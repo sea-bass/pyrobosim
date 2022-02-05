@@ -13,8 +13,6 @@ class PyRoboSim(QtWidgets.QApplication):
 
     def set_world(self, world):
         self.ww = WorldWidget(world)
-        self.ww.createPoly([(0, 0), (1, 1), (1, 0)])
-        self.ww.createPoly([(1, 2), (2, 3), (2, 2)])
         self.ww.show()
 
 class WorldWidget(QtWidgets.QMainWindow):
@@ -36,23 +34,24 @@ class WorldWidget(QtWidgets.QMainWindow):
         widget.setLayout(layout)
         self.setCentralWidget(widget)
 
-        self.polygons = []
+        self.wg.show()
 
     def on_click(self):
-        L = 0.2
-        x = 2.0 * np.random.random()
-        y = 3.0 * np.random.random()
-        yaw = 2.0 * np.pi * np.random.random()
+        xmin, xmax = self.wg.world.x_bounds
+        ymin, ymax = self.wg.world.y_bounds
+        r = self.wg.world.inflation_radius
+        L = 0.1 * min(xmax-xmin, ymax-ymin)
+
+        valid_pose = False
+        while not valid_pose:
+            x = (xmax - xmin - 2*r) * np.random.random() + xmin + r
+            y = (ymax - ymin - 2*r) * np.random.random() + ymin + r
+            yaw = 2.0 * np.pi * np.random.random()
+            valid_pose = not self.wg.world.check_occupancy([x, y])
+
         self.wg.robot_body.set_xdata(x)
         self.wg.robot_body.set_ydata(y)
         self.wg.robot_dir.set_xdata(x + np.array([0, L*np.cos(yaw)]))
         self.wg.robot_dir.set_ydata(y + np.array([0, L*np.sin(yaw)]))
         self.wg.axes.autoscale()
         self.wg.draw()
-
-    def createPoly(self, coords):
-        polygon = Polygon(coords)
-        self.polygons.append(polygon)
-        patch = PolygonPatch(polygon, fc=[1,0,0], ec=[0,0,1], lw=2, zorder=2)
-        self.wg.axes.add_patch(patch)
-        self.wg.axes.autoscale()

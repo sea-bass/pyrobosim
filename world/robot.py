@@ -3,10 +3,11 @@ import math
 from .utils import Pose
 
 class Robot:
-    def __init__(self, id=0, name="robot", pose=Pose()):
+    def __init__(self, id=0, name="robot", pose=Pose(), radius=0.2):
         self.id = id
         self.name = name
         self.set_pose(pose)
+        self.radius = radius
 
     def set_pose(self, pose):
         self.pose = pose

@@ -24,3 +24,9 @@ class WorldGUI(FigureCanvasQTAgg):
             p.x + np.array([0, L*np.cos(p.yaw)]),
             p.y + np.array([0, L*np.sin(p.yaw)]),
             "m-", linewidth=2)
+
+    def show(self):
+        for r in self.world.rooms:
+            self.axes.add_patch(r.viz_patch)
+        self.axes.autoscale()
+        self.axes.axis("equal")
