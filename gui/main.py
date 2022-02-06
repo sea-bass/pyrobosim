@@ -1,8 +1,5 @@
 import numpy as np
-from PyQt5 import QtCore, QtGui, QtWidgets
-from shapely.geometry import Polygon
-from descartes.patch import PolygonPatch
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
+from PyQt5 import QtWidgets
 
 from .world import WorldGUI
 

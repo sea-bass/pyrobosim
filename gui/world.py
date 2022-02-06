@@ -26,7 +26,7 @@ class WorldGUI(FigureCanvasQTAgg):
             "m-", linewidth=2)
 
     def show(self):
-        for r in self.world.rooms:
+        for r in (self.world.rooms + self.world.hallways):
             self.axes.add_patch(r.viz_patch)
         self.axes.autoscale()
         self.axes.axis("equal")
