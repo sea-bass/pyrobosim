@@ -2,6 +2,7 @@
 Room Representation for World Modeling
 """
 
+import warnings
 from shapely.geometry import Polygon, Point
 from descartes.patch import PolygonPatch
 
@@ -34,10 +35,12 @@ class Room:
         self.viz_polygon = self.buffered_polygon.difference(self.polygon)
         for h in self.hallways:
             self.viz_polygon = self.viz_polygon.difference(h.polygon)
-        self.viz_patch = PolygonPatch(
-            self.viz_polygon,
-            fc=self.color, ec=self.color,
-            lw=2, alpha=0.75, zorder=2)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.viz_patch = PolygonPatch(
+                self.viz_polygon,
+                fc=self.color, ec=self.color,
+                lw=2, alpha=0.75, zorder=2)
 
     def is_collision_free(self, pose):
         """ Checks whether a pose in the room is collision-free """

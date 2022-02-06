@@ -2,6 +2,7 @@
 Hallway Representation for World Modeling
 """
 
+import warnings
 import numpy as np
 from shapely.geometry import Point, LineString
 from descartes.patch import PolygonPatch
@@ -94,10 +95,12 @@ class Hallway:
             self.room_start.buffered_polygon)
         self.viz_polygon = self.viz_polygon.difference(
             self.room_end.buffered_polygon)
-        self.viz_patch = PolygonPatch(
-            self.viz_polygon,
-            fc=self.color, ec=self.color,
-            lw=2, alpha=0.75, zorder=2)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.viz_patch = PolygonPatch(
+                self.viz_polygon,
+                fc=self.color, ec=self.color,
+                lw=2, alpha=0.75, zorder=2)
 
     def is_collision_free(self, pose):
         """ Checks whether a pose in the room is collision-free """
