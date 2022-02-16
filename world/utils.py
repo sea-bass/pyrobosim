@@ -56,6 +56,53 @@ def wrap_angle(ang):
 #####################
 
 
+def add_coords(coords, offset):
+    """
+    Adds an offset (x,y) vector to a Shapely compatible list 
+    of coordinate tuples
+
+    Args:
+        coords: A list of coordinate tuples representing the polygon
+        offset: An (x,y) offset vector list or tuple
+    """
+    x, y = offset
+    return [(c[0]+x, c[1]+y) for c in coords]
+
+
+def box_to_coords(dims=[1, 1], origin=[0, 0], ang=0):
+    """ 
+    Converts box dimensions and origin to a Shapely compatible 
+    list of coordinate tuples.
+
+    Args:
+        dims (list): The box dimensions [width, height]
+        origin (list): The box origin [x, y]
+        ang (float): The angle (in radians) to rotate the box
+
+    Returns:
+        coords: A list of coordinate tuples representing the box
+
+    Examples:
+        >>> coords = box_to_coords(dims=[2.5,2.5], origin=[1,2])
+    """
+    x, y = origin
+    w, h = dims
+    coords = [
+        rot2d((-0.5*w, -0.5*h), ang),
+        rot2d((0.5*w, -0.5*h), ang),
+        rot2d((0.5*w,  0.5*h), ang),
+        rot2d((-0.5*w,  0.5*h), ang),
+    ]
+    coords.append(coords[0])
+    coords = add_coords(coords, (x, y))
+    return coords
+
+
+def get_polygon_centroid(poly):
+    """ Gets a Shapely polygon centroid as a list """
+    return list(poly.centroid.coords)[0]
+
+
 def inflate_polygon(poly, radius):
     """ 
     Inflates a Shapely polygon with options preconfigured for 
@@ -64,3 +111,13 @@ def inflate_polygon(poly, radius):
     return poly.buffer(radius,
                        cap_style=CAP_STYLE.flat,
                        join_style=JOIN_STYLE.mitre)
+
+
+def rot2d(vec, ang):
+    """ Rotates a 2-element vector `vec` by an angle `ang` """
+    v = np.array([[vec[0]],
+                  [vec[1]]])
+    M = np.array([[np.cos(ang), -np.sin(ang)],
+                  [np.sin(ang),  np.cos(ang)]])
+    v_tf = np.matmul(M, v)
+    return v_tf.flatten().tolist()

@@ -15,6 +15,7 @@ def create_world():
     # Create a robot and a world
     r = Robot(pose=Pose(x=1.0, y=1.5), radius=0.15)
     w = World(robot=r)
+    w.set_metadata(locations="data/example_location_data.yaml")
 
     # Add rooms
     r1coords = [(0, 0), (1.5, 1.5), (1.5, 0)]
@@ -31,7 +32,13 @@ def create_world():
     w.add_hallway("kitchen", "bedroom", width=0.6,
                   conn_method="points",
                   conn_points=[(1.0, 0.5), (2.5, 0.5), (2.5, 2.5)])
+
+    # Add locations
+    w.add_location("table", "bathroom", Pose(x=-2.0, y=2.0))
+    w.add_location("desk", "bedroom", Pose(x=3.0, y=3.0, yaw=0.2))
+
     return w
+
 
 if __name__ == "__main__":
     w = create_world()

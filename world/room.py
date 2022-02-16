@@ -17,6 +17,7 @@ class Room:
 
         # Entities associated with the room
         self.hallways = []
+        self.locations = []
 
         # Create the room polygon
         self.polygon = Polygon(coords)
@@ -28,6 +29,9 @@ class Room:
         # Deflate the room polygon with the inflation radius
         self.collision_polygon = inflate_polygon(
             self.polygon, -inflation_radius)
+        for loc in self.locations:
+            self.collision_polygon = self.collision_polygon.difference(
+                loc.collision_polygon)
 
     def update_visualization_polygon(self):
         """ Updates visualization polygon for world plotting """

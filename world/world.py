@@ -1,8 +1,9 @@
+from tkinter import NONE
 import warnings
 
 from .robot import Robot
 from .hallway import Hallway
-
+from .locations import Location
 
 class World:
     def __init__(self, robot=Robot(), inflation_radius=None):
@@ -16,16 +17,28 @@ class World:
 
         # Define the world (rooms, locations, etc.)
         self.rooms = []
-        self.locations = []
         self.hallways = []
+        self.locations = []
         self.objects = []
 
         # Counters
         self.num_rooms = 0
         self.num_hallways = 0
+        self.num_locations = 0
+        self.location_instance_counts = {}
 
+        # World bounds
         self.x_bounds = [0, 0]
         self.y_bounds = [0, 0]
+
+    ############
+    # Metadata #
+    ############
+    def set_metadata(self, locations=None, objects=None):
+        """ Sets location and object metadata from the specified file """
+        if locations is not None:
+            Location.set_metadata(locations)
+        # TODO Objects
 
     ##########################
     # World Building Methods #
@@ -86,6 +99,44 @@ class World:
         """ TODO removes a hallway between two rooms. """
         raise NotImplementedError("Hallway removal not implemented.")
 
+    def add_location(self, category, room, pose, name=None):
+        """ Adds a location at the specified room """
+        # Parse inputs
+        if isinstance(room, str):
+            room = self.get_room_by_name(room)
+        if category not in self.location_instance_counts:
+            self.location_instance_counts[category] = 0
+        if name is None:
+            name = f"{category}{self.location_instance_counts[category]}"
+        self.location_instance_counts[category] +=1
+
+        # Create the location
+        # TODO: Check that it fits within the room, else error out
+        loc = Location(category, parent=room, pose=pose, name=name)
+
+        # Do all the necessary bookkeeping
+        loc.update_collision_polygon(self.inflation_radius)
+        room.locations.append(loc)
+        room.update_collision_polygon(self.inflation_radius)
+        self.locations.append(loc)
+        self.num_locations += 1
+
+        return loc
+
+    def remove_location(self, loc):
+        """ Cleanly removes a location from the world """
+        # Parse inputs
+        if isinstance(loc, str):
+            loc = self.get_location_by_name(loc)
+
+        if loc in self.locations:
+            self.locations.remove(loc)
+            self.num_locations -= 1
+            self.location_instance_counts[loc.category] -= 1
+            room = loc.parent
+            room.locations.remove(loc)
+            room.update_collision_polygon(self.inflation_radius)
+
     def update_bounds(self):
         """ 
         Updates the X and Y bounds of the world 
@@ -125,4 +176,17 @@ class World:
             return self.rooms[idx]
         else:
             warnings.warn(f"Room not found: {name}")
+            return None
+
+    def get_location_names(self):
+        """ Gets all location names """
+        return [loc.name for loc in self.locations]
+
+    def get_location_by_name(self, name):
+        """ Gets a location object by its name """
+        names = self.get_location_names()
+        if name in names:
+            idx = names.index(name)
+            return self.locations[idx]
+        else:
             return None
