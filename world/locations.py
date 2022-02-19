@@ -46,9 +46,17 @@ class Location:
         elif self.metadata["footprint_type"] == "box":
             coords = box_to_coords(self.metadata["footprint"])
         self.polygon = Polygon(coords)
-        self.polygon = transform_polygon(self.polygon, self.pose)
-        self.centroid = get_polygon_centroid(self.polygon)
 
+        if "footprint_offset" in self.metadata:
+            offset_vec = self.metadata["footprint_offset"]
+            if len(offset_vec) == 2:
+                offset_pose = Pose(x=offset_vec[0], y=offset_vec[1])
+            elif len(offset_vec) == 3:
+                offset_pose = Pose(x=offset_vec[0], y=offset_vec[1], yaw=offset_vec[2])
+            self.polygon = transform_polygon(self.polygon, offset_pose)
+
+        self.polygon = transform_polygon(self.polygon, self.pose)
+        
         # Add the spawn locations
         if "locations" in self.metadata:
             for loc_data in self.metadata["locations"]:
@@ -126,6 +134,13 @@ class ObjectSpawn:
             elif footprint_type == "box":
                 coords = box_to_coords(self.metadata["footprint"])
             self.polygon = Polygon(coords)
+            if "footprint_offset" in self.metadata:
+                offset_vec = self.metadata["footprint_offset"]
+                if len(offset_vec) == 2:
+                    offset_pose = Pose(x=offset_vec[0], y=offset_vec[1])
+                elif len(offset_vec) == 3:
+                    offset_pose = Pose(x=offset_vec[0], y=offset_vec[1], yaw=offset_vec[2])
+                self.polygon = transform_polygon(self.polygon, offset_pose)
             self.polygon = transform_polygon(self.polygon, self.parent.pose)
 
         self.update_visualization_polygon()
@@ -138,7 +153,9 @@ class ObjectSpawn:
 
     def update_visualization_polygon(self):
         """ Adds a visualization polygon for the object spawn """
-        self.viz_patch = PolygonPatch(
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.viz_patch = PolygonPatch(
             self.polygon, fill=None, ec="k", 
             lw=1, ls="--", zorder=2)
 
