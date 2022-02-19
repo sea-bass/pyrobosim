@@ -4,11 +4,12 @@ Representations for locations and their corresponding object spawns
 
 import yaml
 import warnings
-from shapely.affinity import rotate, translate
 from shapely.geometry import Polygon, Point
 from descartes.patch import PolygonPatch
 
-from .utils import box_to_coords, get_polygon_centroid, inflate_polygon, Pose
+from .utils import (
+    box_to_coords, get_polygon_centroid, inflate_polygon, 
+    transform_polygon, Pose)
 
 
 class LocationMetadata:
@@ -45,10 +46,18 @@ class Location:
         elif self.metadata["footprint_type"] == "box":
             coords = box_to_coords(self.metadata["footprint"])
         self.polygon = Polygon(coords)
-        self.polygon = rotate(self.polygon, self.pose.yaw, use_radians=True)
-        self.polygon = translate(self.polygon, 
-                                 xoff=self.pose.x, yoff=self.pose.y)
+        self.polygon = transform_polygon(self.polygon, self.pose)
         self.centroid = get_polygon_centroid(self.polygon)
+
+        # Add the spawn locations
+        if "locations" in self.metadata:
+            for loc_data in self.metadata["locations"]:
+                if "name" in loc_data:
+                    name = f"{self.name}_{loc_data['name']}"
+                else:
+                    name = f"{self.name}_loc{len(self.children)}"
+                os = ObjectSpawn(name, loc_data, self)
+                self.children.append(os)
 
         # Update the collision and visualization polygons
         self.update_collision_polygon()
@@ -89,3 +98,50 @@ class Location:
 
     def __repr__(self):
         return f"Location: {self.name} in {self.parent}"
+
+
+class ObjectSpawn:
+    """ Representation of an object spawn in the world """
+
+    def __init__(self, name, metadata, parent=None):
+        self.name = name
+        self.category = parent.category
+        self.parent = parent
+        self.children = []
+        self.metadata = metadata
+
+        if "footprint" not in self.metadata:
+            footprint_type = "parent"
+        else:
+            footprint_type = self.metadata["footprint_type"]
+
+        if footprint_type == "parent":
+            self.polygon = self.parent.polygon
+            if "footprint_padding" in self.metadata:
+                self.polygon = inflate_polygon(
+                    self.polygon, -self.metadata["footprint_padding"])
+        else:
+            if footprint_type == "polygon":
+                coords = self.metadata["footprint"]
+            elif footprint_type == "box":
+                coords = box_to_coords(self.metadata["footprint"])
+            self.polygon = Polygon(coords)
+            self.polygon = transform_polygon(self.polygon, self.parent.pose)
+
+        self.update_visualization_polygon()
+
+    
+    def get_room_name(self):
+        """ Returns the name of the containing room """
+        return self.parent.get_room_name()
+
+
+    def update_visualization_polygon(self):
+        """ Adds a visualization polygon for the object spawn """
+        self.viz_patch = PolygonPatch(
+            self.polygon, fill=None, ec="k", 
+            lw=1, ls="--", zorder=2)
+
+
+    def __repr__(self):
+        return f"Object spawn location: {self.name} in {self.parent}"

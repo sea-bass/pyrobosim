@@ -3,6 +3,7 @@ Test script showing how to build a world and use it with pyrobosim
 """
 
 import sys
+import numpy as np
 
 from gui.main import PyRoboSim
 from world.utils import Pose
@@ -18,9 +19,9 @@ def create_world():
     w.set_metadata(locations="data/example_location_data.yaml")
 
     # Add rooms
-    r1coords = [(0, 0), (1.5, 1.5), (1.5, 0)]
+    r1coords = [(-1, -1), (1.5, -1), (1.5, 1.5), (0.5, 1.5)]
     w.add_room(Room(r1coords, name="kitchen", color=[1, 0, 0]))
-    r2coords = [(1.75, 2.5), (3, 2.5), (3, 4), (1.75, 4)]
+    r2coords = [(1.75, 2.5), (3.5, 2.5), (3.5, 4), (1.75, 4)]
     w.add_room(Room(r2coords, name="bedroom", color=[0, 0.6, 0]))
     r3coords = [(-1, 1), (-1, 3.5), (-2.5, 3.5), (-2, 1)]
     w.add_room(Room(r3coords, name="bathroom", color=[0, 0, 0.6]))
@@ -34,8 +35,9 @@ def create_world():
                   conn_points=[(1.0, 0.5), (2.5, 0.5), (2.5, 2.5)])
 
     # Add locations
-    w.add_location("table", "bathroom", Pose(x=-2.0, y=2.0))
-    w.add_location("desk", "bedroom", Pose(x=3.0, y=3.0, yaw=0.2))
+    w.add_location("table", "kitchen", Pose(x=0.85, y=-0.5, yaw=-np.pi/2))
+    w.add_location("desk", "bedroom", Pose(x=3.15, y=3.65))
+    w.add_location("counter", "bathroom", Pose(x=-2.0, y=2.5, yaw=np.pi/2 + np.pi/16))
 
     return w
 

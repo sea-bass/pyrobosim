@@ -1,4 +1,5 @@
 import numpy as np
+from shapely.affinity import rotate, translate
 from shapely.geometry import CAP_STYLE, JOIN_STYLE
 
 ##################
@@ -121,3 +122,17 @@ def rot2d(vec, ang):
                   [np.sin(ang),  np.cos(ang)]])
     v_tf = np.matmul(M, v)
     return v_tf.flatten().tolist()
+
+
+def transform_polygon(polygon, pose):
+    """ 
+    Transforms a Shapely polygon by a Pose object.
+    The order of operations is first translation, and then rotation 
+    about the new translated position.
+    """
+    polygon = translate(polygon,
+                        xoff=pose.x, yoff=pose.y)
+    polygon = rotate(
+        polygon, pose.yaw, origin=(pose.x, pose.y), use_radians=True)
+
+    return polygon

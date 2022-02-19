@@ -8,16 +8,38 @@ table:
     locations:
       - name: "tabletop"
         footprint_type: parent
+        footprint_padding: 0.1
         height: 0.5
 
 desk: 
     footprint_type: polygon
     footprint:
-      - [-0.5, -0.5]
-      - [0.5, -0.5]
-      - [0.5, 0.5]
-      - [-0.5, 0.5]
+      - [-0.3, -0.3]
+      - [0.3, -0.3]
+      - [0.3, 0.3]
+      - [-0.3, 0.3]
     locations:
       - name: "desktop"
         footprint_type: parent
         height: 0.3
+
+counter: 
+  footprint_type: box
+  footprint: [1.1, 0.6]
+  locations:
+    - name: "left"
+      footprint_type: polygon
+      footprint:
+        - [0.1, -0.25]
+        - [0.5, -0.25]
+        - [0.5, 0.25]
+        - [0.1, 0.25]
+      height: 0.5
+    - name: "right"
+      footprint_type: polygon
+      footprint:
+        - [-0.1, -0.25]
+        - [-0.1, 0.25]
+        - [-0.5, 0.25]
+        - [-0.5, -0.25]
+      height: 0.5
