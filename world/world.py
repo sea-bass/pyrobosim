@@ -1,9 +1,10 @@
-from tkinter import NONE
+import numpy as np
 import warnings
 
 from .robot import Robot
 from .hallway import Hallway
 from .locations import Location
+from .objects import Object
 
 class World:
     def __init__(self, robot=Robot(), inflation_radius=None):
@@ -25,7 +26,9 @@ class World:
         self.num_rooms = 0
         self.num_hallways = 0
         self.num_locations = 0
+        self.num_objects = 0
         self.location_instance_counts = {}
+        self.object_instance_counts = {}
 
         # World bounds
         self.x_bounds = [0, 0]
@@ -38,7 +41,8 @@ class World:
         """ Sets location and object metadata from the specified file """
         if locations is not None:
             Location.set_metadata(locations)
-        # TODO Objects
+        if objects is not None:
+            Object.set_metadata(objects)
 
     ##########################
     # World Building Methods #
@@ -137,6 +141,50 @@ class World:
             room.locations.remove(loc)
             room.update_collision_polygon(self.inflation_radius)
 
+    def add_object(self, category, loc, pose=None, name=None):
+        """
+        Adds an object to a location at the specified pose
+        """
+        # If no name is specified, create one automatically
+        if name is None:
+            if category not in self.object_instance_counts:
+                self.object_instance_counts[category] = 0
+            name = f"{category}{self.object_instance_counts[category]}"
+        self.object_instance_counts[category] +=1
+
+        # If it's a string, get the location name
+        if isinstance(loc, str):
+            loc = self.get_location_by_name(loc)
+        # If it's a furniture object, pick a location at random
+        if isinstance(loc, Location):
+            loc = np.random.choice(loc.children)
+
+        # TODO: If no pose is specified, sample a valid one
+
+        # Create the object
+        obj = Object(category=category, name=name, parent=loc, pose=pose)
+        loc.children.append(obj)
+        self.objects.append(obj)
+        self.num_objects += 1
+        return obj
+
+    def remove_object(self, obj):
+        """ Cleanly removes an object from the world """
+        if isinstance(obj, str):
+            obj = self.get_object_by_name(obj)
+        if obj in self.objects:
+            self.objects.remove(obj)
+            self.num_objects -= 1
+            obj.parent.children.remove(obj)
+    
+    def remove_all_objects(self, restart_numbering=True):
+        """ Cleanly removes all objects from the world """
+        for obj in reversed(self.objects):
+            self.remove_object(obj)
+        self.num_objects = 0
+        if restart_numbering:
+            self.object_instance_counts = {}
+
     def update_bounds(self):
         """ 
         Updates the X and Y bounds of the world 
@@ -188,5 +236,18 @@ class World:
         if name in names:
             idx = names.index(name)
             return self.locations[idx]
+        else:
+            return None
+
+    def get_object_names(self):
+        """ Gets all object names """
+        return [o.name for o in self.objects]
+
+    def get_object_by_name(self, name):
+        """ Gets an object by its name """
+        names = self.get_object_names()
+        if name in names:
+            idx = names.index(name)
+            return self.objects[idx]
         else:
             return None

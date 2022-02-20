@@ -4,11 +4,11 @@ Representations for locations and their corresponding object spawns
 
 import yaml
 import warnings
-from shapely.geometry import Polygon, Point
+from shapely.geometry import Point
 from descartes.patch import PolygonPatch
 
 from .utils import (
-    box_to_coords, get_polygon_centroid, inflate_polygon, 
+    box_to_coords, inflate_polygon, polygon_from_footprint, 
     transform_polygon, Pose)
 
 
@@ -38,24 +38,14 @@ class Location:
         self.pose = pose
         self.children = []
         self.parent = parent
+
         self.metadata = Location.metadata.get(self.category)
+        if "color" in self.metadata:
+            self.viz_color = self.metadata["color"]
 
-        # Calculate the object position and dimensions given the model properties
-        if self.metadata["footprint_type"] == "polygon":
-            coords = self.metadata["footprint"]
-        elif self.metadata["footprint_type"] == "box":
-            coords = box_to_coords(self.metadata["footprint"])
-        self.polygon = Polygon(coords)
-
-        if "footprint_offset" in self.metadata:
-            offset_vec = self.metadata["footprint_offset"]
-            if len(offset_vec) == 2:
-                offset_pose = Pose(x=offset_vec[0], y=offset_vec[1])
-            elif len(offset_vec) == 3:
-                offset_pose = Pose(x=offset_vec[0], y=offset_vec[1], yaw=offset_vec[2])
-            self.polygon = transform_polygon(self.polygon, offset_pose)
-
-        self.polygon = transform_polygon(self.polygon, self.pose)
+        self.polygon = polygon_from_footprint(
+            self.metadata["footprint"], pose=self.pose,
+            parent_polygon=self.parent.polygon if self.parent is not None else None)
         
         # Add the spawn locations
         if "locations" in self.metadata:
@@ -116,33 +106,18 @@ class ObjectSpawn:
         self.category = parent.category
         self.parent = parent
         self.children = []
+
         self.metadata = metadata
+        if "color" in self.metadata:
+            self.viz_color = self.metadata["color"]
+        else:
+            self.viz_color = self.parent.viz_color
 
         if "footprint" not in self.metadata:
-            footprint_type = "parent"
-        else:
-            footprint_type = self.metadata["footprint_type"]
-
-        if footprint_type == "parent":
-            self.polygon = self.parent.polygon
-            if "footprint_padding" in self.metadata:
-                self.polygon = inflate_polygon(
-                    self.polygon, -self.metadata["footprint_padding"])
-        else:
-            if footprint_type == "polygon":
-                coords = self.metadata["footprint"]
-            elif footprint_type == "box":
-                coords = box_to_coords(self.metadata["footprint"])
-            self.polygon = Polygon(coords)
-            if "footprint_offset" in self.metadata:
-                offset_vec = self.metadata["footprint_offset"]
-                if len(offset_vec) == 2:
-                    offset_pose = Pose(x=offset_vec[0], y=offset_vec[1])
-                elif len(offset_vec) == 3:
-                    offset_pose = Pose(x=offset_vec[0], y=offset_vec[1], yaw=offset_vec[2])
-                self.polygon = transform_polygon(self.polygon, offset_pose)
-            self.polygon = transform_polygon(self.polygon, self.parent.pose)
-
+            self.metadata["footprint"] = {"type": "parent"}
+        self.polygon = polygon_from_footprint(
+            self.metadata["footprint"], pose=self.parent.pose,
+            parent_polygon=self.parent.polygon if self.parent is not None else None)
         self.update_visualization_polygon()
 
     
@@ -156,9 +131,9 @@ class ObjectSpawn:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             self.viz_patch = PolygonPatch(
-            self.polygon, fill=None, ec="k", 
+            self.polygon, fill=None, ec=self.parent.viz_color, 
             lw=1, ls="--", zorder=2)
 
 
     def __repr__(self):
-        return f"Object spawn location: {self.name} in {self.parent}"
+        return f"Object spawn location: {self.name} in {self.parent.name}"

@@ -1,6 +1,6 @@
 import numpy as np
 from shapely.affinity import rotate, translate
-from shapely.geometry import CAP_STYLE, JOIN_STYLE
+from shapely.geometry import Polygon, CAP_STYLE, JOIN_STYLE
 
 ##################
 # Pose Utilities #
@@ -135,4 +135,43 @@ def transform_polygon(polygon, pose):
     polygon = rotate(
         polygon, pose.yaw, origin=(pose.x, pose.y), use_radians=True)
 
+    return polygon
+
+def polygon_from_footprint(footprint, pose=None, parent_polygon=None):
+    """
+    Creates a Shapely polygon given footprint metadata
+    Valid footprint metadata include:
+        - type: Type of footprint. Supported geometries include.
+            - box
+                - dims: (x, y) dimensions
+            - polygon
+                - coords: List of (x, y) coordinates 
+            - parent: Requires `parent_polygon` to also be passed in
+                - padding: Additional padding relative to the parent polygon
+        - offset: Offset (x, y) or (x, y, yaw) from the specified geometry above
+    """
+    # Parse through the footprint type and corresponding properties
+    ftype = footprint["type"]
+    if ftype == "parent":
+        polygon = parent_polygon
+        if "padding" in footprint:
+            polygon = inflate_polygon(polygon, -footprint["padding"])
+    else:
+        if ftype == "box":
+            coords = box_to_coords(footprint["dims"])
+        elif ftype == "polygon":
+            coords = footprint["coords"]
+        polygon = Polygon(coords)
+
+    # Offset the polygon, if specified
+    if "offset" in footprint:
+        offset_vec = footprint["offset"]
+        if len(offset_vec) == 2:
+            offset_pose = Pose(x=offset_vec[0], y=offset_vec[1])
+        elif len(offset_vec) == 3:
+            offset_pose = Pose(x=offset_vec[0], y=offset_vec[1], yaw=offset_vec[2])
+        polygon = transform_polygon(polygon, offset_pose)
+
+    if pose is not None and ftype != "parent":
+        polygon = transform_polygon(polygon, pose)
     return polygon

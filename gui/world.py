@@ -32,6 +32,8 @@ class WorldGUI(FigureCanvasQTAgg):
             self.axes.add_patch(loc.viz_patch)
             for spawn in loc.children:
                 self.axes.add_patch(spawn.viz_patch)
+        for obj in self.world.objects:
+            self.axes.add_patch(obj.viz_patch)
 
         self.axes.autoscale()
         self.axes.axis("equal")
