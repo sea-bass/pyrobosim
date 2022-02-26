@@ -38,7 +38,7 @@ def create_world():
     # Add locations
     table = w.add_location("table", "kitchen", Pose(x=0.85, y=-0.5, yaw=-np.pi/2))
     desk = w.add_location("desk", "bedroom", Pose(x=3.15, y=3.65))
-    counter = w.add_location("counter", "bathroom", Pose(x=-2.0, y=2.5, yaw=np.pi/2 + np.pi/16))
+    counter = w.add_location("counter", "bathroom", Pose(x=-1.95, y=2.5, yaw=np.pi/2 + np.pi/16))
 
     # Add objects
     w.add_object("apple", table, pose=Pose(x=1.0, y=-0.5))

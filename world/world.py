@@ -51,12 +51,23 @@ class World:
         """ Adds a room to the world """
         if room.name is None:
             room.name = f"room_{self.num_rooms}"
+
+        # Check if the room collides with any other rooms or hallways
+        is_valid_pose = True
+        for other_loc in self.rooms + self.hallways:
+            is_valid_pose = is_valid_pose and not \
+                room.external_collision_polygon.intersects(
+                    other_loc.external_collision_polygon)
+        if not is_valid_pose:
+            warnings.warn(f"Room {room.name} in collision. Cannot add to world.")
+            return None
+
         self.rooms.append(room)
         self.num_rooms += 1
         self.update_bounds()
 
         # Update the room collision polygon based on the world inflation radius
-        room.update_collision_polygon(self.inflation_radius)
+        room.update_collision_polygons(self.inflation_radius)
 
     def remove_room(self, room_name):
         """ Removes a room from the world by name """
@@ -87,6 +98,18 @@ class World:
                     conn_angle=conn_angle, conn_points=conn_points,
                     color=color)
 
+        # Check if the hallway collides with any other rooms or hallways
+        is_valid_pose = True
+        for other_loc in self.rooms + self.hallways:
+            if (other_loc == room_start) or (other_loc == room_end):
+                continue
+            is_valid_pose = is_valid_pose and not \
+                h.external_collision_polygon.intersects(
+                    other_loc.external_collision_polygon)
+        if not is_valid_pose:
+            warnings.warn(f"Hallway {h.name} in collision. Cannot add to world.")
+            return None
+
         # Do all the necessary bookkeeping
         self.hallways.append(h)
         room_start.hallways.append(h)
@@ -94,7 +117,7 @@ class World:
         room_end.hallways.append(h)
         room_end.update_visualization_polygon()
         self.num_hallways += 1
-        h.update_collision_polygon(self.inflation_radius)
+        h.update_collision_polygons(self.inflation_radius)
 
         # Finally, return the Hallway object
         return h
@@ -112,17 +135,25 @@ class World:
             self.location_instance_counts[category] = 0
         if name is None:
             name = f"{category}{self.location_instance_counts[category]}"
-        self.location_instance_counts[category] +=1
 
         # Create the location
-        # TODO: Check that it fits within the room, else error out
         loc = Location(category, parent=room, pose=pose, name=name)
+
+        # Check that the location fits within the room and is not in collision with
+        # other locations already in the room. Else, warn and do not add it.
+        is_valid_pose = loc.polygon.within(room.polygon)
+        for other_loc in room.locations:
+            is_valid_pose = is_valid_pose and not loc.polygon.intersects(other_loc.polygon)
+        if not is_valid_pose:
+            warnings.warn(f"Location {loc.name} in collision. Cannot add to world.")
+            return None
 
         # Do all the necessary bookkeeping
         loc.update_collision_polygon(self.inflation_radius)
         room.locations.append(loc)
-        room.update_collision_polygon(self.inflation_radius)
+        room.update_collision_polygons(self.inflation_radius)
         self.locations.append(loc)
+        self.location_instance_counts[category] +=1
         self.num_locations += 1
 
         return loc
@@ -139,7 +170,7 @@ class World:
             self.location_instance_counts[loc.category] -= 1
             room = loc.parent
             room.locations.remove(loc)
-            room.update_collision_polygon(self.inflation_radius)
+            room.update_collision_polygons(self.inflation_radius)
 
     def add_object(self, category, loc, pose=None, name=None):
         """

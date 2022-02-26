@@ -7,9 +7,7 @@ import warnings
 from shapely.geometry import Point
 from descartes.patch import PolygonPatch
 
-from .utils import (
-    box_to_coords, inflate_polygon, polygon_from_footprint, 
-    transform_polygon, Pose)
+from .utils import inflate_polygon, polygon_from_footprint, Pose
 
 
 class LocationMetadata:

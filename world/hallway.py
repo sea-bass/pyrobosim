@@ -73,19 +73,29 @@ class Hallway:
         self.polygon = inflate_polygon(self.polygon, hall_width/2.0)
 
         # Get the collision and visualization polygons
-        self.update_collision_polygon()
+        self.update_collision_polygons()
         self.update_visualization_polygon()
 
-    def update_collision_polygon(self, inflation_radius=0):
+    def update_collision_polygons(self, inflation_radius=0):
         """ Updates the collision polygon using the specified inflation radius """
+        # Internal collision polygon:
         # Deflate the resulting difference polygon
-        self.collision_polygon = inflate_polygon(
+        self.internal_collision_polygon = inflate_polygon(
             self.polygon, -inflation_radius)
         # Subtract deflated room polygons from the hallway polygon
-        self.collision_polygon = self.collision_polygon.difference(
+        self.internal_collision_polygon = self.internal_collision_polygon.difference(
             inflate_polygon(self.room_start.polygon, -inflation_radius))
-        self.collision_polygon = self.collision_polygon.difference(
+        self.internal_collision_polygon = self.internal_collision_polygon.difference(
             inflate_polygon(self.room_end.polygon, -inflation_radius))
+
+        # External collision polygon:
+        # Inflate the difference polygon by the wall width
+        self.external_collision_polygon = inflate_polygon(
+            self.polygon, self.wall_width)
+        self.external_collision_polygon = self.external_collision_polygon.difference(
+            self.room_start.external_collision_polygon)
+        self.external_collision_polygon = self.external_collision_polygon.difference(
+            self.room_end.external_collision_polygon)
 
     def update_visualization_polygon(self):
         """ Updates the visualization polygon for the hallway walls """

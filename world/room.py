@@ -22,16 +22,22 @@ class Room:
         # Create the room polygon
         self.polygon = Polygon(coords)
         self.centroid = list(self.polygon.centroid.coords)[0]
+        self.update_collision_polygons()
         self.update_visualization_polygon()
 
-    def update_collision_polygon(self, inflation_radius=0):
-        """ Updates collision polygon using the specified inflation radius """
-        # Deflate the room polygon with the inflation radius
-        self.collision_polygon = inflate_polygon(
+    def update_collision_polygons(self, inflation_radius=0):
+        """ Updates collision polygons using the specified inflation radius """
+        # Internal collision polygon:
+        # Deflate the room polygon with the inflation radius and add each location's collision polygon.
+        self.internal_collision_polygon = inflate_polygon(
             self.polygon, -inflation_radius)
         for loc in self.locations:
-            self.collision_polygon = self.collision_polygon.difference(
+            self.internal_collision_polygon = self.internal_collision_polygon.difference(
                 loc.collision_polygon)
+
+        # External collision polygon:
+        # Inflate the room polygon with the wall width
+        self.external_collision_polygon = inflate_polygon(self.polygon, self.wall_width)
 
     def update_visualization_polygon(self):
         """ Updates visualization polygon for world plotting """
@@ -52,7 +58,7 @@ class Room:
             p = Point(pose.x, pose.y)
         else:
             p = Point(pose[0], pose[1])
-        return self.collision_polygon.intersects(p)
+        return self.internal_collision_polygon.intersects(p)
 
     def __repr__(self):
         return f"Room: {self.name}"
