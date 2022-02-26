@@ -41,8 +41,10 @@ def create_world():
     counter = w.add_location("counter", "bathroom", Pose(x=-1.95, y=2.5, yaw=np.pi/2 + np.pi/16))
 
     # Add objects
-    w.add_object("apple", table, pose=Pose(x=1.0, y=-0.5))
-    w.add_object("banana", counter, pose=Pose(x=3.0, y=3.5, yaw=np.pi/4))
+    w.add_object("banana", table, pose=Pose(x=1.0, y=-0.5, yaw=np.pi/4))
+    w.add_object("apple", desk, pose=Pose(x=3.2, y=3.5))
+    w.add_object("apple", counter)
+    w.add_object("banana", counter)
 
     return w
 

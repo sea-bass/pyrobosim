@@ -5,12 +5,13 @@ from .robot import Robot
 from .hallway import Hallway
 from .locations import Location
 from .objects import Object
+from .utils import Pose, inflate_polygon, sample_from_polygon, transform_polygon
 
 class World:
-    def __init__(self, robot=Robot(), inflation_radius=None):
+    def __init__(self, robot=Robot(), inflation_radius=None, object_radius=0.05):
         # Define a robot and all its sensors
         self.robot = robot
-
+        self.object_radius = object_radius
         if inflation_radius is None:
             self.inflation_radius = self.robot.radius
         else:
@@ -186,15 +187,52 @@ class World:
         # If it's a string, get the location name
         if isinstance(loc, str):
             loc = self.get_location_by_name(loc)
-        # If it's a furniture object, pick a location at random
+        # If it's a location object, pick an object spawn at random
         if isinstance(loc, Location):
-            loc = np.random.choice(loc.children)
-
-        # TODO: If no pose is specified, sample a valid one
+            obj_spawn = np.random.choice(loc.children)
+        else:
+            obj_spawn = loc
 
         # Create the object
-        obj = Object(category=category, name=name, parent=loc, pose=pose)
-        loc.children.append(obj)
+        obj = Object(category=category, name=name, parent=obj_spawn, pose=pose)
+        
+        # If no pose is specified, sample a valid one
+        if pose is None:
+            max_tries = 1000 # TODO: Hoist up to be user configurable
+            obj_added = False
+            for i in range(max_tries):
+                if isinstance(loc, Location):
+                    obj_spawn = np.random.choice(loc.children)
+                x_sample, y_sample = sample_from_polygon(obj_spawn.polygon)
+                yaw_sample = np.random.uniform(-np.pi, np.pi)
+                pose_sample = Pose(x=x_sample, y=y_sample, yaw=yaw_sample)
+                poly = inflate_polygon(
+                    transform_polygon(obj.polygon, pose_sample), self.object_radius)
+                
+                is_valid_pose = poly.within(obj_spawn.polygon)
+                for other_obj in obj_spawn.children:
+                    is_valid_pose = is_valid_pose and not poly.intersects(other_obj.polygon)
+                if is_valid_pose:
+                    obj.update_pose(pose_sample)
+                    obj.parent = obj_spawn
+                    obj_added = True
+                    break
+            if not obj_added:
+                warnings.warn(f"Could not sample valid pose to add object {obj.name}.")
+                return None
+
+        # If a pose was specified, collision check it
+        else:
+            poly = inflate_polygon(obj.polygon, self.object_radius)
+            is_valid_pose = poly.within(obj_spawn.polygon)
+            for other_obj in obj_spawn.children:
+                is_valid_pose = is_valid_pose and not poly.intersects(other_obj.polygon)
+            if not is_valid_pose:
+                warnings.warn(f"Object {obj.name} in collision or not in location {loc.name}. Cannot add to world.")
+                return None
+            
+        # Do the necessary bookkeeping
+        obj_spawn.children.append(obj)
         self.objects.append(obj)
         self.num_objects += 1
         return obj

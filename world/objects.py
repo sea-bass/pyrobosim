@@ -38,15 +38,19 @@ class Object:
         if "color" in self.metadata:
             self.viz_color = self.metadata["color"]
 
+        self.update_pose(pose)
+
+    def get_room_name(self):
+        """ Returns the name of the containing room """
+        return self.parent.get_room_name()
+
+    def update_pose(self, pose):
+        self.pose = pose
         self.polygon = polygon_from_footprint(
             self.metadata["footprint"], pose=self.pose,
             parent_polygon=self.parent.polygon if self.parent is not None else None)
         self.update_collision_polygon()
         self.update_visualization_polygon()
-
-    def get_room_name(self):
-        """ Returns the name of the containing room """
-        return self.parent.get_room_name()
 
     def update_collision_polygon(self, inflation_radius=0):
         """ Updates the collision polygon using the specified inflation radius """

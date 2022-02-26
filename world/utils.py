@@ -1,6 +1,7 @@
+import warnings
 import numpy as np
 from shapely.affinity import rotate, translate
-from shapely.geometry import Polygon, CAP_STYLE, JOIN_STYLE
+from shapely.geometry import Point, Polygon, CAP_STYLE, JOIN_STYLE
 
 ##################
 # Pose Utilities #
@@ -175,3 +176,15 @@ def polygon_from_footprint(footprint, pose=None, parent_polygon=None):
     if pose is not None and ftype != "parent":
         polygon = transform_polygon(polygon, pose)
     return polygon
+
+def sample_from_polygon(polygon, max_tries=100):
+    """ Samples a valid (x, y) tuple from a Shapely polygon """
+    xmin, ymin, xmax, ymax = polygon.bounds
+    for _ in range(max_tries):
+        sample_x = np.random.uniform(xmin, xmax)
+        sample_y = np.random.uniform(ymin, ymax)
+        if polygon.contains(Point(sample_x, sample_y)):
+            return sample_x, sample_y
+
+    warnings.warn(f"Exceeded max polygon samples samples: {max_tries}")
+    return None, None
