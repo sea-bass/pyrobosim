@@ -118,7 +118,7 @@ class Hallway:
             p = Point(pose.x, pose.y)
         else:
             p = Point(pose[0], pose[1])
-        return self.collision_polygon.intersects(p)
+        return self.internal_collision_polygon.intersects(p)
 
     def __repr__(self):
         return f"Hallway: Connecting {self.room_start.name} and {self.room_end.name}"

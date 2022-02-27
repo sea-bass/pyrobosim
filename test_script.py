@@ -43,8 +43,11 @@ def create_world():
     # Add objects
     w.add_object("banana", table, pose=Pose(x=1.0, y=-0.5, yaw=np.pi/4))
     w.add_object("apple", desk, pose=Pose(x=3.2, y=3.5))
+    w.add_object("apple", table)
+    w.add_object("apple", table)
     w.add_object("apple", counter)
     w.add_object("banana", counter)
+    w.add_object("banana", desk)
 
     return w
 

@@ -13,7 +13,7 @@ class Room:
     def __init__(self, coords, name=None, color=[0.4, 0.4, 0.4], wall_width=0.2):
         self.name = name
         self.wall_width = wall_width
-        self.color = color
+        self.viz_color = color
 
         # Entities associated with the room
         self.hallways = []
@@ -49,7 +49,7 @@ class Room:
             warnings.simplefilter("ignore")
             self.viz_patch = PolygonPatch(
                 self.viz_polygon,
-                fc=self.color, ec=self.color,
+                fc=self.viz_color, ec=self.viz_color,
                 lw=2, alpha=0.75, zorder=2)
 
     def is_collision_free(self, pose):
