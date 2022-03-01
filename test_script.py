@@ -45,9 +45,9 @@ def create_world():
     w.add_object("apple", desk, pose=Pose(x=3.2, y=3.5))
     w.add_object("apple", table)
     w.add_object("apple", table)
-    w.add_object("apple", counter)
+    w.add_object("water", counter)
     w.add_object("banana", counter)
-    w.add_object("banana", desk)
+    w.add_object("water", desk)
 
     return w
 

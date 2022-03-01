@@ -145,6 +145,8 @@ def polygon_from_footprint(footprint, pose=None, parent_polygon=None):
         - type: Type of footprint. Supported geometries include.
             - box
                 - dims: (x, y) dimensions
+            - circle
+                - radius: radius of circle
             - polygon
                 - coords: List of (x, y) coordinates 
             - parent: Requires `parent_polygon` to also be passed in
@@ -159,10 +161,14 @@ def polygon_from_footprint(footprint, pose=None, parent_polygon=None):
             polygon = inflate_polygon(polygon, -footprint["padding"])
     else:
         if ftype == "box":
-            coords = box_to_coords(footprint["dims"])
+            polygon = Polygon(box_to_coords(footprint["dims"]))
+        elif ftype == "circle":
+            polygon = Point(0, 0).buffer(footprint["radius"])
         elif ftype == "polygon":
-            coords = footprint["coords"]
-        polygon = Polygon(coords)
+            polygon = Polygon(footprint["coords"])
+        else:
+            warnings.warn(f"Invalid footprint type: {ftype}")
+            return None
 
     # Offset the polygon, if specified
     if "offset" in footprint:
