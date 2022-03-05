@@ -7,6 +7,7 @@ import numpy as np
 from shapely.geometry import Point, LineString
 from descartes.patch import PolygonPatch
 
+from .search_graph import Node
 from .utils import get_bearing_range, inflate_polygon, Pose
 
 
@@ -59,17 +60,17 @@ class Hallway:
             pt_start = [x - offset*s, y + offset*c]
             pt_end = [pt_start[0] + length*c,
                       pt_start[1] + length*s]
-            points = [pt_start, pt_end]
+            self.points = [pt_start, pt_end]
 
         # If the connection is "points", the hallway is more complex
         elif conn_method == "points":
-            points = conn_points
+            self.points = conn_points
 
         else:
             raise Exception(f"No valid connection method: {conn_method}")
 
         # Create the hallway polygon
-        self.polygon = LineString(points)
+        self.polygon = LineString(self.points)
         self.polygon = inflate_polygon(self.polygon, hall_width/2.0)
 
         # Get the collision and visualization polygons
@@ -119,6 +120,14 @@ class Hallway:
         else:
             p = Point(pose[0], pose[1])
         return self.internal_collision_polygon.intersects(p)
+
+    def add_graph_nodes(self):
+        """ Creates a graph node for searching """
+        intersect_line = LineString(self.points)
+        intersect_line = intersect_line.difference(self.room_start.internal_collision_polygon)
+        intersect_line = intersect_line.difference(self.room_end.internal_collision_polygon)
+        self.graph_nodes = [Node(Pose(x=p[0], y=p[1])) for p in intersect_line.coords]
+
 
     def __repr__(self):
         return f"Hallway: Connecting {self.room_start.name} and {self.room_end.name}"

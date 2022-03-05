@@ -58,6 +58,18 @@ class WorldGUI(FigureCanvasQTAgg):
             self.obj_texts.append(t)
         obj_patches = [o.viz_patch for o in (self.world.objects)]
 
+        # Search graph
+        if self.world.search_graph is not None:
+            x = [n.pose.x for n in self.world.search_graph.nodes]
+            y = [n.pose.y for n in self.world.search_graph.nodes]
+            graph_nodes = self.axes.scatter(x, y, 15, "k")
+
+            graph_edges = []
+            for e in self.world.search_graph.edges:
+                x = (e.n0.pose.x, e.n1.pose.x)
+                y = (e.n0.pose.y, e.n1.pose.y)
+                graph_edges.append(self.axes.plot(x, y, "k:", linewidth=1))
+
         self.axes.autoscale()
         self.axes.axis("equal")
         adjustText.adjust_text(self.obj_texts, lim=100, add_objects=obj_patches)

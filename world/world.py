@@ -1,3 +1,4 @@
+import itertools
 import numpy as np
 import warnings
 
@@ -5,6 +6,7 @@ from .robot import Robot
 from .hallway import Hallway
 from .locations import Location
 from .objects import Object
+from .search_graph import SearchGraph
 from .utils import Pose, inflate_polygon, sample_from_polygon, transform_polygon
 
 class World:
@@ -34,6 +36,9 @@ class World:
         # World bounds
         self.x_bounds = [0, 0]
         self.y_bounds = [0, 0]
+
+        # Search graph for navigation
+        self.search_graph = SearchGraph()
 
     ############
     # Metadata #
@@ -70,13 +75,22 @@ class World:
         # Update the room collision polygon based on the world inflation radius
         room.update_collision_polygons(self.inflation_radius)
 
+        # Update the search graph, if any
+        if self.search_graph is not None:
+            room.add_graph_nodes()
+            self.search_graph.add(room.graph_nodes)
+
     def remove_room(self, room_name):
         """ Removes a room from the world by name """
-        for i, r in enumerate(self.rooms):
-            if r.name == room_name:
+        for i, room in enumerate(self.rooms):
+            if room.name == room_name:
                 self.rooms.pop(i)
                 self.num_rooms -= 1
                 self.update_bounds()
+                
+                # Update the search graph, if any
+                if self.search_graph is not None:
+                    self.search_graph.remove(room.graph_nodes)
                 return
         warnings.warn(f"No room {room_name} found for removal")
 
@@ -119,6 +133,11 @@ class World:
         room_end.update_visualization_polygon()
         self.num_hallways += 1
         h.update_collision_polygons(self.inflation_radius)
+
+        # Update the search graph, if any
+        if self.search_graph is not None:
+            h.add_graph_nodes()
+            self.search_graph.add(h.graph_nodes)
 
         # Finally, return the Hallway object
         return h
@@ -266,17 +285,36 @@ class World:
             self.y_bounds[0] = min(self.y_bounds[0], ymin)
             self.y_bounds[1] = max(self.y_bounds[1], ymax)
 
+    ######################################
+    # Search Graph and Occupancy Methods #
+    ######################################
     def check_occupancy(self, pose):
         """
         Check if a pose in the world is occupied
         """
-        # Loop through all the rooms
-        for room in self.rooms + self.hallways:
-            if room.is_collision_free(pose):
+        # Loop through all the rooms and hallways and check if the pose
+        # is deemed collision-free in any of them.
+        for entity in itertools.chain(self.rooms, self.hallways):
+            if entity.is_collision_free(pose):
                 return False
-
-        # If we looped through all rooms, the pose is occupied
+        # If we made it through, the pose is occupied
         return True
+
+    def create_search_graph(self, autoconnect=False, max_edge_dist=np.inf, collision_check_dist=0.1):
+        """ Creates a search graph for the world """
+        self.search_graph = SearchGraph(world=self,
+            max_edge_dist=max_edge_dist, collision_check_dist=collision_check_dist)
+
+        # Add nodes to the world
+        for entity in itertools.chain(self.rooms, self.hallways):
+            entity.add_graph_nodes()
+            self.search_graph.add(entity.graph_nodes)
+
+        # Temporary: try connect all the nodes brute force
+        for n0 in self.search_graph.nodes:
+            for n1 in self.search_graph.nodes:
+                self.search_graph.connect(n0, n1)
+
 
     ################################
     # Lookup Functionality Methods #
