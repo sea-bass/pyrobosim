@@ -6,6 +6,9 @@ table:
   footprint: 
     type: box
     dims: [0.9, 1.2]
+  nav_poses:
+    - [-0.75, 0, 0]
+    - [0.75, 0, 3.14]
   locations:
     - name: "tabletop"
       footprint:
@@ -27,6 +30,11 @@ desk:
       footprint:
         type: parent
       height: 0.3
+      nav_poses:
+        - [0, -0.5, 1.57]
+        - [-0.5, 0, 0]
+        - [0, 0.5, -1.57]
+        - [0.5, 0, 3.14]
 
 counter: 
   footprint: 
@@ -42,6 +50,9 @@ counter:
           - [0.25, 0.25]
           - [-0.25, 0.25]
         offset: [0.3, 0]
+      nav_poses:
+        - [0, 0.5, -1.57]
+        - [0, -0.5, 1.57]
       height: 0.5
     - name: "right"
       footprint: 
@@ -53,4 +64,7 @@ counter:
           - [-0.25, 0.25]
         offset: [-0.3, 0]
       height: 0.5
+      nav_poses:
+        - [0, 0.5, -1.57]
+        - [0, -0.5, 1.57]
   color: [0, 0.2, 0]

@@ -7,7 +7,8 @@ import warnings
 from shapely.geometry import Point
 from descartes.patch import PolygonPatch
 
-from .utils import inflate_polygon, polygon_from_footprint, Pose
+from .search_graph import Node
+from .utils import inflate_polygon, polygon_from_footprint, rot2d, Pose
 
 
 class LocationMetadata:
@@ -44,7 +45,23 @@ class Location:
         self.polygon = polygon_from_footprint(
             self.metadata["footprint"], pose=self.pose,
             parent_polygon=self.parent.polygon if self.parent is not None else None)
-        
+
+        # If navigation poses were specified, add them if they are collision free.
+        self.nav_poses = []
+        if "nav_poses" in self.metadata:
+            if "offset" in self.metadata["footprint"]:
+                p_off = self.metadata["footprint"]["offset"]
+            else:
+                p_off = (0, 0)
+            for p in self.metadata["nav_poses"]:
+                rot_p = rot2d((p[0] + p_off[0], p[1] + p_off[1]),
+                              self.pose.yaw)
+                nav_pose = Pose(x=rot_p[0] + self.pose.x, 
+                                y=rot_p[1] + self.pose.y, 
+                                yaw=p[2] + self.pose.yaw)
+                if self.parent.is_collision_free(nav_pose):
+                    self.nav_poses.append(nav_pose)
+
         # Add the spawn locations
         if "locations" in self.metadata:
             for loc_data in self.metadata["locations"]:
@@ -92,6 +109,12 @@ class Location:
                 lw=2, alpha=0.75, zorder=2)
 
 
+    def add_graph_nodes(self):
+        """ Creates graph nodes for searching """
+        for spawn in self.children:
+            spawn.add_graph_nodes()
+
+
     def __repr__(self):
         return f"Location: {self.name} in {self.parent}"
 
@@ -104,6 +127,7 @@ class ObjectSpawn:
         self.category = parent.category
         self.parent = parent
         self.children = []
+        self.graph_nodes = []
 
         self.metadata = metadata
         if "color" in self.metadata:
@@ -111,12 +135,32 @@ class ObjectSpawn:
         else:
             self.viz_color = self.parent.viz_color
 
+        # Get the footprint data
         if "footprint" not in self.metadata:
             self.metadata["footprint"] = {"type": "parent"}
         self.polygon = polygon_from_footprint(
             self.metadata["footprint"], pose=self.parent.pose,
             parent_polygon=self.parent.polygon if self.parent is not None else None)
         self.update_visualization_polygon()
+
+        # If navigation poses were specified, add them. Else, use the parent poses.
+        # Of course, only add these if they are collision-free.
+        if "nav_poses" in self.metadata:
+            self.nav_poses = []
+            if "offset" in self.metadata["footprint"]:
+                p_off = self.metadata["footprint"]["offset"]
+            else:
+                p_off = (0, 0)
+            for p in self.metadata["nav_poses"]:
+                rot_p = rot2d((p[0] + p_off[0], p[1] + p_off[1]),
+                              self.parent.pose.yaw)
+                nav_pose = Pose(x=rot_p[0] + self.parent.pose.x, 
+                                y=rot_p[1] + self.parent.pose.y,
+                                yaw=p[2] + self.parent.pose.yaw)
+                if self.parent.parent.is_collision_free(nav_pose):
+                    self.nav_poses.append(nav_pose)       
+        else:
+            self.nav_poses = self.parent.nav_poses
 
     
     def get_room_name(self):
@@ -132,6 +176,9 @@ class ObjectSpawn:
             self.polygon, fill=None, ec=self.parent.viz_color, 
             lw=1, ls="--", zorder=2)
 
+    def add_graph_nodes(self):
+        """ Creates graph nodes for searching """
+        self.graph_nodes = [Node(p) for p in self.nav_poses]
 
     def __repr__(self):
         return f"Object spawn location: {self.name} in {self.parent.name}"

@@ -176,6 +176,12 @@ class World:
         self.location_instance_counts[category] +=1
         self.num_locations += 1
 
+        # Update the search graph, if any
+        if self.search_graph is not None:
+            loc.add_graph_nodes()
+            for spawn in loc.children:
+                self.search_graph.add(spawn.graph_nodes, autoconnect=True)
+
         return loc
 
     def remove_location(self, loc):
@@ -306,9 +312,13 @@ class World:
             max_edge_dist=max_edge_dist, collision_check_dist=collision_check_dist)
 
         # Add nodes to the world
-        for entity in itertools.chain(self.rooms, self.hallways):
+        for entity in itertools.chain(self.rooms, self.hallways, self.locations):
             entity.add_graph_nodes()
-            self.search_graph.add(entity.graph_nodes, autoconnect=True)
+            if isinstance(entity, Location):
+                for spawn in entity.children:
+                    self.search_graph.add(spawn.graph_nodes, autoconnect=True)
+            else:
+                self.search_graph.add(entity.graph_nodes, autoconnect=True)
 
 
     ################################

@@ -19,7 +19,7 @@ class Room:
         # Entities associated with the room
         self.hallways = []
         self.locations = []
-        self.graph_node = None
+        self.graph_nodes = []
 
         # Create the room polygon
         self.polygon = Polygon(coords)
@@ -45,7 +45,8 @@ class Room:
 
         # External collision polygon:
         # Inflate the room polygon with the wall width
-        self.external_collision_polygon = inflate_polygon(self.polygon, self.wall_width)
+        self.external_collision_polygon = inflate_polygon(
+            self.polygon, self.wall_width)
 
     def update_visualization_polygon(self):
         """ Updates visualization polygon for world plotting """
@@ -69,7 +70,7 @@ class Room:
         return self.internal_collision_polygon.intersects(p)
 
     def add_graph_nodes(self):
-        """ Creates a graph node for searching """
+        """ Creates graph nodes for searching """
         self.graph_nodes = [Node(p) for p in self.nav_poses]
 
     def __repr__(self):

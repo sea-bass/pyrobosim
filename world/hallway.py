@@ -43,6 +43,7 @@ class Hallway:
         self.wall_width = wall_width
         self.offset = offset
         self.color = color
+        self.graph_nodes = []
 
         # Parse the connection method
         # If the connection is "auto" or "angle", the hallway is a simple rectangle
@@ -122,12 +123,14 @@ class Hallway:
         return self.internal_collision_polygon.intersects(p)
 
     def add_graph_nodes(self):
-        """ Creates a graph node for searching """
+        """ Creates graph nodes for searching """
         intersect_line = LineString(self.points)
-        intersect_line = intersect_line.difference(self.room_start.internal_collision_polygon)
-        intersect_line = intersect_line.difference(self.room_end.internal_collision_polygon)
-        self.graph_nodes = [Node(Pose(x=p[0], y=p[1])) for p in intersect_line.coords]
-
+        intersect_line = intersect_line.difference(
+            self.room_start.internal_collision_polygon)
+        intersect_line = intersect_line.difference(
+            self.room_end.internal_collision_polygon)
+        self.graph_nodes = [Node(Pose(x=p[0], y=p[1]))
+                            for p in intersect_line.coords]
 
     def __repr__(self):
         return f"Hallway: Connecting {self.room_start.name} and {self.room_end.name}"

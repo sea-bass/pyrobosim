@@ -83,7 +83,6 @@ class SearchGraph:
         by sampling points spaced by the `self.collision_check_dist` parameter and verifying
         that every point is in the free configuration space.
         """
-
         # Trivial case where nodes are identical or there is no world
         if (self.world is None) or (start == end):
             return True
@@ -93,6 +92,9 @@ class SearchGraph:
         dist = start.pose.get_linear_distance(end.pose, ignore_z=True)
         angle = start.pose.get_angular_distance(end.pose)
         dist_array = np.arange(0, dist, self.collision_check_dist)
+        # If the nodes are coincident, connect them by default
+        if dist_array.size == 0:
+            return True
         if dist_array[-1] != dist:
             np.append(dist_array, dist)
         x_pts = start.pose.x + dist_array * np.cos(angle)
@@ -100,7 +102,7 @@ class SearchGraph:
 
         # Check the occupancy of all the test points.
         # Since we know the nodes already were sampled in free space, use a reduced inflation radius
-        for x_check, y_check in zip(x_pts, y_pts):
+        for x_check, y_check in zip(x_pts[1:-1], y_pts[1:-1]):
             if self.world.check_occupancy(Pose(x=x_check, y=y_check)):
                 return False
 

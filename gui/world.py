@@ -16,15 +16,19 @@ class WorldGUI(FigureCanvasQTAgg):
         super(WorldGUI, self).__init__(self.fig)
 
     def createRobot(self):
-        normalized_length = 0.15
+        normalized_length = 0.1
+        plot_length = normalized_length * max(
+            (self.world.x_bounds[1] - self.world.x_bounds[0]),
+            (self.world.y_bounds[1] - self.world.y_bounds[0]))
+
         p = self.world.robot.pose
         self.robot_body, = self.axes.plot(
             p.x, p.y, 
             "mo", markersize=10, markeredgewidth=2, 
             markerfacecolor="None")
         self.robot_dir, = self.axes.plot(
-            p.x + np.array([0, normalized_length*np.cos(p.yaw)]),
-            p.y + np.array([0, normalized_length*np.sin(p.yaw)]),
+            p.x + np.array([0, plot_length*np.cos(p.yaw)]),
+            p.y + np.array([0, plot_length*np.sin(p.yaw)]),
             "m-", linewidth=2)
 
     def show(self):
