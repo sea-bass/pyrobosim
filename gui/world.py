@@ -2,7 +2,6 @@ import adjustText
 import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
-from matplotlib.pyplot import text
 
 class WorldGUI(FigureCanvasQTAgg):
     def __init__(self, world, width=5, height=4, dpi=100):
@@ -73,6 +72,14 @@ class WorldGUI(FigureCanvasQTAgg):
                 x = (e.n0.pose.x, e.n1.pose.x)
                 y = (e.n0.pose.y, e.n1.pose.y)
                 graph_edges.append(self.axes.plot(x, y, "k:", linewidth=1))
+
+            # Plot the path if specified
+            if self.world.current_path is not None:
+                x = [p.x for p in self.world.current_path]
+                y = [p.y for p in self.world.current_path]
+                self.axes.plot(x, y, "m-", linewidth=3, zorder=1)       # Entire path
+                self.axes.scatter(x[0], y[0], 60, "g", "o", zorder=2)   # Start
+                self.axes.scatter(x[-1], y[-1], 60, "r", "x", zorder=2) # Goal
 
         self.axes.autoscale()
         self.axes.axis("equal")

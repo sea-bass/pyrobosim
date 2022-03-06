@@ -1,4 +1,4 @@
-import math
+import numpy as np
 
 from .utils import Pose
 
@@ -14,8 +14,8 @@ class Robot:
 
     def apply_vel(self, dt, v=0.0, w=0.0):
         dtv = dt * v
-        self.pose.x += dtv * math.cos(self.yaw)
-        self.pose.y += dtv * math.sin(self.yaw)
+        self.pose.x += dtv * np.cos(self.yaw)
+        self.pose.y += dtv * np.sin(self.yaw)
         self.pose.yaw += dt * w
         self.pose.wrap_yaw()
 

@@ -1,5 +1,6 @@
 from astar import AStar
 import numpy as np
+import warnings
 
 from .utils import Pose
 
@@ -108,6 +109,26 @@ class SearchGraph:
 
         # If the loop was traversed for all points without returning, we can connect
         return True
+
+
+    def find_path(self, start, goal):
+        """
+        Gets a path from start to goal poses by searching the graph
+        The path consists of a tuple of Pose objects
+        
+        Arguments:
+          start: Start node
+          goal: Goal node
+
+        Returns:
+          path: tuple of Pose objects describing the path
+        """
+        path = self.solver.astar(start, goal)
+        if path is None:
+            warnings.warn("Did not find a path from start to goal.")
+            return None        
+        path_list = [n.pose for n in path]
+        return path_list
 
 
 class Node:

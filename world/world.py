@@ -6,7 +6,7 @@ from .robot import Robot
 from .hallway import Hallway
 from .locations import Location
 from .objects import Object
-from .search_graph import SearchGraph
+from .search_graph import SearchGraph, Node
 from .utils import Pose, inflate_polygon, sample_from_polygon, transform_polygon
 
 class World:
@@ -38,7 +38,8 @@ class World:
         self.y_bounds = [0, 0]
 
         # Search graph for navigation
-        self.search_graph = SearchGraph()
+        self.search_graph = None
+        self.current_path = None
 
     ############
     # Metadata #
@@ -306,7 +307,7 @@ class World:
         # If we made it through, the pose is occupied
         return True
 
-    def create_search_graph(self, autoconnect=False, max_edge_dist=np.inf, collision_check_dist=0.1):
+    def create_search_graph(self, max_edge_dist=np.inf, collision_check_dist=0.1):
         """ Creates a search graph for the world """
         self.search_graph = SearchGraph(world=self,
             max_edge_dist=max_edge_dist, collision_check_dist=collision_check_dist)
@@ -320,6 +321,62 @@ class World:
             else:
                 self.search_graph.add(entity.graph_nodes, autoconnect=True)
 
+    def find_path(self, goal, start=None):
+        """ Finds a path from the start to goal """
+        if self.search_graph is None:
+            warnings.warn("No search graph defined for this world.")
+            return None
+
+        # TODO: Validate various kinds of inputs and convert them into graph nodes
+        # Here, we should support:
+        # - Standard pose, which connects new nodes to the graph
+        # - Rooms / hallways / locations / object spawns
+        # - Objects (which get the location of the object if known)
+        #
+        # Additionally, we should have parameters to dictate how to select a goal pose
+        # in case there are multiple ones. Some ideas include:
+        # - Pick the nearest one by raw distance heuristic and plan to there
+        # - Try them all and return the shortest path
+        # - Pick a random one
+        if start is None:
+            start = self.robot.pose
+
+        created_start_node = False
+        if isinstance(start, Pose):
+            start_node = Node(start)
+            self.search_graph.add(start_node, autoconnect=True)
+            created_start_node = True
+        elif isinstance(start, Node):
+            start_node = start
+        else:
+            warnings.warn("Invalid start specified")
+            return None
+
+        created_goal_node = False
+        if goal is None:
+            warnings.warn("No goal specified")
+            return None
+        elif isinstance(goal, Pose):
+            goal_node = Node(goal)
+            self.search_graph.add(goal_node, autoconnect=True)
+            created_goal_node = True
+        elif isinstance (goal, Node):
+            goal_node = goal
+        else:
+            warnings.warn("Invalid goal specified")
+            return None
+        
+        # Do the search
+        # TODO: Interpolate yaw angles from start to goal
+        self.current_path = self.search_graph.find_path(start_node, goal_node)
+
+        # If we created temporary nodes for search, remove them
+        if created_start_node:
+            self.search_graph.remove(start_node)
+        if created_goal_node:
+            self.search_graph.remove(goal_node)
+
+        return self.current_path
 
     ################################
     # Lookup Functionality Methods #

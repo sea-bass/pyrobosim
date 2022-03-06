@@ -14,7 +14,7 @@ from world.world import World
 
 def create_world():
     # Create a robot and a world
-    r = Robot(pose=Pose(x=1.0, y=1.0), radius=0.1)
+    r = Robot(pose=Pose(x=-0.5, y=1), radius=0.1)
     w = World(robot=r)
     w.set_metadata(locations="data/example_location_data.yaml", 
                    objects="data/example_object_data.yaml")
@@ -50,8 +50,9 @@ def create_world():
     w.add_object("banana", counter)
     w.add_object("water", desk)
 
-    # Create a search graph
-    w.create_search_graph(max_edge_dist=3.0, collision_check_dist=0.05, autoconnect=True)
+    # Create a search graph and use it to search
+    w.create_search_graph(max_edge_dist=3.0, collision_check_dist=0.05)
+    w.find_path(goal=desk.children[0].graph_nodes[0])
 
     return w
 
