@@ -41,13 +41,16 @@ class SearchGraph:
             path = list(path)
             return path
 
-    def add(self, n):
+    def add(self, n, autoconnect=False):
         """ Adds a new node or list of nodes to the graph """
         if isinstance(n, list):
             for i in n:
-                self.add(i)
+                self.add(i, autoconnect=autoconnect)
         else:
             self.nodes.add(n)
+            if autoconnect:
+                for nconn in self.nodes:
+                    self.connect(n, nconn)
 
     def connect(self, n0, n1):
         """ Connects two nodes in a graph, if collision free """

@@ -78,7 +78,7 @@ class World:
         # Update the search graph, if any
         if self.search_graph is not None:
             room.add_graph_nodes()
-            self.search_graph.add(room.graph_nodes)
+            self.search_graph.add(room.graph_nodes, autoconnect=True)
 
     def remove_room(self, room_name):
         """ Removes a room from the world by name """
@@ -137,7 +137,7 @@ class World:
         # Update the search graph, if any
         if self.search_graph is not None:
             h.add_graph_nodes()
-            self.search_graph.add(h.graph_nodes)
+            self.search_graph.add(h.graph_nodes, autoconnect=True)
 
         # Finally, return the Hallway object
         return h
@@ -308,12 +308,7 @@ class World:
         # Add nodes to the world
         for entity in itertools.chain(self.rooms, self.hallways):
             entity.add_graph_nodes()
-            self.search_graph.add(entity.graph_nodes)
-
-        # Temporary: try connect all the nodes brute force
-        for n0 in self.search_graph.nodes:
-            for n1 in self.search_graph.nodes:
-                self.search_graph.connect(n0, n1)
+            self.search_graph.add(entity.graph_nodes, autoconnect=True)
 
 
     ################################

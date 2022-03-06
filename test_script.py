@@ -35,12 +35,12 @@ def create_world():
                   conn_method="points",
                   conn_points=[(1.0, 0.5), (2.5, 0.5), (2.5, 3.0)])
 
-    # Add locations
+    # # Add locations
     table = w.add_location("table", "kitchen", Pose(x=0.85, y=-0.5, yaw=-np.pi/2))
     desk = w.add_location("desk", "bedroom", Pose(x=3.15, y=3.65))
     counter = w.add_location("counter", "bathroom", Pose(x=-2.45, y=2.5, yaw=np.pi/2 + np.pi/16))
 
-    # Add objects
+    # # Add objects
     w.add_object("banana", table, pose=Pose(x=1.0, y=-0.5, yaw=np.pi/4))
     w.add_object("apple", desk, pose=Pose(x=3.2, y=3.5))
     w.add_object("apple", table)
