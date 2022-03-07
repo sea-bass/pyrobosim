@@ -52,7 +52,7 @@ def create_world():
 
     # Create a search graph and use it to search
     w.create_search_graph(max_edge_dist=3.0, collision_check_dist=0.05)
-    w.find_path(goal=desk.children[0].graph_nodes[0])
+    w.find_path(goal=desk)
 
     return w
 

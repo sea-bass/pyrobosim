@@ -4,8 +4,9 @@ import warnings
 
 from .robot import Robot
 from .hallway import Hallway
-from .locations import Location
+from .locations import Location, ObjectSpawn
 from .objects import Object
+from .room import Room
 from .search_graph import SearchGraph, Node
 from .utils import Pose, inflate_polygon, sample_from_polygon, transform_polygon
 
@@ -322,22 +323,14 @@ class World:
                 self.search_graph.add(entity.graph_nodes, autoconnect=True)
 
     def find_path(self, goal, start=None):
-        """ Finds a path from the start to goal """
+        """
+        Finds a path from the start to goal
+        If no start argument is provided, we assume it is the robot pose.
+        """
         if self.search_graph is None:
             warnings.warn("No search graph defined for this world.")
             return None
 
-        # TODO: Validate various kinds of inputs and convert them into graph nodes
-        # Here, we should support:
-        # - Standard pose, which connects new nodes to the graph
-        # - Rooms / hallways / locations / object spawns
-        # - Objects (which get the location of the object if known)
-        #
-        # Additionally, we should have parameters to dictate how to select a goal pose
-        # in case there are multiple ones. Some ideas include:
-        # - Pick the nearest one by raw distance heuristic and plan to there
-        # - Try them all and return the shortest path
-        # - Pick a random one
         if start is None:
             start = self.robot.pose
 
@@ -346,25 +339,22 @@ class World:
             start_node = Node(start)
             self.search_graph.add(start_node, autoconnect=True)
             created_start_node = True
-        elif isinstance(start, Node):
-            start_node = start
         else:
-            warnings.warn("Invalid start specified")
-            return None
+            start_node = self.graph_node_from_entity(start)
+            if start_node is None:
+                warnings.warn("Invalid start specified")
+                return None
 
         created_goal_node = False
-        if goal is None:
-            warnings.warn("No goal specified")
-            return None
-        elif isinstance(goal, Pose):
+        if isinstance(goal, Pose):
             goal_node = Node(goal)
             self.search_graph.add(goal_node, autoconnect=True)
             created_goal_node = True
-        elif isinstance (goal, Node):
-            goal_node = goal
         else:
-            warnings.warn("Invalid goal specified")
-            return None
+            goal_node = self.graph_node_from_entity(goal)
+            if goal_node is None:
+                warnings.warn("Invalid goal specified")
+                return None
         
         # Do the search
         # TODO: Interpolate yaw angles from start to goal
@@ -377,6 +367,41 @@ class World:
             self.search_graph.remove(goal_node)
 
         return self.current_path
+
+
+    def graph_node_from_entity(self, entity):
+        """
+        Gets a graph node from an entity, which could be any room, hallway, location, 
+        object spawn, or object in the world.
+        
+        TODO: We should have parameters to dictate how to select a goal pose
+        in case there are multiple ones. Some ideas include:
+        - Pick the nearest one by raw distance heuristic and plan to there
+        - Try them all and return the shortest path
+        - Pick a random one
+        """
+        if isinstance(entity, Node):
+            return entity
+
+        if isinstance(entity, str):
+            entity = self.get_entity_by_name(entity)
+
+        if (isinstance(entity, ObjectSpawn) or isinstance(entity, Room)
+            or isinstance(entity, Hallway)):
+            graph_nodes = entity.graph_nodes
+        elif isinstance(entity, Object):
+            graph_nodes = entity.parent.graph_nodes
+        elif isinstance(entity, Location):
+            graph_nodes = entity.children[0].graph_nodes
+            # TODO: Select a child node
+        else:
+            warnings.warn(f"Cannot get graph node from {entity}")
+            return None
+
+        # TODO: Select a graph node
+        graph_node = graph_nodes[0]
+        return graph_node
+
 
     ################################
     # Lookup Functionality Methods #
@@ -420,3 +445,15 @@ class World:
             return self.objects[idx]
         else:
             return None
+
+    def get_entity_by_name(self, name):
+        """ Gets any entity above by its name """
+        for entity in itertools.chain(
+            self.rooms, self.hallways, self.locations, self.objects):
+            if entity.name == name:
+                return entity
+            elif isinstance(entity, Location):
+                for spawn in entity.children:
+                    if spawn.name == name:
+                        return spawn
+        return None
