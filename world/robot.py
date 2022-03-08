@@ -1,6 +1,6 @@
 import numpy as np
 
-from .utils import Pose
+from utils.pose import Pose
 
 class Robot:
     def __init__(self, id=0, name="robot", pose=Pose(), radius=0.2):

@@ -8,7 +8,9 @@ from .locations import Location, ObjectSpawn
 from .objects import Object
 from .room import Room
 from .search_graph import SearchGraph, Node
-from .utils import Pose, inflate_polygon, sample_from_polygon, transform_polygon
+from utils.pose import Pose
+from utils.polygon import inflate_polygon, sample_from_polygon, transform_polygon
+from utils.trajectory import fill_path_yaws
 
 class World:
     def __init__(self, robot=Robot(), inflation_radius=None, object_radius=0.05):
@@ -357,8 +359,8 @@ class World:
                 return None
         
         # Do the search
-        # TODO: Interpolate yaw angles from start to goal
         self.current_path = self.search_graph.find_path(start_node, goal_node)
+        self.current_path = fill_path_yaws(self.current_path)
 
         # If we created temporary nodes for search, remove them
         if created_start_node:

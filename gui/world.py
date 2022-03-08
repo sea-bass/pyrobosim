@@ -1,7 +1,12 @@
 import adjustText
 import numpy as np
+import time
+import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
+
+from utils.pose import Pose
+from utils.trajectory import get_constant_speed_trajectory, interpolate_trajectory
 
 class WorldGUI(FigureCanvasQTAgg):
     def __init__(self, world, width=5, height=4, dpi=100):
@@ -15,15 +20,15 @@ class WorldGUI(FigureCanvasQTAgg):
         super(WorldGUI, self).__init__(self.fig)
 
     def createRobot(self):
-        normalized_length = 0.1
-        plot_length = normalized_length * max(
+        self.robot_normalized_length = 0.1
+        plot_length = self.robot_normalized_length * max(
             (self.world.x_bounds[1] - self.world.x_bounds[0]),
             (self.world.y_bounds[1] - self.world.y_bounds[0]))
 
         p = self.world.robot.pose
         self.robot_body, = self.axes.plot(
-            p.x, p.y, 
-            "mo", markersize=10, markeredgewidth=2, 
+            p.x, p.y,
+            "mo", markersize=10, markeredgewidth=2,
             markerfacecolor="None")
         self.robot_dir, = self.axes.plot(
             p.x + np.array([0, plot_length*np.cos(p.yaw)]),
@@ -84,3 +89,43 @@ class WorldGUI(FigureCanvasQTAgg):
         self.axes.autoscale()
         self.axes.axis("equal")
         adjustText.adjust_text(self.obj_texts, lim=100, add_objects=obj_patches)
+
+
+    def update_robot_plot(self):
+        """ Updates the robot visualization graphics objects """
+        p = self.world.robot.pose
+        self.robot_body.set_xdata(p.x)
+        self.robot_body.set_ydata(p.y)
+        plot_length = self.robot_normalized_length * max(
+            (self.world.x_bounds[1] - self.world.x_bounds[0]),
+            (self.world.y_bounds[1] - self.world.y_bounds[0]))
+        self.robot_dir.set_xdata(
+            p.x + np.array([0, plot_length*np.cos(p.yaw)]))
+        self.robot_dir.set_ydata(
+            p.y + np.array([0, plot_length*np.sin(p.yaw)]))
+
+
+    def animate_path(self, path=None, linear_velocity=0.2, max_angular_velocity=None,
+                     dt=0.1, realtime_factor=1.0):
+        """ 
+        Animates a path (found using `find_path()`) given a 
+        velocity, time step, and real-time scale factor
+        """
+        if path is None:
+            path = self.world.current_path
+        
+        # Convert the path to an interpolated trajectory
+        traj = get_constant_speed_trajectory(path, linear_velocity=linear_velocity,
+                                             max_angular_velocity=max_angular_velocity)
+        (traj_t, traj_x, traj_y, traj_yaw) = interpolate_trajectory(traj, dt)
+
+        # Loop through and animate
+        dt = dt/realtime_factor
+        for i in range(len(traj_t)):
+            self.world.robot.set_pose(
+                Pose(x=traj_x[i], y=traj_y[i], yaw=traj_yaw[i]))
+            self.update_robot_plot()
+            
+            self.fig.canvas.draw()
+            self.fig.canvas.flush_events()
+            time.sleep(dt)

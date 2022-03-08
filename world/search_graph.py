@@ -2,7 +2,7 @@ from astar import AStar
 import numpy as np
 import warnings
 
-from .utils import Pose
+from utils.pose import Pose
 
 
 class SearchGraph:
