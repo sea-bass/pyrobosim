@@ -8,8 +8,8 @@ from shapely.geometry import Point, LineString
 from descartes.patch import PolygonPatch
 
 from .search_graph import Node
-from utils.pose import Pose, get_bearing_range
-from utils.polygon import inflate_polygon
+from ..utils.pose import Pose, get_bearing_range
+from ..utils.polygon import inflate_polygon
 
 
 class Hallway:

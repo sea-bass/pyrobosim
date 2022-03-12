@@ -4,19 +4,20 @@ Test script showing how to build a world and use it with pyrobosim
 import sys
 import numpy as np
 
-from gui.main import PyRoboSim
-from utils.pose import Pose
-from world.robot import Robot
-from world.room import Room
-from world.world import World
+from .gui.main import PyRoboSim
+from .utils.pose import Pose
+from .world.robot import Robot
+from .world.room import Room
+from .world.world import World
 
 
 def create_world():
     # Create a robot and a world
     r = Robot(pose=Pose(x=-0.5, y=1, yaw=0), radius=0.1)
     w = World(robot=r)
-    w.set_metadata(locations="data/example_location_data.yaml", 
-                   objects="data/example_object_data.yaml")
+    data_folder = "/home/sebastian/pyrobosim_ws/src/pyrobosim/pyrobosim/data/" # TODO: Do not hard-code
+    w.set_metadata(locations=data_folder + "example_location_data.yaml", 
+                   objects=data_folder + "example_object_data.yaml")
 
     # Add rooms
     r1coords = [(-1, -1), (1.5, -1), (1.5, 1.5), (0.5, 1.5)]
@@ -54,7 +55,11 @@ def create_world():
     return w
 
 
-if __name__ == "__main__":
+def main():
     w = create_world()
     app = PyRoboSim(w, sys.argv)
     sys.exit(app.exec_())
+
+
+if __name__ == "__main__":
+    main()

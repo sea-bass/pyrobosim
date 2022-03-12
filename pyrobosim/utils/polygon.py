@@ -3,7 +3,7 @@ import numpy as np
 from shapely.affinity import rotate, translate
 from shapely.geometry import Point, Polygon, CAP_STYLE, JOIN_STYLE
 
-from utils.pose import Pose, rot2d
+from .pose import Pose, rot2d
 
 """
 Polygon utilities

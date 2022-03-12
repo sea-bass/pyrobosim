@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.spatial.transform import Slerp, Rotation
 
+from .pose import wrap_angle
+
 def fill_path_yaws(path):
     """ Fill in any "None" yaw angles along a path """
     for idx in range(1, len(path)-1):

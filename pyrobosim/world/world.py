@@ -8,9 +8,9 @@ from .locations import Location, ObjectSpawn
 from .objects import Object
 from .room import Room
 from .search_graph import SearchGraph, Node
-from utils.pose import Pose
-from utils.polygon import inflate_polygon, sample_from_polygon, transform_polygon
-from utils.trajectory import fill_path_yaws
+from ..utils.pose import Pose
+from ..utils.polygon import inflate_polygon, sample_from_polygon, transform_polygon
+from ..utils.trajectory import fill_path_yaws
 
 class World:
     def __init__(self, robot=Robot(), inflation_radius=None, object_radius=0.05):

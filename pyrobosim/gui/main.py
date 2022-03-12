@@ -1,8 +1,8 @@
 import numpy as np
 from PyQt5 import QtWidgets
 
-from utils.pose import Pose
-from gui.world import WorldGUI
+from ..utils.pose import Pose
+from ..gui.world import WorldGUI
 
 class PyRoboSim(QtWidgets.QApplication):
     def __init__(self, world, args):
@@ -23,9 +23,14 @@ class WorldWidget(QtWidgets.QMainWindow):
 
         widget = QtWidgets.QWidget()
 
-        # Push button
-        self.push_button = QtWidgets.QPushButton("Randomize position")
-        self.push_button.clicked.connect(self.on_click)
+        # Push buttons
+        self.buttons_layout = QtWidgets.QHBoxLayout()
+        self.rand_pose_button = QtWidgets.QPushButton("Randomize position")
+        self.rand_pose_button.clicked.connect(self.rand_pose_cb)
+        self.buttons_layout.addWidget(self.rand_pose_button)
+        self.rand_goal_button = QtWidgets.QPushButton("Randomize goal")
+        self.rand_goal_button.clicked.connect(self.rand_goal_cb)
+        self.buttons_layout.addWidget(self.rand_goal_button)
 
         # Animate button
         self.goal_layout = QtWidgets.QHBoxLayout()
@@ -37,7 +42,7 @@ class WorldWidget(QtWidgets.QMainWindow):
         self.goal_layout.addWidget(self.animate_button)
 
         layout = QtWidgets.QVBoxLayout(widget)
-        layout.addWidget(self.push_button)
+        layout.addLayout(self.buttons_layout)
         layout.addLayout(self.goal_layout)
         layout.addWidget(self.wg)
         
@@ -46,7 +51,8 @@ class WorldWidget(QtWidgets.QMainWindow):
 
         self.wg.show()
 
-    def on_click(self):
+    def rand_pose_cb(self):
+        """ Callback to randomize robot pose """
         xmin, xmax = self.wg.world.x_bounds
         ymin, ymax = self.wg.world.y_bounds
         r = self.wg.world.inflation_radius
@@ -62,6 +68,14 @@ class WorldWidget(QtWidgets.QMainWindow):
         self.wg.world.robot.set_pose(Pose(x=x, y=y, yaw=yaw))
         self.wg.update_robot_plot()
         self.wg.draw()
+
+    def rand_goal_cb(self):
+        """ Callback to randomize robot goal """
+        all_entities = self.wg.world.get_object_names() + \
+            self.wg.world.get_location_names() + \
+            self.wg.world.get_room_names()
+        obj_name = np.random.choice(all_entities)
+        self.goal_textbox.setText(obj_name)
 
     def on_animate_click(self):
         print(f"Planning to {self.goal_textbox.text()}")

@@ -6,7 +6,7 @@ import yaml
 import warnings
 from descartes.patch import PolygonPatch
 
-from utils.polygon import inflate_polygon, polygon_from_footprint
+from ..utils.polygon import inflate_polygon, polygon_from_footprint
 
 
 class ObjectMetadata:
