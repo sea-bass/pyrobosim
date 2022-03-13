@@ -1,3 +1,5 @@
+import os
+from glob import glob
 from setuptools import setup
 
 package_name = 'pyrobosim'
@@ -14,7 +16,10 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
-        ('share/' + package_name, ['package.xml']),
+        (os.path.join('share', package_name), ['package.xml']),
+        # Include all YAML data files.
+        (os.path.join('share', package_name, 'data'), 
+         glob(os.path.join(package_name, 'data', '*.yaml'))),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

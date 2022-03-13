@@ -1,23 +1,32 @@
 """
 Test script showing how to build a world and use it with pyrobosim
 """
+import os
 import sys
 import numpy as np
 
-from .gui.main import PyRoboSim
-from .utils.pose import Pose
-from .world.robot import Robot
-from .world.room import Room
-from .world.world import World
+from pyrobosim.gui.main import PyRoboSim
+from pyrobosim.utils.pose import Pose
+from pyrobosim.world.robot import Robot
+from pyrobosim.world.room import Room
+from pyrobosim.world.world import World
+
+# Set the data folder for location and object information.
+try:
+    # If running as a ROS2 node, get the data folder from the package share directory.
+    from ament_index_python.packages import get_package_share_directory
+    data_folder = os.path.join(get_package_share_directory("pyrobosim"), "data")
+except:
+    # Else, assume it's relative to the file's current directory.
+    data_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 
 def create_world():
     # Create a robot and a world
     r = Robot(pose=Pose(x=-0.5, y=1, yaw=0), radius=0.1)
     w = World(robot=r)
-    data_folder = "/home/sebastian/pyrobosim_ws/src/pyrobosim/pyrobosim/data/" # TODO: Do not hard-code
-    w.set_metadata(locations=data_folder + "example_location_data.yaml", 
-                   objects=data_folder + "example_object_data.yaml")
+    w.set_metadata(locations=os.path.join(data_folder, "example_location_data.yaml"), 
+                   objects=os.path.join(data_folder, "example_object_data.yaml"))
 
     # Add rooms
     r1coords = [(-1, -1), (1.5, -1), (1.5, 1.5), (0.5, 1.5)]
