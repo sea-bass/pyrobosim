@@ -103,7 +103,7 @@ class WorldGUI(FigureCanvasQTAgg):
         """ Adjust text in a figure """
         obj_patches = [o.viz_patch for o in (self.world.objects)]
         adjustText.adjust_text(objs, lim=100,
-                               add_objects=obj_patches + self.obj_texts)
+                               add_objects=obj_patches)
 
 
     def show_path(self, path=None):
