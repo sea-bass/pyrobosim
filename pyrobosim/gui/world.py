@@ -64,15 +64,15 @@ class WorldGUI(FigureCanvasQTAgg):
                 self.axes.add_patch(spawn.viz_patch)
 
         # Objects
-        self.obj_texts = []
         for obj in self.world.objects:
             self.axes.add_patch(obj.viz_patch)
             xmin, ymin, xmax, ymax = obj.polygon.bounds
-            x = obj.pose.x + 1.5*(xmax - obj.pose.x)
-            y = obj.pose.y + 1.5*(ymin - obj.pose.y)
+            x = obj.pose.x + 1.0*(xmax - xmin)
+            y = obj.pose.y + 1.0*(ymax - ymin)
             obj.viz_text = self.axes.text(x, y, obj.name,
                                           color=obj.viz_color, fontsize=8)
-            self.obj_texts.append(obj.viz_text)
+        self.obj_patches = [o.viz_patch for o in (self.world.objects)]
+        self.obj_texts = [o.viz_text for o in (self.world.objects)]
 
         # Search graph
         if self.world.search_graph is not None:
@@ -101,9 +101,8 @@ class WorldGUI(FigureCanvasQTAgg):
 
     def adjust_text(self, objs):
         """ Adjust text in a figure """
-        obj_patches = [o.viz_patch for o in (self.world.objects)]
         adjustText.adjust_text(objs, lim=100,
-                               add_objects=obj_patches)
+                               add_objects=self.obj_patches)
 
 
     def show_path(self, path=None):
@@ -135,14 +134,16 @@ class WorldGUI(FigureCanvasQTAgg):
         self.robot_dir.set_ydata(
             p.y + np.array([0, self.robot_length*np.sin(p.yaw)]))
 
-    def update_object_plot(self, obj, adjust_text=False):
+    def update_object_plot(self, obj):
         """ Updates an object visualization based on its pose """
         tf = Affine2D().translate(-obj.centroid[0], -obj.centroid[1]).rotate(
             obj.pose.yaw).translate(obj.pose.x, obj.pose.y)
         obj.viz_patch.set_transform(tf + self.axes.transData)
-        obj.viz_text.set_position((obj.pose.x, obj.pose.y))
-        if adjust_text:
-            self.adjust_text([obj.viz_text])
+        
+        xmin, ymin, xmax, ymax = obj.polygon.bounds
+        x = obj.pose.x + 1.0*(xmax - xmin)
+        y = obj.pose.y + 1.0*(ymax - ymin)
+        obj.viz_text.set_position((x, y))
 
     def animate_path(self, path=None, linear_velocity=0.2, max_angular_velocity=None,
                      dt=0.1, realtime_factor=1.0):
@@ -177,7 +178,7 @@ class WorldGUI(FigureCanvasQTAgg):
     def pick_object(self, obj_name):
         """ Picks an object """
         if self.world.pick_object(obj_name):
-            self.update_object_plot(self.world.robot.manipulated_object, adjust_text=True)
+            self.update_object_plot(self.world.robot.manipulated_object)
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()
             time.sleep(0.01)
@@ -188,7 +189,7 @@ class WorldGUI(FigureCanvasQTAgg):
         obj.viz_patch.remove()
         if self.world.place_object(loc_name):
             self.axes.add_patch(obj.viz_patch)
-            self.update_object_plot(obj, adjust_text=True)
+            self.update_object_plot(obj)
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()
             time.sleep(0.01)
