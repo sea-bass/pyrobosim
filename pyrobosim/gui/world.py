@@ -135,13 +135,14 @@ class WorldGUI(FigureCanvasQTAgg):
         self.robot_dir.set_ydata(
             p.y + np.array([0, self.robot_length*np.sin(p.yaw)]))
 
-    def update_object_plot(self, obj):
+    def update_object_plot(self, obj, adjust_text=False):
         """ Updates an object visualization based on its pose """
         tf = Affine2D().translate(-obj.centroid[0], -obj.centroid[1]).rotate(
             obj.pose.yaw).translate(obj.pose.x, obj.pose.y)
         obj.viz_patch.set_transform(tf + self.axes.transData)
         obj.viz_text.set_position((obj.pose.x, obj.pose.y))
-        self.adjust_text([obj.viz_text])
+        if adjust_text:
+            self.adjust_text([obj.viz_text])
 
     def animate_path(self, path=None, linear_velocity=0.2, max_angular_velocity=None,
                      dt=0.1, realtime_factor=1.0):
@@ -176,7 +177,7 @@ class WorldGUI(FigureCanvasQTAgg):
     def pick_object(self, obj_name):
         """ Picks an object """
         if self.world.pick_object(obj_name):
-            self.update_object_plot(self.world.robot.manipulated_object)
+            self.update_object_plot(self.world.robot.manipulated_object, adjust_text=True)
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()
             time.sleep(0.01)
@@ -187,7 +188,7 @@ class WorldGUI(FigureCanvasQTAgg):
         obj.viz_patch.remove()
         if self.world.place_object(loc_name):
             self.axes.add_patch(obj.viz_patch)
-            self.update_object_plot(obj)
+            self.update_object_plot(obj, adjust_text=True)
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()
             time.sleep(0.01)
