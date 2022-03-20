@@ -4,10 +4,14 @@ from ..utils.pose import Pose
 
 class Robot:
     def __init__(self, id=0, name="robot", pose=Pose(), radius=0.2):
+        # Basic properties
         self.id = id
         self.name = name
         self.set_pose(pose)
         self.radius = radius
+
+        # Object manipulation properties
+        self.manipulated_object = None
 
     def set_pose(self, pose):
         self.pose = pose

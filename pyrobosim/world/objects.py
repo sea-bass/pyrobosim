@@ -6,7 +6,7 @@ import yaml
 import warnings
 from descartes.patch import PolygonPatch
 
-from ..utils.polygon import inflate_polygon, polygon_from_footprint
+from ..utils.polygon import inflate_polygon, polygon_from_footprint, transform_polygon
 
 
 class ObjectMetadata:
@@ -34,21 +34,26 @@ class Object:
         self.parent = parent
         self.pose = pose
 
+        self.collision_polygon = None
+        self.viz_patch = None
+        self.viz_text = None
+
         self.metadata = Object.metadata.get(self.category)
         if "color" in self.metadata:
             self.viz_color = self.metadata["color"]
-
-        self.update_pose(pose)
+        self.create_polygons()
 
     def get_room_name(self):
         """ Returns the name of the containing room """
         return self.parent.get_room_name()
 
-    def update_pose(self, pose):
-        self.pose = pose
+    def get_raw_polygon(self):
+        return polygon_from_footprint(self.metadata["footprint"])
+
+    def create_polygons(self):
         self.polygon = polygon_from_footprint(
-            self.metadata["footprint"], pose=self.pose,
-            parent_polygon=self.parent.polygon if self.parent is not None else None)
+            self.metadata["footprint"], pose=self.pose)
+        self.centroid = list(self.polygon.centroid.coords)[0]    
         self.update_collision_polygon()
         self.update_visualization_polygon()
 
@@ -63,7 +68,7 @@ class Object:
             self.viz_patch = PolygonPatch(
                 self.polygon,
                 fill=None, ec=self.viz_color,
-                lw=2, alpha=0.75, zorder=2)
+                lw=2, alpha=0.75, zorder=3)
 
     def __repr__(self):
         return f"Object: {self.name} in {self.parent.name}\n\t{self.pose}"

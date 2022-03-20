@@ -32,18 +32,31 @@ class WorldWidget(QtWidgets.QMainWindow):
         self.rand_goal_button.clicked.connect(self.rand_goal_cb)
         self.buttons_layout.addWidget(self.rand_goal_button)
 
-        # Animate button
-        self.goal_layout = QtWidgets.QHBoxLayout()
-        self.goal_layout.addWidget(QtWidgets.QLabel("Goal:"))
-        self.goal_textbox = QtWidgets.QLineEdit()
-        self.goal_layout.addWidget(self.goal_textbox)
-        self.animate_button = QtWidgets.QPushButton("Animate path")
-        self.animate_button.clicked.connect(self.on_animate_click)
-        self.goal_layout.addWidget(self.animate_button)
+        # Navigation buttons
+        self.nav_layout = QtWidgets.QHBoxLayout()
+        self.nav_layout.addWidget(QtWidgets.QLabel("Navigation Goal:"))
+        self.nav_goal_textbox = QtWidgets.QLineEdit()
+        self.nav_layout.addWidget(self.nav_goal_textbox)
+        self.nav_button = QtWidgets.QPushButton("Navigate")
+        self.nav_button.clicked.connect(self.on_navigate_click)
+        self.nav_layout.addWidget(self.nav_button)
+
+        # Manipulation buttons
+        self.manip_layout = QtWidgets.QHBoxLayout()
+        self.manip_layout.addWidget(QtWidgets.QLabel("Manipulation Goal:"))
+        self.manip_obj_textbox = QtWidgets.QLineEdit()
+        self.manip_layout.addWidget(self.manip_obj_textbox)
+        self.pick_button = QtWidgets.QPushButton("Pick")
+        self.pick_button.clicked.connect(self.on_pick_click)
+        self.manip_layout.addWidget(self.pick_button)
+        self.place_button = QtWidgets.QPushButton("Place")
+        self.place_button.clicked.connect(self.on_place_click)
+        self.manip_layout.addWidget(self.place_button)
 
         layout = QtWidgets.QVBoxLayout(widget)
         layout.addLayout(self.buttons_layout)
-        layout.addLayout(self.goal_layout)
+        layout.addLayout(self.nav_layout)
+        layout.addLayout(self.manip_layout)
         layout.addWidget(self.wg)
         
         widget.setLayout(layout)
@@ -75,10 +88,23 @@ class WorldWidget(QtWidgets.QMainWindow):
             self.wg.world.get_location_names() + \
             self.wg.world.get_room_names()
         obj_name = np.random.choice(all_entities)
-        self.goal_textbox.setText(obj_name)
+        self.nav_goal_textbox.setText(obj_name)
 
-    def on_animate_click(self):
-        print(f"Planning to {self.goal_textbox.text()}")
-        p = self.wg.world.find_path(goal=self.goal_textbox.text())
+    def on_navigate_click(self):
+        print(f"Planning to {self.nav_goal_textbox.text()}")
+        p = self.wg.world.find_path(goal=self.nav_goal_textbox.text())
         if p is not None:
             self.wg.animate_path(linear_velocity=1.0, dt=0.05)
+
+    # TODO: Keep track of state and gray out the buttons
+    def on_pick_click(self):
+        obj_name = self.manip_obj_textbox.text()
+        print(f"Picking {obj_name}")
+        self.wg.pick_object(obj_name)
+
+    def on_place_click(self):
+        obj_name = self.manip_obj_textbox.text()
+        # TODO: Get location name from state of world
+        loc_name = self.nav_goal_textbox.text()
+        print(f"Placing {obj_name} in {loc_name}")
+        self.wg.place_object(obj_name, loc_name)

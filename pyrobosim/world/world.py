@@ -44,6 +44,10 @@ class World:
         self.search_graph = None
         self.current_path = None
 
+        # Other parameters
+        self.max_object_sample_tries = 1000 # Max number of tries to sample object locations
+
+
     ############
     # Metadata #
     ############
@@ -227,9 +231,8 @@ class World:
         
         # If no pose is specified, sample a valid one
         if pose is None:
-            max_tries = 1000 # TODO: Hoist up to be user configurable
             obj_added = False
-            for i in range(max_tries):
+            for i in range(self.max_object_sample_tries):
                 if isinstance(loc, Location):
                     obj_spawn = np.random.choice(loc.children)
                 x_sample, y_sample = sample_from_polygon(obj_spawn.polygon)
@@ -242,7 +245,8 @@ class World:
                 for other_obj in obj_spawn.children:
                     is_valid_pose = is_valid_pose and not poly.intersects(other_obj.polygon)
                 if is_valid_pose:
-                    obj.update_pose(pose_sample)
+                    obj.pose = pose_sample
+                    obj.create_polygons()
                     obj.parent = obj_spawn
                     obj_added = True
                     break
@@ -459,3 +463,134 @@ class World:
                     if spawn.name == name:
                         return spawn
         return None
+
+    def resolve_to_object_spawn(self, entity):
+        """ 
+        Resolves an entity or entity name to a specific object spawn 
+        TODO: Here we should have selection criteria like nearest, random, first, etc.
+        Basically we want to gather all the valid objects and then pick the one that optimizes the criteria.
+        """
+        # If a string was passed in, resolve that to an entity in the world
+        if isinstance(entity, str):
+            entity_name = entity
+            entity = self.get_entity_by_name(entity_name)
+            
+            # Now look for a location assuming it's a category
+            # TODO: Right now we're just grabbing the first instance, if any.
+            # Resolve better using other criteria
+            if entity_name in Location.metadata.data:
+                for loc in self.locations:
+                    if loc.category == entity_name:
+                        entity = loc
+
+            if entity is None:
+                warnings.warn(f"Could not resolve entity {entity_name}.")
+                return None
+
+        if isinstance(entity, Room):
+            # If it's a room, pick one of the locations and resolve that
+            entity = entity.locations[0] # TODO resolve better using other criteria
+        if isinstance(entity, Location):
+            # If it's a room, pick one of the object spawns
+            entity = entity.children[0] # TODO resolve better using other criteria
+        if isinstance(entity, ObjectSpawn):
+            return entity
+        else:
+            warnings.warn(f"Could not resolve entity {entity_name}.")
+            return None
+
+    ###########
+    # Actions #
+    ###########
+    def add_robot(self, robot=Robot(), loc=None, pose=None):
+        """
+        Adds a robot to the world given either a world entity and/or pose
+        """
+        # TODO Add logic for different types of locations
+        # loc=None, pose=None : Sample any valid location in world
+        # loc=None, pose=Given : Place the robot there if valid, figure out the location
+        # loc=Given, pose=None : Place the robot in any random configuration
+        # loc=Given, pose=Given : Validate only if hallway/room
+        return
+
+    def pick_object(self, obj):
+        """ 
+        Picks up an object `obj` in the world 
+        Returns True if successful and False otherwise.
+        """
+        # Validate input
+        if self.robot is None:
+            print(f"No robot in the world.")
+            return False
+        elif self.robot.manipulated_object is not None:
+            print(f"Robot is already holding {self.robot.manipulated_object.name}.")
+            return False
+
+        # Get object
+        if isinstance(obj, str):
+            obj = self.get_object_by_name(obj)
+        if not isinstance(obj, Object):
+            print(f"Invalid object {obj.name}.")
+            return False
+    
+        # Denote the target object as the manipulated object
+        self.robot.manipulated_object = obj
+        obj.parent.children.remove(obj)
+        obj.parent = self.robot
+        obj.pose = self.robot.pose
+        return True
+
+
+    def place_object(self, loc, pose=None):
+        """
+        Places an object in a target location and (optionally) pose.
+        Returns True if successful and False otherwise.
+        """
+        # Validate input
+        if self.robot is None:
+            print(f"No robot in the world.")
+            return False
+        elif self.robot.manipulated_object is None:
+            print("No manipulated object.")
+            return False
+        
+        # Resolve the specified location to an object spawn
+        loc = self.resolve_to_object_spawn(loc)
+        if loc is None:
+            return False
+
+        # Place the object somewhere in the target location
+        poly = inflate_polygon(self.robot.manipulated_object.get_raw_polygon(),
+                               self.object_radius)
+        if pose is None:
+            # If no pose was specified, sample one
+            is_valid_pose = False
+            for i in range(self.max_object_sample_tries):
+                x_sample, y_sample = sample_from_polygon(loc.polygon)
+                yaw_sample = np.random.uniform(-np.pi, np.pi)
+                pose_sample = Pose(x=x_sample, y=y_sample, yaw=yaw_sample)
+                sample_poly = transform_polygon(poly, pose_sample)
+                is_valid_pose = sample_poly.within(loc.polygon)
+                for other_obj in loc.children:
+                    is_valid_pose = is_valid_pose and not sample_poly.intersects(other_obj.polygon)
+                if is_valid_pose:
+                    self.robot.manipulated_object.pose = pose_sample
+                    self.robot.manipulated_object.parent = loc
+                    self.robot.manipulated_object.create_polygons()
+                    loc.children.append(self.robot.manipulated_object)
+                    self.robot.manipulated_object = None
+                    return True
+            warnings.warn(f"Could not sample a placement position at {loc.name}")
+            return False
+        else:
+            # If a pose was specified, collision check it
+            poly = transform_polygon(poly, pose_sample)
+            is_valid_pose = poly.within(loc.polygon)
+            for other_obj in loc.children:
+                is_valid_pose = is_valid_pose and not poly.intersects(other_obj.polygon)
+            if is_valid_pose:
+                return True
+            else:
+                warnings.warn(f"Pose in collision or not in location {loc.name}.")
+                return False
+            

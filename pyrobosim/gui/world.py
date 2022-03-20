@@ -1,15 +1,17 @@
 import adjustText
 import numpy as np
 import time
-import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
+from matplotlib.transforms import Affine2D
 
 from ..utils.pose import Pose
 from ..utils.trajectory import get_constant_speed_trajectory, interpolate_trajectory
 
 
 class WorldGUI(FigureCanvasQTAgg):
+    object_zorder = 3
+
     def __init__(self, world, width=5, height=4, dpi=100):
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = self.fig.add_subplot(111)
@@ -68,10 +70,9 @@ class WorldGUI(FigureCanvasQTAgg):
             xmin, ymin, xmax, ymax = obj.polygon.bounds
             x = obj.pose.x + 1.5*(xmax - obj.pose.x)
             y = obj.pose.y + 1.5*(ymin - obj.pose.y)
-            t = self.axes.text(x, y, obj.name,
-                               color=obj.viz_color, fontsize=8)
-            self.obj_texts.append(t)
-        obj_patches = [o.viz_patch for o in (self.world.objects)]
+            obj.viz_text = self.axes.text(x, y, obj.name,
+                                          color=obj.viz_color, fontsize=8)
+            self.obj_texts.append(obj.viz_text)
 
         # Search graph
         if self.world.search_graph is not None:
@@ -95,8 +96,15 @@ class WorldGUI(FigureCanvasQTAgg):
 
         self.axes.autoscale()
         self.axes.axis("equal")
-        adjustText.adjust_text(self.obj_texts, lim=100,
-                               add_objects=obj_patches)
+        self.adjust_text(self.obj_texts)
+
+
+    def adjust_text(self, objs):
+        """ Adjust text in a figure """
+        obj_patches = [o.viz_patch for o in (self.world.objects)]
+        adjustText.adjust_text(objs, lim=100,
+                               add_objects=obj_patches + self.obj_texts)
+
 
     def show_path(self, path=None):
         """ Displays a path """
@@ -106,9 +114,11 @@ class WorldGUI(FigureCanvasQTAgg):
 
             if self.displayed_path is None:
                 self.displayed_path, = self.axes.plot(x, y, "m-", linewidth=3,
-                                                    zorder=1)
-                self.displayed_path_start = self.axes.scatter(x[0], y[0], 60, "g", "o", zorder=2)
-                self.displayed_path_goal = self.axes.scatter(x[-1], y[-1], 60, "r", "x", zorder=2)
+                                                      zorder=1)
+                self.displayed_path_start = self.axes.scatter(
+                    x[0], y[0], 60, "g", "o", zorder=2)
+                self.displayed_path_goal = self.axes.scatter(
+                    x[-1], y[-1], 60, "r", "x", zorder=2)
             else:
                 self.displayed_path.set_xdata(x)
                 self.displayed_path.set_ydata(y)
@@ -124,6 +134,14 @@ class WorldGUI(FigureCanvasQTAgg):
             p.x + np.array([0, self.robot_length*np.cos(p.yaw)]))
         self.robot_dir.set_ydata(
             p.y + np.array([0, self.robot_length*np.sin(p.yaw)]))
+
+    def update_object_plot(self, obj):
+        """ Updates an object visualization based on its pose """
+        tf = Affine2D().translate(-obj.centroid[0], -obj.centroid[1]).rotate(
+            obj.pose.yaw).translate(obj.pose.x, obj.pose.y)
+        obj.viz_patch.set_transform(tf + self.axes.transData)
+        obj.viz_text.set_position((obj.pose.x, obj.pose.y))
+        self.adjust_text([obj.viz_text])
 
     def animate_path(self, path=None, linear_velocity=0.2, max_angular_velocity=None,
                      dt=0.1, realtime_factor=1.0):
@@ -142,11 +160,34 @@ class WorldGUI(FigureCanvasQTAgg):
         # Loop through and animate
         self.show_path(path)
         dt = dt/realtime_factor
+        has_manip_object = self.world.robot.manipulated_object is not None
         for i in range(len(traj_t)):
-            self.world.robot.set_pose(
-                Pose(x=traj_x[i], y=traj_y[i], yaw=traj_yaw[i]))
+            pose = Pose(x=traj_x[i], y=traj_y[i], yaw=traj_yaw[i])
+            self.world.robot.set_pose(pose)
             self.update_robot_plot()
+            if has_manip_object:
+                self.world.robot.manipulated_object.pose = pose
+                self.update_object_plot(self.world.robot.manipulated_object)
 
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()
             time.sleep(dt)
+
+    def pick_object(self, obj_name):
+        """ Picks an object """
+        if self.world.pick_object(obj_name):
+            self.update_object_plot(self.world.robot.manipulated_object)
+            self.fig.canvas.draw()
+            self.fig.canvas.flush_events()
+            time.sleep(0.01)
+
+    def place_object(self, obj_name, loc_name):
+        """ Places an object """
+        obj = self.world.get_object_by_name(self.world.robot.manipulated_object.name)
+        obj.viz_patch.remove()
+        if self.world.place_object(loc_name):
+            self.axes.add_patch(obj.viz_patch)
+            self.update_object_plot(obj)
+            self.fig.canvas.draw()
+            self.fig.canvas.flush_events()
+            time.sleep(0.01)
