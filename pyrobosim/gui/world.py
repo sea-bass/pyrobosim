@@ -15,7 +15,6 @@ class WorldGUI(FigureCanvasQTAgg):
     def __init__(self, world, width=5, height=4, dpi=100):
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = self.fig.add_subplot(111)
-        self.axes.set_title("World Model")
 
         self.robot_normalized_length = 0.1
         self.robot_length = None
@@ -47,6 +46,7 @@ class WorldGUI(FigureCanvasQTAgg):
     def show(self):
         # Robot
         self.show_robot()
+        self.show_world_state()
 
         # Rooms and hallways
         for r in self.world.rooms:
@@ -137,6 +137,18 @@ class WorldGUI(FigureCanvasQTAgg):
         self.robot_dir.set_ydata(
             p.y + np.array([0, self.robot_length*np.sin(p.yaw)]))
 
+    def show_world_state(self):
+        """ Shows the world state in the figure title """
+        r = self.world.robot
+        if r is not None:
+            title_bits = []
+            if r.location is not None:
+                title_bits.append(f"Location: {r.location.name}")
+            if r.manipulated_object is not None:
+                title_bits.append(f"Holding: {r.manipulated_object.name}")
+            title_str = ", ".join(title_bits)
+            self.axes.set_title(title_str)
+
     def update_object_plot(self, obj):
         """ Updates an object visualization based on its pose """
         tf = Affine2D().translate(-obj.centroid[0], -obj.centroid[1]).rotate(
@@ -173,15 +185,21 @@ class WorldGUI(FigureCanvasQTAgg):
             if has_manip_object:
                 self.world.robot.manipulated_object.pose = pose
                 self.update_object_plot(self.world.robot.manipulated_object)
-
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()
             time.sleep(dt)
+        
+        self.world.robot.location = self.world.current_path_goal
+        self.show_world_state()
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
+        time.sleep(0.01)
 
     def pick_object(self, obj_name):
         """ Picks an object """
         if self.world.pick_object(obj_name):
             self.update_object_plot(self.world.robot.manipulated_object)
+            self.show_world_state()
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()
             time.sleep(0.01)
@@ -193,6 +211,7 @@ class WorldGUI(FigureCanvasQTAgg):
         if self.world.place_object(loc_name):
             self.axes.add_patch(obj.viz_patch)
             self.update_object_plot(obj)
+            self.show_world_state()
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()
             time.sleep(0.01)

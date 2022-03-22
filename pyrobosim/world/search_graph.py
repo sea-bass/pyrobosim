@@ -134,8 +134,9 @@ class SearchGraph:
 class Node:
     """ Graph node representation """
 
-    def __init__(self, pose):
+    def __init__(self, pose, parent=None):
         self.pose = pose
+        self.parent = parent
         self.neighbors = set()
 
 

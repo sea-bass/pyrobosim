@@ -130,7 +130,7 @@ class Hallway:
             self.room_start.internal_collision_polygon)
         intersect_line = intersect_line.difference(
             self.room_end.internal_collision_polygon)
-        self.graph_nodes = [Node(Pose(x=p[0], y=p[1]))
+        self.graph_nodes = [Node(Pose(x=p[0], y=p[1]), parent=self)
                             for p in intersect_line.coords]
 
     def __repr__(self):

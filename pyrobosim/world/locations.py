@@ -179,7 +179,7 @@ class ObjectSpawn:
 
     def add_graph_nodes(self):
         """ Creates graph nodes for searching """
-        self.graph_nodes = [Node(p) for p in self.nav_poses]
+        self.graph_nodes = [Node(p, parent=self) for p in self.nav_poses]
 
     def __repr__(self):
         return f"Object spawn location: {self.name} in {self.parent.name}"

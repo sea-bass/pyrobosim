@@ -36,6 +36,7 @@ class World:
         # Search graph for navigation
         self.search_graph = None
         self.current_path = None
+        self.current_path_goal = None
 
         # Other parameters
         self.max_object_sample_tries = 1000 # Max number of tries to sample object locations
@@ -345,7 +346,7 @@ class World:
 
         created_start_node = False
         if isinstance(start, Pose):
-            start_node = Node(start)
+            start_node = Node(start, parent=self.robot.location if self.robot is not None else None)
             self.search_graph.add(start_node, autoconnect=True)
             created_start_node = True
         else:
@@ -356,7 +357,7 @@ class World:
 
         created_goal_node = False
         if isinstance(goal, Pose):
-            goal_node = Node(goal)
+            goal_node = Node(goal, parent=self) # TODO: Get goal entity from poses
             self.search_graph.add(goal_node, autoconnect=True)
             created_goal_node = True
         else:
@@ -368,6 +369,7 @@ class World:
         # Do the search
         self.current_path = self.search_graph.find_path(start_node, goal_node)
         self.current_path = fill_path_yaws(self.current_path)
+        self.current_path_goal = goal_node.parent
 
         # If we created temporary nodes for search, remove them
         if created_start_node:
