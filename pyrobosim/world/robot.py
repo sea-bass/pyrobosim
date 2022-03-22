@@ -3,14 +3,15 @@ import numpy as np
 from ..utils.pose import Pose
 
 class Robot:
-    def __init__(self, id=0, name="robot", pose=Pose(), radius=0.2):
+    def __init__(self, id=0, name="robot", pose=Pose(), radius=0.0):
         # Basic properties
         self.id = id
         self.name = name
         self.set_pose(pose)
         self.radius = radius
 
-        # Object manipulation properties
+        # World interaction properties
+        self.location = None
         self.manipulated_object = None
 
     def set_pose(self, pose):

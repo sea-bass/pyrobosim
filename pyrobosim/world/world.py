@@ -13,16 +13,9 @@ from ..utils.polygon import inflate_polygon, sample_from_polygon, transform_poly
 from ..utils.trajectory import fill_path_yaws
 
 class World:
-    def __init__(self, robot=Robot(), inflation_radius=None, object_radius=0.05):
-        # Define a robot and all its sensors
-        self.robot = robot
-        self.object_radius = object_radius
-        if inflation_radius is None:
-            self.inflation_radius = self.robot.radius
-        else:
-            self.inflation_radius = inflation_radius
-
+    def __init__(self, inflation_radius=0.0, object_radius=0.05):
         # Define the world (rooms, locations, etc.)
+        self.robot = None
         self.rooms = []
         self.hallways = []
         self.locations = []
@@ -47,6 +40,10 @@ class World:
         # Other parameters
         self.max_object_sample_tries = 1000 # Max number of tries to sample object locations
 
+        # Distances for collision-aware navigation and sampling
+        self.object_radius = object_radius
+        self.set_inflation_radius(inflation_radius)
+
 
     ############
     # Metadata #
@@ -57,6 +54,12 @@ class World:
             Location.set_metadata(locations)
         if objects is not None:
             Object.set_metadata(objects)
+
+    def set_inflation_radius(self, inflation_radius=0.0):
+        """ Sets inflation radius """
+        self.inflation_radius = inflation_radius
+        for entity in itertools.chain(self.rooms, self.hallways):
+            entity.update_collision_polygons(self.inflation_radius)
 
     ##########################
     # World Building Methods #
@@ -232,7 +235,7 @@ class World:
         # If no pose is specified, sample a valid one
         if pose is None:
             obj_added = False
-            for i in range(self.max_object_sample_tries):
+            for _ in range(self.max_object_sample_tries):
                 if isinstance(loc, Location):
                     obj_spawn = np.random.choice(loc.children)
                 x_sample, y_sample = sample_from_polygon(obj_spawn.polygon)
@@ -374,7 +377,6 @@ class World:
 
         return self.current_path
 
-
     def graph_node_from_entity(self, entity):
         """
         Gets a graph node from an entity, which could be any room, hallway, location, 
@@ -408,6 +410,22 @@ class World:
         graph_node = graph_nodes[0]
         return graph_node
 
+    def sample_free_robot_pose_uniform(self):
+        """ 
+        Sample an unoccupied robot pose in the world.
+        """
+        xmin, xmax = self.x_bounds
+        ymin, ymax = self.y_bounds
+        r = self.inflation_radius
+
+        for _ in range(self.max_object_sample_tries):
+            x = (xmax - xmin - 2*r) * np.random.random() + xmin + r
+            y = (ymax - ymin - 2*r) * np.random.random() + ymin + r
+            yaw = 2.0 * np.pi * np.random.random()
+            if not self.check_occupancy((x, y)):
+                return Pose(x=x, y=y, yaw=yaw)
+        warnings.warn("Could not sample pose.")
+        return None
 
     ################################
     # Lookup Functionality Methods #
@@ -502,16 +520,66 @@ class World:
     ###########
     # Actions #
     ###########
-    def add_robot(self, robot=Robot(), loc=None, pose=None):
+    def add_robot(self, robot=Robot(), loc=None, pose=None, use_robot_pose=False):
         """
         Adds a robot to the world given either a world entity and/or pose
         """
-        # TODO Add logic for different types of locations
-        # loc=None, pose=None : Sample any valid location in world
-        # loc=None, pose=Given : Place the robot there if valid, figure out the location
-        # loc=Given, pose=None : Place the robot in any random configuration
-        # loc=Given, pose=Given : Validate only if hallway/room
-        return
+        old_inflation_radius = self.inflation_radius
+        self.set_inflation_radius(robot.radius)
+        valid_pose = True
+
+        if use_robot_pose:
+            # If using the robot pose, simply add the robot and we're done!
+            robot_pose = robot.pose
+            if self.check_occupancy((pose.x, pose.y)):
+                warnings.warn(f"{pose} is occupied.")
+                valid_pose = False
+        elif loc is None:
+            if pose is None:
+                # If nothing is specified, sample any valid location in the world
+                robot_pose = self.sample_free_robot_pose_uniform()
+                if robot_pose is None:
+                    warnings.warn("Unable to sample free pose.")
+                    valid_pose = False
+            else:
+                # Validate that the pose is unoccupied
+                if self.check_occupancy((pose.x, pose.y)):
+                    warnings.warn(f"{pose} is occupied.")
+                    valid_pose = False
+                robot_pose = pose
+        
+        elif loc is not None:
+            # First, validate that the location is valid for a robot (Room or Hallway)
+            if isinstance(loc, str):    
+                loc = self.get_entity_by_name(loc)
+            if not isinstance(loc, Room) and not isinstance(loc, Hallway):
+                warnings.warn("Invalid location specified.")
+                valid_pose = False
+
+            if pose is None:
+                # Sample a pose in the location
+                x_sample, y_sample = sample_from_polygon(
+                    loc.internal_collision_polygon, max_tries=self.max_object_sample_tries)
+                if x_sample is None:
+                    warnings.warn(f"Could not sample pose in {loc.name}.")
+                    valid_pose = False
+                yaw_sample = np.random.uniform(-np.pi, np.pi)
+                robot_pose = Pose(x=x_sample, y=y_sample, yaw=yaw_sample)
+            else:
+                # Validate that the pose is unoccupied and in the right location 
+                if not loc.is_collision_free(pose):
+                    warnings.warn(f"{pose} is occupied")
+                    valid_pose = False
+                robot_pose = pose
+
+        # If we got a valid location / pose combination, add the robot
+        if valid_pose:
+            self.robot = robot
+            self.robot.location = loc
+            self.robot.set_pose(robot_pose)
+        else:
+            warnings.warn("Could not add robot.")
+            self.set_inflation_radius(old_inflation_radius)
 
     def pick_object(self, obj):
         """ 
@@ -540,7 +608,6 @@ class World:
         obj.pose = self.robot.pose
         return True
 
-
     def place_object(self, loc, pose=None):
         """
         Places an object in a target location and (optionally) pose.
@@ -565,7 +632,7 @@ class World:
         if pose is None:
             # If no pose was specified, sample one
             is_valid_pose = False
-            for i in range(self.max_object_sample_tries):
+            for _ in range(self.max_object_sample_tries):
                 x_sample, y_sample = sample_from_polygon(loc.polygon)
                 yaw_sample = np.random.uniform(-np.pi, np.pi)
                 pose_sample = Pose(x=x_sample, y=y_sample, yaw=yaw_sample)

@@ -25,26 +25,29 @@ class WorldGUI(FigureCanvasQTAgg):
         self.displayed_path_goal = None
 
         self.world = world
-        self.createRobot()
 
         super(WorldGUI, self).__init__(self.fig)
 
-    def createRobot(self):
+    def show_robot(self):
         """ Creates the robot for visualization """
-        self.robot_length = self.robot_normalized_length * max(
-            (self.world.x_bounds[1] - self.world.x_bounds[0]),
-            (self.world.y_bounds[1] - self.world.y_bounds[0]))
-        p = self.world.robot.pose
-        self.robot_body, = self.axes.plot(
-            p.x, p.y,
-            "mo", markersize=10, markeredgewidth=2,
-            markerfacecolor="None")
-        self.robot_dir, = self.axes.plot(
-            p.x + np.array([0, self.robot_length*np.cos(p.yaw)]),
-            p.y + np.array([0, self.robot_length*np.sin(p.yaw)]),
-            "m-", linewidth=2)
+        if self.world.robot is not None:
+            self.robot_length = self.robot_normalized_length * max(
+                (self.world.x_bounds[1] - self.world.x_bounds[0]),
+                (self.world.y_bounds[1] - self.world.y_bounds[0]))
+            p = self.world.robot.pose
+            self.robot_body, = self.axes.plot(
+                p.x, p.y,
+                "mo", markersize=10, markeredgewidth=2,
+                markerfacecolor="None")
+            self.robot_dir, = self.axes.plot(
+                p.x + np.array([0, self.robot_length*np.cos(p.yaw)]),
+                p.y + np.array([0, self.robot_length*np.sin(p.yaw)]),
+                "m-", linewidth=2)
 
     def show(self):
+        # Robot
+        self.show_robot()
+
         # Rooms and hallways
         for r in self.world.rooms:
             self.axes.add_patch(r.viz_patch)

@@ -87,18 +87,9 @@ class WorldWidget(QtWidgets.QMainWindow):
     ####################
     def rand_pose_cb(self):
         """ Callback to randomize robot pose """
-        xmin, xmax = self.wg.world.x_bounds
-        ymin, ymax = self.wg.world.y_bounds
-        r = self.wg.world.inflation_radius
-
-        valid_pose = False
-        while not valid_pose:
-            x = (xmax - xmin - 2*r) * np.random.random() + xmin + r
-            y = (ymax - ymin - 2*r) * np.random.random() + ymin + r
-            yaw = 2.0 * np.pi * np.random.random()
-            valid_pose = not self.wg.world.check_occupancy([x, y])
-
-        self.wg.world.robot.set_pose(Pose(x=x, y=y, yaw=yaw))
+        sampled_pose = self.wg.world.sample_free_robot_pose_uniform()
+        if sampled_pose is not None:
+            self.wg.world.robot.set_pose(sampled_pose)
         self.wg.update_robot_plot()
         self.wg.draw()
 

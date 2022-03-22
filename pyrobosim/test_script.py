@@ -22,9 +22,8 @@ except:
 
 
 def create_world():
-    # Create a robot and a world
-    r = Robot(pose=Pose(x=-0.5, y=1, yaw=0), radius=0.1)
-    w = World(robot=r)
+    # Create a world
+    w = World()
     w.set_metadata(locations=os.path.join(data_folder, "example_location_data.yaml"), 
                    objects=os.path.join(data_folder, "example_object_data.yaml"))
 
@@ -59,7 +58,10 @@ def create_world():
     w.add_object("banana", counter)
     w.add_object("water", desk)
 
-    # Create a search graph and use it to search
+    # Add a robot
+    w.add_robot(Robot(radius=0.1), loc="kitchen")
+
+    # Create a search graph
     w.create_search_graph(max_edge_dist=3.0, collision_check_dist=0.05)
     return w
 
