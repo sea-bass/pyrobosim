@@ -29,7 +29,7 @@ class WorldGUI(FigureCanvasQTAgg):
 
     def show_robot(self):
         """ Creates the robot for visualization """
-        if self.world.robot is not None:
+        if self.world.has_robot:
             self.robot_length = self.robot_normalized_length * max(
                 (self.world.x_bounds[1] - self.world.x_bounds[0]),
                 (self.world.y_bounds[1] - self.world.y_bounds[0]))

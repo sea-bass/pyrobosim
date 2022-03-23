@@ -14,8 +14,11 @@ from ..utils.trajectory import fill_path_yaws
 
 class World:
     def __init__(self, inflation_radius=0.0, object_radius=0.05):
-        # Define the world (rooms, locations, etc.)
+        # Robot
         self.robot = None
+        self.has_robot = False
+
+        # World entities (rooms, locations, objects, etc.)
         self.rooms = []
         self.hallways = []
         self.locations = []
@@ -346,7 +349,10 @@ class World:
 
         created_start_node = False
         if isinstance(start, Pose):
-            start_node = Node(start, parent=self.robot.location if self.robot is not None else None)
+            start_parent = self.robot.location if self.has_robot else None
+            if not start_parent:
+                start_parent = self.get_location_from_pose()
+            start_node = Node(start, parent=start_parent)
             self.search_graph.add(start_node, autoconnect=True)
             created_start_node = True
         else:
@@ -579,9 +585,18 @@ class World:
             self.robot = robot
             self.robot.location = loc
             self.robot.set_pose(robot_pose)
+            self.has_robot = True
         else:
             warnings.warn("Could not add robot.")
             self.set_inflation_radius(old_inflation_radius)
+
+    def remove_robot(self):
+        """ Removes a robot from the world """
+        if self.has_robot:
+            self.robot = None
+            self.has_robot = False
+        else:
+            warnings.warn("No robot to remove.")    
 
     def pick_object(self, obj):
         """ 
@@ -589,18 +604,20 @@ class World:
         Returns True if successful and False otherwise.
         """
         # Validate input
-        if self.robot is None:
-            print(f"No robot in the world.")
+        if obj is None:
+            warnings.warn("No object specified to pick.")
+        if not self.has_robot:
+            warnings.warn(f"No robot in the world.")
             return False
         elif self.robot.manipulated_object is not None:
-            print(f"Robot is already holding {self.robot.manipulated_object.name}.")
+            warnings.warn(f"Robot is already holding {self.robot.manipulated_object.name}.")
             return False
 
         # Get object
         if isinstance(obj, str):
             obj = self.get_object_by_name(obj)
         if not isinstance(obj, Object):
-            print(f"Invalid object {obj.name}.")
+            warnings.warn(f"Invalid object {obj.name}.")
             return False
     
         # Denote the target object as the manipulated object
@@ -616,11 +633,11 @@ class World:
         Returns True if successful and False otherwise.
         """
         # Validate input
-        if self.robot is None:
-            print(f"No robot in the world.")
+        if not self.has_robot:
+            warnings.warn(f"No robot in the world.")
             return False
         elif self.robot.manipulated_object is None:
-            print("No manipulated object.")
+            warnings.warn("No manipulated object.")
             return False
         
         # Resolve the specified location to an object spawn
