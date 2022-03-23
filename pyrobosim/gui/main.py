@@ -1,8 +1,8 @@
 import numpy as np
 from PyQt5 import QtWidgets
 
-from ..utils.pose import Pose
 from ..gui.world import WorldGUI
+
 
 class PyRoboSim(QtWidgets.QApplication):
     def __init__(self, world, args):
@@ -12,6 +12,7 @@ class PyRoboSim(QtWidgets.QApplication):
     def set_world(self, world):
         self.ww = WorldWidget(world)
         self.ww.show()
+
 
 class WorldWidget(QtWidgets.QMainWindow):
     def __init__(self, world, *args, **kwargs):
@@ -24,7 +25,6 @@ class WorldWidget(QtWidgets.QMainWindow):
         self.update_manip_state()
         self.wg.show()
 
-
     def set_window_dims(self):
         """ Set window dimensions """
         screen_percent = 0.8
@@ -34,7 +34,6 @@ class WorldWidget(QtWidgets.QMainWindow):
         window_x = screen.left() + 0.5 * (screen.width() - window_width)
         window_y = screen.top() + 0.5 * (screen.height() - window_height)
         self.setGeometry(window_x, window_y, window_width, window_height)
-
 
     def create_layout(self):
         """ Creates the GUI layout """
@@ -79,9 +78,20 @@ class WorldWidget(QtWidgets.QMainWindow):
         self.main_layout.addLayout(self.nav_layout)
         self.main_layout.addLayout(self.manip_layout)
         self.main_layout.addWidget(self.wg)
-        
+
         self.main_widget.setLayout(self.main_layout)
         self.setCentralWidget(self.main_widget)
+
+    ####################
+    # State Management #
+    ####################
+
+    def update_manip_state(self):
+        """ Update the manipulation state to enable/disable buttons """
+        can_pick = self.wg.world.has_robot and \
+            self.wg.world.robot.manipulated_object is None
+        self.pick_button.setEnabled(can_pick)
+        self.place_button.setEnabled(not can_pick)
 
     ####################
     # Button Callbacks #
@@ -108,26 +118,23 @@ class WorldWidget(QtWidgets.QMainWindow):
         self.manip_obj_textbox.setText(obj_name)
 
     def on_navigate_click(self):
+        """ Callback to navigate to a goal location """
         print(f"Planning to {self.nav_goal_textbox.text()}")
         p = self.wg.world.find_path(goal=self.nav_goal_textbox.text())
         if p is not None:
             self.wg.animate_path(linear_velocity=1.0, dt=0.05)
 
     def on_pick_click(self):
+        """ Callback to pick an object """
         obj_name = self.manip_obj_textbox.text()
         print(f"Picking {obj_name}")
         self.wg.pick_object(obj_name)
         self.update_manip_state()
 
     def on_place_click(self):
+        """ Callback to place an object """
         obj_name = self.manip_obj_textbox.text()
         loc_name = self.nav_goal_textbox.text()
         print(f"Placing {obj_name} in {loc_name}")
         self.wg.place_object(obj_name, loc_name)
         self.update_manip_state()
-
-    def update_manip_state(self):
-        can_pick = self.wg.world.has_robot and \
-                   self.wg.world.robot.manipulated_object is None
-        self.pick_button.setEnabled(can_pick)
-        self.place_button.setEnabled(not can_pick)

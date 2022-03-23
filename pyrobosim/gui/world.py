@@ -137,12 +137,16 @@ class WorldGUI(FigureCanvasQTAgg):
         self.robot_dir.set_ydata(
             p.y + np.array([0, self.robot_length*np.sin(p.yaw)]))
 
-    def show_world_state(self):
+    def show_world_state(self, navigating=False):
         """ Shows the world state in the figure title """
         r = self.world.robot
         if r is not None:
             title_bits = []
-            if r.location is not None:
+            if navigating:
+                robot_loc = self.world.get_location_from_pose(self.world.robot.pose)
+                if robot_loc is not None:
+                    title_bits.append(f"Location: {robot_loc.name}")
+            elif r.location is not None:
                 title_bits.append(f"Location: {r.location.name}")
             if r.manipulated_object is not None:
                 title_bits.append(f"Holding: {r.manipulated_object.name}")
@@ -185,6 +189,7 @@ class WorldGUI(FigureCanvasQTAgg):
             if has_manip_object:
                 self.world.robot.manipulated_object.pose = pose
                 self.update_object_plot(self.world.robot.manipulated_object)
+            self.show_world_state(navigating=True)
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()
             time.sleep(dt)
@@ -209,8 +214,8 @@ class WorldGUI(FigureCanvasQTAgg):
         obj = self.world.get_object_by_name(self.world.robot.manipulated_object.name)
         if obj is None:
             return
+        obj.viz_patch.remove()
         if self.world.place_object(loc_name):
-            obj.viz_patch.remove()
             self.axes.add_patch(obj.viz_patch)
             self.update_object_plot(obj)
             self.show_world_state()
