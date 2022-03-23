@@ -207,8 +207,10 @@ class WorldGUI(FigureCanvasQTAgg):
     def place_object(self, obj_name, loc_name):
         """ Places an object """
         obj = self.world.get_object_by_name(self.world.robot.manipulated_object.name)
-        obj.viz_patch.remove()
+        if obj is None:
+            return
         if self.world.place_object(loc_name):
+            obj.viz_patch.remove()
             self.axes.add_patch(obj.viz_patch)
             self.update_object_plot(obj)
             self.show_world_state()

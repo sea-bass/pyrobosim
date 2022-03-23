@@ -21,6 +21,7 @@ class WorldWidget(QtWidgets.QMainWindow):
 
         self.wg = WorldGUI(world, dpi=100)
         self.create_layout()
+        self.update_manip_state()
         self.wg.show()
 
 
@@ -112,15 +113,21 @@ class WorldWidget(QtWidgets.QMainWindow):
         if p is not None:
             self.wg.animate_path(linear_velocity=1.0, dt=0.05)
 
-    # TODO: Keep track of state and gray out the buttons
     def on_pick_click(self):
         obj_name = self.manip_obj_textbox.text()
         print(f"Picking {obj_name}")
         self.wg.pick_object(obj_name)
+        self.update_manip_state()
 
     def on_place_click(self):
         obj_name = self.manip_obj_textbox.text()
-        # TODO: Get location name from state of world
         loc_name = self.nav_goal_textbox.text()
         print(f"Placing {obj_name} in {loc_name}")
         self.wg.place_object(obj_name, loc_name)
+        self.update_manip_state()
+
+    def update_manip_state(self):
+        can_pick = self.wg.world.has_robot and \
+                   self.wg.world.robot.manipulated_object is None
+        self.pick_button.setEnabled(can_pick)
+        self.place_button.setEnabled(not can_pick)

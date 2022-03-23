@@ -555,6 +555,7 @@ class World:
             if self.check_occupancy((pose.x, pose.y)):
                 warnings.warn(f"{pose} is occupied.")
                 valid_pose = False
+
         elif loc is None:
             if pose is None:
                 # If nothing is specified, sample any valid location in the world
@@ -575,6 +576,7 @@ class World:
             # First, validate that the location is valid for a robot
             if isinstance(loc, str):    
                 loc = self.get_entity_by_name(loc)
+            
             if isinstance(loc, Room) or isinstance(loc, Hallway):
                 if pose is None:
                     # Sample a pose in the location
@@ -591,10 +593,11 @@ class World:
                         warnings.warn(f"{pose} is occupied")
                         valid_pose = False
                     robot_pose = pose
-            if isinstance(loc, Location) or isinstance(loc, ObjectSpawn):
+            elif isinstance(loc, Location) or isinstance(loc, ObjectSpawn):
                 if isinstance(loc, Location):
                     # NOTE: If you don't want a random object spawn, use the object spawn as the input location.
                     loc = np.random.choice(loc.children) 
+                
                 if pose in loc.nav_poses: # Slim chance of this happening lol
                     robot_pose = pose
                 else:
@@ -627,8 +630,9 @@ class World:
         Returns True if successful and False otherwise.
         """
         # Validate input
-        if obj is None:
+        if not obj:
             warnings.warn("No object specified to pick.")
+            return False
         if not self.has_robot:
             warnings.warn(f"No robot in the world.")
             return False
