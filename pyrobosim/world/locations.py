@@ -169,6 +169,15 @@ class ObjectSpawn:
         return self.parent.get_room_name()
 
 
+    def is_inside(self, pose):
+        """ Checks if a pose is inside the object spawn footprint """
+        if isinstance(pose, Pose):
+            p = Point(pose.x, pose.y)
+        else:
+            p = Point(pose[0], pose[1])
+        return self.polygon.intersects(p)
+
+
     def update_visualization_polygon(self):
         """ Adds a visualization polygon for the object spawn """
         with warnings.catch_warnings():

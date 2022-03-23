@@ -349,10 +349,10 @@ class World:
 
         created_start_node = False
         if isinstance(start, Pose):
-            start_parent = self.robot.location if self.has_robot else None
-            if not start_parent:
-                start_parent = self.get_location_from_pose()
-            start_node = Node(start, parent=start_parent)
+            start_loc = self.robot.location if self.has_robot else None
+            if not start_loc:
+                start_loc = self.get_location_from_pose(start)
+            start_node = Node(start, parent=start_loc)
             self.search_graph.add(start_node, autoconnect=True)
             created_start_node = True
         else:
@@ -363,7 +363,7 @@ class World:
 
         created_goal_node = False
         if isinstance(goal, Pose):
-            goal_node = Node(goal, parent=self) # TODO: Get goal entity from poses
+            goal_node = Node(goal, parent=self.get_location_from_pose(goal))
             self.search_graph.add(goal_node, autoconnect=True)
             created_goal_node = True
         else:
@@ -465,6 +465,19 @@ class World:
         else:
             return None
 
+    def get_location_from_pose(self, pose):
+        """ Gets the name of a location given a pose """
+        # First, check rooms and hallways.
+        for entity in itertools.chain(self.rooms, self.hallways):
+            if entity.is_collision_free(pose):
+                return entity
+        # Then, check object spawns.
+        for loc in self.locations:
+            for spawn in loc.children:
+                if spawn.is_inside(pose):
+                    return spawn
+        return None
+
     def get_object_names(self):
         """ Gets all object names """
         return [o.name for o in self.objects]
@@ -555,30 +568,40 @@ class World:
                     warnings.warn(f"{pose} is occupied.")
                     valid_pose = False
                 robot_pose = pose
+            # If we have a valid pose, extract its location
+            loc = self.get_location_from_pose(robot_pose)
         
         elif loc is not None:
-            # First, validate that the location is valid for a robot (Room or Hallway)
+            # First, validate that the location is valid for a robot
             if isinstance(loc, str):    
                 loc = self.get_entity_by_name(loc)
-            if not isinstance(loc, Room) and not isinstance(loc, Hallway):
+            if isinstance(loc, Room) or isinstance(loc, Hallway):
+                if pose is None:
+                    # Sample a pose in the location
+                    x_sample, y_sample = sample_from_polygon(
+                        loc.internal_collision_polygon, max_tries=self.max_object_sample_tries)
+                    if x_sample is None:
+                        warnings.warn(f"Could not sample pose in {loc.name}.")
+                        valid_pose = False
+                    yaw_sample = np.random.uniform(-np.pi, np.pi)
+                    robot_pose = Pose(x=x_sample, y=y_sample, yaw=yaw_sample)
+                else:
+                    # Validate that the pose is unoccupied and in the right location 
+                    if not loc.is_collision_free(pose):
+                        warnings.warn(f"{pose} is occupied")
+                        valid_pose = False
+                    robot_pose = pose
+            if isinstance(loc, Location) or isinstance(loc, ObjectSpawn):
+                if isinstance(loc, Location):
+                    # NOTE: If you don't want a random object spawn, use the object spawn as the input location.
+                    loc = np.random.choice(loc.children) 
+                if pose in loc.nav_poses: # Slim chance of this happening lol
+                    robot_pose = pose
+                else:
+                    robot_pose = np.random.choice(loc.nav_poses)
+            else:
                 warnings.warn("Invalid location specified.")
                 valid_pose = False
-
-            if pose is None:
-                # Sample a pose in the location
-                x_sample, y_sample = sample_from_polygon(
-                    loc.internal_collision_polygon, max_tries=self.max_object_sample_tries)
-                if x_sample is None:
-                    warnings.warn(f"Could not sample pose in {loc.name}.")
-                    valid_pose = False
-                yaw_sample = np.random.uniform(-np.pi, np.pi)
-                robot_pose = Pose(x=x_sample, y=y_sample, yaw=yaw_sample)
-            else:
-                # Validate that the pose is unoccupied and in the right location 
-                if not loc.is_collision_free(pose):
-                    warnings.warn(f"{pose} is occupied")
-                    valid_pose = False
-                robot_pose = pose
 
         # If we got a valid location / pose combination, add the robot
         if valid_pose:
