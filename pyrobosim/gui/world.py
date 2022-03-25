@@ -109,12 +109,16 @@ class WorldGUI(FigureCanvasQTAgg):
         self.axes.axis("equal")
         self.adjust_text(self.obj_texts)
 
+    def draw_and_sleep(self):
+        """ Redraws the figure and waits a small amount of time """
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
+        time.sleep(0.001)
 
     def adjust_text(self, objs):
         """ Adjust text in a figure """
         adjustText.adjust_text(objs, lim=100,
                                add_objects=self.obj_patches)
-
 
     def show_path(self, path=None):
         """ Displays a path """
@@ -198,24 +202,18 @@ class WorldGUI(FigureCanvasQTAgg):
                 self.world.robot.manipulated_object.pose = pose
                 self.update_object_plot(self.world.robot.manipulated_object)
             self.show_world_state(navigating=True)
-            self.fig.canvas.draw()
-            self.fig.canvas.flush_events()
-            time.sleep(dt)
+            self.draw_and_sleep()
         
         self.world.robot.location = self.world.current_path_goal
         self.show_world_state()
-        self.fig.canvas.draw()
-        self.fig.canvas.flush_events()
-        time.sleep(0.01)
+        self.draw_and_sleep()
 
     def pick_object(self, obj_name):
         """ Picks an object """
         if self.world.pick_object(obj_name):
             self.update_object_plot(self.world.robot.manipulated_object)
             self.show_world_state()
-            self.fig.canvas.draw()
-            self.fig.canvas.flush_events()
-            time.sleep(0.01)
+            self.draw_and_sleep()
 
     def place_object(self, obj_name, loc_name):
         """ Places an object """
@@ -227,6 +225,4 @@ class WorldGUI(FigureCanvasQTAgg):
             self.axes.add_patch(obj.viz_patch)
             self.update_object_plot(obj)
             self.show_world_state()
-            self.fig.canvas.draw()
-            self.fig.canvas.flush_events()
-            time.sleep(0.01)
+            self.draw_and_sleep()
