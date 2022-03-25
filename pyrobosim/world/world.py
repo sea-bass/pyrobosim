@@ -157,9 +157,19 @@ class World:
         # Finally, return the Hallway object
         return h
 
-    def remove_hallway(self, room1, room2):
-        """ TODO removes a hallway between two rooms. """
-        raise NotImplementedError("Hallway removal not implemented.")
+    def remove_hallway(self, hallway):
+        """ Removes a hallway between two rooms. """
+        # Validate the input
+        if not hallway in self.hallways:
+            warnings.warn("Invalid hallway specified.")
+            return
+
+        # Remove the hallways from the world and relevant rooms.
+        self.hallways.remove(hallway)
+        for r in [hallway.room_start, hallway.room_end]:
+            r.hallways.remove(hallway)
+            r.update_collision_polygons()
+            r.update_visualization_polygon()
 
     def add_location(self, category, room, pose, name=None):
         """ Adds a location at the specified room """
@@ -451,6 +461,30 @@ class World:
         else:
             warnings.warn(f"Room not found: {name}")
             return None
+
+    def get_hallways_from_rooms(self, room1, room2):
+        """ Returns a list of hallways between two rooms """
+        # Validate room input
+        if isinstance(room1, str):
+            room1 = self.get_room_by_name(room1)
+        if not isinstance(room1, Room):
+            warnings.warn("Invalid room1 specified")
+            return []
+        if isinstance(room2, str):
+            room2 = self.get_room_by_name(room2)
+        if not isinstance(room2, Room):
+            warnings.warn("Invalid room2 specified")
+            return []
+
+        # Now search through the hallways and add any valid ones to the list
+        hallways = []
+        for hall in room1.hallways:
+            is_valid_hallway = \
+                ((hall.room_start == room1) and (hall.room_end == room2)) or \
+                ((hall.room_end == room2) and (hall.room_end == room1))
+            if is_valid_hallway:
+                hallways.append(hall)
+        return hallways
 
     def get_location_names(self):
         """ Gets all location names """
