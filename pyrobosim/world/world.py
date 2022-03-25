@@ -66,7 +66,7 @@ class World:
             loc.update_collision_polygon(self.inflation_radius)
         for entity in itertools.chain(self.rooms, self.hallways):
             entity.update_collision_polygons(self.inflation_radius)
-
+        self.update_search_graph()
 
     ##########################
     # World Building Methods #
@@ -347,6 +347,13 @@ class World:
                     self.search_graph.add(spawn.graph_nodes, autoconnect=True)
             else:
                 self.search_graph.add(entity.graph_nodes, autoconnect=True)
+
+    def update_search_graph(self):
+        """ Updates a search graph with the same properties as the previous one """
+        if self.search_graph is None:
+            return
+        self.create_search_graph(max_edge_dist=self.search_graph.max_edge_dist,
+                                 collision_check_dist=self.search_graph.collision_check_dist)
 
     def find_path(self, goal, start=None):
         """
