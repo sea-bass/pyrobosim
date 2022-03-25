@@ -62,6 +62,15 @@ class Room:
                 fc=self.viz_color, ec=self.viz_color,
                 lw=2, alpha=0.75, zorder=2)
 
+    def get_collision_patch(self):
+        """ Returns a PolygonPatch of collision polygon for debug """
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            return PolygonPatch(
+                self.internal_collision_polygon,
+                fc=[1, 0, 1], ec=[1, 0, 1],
+                lw=2, alpha=0.5, zorder=2)
+
     def is_collision_free(self, pose):
         """ Checks whether a pose in the room is collision-free """
         if isinstance(pose, Pose):

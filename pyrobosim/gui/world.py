@@ -11,10 +11,13 @@ from ..utils.trajectory import get_constant_speed_trajectory, interpolate_trajec
 
 class WorldGUI(FigureCanvasQTAgg):
     object_zorder = 3
+    robot_zorder = 3
 
     def __init__(self, world, width=5, height=4, dpi=100):
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = self.fig.add_subplot(111)
+
+        self.world = world
 
         self.robot_normalized_length = 0.1
         self.robot_length = None
@@ -23,7 +26,8 @@ class WorldGUI(FigureCanvasQTAgg):
         self.displayed_path_start = None
         self.displayed_path_goal = None
 
-        self.world = world
+        # Debug displays (TODO: Should be available from GUI)
+        self.show_collision_polygons = False
 
         super(WorldGUI, self).__init__(self.fig)
 
@@ -37,11 +41,11 @@ class WorldGUI(FigureCanvasQTAgg):
             self.robot_body, = self.axes.plot(
                 p.x, p.y,
                 "mo", markersize=10, markeredgewidth=2,
-                markerfacecolor="None")
+                markerfacecolor="None", zorder=self.robot_zorder)
             self.robot_dir, = self.axes.plot(
                 p.x + np.array([0, self.robot_length*np.cos(p.yaw)]),
                 p.y + np.array([0, self.robot_length*np.sin(p.yaw)]),
-                "m-", linewidth=2)
+                "m-", linewidth=2, zorder=self.robot_zorder)
 
     def show(self):
         # Robot
@@ -54,8 +58,12 @@ class WorldGUI(FigureCanvasQTAgg):
             t = self.axes.text(r.centroid[0], r.centroid[1], r.name,
                                color=r.viz_color, fontsize=12,
                                ha="center", va="top")
+            if self.show_collision_polygons:
+                self.axes.add_patch(r.get_collision_patch())
         for h in self.world.hallways:
             self.axes.add_patch(h.viz_patch)
+            if self.show_collision_polygons:
+                self.axes.add_patch(h.get_collision_patch())
 
         # Locations
         for loc in self.world.locations:

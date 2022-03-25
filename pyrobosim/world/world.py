@@ -62,8 +62,11 @@ class World:
     def set_inflation_radius(self, inflation_radius=0.0):
         """ Sets inflation radius """
         self.inflation_radius = inflation_radius
+        for loc in self.locations:
+            loc.update_collision_polygon(self.inflation_radius)
         for entity in itertools.chain(self.rooms, self.hallways):
             entity.update_collision_polygons(self.inflation_radius)
+
 
     ##########################
     # World Building Methods #
