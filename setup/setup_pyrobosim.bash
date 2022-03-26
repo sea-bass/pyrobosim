@@ -1,6 +1,6 @@
 # Sets up the pyrobosim environment for development
 #
-# One recommendation is to make an alias for this script in 
+# One recommendation is to make a bash function for this script in 
 # your ~/.bashrc file as follows:
 #
 # pyrobosim_ros() {
