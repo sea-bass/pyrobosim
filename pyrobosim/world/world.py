@@ -667,7 +667,7 @@ class World:
         else:
             warnings.warn("No robot to remove.")    
 
-    def execute_path(self, path, dt=0.05, realtime_factor=1.0,
+    def execute_path(self, path, dt=0.1, realtime_factor=1.0,
                      linear_velocity=0.2, max_angular_velocity=None,
                      blocking=False):
         """

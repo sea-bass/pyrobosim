@@ -1,0 +1,11 @@
+# Task Action ROS Message
+
+# Main Action information
+string type
+string object
+string room
+string source_location
+string target_location
+
+# Action cost (from the output of a planner)
+float32 cost

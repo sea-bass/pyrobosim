@@ -1,8 +1,11 @@
+#!/usr/bin/env python
+
 """
 Test script showing how to build a world and use it with pyrobosim
 """
 import os
 import sys
+import argparse
 import numpy as np
 
 from pyrobosim.utils.pose import Pose
@@ -14,10 +17,12 @@ from pyrobosim.world.world import World
 try:
     # If running as a ROS2 node, get the data folder from the package share directory.
     from ament_index_python.packages import get_package_share_directory
-    data_folder = os.path.join(get_package_share_directory("pyrobosim"), "data")
+    data_folder = os.path.join(
+        get_package_share_directory("pyrobosim"), "data")
 except:
     # Else, assume it's relative to the file's current directory.
-    data_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+    data_folder = os.path.join(os.path.dirname(
+        os.path.abspath(__file__)), "..", "data")
 
 
 def create_world():
@@ -84,6 +89,13 @@ def start_ros_node(world):
     rclpy.shutdown()
 
 
+def parse_args():
+    """ Parse command-line arguments """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--ros", action="store_true")
+    return parser.parse_args()
+
+
 def main():
     """ Main for standalone operation """
     w = create_world()
@@ -102,4 +114,8 @@ def main_ros():
     start_gui(w, sys.argv)
 
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    if args.ros:
+        main_ros()
+    else:
+        main()

@@ -7,8 +7,18 @@
   <maintainer email="sebas.a.castro@gmail.com">Sebastian Castro</maintainer>
   <license>MIT</license>
 
+  <!-- Build dependencies -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
+  <build_depend>rclcpp</build_depend>
+  <build_depend>rosidl_default_generators</build_depend>
+
   <!-- Execution dependencies -->
+  <exec_depend>rclcpp</exec_depend>
   <exec_depend>rclpy</exec_depend>
+  <exec_depend>rosidl_default_runtime</exec_depend>
+
+  <member_of_group>rosidl_interface_packages</member_of_group>
 
   <!-- Test dependencies -->
   <test_depend>ament_copyright</test_depend>
@@ -17,6 +27,6 @@
   <test_depend>python3-pytest</test_depend>
 
   <export>
-    <build_type>ament_python</build_type>
+    <build_type>ament_cmake</build_type>
   </export>
 </package>

@@ -187,7 +187,7 @@ class WorldGUI(FigureCanvasQTAgg):
         # Find a path and kick off the navigation thread
         path = self.world.find_path(goal)
         self.show_path(path)
-        self.world.execute_path(path, dt=0.05, realtime_factor=1.0,
+        self.world.execute_path(path, dt=0.1, realtime_factor=1.0,
                                 linear_velocity=1.0, max_angular_velocity=None)
 
         # Animate while the thread is alive
