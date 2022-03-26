@@ -215,13 +215,13 @@ class WorldGUI(FigureCanvasQTAgg):
             self.show_world_state()
             self.draw_and_sleep()
 
-    def place_object(self, obj_name, loc_name):
+    def place_object(self, loc_name):
         """ Places an object """
         obj = self.world.get_object_by_name(self.world.robot.manipulated_object.name)
         if obj is None:
             return
-        obj.viz_patch.remove()
         if self.world.place_object(loc_name):
+            obj.viz_patch.remove()
             self.axes.add_patch(obj.viz_patch)
             self.update_object_plot(obj)
             self.show_world_state()

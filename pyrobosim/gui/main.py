@@ -123,19 +123,27 @@ class WorldWidget(QtWidgets.QMainWindow):
         print(f"Planning to {self.nav_goal_textbox.text()}")
         p = self.wg.world.find_path(goal=self.nav_goal_textbox.text())
         if p is not None:
+            self.pick_button.setEnabled(False)
+            self.place_button.setEnabled(False)
             self.wg.animate_path(linear_velocity=1.0, dt=0.05)
+            self.pick_button.setEnabled(True)
+            self.place_button.setEnabled(True)
 
     def on_pick_click(self):
         """ Callback to pick an object """
         obj_name = self.manip_obj_textbox.text()
-        print(f"Picking {obj_name}")
+        if obj_name == "":
+            obj_name = None
         self.wg.pick_object(obj_name)
         self.update_manip_state()
 
     def on_place_click(self):
         """ Callback to place an object """
         obj_name = self.manip_obj_textbox.text()
+        if obj_name == "":
+            obj_name = None
         loc_name = self.nav_goal_textbox.text()
-        print(f"Placing {obj_name} in {loc_name}")
-        self.wg.place_object(obj_name, loc_name)
+        if loc_name == "":
+            loc_name = None
+        self.wg.place_object(obj_name)
         self.update_manip_state()

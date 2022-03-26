@@ -143,6 +143,8 @@ class ObjectSpawn:
             self.metadata["footprint"], pose=self.parent.pose,
             parent_polygon=self.parent.polygon if self.parent is not None else None)
         self.update_visualization_polygon()
+        self.centroid = list(self.polygon.centroid.coords)[0]
+        self.pose = Pose(x=self.centroid[0], y=self.centroid[1], yaw=self.parent.pose.yaw)
 
         # If navigation poses were specified, add them. Else, use the parent poses.
         # Of course, only add these if they are collision-free.

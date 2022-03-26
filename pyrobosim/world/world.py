@@ -8,6 +8,7 @@ from .locations import Location, ObjectSpawn
 from .objects import Object
 from .room import Room
 from .search_graph import SearchGraph, Node
+from ..utils.knowledge import resolve_to_location, resolve_to_object
 from ..utils.pose import Pose
 from ..utils.polygon import inflate_polygon, sample_from_polygon, transform_polygon
 from ..utils.trajectory import fill_path_yaws
@@ -405,22 +406,23 @@ class World:
 
         return self.current_path
 
-    def graph_node_from_entity(self, entity):
+    def graph_node_from_entity(self, entity_query, resolution_strategy="nearest"):
         """
-        Gets a graph node from an entity, which could be any room, hallway, location, 
-        object spawn, or object in the world.
-        
-        TODO: We should have parameters to dictate how to select a goal pose
-        in case there are multiple ones. Some ideas include:
-        - Pick the nearest one by raw distance heuristic and plan to there
-        - Try them all and return the shortest path
-        - Pick a random one
+        Gets a graph node from an entity query, which could be any 
+        room, hallway, location, object spawn, or object in the world,
+        as well as respective categories.
         """
-        if isinstance(entity, Node):
-            return entity
+        if isinstance(entity_query, Node):
+            return entity_query
 
-        if isinstance(entity, str):
-            entity = self.get_entity_by_name(entity)
+        if isinstance(entity_query, str):
+            entity = self.get_entity_by_name(entity_query)
+            if entity is None:
+                entity = resolve_to_location(self, category=entity_query,
+                    expand_locations=True, resolution_strategy=resolution_strategy)
+            if entity is None:
+                entity = resolve_to_object(self, category=entity_query,
+                    resolution_strategy=resolution_strategy, ignore_grasped=True)
 
         if (isinstance(entity, ObjectSpawn) or isinstance(entity, Room)
             or isinstance(entity, Hallway)):
@@ -496,9 +498,21 @@ class World:
                 hallways.append(hall)
         return hallways
 
-    def get_location_names(self):
-        """ Gets all location names """
-        return [loc.name for loc in self.locations]
+    def get_locations(self, category_list=None):
+        """ Gets all locations, optionally filtered by category """
+        if not category_list:
+            return [loc for loc in self.locations]
+        else:
+            return [loc for loc in self.locations
+                    if loc.category in category_list]
+
+    def get_location_names(self, category_list=None):
+        """ Gets all location names, optionally filtered by category """
+        if not category_list:
+            return [loc.name for loc in self.locations]
+        else:
+            return [loc.name for loc in self.locations
+                    if loc.category in category_list]
 
     def get_location_by_name(self, name):
         """ Gets a location object by its name """
@@ -522,9 +536,21 @@ class World:
                     return spawn
         return None
 
-    def get_object_names(self):
-        """ Gets all object names """
-        return [o.name for o in self.objects]
+    def get_objects(self, category_list=None):
+        """ Gets all objects, optionally filtered by category """
+        if not category_list:
+            return self.objects
+        else:
+            return [o for o in self.objects 
+                    if o.category in category_list]
+
+    def get_object_names(self, category_list=None):
+        """ Gets all object names, optionally filtered by category """
+        if not category_list:
+            return [o.name for o in self.objects]
+        else:
+            return [o.name for o in self.objects 
+                    if o.category in category_list]
 
     def get_object_by_name(self, name):
         """ Gets an object by its name """
@@ -547,40 +573,6 @@ class World:
                         return spawn
         return None
 
-    def resolve_to_object_spawn(self, entity):
-        """ 
-        Resolves an entity or entity name to a specific object spawn 
-        TODO: Here we should have selection criteria like nearest, random, first, etc.
-        Basically we want to gather all the valid objects and then pick the one that optimizes the criteria.
-        """
-        # If a string was passed in, resolve that to an entity in the world
-        if isinstance(entity, str):
-            entity_name = entity
-            entity = self.get_entity_by_name(entity_name)
-            
-            # Now look for a location assuming it's a category
-            # TODO: Right now we're just grabbing the first instance, if any.
-            # Resolve better using other criteria
-            if entity_name in Location.metadata.data:
-                for loc in self.locations:
-                    if loc.category == entity_name:
-                        entity = loc
-
-            if entity is None:
-                warnings.warn(f"Could not resolve entity {entity_name}.")
-                return None
-
-        if isinstance(entity, Room):
-            # If it's a room, pick one of the locations and resolve that
-            entity = entity.locations[0] # TODO resolve better using other criteria
-        if isinstance(entity, Location):
-            # If it's a room, pick one of the object spawns
-            entity = entity.children[0] # TODO resolve better using other criteria
-        if isinstance(entity, ObjectSpawn):
-            return entity
-        else:
-            warnings.warn(f"Could not resolve entity {entity_name}.")
-            return None
 
     ###########
     # Actions #
@@ -668,15 +660,12 @@ class World:
         else:
             warnings.warn("No robot to remove.")    
 
-    def pick_object(self, obj):
+    def pick_object(self, obj_query):
         """ 
-        Picks up an object `obj` in the world 
+        Picks up an object in the world given an object and location query. 
         Returns True if successful and False otherwise.
         """
         # Validate input
-        if not obj:
-            warnings.warn("No object specified to pick.")
-            return False
         if not self.has_robot:
             warnings.warn(f"No robot in the world.")
             return False
@@ -684,9 +673,19 @@ class World:
             warnings.warn(f"Robot is already holding {self.robot.manipulated_object.name}.")
             return False
 
+        # Validate the robot location
+        loc = self.robot.location
+        if not isinstance(loc, ObjectSpawn):
+            warnings.warn("Not an object spawn. Cannot pick object.")
+            return False
+
         # Get object
-        if isinstance(obj, str):
-            obj = self.get_object_by_name(obj)
+        if not obj_query or isinstance(obj_query, str):
+            obj = self.get_object_by_name(obj_query)
+            if not obj:
+                obj = resolve_to_object(
+                    self, category=obj_query, location=loc,
+                    resolution_strategy="nearest")
         if not isinstance(obj, Object):
             warnings.warn(f"Invalid object {obj.name}.")
             return False
@@ -710,13 +709,14 @@ class World:
         elif self.robot.manipulated_object is None:
             warnings.warn("No manipulated object.")
             return False
-        
-        # Resolve the specified location to an object spawn
-        loc = self.resolve_to_object_spawn(loc)
-        if loc is None:
+
+        # Validate the robot location
+        loc = self.robot.location
+        if not isinstance(loc, ObjectSpawn):
+            warnings.warn("Not an object spawn. Cannot place object.")
             return False
 
-        # Place the object somewhere in the target location
+        # Place the object somewhere in the current location
         poly = inflate_polygon(self.robot.manipulated_object.get_raw_polygon(),
                                self.object_radius)
         if pose is None:
