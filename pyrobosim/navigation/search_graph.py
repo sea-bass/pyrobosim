@@ -121,14 +121,12 @@ class SearchGraph:
           goal: Goal node
 
         Returns:
-          path: tuple of Pose objects describing the path
+          path: list of graph Node objects describing the path
         """
         path = self.solver.astar(start, goal)
         if path is None:
             warnings.warn("Did not find a path from start to goal.")
-            return None        
-        path_list = [n.pose for n in path]
-        return path_list
+        return list(path)
 
 
 class Node:

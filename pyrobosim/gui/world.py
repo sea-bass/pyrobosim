@@ -122,9 +122,12 @@ class WorldGUI(FigureCanvasQTAgg):
 
     def show_path(self, path=None):
         """ Displays a path """
+        if path is None:
+            path = self.world.current_path
+
         if path is not None:
-            x = [p.x for p in self.world.current_path]
-            y = [p.y for p in self.world.current_path]
+            x = [p.pose.x for p in self.world.current_path]
+            y = [p.pose.y for p in self.world.current_path]
 
             if self.displayed_path is None:
                 self.displayed_path, = self.axes.plot(x, y, "m-", linewidth=3,
@@ -196,7 +199,6 @@ class WorldGUI(FigureCanvasQTAgg):
             self.show_world_state(navigating=True)
             self.draw_and_sleep()
 
-        self.world.robot.location = self.world.current_path_goal
         self.show_world_state()
         self.draw_and_sleep()
 

@@ -8,7 +8,7 @@ from .hallway import Hallway
 from .locations import Location, ObjectSpawn
 from .objects import Object
 from .room import Room
-from .search_graph import SearchGraph, Node
+from ..navigation.search_graph import SearchGraph, Node
 from ..navigation.execution import execute_with_linear_trajectory
 from ..utils.knowledge import resolve_to_location, resolve_to_object
 from ..utils.pose import Pose
@@ -48,7 +48,6 @@ class World:
         # Search graph for navigation
         self.search_graph = None
         self.current_path = None
-        self.current_path_goal = None
 
         # Other parameters
         self.max_object_sample_tries = 1000 # Max number of tries to sample object locations
@@ -404,7 +403,6 @@ class World:
         # Do the search
         self.current_path = self.search_graph.find_path(start_node, goal_node)
         self.current_path = fill_path_yaws(self.current_path)
-        self.current_path_goal = goal_node.parent
 
         # If we created temporary nodes for search, remove them
         if created_start_node:
@@ -682,7 +680,7 @@ class World:
 
         # Start a thread with the path execution
         self.nav_thread = threading.Thread(target=execute_with_linear_trajectory,
-                                           args=(self.robot, self.current_path_goal, path, dt, realtime_factor,
+                                           args=(self.robot, path, dt, realtime_factor,
                                                  linear_velocity, max_angular_velocity))
         self.nav_thread.start()
         if blocking:

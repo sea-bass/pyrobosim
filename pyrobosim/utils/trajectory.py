@@ -6,8 +6,8 @@ from .pose import wrap_angle
 def fill_path_yaws(path):
     """ Fill in any "None" yaw angles along a path """
     for idx in range(1, len(path)-1):
-        path[idx].yaw = np.arctan2(path[idx].y - path[idx-1].y,
-                                   path[idx].x - path[idx-1].x)
+        path[idx].pose.yaw = np.arctan2(path[idx].pose.y - path[idx-1].pose.y,
+                                        path[idx].pose.x - path[idx-1].pose.x)
     return path
 
 def get_constant_speed_trajectory(path, linear_velocity=0.2, max_angular_velocity=None):
@@ -25,8 +25,8 @@ def get_constant_speed_trajectory(path, linear_velocity=0.2, max_angular_velocit
     # the maximum angular velocity if one is specified
     t_pts = np.zeros_like(path, dtype=np.float)
     for idx in range(len(path)-1):
-        start_pose = path[idx]
-        end_pose = path[idx+1]
+        start_pose = path[idx].pose
+        end_pose = path[idx+1].pose
         lin_time = start_pose.get_linear_distance(end_pose) / linear_velocity
         if max_angular_velocity is None:
             ang_time = 0
@@ -36,9 +36,9 @@ def get_constant_speed_trajectory(path, linear_velocity=0.2, max_angular_velocit
         t_pts[idx+1] = t_pts[idx] + max(lin_time, ang_time)
 
     # Package up the trajectory
-    x_pts = np.array([p.x for p in path])
-    y_pts = np.array([p.y for p in path])
-    yaw_pts = np.array([p.yaw for p in path])
+    x_pts = np.array([p.pose.x for p in path])
+    y_pts = np.array([p.pose.y for p in path])
+    yaw_pts = np.array([p.pose.yaw for p in path])
     traj = (t_pts, x_pts, y_pts, yaw_pts)
     return traj
 

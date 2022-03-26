@@ -7,7 +7,7 @@ import warnings
 from shapely.geometry import Point
 from descartes.patch import PolygonPatch
 
-from .search_graph import Node
+from ..navigation.search_graph import Node
 from ..utils.pose import Pose, rot2d
 from ..utils.polygon import inflate_polygon, polygon_from_footprint
 

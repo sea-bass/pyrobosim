@@ -6,7 +6,7 @@ from ..utils.trajectory import get_constant_speed_trajectory, interpolate_trajec
 """ Path execution utilities """
 
 
-def execute_with_linear_trajectory(robot, goal, path, dt, realtime_factor=1.0, 
+def execute_with_linear_trajectory(robot, path, dt, realtime_factor=1.0, 
     linear_velocity=0.2, max_angular_velocity=None):
     """ 
     Executes a path with a linear trajectory assuming constant 
@@ -31,7 +31,7 @@ def execute_with_linear_trajectory(robot, goal, path, dt, realtime_factor=1.0,
             robot.manipulated_object.pose = cur_pose
         time.sleep(max(0, sleep_time - (time.time()-start_time)))
 
-    # Finalize
-    robot.location = goal
+    # Finalize path execution
+    robot.location = path[-1].parent
     robot.executing_action = False
     return True
