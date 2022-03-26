@@ -10,6 +10,8 @@ setup(
     packages=[
         package_name,
         package_name + "/gui",
+        package_name + "/navigation",
+        package_name + "/planning",
         package_name + "/utils",
         package_name + "/world"
     ],

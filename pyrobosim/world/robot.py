@@ -11,6 +11,8 @@ class Robot:
         self.radius = radius
 
         # World interaction properties
+        self.current_action = None
+        self.executing_action = False
         self.location = None
         self.manipulated_object = None
 

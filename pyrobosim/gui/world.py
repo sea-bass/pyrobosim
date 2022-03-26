@@ -5,9 +5,6 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.transforms import Affine2D
 
-from ..utils.pose import Pose
-from ..utils.trajectory import get_constant_speed_trajectory, interpolate_trajectory
-
 
 class WorldGUI(FigureCanvasQTAgg):
     object_zorder = 3
@@ -176,34 +173,26 @@ class WorldGUI(FigureCanvasQTAgg):
         y = obj.pose.y + 1.0*(ymax - ymin)
         obj.viz_text.set_position((x, y))
 
-    def animate_path(self, path=None, linear_velocity=0.2, max_angular_velocity=None,
-                     dt=0.1, realtime_factor=1.0):
+    def navigate(self, goal):
         """ 
         Animates a path (found using `find_path()`) given a 
         velocity, time step, and real-time scale factor
         """
-        if path is None:
-            path = self.world.current_path
-
-        # Convert the path to an interpolated trajectory
-        traj = get_constant_speed_trajectory(path, linear_velocity=linear_velocity,
-                                             max_angular_velocity=max_angular_velocity)
-        (traj_t, traj_x, traj_y, traj_yaw) = interpolate_trajectory(traj, dt)
-
-        # Loop through and animate
+        # Find a path and kick off the navigation thread
+        path = self.world.find_path(goal)
         self.show_path(path)
-        dt = dt/realtime_factor
-        has_manip_object = self.world.robot.manipulated_object is not None
-        for i in range(len(traj_t)):
-            pose = Pose(x=traj_x[i], y=traj_y[i], yaw=traj_yaw[i])
-            self.world.robot.set_pose(pose)
+        self.world.execute_path(path, dt=0.05, realtime_factor=1.0,
+                                linear_velocity=1.0, max_angular_velocity=None)
+
+        # Animate while the thread is alive
+        is_holding_object = self.world.robot.manipulated_object is not None
+        while self.world.robot.executing_action:
             self.update_robot_plot()
-            if has_manip_object:
-                self.world.robot.manipulated_object.pose = pose
+            if is_holding_object:
                 self.update_object_plot(self.world.robot.manipulated_object)
             self.show_world_state(navigating=True)
             self.draw_and_sleep()
-        
+
         self.world.robot.location = self.world.current_path_goal
         self.show_world_state()
         self.draw_and_sleep()
@@ -217,12 +206,12 @@ class WorldGUI(FigureCanvasQTAgg):
 
     def place_object(self, loc_name):
         """ Places an object """
-        obj = self.world.get_object_by_name(self.world.robot.manipulated_object.name)
+        obj = self.world.robot.manipulated_object
         if obj is None:
             return
-        if self.world.place_object(loc_name):
-            obj.viz_patch.remove()
-            self.axes.add_patch(obj.viz_patch)
-            self.update_object_plot(obj)
-            self.show_world_state()
-            self.draw_and_sleep()
+        obj.viz_patch.remove()
+        self.world.place_object(loc_name)
+        self.axes.add_patch(obj.viz_patch)
+        self.update_object_plot(obj)
+        self.show_world_state()
+        self.draw_and_sleep()

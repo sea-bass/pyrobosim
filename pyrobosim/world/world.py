@@ -1,5 +1,6 @@
 import itertools
 import numpy as np
+import threading
 import warnings
 
 from .robot import Robot
@@ -8,6 +9,7 @@ from .locations import Location, ObjectSpawn
 from .objects import Object
 from .room import Room
 from .search_graph import SearchGraph, Node
+from ..navigation.execution import execute_with_linear_trajectory
 from ..utils.knowledge import resolve_to_location, resolve_to_object
 from ..utils.pose import Pose
 from ..utils.polygon import inflate_polygon, sample_from_polygon, transform_polygon
@@ -659,6 +661,24 @@ class World:
             self.has_robot = False
         else:
             warnings.warn("No robot to remove.")    
+
+    def execute_path(self, path, dt=0.05, realtime_factor=1.0,
+                     linear_velocity=0.2, max_angular_velocity=None,
+                     blocking=False):
+        """
+        Executes a specified base path
+        TODO: Set nav parameters as properties of the robot
+        """
+        if path is None:
+            return
+
+        # Start a thread with the path execution
+        self.nav_thread = threading.Thread(target=execute_with_linear_trajectory,
+                             args=(self.robot, path, dt, realtime_factor,
+                                   linear_velocity, max_angular_velocity))
+        self.nav_thread.start()
+        if blocking:
+            self.nav_thread.join()
 
     def pick_object(self, obj_query):
         """ 
