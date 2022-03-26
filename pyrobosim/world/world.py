@@ -17,6 +17,12 @@ from ..utils.trajectory import fill_path_yaws
 
 class World:
     def __init__(self, inflation_radius=0.0, object_radius=0.05):
+        # Connected apps
+        self.has_gui = False
+        self.gui = None
+        self.has_ros_node = False
+        self.ros_node = False
+
         # Robot
         self.robot = None
         self.has_robot = False
@@ -416,8 +422,7 @@ class World:
         """
         if isinstance(entity_query, Node):
             return entity_query
-
-        if isinstance(entity_query, str):
+        elif isinstance(entity_query, str):
             entity = self.get_entity_by_name(entity_query)
             if entity is None:
                 entity = resolve_to_location(self, category=entity_query,
@@ -425,6 +430,8 @@ class World:
             if entity is None:
                 entity = resolve_to_object(self, category=entity_query,
                     resolution_strategy=resolution_strategy, ignore_grasped=True)
+        else:
+            entity = entity_query
 
         if (isinstance(entity, ObjectSpawn) or isinstance(entity, Room)
             or isinstance(entity, Hallway)):
@@ -668,14 +675,15 @@ class World:
         """
         Executes a specified base path
         TODO: Set nav parameters as properties of the robot
+        TODO: Set goal as part of path to simplify
         """
         if path is None:
             return
 
         # Start a thread with the path execution
         self.nav_thread = threading.Thread(target=execute_with_linear_trajectory,
-                             args=(self.robot, path, dt, realtime_factor,
-                                   linear_velocity, max_angular_velocity))
+                                           args=(self.robot, self.current_path_goal, path, dt, realtime_factor,
+                                                 linear_velocity, max_angular_velocity))
         self.nav_thread.start()
         if blocking:
             self.nav_thread.join()

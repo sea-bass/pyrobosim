@@ -8,10 +8,10 @@ class PyRoboSim(QtWidgets.QApplication):
     def __init__(self, world, args):
         super(PyRoboSim, self).__init__(args)
         self.set_world(world)
+        self.ww.show()
 
     def set_world(self, world):
         self.ww = WorldWidget(world)
-        self.ww.show()
 
 
 class WorldWidget(QtWidgets.QMainWindow):

@@ -32,7 +32,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'test_script = pyrobosim.test_script:main'
+            'test_script = pyrobosim.test_script:main',
+            'test_script_ros = pyrobosim.test_script:main_ros'
         ],
     },
 )

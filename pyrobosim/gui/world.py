@@ -14,7 +14,10 @@ class WorldGUI(FigureCanvasQTAgg):
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = self.fig.add_subplot(111)
 
+        # Connect the GUI to the world
         self.world = world
+        self.world.gui = self
+        self.world.has_gui = True
 
         self.robot_normalized_length = 0.1
         self.robot_length = None

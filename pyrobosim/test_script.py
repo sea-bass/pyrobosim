@@ -5,7 +5,6 @@ import os
 import sys
 import numpy as np
 
-from pyrobosim.gui.main import PyRoboSim
 from pyrobosim.utils.pose import Pose
 from pyrobosim.world.robot import Robot
 from pyrobosim.world.room import Room
@@ -66,11 +65,41 @@ def create_world():
     return w
 
 
-def main():
-    w = create_world()
-    app = PyRoboSim(w, sys.argv)
+def start_gui(world, args):
+    """ Initializes GUI """
+    from pyrobosim.gui.main import PyRoboSim
+    app = PyRoboSim(world, args)
     sys.exit(app.exec_())
 
+def start_ros_node(world):
+    """ Initializes ROS node """
+    import rclpy
+    from pyrobosim.world.ros_interface import WorldROSWrapper
+
+    rclpy.init()
+    world_node = WorldROSWrapper(world)
+    rclpy.spin(world_node)
+    
+    world_node.destroy_node()
+    rclpy.shutdown()
+
+
+def main():
+    """ Main for standalone operation """
+    w = create_world()
+    start_gui(w, sys.argv)
+
+def main_ros():
+    """ Main for ROS operation """
+    import threading
+    w = create_world()
+
+    # Start ROS Node in separate thread
+    t = threading.Thread(target=start_ros_node, args=(w,))
+    t.start()
+    
+    # Start GUI in main thread
+    start_gui(w, sys.argv)
 
 if __name__ == "__main__":
     main()
