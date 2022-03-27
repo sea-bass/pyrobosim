@@ -25,8 +25,8 @@ class WorldROSWrapper(Node):
         self.plan_sub = self.create_subscription(
             TaskPlan, "/commanded_plan", self.plan_callback, 10)
 
+        self.get_logger().info("Node started")
 
-        print("World ROS node started")
 
     def handle_action(self, msg):
         """ Handles an action and returns its success """
@@ -64,8 +64,12 @@ class WorldROSWrapper(Node):
     def plan_callback(self, msg):
         """ Handle task plan callback """
         self.get_logger().info(f"Executing task plan...")
-        for act_msg in msg.actions:
+        num_acts = len(msg.actions)
+        for n, act_msg in enumerate(msg.actions):
+            self.get_logger().info(
+                f"Executing action {act_msg.type} [{n+1}/{num_acts}]")
             success = self.handle_action(act_msg)
             if not success:
                 return
             time.sleep(0.5)
+        self.get_logger().info(f"Task plan executed successfully")
