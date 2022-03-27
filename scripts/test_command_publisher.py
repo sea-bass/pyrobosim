@@ -9,7 +9,7 @@ from rclpy.node import Node
 import numpy as np
 import time
 
-from pyrobosim.msg import TaskAction
+from pyrobosim.msg import TaskAction, TaskPlan
 
 
 class CommandPublisher(Node):
@@ -18,22 +18,27 @@ class CommandPublisher(Node):
 
         # Publisher for a single action
         self.action_pub = self.create_publisher(
-            TaskAction, "/commanded_action", 1)
+            TaskAction, "/commanded_action", 10)
         
-        # TODO: Add publisher for an action plan
+        # Publisher for a task plan
+        self.plan_pub = self.create_publisher(
+            TaskPlan, "/commanded_plan", 10)
 
 def main():
     rclpy.init()
     cmd_pub = CommandPublisher()
     time.sleep(1.0) # Need a delay to ensure publisher is ready
 
-    # Publish a single action
-    print("Publishing sample action...")
-    act_msg = TaskAction()
-    act_msg.type = "navigate"
-    act_msg.target_location = np.random.choice(
-        ["desk", "table", "counter"])
-    cmd_pub.action_pub.publish(act_msg)
+    print("Publishing sample task plan...")
+    task_actions = [
+        TaskAction(type="navigate", target_location="desk"),
+        TaskAction(type="pick"),
+        TaskAction(type="navigate", target_location="counter"),
+        TaskAction(type="place"),
+        TaskAction(type="navigate", target_location="kitchen")
+    ]
+    plan_msg = TaskPlan(actions=task_actions)
+    cmd_pub.plan_pub.publish(plan_msg)
 
     rclpy.spin(cmd_pub)
     cmd_pub.destroy_node()

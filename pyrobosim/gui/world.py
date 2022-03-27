@@ -201,13 +201,16 @@ class WorldGUI(FigureCanvasQTAgg):
 
         self.show_world_state()
         self.draw_and_sleep()
+        return True
 
     def pick_object(self, obj_name):
         """ Picks an object """
-        if self.world.pick_object(obj_name):
+        success = self.world.pick_object(obj_name)
+        if success:
             self.update_object_plot(self.world.robot.manipulated_object)
             self.show_world_state()
             self.draw_and_sleep()
+        return success
 
     def place_object(self, loc_name):
         """ Places an object """
@@ -215,8 +218,9 @@ class WorldGUI(FigureCanvasQTAgg):
         if obj is None:
             return
         obj.viz_patch.remove()
-        self.world.place_object(loc_name)
+        success = self.world.place_object(loc_name)
         self.axes.add_patch(obj.viz_patch)
         self.update_object_plot(obj)
         self.show_world_state()
         self.draw_and_sleep()
+        return success

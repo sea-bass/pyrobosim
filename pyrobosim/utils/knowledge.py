@@ -50,6 +50,7 @@ def resolve_to_location(world, category=None, room=None,
       expand_locations will expand locations to individual object spawns
     """
     if room is None:
+        room_name = None
         if category is None:
             possible_locations = world.get_locations()
         else:

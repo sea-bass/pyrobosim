@@ -56,5 +56,5 @@ ros2 run pyrobosim test_script.py
 The ROS option is (in 2 separate Terminals):
 ```
 ros2 run pyrobosim test_script.py --ros
-ros2 run pyrobosim test_action_publisher.py
+ros2 run pyrobosim test_command_publisher.py
 ```
