@@ -9,11 +9,10 @@ from .locations import Location, ObjectSpawn
 from .objects import Object
 from .room import Room
 from ..navigation.search_graph import SearchGraph, Node
-from ..navigation.execution import execute_with_linear_trajectory
+from ..navigation.trajectory import fill_path_yaws
 from ..utils.knowledge import resolve_to_location, resolve_to_object
 from ..utils.pose import Pose
 from ..utils.polygon import inflate_polygon, sample_from_polygon, transform_polygon
-from ..utils.trajectory import fill_path_yaws
 
 class World:
     def __init__(self, inflation_radius=0.0, object_radius=0.05):
@@ -584,7 +583,7 @@ class World:
     ###########
     # Actions #
     ###########
-    def add_robot(self, robot=Robot(), loc=None, pose=None, use_robot_pose=False):
+    def add_robot(self, robot, loc=None, pose=None, use_robot_pose=False):
         """
         Adds a robot to the world given either a world entity and/or pose
         """
@@ -667,24 +666,21 @@ class World:
         else:
             warnings.warn("No robot to remove.")    
 
-    def execute_path(self, path, dt=0.1, realtime_factor=1.0,
-                     linear_velocity=0.2, max_angular_velocity=None,
-                     blocking=False):
-        """
-        Executes a specified base path
-        TODO: Set nav parameters as properties of the robot
-        TODO: Set goal as part of path to simplify
-        """
-        if path is None:
+    def execute_path(self, path, realtime_factor=1.0, 
+                     use_thread=True, blocking=False):
+        """ Executes a specified base path """
+        if path is None or self.robot is None or self.robot.path_executor is None:
             return
 
-        # Start a thread with the path execution
-        self.nav_thread = threading.Thread(target=execute_with_linear_trajectory,
-                                           args=(self.robot, path, dt, realtime_factor,
-                                                 linear_velocity, max_angular_velocity))
-        self.nav_thread.start()
-        if blocking:
-            self.nav_thread.join()
+        if use_thread:
+            # Start a thread with the path execution
+            self.nav_thread = threading.Thread(target=self.robot.path_executor.execute,
+                                               args=(path, realtime_factor))
+            self.nav_thread.start()
+            if blocking:
+                self.nav_thread.join()
+        else:
+            self.robot.path_executor.execute(path, realtime_factor)
 
     def pick_object(self, obj_query):
         """ 

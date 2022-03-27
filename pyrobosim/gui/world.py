@@ -194,15 +194,12 @@ class WorldGUI(FigureCanvasQTAgg):
 
         dt = 0.1
         rt_factor = 1.0
-        self.world.execute_path(path, dt=dt, realtime_factor=rt_factor,
-                                linear_velocity=1.0, max_angular_velocity=None)
+        self.world.execute_path(path, realtime_factor=rt_factor)
 
         # Animate while navigation is active
-        # NOTE: Right now blitting is working to make things faster, but we run into
-        # a race condition when the ROS wrapper is also in the same thread
         held_obj = self.world.robot.manipulated_object
         is_holding_object = held_obj is not None   
-        do_blit = True
+        do_blit = True # Keeping this around to disable if needed
         sleep_time = dt / rt_factor
         if do_blit:
             animated_artists = [self.robot_body, self.robot_dir]

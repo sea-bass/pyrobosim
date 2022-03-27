@@ -1,14 +1,16 @@
 import numpy as np
 from scipy.spatial.transform import Slerp, Rotation
 
-from .pose import wrap_angle
+from ..utils.pose import wrap_angle
+
 
 def fill_path_yaws(path):
-    """ Fill in any "None" yaw angles along a path """
+    """ Fill in any yaw angles along a path to point at the next waypoint """
     for idx in range(1, len(path)-1):
         path[idx].pose.yaw = np.arctan2(path[idx].pose.y - path[idx-1].pose.y,
                                         path[idx].pose.x - path[idx-1].pose.x)
     return path
+
 
 def get_constant_speed_trajectory(path, linear_velocity=0.2, max_angular_velocity=None):
     """
@@ -32,7 +34,7 @@ def get_constant_speed_trajectory(path, linear_velocity=0.2, max_angular_velocit
             ang_time = 0
         else:
             ang_time = wrap_angle(start_pose.get_angular_distance(
-                end_pose)) / max_angular_velocity 
+                end_pose)) / max_angular_velocity
         t_pts[idx+1] = t_pts[idx] + max(lin_time, ang_time)
 
     # Package up the trajectory
@@ -57,7 +59,7 @@ def interpolate_trajectory(traj, dt):
     if t_final > 0:
         euler_angs = [[0, 0, th] for th in yaw_pts]
         slerp = Slerp(t_pts, Rotation.from_euler("xyz", euler_angs))
-    
+
     # Package up the interpolated trajectory
     t_interp = np.arange(0, t_final, dt)
     if t_final not in t_interp:
@@ -65,7 +67,8 @@ def interpolate_trajectory(traj, dt):
     x_interp = np.interp(t_interp, t_pts, x_pts)
     y_interp = np.interp(t_interp, t_pts, y_pts)
     if t_final > 0:
-        yaw_interp = np.array([slerp(t).as_euler("xyz", degrees=False)[2] for t in t_interp])
+        yaw_interp = np.array(
+            [slerp(t).as_euler("xyz", degrees=False)[2] for t in t_interp])
     else:
         yaw_interp = np.array([yaw_pts[-1]])
     return (t_interp, x_interp, y_interp, yaw_interp)

@@ -5,10 +5,10 @@ Test script showing how to build a world and use it with pyrobosim
 """
 import os
 import sys
-import time
 import argparse
 import numpy as np
 
+from pyrobosim.navigation.execution import ConstantVelocityExecutor
 from pyrobosim.utils.pose import Pose
 from pyrobosim.world.robot import Robot
 from pyrobosim.world.room import Room
@@ -29,12 +29,12 @@ except:
 def create_world():
     # Create a world
     w = World()
-    w.set_metadata(locations=os.path.join(data_folder, "example_location_data.yaml"), 
+    w.set_metadata(locations=os.path.join(data_folder, "example_location_data.yaml"),
                    objects=os.path.join(data_folder, "example_object_data.yaml"))
 
     # Add rooms
     r1coords = [(-1, -1), (1.5, -1), (1.5, 1.5), (0.5, 1.5)]
-    w.add_room(Room(r1coords, name="kitchen", color=[1, 0, 0], 
+    w.add_room(Room(r1coords, name="kitchen", color=[1, 0, 0],
                nav_poses=[Pose(x=0.75, y=0.75, yaw=0)]))
     r2coords = [(1.75, 2.5), (3.5, 2.5), (3.5, 4), (1.75, 4)]
     w.add_room(Room(r2coords, name="bedroom", color=[0, 0.6, 0]))
@@ -50,9 +50,11 @@ def create_world():
                   conn_points=[(1.0, 0.5), (2.5, 0.5), (2.5, 3.0)])
 
     # Add locations
-    table = w.add_location("table", "kitchen", Pose(x=0.85, y=-0.5, yaw=-np.pi/2))
+    table = w.add_location("table", "kitchen", Pose(
+        x=0.85, y=-0.5, yaw=-np.pi/2))
     desk = w.add_location("desk", "bedroom", Pose(x=3.15, y=3.65, yaw=0))
-    counter = w.add_location("counter", "bathroom", Pose(x=-2.45, y=2.5, yaw=np.pi/2 + np.pi/16))
+    counter = w.add_location("counter", "bathroom", Pose(
+        x=-2.45, y=2.5, yaw=np.pi/2 + np.pi/16))
 
     # Add objects
     w.add_object("banana", table, pose=Pose(x=1.0, y=-0.5, yaw=np.pi/4))
@@ -64,7 +66,8 @@ def create_world():
     w.add_object("water", desk)
 
     # Add a robot
-    w.add_robot(Robot(radius=0.1), loc="kitchen")
+    r = Robot(radius=0.1, path_executor=ConstantVelocityExecutor())
+    w.add_robot(r, loc="kitchen")
 
     # Create a search graph
     w.create_search_graph(max_edge_dist=3.0, collision_check_dist=0.05)
@@ -77,6 +80,7 @@ def start_gui(world, args):
     app = PyRoboSim(world, args)
     sys.exit(app.exec_())
 
+
 def start_ros_node(world):
     """ Initializes ROS node """
     import rclpy
@@ -85,7 +89,7 @@ def start_ros_node(world):
     rclpy.init()
     world_node = WorldROSWrapper(world)
     rclpy.spin(world_node)
-    
+
     world_node.destroy_node()
     rclpy.shutdown()
 
@@ -102,17 +106,19 @@ def main():
     w = create_world()
     start_gui(w, sys.argv)
 
+
 def main_ros():
     """ Main for ROS operation """
-    import threading
     w = create_world()
 
     # Start ROS Node in separate thread
+    import threading
     t = threading.Thread(target=start_ros_node, args=(w,))
     t.start()
-    
+
     # Start GUI in main thread
     start_gui(w, sys.argv)
+
 
 if __name__ == "__main__":
     args = parse_args()
