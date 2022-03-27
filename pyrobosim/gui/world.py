@@ -26,6 +26,10 @@ class WorldGUI(FigureCanvasQTAgg):
         self.displayed_path_start = None
         self.displayed_path_goal = None
 
+        self.robot_body = None
+        self.robot_dir = None
+        self.animated_artists = [self.robot_body, self.robot_dir]
+
         # Debug displays (TODO: Should be available from GUI)
         self.show_collision_polygons = False
 
@@ -187,17 +191,47 @@ class WorldGUI(FigureCanvasQTAgg):
         # Find a path and kick off the navigation thread
         path = self.world.find_path(goal)
         self.show_path(path)
-        self.world.execute_path(path, dt=0.1, realtime_factor=1.0,
+
+        dt = 0.1
+        rt_factor = 1.0
+        self.world.execute_path(path, dt=dt, realtime_factor=rt_factor,
                                 linear_velocity=1.0, max_angular_velocity=None)
 
-        # Animate while the thread is alive
-        is_holding_object = self.world.robot.manipulated_object is not None
-        while self.world.robot.executing_action:
-            self.update_robot_plot()
+        # Animate while navigation is active
+        # NOTE: Right now blitting is working to make things faster, but we run into
+        # a race condition when the ROS wrapper is also in the same thread
+        held_obj = self.world.robot.manipulated_object
+        is_holding_object = held_obj is not None   
+        do_blit = not self.world.has_ros_node
+        if do_blit:
+            animated_artists = [self.robot_body, self.robot_dir]
             if is_holding_object:
-                self.update_object_plot(self.world.robot.manipulated_object)
-            self.show_world_state(navigating=True)
+                animated_artists.extend([held_obj.viz_patch, held_obj.viz_text])     
+            for a in animated_artists:
+                a.set_animated(True)
             self.draw_and_sleep()
+            bg = self.fig.canvas.copy_from_bbox(self.fig.bbox)
+            while self.world.robot.executing_action:
+                self.fig.canvas.restore_region(bg)
+                self.update_robot_plot()
+                if is_holding_object:
+                    self.update_object_plot(held_obj)
+                self.show_world_state(navigating=True)
+                for a in animated_artists:
+                    self.axes.draw_artist(a)
+                self.fig.canvas.blit(self.fig.bbox)
+                self.fig.canvas.flush_events()
+            for a in animated_artists:
+                a.set_animated(False)
+        else:
+            sleep_time = dt / rt_factor
+            while self.world.robot.executing_action:
+                self.update_robot_plot()
+                if is_holding_object:
+                    self.update_object_plot(held_obj)
+                self.show_world_state(navigating=True)
+                self.draw_and_sleep()
+                time.sleep(sleep_time)
 
         self.show_world_state()
         self.draw_and_sleep()

@@ -5,6 +5,7 @@ Test script showing how to build a world and use it with pyrobosim
 """
 import os
 import sys
+import time
 import argparse
 import numpy as np
 
