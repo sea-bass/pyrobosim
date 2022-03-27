@@ -119,6 +119,14 @@ class WorldGUI(FigureCanvasQTAgg):
         self.fig.canvas.flush_events()
         time.sleep(0.001)
 
+    def get_animated_artists(self):
+        """ Returns a list of artists to animate when blitting """
+        animated_artists = [self.robot_body, self.robot_dir, self.axes.title]
+        held_object = self.world.robot.manipulated_object
+        if held_object is not None:
+            animated_artists.extend([held_object.viz_patch, held_object.viz_text])
+        return animated_artists
+
     def adjust_text(self, objs):
         """ Adjust text in a figure """
         adjustText.adjust_text(objs, lim=100,
@@ -174,6 +182,9 @@ class WorldGUI(FigureCanvasQTAgg):
 
     def update_object_plot(self, obj):
         """ Updates an object visualization based on its pose """
+        if obj is None:
+            return
+
         tf = Affine2D().translate(-obj.centroid[0], -obj.centroid[1]).rotate(
             obj.pose.yaw).translate(obj.pose.x, obj.pose.y)
         obj.viz_patch.set_transform(tf + self.axes.transData)
@@ -196,15 +207,11 @@ class WorldGUI(FigureCanvasQTAgg):
         rt_factor = 1.0
         self.world.execute_path(path, realtime_factor=rt_factor)
 
-        # Animate while navigation is active
-        held_obj = self.world.robot.manipulated_object
-        is_holding_object = held_obj is not None   
+        # Animate while navigation is active  
         do_blit = True # Keeping this around to disable if needed
         sleep_time = dt / rt_factor
         if do_blit:
-            animated_artists = [self.robot_body, self.robot_dir]
-            if is_holding_object:
-                animated_artists.extend([held_obj.viz_patch, held_obj.viz_text])     
+            animated_artists = self.get_animated_artists()
             for a in animated_artists:
                 a.set_animated(True)
             self.draw_and_sleep()
@@ -213,20 +220,18 @@ class WorldGUI(FigureCanvasQTAgg):
                 time.sleep(sleep_time) # Needs to happen before blitting to avoid race condition
                 self.fig.canvas.restore_region(bg)
                 self.update_robot_plot()
-                if is_holding_object:
-                    self.update_object_plot(held_obj)
+                self.update_object_plot(self.world.robot.manipulated_object)
                 self.show_world_state(navigating=True)
                 for a in animated_artists:
                     self.axes.draw_artist(a)
                 self.fig.canvas.blit(self.fig.bbox)
-                self.fig.canvas.flush_events()  
+                self.fig.canvas.flush_events()
             for a in animated_artists:
                 a.set_animated(False)
         else:
             while self.world.robot.executing_action:
                 self.update_robot_plot()
-                if is_holding_object:
-                    self.update_object_plot(held_obj)
+                self.update_object_plot(self.world.robot.manipulated_object)
                 self.show_world_state(navigating=True)
                 self.draw_and_sleep()
                 time.sleep(sleep_time)
