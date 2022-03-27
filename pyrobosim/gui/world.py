@@ -202,7 +202,8 @@ class WorldGUI(FigureCanvasQTAgg):
         # a race condition when the ROS wrapper is also in the same thread
         held_obj = self.world.robot.manipulated_object
         is_holding_object = held_obj is not None   
-        do_blit = not self.world.has_ros_node
+        do_blit = True
+        sleep_time = dt / rt_factor
         if do_blit:
             animated_artists = [self.robot_body, self.robot_dir]
             if is_holding_object:
@@ -212,6 +213,7 @@ class WorldGUI(FigureCanvasQTAgg):
             self.draw_and_sleep()
             bg = self.fig.canvas.copy_from_bbox(self.fig.bbox)
             while self.world.robot.executing_action:
+                time.sleep(sleep_time) # Needs to happen before blitting to avoid race condition
                 self.fig.canvas.restore_region(bg)
                 self.update_robot_plot()
                 if is_holding_object:
@@ -220,11 +222,10 @@ class WorldGUI(FigureCanvasQTAgg):
                 for a in animated_artists:
                     self.axes.draw_artist(a)
                 self.fig.canvas.blit(self.fig.bbox)
-                self.fig.canvas.flush_events()
+                self.fig.canvas.flush_events()  
             for a in animated_artists:
                 a.set_animated(False)
         else:
-            sleep_time = dt / rt_factor
             while self.world.robot.executing_action:
                 self.update_robot_plot()
                 if is_holding_object:
