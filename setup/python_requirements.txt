@@ -2,8 +2,11 @@ adjustText==0.7.3
 astar==0.93
 attrs==21.4.0
 autopep8==1.6.0
+catkin-pkg==0.4.24
 cycler==0.11.0
 descartes==1.1.0
+docutils==0.18.1
+empy==3.3.4
 flake8==4.0.1
 fonttools==4.28.5
 iniconfig==1.1.1

@@ -36,10 +36,12 @@ pyrobosim_ros() {
 
 ---
 
-### Usage
+## Usage
 This package works with or without ROS2, and with or without a PyQt5 based GUI for visualization. 
 
-The entry points are still in progress, but this is what works now with the ROS workflow.
+The entry points are still in progress, but this is what works now.
+
+### With ROS
 
 First, build and setup the colcon workspace.
 
@@ -50,11 +52,26 @@ colcon build
 
 The ROS-free option is:
 ```
-ros2 run pyrobosim test_script.py
+ros2 run pyrobosim test_script.py 
 ```
 
 The ROS option is (in 2 separate Terminals):
 ```
 ros2 run pyrobosim test_script.py --ros
 ros2 run pyrobosim test_command_publisher.py
+```
+
+### Without ROS
+
+First, install the module.
+
+```
+cd /path/to/pyrobosim
+pip install .
+```
+
+Then, run the test script.
+
+```
+python scripts/test_script.py
 ```

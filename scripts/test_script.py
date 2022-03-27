@@ -23,7 +23,7 @@ try:
 except:
     # Else, assume it's relative to the file's current directory.
     data_folder = os.path.join(os.path.dirname(
-        os.path.abspath(__file__)), "..", "data")
+        os.path.abspath(__file__)), "..", "pyrobosim", "data")
 
 
 def create_world():
