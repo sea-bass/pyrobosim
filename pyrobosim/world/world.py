@@ -3,7 +3,6 @@ import numpy as np
 import threading
 import warnings
 
-from .robot import Robot
 from .hallway import Hallway
 from .locations import Location, ObjectSpawn
 from .objects import Object
@@ -702,15 +701,17 @@ class World:
             return False
 
         # Get object
-        if not obj_query or isinstance(obj_query, str):
+        if isinstance(obj_query, Object):
+            obj = obj_query
+        else:
             obj = self.get_object_by_name(obj_query)
             if not obj:
                 obj = resolve_to_object(
                     self, category=obj_query, location=loc,
                     resolution_strategy="nearest")
-        if not isinstance(obj, Object):
-            warnings.warn(f"Invalid object {obj.name}.")
-            return False
+            if not obj:
+                warnings.warn(f"Invalid object {obj.name}.")
+                return False
     
         # Denote the target object as the manipulated object
         self.robot.manipulated_object = obj

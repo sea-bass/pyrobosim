@@ -16,6 +16,9 @@ class ObjectMetadata:
         with open(self.filename) as file:
             self.data = yaml.load(file, Loader=yaml.FullLoader)
 
+    def has_category(self, category):
+        return category in self.data
+
     def get(self, category):
         return self.data[category]
 

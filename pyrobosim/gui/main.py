@@ -2,7 +2,7 @@ import numpy as np
 from PyQt5 import QtWidgets
 
 from ..gui.world import WorldGUI
-
+from ..utils.knowledge import query_to_entity
 
 class PyRoboSim(QtWidgets.QApplication):
     def __init__(self, world, args):
@@ -52,31 +52,28 @@ class WorldWidget(QtWidgets.QMainWindow):
         self.buttons_layout.addWidget(self.rand_obj_button)
 
         # Navigation buttons
-        self.nav_layout = QtWidgets.QHBoxLayout()
-        self.nav_layout.addWidget(QtWidgets.QLabel("Navigation Goal:"))
-        self.nav_goal_textbox = QtWidgets.QLineEdit()
-        self.nav_layout.addWidget(self.nav_goal_textbox)
+        self.goal_layout = QtWidgets.QHBoxLayout()
+        self.goal_layout.addWidget(QtWidgets.QLabel("Goal query:"))
+        self.goal_textbox = QtWidgets.QLineEdit()
+        self.goal_layout.addWidget(self.goal_textbox)
+
+        # Action buttons
+        self.action_layout = QtWidgets.QHBoxLayout()
         self.nav_button = QtWidgets.QPushButton("Navigate")
         self.nav_button.clicked.connect(self.on_navigate_click)
-        self.nav_layout.addWidget(self.nav_button)
-
-        # Manipulation buttons
-        self.manip_layout = QtWidgets.QHBoxLayout()
-        self.manip_layout.addWidget(QtWidgets.QLabel("Manipulation Goal:"))
-        self.manip_obj_textbox = QtWidgets.QLineEdit()
-        self.manip_layout.addWidget(self.manip_obj_textbox)
+        self.action_layout.addWidget(self.nav_button)
         self.pick_button = QtWidgets.QPushButton("Pick")
         self.pick_button.clicked.connect(self.on_pick_click)
-        self.manip_layout.addWidget(self.pick_button)
+        self.action_layout.addWidget(self.pick_button)
         self.place_button = QtWidgets.QPushButton("Place")
         self.place_button.clicked.connect(self.on_place_click)
-        self.manip_layout.addWidget(self.place_button)
+        self.action_layout.addWidget(self.place_button)
 
         # Main layout
         self.main_layout = QtWidgets.QVBoxLayout(self.main_widget)
         self.main_layout.addLayout(self.buttons_layout)
-        self.main_layout.addLayout(self.nav_layout)
-        self.main_layout.addLayout(self.manip_layout)
+        self.main_layout.addLayout(self.goal_layout)
+        self.main_layout.addLayout(self.action_layout)
         self.main_layout.addWidget(self.wg)
 
         self.main_widget.setLayout(self.main_layout)
@@ -111,37 +108,47 @@ class WorldWidget(QtWidgets.QMainWindow):
             self.wg.world.get_location_names() + \
             self.wg.world.get_room_names()
         entity_name = np.random.choice(all_entities)
-        self.nav_goal_textbox.setText(entity_name)
+        self.goal_textbox.setText(entity_name)
 
     def rand_obj_cb(self):
         """ Callback to randomize manipulation object goal """
         obj_name = np.random.choice(self.wg.world.get_object_names())
-        self.manip_obj_textbox.setText(obj_name)
+        self.goal_textbox.setText(obj_name)
 
     def on_navigate_click(self):
         """ Callback to navigate to a goal location """
-        print(f"Planning to {self.nav_goal_textbox.text()}")
+        if self.wg.world.robot and self.wg.world.robot.executing_action:
+            return
+
+        query_list = self.goal_textbox.text().split(" ")
+        loc = query_to_entity(self.wg.world, query_list, mode="location",
+                              resolution_strategy="nearest")
+        if not loc:
+            return
+        
+        print(f"Navigating to {loc.name}")
         self.pick_button.setEnabled(False)
         self.place_button.setEnabled(False)
-        self.wg.navigate(self.nav_goal_textbox.text())
+        self.wg.navigate(loc)
         self.pick_button.setEnabled(True)
         self.place_button.setEnabled(True)
 
     def on_pick_click(self):
         """ Callback to pick an object """
-        obj_name = self.manip_obj_textbox.text()
-        if obj_name == "":
-            obj_name = None
-        self.wg.pick_object(obj_name)
-        self.update_manip_state()
+        if self.wg.world.robot:
+            loc = self.wg.world.robot.location
+            query_list = [loc] + self.goal_textbox.text().split(" ")
+            obj = query_to_entity(self.wg.world, query_list, mode="object",
+                                  resolution_strategy="nearest")
+            print(f"Picking {obj.name}")
+            self.wg.pick_object(obj)
+            self.update_manip_state()
 
     def on_place_click(self):
         """ Callback to place an object """
-        obj_name = self.manip_obj_textbox.text()
-        if obj_name == "":
-            obj_name = None
-        loc_name = self.nav_goal_textbox.text()
-        if loc_name == "":
-            loc_name = None
-        self.wg.place_object(obj_name)
-        self.update_manip_state()
+        if self.wg.world.robot:
+            loc = self.wg.world.robot.location
+            if self.wg.world.robot.manipulated_object is not None:
+                print(f"Placing {self.wg.world.robot.manipulated_object.name}")
+            self.wg.place_object(loc)
+            self.update_manip_state()

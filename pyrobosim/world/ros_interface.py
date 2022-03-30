@@ -39,9 +39,9 @@ class WorldROSWrapper(Node):
                                                   linear_velocity=1.0, max_angular_velocity=None)
         elif msg.type == "pick":
             if self.world.has_gui:
-                success = self.world.gui.pick_object(None)
+                success = self.world.gui.pick_object(msg.object)
             else:
-                success = self.world.pick_object(None)
+                success = self.world.pick_object(msg.object)
         elif msg.type == "place":
             if self.world.has_gui:
                 success = self.world.gui.place_object(None)

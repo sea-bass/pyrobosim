@@ -2,7 +2,8 @@ import sys
 import warnings
 import numpy as np
 
-from ..world.locations import Location
+from ..world.locations import Location, ObjectSpawn
+from ..world.objects import Object
 
 """
 Utilities to reason about entities using world knowledge
@@ -43,10 +44,96 @@ def apply_resolution_strategy(world, entity_list, resolution_strategy):
         return None
 
 
+def query_to_entity(world, query_list, mode, resolution_strategy="first"):
+    """ 
+    Resolves a generic query list of strings to an entity 
+    mode can be "location" or "object"
+    """
+    room = None
+    named_location = None
+    loc_category = None
+    obj_category = None
+
+    # Direct name search
+    entity_list = []
+    for elem in query_list:
+        # First, directly search for location/object spawn names
+        for loc in world.locations:
+            if elem == loc.name:
+                named_location = loc
+            for spawn in loc.children:
+                if elem == spawn.name:
+                    named_location = spawn
+        # Then, directly search for object names and get the location
+        for obj in world.objects:
+            if elem == obj.name:
+                if mode == "location":
+                    return obj.parent
+                elif mode == "object":
+                    return obj
+
+    # Resolution search: Build a list of possible query terms
+    for elem in query_list:
+        if elem in world.get_room_names() and not room:
+            room = elem
+        if Location.metadata.has_category(elem) and not loc_category:
+            loc_category = elem
+        if Object.metadata.has_category(elem) and not obj_category:
+            obj_category = elem
+
+    # Special case: A room is selected purely by name
+    if room and not named_location and not loc_category and not obj_category:
+        return world.get_room_by_name(room)
+
+    # If a named location is given, check that have an object category and filter by that.
+    # Otherwise, just use the named location itself.
+    if named_location is not None:
+        if obj_category is None:
+            return named_location
+        else:
+            if isinstance(named_location, ObjectSpawn):
+                entity_list = named_location.children
+            elif isinstance(named_location, Location):
+                entity_list = []
+                for spawn in named_location.children:
+                    entity_list.extend(spawn.children)
+
+        entity_list = [o for o in entity_list if o.category == obj_category]
+        obj_candidate = apply_resolution_strategy(world, entity_list,
+                                                  resolution_strategy=resolution_strategy)
+        if not obj_candidate:
+            warnings.warn(f"Could not resolve query {query_list}")
+        else:
+            if mode == "object":
+                return obj_candidate
+            elif mode == "location":
+                return obj_candidate.parent
+
+    # Resolve a location from any other query
+    if obj_category or mode=="object":
+        obj_candidate = resolve_to_object(world, category=obj_category, 
+                                          location=loc_category, room=room,
+                                          resolution_strategy=resolution_strategy)
+        if not obj_candidate:
+            warnings.warn(f"Could not resolve query {query_list}")
+        else:
+            if mode == "object":
+                return obj_candidate
+            elif mode == "location":
+                return obj_candidate.parent
+    else:
+        loc_candidate = resolve_to_location(world, category=loc_category, room=room,
+                                            resolution_strategy=resolution_strategy)
+        if not loc_candidate:
+            warnings.warn(f"Could not resolve query {query_list}")
+        else:
+            return loc_candidate
+    
+
 def resolve_to_location(world, category=None, room=None,
                         resolution_strategy="first", expand_locations=False):
     """ 
-    Resolves a query to a location 
+    Resolves a category/room combination to a location. 
       expand_locations will expand locations to individual object spawns
     """
     if room is None:
@@ -61,8 +148,12 @@ def resolve_to_location(world, category=None, room=None,
             room = world.get_room_by_name(room)
         else:
             room_name = room.name
-        possible_locations = [
-            loc for loc in room.locations if loc.category is category]
+
+        if category is None:
+            possible_locations = [loc for loc in room.locations]
+        else:
+            possible_locations = [
+                loc for loc in room.locations if loc.category == category]
 
     # Optionally expand locations to their individual object spawns
     if expand_locations:
@@ -88,10 +179,24 @@ def resolve_to_object(world, category=None, location=None, room=None,
     Resolves a query to an object 
       ignore_grasped will ignore any currently manipulated object
     """
+    # Filter by category
     if category is None:
         possible_objects = world.get_objects()
     else:
         possible_objects = world.get_objects(category_list=[category])
+
+    # Filter by room and/or location
+    if room is not None:
+        if isinstance(room, str):
+            room_name = room
+        else:
+            room_name = room.name
+        possible_objects = [
+            o for o in possible_objects if o.parent.parent.parent.name == room_name]
+
+    if location is not None:
+        possible_objects = [o for o in possible_objects if 
+            (o.parent == location or o.parent.category == location or o.parent.parent.name == location)]
 
     if ignore_grasped:
         if world.robot is not None:

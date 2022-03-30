@@ -32,7 +32,7 @@ def main():
     print("Publishing sample task plan...")
     task_actions = [
         TaskAction(type="navigate", target_location="desk"),
-        TaskAction(type="pick"),
+        TaskAction(type="pick", object="water"),
         TaskAction(type="navigate", target_location="counter"),
         TaskAction(type="place"),
         TaskAction(type="navigate", target_location="kitchen")
