@@ -15,11 +15,14 @@ find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 # Generate custom messages
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/RobotState.msg"
   "msg/TaskAction.msg"
   "msg/TaskPlan.msg"
+  DEPENDENCIES geometry_msgs
 )
 
 # Install Python package

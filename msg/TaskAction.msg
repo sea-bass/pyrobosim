@@ -9,3 +9,6 @@ string target_location
 
 # Action cost (from the output of a planner)
 float32 cost
+
+# Other parameters
+geometry_msgs/Pose pose

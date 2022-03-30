@@ -87,7 +87,7 @@ def start_ros_node(world):
     from pyrobosim.world.ros_interface import WorldROSWrapper
 
     rclpy.init()
-    world_node = WorldROSWrapper(world, name="test_world")
+    world_node = WorldROSWrapper(world, name="test_world", state_pub_rate=0.1)
     rclpy.spin(world_node)
 
     world_node.destroy_node()
