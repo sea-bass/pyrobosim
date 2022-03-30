@@ -694,13 +694,8 @@ class World:
             warnings.warn(f"Robot is already holding {self.robot.manipulated_object.name}.")
             return False
 
-        # Validate the robot location
-        loc = self.robot.location
-        if not isinstance(loc, ObjectSpawn):
-            warnings.warn("Not an object spawn. Cannot pick object.")
-            return False
-
         # Get object
+        loc = self.robot.location
         if isinstance(obj_query, Object):
             obj = obj_query
         else:
@@ -712,6 +707,12 @@ class World:
             if not obj:
                 warnings.warn(f"Invalid object {obj.name}.")
                 return False
+
+        # Validate the robot location
+        if obj.parent != loc:
+            warnings.warn(f"{obj.name} is at {obj.parent.name} and robot" +
+                          f"is at {loc.name}. Cannot pick.")
+            return False
     
         # Denote the target object as the manipulated object
         self.robot.manipulated_object = obj
