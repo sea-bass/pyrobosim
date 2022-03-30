@@ -9,8 +9,9 @@ from pyrobosim.msg import TaskAction, TaskPlan
 
 
 class WorldROSWrapper(Node):
-    def __init__(self, world):
-        super().__init__("world_ros_wrapper")
+    def __init__(self, world, name="pyrobosim"):
+        self.name = name
+        super().__init__(self.name + "_world", namespace=self.name)
 
         # Connect the ROS node to the world
         self.world = world
@@ -19,11 +20,11 @@ class WorldROSWrapper(Node):
 
         # Subscriber to single action
         self.action_sub = self.create_subscription(
-            TaskAction, "/commanded_action", self.action_callback, 10)
+            TaskAction, "commanded_action", self.action_callback, 10)
 
         # Subscriber to task plan
         self.plan_sub = self.create_subscription(
-            TaskPlan, "/commanded_plan", self.plan_callback, 10)
+            TaskPlan, "commanded_plan", self.plan_callback, 10)
 
         self.get_logger().info("Node started")
 

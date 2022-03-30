@@ -13,20 +13,21 @@ from pyrobosim.msg import TaskAction, TaskPlan
 
 
 class CommandPublisher(Node):
-    def __init__(self):
-        super().__init__("pyrobosim_action_publisher")
+    def __init__(self, name="pyrobosim"):
+        self.name = name
+        super().__init__(self.name + "_command_publisher", namespace=self.name)
 
         # Publisher for a single action
         self.action_pub = self.create_publisher(
-            TaskAction, "/commanded_action", 10)
+            TaskAction, "commanded_action", 10)
         
         # Publisher for a task plan
         self.plan_pub = self.create_publisher(
-            TaskPlan, "/commanded_plan", 10)
+            TaskPlan, "commanded_plan", 10)
 
 def main():
     rclpy.init()
-    cmd_pub = CommandPublisher()
+    cmd_pub = CommandPublisher(name="test_world")
     time.sleep(1.0) # Need a delay to ensure publisher is ready
 
     print("Publishing sample task plan...")
