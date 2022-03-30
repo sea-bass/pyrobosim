@@ -7,6 +7,9 @@ from matplotlib.transforms import Affine2D
 
 
 class WorldGUI(FigureCanvasQTAgg):
+    animation_dt = 0.1
+    realtime_factor = 1.0
+
     object_zorder = 3
     robot_zorder = 3
 
@@ -202,14 +205,11 @@ class WorldGUI(FigureCanvasQTAgg):
         # Find a path and kick off the navigation thread
         path = self.world.find_path(goal)
         self.show_path(path)
-
-        dt = 0.1
-        rt_factor = 1.0
-        self.world.execute_path(path, realtime_factor=rt_factor)
+        self.world.execute_path(path, realtime_factor=self.realtime_factor)
 
         # Animate while navigation is active  
         do_blit = True # Keeping this around to disable if needed
-        sleep_time = dt / rt_factor
+        sleep_time = self.animation_dt / self.realtime_factor
         if do_blit:
             animated_artists = self.get_animated_artists()
             for a in animated_artists:
