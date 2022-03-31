@@ -4,6 +4,7 @@ ROS interface to world model
 
 import time
 import threading
+import rclpy
 from rclpy.node import Node
 from transforms3d.euler import euler2quat
 
@@ -32,16 +33,26 @@ class WorldROSWrapper(Node):
         # Robot state publisher
         self.robot_state_pub = self.create_publisher(
             RobotState, "robot_state", 10)
-        self.timer = self.create_timer(self.state_pub_rate, self.publish_robot_state)
+        self.robot_state_pub_thread = threading.Thread(
+            target=self.create_timer, 
+            args=(self.state_pub_rate, self.publish_robot_state))
 
-        self.get_logger().info("Node started")
+        self.get_logger().info("World node started")
+
+
+    def start(self):
+        """ Starts the node """
+        self.robot_state_pub_thread.start()
+        rclpy.spin(self)
+        self.destroy_node()
+        rclpy.shutdown()
 
 
     def action_callback(self, msg):
         """ Handle single action callback """
         self.get_logger().info(f"Executing action {msg.type}")
-        t = threading.Thread(target=self.execute_action, args=(msg,))
-        t.start()
+        success = self.execute_action(msg)
+        self.get_logger().info(f"Action completed with success: {success}")
 
 
     def execute_action(self, msg):
@@ -64,30 +75,23 @@ class WorldROSWrapper(Node):
             else:
                 success = self.world.place_object(None)
         else:
+            self.get_logger().info(f"Invalid action type: {msg.type}")
             success = False
-        
-        if not success:
-            self.get_logger().info(f"Failed to execute action {msg.type}")
         return success
 
 
     def plan_callback(self, msg):
         """ Handle task plan callback """
         self.get_logger().info(f"Executing task plan...")
-        t = threading.Thread(target=self.execute_plan, args=(msg,))
-        t.start()
-
-
-    def execute_plan(self, msg):
-        """ Executes a task plan """
         num_acts = len(msg.actions)
         for n, act_msg in enumerate(msg.actions):
             self.get_logger().info(
                 f"Executing action {act_msg.type} [{n+1}/{num_acts}]")
             success = self.execute_action(act_msg)
             if not success:
+                self.get_logger().info(f"Task plan failed to execute on action {n+1}")
                 return
-            time.sleep(0.5)
+            time.sleep(0.5) # Artificial delay between actions
         self.get_logger().info(f"Task plan executed successfully")
 
 

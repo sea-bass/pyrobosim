@@ -88,10 +88,7 @@ def start_ros_node(world):
 
     rclpy.init()
     world_node = WorldROSWrapper(world, name="test_world", state_pub_rate=0.1)
-    rclpy.spin(world_node)
-
-    world_node.destroy_node()
-    rclpy.shutdown()
+    world_node.start()
 
 
 def parse_args():
