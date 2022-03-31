@@ -22,6 +22,9 @@ class WorldROSWrapper(Node):
         self.world.ros_node = self
         self.world.has_ros_node = True
 
+        # Internal state
+        self.last_command_status = None
+
         # Subscriber to single action
         self.action_sub = self.create_subscription(
             TaskAction, "commanded_action", self.action_callback, 10)
@@ -50,49 +53,74 @@ class WorldROSWrapper(Node):
 
     def action_callback(self, msg):
         """ Handle single action callback """
-        self.get_logger().info(f"Executing action {msg.type}")
-        success = self.execute_action(msg)
-        self.get_logger().info(f"Action completed with success: {success}")
+        t = threading.Thread(target=self.execute_action, args=(msg,))
+        t.start()
 
 
     def execute_action(self, msg):
-        """ Executes an action and returns its success """
+        """ Executes an action """
+        self.get_logger().info(f"Executing action {msg.type}")
+        if self.world.has_gui:
+            self.world.gui.set_buttons_during_action(False)
+        success = self.run_action(msg)
+        if self.world.has_gui:
+            self.world.gui.set_buttons_during_action(True)
+        self.get_logger().info(f"Action completed with success: {success}")
+        self.last_command_status = success
+
+
+    def plan_callback(self, msg):
+        """ Handle task plan callback """
+        self.get_logger().info(f"Executing task plan...")
+        t = threading.Thread(target=self.execute_plan, args=(msg,))
+        t.start()
+
+
+    def execute_plan(self, msg):
+        """ Executes a task plan """
+        if self.world.has_gui:
+            self.world.gui.set_buttons_during_action(False)
+
+        success = True
+        num_acts = len(msg.actions)
+        for n, act_msg in enumerate(msg.actions):
+            self.get_logger().info(
+                f"Executing action {act_msg.type} [{n+1}/{num_acts}]")
+            success = self.run_action(act_msg)
+            if not success:
+                self.get_logger().info(f"Task plan failed to execute on action {n+1}")
+                break
+            time.sleep(0.5) # Artificial delay between actions
+
+        if self.world.has_gui:
+            self.world.gui.set_buttons_during_action(True)
+        self.get_logger().info(f"Task plan completed with success: {success}")
+        self.last_command_status = success
+
+
+    def run_action(self, msg):
+        """ Runs an action in the world model """
         if msg.type == "navigate":
             if self.world.has_gui:
-                success = self.world.gui.navigate(msg.target_location)
+                success = self.world.gui.wg.navigate(msg.target_location)
             else:
                 path = self.world.find_path(msg.target_location)
                 success = self.world.execute_path(path, dt=0.1, realtime_factor=1.0,
                                                   linear_velocity=1.0, max_angular_velocity=None)
         elif msg.type == "pick":
             if self.world.has_gui:
-                success = self.world.gui.pick_object(msg.object)
+                success = self.world.gui.wg.pick_object(msg.object)
             else:
                 success = self.world.pick_object(msg.object)
         elif msg.type == "place":
             if self.world.has_gui:
-                success = self.world.gui.place_object(None)
+                success = self.world.gui.wg.place_object(None)
             else:
                 success = self.world.place_object(None)
         else:
             self.get_logger().info(f"Invalid action type: {msg.type}")
             success = False
         return success
-
-
-    def plan_callback(self, msg):
-        """ Handle task plan callback """
-        self.get_logger().info(f"Executing task plan...")
-        num_acts = len(msg.actions)
-        for n, act_msg in enumerate(msg.actions):
-            self.get_logger().info(
-                f"Executing action {act_msg.type} [{n+1}/{num_acts}]")
-            success = self.execute_action(act_msg)
-            if not success:
-                self.get_logger().info(f"Task plan failed to execute on action {n+1}")
-                return
-            time.sleep(0.5) # Artificial delay between actions
-        self.get_logger().info(f"Task plan executed successfully")
 
 
     def publish_robot_state(self):

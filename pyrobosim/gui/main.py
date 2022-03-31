@@ -20,6 +20,11 @@ class WorldWidget(QtWidgets.QMainWindow):
         self.setWindowTitle("pyrobosim")
         self.set_window_dims()
 
+        # Connect the GUI to the world
+        self.world = world
+        self.world.gui = self
+        self.world.has_gui = True
+
         self.wg = WorldGUI(world, dpi=100)
         self.create_layout()
         self.update_manip_state()
@@ -41,7 +46,7 @@ class WorldWidget(QtWidgets.QMainWindow):
 
         # Push buttons
         self.buttons_layout = QtWidgets.QHBoxLayout()
-        self.rand_pose_button = QtWidgets.QPushButton("Randomize position")
+        self.rand_pose_button = QtWidgets.QPushButton("Randomize robot pose")
         self.rand_pose_button.clicked.connect(self.rand_pose_cb)
         self.buttons_layout.addWidget(self.rand_pose_button)
         self.rand_goal_button = QtWidgets.QPushButton("Randomize nav goal")
@@ -90,6 +95,16 @@ class WorldWidget(QtWidgets.QMainWindow):
         self.pick_button.setEnabled(can_pick)
         self.place_button.setEnabled(not can_pick)
 
+    def set_buttons_during_action(self, state):
+        """ 
+        Enables or disables buttons that should not be pressed while
+        the robot is executing an action
+        """
+        self.nav_button.setEnabled(state)
+        self.pick_button.setEnabled(state)
+        self.place_button.setEnabled(state)
+        self.rand_pose_button.setEnabled(state)
+
     ####################
     # Button Callbacks #
     ####################
@@ -104,8 +119,7 @@ class WorldWidget(QtWidgets.QMainWindow):
 
     def rand_goal_cb(self):
         """ Callback to randomize robot goal """
-        all_entities = self.wg.world.get_object_names() + \
-            self.wg.world.get_location_names() + \
+        all_entities = self.wg.world.get_location_names() + \
             self.wg.world.get_room_names()
         entity_name = np.random.choice(all_entities)
         self.goal_textbox.setText(entity_name)
@@ -127,11 +141,9 @@ class WorldWidget(QtWidgets.QMainWindow):
             return
         
         print(f"Navigating to {loc.name}")
-        self.pick_button.setEnabled(False)
-        self.place_button.setEnabled(False)
+        self.set_buttons_during_action(False)
         self.wg.navigate(loc)
-        self.pick_button.setEnabled(True)
-        self.place_button.setEnabled(True)
+        self.set_buttons_during_action(True)
 
     def on_pick_click(self):
         """ Callback to pick an object """

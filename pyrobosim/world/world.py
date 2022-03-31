@@ -705,7 +705,7 @@ class World:
                     self, category=obj_query, location=loc,
                     resolution_strategy="nearest")
             if not obj:
-                warnings.warn(f"Invalid object {obj.name}.")
+                warnings.warn(f"Found no object {obj_query} to pick.")
                 return False
 
         # Validate the robot location
