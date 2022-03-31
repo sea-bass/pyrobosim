@@ -23,6 +23,7 @@ class WorldROSWrapper(Node):
         self.world.has_ros_node = True
 
         # Internal state
+        self.executing_command = False
         self.last_command_status = None
 
         # Subscriber to single action
@@ -53,31 +54,42 @@ class WorldROSWrapper(Node):
 
     def action_callback(self, msg):
         """ Handle single action callback """
+        if self.executing_command:
+            self.get_logger().info(f"Currently executing command. Discarding this one.")
+            return
         t = threading.Thread(target=self.execute_action, args=(msg,))
         t.start()
 
 
     def execute_action(self, msg):
         """ Executes an action """
+        self.executing_command = True
         self.get_logger().info(f"Executing action {msg.type}")
         if self.world.has_gui:
             self.world.gui.set_buttons_during_action(False)
+
         success = self.run_action(msg)
+
         if self.world.has_gui:
             self.world.gui.set_buttons_during_action(True)
         self.get_logger().info(f"Action completed with success: {success}")
         self.last_command_status = success
+        self.executing_command = False
 
 
     def plan_callback(self, msg):
         """ Handle task plan callback """
-        self.get_logger().info(f"Executing task plan...")
+        if self.executing_command:
+            self.get_logger().info(f"Currently executing command. Discarding this one.")
+            return
         t = threading.Thread(target=self.execute_plan, args=(msg,))
         t.start()
 
 
     def execute_plan(self, msg):
         """ Executes a task plan """
+        self.executing_command = True
+        self.get_logger().info(f"Executing task plan...")
         if self.world.has_gui:
             self.world.gui.set_buttons_during_action(False)
 
@@ -96,6 +108,7 @@ class WorldROSWrapper(Node):
             self.world.gui.set_buttons_during_action(True)
         self.get_logger().info(f"Task plan completed with success: {success}")
         self.last_command_status = success
+        self.executing_command = False
 
 
     def run_action(self, msg):
