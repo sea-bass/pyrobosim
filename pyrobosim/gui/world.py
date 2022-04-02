@@ -202,7 +202,8 @@ class WorldGUI(FigureCanvasQTAgg):
         # Find a path and kick off the navigation thread
         path = self.world.find_path(goal)
         self.show_path(path)
-        self.world.execute_path(path, realtime_factor=self.realtime_factor)
+        self.world.robot.follow_path(
+            path, realtime_factor=self.realtime_factor)
 
         # Animate while navigation is active  
         do_blit = True # Keeping this around to disable if needed
@@ -239,22 +240,26 @@ class WorldGUI(FigureCanvasQTAgg):
 
     def pick_object(self, obj_name):
         """ Picks an object """
-        success = self.world.pick_object(obj_name)
-        if success:
-            self.update_object_plot(self.world.robot.manipulated_object)
-            self.show_world_state()
-            self.draw_and_sleep()
-        return success
+        robot = self.world.robot
+        if robot is not None:
+            success = robot.pick_object(obj_name)
+            if success:
+                self.update_object_plot(robot.manipulated_object)
+                self.show_world_state()
+                self.draw_and_sleep()
+            return success
 
     def place_object(self, loc_name):
         """ Places an object """
-        obj = self.world.robot.manipulated_object
-        if obj is None:
-            return
-        obj.viz_patch.remove()
-        success = self.world.place_object(loc_name)
-        self.axes.add_patch(obj.viz_patch)
-        self.update_object_plot(obj)
-        self.show_world_state()
-        self.draw_and_sleep()
-        return success
+        robot = self.world.robot
+        if robot is not None:
+            obj = robot.manipulated_object
+            if obj is None:
+                return
+            obj.viz_patch.remove()
+            success = robot.place_object(loc_name)
+            self.axes.add_patch(obj.viz_patch)
+            self.update_object_plot(obj)
+            self.show_world_state()
+            self.draw_and_sleep()
+            return success

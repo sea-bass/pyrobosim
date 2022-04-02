@@ -1,6 +1,12 @@
 import time
+import threading
 import numpy as np
+import warnings
 
+from .locations import ObjectSpawn
+from .objects import Object
+from ..utils.knowledge import resolve_to_object
+from ..utils.polygon import inflate_polygon, sample_from_polygon, transform_polygon
 from ..utils.pose import Pose
 
 class Robot:
@@ -41,30 +47,137 @@ class Robot:
         executor.robot = self
         self.path_executor = executor
 
+    def follow_path(self, path, realtime_factor=1.0, 
+                    use_thread=True, blocking=False):
+        """ Follows a specified base path """
+        if path is None or self.path_executor is None:
+            return
+
+        if use_thread:
+            # Start a thread with the path execution
+            self.nav_thread = threading.Thread(target=self.path_executor.execute,
+                                               args=(path, realtime_factor))
+            self.nav_thread.start()
+            if blocking:
+                success = self.nav_thread.join()
+            else:
+                success = True
+        else:
+            success = self.path_executor.execute(path, realtime_factor)
+        return success
+
+    def pick_object(self, obj_query):
+        """ 
+        Picks up an object in the world given an object and location query. 
+        Returns True if successful and False otherwise.
+        """
+        # Validate input
+        if self.manipulated_object is not None:
+            warnings.warn(f"Robot is already holding {self.robot.manipulated_object.name}.")
+            return False
+
+        # Get object
+        loc = self.location
+        if isinstance(obj_query, Object):
+            obj = obj_query
+        else:
+            obj = self.world.get_object_by_name(obj_query)
+            if not obj:
+                obj = resolve_to_object(
+                    self.world, category=obj_query, location=loc,
+                    resolution_strategy="nearest")
+            if not obj:
+                warnings.warn(f"Found no object {obj_query} to pick.")
+                return False
+
+        # Validate the robot location
+        if obj.parent != loc:
+            warnings.warn(f"{obj.name} is at {obj.parent.name} and robot" +
+                          f"is at {loc.name}. Cannot pick.")
+            return False
+    
+        # Denote the target object as the manipulated object
+        self.manipulated_object = obj
+        obj.parent.children.remove(obj)
+        obj.parent = self
+        obj.pose = self.pose
+        return True
+
+    def place_object(self, loc, pose=None):
+        """
+        Places an object in a target location and (optionally) pose.
+        Returns True if successful and False otherwise.
+        """
+        # Validate input
+        if self.manipulated_object is None:
+            warnings.warn("No manipulated object.")
+            return False
+
+        # Validate the robot location
+        loc = self.location
+        if not isinstance(loc, ObjectSpawn):
+            warnings.warn("Not an object spawn. Cannot place object.")
+            return False
+
+        # Place the object somewhere in the current location
+        poly = inflate_polygon(self.manipulated_object.get_raw_polygon(),
+                               self.world.object_radius)
+        if pose is None:
+            # If no pose was specified, sample one
+            is_valid_pose = False
+            for _ in range(self.world.max_object_sample_tries):
+                x_sample, y_sample = sample_from_polygon(loc.polygon)
+                yaw_sample = np.random.uniform(-np.pi, np.pi)
+                pose_sample = Pose(x=x_sample, y=y_sample, yaw=yaw_sample)
+                sample_poly = transform_polygon(poly, pose_sample)
+                is_valid_pose = sample_poly.within(loc.polygon)
+                for other_obj in loc.children:
+                    is_valid_pose = is_valid_pose and not sample_poly.intersects(other_obj.polygon)
+                if is_valid_pose:
+                    self.manipulated_object.pose = pose_sample
+                    self.manipulated_object.parent = loc
+                    self.manipulated_object.create_polygons()
+                    loc.children.append(self.manipulated_object)
+                    self.manipulated_object = None
+                    return True
+            warnings.warn(f"Could not sample a placement position at {loc.name}")
+            return False
+        else:
+            # If a pose was specified, collision check it
+            poly = transform_polygon(poly, pose_sample)
+            is_valid_pose = poly.within(loc.polygon)
+            for other_obj in loc.children:
+                is_valid_pose = is_valid_pose and not poly.intersects(other_obj.polygon)
+            if is_valid_pose:
+                return True
+            else:
+                warnings.warn(f"Pose in collision or not in location {loc.name}.")
+                return False
+
     def execute_action(self, action, blocking=False):
         """ Executes an action, specified as a TaskAction object """
+        robot = self.world.robot
         self.executing_action = True
         self.current_action = action
         if self.world.has_gui:
             self.world.gui.set_buttons_during_action(False)
 
-        # TODO: Make actions callable from the robot, not the world
         if action.type == "navigate":
             if self.world.has_gui:
                 success = self.world.gui.wg.navigate(action.target_location)
             else:
                 path = self.world.find_path(action.target_location)
-                success = self.world.execute_path(path, realtime_factor=1.0, blocking=blocking)
+                success = robot.follow_path(path, realtime_factor=1.0, blocking=blocking)
         elif action.type == "pick":
             if self.world.has_gui:
                 success = self.world.gui.wg.pick_object(action.object)
             else:
-                success = self.world.pick_object(action.object)
+                success = self.pick_object(action.object)
         elif action.type == "place":
             if self.world.has_gui:
                 success = self.world.gui.wg.place_object(None)
             else:
-                success = self.world.place_object(None)
+                success = self.place_object(None)
         else:
             print(f"Invalid action type: {action.type}")
             success = False
