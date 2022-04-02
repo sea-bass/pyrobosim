@@ -213,7 +213,7 @@ class WorldGUI(FigureCanvasQTAgg):
                 a.set_animated(True)
             self.draw_and_sleep()
             bg = self.fig.canvas.copy_from_bbox(self.fig.bbox)
-            while self.world.robot.executing_action:
+            while self.world.robot.executing_nav:
                 time.sleep(sleep_time) # Needs to happen before blitting to avoid race condition
                 self.fig.canvas.restore_region(bg)
                 self.update_robot_plot()

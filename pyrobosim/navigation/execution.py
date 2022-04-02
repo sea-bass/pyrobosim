@@ -25,7 +25,7 @@ class ConstantVelocityExecutor:
         if self.robot is None:
             warnings.warn("No robot attached to execute the trajectory.")
             return
-        self.robot.executing_action = True
+        self.robot.executing_nav = True
         
         # Convert the path to an interpolated trajectory
         traj = get_constant_speed_trajectory(
@@ -46,5 +46,5 @@ class ConstantVelocityExecutor:
 
         # Finalize path execution
         self.robot.location = path[-1].parent
-        self.robot.executing_action = False
+        self.robot.executing_nav = False
         return True

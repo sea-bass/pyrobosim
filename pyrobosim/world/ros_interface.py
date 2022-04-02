@@ -2,14 +2,13 @@
 ROS interface to world model
 """
 
-import time
 import threading
 import rclpy
 from rclpy.node import Node
 from transforms3d.euler import euler2quat
 
 from pyrobosim.msg import RobotState, TaskAction, TaskPlan
-
+from pyrobosim.planning.ros_utils import task_action_from_ros, task_plan_from_ros
 
 class WorldROSWrapper(Node):
     def __init__(self, world, name="pyrobosim", state_pub_rate=0.1):
@@ -23,7 +22,7 @@ class WorldROSWrapper(Node):
         self.world.has_ros_node = True
 
         # Internal state
-        self.executing_command = False
+        self.executing_plan = False
         self.last_command_status = None
 
         # Subscriber to single action
@@ -54,86 +53,26 @@ class WorldROSWrapper(Node):
 
     def action_callback(self, msg):
         """ Handle single action callback """
-        if self.executing_command:
-            self.get_logger().info(f"Currently executing command. Discarding this one.")
+        if self.is_robot_busy():
+            self.get_logger().info(f"Currently executing action(s). Discarding this one.")
             return
-        t = threading.Thread(target=self.execute_action, args=(msg,))
+        t = threading.Thread(target=self.world.robot.execute_action,
+                             args=(task_action_from_ros(msg),))
         t.start()
-
-
-    def execute_action(self, msg):
-        """ Executes an action """
-        self.executing_command = True
-        self.get_logger().info(f"Executing action {msg.type}")
-        if self.world.has_gui:
-            self.world.gui.set_buttons_during_action(False)
-
-        success = self.run_action(msg)
-
-        if self.world.has_gui:
-            self.world.gui.set_buttons_during_action(True)
-        self.get_logger().info(f"Action completed with success: {success}")
-        self.last_command_status = success
-        self.executing_command = False
 
 
     def plan_callback(self, msg):
         """ Handle task plan callback """
-        if self.executing_command:
-            self.get_logger().info(f"Currently executing command. Discarding this one.")
+        if self.is_robot_busy():
+            self.get_logger().info(f"Currently executing action(s). Discarding this one.")
             return
-        t = threading.Thread(target=self.execute_plan, args=(msg,))
+        t = threading.Thread(target=self.world.robot.execute_plan,
+                             args=(task_plan_from_ros(msg),))
         t.start()
 
 
-    def execute_plan(self, msg):
-        """ Executes a task plan """
-        self.executing_command = True
-        self.get_logger().info(f"Executing task plan...")
-        if self.world.has_gui:
-            self.world.gui.set_buttons_during_action(False)
-
-        success = True
-        num_acts = len(msg.actions)
-        for n, act_msg in enumerate(msg.actions):
-            self.get_logger().info(
-                f"Executing action {act_msg.type} [{n+1}/{num_acts}]")
-            success = self.run_action(act_msg)
-            if not success:
-                self.get_logger().info(f"Task plan failed to execute on action {n+1}")
-                break
-            time.sleep(0.5) # Artificial delay between actions
-
-        if self.world.has_gui:
-            self.world.gui.set_buttons_during_action(True)
-        self.get_logger().info(f"Task plan completed with success: {success}")
-        self.last_command_status = success
-        self.executing_command = False
-
-
-    def run_action(self, msg):
-        """ Runs an action in the world model """
-        if msg.type == "navigate":
-            if self.world.has_gui:
-                success = self.world.gui.wg.navigate(msg.target_location)
-            else:
-                path = self.world.find_path(msg.target_location)
-                success = self.world.execute_path(path, dt=0.1, realtime_factor=1.0,
-                                                  linear_velocity=1.0, max_angular_velocity=None)
-        elif msg.type == "pick":
-            if self.world.has_gui:
-                success = self.world.gui.wg.pick_object(msg.object)
-            else:
-                success = self.world.pick_object(msg.object)
-        elif msg.type == "place":
-            if self.world.has_gui:
-                success = self.world.gui.wg.place_object(None)
-            else:
-                success = self.world.place_object(None)
-        else:
-            self.get_logger().info(f"Invalid action type: {msg.type}")
-            success = False
-        return success
+    def is_robot_busy(self):
+        return self.world.robot.executing_action or self.world.robot.executing_plan
 
 
     def publish_robot_state(self):

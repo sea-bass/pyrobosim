@@ -652,6 +652,7 @@ class World:
             self.robot = robot
             self.robot.location = loc
             self.robot.set_pose(robot_pose)
+            self.robot.world = self
             self.has_robot = True
         else:
             warnings.warn("Could not add robot.")
@@ -677,9 +678,12 @@ class World:
                                                args=(path, realtime_factor))
             self.nav_thread.start()
             if blocking:
-                self.nav_thread.join()
+                success = self.nav_thread.join()
+            else:
+                success = True
         else:
-            self.robot.path_executor.execute(path, realtime_factor)
+            success = self.robot.path_executor.execute(path, realtime_factor)
+        return success
 
     def pick_object(self, obj_query):
         """ 
