@@ -164,7 +164,11 @@ class Robot:
 
         if action.type == "navigate":
             if self.world.has_gui:
-                success = self.world.gui.wg.navigate(action.target_location)
+                self.executing_nav = True
+                self.world.gui.wg.nav_trigger.emit(action.target_location)
+                while self.executing_nav:
+                    time.sleep(0.5) # Delay to wait for navigation
+                success = True # TODO Need to keep track of nav status
             else:
                 path = self.world.find_path(action.target_location)
                 success = robot.follow_path(path, realtime_factor=1.0, blocking=blocking)
@@ -201,7 +205,7 @@ class Robot:
         num_acts = len(plan.actions)
         for n, act_msg in enumerate(plan.actions):
             print(f"Executing action {act_msg.type} [{n+1}/{num_acts}]")
-            success = self.execute_action(act_msg)
+            success = self.execute_action(act_msg, blocking=blocking)
             if not success:
                 print(f"Task plan failed to execute on action {n+1}")
                 break

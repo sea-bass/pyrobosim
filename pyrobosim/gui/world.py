@@ -4,7 +4,7 @@ import time
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.transforms import Affine2D
-
+from PyQt5.QtCore import pyqtSignal
 
 class WorldGUI(FigureCanvasQTAgg):
     animation_dt = 0.1
@@ -13,9 +13,13 @@ class WorldGUI(FigureCanvasQTAgg):
     object_zorder = 3
     robot_zorder = 3
 
+    # Trigger for navigation method
+    nav_trigger = pyqtSignal(str)
+
     def __init__(self, world, width=5, height=4, dpi=100):
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = self.fig.add_subplot(111)
+        super(WorldGUI, self).__init__(self.fig)
 
         self.world = world
 
@@ -33,7 +37,8 @@ class WorldGUI(FigureCanvasQTAgg):
         # Debug displays (TODO: Should be available from GUI)
         self.show_collision_polygons = False
 
-        super(WorldGUI, self).__init__(self.fig)
+        # Connect triggers for thread-safe execution
+        self.nav_trigger.connect(self.navigate)
 
     def show_robot(self):
         """ Creates the robot for visualization """
@@ -227,7 +232,7 @@ class WorldGUI(FigureCanvasQTAgg):
             for a in animated_artists:
                 a.set_animated(False)
         else:
-            while self.world.robot.executing_action:
+            while self.world.robot.executing_nav:
                 self.update_robot_plot()
                 self.update_object_plot(self.world.robot.manipulated_object)
                 self.show_world_state(navigating=True)
