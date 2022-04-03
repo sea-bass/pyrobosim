@@ -1,0 +1,150 @@
+"""
+Utilities to create worlds from YAML files
+"""
+
+import numpy as np
+import os
+import warnings
+import yaml
+
+from .robot import Robot
+from .room import Room
+from .world import World
+from ..utils.pose import Pose
+
+
+def get_value_or(data, key, default=None):
+    """ 
+    Utility function to get a value from a dictionary if the key exists,
+    or else get a default value.
+    """
+    return data[key] if key in data else default
+
+
+class WorldYamlLoader:
+    world = None
+
+    def from_yaml(self, filename):
+        """ Load a world from a YAML description. """
+        self.filename = filename
+        with open(self.filename) as file:
+            self.data = yaml.load(file, Loader=yaml.FullLoader)
+
+        # Build the world
+        self.create_world()
+        self.add_rooms()
+        self.add_hallways()
+        self.add_locations()
+        self.add_objects()
+        self.add_robot()
+        self.add_planner()
+        return self.world
+
+
+    def create_world(self):
+        """ Creates an initial world given parameters """
+        if "params" not in self.data:
+            return
+        params = self.data["params"]
+
+        name = get_value_or(params, "name", default="world")
+        inf_radius = get_value_or(params, "inflation_radius", default=0.0)
+        obj_radius = get_value_or(params, "object_radius", default=0.0)
+
+        self.world = World(name=name, inflation_radius=inf_radius, object_radius=obj_radius)
+
+        # Set the metadata
+        # TODO: Validate this data better
+        world_dir = os.path.dirname(self.filename)
+        self.world.set_metadata(
+            locations=os.path.join(world_dir, self.data["metadata"]["locations"]),
+            objects=os.path.join(world_dir, self.data["metadata"]["objects"]))
+
+
+    def add_rooms(self):
+        """ Add rooms to the world """
+        if "rooms" not in self.data:
+            return
+
+        for room in self.data["rooms"]:
+            # TODO Directly create room polygon from data
+            from ..utils.polygon import polygon_from_footprint
+            polygon = polygon_from_footprint(room["footprint"])
+            coords = list(polygon.exterior.coords)
+            
+            # TODO Load in nav poses
+            nav_poses = None
+        
+            r = Room(coords, name=room["name"], color=room["color"], 
+                     wall_width=room["wall_width"], nav_poses=nav_poses)
+            self.world.add_room(r)
+        
+
+    def add_hallways(self):
+        """ Add hallways connecting rooms to the world """
+        if "hallways" not in self.data:
+            return
+
+        for hall in self.data["hallways"]:
+            conn_method = get_value_or(hall, "conn_method", default="auto")
+            offset = get_value_or(hall, "offset", default=0.0)
+            conn_angle = get_value_or(hall, "conn_angle", default=0.0)
+            conn_points = get_value_or(hall, "conn_points", default=[])
+            color = get_value_or(hall, "color", default=[0.4, 0.4, 0.4])
+            wall_width = get_value_or(hall, "wall_width", default=0.2)
+
+            self.world.add_hallway(
+                hall["from"], hall["to"], hall["width"],
+                conn_method=conn_method, offset=offset, 
+                conn_angle=conn_angle, conn_points=conn_points,
+                color=color, wall_width=wall_width)
+
+
+    def add_locations(self):
+        """ Add locations for object spawning to the world """
+        if "locations" not in self.data:
+            return
+        # TODO: Fill this in
+        
+
+    def add_objects(self):
+        """ Add objects to the world """
+        if "objects" not in self.data:
+            return
+        # TODO: Fill this in
+
+
+    def add_robot(self):
+        """ Add a robot to the world """
+        if "robots" not in self.data:
+            return
+
+        # We only support a single robot now, so output the appropriate warning.
+        if len(self.data["robots"]) > 1:
+            warnings.warn("Multiple robots not supported. Only using the first one.")
+        robot_data = self.data["robots"][0]
+
+        from pyrobosim.navigation.execution import ConstantVelocityExecutor
+        robot = Robot(radius=robot_data["radius"], path_executor=ConstantVelocityExecutor())
+        
+        loc = robot_data["location"] if "location" in robot_data else None
+        if "pose" in robot_data:
+            pvec = robot_data["pose"]
+            pose = Pose(x=pvec[0], y=pvec[1], yaw=pvec[2])
+        else:
+            pose = None
+        self.world.add_robot(robot, loc=loc, pose=pose)
+
+
+    def add_planner(self):
+        """ Adds a global planner to the world """
+        if "planning" not in self.data or "planner_type" not in self.data["planning"]:
+            return
+        planning = self.data["planning"]
+        planner_type = planning["planner_type"]
+        
+        if planner_type == "search_graph":
+            max_edge_dist = get_value_or(planning, "max_edge_dist", default=np.inf)
+            collision_check_dist = get_value_or(planning, "collision_check_dist", default=0.1)
+            self.world.create_search_graph(
+                max_edge_dist=max_edge_dist, collision_check_dist=collision_check_dist)

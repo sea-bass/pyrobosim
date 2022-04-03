@@ -14,7 +14,9 @@ from ..utils.pose import Pose
 from ..utils.polygon import inflate_polygon, sample_from_polygon, transform_polygon
 
 class World:
-    def __init__(self, inflation_radius=0.0, object_radius=0.05):
+    def __init__(self, name="world", inflation_radius=0.0, object_radius=0.05):
+        self.name = name
+
         # Connected apps
         self.has_gui = False
         self.gui = None
@@ -119,8 +121,8 @@ class World:
         warnings.warn(f"No room {room_name} found for removal")
 
     def add_hallway(self, room_start, room_end, width,
-                    conn_method="auto", offset=0,
-                    conn_angle=0, conn_points=[], color=None):
+                    conn_method="auto", offset=0, conn_angle=0,
+                    conn_points=[], color=[0.4, 0.4, 0.4], wall_width=0.2):
         """
         Adds a hallway from room_start to room_end, with a specified 
         width and options related to the Hallway class
@@ -135,7 +137,7 @@ class World:
         h = Hallway(room_start, room_end, width,
                     conn_method=conn_method, offset=offset,
                     conn_angle=conn_angle, conn_points=conn_points,
-                    color=color)
+                    color=color, wall_width=wall_width)
 
         # Check if the hallway collides with any other rooms or hallways
         is_valid_pose = True

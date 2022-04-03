@@ -74,6 +74,12 @@ def create_world():
     return w
 
 
+def create_world_from_yaml():
+    from pyrobosim.world.yaml import WorldYamlLoader
+    loader = WorldYamlLoader()
+    return loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
+
+
 def start_gui(world, args):
     """ Initializes GUI """
     from pyrobosim.gui.main import PyRoboSim
@@ -95,31 +101,37 @@ def parse_args():
     """ Parse command-line arguments """
     parser = argparse.ArgumentParser()
     parser.add_argument("--ros", action="store_true")
+    parser.add_argument("--from-yaml", action="store_true")
     return parser.parse_args()
 
 
-def main():
+def main(world):
     """ Main for standalone operation """
-    w = create_world()
-    start_gui(w, sys.argv)
+    start_gui(world, sys.argv)
 
 
-def main_ros():
+def main_ros(world):
     """ Main for ROS operation """
-    w = create_world()
-
     # Start ROS Node in separate thread
     import threading
-    t = threading.Thread(target=start_ros_node, args=(w,))
+    t = threading.Thread(target=start_ros_node, args=(world,))
     t.start()
 
     # Start GUI in main thread
-    start_gui(w, sys.argv)
+    start_gui(world, sys.argv)
 
 
 if __name__ == "__main__":
     args = parse_args()
-    if args.ros:
-        main_ros()
+
+    # Create a world
+    if args.from_yaml:
+        w = create_world_from_yaml()
     else:
-        main()
+        w = create_world()
+
+    # Start the program
+    if args.ros:
+        main_ros(w)
+    else:
+        main(w)
