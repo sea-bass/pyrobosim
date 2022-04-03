@@ -147,8 +147,8 @@ class WorldGUI(FigureCanvasQTAgg):
             y = [p.pose.y for p in self.world.current_path]
 
             if self.displayed_path is None:
-                self.displayed_path, = self.axes.plot(x, y, "m-", linewidth=3,
-                                                      zorder=1)
+                self.displayed_path, = self.axes.plot(
+                    x, y, "m-", linewidth=3, zorder=1)
                 self.displayed_path_start = self.axes.scatter(
                     x[0], y[0], 60, "g", "o", zorder=2)
                 self.displayed_path_goal = self.axes.scatter(
@@ -158,6 +158,14 @@ class WorldGUI(FigureCanvasQTAgg):
                 self.displayed_path.set_ydata(y)
                 self.displayed_path_start.set_offsets((x[0], y[0]))
                 self.displayed_path_goal.set_offsets((x[-1], y[-1]))
+                self.displayed_path.set_visible(True)
+                self.displayed_path_start.set_visible(True)
+                self.displayed_path_goal.set_visible(True)
+        else:
+            if self.displayed_path is not None:
+                self.displayed_path.set_visible(False)
+                self.displayed_path_start.set_visible(False)
+                self.displayed_path_goal.set_visible(False)
 
     def update_robot_plot(self):
         """ Updates the robot visualization graphics objects """

@@ -87,7 +87,6 @@ class WorldWidget(QtWidgets.QMainWindow):
     ####################
     # State Management #
     ####################
-
     def update_manip_state(self):
         """ Update the manipulation state to enable/disable buttons """
         can_pick = self.wg.world.has_robot and \
@@ -114,6 +113,8 @@ class WorldWidget(QtWidgets.QMainWindow):
         if sampled_pose is not None:
             self.wg.world.robot.set_pose(sampled_pose)
         self.wg.update_robot_plot()
+        self.wg.world.current_path = None
+        self.wg.show_path()
         self.wg.show_world_state(navigating=True)
         self.wg.draw()
 
