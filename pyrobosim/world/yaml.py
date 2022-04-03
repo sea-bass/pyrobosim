@@ -30,7 +30,7 @@ class WorldYamlLoader:
         with open(self.filename) as file:
             self.data = yaml.load(file, Loader=yaml.FullLoader)
 
-        # Build the world
+        # Build and return the world
         self.create_world()
         self.add_rooms()
         self.add_hallways()
@@ -42,23 +42,29 @@ class WorldYamlLoader:
 
 
     def create_world(self):
-        """ Creates an initial world given parameters """
-        if "params" not in self.data:
-            return
-        params = self.data["params"]
+        """ Creates an initial world """
+        # Create a world given its global parameters
+        if "params" in self.data:
+            params = self.data["params"]
+            name = get_value_or(params, "name", default="world")
+            inf_radius = get_value_or(params, "inflation_radius", default=0.0)
+            obj_radius = get_value_or(params, "object_radius", default=0.0)
+            self.world = World(name=name, inflation_radius=inf_radius, object_radius=obj_radius)
+        else:
+            self.world = World()
 
-        name = get_value_or(params, "name", default="world")
-        inf_radius = get_value_or(params, "inflation_radius", default=0.0)
-        obj_radius = get_value_or(params, "object_radius", default=0.0)
-
-        self.world = World(name=name, inflation_radius=inf_radius, object_radius=obj_radius)
-
-        # Set the metadata
-        # TODO: Validate this data better
+        # Set the location/object metadata
         world_dir = os.path.dirname(self.filename)
-        self.world.set_metadata(
-            locations=os.path.join(world_dir, self.data["metadata"]["locations"]),
-            objects=os.path.join(world_dir, self.data["metadata"]["objects"]))
+        metadata = self.data["metadata"]
+        if "locations" in metadata:
+            loc_data = os.path.join(world_dir, metadata["locations"])
+        else:
+            loc_data = None
+        if "objects" in metadata:
+            obj_data = os.path.join(world_dir, metadata["objects"])
+        else:
+            obj_data = None
+        self.world.set_metadata(locations=loc_data, objects=obj_data)
 
 
     def add_rooms(self):
@@ -66,18 +72,18 @@ class WorldYamlLoader:
         if "rooms" not in self.data:
             return
 
-        for room in self.data["rooms"]:
-            # TODO Directly create room polygon from data
-            from ..utils.polygon import polygon_from_footprint
-            polygon = polygon_from_footprint(room["footprint"])
-            coords = list(polygon.exterior.coords)
-            
-            # TODO Load in nav poses
-            nav_poses = None
+        for room_data in self.data["rooms"]:
+            name = get_value_or(room_data, "name", default=None)
+            color = get_value_or(room_data, "color", default=[0.4, 0.4, 0.4])
+            wall_width = get_value_or(room_data, "wall_width", default=0.2)
+            if "nav_poses" in room_data:
+                nav_poses = [Pose(x=p[0], y=p[1], yaw=p[2]) for p in room_data["nav_poses"]]
+            else:
+                nav_poses = None
         
-            r = Room(coords, name=room["name"], color=room["color"], 
-                     wall_width=room["wall_width"], nav_poses=nav_poses)
-            self.world.add_room(r)
+            room = Room(room_data["footprint"], name=name, color=color, 
+                        wall_width=wall_width, nav_poses=nav_poses)
+            self.world.add_room(room)
         
 
     def add_hallways(self):

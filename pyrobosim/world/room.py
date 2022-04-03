@@ -8,11 +8,11 @@ from descartes.patch import PolygonPatch
 
 from ..navigation.search_graph import Node
 from ..utils.pose import Pose
-from ..utils.polygon import inflate_polygon
+from ..utils.polygon import inflate_polygon, polygon_from_footprint
 
 
 class Room:
-    def __init__(self, coords, name=None, color=[0.4, 0.4, 0.4], wall_width=0.2, nav_poses=None):
+    def __init__(self, footprint, name=None, color=[0.4, 0.4, 0.4], wall_width=0.2, nav_poses=None):
         self.name = name
         self.wall_width = wall_width
         self.viz_color = color
@@ -23,7 +23,10 @@ class Room:
         self.graph_nodes = []
 
         # Create the room polygon
-        self.polygon = Polygon(coords)
+        if isinstance(footprint, list):
+            self.polygon = Polygon(footprint)
+        else:
+            self.polygon = polygon_from_footprint(footprint)
         self.centroid = list(self.polygon.centroid.coords)[0]
         self.update_collision_polygons()
         self.update_visualization_polygon()
