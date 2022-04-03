@@ -5,7 +5,7 @@
   <version>0.0.0</version>
   <description>ROS2 enabled 2D mobile robot simulator for behavior prototyping.</description>
   <maintainer email="sebas.a.castro@gmail.com">Sebastian Castro</maintainer>
-  <license>MIT</license>
+  <license>BSD</license>
 
   <!-- Build dependencies -->
   <buildtool_depend>ament_cmake</buildtool_depend>
