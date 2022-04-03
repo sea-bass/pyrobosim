@@ -13,6 +13,26 @@ class Pose:
         self.z = z
         self.yaw = wrap_angle(yaw)
 
+    @classmethod
+    def from_list(cls, plist):
+        """ 
+        Creates a pose from a list.The assumptions are:
+            - 2-element lists are [x, y]
+            - 3-element lists are [x, y, yaw]
+            - 4-element lists are [x, y, z, yaw]
+        """
+        num_elems = len(plist)
+        plist = [float(elem) for elem in plist]
+        if num_elems == 2:
+            return cls(x=plist[0], y=plist[1])
+        elif num_elems == 3:
+            return cls(x=plist[0], y=plist[1], yaw=plist[2])
+        elif num_elems == 4:
+            return cls(x=plist[0], y=plist[1], z=plist[2], yaw=plist[3])
+        else:
+            raise Exception("List must contain 2, 3, or 4 elements.")
+
+
     def get_linear_distance(self, other, ignore_z=False):
         """ Gets the straight-line distance between two poses """
         sum_squares = (other.x - self.x)**2 + (other.y - self.y)**2
@@ -51,6 +71,7 @@ def get_bearing_range(p1, p2):
     bear = get_angle(p1, p2)
     return (bear, rng)
 
+
 def rot2d(vec, ang):
     """ Rotates a 2-element vector `vec` by an angle `ang` """
     v = np.array([[vec[0]],
@@ -59,6 +80,7 @@ def rot2d(vec, ang):
                   [np.sin(ang),  np.cos(ang)]])
     v_tf = np.matmul(M, v)
     return v_tf.flatten().tolist()
+
 
 def wrap_angle(ang):
     """ Wraps an angle in the range [-pi, pi]. """

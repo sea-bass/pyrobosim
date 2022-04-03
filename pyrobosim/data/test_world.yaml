@@ -40,6 +40,8 @@ rooms:
         - [1.5, -1]
         - [1.5, 1.5]
         - [0.5, 1.5]
+    nav_poses:
+      - [0.75, 0.75, 0.0]
     wall_width: 0.2
     color: [1, 0, 0]
 
@@ -87,7 +89,48 @@ hallways:
       - [2.5, 3.0]
 
 
-# LOCATIONS: TODO
+# LOCATIONS: Can contain objects
+locations:
+  - name: table0
+    type: table
+    room: kitchen
+    pose: [0.85, -0.5, -1.57]
+
+  - name: my_desk
+    type: desk
+    room: bedroom
+    pose: [3.15, 3.65, 0.0]
+
+  - name: counter0
+    type: counter
+    room: bathroom
+    pose: [-2.45, 2.5, 1.767]
 
 
-# OBJECTS: TODO
+# OBJECTS: Can be picked, placed, and move by robot
+objects:
+  - type: banana
+    location: table0
+    pose: [1.0, -0.5, 0.707]
+
+  - type: apple
+    location: my_desk
+    pose: [3.2, 3.5, 0.0]
+
+  - name: gala
+    type: apple
+    location: table0
+
+  - name: fuji
+    type: apple
+    location: table0
+
+  - type: water
+    location: counter0
+
+  - type: banana
+    location: counter0
+
+  - name: my_water
+    type: water
+    location: my_desk

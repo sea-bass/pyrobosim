@@ -35,7 +35,7 @@ class Room:
         if nav_poses is not None:
             self.nav_poses = nav_poses
         else:
-            self.nav_poses = [Pose(x=self.centroid[0], y=self.centroid[1])]
+            self.nav_poses = [Pose.from_list(self.centroid)]
 
     def update_collision_polygons(self, inflation_radius=0):
         """ Updates collision polygons using the specified inflation radius """

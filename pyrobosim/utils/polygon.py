@@ -112,12 +112,7 @@ def polygon_from_footprint(footprint, pose=None, parent_polygon=None):
 
     # Offset the polygon, if specified
     if "offset" in footprint:
-        offset_vec = footprint["offset"]
-        if len(offset_vec) == 2:
-            offset_pose = Pose(x=offset_vec[0], y=offset_vec[1])
-        elif len(offset_vec) == 3:
-            offset_pose = Pose(x=offset_vec[0], y=offset_vec[1], yaw=offset_vec[2])
-        polygon = transform_polygon(polygon, offset_pose)
+        polygon = transform_polygon(polygon, Pose.from_list(footprint["offset"]))
 
     if pose is not None and ftype != "parent":
         polygon = transform_polygon(polygon, pose)

@@ -77,7 +77,7 @@ class WorldYamlLoader:
             color = get_value_or(room_data, "color", default=[0.4, 0.4, 0.4])
             wall_width = get_value_or(room_data, "wall_width", default=0.2)
             if "nav_poses" in room_data:
-                nav_poses = [Pose(x=p[0], y=p[1], yaw=p[2]) for p in room_data["nav_poses"]]
+                nav_poses = [Pose.from_list(p) for p in room_data["nav_poses"]]
             else:
                 nav_poses = None
         
@@ -110,14 +110,29 @@ class WorldYamlLoader:
         """ Add locations for object spawning to the world """
         if "locations" not in self.data:
             return
-        # TODO: Fill this in
+        
+        for loc in self.data["locations"]:
+            category = loc["type"]
+            room = loc["room"]
+            pose = Pose.from_list(loc["pose"])
+            name = get_value_or(loc, "name", default=None)
+            self.world.add_location(category, room, pose, name=name)
         
 
     def add_objects(self):
         """ Add objects to the world """
         if "objects" not in self.data:
             return
-        # TODO: Fill this in
+        
+        for obj in self.data["objects"]:
+            category = obj["type"]
+            loc = obj["location"]
+            if "pose" in obj:
+                pose = Pose.from_list(obj["pose"])
+            else:
+                pose = None
+            name = get_value_or(obj, "name", default=None)
+            self.world.add_object(category, loc, pose=pose, name=name)
 
 
     def add_robot(self):
@@ -135,8 +150,7 @@ class WorldYamlLoader:
         
         loc = robot_data["location"] if "location" in robot_data else None
         if "pose" in robot_data:
-            pvec = robot_data["pose"]
-            pose = Pose(x=pvec[0], y=pvec[1], yaw=pvec[2])
+            pose = Pose.from_list(robot_data["pose"])
         else:
             pose = None
         self.world.add_robot(robot, loc=loc, pose=pose)
