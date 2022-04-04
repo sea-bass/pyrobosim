@@ -1,8 +1,11 @@
 import numpy as np
 from PyQt5 import QtWidgets
+from matplotlib.backends.qt_compat import QtCore
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
 
 from ..gui.world import WorldGUI
 from ..utils.knowledge import query_to_entity
+
 
 class PyRoboSim(QtWidgets.QApplication):
     def __init__(self, world, args):
@@ -74,12 +77,18 @@ class WorldWidget(QtWidgets.QMainWindow):
         self.place_button.clicked.connect(self.on_place_click)
         self.action_layout.addWidget(self.place_button)
 
+        # World layout (Matplotlib affordances)
+        self.world_layout = QtWidgets.QVBoxLayout()
+        self.nav_toolbar = NavigationToolbar2QT(self.wg, self)
+        self.addToolBar(QtCore.Qt.BottomToolBarArea, self.nav_toolbar)
+        self.world_layout.addWidget(self.wg)
+
         # Main layout
         self.main_layout = QtWidgets.QVBoxLayout(self.main_widget)
         self.main_layout.addLayout(self.buttons_layout)
         self.main_layout.addLayout(self.goal_layout)
         self.main_layout.addLayout(self.action_layout)
-        self.main_layout.addWidget(self.wg)
+        self.main_layout.addLayout(self.world_layout)
 
         self.main_widget.setLayout(self.main_layout)
         self.setCentralWidget(self.main_widget)

@@ -17,7 +17,7 @@ class WorldGUI(FigureCanvasQTAgg):
     nav_trigger = pyqtSignal(str)
 
     def __init__(self, world, width=5, height=4, dpi=100):
-        self.fig = Figure(figsize=(width, height), dpi=dpi)
+        self.fig = Figure(figsize=(width, height), dpi=dpi, layout="tight")
         self.axes = self.fig.add_subplot(111)
         super(WorldGUI, self).__init__(self.fig)
 
