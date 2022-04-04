@@ -66,7 +66,7 @@ class WorldGUI(FigureCanvasQTAgg):
             self.axes.add_patch(r.viz_patch)
             t = self.axes.text(r.centroid[0], r.centroid[1], r.name,
                                color=r.viz_color, fontsize=12,
-                               ha="center", va="top")
+                               ha="center", va="top", clip_on=True)
             if self.show_collision_polygons:
                 self.axes.add_patch(r.get_collision_patch())
         for h in self.world.hallways:
@@ -79,7 +79,7 @@ class WorldGUI(FigureCanvasQTAgg):
             self.axes.add_patch(loc.viz_patch)
             t = self.axes.text(loc.pose.x, loc.pose.y, loc.name,
                                color=loc.viz_color, fontsize=10,
-                               ha="center", va="top")
+                               ha="center", va="top", clip_on=True)
             for spawn in loc.children:
                 self.axes.add_patch(spawn.viz_patch)
 
@@ -89,7 +89,7 @@ class WorldGUI(FigureCanvasQTAgg):
             xmin, ymin, xmax, ymax = obj.polygon.bounds
             x = obj.pose.x + 1.0*(xmax - xmin)
             y = obj.pose.y + 1.0*(ymax - ymin)
-            obj.viz_text = self.axes.text(x, y, obj.name,
+            obj.viz_text = self.axes.text(x, y, obj.name, clip_on=True,
                                           color=obj.viz_color, fontsize=8)
         self.obj_patches = [o.viz_patch for o in (self.world.objects)]
         self.obj_texts = [o.viz_text for o in (self.world.objects)]
