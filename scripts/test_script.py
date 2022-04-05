@@ -9,26 +9,21 @@ import argparse
 import numpy as np
 
 from pyrobosim.navigation.execution import ConstantVelocityExecutor
+from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 from pyrobosim.world.robot import Robot
 from pyrobosim.world.room import Room
 from pyrobosim.world.world import World
 
-# Set the data folder for location and object information.
-try:
-    # If running as a ROS2 node, get the data folder from the package share directory.
-    from ament_index_python.packages import get_package_share_directory
-    data_folder = os.path.join(
-        get_package_share_directory("pyrobosim"), "data")
-except:
-    # Else, assume it's relative to the file's current directory.
-    data_folder = os.path.join(os.path.dirname(
-        os.path.abspath(__file__)), "..", "pyrobosim", "data")
+
+data_folder = get_data_folder()
 
 
 def create_world():
-    # Create a world
+    """ Create a test world """
     w = World()
+
+    # Set the location and object metadata
     w.set_metadata(locations=os.path.join(data_folder, "example_location_data.yaml"),
                    objects=os.path.join(data_folder, "example_object_data.yaml"))
 
