@@ -1,8 +1,13 @@
+import os
+import collada
+import trimesh
 import warnings
 import numpy as np
+from scipy.spatial import ConvexHull
 from shapely.affinity import rotate, translate
 from shapely.geometry import Point, Polygon, CAP_STYLE, JOIN_STYLE
 
+from .general import replace_special_yaml_tokens
 from .pose import Pose, rot2d
 
 """
@@ -88,7 +93,10 @@ def polygon_from_footprint(footprint, pose=None, parent_polygon=None):
             - circle
                 - radius: radius of circle
             - polygon
-                - coords: List of (x, y) coordinates 
+                - coords: List of (x, y) coordinates
+            - mesh
+                - model_path: Path to folder containing the .sdf and mesh files
+                - mesh path: Path to mesh file relative to model_path
             - parent: Requires `parent_polygon` to also be passed in
                 - padding: Additional padding relative to the parent polygon
         - offset: Offset (x, y) or (x, y, yaw) from the specified geometry above
@@ -106,6 +114,8 @@ def polygon_from_footprint(footprint, pose=None, parent_polygon=None):
             polygon = Point(0, 0).buffer(footprint["radius"])
         elif ftype == "polygon":
             polygon = Polygon(footprint["coords"])
+        elif ftype == "mesh":
+            polygon = footprint_from_mesh(footprint)
         else:
             warnings.warn(f"Invalid footprint type: {ftype}")
             return None
@@ -129,3 +139,22 @@ def sample_from_polygon(polygon, max_tries=100):
 
     warnings.warn(f"Exceeded max polygon samples samples: {max_tries}")
     return None, None
+
+def footprint_from_mesh(mesh_data):
+    """ 
+    Returns the 2D footprint from a mesh 
+    Right now just supports DAE files
+    """
+    mesh_filename = replace_special_yaml_tokens(
+        os.path.join(mesh_data["model_path"], mesh_data["mesh_path"]))
+    mesh = trimesh.load_mesh(mesh_filename, "dae")
+
+    # Get the unit scale
+    c = collada.Collada(mesh_filename)
+    scale = c.assetInfo.unitmeter
+
+    # Get the convex hull of the 2D points
+    footprint_pts = [[p[0]*scale, p[1]*scale] for p in mesh.convex_hull.vertices]
+    hull = ConvexHull(footprint_pts)
+    hull_pts = hull.points[hull.vertices, :]
+    return Polygon(hull_pts)

@@ -107,6 +107,11 @@ locations:
     room: bathroom
     pose: [-2.45, 2.5, 1.767]
 
+  - name: trash
+    type: trash_can
+    room: kitchen
+    pose: [0.9, 1.1, 1.57]
+
 
 # OBJECTS: Can be picked, placed, and move by robot
 objects:
@@ -124,7 +129,7 @@ objects:
 
   - name: fuji
     type: apple
-    location: table0
+    location: trash
 
   - type: water
     location: counter0
@@ -132,6 +137,6 @@ objects:
   - type: banana
     location: counter0
 
-  - name: my_water
-    type: water
+  - name: soda
+    type: coke
     location: my_desk

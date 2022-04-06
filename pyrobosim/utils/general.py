@@ -15,3 +15,11 @@ def get_data_folder():
             os.path.abspath(__file__)), "..", "pyrobosim", "data")
 
     return data_folder
+
+
+def replace_special_yaml_tokens(in_text):
+    """ Replaces special tokens permitted in our YAML spec """
+    out_text = in_text
+    out_text = out_text.replace("$HOME", os.environ["HOME"])
+    out_text = out_text.replace("$DATA", get_data_folder())
+    return out_text

@@ -4,7 +4,7 @@ Hallway Representation for World Modeling
 
 import warnings
 import numpy as np
-from shapely.geometry import Point, LineString
+from shapely.geometry import LineString, MultiLineString, Point
 from descartes.patch import PolygonPatch
 
 from ..navigation.search_graph import Node
@@ -139,8 +139,16 @@ class Hallway:
             self.room_start.internal_collision_polygon)
         intersect_line = intersect_line.difference(
             self.room_end.internal_collision_polygon)
-        self.graph_nodes = [Node(Pose(x=p[0], y=p[1]), parent=self)
-                            for p in intersect_line.coords]
+        
+        if isinstance(intersect_line, LineString):
+            self.graph_nodes = [Node(Pose(x=p[0], y=p[1]), parent=self)
+                                for p in intersect_line.coords]
+        elif isinstance(intersect_line, MultiLineString):
+            self.graph_nodes = []
+            for line in intersect_line:
+                self.graph_nodes.extend(
+                    [Node(Pose(x=p[0], y=p[1]), parent=self) 
+                     for p in line.coords])
 
     def __repr__(self):
         return f"Hallway: Connecting {self.room_start.name} and {self.room_end.name}"

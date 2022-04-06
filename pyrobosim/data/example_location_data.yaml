@@ -68,3 +68,21 @@ counter:
         - [0, 0.5, -1.57]
         - [0, -0.5, 1.57]
   color: [0, 0.2, 0]
+
+
+trash_can:
+  footprint:
+    type: mesh
+    model_path: $DATA/sample_models/first_2015_trash_can
+    mesh_path: meshes/trash_can.dae
+  locations:
+    - name: "top"
+      footprint:
+        type: parent
+        padding: 0.05
+      height: 1.0
+  nav_poses:
+    - [0.5, 0.0, 3.14]
+    - [-0.5, 0.0, 0.0]
+  color: [0, 0.35, 0.2]
+ 

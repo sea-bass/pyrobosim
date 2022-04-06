@@ -240,9 +240,9 @@ class World:
         Adds an object to a location at the specified pose
         """
         # If no name is specified, create one automatically
+        if category not in self.object_instance_counts:
+            self.object_instance_counts[category] = 0
         if name is None:
-            if category not in self.object_instance_counts:
-                self.object_instance_counts[category] = 0
             name = f"{category}{self.object_instance_counts[category]}"
         self.object_instance_counts[category] +=1
 

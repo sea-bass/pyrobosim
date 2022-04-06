@@ -126,7 +126,9 @@ class SearchGraph:
         path = self.solver.astar(start, goal)
         if path is None:
             warnings.warn("Did not find a path from start to goal.")
-        return list(path)
+            return []
+        else:
+            return list(path)
 
 
 class Node:
