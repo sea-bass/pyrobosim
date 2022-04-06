@@ -1,0 +1,13 @@
+<?xml version='1.0'?>
+<sdf version='1.7'>
+  <!-- Model name -->
+  <model name='$NAME'>
+        <pose>$POSE</pose>
+        <frame name='walls'/>
+    
+    <!-- All the links go here -->
+$LINKS    
+    
+    <static>1</static>
+  </model>
+</sdf>

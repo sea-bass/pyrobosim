@@ -30,6 +30,7 @@ ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
   scripts/test_command_publisher.py
   scripts/test_script.py
+  scripts/test_world_save.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

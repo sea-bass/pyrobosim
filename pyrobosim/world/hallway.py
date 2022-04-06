@@ -43,7 +43,7 @@ class Hallway:
         self.hall_width = hall_width
         self.wall_width = wall_width
         self.offset = offset
-        self.color = color
+        self.viz_color = color
         self.graph_nodes = []
 
         # Parse the connection method
@@ -112,7 +112,7 @@ class Hallway:
             warnings.simplefilter("ignore")
             self.viz_patch = PolygonPatch(
                 self.viz_polygon,
-                fc=self.color, ec=self.color,
+                fc=self.viz_color, ec=self.viz_color,
                 lw=2, alpha=0.75, zorder=2)
 
     def get_collision_patch(self):

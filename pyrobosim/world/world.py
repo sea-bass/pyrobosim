@@ -14,8 +14,9 @@ from ..utils.pose import Pose
 from ..utils.polygon import inflate_polygon, sample_from_polygon, transform_polygon
 
 class World:
-    def __init__(self, name="world", inflation_radius=0.0, object_radius=0.05):
+    def __init__(self, name="world", inflation_radius=0.0, object_radius=0.05, wall_height=2.0):
         self.name = name
+        self.wall_height = wall_height
 
         # Connected apps
         self.has_gui = False

@@ -1,0 +1,36 @@
+    <link name='$LINK_NAME'>
+      <pose>"0 0 0 0 0 0"</pose>
+      <frame name='$LINK_NAME'/>
+      <inertial>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+          <mass>1</mass>
+      </inertial>
+      <collision name='$LINK_NAME_collision'>
+        <geometry>
+          <polyline>
+$WALL_POINTS
+            <height>$WALL_HEIGHT</height>
+          </polyline>
+        </geometry>
+      </collision>
+      <visual name='$LINK_NAME_visual'>
+        <geometry>
+          <polyline>
+$WALL_POINTS
+            <height>$WALL_HEIGHT</height>
+          </polyline>
+        </geometry>
+        <material>
+            <ambient>$COLOR 1</ambient>
+            <diffuse>$COLOR 1</diffuse>
+            <specular>$COLOR 1</specular>
+        </material>
+      </visual>
+    </link>

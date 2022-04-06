@@ -49,7 +49,9 @@ class WorldYamlLoader:
             name = get_value_or(params, "name", default="world")
             inf_radius = get_value_or(params, "inflation_radius", default=0.0)
             obj_radius = get_value_or(params, "object_radius", default=0.0)
-            self.world = World(name=name, inflation_radius=inf_radius, object_radius=obj_radius)
+            wall_height = get_value_or(params, "wall_height", default=2.0)
+            self.world = World(name=name, inflation_radius=inf_radius,
+                               object_radius=obj_radius, wall_height=wall_height)
         else:
             self.world = World()
 
