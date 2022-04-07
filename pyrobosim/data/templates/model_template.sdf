@@ -8,6 +8,6 @@
     <!-- All the links go here -->
 $LINKS    
     
-    <static>1</static>
+    <static>$STATIC</static>
   </model>
 </sdf>

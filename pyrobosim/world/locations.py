@@ -28,6 +28,7 @@ class LocationMetadata:
 
 class Location:
     """ Representation of a location in the world """
+    height = 1.0
     viz_color = (0, 0, 0)
 
     @classmethod
@@ -43,6 +44,8 @@ class Location:
         self.parent = parent
 
         self.metadata = Location.metadata.get(self.category)
+        if "height" in self.metadata:
+            self.height = self.metadata["height"]
         if "color" in self.metadata:
             self.viz_color = self.metadata["color"]
 
@@ -98,6 +101,9 @@ class Location:
         return self.polygon.intersects(p)
 
 
+    def get_raw_polygon(self):
+        return polygon_from_footprint(self.metadata["footprint"])
+
     def update_collision_polygon(self, inflation_radius=0):
         """ Updates the collision polygon using the specified inflation radius """
         self.collision_polygon = inflate_polygon(self.polygon, inflation_radius)
@@ -138,6 +144,10 @@ class ObjectSpawn:
             self.viz_color = self.metadata["color"]
         else:
             self.viz_color = self.parent.viz_color
+        if "height" in self.metadata:
+            self.height = self.metadata["height"]
+        else:
+            self.height = self.parent.height
 
         # Get the footprint data
         if "footprint" not in self.metadata:

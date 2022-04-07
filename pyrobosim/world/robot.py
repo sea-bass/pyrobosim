@@ -134,8 +134,8 @@ class Robot:
                 for other_obj in loc.children:
                     is_valid_pose = is_valid_pose and not sample_poly.intersects(other_obj.polygon)
                 if is_valid_pose:
-                    self.manipulated_object.pose = pose_sample
                     self.manipulated_object.parent = loc
+                    self.manipulated_object.set_pose(pose_sample)
                     self.manipulated_object.create_polygons()
                     loc.children.append(self.manipulated_object)
                     self.manipulated_object = None

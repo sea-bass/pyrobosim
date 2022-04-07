@@ -6,6 +6,7 @@ table:
   footprint: 
     type: box
     dims: [0.9, 1.2]
+  height: 0.5
   nav_poses:
     - [-0.75, 0, 0]
     - [0.75, 0, 3.14]
@@ -14,7 +15,6 @@ table:
       footprint:
         type: parent
         padding: 0.1
-      height: 0.5
   color: [0.2, 0, 0]
 
 desk: 
@@ -25,11 +25,11 @@ desk:
       - [0.3, -0.3]
       - [0.3, 0.3]
       - [-0.3, 0.3]
+  height: 0.3
   locations:
     - name: "desktop"
       footprint:
         type: parent
-      height: 0.3
       nav_poses:
         - [0, -0.5, 1.57]
         - [-0.5, 0, 0]
@@ -40,6 +40,7 @@ counter:
   footprint: 
     type: box
     dims: [1.2, 0.6]
+  height: 0.75
   locations:
     - name: "left"
       footprint: 
@@ -53,7 +54,6 @@ counter:
       nav_poses:
         - [0, 0.5, -1.57]
         - [0, -0.5, 1.57]
-      height: 0.5
     - name: "right"
       footprint: 
         type: polygon
@@ -63,7 +63,6 @@ counter:
           - [0.25, 0.25]
           - [-0.25, 0.25]
         offset: [-0.3, 0]
-      height: 0.5
       nav_poses:
         - [0, 0.5, -1.57]
         - [0, -0.5, 1.57]

@@ -15,16 +15,16 @@
       <collision name='$LINK_NAME_collision'>
         <geometry>
           <polyline>
-$WALL_POINTS
-            <height>$WALL_HEIGHT</height>
+$POINTS
+            <height>$HEIGHT</height>
           </polyline>
         </geometry>
       </collision>
       <visual name='$LINK_NAME_visual'>
         <geometry>
           <polyline>
-$WALL_POINTS
-            <height>$WALL_HEIGHT</height>
+$POINTS
+            <height>$HEIGHT</height>
           </polyline>
         </geometry>
         <material>

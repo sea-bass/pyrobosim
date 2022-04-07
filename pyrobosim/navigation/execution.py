@@ -41,7 +41,7 @@ class ConstantVelocityExecutor:
             cur_pose = Pose(x=traj_x[i], y=traj_y[i], yaw=traj_yaw[i])
             self.robot.set_pose(cur_pose)
             if is_holding_object:
-                self.robot.manipulated_object.pose = cur_pose
+                self.robot.manipulated_object.set_pose(cur_pose)
             time.sleep(max(0, sleep_time - (time.time()-start_time)))
 
         # Finalize path execution

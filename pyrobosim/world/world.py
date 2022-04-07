@@ -274,9 +274,9 @@ class World:
                 for other_obj in obj_spawn.children:
                     is_valid_pose = is_valid_pose and not poly.intersects(other_obj.polygon)
                 if is_valid_pose:
-                    obj.pose = pose_sample
-                    obj.create_polygons()
                     obj.parent = obj_spawn
+                    obj.set_pose(pose_sample)
+                    obj.create_polygons()
                     obj_added = True
                     break
             if not obj_added:

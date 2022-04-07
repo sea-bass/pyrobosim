@@ -25,6 +25,7 @@ class ObjectMetadata:
 
 class Object:
     """ Represents an object in the world """
+    height = 0.1
     viz_color = (0, 0, 1)
 
     @classmethod
@@ -35,16 +36,24 @@ class Object:
         self.category = category
         self.name = name
         self.parent = parent
-        self.pose = pose
 
         self.collision_polygon = None
         self.viz_patch = None
         self.viz_text = None
 
         self.metadata = Object.metadata.get(self.category)
+        if "height" in self.metadata:
+            self.height = self.metadata["height"]
         if "color" in self.metadata:
             self.viz_color = self.metadata["color"]
+        self.set_pose(pose)
         self.create_polygons()
+
+    def set_pose(self, pose):
+        """ Sets the pose of an object """
+        self.pose = pose
+        if self.pose is not None and self.parent is not None:
+            self.pose.z += self.parent.height
 
     def get_room_name(self):
         """ Returns the name of the containing room """
