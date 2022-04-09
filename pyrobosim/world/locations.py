@@ -9,7 +9,7 @@ from descartes.patch import PolygonPatch
 
 from ..navigation.search_graph import Node
 from ..utils.pose import Pose, rot2d
-from ..utils.polygon import inflate_polygon, polygon_from_footprint
+from ..utils.polygon import inflate_polygon, polygon_and_height_from_footprint
 
 
 class LocationMetadata:
@@ -44,12 +44,10 @@ class Location:
         self.parent = parent
 
         self.metadata = Location.metadata.get(self.category)
-        if "height" in self.metadata:
-            self.height = self.metadata["height"]
         if "color" in self.metadata:
             self.viz_color = self.metadata["color"]
 
-        self.polygon = polygon_from_footprint(
+        self.polygon, self.height = polygon_and_height_from_footprint(
             self.metadata["footprint"], pose=self.pose,
             parent_polygon=self.parent.polygon if self.parent is not None else None)
 
@@ -102,7 +100,9 @@ class Location:
 
 
     def get_raw_polygon(self):
-        return polygon_from_footprint(self.metadata["footprint"])
+        """ Gets the raw polygon (without any pose offset) """
+        return polygon_and_height_from_footprint(self.metadata["footprint"])[0]
+
 
     def update_collision_polygon(self, inflation_radius=0):
         """ Updates the collision polygon using the specified inflation radius """
@@ -144,17 +144,16 @@ class ObjectSpawn:
             self.viz_color = self.metadata["color"]
         else:
             self.viz_color = self.parent.viz_color
-        if "height" in self.metadata:
-            self.height = self.metadata["height"]
-        else:
-            self.height = self.parent.height
 
-        # Get the footprint data
+        # Get the footprint and height data
         if "footprint" not in self.metadata:
             self.metadata["footprint"] = {"type": "parent"}
-        self.polygon = polygon_from_footprint(
+        self.polygon, self.height = polygon_and_height_from_footprint(
             self.metadata["footprint"], pose=self.parent.pose,
             parent_polygon=self.parent.polygon if self.parent is not None else None)
+        if self.height is None:
+            self.height = self.parent.height
+
         self.update_visualization_polygon()
         self.centroid = list(self.polygon.centroid.coords)[0]
         self.pose = Pose(x=self.centroid[0], y=self.centroid[1], yaw=self.parent.pose.yaw)

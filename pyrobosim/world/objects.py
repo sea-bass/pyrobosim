@@ -6,11 +6,12 @@ import yaml
 import warnings
 from descartes.patch import PolygonPatch
 
-from ..utils.polygon import inflate_polygon, polygon_from_footprint
+from ..utils.polygon import inflate_polygon, polygon_and_height_from_footprint
 
 
 class ObjectMetadata:
     """ Represents metadata about objects """
+
     def __init__(self, filename):
         self.filename = filename
         with open(self.filename) as file:
@@ -42,8 +43,6 @@ class Object:
         self.viz_text = None
 
         self.metadata = Object.metadata.get(self.category)
-        if "height" in self.metadata:
-            self.height = self.metadata["height"]
         if "color" in self.metadata:
             self.viz_color = self.metadata["color"]
         self.set_pose(pose)
@@ -60,18 +59,22 @@ class Object:
         return self.parent.get_room_name()
 
     def get_raw_polygon(self):
-        return polygon_from_footprint(self.metadata["footprint"])
+        """ Gets the raw polygon (without any pose offset) """
+        return polygon_and_height_from_footprint(self.metadata["footprint"])[0]
 
     def create_polygons(self):
-        self.polygon = polygon_from_footprint(
+        self.polygon, height = polygon_and_height_from_footprint(
             self.metadata["footprint"], pose=self.pose)
-        self.centroid = list(self.polygon.centroid.coords)[0]    
+        if height is not None:
+            self.height = height
+        self.centroid = list(self.polygon.centroid.coords)[0]
         self.update_collision_polygon()
         self.update_visualization_polygon()
 
     def update_collision_polygon(self, inflation_radius=0):
         """ Updates the collision polygon using the specified inflation radius """
-        self.collision_polygon = inflate_polygon(self.polygon, inflation_radius)
+        self.collision_polygon = inflate_polygon(
+            self.polygon, inflation_radius)
 
     def update_visualization_polygon(self):
         """ Updates the visualization polygon for the furniture """

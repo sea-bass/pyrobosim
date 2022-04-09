@@ -8,7 +8,7 @@ from descartes.patch import PolygonPatch
 
 from ..navigation.search_graph import Node
 from ..utils.pose import Pose
-from ..utils.polygon import inflate_polygon, polygon_from_footprint
+from ..utils.polygon import inflate_polygon, polygon_and_height_from_footprint
 
 
 class Room:
@@ -26,7 +26,7 @@ class Room:
         if isinstance(footprint, list):
             self.polygon = Polygon(footprint)
         else:
-            self.polygon = polygon_from_footprint(footprint)
+            self.polygon, _ = polygon_and_height_from_footprint(footprint)
         self.centroid = list(self.polygon.centroid.coords)[0]
         self.update_collision_polygons()
         self.update_visualization_polygon()

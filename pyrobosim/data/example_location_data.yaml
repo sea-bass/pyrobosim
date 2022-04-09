@@ -6,7 +6,7 @@ table:
   footprint: 
     type: box
     dims: [0.9, 1.2]
-  height: 0.5
+    height: 0.5
   nav_poses:
     - [-0.75, 0, 0]
     - [0.75, 0, 3.14]
@@ -25,7 +25,7 @@ desk:
       - [0.3, -0.3]
       - [0.3, 0.3]
       - [-0.3, 0.3]
-  height: 0.3
+    height: 0.3
   locations:
     - name: "desktop"
       footprint:
@@ -40,7 +40,7 @@ counter:
   footprint: 
     type: box
     dims: [1.2, 0.6]
-  height: 0.75
+    height: 0.75
   locations:
     - name: "left"
       footprint: 
@@ -79,7 +79,6 @@ trash_can:
       footprint:
         type: parent
         padding: 0.05
-      height: 1.0
   nav_poses:
     - [0.5, 0.0, 3.14]
     - [-0.5, 0.0, 0.0]
