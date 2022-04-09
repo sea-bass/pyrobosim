@@ -10,6 +10,8 @@ from ..utils.polygon import inflate_polygon, sample_from_polygon, transform_poly
 from ..utils.pose import Pose
 
 class Robot:
+    height = 0.0
+
     def __init__(self, id=0, name="robot", pose=Pose(), radius=0.0, path_executor=None):
         # Basic properties
         self.id = id

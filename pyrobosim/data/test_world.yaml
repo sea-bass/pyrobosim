@@ -137,6 +137,9 @@ objects:
   - type: banana
     location: counter0
 
+  - type: water
+    location: my_desk
+
   - name: soda
     type: coke
     location: my_desk
