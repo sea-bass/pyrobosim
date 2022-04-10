@@ -1,2 +1,8 @@
+# VS Code metadata
+.vscode/
+
+# Python cache folders
 __pycache__**
-/scratch
+
+# Sphinx documentation
+docs/build/

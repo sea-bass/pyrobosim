@@ -8,12 +8,18 @@ from ..utils.knowledge import query_to_entity
 
 
 class PyRoboSim(QtWidgets.QApplication):
+    """ Main pyrobosim GUI class. """
     def __init__(self, world, args):
         super(PyRoboSim, self).__init__(args)
         self.set_world(world)
         self.ww.show()
 
     def set_world(self, world):
+        """
+        Assigns a world model to the GUI.
+
+        :param world: World object
+        """
         self.ww = WorldWidget(world)
 
 
