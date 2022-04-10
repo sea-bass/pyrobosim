@@ -56,7 +56,7 @@ class WorldGazeboExporter:
         print(f"    export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:{include_path_str}\n")
         print(f"To start the world, enter")
         print(f"    gazebo {world_file_name}\n")
-        return
+        return self.out_folder
 
     def create_walls_for_export(self, walls_name="walls"):
         """ Convert all room / hallway polygons to Gazebo representations """
