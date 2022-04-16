@@ -69,10 +69,10 @@ def create_world():
     return w
 
 
-def create_world_from_yaml():
+def create_world_from_yaml(world_file):
     from pyrobosim.world.yaml import WorldYamlLoader
     loader = WorldYamlLoader()
-    return loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
+    return loader.from_yaml(os.path.join(data_folder, world_file))
 
 
 def start_gui(world, args):
@@ -94,13 +94,18 @@ def start_ros_node(world):
 
 def parse_args():
     """ Parse command-line arguments """
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--ros", action="store_true")
-    parser.add_argument("--from-yaml", action="store_true")
+    parser = argparse.ArgumentParser(description="Main pyrobosim demo.")
+    parser.add_argument("--ros", action="store_true",
+                        help="Start as ROS2 node")
+    parser.add_argument("--from-file", action="store_true",
+                        help="Load from YAML file")
+    parser.add_argument("--world-file", default="test_world.yaml",
+                        help="YAML file name (should be in the pyrobosim/data folder). " +
+                             "Defaults to test_world.yaml")
     return parser.parse_args()
 
 
-def main(world):
+def main_standalone(world):
     """ Main for standalone operation """
     start_gui(world, sys.argv)
 
@@ -119,14 +124,14 @@ def main_ros(world):
 if __name__ == "__main__":
     args = parse_args()
 
-    # Create a world
+    # Create a world or load it from file.
     if args.from_yaml:
-        w = create_world_from_yaml()
+        w = create_world_from_yaml(args.world_file)
     else:
         w = create_world()
 
-    # Start the program
+    # Start the program either as ROS2 node or standalone.
     if args.ros:
         main_ros(w)
     else:
-        main(w)
+        main_standalone(w)

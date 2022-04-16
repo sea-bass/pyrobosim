@@ -28,9 +28,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 # Install Python package
 ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
-  scripts/test_command_publisher.py
-  scripts/test_script.py
-  scripts/test_world_save.py
+  scripts/demo.py
+  scripts/demo_commands.py
+  scripts/demo_world_save.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

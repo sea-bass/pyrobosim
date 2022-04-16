@@ -1,7 +1,7 @@
 .. pyrobosim documentation master file.
 
-Welcome to pyrobosim's documentation!
-=====================================
+pyrobosim
+=========
 
 pyrobosim is a ROS2 enabled 2D mobile robot simulator for behavior prototyping.
 
