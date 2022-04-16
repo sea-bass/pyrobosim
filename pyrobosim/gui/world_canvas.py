@@ -6,20 +6,30 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.transforms import Affine2D
 from PyQt5.QtCore import pyqtSignal
 
-class WorldGUI(FigureCanvasQTAgg):
+class WorldCanvas(FigureCanvasQTAgg):
+    """
+    Canvas for rendering a pyrobosim world as a matplotlib figure in an application.
+    """
+
+    # Constants
     animation_dt = 0.1
     realtime_factor = 1.0
-
     object_zorder = 3
     robot_zorder = 3
 
     # Trigger for navigation method
     nav_trigger = pyqtSignal(str)
 
-    def __init__(self, world, width=5, height=4, dpi=100):
-        self.fig = Figure(figsize=(width, height), dpi=dpi, layout="tight")
+    def __init__(self, world, dpi=100):
+        """
+        Creates an instance of a pyrobosim figure canvas.
+
+        :param dpi: DPI for the figure.
+        :type dpi: int
+        """
+        self.fig = Figure(dpi=dpi, layout="tight")
         self.axes = self.fig.add_subplot(111)
-        super(WorldGUI, self).__init__(self.fig)
+        super(WorldCanvas, self).__init__(self.fig)
 
         self.world = world
 
@@ -41,7 +51,7 @@ class WorldGUI(FigureCanvasQTAgg):
         self.nav_trigger.connect(self.navigate)
 
     def show_robot(self):
-        """ Creates the robot for visualization """
+        """ Draws a robot as a circle with a heading line for visualization. """
         if self.world.has_robot:
             self.robot_length = self.robot_normalized_length * max(
                 (self.world.x_bounds[1] - self.world.x_bounds[0]),
@@ -57,6 +67,7 @@ class WorldGUI(FigureCanvasQTAgg):
                 "m-", linewidth=2, zorder=self.robot_zorder)
 
     def show(self):
+        """ Displays all entities in the world (rooms, locations, objects, etc.). """
         # Robot
         self.show_robot()
         self.show_world_state()
@@ -119,13 +130,13 @@ class WorldGUI(FigureCanvasQTAgg):
         self.adjust_text(self.obj_texts)
 
     def draw_and_sleep(self):
-        """ Redraws the figure and waits a small amount of time """
+        """ Redraws the figure and waits a small amount of time. """
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
         time.sleep(0.001)
 
     def get_animated_artists(self):
-        """ Returns a list of artists to animate when blitting """
+        """ Returns a list of artists to animate when blitting. """
         animated_artists = [self.robot_body, self.robot_dir, self.axes.title]
         held_object = self.world.robot.manipulated_object
         if held_object is not None:
@@ -133,12 +144,22 @@ class WorldGUI(FigureCanvasQTAgg):
         return animated_artists
 
     def adjust_text(self, objs):
-        """ Adjust text in a figure """
+        """ 
+        Adjust text in a figure.
+        
+        :param objs: List of objects to consider for text adjustment
+        :type objs: list
+        """
         adjustText.adjust_text(objs, lim=100,
                                add_objects=self.obj_patches)
 
     def show_path(self, path=None):
-        """ Displays a path """
+        """ 
+        Displays a path that the robot will follow for navigation. 
+        
+        :param path: A list of Pose objects defining the path. 
+        :type path: list, optional
+        """
         if path is None:
             path = self.world.current_path
 
@@ -168,7 +189,7 @@ class WorldGUI(FigureCanvasQTAgg):
                 self.displayed_path_goal.set_visible(False)
 
     def update_robot_plot(self):
-        """ Updates the robot visualization graphics objects """
+        """ Updates the robot visualization graphics objects. """
         p = self.world.robot.pose
         self.robot_body.set_xdata(p.x)
         self.robot_body.set_ydata(p.y)
@@ -178,7 +199,13 @@ class WorldGUI(FigureCanvasQTAgg):
             p.y + np.array([0, self.robot_length*np.sin(p.yaw)]))
 
     def show_world_state(self, navigating=False):
-        """ Shows the world state in the figure title """
+        """
+        Shows the world state in the figure title.
+        
+        :param navigating: Flag that indicates that the robot is moving so we 
+        should continuously update the title containing the robot's location.
+        :type navigating: bool, optional
+        """
         r = self.world.robot
         if r is not None:
             title_bits = []
@@ -194,7 +221,12 @@ class WorldGUI(FigureCanvasQTAgg):
             self.axes.set_title(title_str)
 
     def update_object_plot(self, obj):
-        """ Updates an object visualization based on its pose """
+        """ 
+        Updates an object visualization based on its pose.
+        
+        :param obj: pyrobosim object to update.
+        :type obj: class:`pyrobosim.objects.Object`
+        """
         if obj is None:
             return
 
@@ -209,8 +241,10 @@ class WorldGUI(FigureCanvasQTAgg):
 
     def navigate(self, goal):
         """ 
-        Animates a path (found using `find_path()`) given a 
-        velocity, time step, and real-time scale factor
+        Animates a path to a goal location using the robot's path executor.
+
+        :param goal: Name of goal location (resolved by the world model).
+        :type goal: str
         """
         # Find a path and kick off the navigation thread
         path = self.world.find_path(goal)
@@ -252,7 +286,12 @@ class WorldGUI(FigureCanvasQTAgg):
         return True
 
     def pick_object(self, obj_name):
-        """ Picks an object """
+        """
+        Picks an object.
+        
+        :param obj_name: The name of the object.
+        :type obj_name: str
+        """
         robot = self.world.robot
         if robot is not None:
             success = robot.pick_object(obj_name)
@@ -263,7 +302,12 @@ class WorldGUI(FigureCanvasQTAgg):
             return success
 
     def place_object(self, loc_name):
-        """ Places an object """
+        """
+        Places an object.
+        
+        :param loc_name: The name of the location.
+        :type loc_mame: str
+        """
         robot = self.world.robot
         if robot is not None:
             obj = robot.manipulated_object

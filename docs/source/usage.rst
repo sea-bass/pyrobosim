@@ -67,7 +67,7 @@ Refer to the Location YAML Specification (TODO) and Object YAML Specification (T
 
 Exporting Worlds to Gazebo
 --------------------------
-To export words to Gazebo, there is a :doc:`WorldGazeboExporter </generated/pyrobosim.world.gazebo.WorldGazeboExporter>` utility:
+To export worlds to Gazebo, there is a :doc:`WorldGazeboExporter </generated/pyrobosim.world.gazebo.WorldGazeboExporter>` utility:
 
 Standalone:
 

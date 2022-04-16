@@ -77,8 +77,8 @@ def create_world_from_yaml(world_file):
 
 def start_gui(world, args):
     """ Initializes GUI """
-    from pyrobosim.gui.main import PyRoboSim
-    app = PyRoboSim(world, args)
+    from pyrobosim.gui.main import PyRoboSimGUI
+    app = PyRoboSimGUI(world, args)
     sys.exit(app.exec_())
 
 
@@ -125,7 +125,7 @@ if __name__ == "__main__":
     args = parse_args()
 
     # Create a world or load it from file.
-    if args.from_yaml:
+    if args.from_file:
         w = create_world_from_yaml(args.world_file)
     else:
         w = create_world()

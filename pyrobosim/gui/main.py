@@ -3,29 +3,37 @@ from PyQt5 import QtWidgets
 from matplotlib.backends.qt_compat import QtCore
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
 
-from ..gui.world import WorldGUI
+from .world_canvas import WorldCanvas
 from ..utils.knowledge import query_to_entity
 
 
-class PyRoboSim(QtWidgets.QApplication):
+class PyRoboSimGUI(QtWidgets.QApplication):
     """ Main pyrobosim GUI class. """
+
     def __init__(self, world, args):
-        super(PyRoboSim, self).__init__(args)
-        self.set_world(world)
-        self.ww.show()
-
-    def set_world(self, world):
         """
-        Assigns a world model to the GUI.
+        Creates an instance of the pyrobosim GUI.
 
-        :param world: World object
+        :param world: World object to attach
+        :type world: class:`pyrobosim.world.World`
         """
-        self.ww = WorldWidget(world)
+        super(PyRoboSimGUI, self).__init__(args)
+        self.world = world
+        self.main_window = PyRoboSimMainWindow(world)
+        self.main_window.show()
 
 
-class WorldWidget(QtWidgets.QMainWindow):
+class PyRoboSimMainWindow(QtWidgets.QMainWindow):
+    """ Main application window for the pyrobosim GUI. """
+
     def __init__(self, world, *args, **kwargs):
-        super(WorldWidget, self).__init__(*args, **kwargs)
+        """
+        Creates an instance of the pyrobosim application main window.
+
+        :param world: World object to attach
+        :type world: class:`pyrobosim.world.World`
+        """
+        super(PyRoboSimMainWindow, self).__init__(*args, **kwargs)
         self.setWindowTitle("pyrobosim")
         self.set_window_dims()
 
@@ -34,23 +42,27 @@ class WorldWidget(QtWidgets.QMainWindow):
         self.world.gui = self
         self.world.has_gui = True
 
-        self.wg = WorldGUI(world, dpi=100)
+        self.canvas = WorldCanvas(world)
         self.create_layout()
         self.update_manip_state()
-        self.wg.show()
+        self.canvas.show()
 
-    def set_window_dims(self):
-        """ Set window dimensions """
-        screen_percent = 0.8
+    def set_window_dims(self, screen_fraction=0.8):
+        """ 
+        Set window dimensions. 
+        
+        :param screen_fraction: Fraction of screen (0.0 to 1.0 that the window uses)
+        :type screen_fraction: float
+        """
         screen = QtWidgets.QDesktopWidget().availableGeometry()
-        window_width = screen.width() * screen_percent
-        window_height = screen.height() * screen_percent
+        window_width = screen.width() * screen_fraction
+        window_height = screen.height() * screen_fraction
         window_x = screen.left() + 0.5 * (screen.width() - window_width)
         window_y = screen.top() + 0.5 * (screen.height() - window_height)
         self.setGeometry(window_x, window_y, window_width, window_height)
 
     def create_layout(self):
-        """ Creates the GUI layout """
+        """ Creates the main GUI layout. """
         self.main_widget = QtWidgets.QWidget()
 
         # Push buttons
@@ -85,9 +97,9 @@ class WorldWidget(QtWidgets.QMainWindow):
 
         # World layout (Matplotlib affordances)
         self.world_layout = QtWidgets.QVBoxLayout()
-        self.nav_toolbar = NavigationToolbar2QT(self.wg, self)
+        self.nav_toolbar = NavigationToolbar2QT(self.canvas, self)
         self.addToolBar(QtCore.Qt.BottomToolBarArea, self.nav_toolbar)
-        self.world_layout.addWidget(self.wg)
+        self.world_layout.addWidget(self.canvas)
 
         # Main layout
         self.main_layout = QtWidgets.QVBoxLayout(self.main_widget)
@@ -103,16 +115,19 @@ class WorldWidget(QtWidgets.QMainWindow):
     # State Management #
     ####################
     def update_manip_state(self):
-        """ Update the manipulation state to enable/disable buttons """
-        can_pick = self.wg.world.has_robot and \
-            self.wg.world.robot.manipulated_object is None
+        """ Update the manipulation state to enable/disable buttons. """
+        can_pick = self.world.has_robot and \
+            self.world.robot.manipulated_object is None
         self.pick_button.setEnabled(can_pick)
         self.place_button.setEnabled(not can_pick)
 
     def set_buttons_during_action(self, state):
         """ 
         Enables or disables buttons that should not be pressed while
-        the robot is executing an action
+        the robot is executing an action.
+    
+        :param state: The desired button state (True for enabled or False for disabled)
+        :type state: bool
         """
         self.nav_button.setEnabled(state)
         self.pick_button.setEnabled(state)
@@ -123,60 +138,60 @@ class WorldWidget(QtWidgets.QMainWindow):
     # Button Callbacks #
     ####################
     def rand_pose_cb(self):
-        """ Callback to randomize robot pose """
-        sampled_pose = self.wg.world.sample_free_robot_pose_uniform()
+        """ Callback to randomize robot pose. """
+        sampled_pose = self.world.sample_free_robot_pose_uniform()
         if sampled_pose is not None:
-            self.wg.world.robot.set_pose(sampled_pose)
-        self.wg.update_robot_plot()
-        self.wg.world.current_path = None
-        self.wg.show_path()
-        self.wg.show_world_state(navigating=True)
-        self.wg.draw()
+            self.world.robot.set_pose(sampled_pose)
+        self.canvas.update_robot_plot()
+        self.world.current_path = None
+        self.canvas.show_path()
+        self.canvas.show_world_state(navigating=True)
+        self.canvas.draw()
 
     def rand_goal_cb(self):
-        """ Callback to randomize robot goal """
-        all_entities = self.wg.world.get_location_names() + \
-            self.wg.world.get_room_names()
+        """ Callback to randomize robot goal. """
+        all_entities = self.world.get_location_names() + \
+            self.world.get_room_names()
         entity_name = np.random.choice(all_entities)
         self.goal_textbox.setText(entity_name)
 
     def rand_obj_cb(self):
-        """ Callback to randomize manipulation object goal """
-        obj_name = np.random.choice(self.wg.world.get_object_names())
+        """ Callback to randomize manipulation object goal. """
+        obj_name = np.random.choice(self.world.get_object_names())
         self.goal_textbox.setText(obj_name)
 
     def on_navigate_click(self):
-        """ Callback to navigate to a goal location """
-        if self.wg.world.robot and self.wg.world.robot.executing_action:
+        """ Callback to navigate to a goal location. """
+        if self.world.robot and self.world.robot.executing_action:
             return
 
         query_list = self.goal_textbox.text().split(" ")
-        loc = query_to_entity(self.wg.world, query_list, mode="location",
+        loc = query_to_entity(self.world, query_list, mode="location",
                               resolution_strategy="nearest")
         if not loc:
             return
-        
+
         print(f"Navigating to {loc.name}")
         self.set_buttons_during_action(False)
-        self.wg.navigate(loc)
+        self.canvas.navigate(loc)
         self.set_buttons_during_action(True)
 
     def on_pick_click(self):
-        """ Callback to pick an object """
-        if self.wg.world.robot:
-            loc = self.wg.world.robot.location
+        """ Callback to pick an object. """
+        if self.world.robot:
+            loc = self.world.robot.location
             query_list = [loc] + self.goal_textbox.text().split(" ")
-            obj = query_to_entity(self.wg.world, query_list, mode="object",
+            obj = query_to_entity(self.world, query_list, mode="object",
                                   resolution_strategy="nearest")
             print(f"Picking {obj.name}")
-            self.wg.pick_object(obj)
+            self.canvas.pick_object(obj)
             self.update_manip_state()
 
     def on_place_click(self):
-        """ Callback to place an object """
-        if self.wg.world.robot:
-            loc = self.wg.world.robot.location
-            if self.wg.world.robot.manipulated_object is not None:
-                print(f"Placing {self.wg.world.robot.manipulated_object.name}")
-            self.wg.place_object(loc)
+        """ Callback to place an object. """
+        if self.world.robot:
+            loc = self.world.robot.location
+            if self.world.robot.manipulated_object is not None:
+                print(f"Placing {self.world.robot.manipulated_object.name}")
+            self.canvas.place_object(loc)
             self.update_manip_state()

@@ -167,7 +167,7 @@ class Robot:
         if action.type == "navigate":
             if self.world.has_gui:
                 self.executing_nav = True
-                self.world.gui.wg.nav_trigger.emit(action.target_location)
+                self.world.gui.canvas.nav_trigger.emit(action.target_location)
                 while self.executing_nav:
                     time.sleep(0.5) # Delay to wait for navigation
                 success = True # TODO Need to keep track of nav status
@@ -176,12 +176,12 @@ class Robot:
                 success = robot.follow_path(path, realtime_factor=1.0, blocking=blocking)
         elif action.type == "pick":
             if self.world.has_gui:
-                success = self.world.gui.wg.pick_object(action.object)
+                success = self.world.gui.canvas.pick_object(action.object)
             else:
                 success = self.pick_object(action.object)
         elif action.type == "place":
             if self.world.has_gui:
-                success = self.world.gui.wg.place_object(None)
+                success = self.world.gui.canvas.place_object(None)
             else:
                 success = self.place_object(None)
         else:
