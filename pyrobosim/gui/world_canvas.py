@@ -6,19 +6,26 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.transforms import Affine2D
 from PyQt5.QtCore import pyqtSignal
 
+
 class WorldCanvas(FigureCanvasQTAgg):
     """
     Canvas for rendering a pyrobosim world as a matplotlib figure in an application.
     """
 
-    # Constants
+    # Animation constants
     animation_dt = 0.1
+    """ Time step for animations (seconds). """
     realtime_factor = 1.0
-    object_zorder = 3
-    robot_zorder = 3
+    """ Real-time multiplier for animations. """
 
-    # Trigger for navigation method
+    # Visualization constants
+    object_zorder = 3
+    """ zorder for object visualization. """
+    robot_zorder = 3
+    """ zorder for robot visualization. """
+
     nav_trigger = pyqtSignal(str)
+    """ Signal to trigger navigation method in a thread-safe way. """
 
     def __init__(self, world, dpi=100):
         """
@@ -140,7 +147,8 @@ class WorldCanvas(FigureCanvasQTAgg):
         animated_artists = [self.robot_body, self.robot_dir, self.axes.title]
         held_object = self.world.robot.manipulated_object
         if held_object is not None:
-            animated_artists.extend([held_object.viz_patch, held_object.viz_text])
+            animated_artists.extend(
+                [held_object.viz_patch, held_object.viz_text])
         return animated_artists
 
     def adjust_text(self, objs):
@@ -210,7 +218,8 @@ class WorldCanvas(FigureCanvasQTAgg):
         if r is not None:
             title_bits = []
             if navigating:
-                robot_loc = self.world.get_location_from_pose(self.world.robot.pose)
+                robot_loc = self.world.get_location_from_pose(
+                    self.world.robot.pose)
                 if robot_loc is not None:
                     title_bits.append(f"Location: {robot_loc.name}")
             elif r.location is not None:
@@ -233,7 +242,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         tf = Affine2D().translate(-obj.centroid[0], -obj.centroid[1]).rotate(
             obj.pose.yaw).translate(obj.pose.x, obj.pose.y)
         obj.viz_patch.set_transform(tf + self.axes.transData)
-        
+
         xmin, ymin, xmax, ymax = obj.polygon.bounds
         x = obj.pose.x + 1.0*(xmax - xmin)
         y = obj.pose.y + 1.0*(ymax - ymin)
@@ -252,8 +261,8 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.world.robot.follow_path(
             path, realtime_factor=self.realtime_factor)
 
-        # Animate while navigation is active  
-        do_blit = True # Keeping this around to disable if needed
+        # Animate while navigation is active
+        do_blit = True  # Keeping this around to disable if needed
         sleep_time = self.animation_dt / self.realtime_factor
         if do_blit:
             animated_artists = self.get_animated_artists()
@@ -262,7 +271,8 @@ class WorldCanvas(FigureCanvasQTAgg):
             self.draw_and_sleep()
             bg = self.fig.canvas.copy_from_bbox(self.fig.bbox)
             while self.world.robot.executing_nav:
-                time.sleep(sleep_time) # Needs to happen before blitting to avoid race condition
+                # Needs to happen before blitting to avoid race condition
+                time.sleep(sleep_time)
                 self.fig.canvas.restore_region(bg)
                 self.update_robot_plot()
                 self.update_object_plot(self.world.robot.manipulated_object)

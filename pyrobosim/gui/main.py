@@ -14,7 +14,7 @@ class PyRoboSimGUI(QtWidgets.QApplication):
         """
         Creates an instance of the pyrobosim GUI.
 
-        :param world: World object to attach
+        :param world: World object to attach to the GUI.
         :type world: class:`pyrobosim.world.World`
         """
         super(PyRoboSimGUI, self).__init__(args)
