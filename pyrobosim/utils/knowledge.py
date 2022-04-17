@@ -1,3 +1,8 @@
+"""
+Utilities to reason about entities using world knowledge
+(that is, metadata about locations and objects).
+"""
+
 import sys
 import warnings
 import numpy as np
@@ -5,19 +10,25 @@ import numpy as np
 from ..core.locations import Location, ObjectSpawn
 from ..core.objects import Object
 
-"""
-Utilities to reason about entities using world knowledge
-(that is, metadata about locations and objects)
-"""
 
 def apply_resolution_strategy(world, entity_list, resolution_strategy):
     """
-    Applies a resolution strategy on a list of entities based on one of the 
-    following criteria:
-      "first"   : Return the first entity that meets this query
-      "random"  : Return a random entity from all possible options 
-      "nearest" : Return the nearest entity based on robot pose
-                    (So, a robot must exist in the world)
+    Accepts a list of entities in the world (e.g. rooms, objects, etc.) and 
+    applies a resolution strategy to get a single entity from that list that best 
+    meets one of the following criteria:
+    
+    - ``"first"`` : Return the first entity that meets this query
+    - ``"random"`` : Return a random entity from all possible options 
+    - ``"nearest"`` : Return the nearest entity based on robot pose (So, a robot must exist in the world)
+
+    :param world: World model.
+    :type world: :class:`pyrobosim.core.world.World`
+    :param entity_list: List of entities (e.g., rooms or objects)
+    :type entity_list: list[Entity]
+    :param resolution_strategy: Resolution strategy to apply
+    :type resolution_strategy: str
+    :return: The entity that meets the resolution strategy, or None.
+    :rtype: Entity
     """
     if entity_list is None or len(entity_list) == 0:
         return None
@@ -48,6 +59,17 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first"):
     """ 
     Resolves a generic query list of strings to an entity 
     mode can be "location" or "object"
+
+    :param world: World model.
+    :type world: :class:`pyrobosim.core.world.World`
+    :param query_list: List of query terms (e.g., "kitchen table apple")
+    :type query_list: list[str]
+    :param mode: Can be either "location" or "object".
+    :type mode: str
+    :param resolution_strategy: Resolution strategy to apply (see :func:`apply_resolution_strategy`)
+    :type resolution_strategy: str
+    :return: The entity that meets the mode and resolution strategy, or None.
+    :rtype: Entity
     """
     room = None
     named_location = None
@@ -133,8 +155,20 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first"):
 def resolve_to_location(world, category=None, room=None,
                         resolution_strategy="first", expand_locations=False):
     """ 
-    Resolves a category/room combination to a location. 
-      expand_locations will expand locations to individual object spawns
+    Resolves a category/room query combination to a single specific location. 
+
+    :param world: World model.
+    :type world: :class:`pyrobosim.core.world.World`
+    :param category: Location category (e.g. "table")
+    :type category: str, optional
+    :param room: Room name to search in (e.g. "kitchen")
+    :type room: str, optional
+    :param resolution_strategy: Resolution strategy to apply (see :func:`apply_resolution_strategy`)
+    :type resolution_strategy: str
+    :param expand_locations: If True, expands location to individual object spawns.
+    :type expand_locations: bool
+    :return: The location or object spawn that meets the category and/or room filters, or None.
+    :rtype: :class:`pyrobosim.core.locations.Location`/:class:`pyrobosim.core.locations.ObjectSpawn`
     """
     if room is None:
         room_name = None
@@ -176,8 +210,22 @@ def resolve_to_location(world, category=None, room=None,
 def resolve_to_object(world, category=None, location=None, room=None, 
                       resolution_strategy="first", ignore_grasped=True):
     """ 
-    Resolves a query to an object 
-      ignore_grasped will ignore any currently manipulated object
+    Resolves a category/location/room query to an object 
+
+    :param world: World model.
+    :type world: :class:`pyrobosim.core.world.World`
+    :param category: Object category (e.g. "apple")
+    :type category: str, optional
+    :param location: Location category search in (e.g. "table")
+    :type location: str, optional
+    :param category: Room name to search in (e.g. "kitchen")
+    :type category: str, optional
+    :param resolution_strategy: Resolution strategy to apply (see :func:`apply_resolution_strategy`)
+    :type resolution_strategy: str
+    :param ignore_grasped: If True, ignores the current manipulated object.
+    :type ignore_grasped: bool
+    :return: The object that meets the category, location, and/or room filters, or None.
+    :rtype: :class:`pyrobosim.core.objects.Object`
     """
     # Filter by category
     if category is None:

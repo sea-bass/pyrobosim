@@ -1,11 +1,29 @@
-""" Defines actions for task and motion planning """
+""" Defines actions for task and motion planning. """
 
 class TaskAction:
-    """ Task Action representation class """
+    """ Task Action representation class. """
 
     def __init__(self, type, object=None, room=None,
                  source_location=None, target_location=None,
                  pose=None, cost=None):
+        """ 
+        Creates a new task action representation.
+
+        :param type: Action type.
+        :type type: str
+        :param object: Target object type or name.
+        :type object: str, optional
+        :param room: Target room name.
+        :type room: str, optional
+        :param source_location: Source location type or name.
+        :type source_location: str, optional
+        :param target_location: Target location type or name.
+        :type target_location: str, optional
+        :param pose: Optional pose parameter for the action.
+        :type pose: :class:`pyrobosim.utils.pose.Pose`, optional
+        :param cost: Optional action cost.
+        :type cost: float
+        """
         # Action-agnostic parameters
         self.type = type.lower()
         self.cost = cost
@@ -18,7 +36,7 @@ class TaskAction:
         self.pose = pose                        # Target pose
 
     def __repr__(self):
-        """ Returns a string describing an action """
+        """ Returns printable string describing an action. """
         
         # Format actions based on their types
         # NAVIGATE
@@ -62,24 +80,43 @@ class TaskAction:
 
 
 class TaskPlan:
-    """ Task Plan representation """
+    """
+    Task Plan representation class.
+    
+    A task plan is simply described as a sequence of task actions 
+    (:class:`pyrobosim.planning.actions.TaskAction`).
+    """
     def __init__(self, actions=[]):
+        """ 
+        Creates a new task plan.
+        
+        :param actions: List of actions.
+        :type actions: list[:class:`pyrobosim.planning.actions.TaskAction`], optional
+        """
         self.set_actions(actions)
 
     def set_actions(self, actions):
         """ 
-        Sets actions and updates the total cost 
-        Use this method rather than directly setting the actions variable
+        Sets actions and updates the total cost over all the actions.
+        Use this method rather than directly setting the actions variable.
+
+        :param actions: List of actions.
+        :type actions: list[:class:`pyrobosim.planning.actions.TaskAction`]
         """
         self.actions = actions
         self.total_cost = sum([a.cost for a in self.actions])
 
     def size(self):
-        """ Get the length of the plan """
+        """
+        Get the total number of actions comprising this task plan.
+        
+        :return: Size of plan.
+        :rtype: int
+        """
         return len(self.actions)
 
     def __repr__(self):
-        """ Formats a plan for printing """
+        """ Returns printable string describing a task plan. """
         # Check for empty plan
         if len(self.actions) == 0:
             return "Empty plan"
