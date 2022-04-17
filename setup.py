@@ -1,4 +1,4 @@
-from os import filesep
+from os.path import join
 from setuptools import setup
 
 # This is for standalone (non-ROS) use.
@@ -13,11 +13,11 @@ setup(
     license="BSD",
     packages=[
         project_name,
-        project_name + filesep + "core",
-        project_name + filesep + "gui",
-        project_name + filesep + "navigation",
-        project_name + filesep + "planning",
-        project_name + filesep + "utils"
+        join(project_name, "core"),
+        join(project_name, "gui"),
+        join(project_name, "navigation"),
+        join(project_name, "planning"),
+        join(project_name, "utils")
     ],
     zip_safe=True
 )
