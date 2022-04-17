@@ -1,3 +1,5 @@
+""" Defines a robot which operates in a world. """
+
 import time
 import threading
 import numpy as np
@@ -10,14 +12,32 @@ from ..utils.polygon import inflate_polygon, sample_from_polygon, transform_poly
 from ..utils.pose import Pose
 
 class Robot:
-    height = 0.0
+    """ Representation of a robot in the world. """
 
-    def __init__(self, id=0, name="robot", pose=Pose(), radius=0.0, path_executor=None):
+    def __init__(self, id=0, name="robot", pose=Pose(), 
+                 radius=0.0, height=0.0, path_executor=None):
+        """ 
+        Creates a robot instance.
+        
+        :param id: Numeric ID for the robot.
+        :type id: int, optional
+        :param name: Robot name.
+        :type name: str, optional
+        :param pose: Robot initial pose.
+        :type pose: :class:`pyrobosim.utils.pose.Pose`
+        :param radius: Robot radius, in meters.
+        :type radius: float, optional
+        :param height: Robot height, in meters.
+        :type height: float, optional
+        :param path_executor: Path executor for navigation (see e.g. :class:`pyrobosim.navigation.execution.ConstantVelocityExecutor`).
+        :type path_executor: PathExecutor, optional
+        """
         # Basic properties
         self.id = id
         self.name = name
         self.set_pose(pose)
         self.radius = radius
+        self.height = height
 
         # Navigation properties
         self.set_path_executor(path_executor)
@@ -33,25 +53,42 @@ class Robot:
         self.manipulated_object = None
 
     def set_pose(self, pose):
+        """ 
+        Sets the robot pose. 
+        
+        :param pose: New robot pose
+        :type pose: :class:`pyrobosim.utils.pose.Pose`
+        """
         self.pose = pose
 
-    def apply_vel(self, dt, v=0.0, w=0.0):
-        dtv = dt * v
-        self.pose.x += dtv * np.cos(self.yaw)
-        self.pose.y += dtv * np.sin(self.yaw)
-        self.pose.yaw += dt * w
-        self.pose.wrap_yaw()
+    def set_path_executor(self, path_executor):
+        """ 
+        Sets a path executor for navigation.
 
-    def set_path_executor(self, executor):
-        """ Sets a path executor for navigation """
-        if executor is None:
+        :param path_executor: Path executor for navigation (see e.g. :class:`pyrobosim.navigation.execution.ConstantVelocityExecutor`).
+        :type path_executor: PathExecutor, optional        
+        """
+        if path_executor is None:
             return
-        executor.robot = self
-        self.path_executor = executor
+        path_executor.robot = self
+        self.path_executor = path_executor
 
     def follow_path(self, path, realtime_factor=1.0, 
                     use_thread=True, blocking=False):
-        """ Follows a specified base path """
+        """ 
+        Follows a specified path using the attached path executor.
+        
+        :param path: A list of Pose objects defining the path. 
+        :type path: list[:class:`pyrobosim.utils.pose.Pose`]
+        :param realtime_factor: A real-time multiplier on execution speed, defaults to 1.0.
+        :type realtime_factor: float
+        :param use_thread: If True, spawns a new thread to execute the path.
+        :type use_thread: bool
+        :param blocking: If path executes in a new thread, set to True to block and wait 
+            for the thread to complete before returning.
+        :return: True if path following, or starting the path following thread, is successful.
+        :rtype: bool
+        """
         if path is None or self.path_executor is None:
             return
 
@@ -70,8 +107,12 @@ class Robot:
 
     def pick_object(self, obj_query):
         """ 
-        Picks up an object in the world given an object and location query. 
-        Returns True if successful and False otherwise.
+        Picks up an object in the world given an object and/or location query. 
+        
+        :param obj_query: The object query (name, category, etc.).
+        :type obj_query: str
+        :return: True if picking succeeds, else False
+        :rtype: bool
         """
         # Validate input
         if self.manipulated_object is not None:
@@ -105,10 +146,14 @@ class Robot:
         obj.pose = self.pose
         return True
 
-    def place_object(self, loc, pose=None):
+    def place_object(self, pose=None):
         """
         Places an object in a target location and (optionally) pose.
-        Returns True if successful and False otherwise.
+
+        :param pose: Placement pose (if not specified, will be sampled).
+        :type pose: :class:`pyrobosim.utils.pose.Pose`, optional
+        :return: True if placement succeeds, else False
+        :rtype: bool
         """
         # Validate input
         if self.manipulated_object is None:
@@ -157,7 +202,16 @@ class Robot:
                 return False
 
     def execute_action(self, action, blocking=False):
-        """ Executes an action, specified as a TaskAction object """
+        """ 
+        Executes an action, specified as a :class:`pyrobosim.planning.actions.TaskAction` object.
+
+        :param action: Action to execute.
+        :type action: :class:`pyrobosim.planning.actions.TaskAction`
+        :param blocking: True to block execution until the action is complete.
+        :type blocking: bool, optional
+        :return: True if the action succeeds, or False otherwise.
+        :rtype: bool
+        """
         robot = self.world.robot
         self.executing_action = True
         self.current_action = action
@@ -181,9 +235,9 @@ class Robot:
                 success = self.pick_object(action.object)
         elif action.type == "place":
             if self.world.has_gui:
-                success = self.world.gui.canvas.place_object(None)
+                success = self.world.gui.canvas.place_object()
             else:
-                success = self.place_object(None)
+                success = self.place_object()
         else:
             print(f"Invalid action type: {action.type}")
             success = False
@@ -196,7 +250,18 @@ class Robot:
         return success
 
     def execute_plan(self, plan, blocking=False, delay=0.5):
-        """ Executes a plan, specified as a TaskPlan object """
+        """
+        Executes a task plan, specified as a :class:`pyrobosim.planning.actions.TaskPlan` object.
+
+        :param plan: Task plan to execute.
+        :type plan: :class:`pyrobosim.planning.actions.TaskPlan`
+        :param blocking: True to block execution until the action is complete.
+        :type blocking: bool, optional
+        :param delay: Artificial delay between actions, for ease of visualization.
+        :type delay: float, optional
+        :return: True if the plan succeeds, or False otherwise.
+        :rtype: bool
+        """
         self.executing_plan = True
         self.current_plan = plan
         print(f"Executing task plan...")
@@ -221,4 +286,5 @@ class Robot:
         return success
 
     def __repr__(self):
+        """ Returns printable string. """
         return f"Robot {self.name}, ID={self.id}\n\t{self.pose}"

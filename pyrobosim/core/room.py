@@ -1,5 +1,5 @@
 """
-Room Representation for World Modeling
+Room representation for world modeling.
 """
 
 import warnings
@@ -12,7 +12,22 @@ from ..utils.polygon import inflate_polygon, polygon_and_height_from_footprint
 
 
 class Room:
+    """ Representation of a room in a world. """
     def __init__(self, footprint, name=None, color=[0.4, 0.4, 0.4], wall_width=0.2, nav_poses=None):
+        """ 
+        Creates a Room instance.
+
+        :param footprint: Point list or Shapely polygon describing the room 2D footprint.
+        :type footprint: :class:`shapely.geometry.Polygon`/list[:class:`pyrobosim.utils.pose.Pose`]
+        :param name: Room name
+        :type name: str, optional
+        :param color: Visualization color as an (R, G, B) tuple in the range (0.0, 1.0)
+        :type color: (float, float, float), optional
+        :param wall_width: Width of room walls, in meters.
+        :type wall_width: float, optional
+        :param nav_poses: List of navigation poses in the room. If not specified, defaults to the centroid.
+        :type nav_poses: list[:class:`pyrobosim.utils.pose.Pose`]
+        """
         self.name = name
         self.wall_width = wall_width
         self.viz_color = color
@@ -38,7 +53,12 @@ class Room:
             self.nav_poses = [Pose.from_list(self.centroid)]
 
     def update_collision_polygons(self, inflation_radius=0):
-        """ Updates collision polygons using the specified inflation radius """
+        """
+        Updates the collision polygons using the specified inflation radius.
+        
+        :param inflation_radius: Inflation radius, in meters.
+        :type inflation_radius: float, optional
+        """
         # Internal collision polygon:
         # Deflate the room polygon with the inflation radius and add each location's collision polygon.
         self.internal_collision_polygon = inflate_polygon(
@@ -53,7 +73,7 @@ class Room:
             self.polygon, self.wall_width)
 
     def update_visualization_polygon(self):
-        """ Updates visualization polygon for world plotting """
+        """ Updates visualization polygon of the room walls. """
         self.buffered_polygon = inflate_polygon(self.polygon, self.wall_width)
         self.viz_polygon = self.buffered_polygon.difference(self.polygon)
         for h in self.hallways:
@@ -66,7 +86,12 @@ class Room:
                 lw=2, alpha=0.75, zorder=2)
 
     def get_collision_patch(self):
-        """ Returns a PolygonPatch of collision polygon for debug """
+        """ 
+        Returns a PolygonPatch of the collision polygon for debug visualization.
+        
+        :return: Polygon patch of the collision polygon.
+        :rtype: :class:`descartes.patch.PolygonPatch`
+        """
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             return PolygonPatch(
@@ -75,7 +100,14 @@ class Room:
                 lw=2, alpha=0.5, zorder=2)
 
     def is_collision_free(self, pose):
-        """ Checks whether a pose in the room is collision-free """
+        """
+        Checks whether a pose in the hallway is collision-free.
+        
+        :param pose: Pose to test.
+        :type pose: :class:`pyrobosim.utils.pose.Pose`/(float, float)
+        :return: True if collision-free, else False.
+        :rtype: bool
+        """
         if isinstance(pose, Pose):
             p = Point(pose.x, pose.y)
         else:
@@ -83,8 +115,9 @@ class Room:
         return self.internal_collision_polygon.intersects(p)
 
     def add_graph_nodes(self):
-        """ Creates graph nodes for searching """
+        """ Creates graph nodes for searching. """
         self.graph_nodes = [Node(p, parent=self) for p in self.nav_poses]
 
     def __repr__(self):
+        """ Returns printable string. """
         return f"Room: {self.name}"

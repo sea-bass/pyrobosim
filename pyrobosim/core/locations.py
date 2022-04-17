@@ -1,41 +1,47 @@
-"""
-Representations for locations and their corresponding object spawns
-"""
+""" Representations for locations and their corresponding object spawns. """
 
-import yaml
 import warnings
 from shapely.geometry import Point
 from descartes.patch import PolygonPatch
 
 from ..navigation.search_graph import Node
+from ..utils.general import EntityMetadata
 from ..utils.pose import Pose, rot2d
 from ..utils.polygon import inflate_polygon, polygon_and_height_from_footprint
 
 
-class LocationMetadata:
-    """ Represents metadata about locations """
-    def __init__(self, filename):
-        self.filename = filename
-        with open(self.filename) as file:
-            self.data = yaml.load(file, Loader=yaml.FullLoader)
-
-    def has_category(self, category):
-        return category in self.data
-
-    def get(self, category):
-        return self.data[category]
-
-
 class Location:
-    """ Representation of a location in the world """
+    """ Representation of a location in the world. """
+
+    # Default class attributes
     height = 1.0
+    """ Vertical height of location. """
     viz_color = (0, 0, 0)
+    """ Visualization color (RGB tuple). """
 
     @classmethod
     def set_metadata(cls, filename):
-        cls.metadata = LocationMetadata(filename)
+        """ 
+        Assign a metadata file to the :class:`pyrobosim.core.locations.Location` class.
+        
+        :param filename: Path to location metadata YAML file.
+        :type filename: str
+        """
+        cls.metadata = EntityMetadata(filename)
 
     def __init__(self, category, pose, name=None, parent=None):
+        """
+        Creates a location instance.
+
+        :param category: Location category (e.g., table).
+        :type category: str
+        :param pose: Pose of the location.
+        :type pose: :class:`pyrobosim.utils.pose.Pose`
+        :param name: Name of the location.
+        :type name: str, optional
+        :param parent: Parent of the location (typically a :class:`pyrobosim.core.room.Room`)
+        :type parent: Entity
+        """
         # Extract the model information from the model list
         self.name = name
         self.category = category
@@ -61,8 +67,8 @@ class Location:
             for p in self.metadata["nav_poses"]:
                 rot_p = rot2d((p[0] + p_off[0], p[1] + p_off[1]),
                               self.pose.yaw)
-                nav_pose = Pose(x=rot_p[0] + self.pose.x, 
-                                y=rot_p[1] + self.pose.y, 
+                nav_pose = Pose(x=rot_p[0] + self.pose.x,
+                                y=rot_p[1] + self.pose.y,
                                 yaw=p[2] + self.pose.yaw)
                 if self.parent.is_collision_free(nav_pose):
                     self.nav_poses.append(nav_pose)
@@ -81,36 +87,54 @@ class Location:
         self.update_collision_polygon()
         self.update_visualization_polygon()
 
-
     def get_room_name(self):
-        """ Returns the name of the containing room """
+        """ 
+        Returns the name of the room containing the location.
+        
+        :return: Room name.
+        :rtype: str
+        """
         if self.parent is None:
             return None
         else:
             return self.parent.get_room_name()
 
-
     def is_inside(self, pose):
-        """ Checks if a pose is inside the location footprint """
+        """ 
+        Checks if a pose is inside the location polygon.
+        
+        :param pose: Pose to check.
+        :type pose: :class:`pyrobosim.utils.pose.Pose`/(float, float)
+        :return: True if pose is inside the polygon, else False.
+        :rtype: bool
+        """
         if isinstance(pose, Pose):
             p = Point(pose.x, pose.y)
         else:
             p = Point(pose[0], pose[1])
         return self.polygon.intersects(p)
 
-
     def get_raw_polygon(self):
-        """ Gets the raw polygon (without any pose offset) """
+        """ 
+        Gets the raw polygon (without any pose offset).
+        
+        :return: Raw polygon.
+        :rtype: :class:`shapely.geometry.Polygon`
+        """
         return polygon_and_height_from_footprint(self.metadata["footprint"])[0]
 
-
-    def update_collision_polygon(self, inflation_radius=0):
-        """ Updates the collision polygon using the specified inflation radius """
-        self.collision_polygon = inflate_polygon(self.polygon, inflation_radius)
-
+    def update_collision_polygon(self, inflation_radius=0.0):
+        """
+        Updates the collision polygon using the specified inflation radius.
+        
+        :param inflation_radius: Inflation radius, in meters.
+        :type inflation_radius: float, optional
+        """
+        self.collision_polygon = inflate_polygon(
+            self.polygon, inflation_radius)
 
     def update_visualization_polygon(self):
-        """ Updates the visualization polygon for the furniture """
+        """ Updates the visualization polygon for the location. """
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             self.viz_patch = PolygonPatch(
@@ -118,21 +142,30 @@ class Location:
                 fill=None, ec=self.viz_color,
                 lw=2, alpha=0.75, zorder=2)
 
-
     def add_graph_nodes(self):
-        """ Creates graph nodes for searching """
+        """ Creates graph nodes for searching. """
         for spawn in self.children:
             spawn.add_graph_nodes()
 
-
     def __repr__(self):
+        """ Returns printable string. """
         return f"Location: {self.name} in {self.parent}"
 
 
 class ObjectSpawn:
-    """ Representation of an object spawn in the world """
+    """ Representation of an object spawn in the world. """
 
     def __init__(self, name, metadata, parent=None):
+        """
+        Creates an object spawn instance.
+
+        :param name: Name of the location.
+        :type name: str, optional
+        :param metadata: Metadata dictionary for the object spawn
+        :type metadata: dict
+        :param parent: Parent of the location (typically a :class:`pyrobosim.core.locations.Location`)
+        :type parent: Entity
+        """
         self.name = name
         self.category = parent.category
         self.parent = parent
@@ -156,7 +189,8 @@ class ObjectSpawn:
 
         self.update_visualization_polygon()
         self.centroid = list(self.polygon.centroid.coords)[0]
-        self.pose = Pose(x=self.centroid[0], y=self.centroid[1], yaw=self.parent.pose.yaw)
+        self.pose = Pose(
+            x=self.centroid[0], y=self.centroid[1], yaw=self.parent.pose.yaw)
 
         # If navigation poses were specified, add them. Else, use the parent poses.
         # Of course, only add these if they are collision-free.
@@ -169,40 +203,50 @@ class ObjectSpawn:
             for p in self.metadata["nav_poses"]:
                 rot_p = rot2d((p[0] + p_off[0], p[1] + p_off[1]),
                               self.parent.pose.yaw)
-                nav_pose = Pose(x=rot_p[0] + self.parent.pose.x, 
+                nav_pose = Pose(x=rot_p[0] + self.parent.pose.x,
                                 y=rot_p[1] + self.parent.pose.y,
                                 yaw=p[2] + self.parent.pose.yaw)
                 if self.parent.parent.is_collision_free(nav_pose):
-                    self.nav_poses.append(nav_pose)       
+                    self.nav_poses.append(nav_pose)
         else:
             self.nav_poses = self.parent.nav_poses
 
-    
     def get_room_name(self):
-        """ Returns the name of the containing room """
+        """
+        Returns the name of the room containing the object spawn.
+        
+        :return: Room name.
+        :rtype: str
+        """
         return self.parent.get_room_name()
 
-
     def is_inside(self, pose):
-        """ Checks if a pose is inside the object spawn footprint """
+        """
+        Checks if a pose is inside the object spawn polygon.
+        
+        :param pose: Pose to check.
+        :type pose: :class:`pyrobosim.utils.pose.Pose`/(float, float)
+        :return: True if pose is inside the polygon, else False.
+        :rtype: bool
+        """
         if isinstance(pose, Pose):
             p = Point(pose.x, pose.y)
         else:
             p = Point(pose[0], pose[1])
         return self.polygon.intersects(p)
 
-
     def update_visualization_polygon(self):
-        """ Adds a visualization polygon for the object spawn """
+        """ Updates the visualization polygon for the object spawn. """
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             self.viz_patch = PolygonPatch(
-            self.polygon, fill=None, ec=self.parent.viz_color, 
-            lw=1, ls="--", zorder=2)
+                self.polygon, fill=None, ec=self.parent.viz_color,
+                lw=1, ls="--", zorder=2)
 
     def add_graph_nodes(self):
-        """ Creates graph nodes for searching """
+        """ Creates graph nodes for searching. """
         self.graph_nodes = [Node(p, parent=self) for p in self.nav_poses]
 
     def __repr__(self):
+        """ Returns printable string. """
         return f"Object spawn location: {self.name} in {self.parent.name}"

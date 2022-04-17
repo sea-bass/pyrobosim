@@ -1,4 +1,4 @@
-""" Utilities to export worlds to Gazebo """
+""" Utilities to export worlds to Gazebo. """
 
 import os
 import shutil
@@ -10,7 +10,15 @@ from ..utils.general import get_data_folder, replace_special_yaml_tokens
 
 
 class WorldGazeboExporter:
+    """ Exports world models to Gazebo. """
+
     def __init__(self, world):
+        """
+        Creates a new Gazebo exporter from a world. 
+        
+        :param world: World object to export.
+        :type world: :class:`pyrobosim.core.world.World`
+        """
         self.world = world
 
         # Set up template text for string replacement.
@@ -24,7 +32,16 @@ class WorldGazeboExporter:
             "link_template_polyline.sdf")
 
     def export(self):
-        """ Exports the world to an SDF file to use with Gazebo """
+        """
+        Exports the world to an SDF file to use with Gazebo, including 
+        all other necessary models for locations and/or objects.
+
+        Instructions to add to the Gazebo model path and spawn the world 
+        are printed to the Terminal.
+
+        :return: Path to output folder with generated world.
+        :rtype: str
+        """
         world_name = self.world.name
         if world_name is None:
             world_name = "gen_world"
@@ -53,13 +70,24 @@ class WorldGazeboExporter:
         print(f"\nWorld file saved to {world_file_name}\n")
         print(f"Ensure to update your Gazebo model path:")
         include_path_str = ":".join(self.include_model_paths)
-        print(f"    export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:{include_path_str}\n")
+        print(
+            f"    export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:{include_path_str}\n")
         print(f"To start the world, enter")
         print(f"    gazebo {world_file_name}\n")
         return self.out_folder
 
     def create_walls_for_export(self, walls_name="walls"):
-        """ Convert all room / hallway polygons to Gazebo representations """
+        """ 
+        Convert all room / hallway polygons to Gazebo representations. 
+        
+        This looks at the polygons representing the walls of each entity and 
+        creates a model with the "polyline" geometry.
+
+        NOTE: The "polyline" geometry is not yet supported in Ignition Gazebo.
+        
+        :param walls_name: The name of the Gazebo model containing walls.
+        :type walls_name: str, optional
+        """
         # Build up a list of links representing each wall segment in the world.
         full_links_text = ""
         for obj in itertools.chain(self.world.rooms, self.world.hallways):
@@ -91,7 +119,19 @@ class WorldGazeboExporter:
         self.model_include_text += " "*4 + "</include>\n"
 
     def create_locations_and_objects_for_export(self):
-        """ Export locations and objects to Gazebo representations """
+        """ 
+        Export locations and objects to Gazebo representations.
+
+        For each entity that is exported, we check whether it is created from a
+        geometry primitive within pyrobosim, or it references an existing model mesh.
+
+        If created from a primitive, we export each location/object category to a separate
+        Gazebo model created using the "polyline" geometry (extruding the 2D footprint).
+
+        If referencing an existing model mesh, we simply add an <include> tag to that model
+        and ensure that we prompt users to add the path to this model to the Gazebo path
+        before spawning the world.
+        """
         for entity in itertools.chain(self.world.locations, self.world.objects):
             # If the object category does not have meshes, create a new model and extrude a polyline.
             if entity.metadata["footprint"]["type"] != "mesh":
@@ -139,7 +179,18 @@ class WorldGazeboExporter:
             self.model_include_text += " "*4 + "</include>\n"
 
     def create_sdf_link_text(self, template_text, entity, entity_type):
-        """ Creates SDF link text from a world entity. """
+        """
+        Creates SDF link text from a world entity. 
+        
+        :param template_text: Link template SDF text to modify.
+        :type template_text: str
+        :param entity: Entity object (e.g. Room, Hallway, Location, Object)
+        :type entity: Entity
+        :param entity_type: The type of entity, either ``"walls"`` or ``"object"``.
+        :type entity_type: str
+        :return: The modified template SDF text containing the entity model.
+        :rtype: str
+        """
 
         # Check the height
         if entity_type == "walls":
@@ -195,7 +246,14 @@ class WorldGazeboExporter:
         return full_text
 
     def read_template_file(self, filename):
-        """ Utility to read a file from the template folder """
+        """
+        Simple wrapper utility to read a file from the template folder. 
+        
+        :param filename: Filename, relative to the template folder.
+        :type filename: str
+        :return: Raw template text.
+        :rtype: str
+        """
         fullfile = os.path.join(self.template_folder, filename)
         with open(fullfile, "r") as f:
             return f.read()

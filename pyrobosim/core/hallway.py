@@ -1,6 +1,4 @@
-"""
-Hallway Representation for World Modeling
-"""
+""" Hallway representation for world modeling. """
 
 import warnings
 import numpy as np
@@ -13,29 +11,40 @@ from ..utils.polygon import inflate_polygon
 
 
 class Hallway:
-    """ Representation of a hallway connecting two rooms in a world """
+    """ Representation of a hallway connecting two rooms in a world. """
 
     def __init__(self, room_start, room_end, hall_width,
                  conn_method="auto", offset=0,
                  conn_angle=0, conn_points=[],
                  color=[0.4, 0.4, 0.4], wall_width=0.2):
-        """ Creates a Hallway object
+        """ 
+        Creates a Hallway instance between two rooms.
 
-        Arguments:
-            room_start : Room object for the start of the hallway
-            room_end : Room object for the end of the hallway
-            hall_width : Width of the hallway
-            conn_method : Connection method
-                - auto : Draws straight line between centroids
-                - angle : Directly specifies an angle
-                - points : Specify a list of points
-            offset : Perpendicular offset from centroid of start point
-                     (valid if using "auto" or "angle" methods)
-            conn_angle : If using "angle" connection method, specifies the angle of the hallway 
-                         (0 is horizontal to right)
-            conn_points: If using "points" connection method, specifies the hallway points
-            color : Visualization color
-            wall_width : Width of hallway walls
+        Hallways can be connected with a few different connection methods. These are:
+            - ``"auto"`` : Draws straight line between room centroids (default)
+            - ``"angle"`` : Directly specifies an angle leaving the centroid of the start room.
+            - ``"points"`` : Specify an explicit list of points defining the hallway.
+
+        :param room_start: Room object for the start of the hallway.
+        :type room_start: :class:`pyrobosim.core.room.Room`
+        :param room_end: Room object for the end of the hallway.
+        :type room_end: :class:`pyrobosim.core.room.Room`
+        :param hall_width: Width of the hallway, in meters
+        :type hall_width: float
+        :param conn_method: Connection method (see above)
+        :type conn_method: str, optional
+        :param offset: Perpendicular offset from centroid of start point 
+            (valid if using ``"auto"`` or ``"angle"`` connection methods)
+        :type offset: float, optional
+        :param conn_angle: If using ``"angle"`` connection method, specifies
+            the angle of the hallway in radians (0 points to the right).
+        :type conn_angle: float, optional
+        :param conn_points: If using "points" connection method, specifies the hallway points.
+        :type conn_points: list[(float, float)], optional
+        :param color: Visualization color as an (R, G, B) tuple in the range (0.0, 1.0)
+        :type color: (float, float, float), optional
+        :param wall_width: Width of hallway walls, in meters.
+        :type wall_width: float, optional
         """
         self.room_start = room_start
         self.room_end = room_end
@@ -73,14 +82,19 @@ class Hallway:
 
         # Create the hallway polygon
         self.polygon = LineString(self.points)
-        self.polygon = inflate_polygon(self.polygon, hall_width/2.0)
+        self.polygon = inflate_polygon(self.polygon, hall_width / 2.0)
 
         # Get the collision and visualization polygons
         self.update_collision_polygons()
         self.update_visualization_polygon()
 
-    def update_collision_polygons(self, inflation_radius=0):
-        """ Updates the collision polygon using the specified inflation radius """
+    def update_collision_polygons(self, inflation_radius=0.0):
+        """
+        Updates the collision polygons using the specified inflation radius.
+        
+        :param inflation_radius: Inflation radius, in meters.
+        :type inflation_radius: float, optional
+        """
         # Internal collision polygon:
         # Deflate the resulting difference polygon
         self.internal_collision_polygon = inflate_polygon(
@@ -101,7 +115,7 @@ class Hallway:
             self.room_end.external_collision_polygon)
 
     def update_visualization_polygon(self):
-        """ Updates the visualization polygon for the hallway walls """
+        """ Updates the visualization polygon for the hallway walls. """
         self.buffered_polygon = inflate_polygon(self.polygon, self.wall_width)
         self.viz_polygon = self.buffered_polygon.difference(self.polygon)
         self.viz_polygon = self.viz_polygon.difference(
@@ -116,7 +130,12 @@ class Hallway:
                 lw=2, alpha=0.75, zorder=2)
 
     def get_collision_patch(self):
-        """ Returns a PolygonPatch of collision polygon for debug """
+        """ 
+        Returns a PolygonPatch of the collision polygon for debug visualization.
+        
+        :return: Polygon patch of the collision polygon.
+        :rtype: :class:`descartes.patch.PolygonPatch`
+        """
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             return PolygonPatch(
@@ -125,7 +144,14 @@ class Hallway:
                 lw=2, alpha=0.5, zorder=2)
 
     def is_collision_free(self, pose):
-        """ Checks whether a pose in the room is collision-free """
+        """
+        Checks whether a pose in the hallway is collision-free.
+        
+        :param pose: Pose to test.
+        :type pose: :class:`pyrobosim.utils.pose.Pose`/(float, float)
+        :return: True if collision-free, else False.
+        :rtype: bool
+        """
         if isinstance(pose, Pose):
             p = Point(pose.x, pose.y)
         else:
@@ -133,7 +159,7 @@ class Hallway:
         return self.internal_collision_polygon.intersects(p)
 
     def add_graph_nodes(self):
-        """ Creates graph nodes for searching """
+        """ Creates graph nodes for searching. """
         intersect_line = LineString(self.points)
         intersect_line = intersect_line.difference(
             self.room_start.internal_collision_polygon)
@@ -151,4 +177,5 @@ class Hallway:
                      for p in line.coords])
 
     def __repr__(self):
+        """ Returns printable string. """
         return f"Hallway: Connecting {self.room_start.name} and {self.room_end.name}"

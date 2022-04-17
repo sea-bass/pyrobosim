@@ -190,8 +190,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
     def on_place_click(self):
         """ Callback to place an object. """
         if self.world.robot:
-            loc = self.world.robot.location
             if self.world.robot.manipulated_object is not None:
                 print(f"Placing {self.world.robot.manipulated_object.name}")
-            self.canvas.place_object(loc)
+            self.canvas.place_object()
             self.update_manip_state()

@@ -166,7 +166,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         Displays a path that the robot will follow for navigation. 
         
         :param path: A list of Pose objects defining the path. 
-        :type path: list, optional
+        :type path: list[:class:`pyrobosim.utils.pose.Pose`], optional
         """
         if path is None:
             path = self.world.current_path
@@ -316,12 +316,10 @@ class WorldCanvas(FigureCanvasQTAgg):
             return success
         return False
 
-    def place_object(self, loc_name):
+    def place_object(self):
         """
-        Places an object.
+        Places an object at the robot's current location.
         
-        :param loc_name: The name of the location.
-        :type loc_mame: str
         :return: True if placing succeeds, else False
         :rtype: bool
         """
@@ -331,7 +329,7 @@ class WorldCanvas(FigureCanvasQTAgg):
             if obj is None:
                 return
             obj.viz_patch.remove()
-            success = robot.place_object(loc_name)
+            success = robot.place_object()
             self.axes.add_patch(obj.viz_patch)
             self.update_object_plot(obj)
             self.show_world_state()
