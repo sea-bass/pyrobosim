@@ -15,7 +15,7 @@ class PyRoboSimGUI(QtWidgets.QApplication):
         Creates an instance of the pyrobosim GUI.
 
         :param world: World object to attach to the GUI.
-        :type world: :class:`pyrobosim.world.world.World`
+        :type world: :class:`pyrobosim.core.world.World`
         """
         super(PyRoboSimGUI, self).__init__(args)
         self.world = world
@@ -31,7 +31,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         Creates an instance of the pyrobosim application main window.
 
         :param world: World object to attach
-        :type world: :class:`pyrobosim.world.world.World`
+        :type world: :class:`pyrobosim.core.world.World`
         """
         super(PyRoboSimMainWindow, self).__init__(*args, **kwargs)
         self.setWindowTitle("pyrobosim")

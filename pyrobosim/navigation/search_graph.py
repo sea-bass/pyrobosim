@@ -15,7 +15,7 @@ class SearchGraph:
         Creates a new search graph.
         
         :param world: World object from which to create the search graph.
-        :type world: :class:`pyrobosim.world.world.World`
+        :type world: :class:`pyrobosim.core.world.World`
         :param max_edge_dist: Maximum distance to automatically connect two edges, defaults to infinity.
         :type max_edge_dist: float
         :param collision_check_dist: Distance sampled along an edge to check for collisions, defaults to 0.1.

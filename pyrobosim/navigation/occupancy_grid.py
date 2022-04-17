@@ -101,7 +101,7 @@ def occupancy_grid_from_world(world, resolution, inflation_radius=0.0,
     left unspecified, the extents will be calculated automatically.
 
     :param world: World object from which to create an occupancy grid.
-    :type world: :class:`pyrobosim.world.world.World`
+    :type world: :class:`pyrobosim.core.world.World`
     :param resolution: Grid resolution, in meters.
     :type resolution: float
     :param inflation_radius: Inflation radius, in meters.

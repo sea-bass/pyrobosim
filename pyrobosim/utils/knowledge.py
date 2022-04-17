@@ -2,8 +2,8 @@ import sys
 import warnings
 import numpy as np
 
-from ..world.locations import Location, ObjectSpawn
-from ..world.objects import Object
+from ..core.locations import Location, ObjectSpawn
+from ..core.objects import Object
 
 """
 Utilities to reason about entities using world knowledge

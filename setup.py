@@ -1,4 +1,5 @@
-from setuptools import setup, find_packages
+from os import filesep
+from setuptools import setup
 
 # This is for standalone (non-ROS) use.
 project_name = "pyrobosim"
@@ -12,11 +13,11 @@ setup(
     license="BSD",
     packages=[
         project_name,
-        project_name + "/gui",
-        project_name + "/navigation",
-        project_name + "/planning",
-        project_name + "/utils",
-        project_name + "/world",
+        project_name + filesep + "core",
+        project_name + filesep + "gui",
+        project_name + filesep + "navigation",
+        project_name + filesep + "planning",
+        project_name + filesep + "utils"
     ],
     zip_safe=True
 )

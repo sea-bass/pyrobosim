@@ -50,7 +50,7 @@ The first command will start a world as a ROS2 node, and the second one will pub
 
 Creating Worlds
 ---------------
-Worlds can be created either with the pyrobosim API, or loaded from a YAML file using the :doc:`WorldYamlLoader </generated/pyrobosim.world.yaml.WorldYamlLoader>` utility:
+Worlds can be created either with the pyrobosim API, or loaded from a YAML file using the :doc:`WorldYamlLoader </generated/pyrobosim.core.yaml.WorldYamlLoader>` utility:
 
 By default, ``demo.py`` creates a world using the API, but you can alternative try a demo YAML file using the ``--from-file`` argument. For example:
 
@@ -67,7 +67,7 @@ Refer to the Location YAML Specification (TODO) and Object YAML Specification (T
 
 Exporting Worlds to Gazebo
 --------------------------
-To export worlds to Gazebo, there is a :doc:`WorldGazeboExporter </generated/pyrobosim.world.gazebo.WorldGazeboExporter>` utility:
+To export worlds to Gazebo, there is a :doc:`WorldGazeboExporter </generated/pyrobosim.core.gazebo.WorldGazeboExporter>` utility:
 
 Standalone:
 
