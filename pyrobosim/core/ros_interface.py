@@ -1,17 +1,31 @@
-"""
-ROS interface to world model
-"""
+""" ROS interfaces to world model. """
 
-import threading
 import rclpy
 from rclpy.node import Node
+import threading
 from transforms3d.euler import euler2quat
 
 from pyrobosim.msg import RobotState, TaskAction, TaskPlan
 from pyrobosim.planning.ros_utils import task_action_from_ros, task_plan_from_ros
 
 class WorldROSWrapper(Node):
+    """ ROS2 wrapper node for pyrobosim worlds. """
     def __init__(self, world, name="pyrobosim", state_pub_rate=0.1):
+        """
+        Creates a ROS2 world wrapper node.
+
+        Given a node name (default is ``"pyrobosim"``), this node will:
+            * Subscribe to single actions on the ``pyrobosim/commanded_action`` topic.
+            * Subscribe to task plans on the ``pyrobosim/commanded_plan`` topic
+            * Publish robot state on the ``pyrobosim/robot_state`` topic
+
+        :param world: World model instance.
+        :type world: :class:`pyrobosim.core.world.World`
+        :param name: Node name prefix and namespace, defaults to ``"pyrobosim"``.
+        :type name: str, optional
+        :param state_pub_rate: Rate, in seconds, to publish robot state.
+        :type state_pub_rate: float, optional.
+        """
         self.name = name
         self.state_pub_rate = state_pub_rate
         super().__init__(self.name + "_world", namespace=self.name)
@@ -44,7 +58,7 @@ class WorldROSWrapper(Node):
 
 
     def start(self):
-        """ Starts the node """
+        """ Starts the node. """
         self.robot_state_pub_thread.start()
         rclpy.spin(self)
         self.destroy_node()
@@ -52,7 +66,12 @@ class WorldROSWrapper(Node):
 
 
     def action_callback(self, msg):
-        """ Handle single action callback """
+        """ 
+        Handle single action callback. 
+        
+        :param msg: Task action message to process.
+        :type msg: :class:`pyrobosim.msg.TaskAction`
+        """
         if self.is_robot_busy():
             self.get_logger().info(f"Currently executing action(s). Discarding this one.")
             return
@@ -62,7 +81,12 @@ class WorldROSWrapper(Node):
 
 
     def plan_callback(self, msg):
-        """ Handle task plan callback """
+        """ 
+        Handle task plan callback.
+        
+        :param msg: Task plan message to process.
+        :type msg: :class:`pyrobosim.msg.TaskPlan`
+        """
         if self.is_robot_busy():
             self.get_logger().info(f"Currently executing action(s). Discarding this one.")
             return
@@ -72,10 +96,17 @@ class WorldROSWrapper(Node):
 
 
     def is_robot_busy(self):
+        """
+        Check if the robot is currently executing an action or plan. 
+        
+        :return: True if the robot is busy, else False.
+        :rtype: bool
+        """
         return self.world.robot.executing_action or self.world.robot.executing_plan
 
 
     def publish_robot_state(self):
+        """ Publishes the robot state (this function runs on a timer). """
         robot = self.world.robot
         if robot:
             state_msg = RobotState()

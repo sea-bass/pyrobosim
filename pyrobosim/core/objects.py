@@ -8,7 +8,7 @@ from ..utils.polygon import inflate_polygon, polygon_and_height_from_footprint
 
 
 class Object:
-    """ Represents an object in the world """
+    """ Represents an object in the world. """
 
     # Default class attributes
     height = 1.0

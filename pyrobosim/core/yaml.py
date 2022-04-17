@@ -1,6 +1,4 @@
-"""
-Utilities to create worlds from YAML files
-"""
+""" Utilities to create worlds from YAML files. """
 
 import numpy as np
 import os
@@ -17,15 +15,29 @@ def get_value_or(data, key, default=None):
     """ 
     Utility function to get a value from a dictionary if the key exists,
     or else get a default value.
+
+    :param data: Dictionary containing the data.
+    :type data: dict
+    :param key: Dictionary key.
+    :type key: str
+    :param default: Default value to use if key does not exist, defaults to None.
+    :return: Value from the dictionary, or the default value if the key does not exist.
     """
     return data[key] if key in data else default
 
 
 class WorldYamlLoader:
-    world = None
+    """ Creates world models from YAML files. """
 
     def from_yaml(self, filename):
-        """ Load a world from a YAML description. """
+        """ 
+        Load a world from a YAML description. 
+        
+        :param filename: Path to YAML file describing the world.
+        :type filename: str
+        :return: World model instance.
+        :rtype: :class:`pyrobosim.core.world.World`
+        """
         self.filename = filename
         with open(self.filename) as file:
             self.data = yaml.load(file, Loader=yaml.FullLoader)
@@ -42,8 +54,7 @@ class WorldYamlLoader:
 
 
     def create_world(self):
-        """ Creates an initial world """
-        # Create a world given its global parameters
+        """ Creates an initial world with the specified global parameters. """
         if "params" in self.data:
             params = self.data["params"]
             name = get_value_or(params, "name", default="world")
@@ -70,7 +81,7 @@ class WorldYamlLoader:
 
 
     def add_rooms(self):
-        """ Add rooms to the world """
+        """ Add rooms to the world. """
         if "rooms" not in self.data:
             return
 
@@ -89,7 +100,7 @@ class WorldYamlLoader:
         
 
     def add_hallways(self):
-        """ Add hallways connecting rooms to the world """
+        """ Add hallways connecting rooms to the world. """
         if "hallways" not in self.data:
             return
 
@@ -109,7 +120,7 @@ class WorldYamlLoader:
 
 
     def add_locations(self):
-        """ Add locations for object spawning to the world """
+        """ Add locations for object spawning to the world. """
         if "locations" not in self.data:
             return
         
@@ -122,7 +133,7 @@ class WorldYamlLoader:
         
 
     def add_objects(self):
-        """ Add objects to the world """
+        """ Add objects to the world. """
         if "objects" not in self.data:
             return
         
@@ -138,7 +149,7 @@ class WorldYamlLoader:
 
 
     def add_robot(self):
-        """ Add a robot to the world """
+        """ Add a robot to the world. """
         if "robots" not in self.data:
             return
 
@@ -159,7 +170,7 @@ class WorldYamlLoader:
 
 
     def add_planner(self):
-        """ Adds a global planner to the world """
+        """ Adds a global path planner to the world. """
         if "planning" not in self.data or "planner_type" not in self.data["planning"]:
             return
         planning = self.data["planning"]
@@ -170,3 +181,5 @@ class WorldYamlLoader:
             collision_check_dist = get_value_or(planning, "collision_check_dist", default=0.1)
             self.world.create_search_graph(
                 max_edge_dist=max_edge_dist, collision_check_dist=collision_check_dist)
+        else:
+            warnings.warn(f"Invalid planner type specified: {planner_type}")

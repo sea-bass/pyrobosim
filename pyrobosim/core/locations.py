@@ -33,7 +33,7 @@ class Location:
         """
         Creates a location instance.
 
-        :param category: Location category (e.g., table).
+        :param category: Location category (e.g., ``"table"``).
         :type category: str
         :param pose: Pose of the location.
         :type pose: :class:`pyrobosim.utils.pose.Pose`
