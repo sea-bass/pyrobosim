@@ -1,3 +1,5 @@
+""" Graph search utilities. """
+
 from astar import AStar
 import numpy as np
 import warnings
@@ -10,9 +12,14 @@ class SearchGraph:
 
     def __init__(self, world=None, max_edge_dist=np.inf, collision_check_dist=0.1):
         """
-        Args:
-            max_edge_dist (float): Maximum distance to automatically connect two edges
-            collision_check_dist (float): Distance sampled along an edge to check for collisions
+        Creates a new search graph.
+        
+        :param world: World object from which to create the search graph.
+        :type world: :class:`pyrobosim.world.world.World`
+        :param max_edge_dist: Maximum distance to automatically connect two edges, defaults to infinity.
+        :type max_edge_dist: float
+        :param collision_check_dist: Distance sampled along an edge to check for collisions, defaults to 0.1.
+        :type collision_check_dist: float
         """
         self.nodes = set()
         self.edges = set()
@@ -24,26 +31,15 @@ class SearchGraph:
 
         self.solver = GraphSolver()
 
-    def search(self, start, goal):
-        """ 
-        Returns a path between start and goal nodes
-        """
-        if start not in self.nodes:
-            raise Exception("Start node not in nodes")
-            return None
-        if goal not in self.nodes:
-            raise Exception("Goal node not in nodes")
-
-        path = self.solver.astar(start, goal)
-        if path is None:
-            print("No valid path found")
-            return path
-        else:
-            path = list(path)
-            return path
-
     def add(self, n, autoconnect=False):
-        """ Adds a new node or list of nodes to the graph """
+        """ 
+        Adds a new node or list of nodes to the graph.
+        
+        :param n: Node to add to the graph
+        :type n: :class:`Node`
+        :param autoconnect: Whether to autoconnect the node to existing nodes in the graph, defaults to False.
+        :type autoconnect: bool, optional
+        """
         if isinstance(n, list):
             for i in n:
                 self.add(i, autoconnect=autoconnect)
@@ -54,14 +50,26 @@ class SearchGraph:
                     self.connect(n, nconn)
 
     def connect(self, n0, n1):
-        """ Connects two nodes in a graph, if collision free """
+        """
+        Connects two nodes in a graph, if collision free.
+        
+        :param n0: First node to connect
+        :type n0: :class:`Node`
+        :param n1: Second node to connect
+        :type n1: :class:`Node`
+        """
         if (n0 != n1) and self.check_connectivity(n0, n1):
             n0.neighbors.add(n1)
             n1.neighbors.add(n0)
             self.edges.add(Edge(n0, n1))
 
     def remove(self, ndel):
-        """ Removes a node pr list of nodes and all its connections from the graph """
+        """ 
+        Removes a node or list of nodes and all its connections from the graph.
+        
+        :param ndel: Node or list of nodes to remove
+        :type ndel: :class:`Node`/list[:class:`Node`]
+        """
         if isinstance(ndel, list):
             for i in ndel:
                 self.remove(i)
@@ -78,22 +86,29 @@ class SearchGraph:
                 if e.n0 == ndel or e.n1 == ndel:
                     self.edges.remove(e)
 
-    def check_connectivity(self, start, end):
+    def check_connectivity(self, start, goal):
         """
-        Checks connectivity between two nodes `start` and `end` in the world
+        Checks connectivity between two nodes `start` and `goal` in the world
         by sampling points spaced by the `self.collision_check_dist` parameter and verifying
         that every point is in the free configuration space.
+
+        :param start: Start node
+        :type start: :class:`Node`
+        :param goal: Goal node
+        :type goal: :class:`Node`
+        :return: True if nodes can be connected, else False.
+        :rtype: bool
         """
-        # Trivial case where nodes are identical or there is no world
-        if (self.world is None) or (start == end):
+        # Trivial case where nodes are identical or there is no world.
+        if (self.world is None) or (start == goal):
             return True
 
         # Build up the array of test X and Y coordinates for sampling between
-        # the start and end points
-        dist = start.pose.get_linear_distance(end.pose, ignore_z=True)
-        angle = start.pose.get_angular_distance(end.pose)
+        # the start and goal points.
+        dist = start.pose.get_linear_distance(goal.pose, ignore_z=True)
+        angle = start.pose.get_angular_distance(goal.pose)
         dist_array = np.arange(0, dist, self.collision_check_dist)
-        # If the nodes are coincident, connect them by default
+        # If the nodes are coincident, connect them by default.
         if dist_array.size == 0:
             return True
         if dist_array[-1] != dist:
@@ -102,26 +117,25 @@ class SearchGraph:
         y_pts = start.pose.y + dist_array * np.sin(angle)
 
         # Check the occupancy of all the test points.
-        # Since we know the nodes already were sampled in free space, use a reduced inflation radius
+        # Since we know the nodes already were sampled in free space, use a reduced inflation radius.
         for x_check, y_check in zip(x_pts[1:-1], y_pts[1:-1]):
             if self.world.check_occupancy(Pose(x=x_check, y=y_check)):
                 return False
 
-        # If the loop was traversed for all points without returning, we can connect
+        # If the loop was traversed for all points without returning, we can connect.
         return True
-
 
     def find_path(self, start, goal):
         """
         Gets a path from start to goal poses by searching the graph
         The path consists of a tuple of Pose objects
         
-        Arguments:
-          start: Start node
-          goal: Goal node
-
-        Returns:
-          path: list of graph Node objects describing the path
+        :param start: Start node
+        :type start: :class:`Node`
+        :param goal: Goal node
+        :type goal: :class:`Node`
+        :return: List of graph Node objects describing the path
+        :rtype: list[:class:`Node`]
         """
         path = self.solver.astar(start, goal)
         if path is None:
@@ -132,18 +146,34 @@ class SearchGraph:
 
 
 class Node:
-    """ Graph node representation """
+    """ Graph node representation. """
 
     def __init__(self, pose, parent=None):
+        """
+        Creates a graph node. 
+        
+        :param pose: Pose of the node.
+        :type pose: :class:`pyrobosim.utils.pose.Pose`
+        :param parent: Parent node, if any.
+        :type parent: :class:`Node`, optional
+        """
         self.pose = pose
         self.parent = parent
         self.neighbors = set()
 
 
 class Edge:
-    """ Edge node representation """
+    """ Graph edge representation. """
 
     def __init__(self, n0, n1):
+        """
+        Creates a graph edge.
+        
+        :param n0: First node
+        :type n0: :class:`Node`
+        :param n1: Second node
+        :type n1: :class:`Node`
+        """
         self.n0 = n0
         self.n1 = n1
         self.cost = n0.pose.get_linear_distance(n1.pose)
@@ -156,13 +186,38 @@ class GraphSolver(AStar):
     """
 
     def heuristic_cost_estimate(self, n0, n1):
-        """ Compute distance """
+        """ 
+        Compute heuristic cost estimate using linear distance.
+
+        :param n0: First node
+        :type n0: :class:`Node`
+        :param n1: Second node
+        :type n1: :class:`Node`
+        :return: Heuristic cost estimate
+        :rtype: float
+        """
         return n0.pose.get_linear_distance(n1.pose, ignore_z=True)
 
     def distance_between(self, n0, n1):
-        """ Compute distance """
+        """
+        Compute distance between two nodes
+        
+        :param n0: First node
+        :type n0: :class:`Node`
+        :param n1: Second node
+        :type n1: :class:`Node`
+        :return: Heuristic cost estimate
+        :rtype: float
+        """
         return n0.pose.get_linear_distance(n1.pose, ignore_z=True)
 
     def neighbors(self, n):
-        """ Get neighbors """
+        """
+        Get neighbors of a graph node.
+        
+        :param n: Node
+        :type n: :class:`Node`
+        :return: List of node neighbors
+        :rtype: list[:class:`Node`]
+        """
         return list(n.neighbors)

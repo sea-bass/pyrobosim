@@ -254,6 +254,8 @@ class WorldCanvas(FigureCanvasQTAgg):
 
         :param goal: Name of goal location (resolved by the world model).
         :type goal: str
+        :return: True if navigation succeeds, else False
+        :rtype: bool
         """
         # Find a path and kick off the navigation thread
         path = self.world.find_path(goal)
@@ -301,6 +303,8 @@ class WorldCanvas(FigureCanvasQTAgg):
         
         :param obj_name: The name of the object.
         :type obj_name: str
+        :return: True if picking succeeds, else False
+        :rtype: bool
         """
         robot = self.world.robot
         if robot is not None:
@@ -310,6 +314,7 @@ class WorldCanvas(FigureCanvasQTAgg):
                 self.show_world_state()
                 self.draw_and_sleep()
             return success
+        return False
 
     def place_object(self, loc_name):
         """
@@ -317,6 +322,8 @@ class WorldCanvas(FigureCanvasQTAgg):
         
         :param loc_name: The name of the location.
         :type loc_mame: str
+        :return: True if placing succeeds, else False
+        :rtype: bool
         """
         robot = self.world.robot
         if robot is not None:
@@ -330,3 +337,4 @@ class WorldCanvas(FigureCanvasQTAgg):
             self.show_world_state()
             self.draw_and_sleep()
             return success
+        return False

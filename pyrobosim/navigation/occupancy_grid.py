@@ -1,14 +1,29 @@
-""" Occupancy map utilities """
+""" Occupancy grid utilities. """
 
 import os
 import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 class OccupancyGrid:
-    """ Lightweight wrapper containing occupancy grid information """
+    """ Lightweight wrapper containing occupancy grid information. """
 
     def __init__(self, data, resolution, origin=(0, 0), occ_thresh=0.65, free_thresh=0.2):
+        """
+        Creates an occupancy grid. 
+        
+        :param data: 2D numeric array containing the occupancy data.
+        :type data: :class:`numpy.ndarray`
+        :param resolution: Grid resolution, in meters.
+        :type resolution: float
+        :param origin: XY position of the grid origin, in meters, defaults to (0, 0).
+        :type origin: (float, float)
+        :param occ_thresh: Probability threshold for a cell being occupied (0 to 1), defaults to 0.65.
+        :type occ_thresh: float
+        :param free_thresh: Probability threshold for a cell being free (0 to 1), defaults to 0.2.
+        :type free_thresh: float
+        """
         self.data = data
         self.width, self.height = self.data.shape
         self.resolution = resolution
@@ -17,9 +32,9 @@ class OccupancyGrid:
         self.free_thresh = free_thresh
 
     def show(self):
-        """ Displays the occupancy grid as an image """
+        """ Displays the occupancy grid as an image. """
         rot_img = np.logical_not(np.rot90(self.data))
-        plt.imshow(rot_img, 
+        plt.imshow(rot_img,
                    cmap="gray", interpolation="nearest")
         plt.axis("equal")
         plt.title("Occupancy Grid")
@@ -34,8 +49,14 @@ class OccupancyGrid:
         plt.show()
 
     def save_to_file(self, folder, filename="world_map"):
-        """ Save occupancy grid to PGM and YAML files compatible with ROS tools. """
-
+        """ 
+        Save occupancy grid to PGM and YAML files compatible with ROS tools. 
+        
+        :param folder: Path to output folder.
+        :type folder: str
+        :param filename: Name of PGM/YAML file, defaults to "world_map".
+        :type filename: str
+        """
         # Write the PGM file.
         pgm_file = os.path.join(folder, filename + ".pgm")
         with open(pgm_file, "wb") as f:
@@ -51,7 +72,7 @@ class OccupancyGrid:
                     if occ >= self.occ_thresh:
                         occ_val = 0
                     elif occ <= self.free_thresh:
-                        occ_val = 254 
+                        occ_val = 254
                     else:
                         occ_val = 205
                     f.write(occ_val.to_bytes(1, "big"))
@@ -71,22 +92,37 @@ class OccupancyGrid:
             yaml.dump(yaml_dict, f, sort_keys=False, default_flow_style=None)
 
 
-def occupancy_grid_from_world(world, resolution,
-                              inflation_radius=0.0,
-                              xlim=None, ylim=None):
+def occupancy_grid_from_world(world, resolution, inflation_radius=0.0,
+                              xlim=None, ylim=None, auto_lim_padding_ratio=0.05):
     """
     Generates an occupancy grid of a world at a given resolution.
 
     Can optionally specify (min, max) x and y limits. If they are 
     left unspecified, the extents will be calculated automatically.
+
+    :param world: World object from which to create an occupancy grid.
+    :type world: :class:`pyrobosim.world.world.World`
+    :param resolution: Grid resolution, in meters.
+    :type resolution: float
+    :param inflation_radius: Inflation radius, in meters.
+    :type inflation_radius: float
+    :param xlim: X coordinate limits, in meters.
+    :type xlim: (float, float), optional
+    :param ylim: Y coordinate limits, in meters.
+    :type ylim: (float, float), optional
+    :param auto_lim_padding_ratio: Additional padding ratio outside world limits if automatically computed, defaults to 0.05.
+    :type auto_lim_padding_ratio: float
+    :return: Occupancy grid of the world.
+    :rtype: :class:`pyrobosim.navigation.occupancy_grid.OccupancyGrid`
     """
     # Use the world limits if not specified, but slightly padded
-    auto_lim_padding_ratio = 0.05
     if xlim is None:
-        x_padding = (world.x_bounds[1] - world.x_bounds[0]) * auto_lim_padding_ratio
+        x_padding = (world.x_bounds[1] -
+                     world.x_bounds[0]) * auto_lim_padding_ratio
         xlim = (world.x_bounds[0] - x_padding, world.x_bounds[1] + x_padding)
     if ylim is None:
-        y_padding = (world.y_bounds[1] - world.y_bounds[0]) * auto_lim_padding_ratio
+        y_padding = (world.y_bounds[1] -
+                     world.y_bounds[0]) * auto_lim_padding_ratio
         ylim = (world.y_bounds[0] - y_padding, world.y_bounds[1] + y_padding)
 
     # Temporarily change collision polygons to specified inflation radius

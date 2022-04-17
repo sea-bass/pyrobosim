@@ -1,3 +1,5 @@
+""" Trajectory generation and interpolation utilities. """
+
 import numpy as np
 from scipy.spatial.transform import Slerp, Rotation
 
@@ -5,7 +7,14 @@ from ..utils.pose import wrap_angle
 
 
 def fill_path_yaws(path):
-    """ Fill in any yaw angles along a path to point at the next waypoint """
+    """ 
+    Fills in any yaw angles along a path to point at the next waypoint.
+    
+    :param path: List of poses representing a path.
+    :type path: list[:class:`pyrobosim.utils.pose.Pose`]
+    :return: Path with filled-in yaw angle values.
+    :rtype: list[:class:`pyrobosim.utils.pose.Pose`]
+    """
     for idx in range(1, len(path)-1):
         path[idx].pose.yaw = np.arctan2(path[idx].pose.y - path[idx-1].pose.y,
                                         path[idx].pose.x - path[idx-1].pose.x)
@@ -18,7 +27,16 @@ def get_constant_speed_trajectory(path, linear_velocity=0.2, max_angular_velocit
     calculating time points based on constant velocity and maximum angular velocity.
 
     The trajectory is returned as a tuple of numpy arrays
-    (t_pts, x_pts, y_pts, theta_pts)
+    (t_pts, x_pts, y_pts, theta_pts).
+
+    :param path: List of poses representing a path.
+    :type path: list[:class:`pyrobosim.utils.pose.Pose`]
+    :param linear_velocity: Constant linear velocity in m/s, defaults to 0.2.
+    :type linear_velocity: float
+    :param max_angular_velocity: Maximum angular velocity in rad/s, defaults to None.
+    :type max_angular_velocity: float, optional
+    :return: Trajectory type of the form (t_pts, x_pts, y_pts, theta_pts).
+    :rtype: tuple(:class:`numpy.array`)
     """
     if len(path) == 0:
         return None
@@ -49,7 +67,14 @@ def interpolate_trajectory(traj, dt):
     """ 
     Interpolates a trajectory given a time step `dt`.
     Positions are interpolated linearly and the angle is interpolated 
-    using the Spherical Linear Interpolation (Slerp) method
+    using the Spherical Linear Interpolation (Slerp) method.
+
+    :param traj: Trajectory type of the form (t_pts, x_pts, y_pts, theta_pts).
+    :type traj: tuple(:class:`numpy.array`)
+    :param dt: Trajectory sample time, in seconds.
+    :type dt: float
+    :return: Trajectory type of the form (t_pts, x_pts, y_pts, theta_pts).
+    :rtype: tuple(:class:`numpy.array`)
     """
     # Unpack the trajectory
     (t_pts, x_pts, y_pts, yaw_pts) = traj

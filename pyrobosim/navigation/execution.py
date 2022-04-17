@@ -4,7 +4,7 @@ import warnings
 from ..utils.pose import Pose
 from .trajectory import get_constant_speed_trajectory, interpolate_trajectory
 
-""" Path execution utilities """
+""" Path execution utilities. """
 
 
 class ConstantVelocityExecutor:
@@ -14,14 +14,33 @@ class ConstantVelocityExecutor:
     go to the next pose.
     """
     def __init__(self, linear_velocity=1.0, dt=0.1, max_angular_velocity=None):
+        """
+        Creates a constant velocity path executor.
+
+        :param linear_velocity: Linear velocity, in m/s, defaults to 1.0.
+        :type linear_velocity: float
+        :param dt: Time step for creating a trajectory, defaults to 0.1.
+        :type dt: float
+        :param max_angular_velocity: Maximum angular velocity, in rad/s.
+        :type max_angular_velocity: float, optional
+        """
         self.linear_velocity = linear_velocity
         self.max_angular_velocity = max_angular_velocity
         self.dt = dt
-
         self.robot = None
 
 
     def execute(self, path, realtime_factor=1.0):
+        """ 
+        Generates and executes a trajectory on the robot. 
+        
+        :param path: A list of Pose objects defining the path. 
+        :type path: list
+        :param realtime_factor: A multiplier on the execution time relative to real time, defaults to 1.0.
+        :type realtime_factor: float, optional
+        :return: True if execution is complete, else False.
+        :rtype: bool
+        """
         if self.robot is None:
             warnings.warn("No robot attached to execute the trajectory.")
             return
