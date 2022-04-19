@@ -211,7 +211,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         Shows the world state in the figure title.
         
         :param navigating: Flag that indicates that the robot is moving so we 
-        should continuously update the title containing the robot's location.
+            should continuously update the title containing the robot's location.
         :type navigating: bool, optional
         """
         r = self.world.robot

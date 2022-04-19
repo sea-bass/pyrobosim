@@ -11,7 +11,7 @@ class Object:
     """ Represents an object in the world. """
 
     # Default class attributes
-    height = 1.0
+    height = 0.1
     """ Vertical height of location. """
     viz_color = (0, 0, 1)
     """ Visualization color (RGB tuple). """
@@ -30,7 +30,7 @@ class Object:
         """
         Creates an object instance.
 
-        :param category: Object category (e.g., apple).
+        :param category: Object category (e.g., ``"apple"``).
         :type category: str
         :param name: Name of the location.
         :type name: str, optional

@@ -1,5 +1,5 @@
 Setup
-^^^^^
+=====
 
 This package is being developed with Python 3.8 in Ubuntu 20.04, and if you use the optional ROS2 interface, with ROS2 Foxy.
 
