@@ -78,10 +78,7 @@ By default, ``demo.py`` creates a world using the API, but you can alternative t
     python scripts/demo.py --from-file
     ros2 run pyrobosim demo.py --ros --from-file
 
-Refer to the World YAML Specification (TODO) for more information.
-
-Also, all locations and objects must be specified as a category before spawning in the world.
-Refer to the Location YAML Specification (TODO) and Object YAML Specification (TODO) for more information.
+Refer to the :doc:`YAML Schemas </yaml_schemas>` documentation for more information.
 
 
 Exporting Worlds to Gazebo

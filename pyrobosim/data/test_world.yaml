@@ -10,10 +10,9 @@ params:
 
 
 # METADATA: Describes information about locations and objects
-# For now, these are specified relative to this file.
 metadata:
-  locations: example_location_data.yaml
-  objects: example_object_data.yaml
+  locations: $DATA/example_location_data.yaml
+  objects: $DATA/example_object_data.yaml
 
 
 # ROBOTS: For now, we only support a single robot
