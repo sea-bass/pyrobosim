@@ -8,6 +8,7 @@ import yaml
 from .robot import Robot
 from .room import Room
 from .world import World
+from ..utils.general import replace_special_yaml_tokens
 from ..utils.pose import Pose
 
 
@@ -67,14 +68,13 @@ class WorldYamlLoader:
             self.world = World()
 
         # Set the location/object metadata
-        world_dir = os.path.dirname(self.filename)
         metadata = self.data["metadata"]
         if "locations" in metadata:
-            loc_data = os.path.join(world_dir, metadata["locations"])
+            loc_data = replace_special_yaml_tokens(metadata["locations"])
         else:
             loc_data = None
         if "objects" in metadata:
-            obj_data = os.path.join(world_dir, metadata["objects"])
+            obj_data = replace_special_yaml_tokens(metadata["objects"])
         else:
             obj_data = None
         self.world.set_metadata(locations=loc_data, objects=obj_data)
