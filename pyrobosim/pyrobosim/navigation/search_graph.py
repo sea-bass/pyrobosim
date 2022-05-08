@@ -152,7 +152,7 @@ class SearchGraph:
 class Node:
     """ Graph node representation. """
 
-    def __init__(self, pose, parent=None):
+    def __init__(self, pose, parent=None, cost=0.0):
         """
         Creates a graph node. 
         
@@ -160,9 +160,12 @@ class Node:
         :type pose: :class:`pyrobosim.utils.pose.Pose`
         :param parent: Parent node, if any.
         :type parent: :class:`Node`, optional
+        :param cost: Cose of the node, defaults to zero
+        :type cost: float, optional
         """
         self.pose = pose
         self.parent = parent
+        self.cost = cost
         self.neighbors = set()
 
 

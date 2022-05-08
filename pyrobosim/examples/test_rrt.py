@@ -16,9 +16,9 @@ if __name__=="__main__":
     w.search_graph = None
 
     # Create an RRT planner and plan
-    rrt = RRTPlanner(w)
+    rrt = RRTPlanner(w, rrt_star=True)
     start = Pose(x=0.5, y=0.5)
-    goal = Pose(x=3, y=3)
+    goal = Pose(x=3.0, y=3.0)
     w.robot.set_pose(start)
     w.current_path = rrt.plan(start, goal, plot=True)
     w.current_path = fill_path_yaws(w.current_path)

@@ -10,10 +10,14 @@ from .search_graph import SearchGraph, Node, Edge
 from ..utils.pose import Pose
 
 class RRTPlanner:
-    def __init__(self, world):
+    def __init__(self, world, rrt_star=False):
         self.max_connection_dist = 1.0
         self.max_nodes_sampled = 1000
         self.max_time = 10
+
+        # Algorithm options
+        self.rrt_star = rrt_star
+        self.rewire_radius = 2.0
 
         self.world = world
         self.reset()
@@ -50,6 +54,10 @@ class RRTPlanner:
                 n_goal.parent = n_near
                 self.graph.add(n_goal)
                 goal_found = True
+
+            # Optional rewire, if RRT* is enabled
+            if self.rrt_star:
+                self.rewire_node(n_new)
 
             # Check max nodes samples or max time elapsed
             t_elapsed = time.time() - t_start
@@ -101,4 +109,19 @@ class RRTPlanner:
             q_new = Pose(x=q_start.x + step_dist * np.cos(theta),
                          y=q_start.y + step_dist * np.sin(theta))
 
-        return Node(q_new, parent=n_near)
+        return Node(q_new, parent=n_near, cost=n_near.cost + dist)
+
+    def rewire_node(self, n_new):
+        """ 
+        Rewires a node by checking vicinity. 
+        This is the key modification for RRT*.
+        """
+        for n in self.graph.nodes:
+            dist = n.pose.get_linear_distance(n_new.pose)
+            if (n != n_new) and (dist <= self.rewire_radius):
+                alt_cost = n.cost + dist
+                should_rewire = (alt_cost < n_new.cost) and \
+                    self.graph.check_connectivity(n, n_new)
+                if should_rewire:
+                    n_new.cost = alt_cost
+                    n_new.parent = n
