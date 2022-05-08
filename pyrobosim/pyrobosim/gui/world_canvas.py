@@ -125,8 +125,8 @@ class WorldCanvas(FigureCanvasQTAgg):
                 y = (e.n0.pose.y, e.n1.pose.y)
                 graph_edges.append(self.axes.plot(x, y, "k:", linewidth=1))
 
-            # Plot the path if specified
-            self.show_path()
+        # Plot the path if specified
+        self.show_path()
 
         # Update the robot length
         self.robot_length = self.robot_normalized_length * max(

@@ -57,11 +57,15 @@ class SearchGraph:
         :type n0: :class:`Node`
         :param n1: Second node to connect
         :type n1: :class:`Node`
+        :return: True if nodes were, else False.
+        :rtype: bool
         """
         if (n0 != n1) and self.check_connectivity(n0, n1):
             n0.neighbors.add(n1)
             n1.neighbors.add(n0)
             self.edges.add(Edge(n0, n1))
+            return True
+        return False
 
     def remove(self, ndel):
         """ 
