@@ -16,13 +16,20 @@ if __name__=="__main__":
     w.search_graph = None
 
     # Create an RRT planner and plan
-    rrt = RRTPlanner(w, bidirectional=True, rrt_star=True)
+    rrt = RRTPlanner(w, bidirectional=True, rrt_connect=True, rrt_star=True)
     start = Pose(x=-0.5, y=-0.5)
     goal = Pose(x=3.0, y=3.0)
     w.robot.set_pose(start)
     w.current_path = rrt.plan(start, goal)
     w.current_path = fill_path_yaws(w.current_path)
-    print([n.pose for n in w.current_path])
+
+    print("PATH:")
+    for n in w.current_path:
+        print(n.pose)
+    print("")
+    print(f"Nodes sampled: {rrt.nodes_sampled}")
+    print(f"Time to plan: {rrt.planning_time} seconds")
+    print(f"Number of rewires: {rrt.n_rewires}")
 
     # Plot hacks: Make this work with the GUI
     from pyrobosim.gui.world_canvas import WorldCanvas
