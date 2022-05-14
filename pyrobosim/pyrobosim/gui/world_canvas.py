@@ -50,7 +50,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.robot_body = None
         self.robot_dir = None
         self.animated_artists = [self.robot_body, self.robot_dir]
-        self.path_planner_entities = []
+        self.path_planner_artists = []
 
         # Debug displays (TODO: Should be available from GUI)
         self.show_collision_polygons = False
@@ -113,14 +113,8 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.obj_patches = [o.viz_patch for o in (self.world.objects)]
         self.obj_texts = [o.viz_text for o in (self.world.objects)]
 
-        # Plot the path planner and latest path, if specified.
-        # This planner could be global (property of the world) or local (property of the robot).
-        if self.world.path_planner:
-            self.world.path_planner.plot(self.axes)
-        if self.world.robot.path_planner:
-            for e in self.path_planner_entities:
-                self.axes.lines.remove(e)
-            self.path_planner_entities = self.world.robot.path_planner.plot(self.axes)
+        # Path planner and path
+        self.show_planner_and_path()
 
         # Update the robot length
         self.robot_length = self.robot_normalized_length * max(
@@ -156,40 +150,16 @@ class WorldCanvas(FigureCanvasQTAgg):
         adjustText.adjust_text(objs, lim=100,
                                add_objects=self.obj_patches)
 
-    def show_path(self, path=None):
-        """ 
-        Displays a path that the robot will follow for navigation. 
-        
-        :param path: A list of Pose objects defining the path. 
-        :type path: list[:class:`pyrobosim.utils.pose.Pose`], optional
-        """
-        if path is None:
-            path = self.world.current_path
+    def show_planner_and_path(self):
+        # Plot the path planner and latest path, if specified.
+        # This planner could be global (property of the world) or local (property of the robot).
+        for e in self.path_planner_artists:
+            self.axes.lines.remove(e)
 
-        if path is not None:
-            x = [p.pose.x for p in self.world.current_path]
-            y = [p.pose.y for p in self.world.current_path]
-
-            if self.displayed_path is None:
-                self.displayed_path, = self.axes.plot(
-                    x, y, "m-", linewidth=3, zorder=1)
-                self.displayed_path_start, = self.axes.plot(x[0], y[0], "go", zorder=2)
-                self.displayed_path_goal, = self.axes.plot(x[-1], y[-1], "rx", zorder=2)
-            else:
-                self.displayed_path.set_xdata(x)
-                self.displayed_path.set_ydata(y)
-                self.displayed_path.set_visible(True)
-                self.displayed_path_start.set_xdata(x[0])
-                self.displayed_path_start.set_ydata(y[0])
-                self.displayed_path_start.set_visible(True)
-                self.displayed_path_goal.set_xdata(x[-1])
-                self.displayed_path_goal.set_ydata(y[-1])
-                self.displayed_path_goal.set_visible(True)
-        else:
-            if self.displayed_path is not None:
-                self.displayed_path.set_visible(False)
-                self.displayed_path_start.set_visible(False)
-                self.displayed_path_goal.set_visible(False)
+        if self.world.robot.path_planner:
+            self.path_planner_artists = self.world.robot.path_planner.plot(self.axes)
+        elif self.world.path_planner:
+            self.path_planner_artists = self.world.path_planner.plot(self.axes)
 
     def update_robot_plot(self):
         """ Updates the robot visualization graphics objects. """
@@ -254,11 +224,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         """
         # Find a path and kick off the navigation thread
         path = self.world.find_path(goal)
-        if self.world.robot.path_planner:
-            for e in self.path_planner_entities:
-                self.axes.lines.remove(e)
-            self.path_planner_entities = self.world.robot.path_planner.plot(self.axes)
-        self.show_path(path)
+        self.show_planner_and_path()
         self.world.robot.follow_path(
             path, realtime_factor=self.realtime_factor)
 

@@ -174,23 +174,28 @@ class SearchGraph:
         """ 
         Plots the search graph on a specified set of axes.
         """
+        artists = []
         if show_graph:
             x = [n.pose.x for n in self.nodes]
             y = [n.pose.y for n in self.nodes]
-            axes.scatter(x, y, 15, "k")
+            nodes, = axes.plot(x, y, "k.", linestyle="None", markersize=10)
+            artists.append(nodes)
 
             for e in self.edges:
                 x = (e.n0.pose.x, e.n1.pose.x)
                 y = (e.n0.pose.y, e.n1.pose.y)
-                axes.plot(x, y, "k:", linewidth=1)
+                edge, = axes.plot(x, y, "k:", linewidth=1)
+                artists.append(edge)
 
         if show_path and self.latest_path is not None:
             x = [p.pose.x for p in self.latest_path]
             y = [p.pose.y for p in self.latest_path]
-            axes.plot(x, y, "m-", linewidth=3, zorder=1)
-            axes.scatter(x[0], y[0], 60, "g", "o", zorder=2)
-            axes.scatter(x[-1], y[-1], 60, "r", "x", zorder=2)
+            path, = axes.plot(x, y, "m-", linewidth=3, zorder=1)
+            start, = axes.plot(x[0], y[0], "go", zorder=2)
+            goal, = axes.plot(x[-1], y[-1], "rx", zorder=2)
+            artists.extend((path, start, goal))
 
+        return artists
 
 
 class Node:

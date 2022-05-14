@@ -67,9 +67,6 @@ def create_world():
 
     # Create a search graph
     w.create_search_graph(max_edge_dist=3.0, collision_check_dist=0.05)
-    # w.path_planner = None
-    # from pyrobosim.navigation.rrt import RRTPlanner
-    # r.set_path_planner(RRTPlanner(w, bidirectional=True, rrt_connect=False, rrt_star=True))
     return w
 
 
