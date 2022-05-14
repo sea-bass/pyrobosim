@@ -31,6 +31,7 @@ class RRTPlanner:
         """ Resets the search trees """
         self.graph = SearchGraph(world=self.world)
         self.graph_goal = SearchGraph(world=self.world)
+        self.latest_path = None
         self.planning_time = 0.0
         self.nodes_sampled = 0
         self.n_rewires = 0
@@ -52,7 +53,7 @@ class RRTPlanner:
             q_sample = self.sample_configuration()
             self.nodes_sampled += 1
 
-            # Connect aa new node to the parent
+            # Connect a new node to the parent
             n_near = self.graph.nearest_node(q_sample)
             n_new = self.new_node(n_near, q_sample)
             connected_node = self.graph.connect(n_near, n_new)
@@ -120,6 +121,7 @@ class RRTPlanner:
                 else:
                     n = n.parent
                     path.append(n)
+        self.latest_path = path
         return path         
 
     def sample_configuration(self):
@@ -196,3 +198,43 @@ class RRTPlanner:
             else:
                 # If not using RRT-Connect, we only get one chance to connect to the target.
                 return False, n_curr
+
+    def plot(self, axes, show_graph=True, show_path=True):
+        """
+        Plots the RRT graph on a specified set of axes
+        """
+        artists = []
+        if show_graph:
+            for e in self.graph.edges:
+                x = (e.n0.pose.x, e.n1.pose.x)
+                y = (e.n0.pose.y, e.n1.pose.y)
+                edge, = axes.plot(x, y, "k:", linewidth=1)
+                artists.append(edge)
+            if self.bidirectional:
+                for e in self.graph_goal.edges:
+                    x = (e.n0.pose.x, e.n1.pose.x)
+                    y = (e.n0.pose.y, e.n1.pose.y)
+                    edge, = axes.plot(x, y, "b--", linewidth=1)
+                    artists.append(edge)
+        
+        if show_path and self.latest_path is not None:
+            x = [p.pose.x for p in self.latest_path]
+            y = [p.pose.y for p in self.latest_path]
+            path, = axes.plot(x, y, "m-", linewidth=3, zorder=1)
+            start, = axes.plot(x[0], y[0], "go", zorder=2)
+            goal, = axes.plot(x[-1], y[-1], "rx", zorder=2)
+            artists.extend((path, start, goal))
+
+        return artists
+
+    def show(self, show_graph=True, show_path=True):
+        """
+        Shows the RRT in a new figure
+        """
+        import matplotlib.pyplot as plt
+        f = plt.figure()
+        ax = f.add_subplot(111)
+        self.plot(ax, show_graph=show_graph, show_path=show_path)
+        plt.title("RRT")
+        plt.axis("equal")
+        plt.show()

@@ -50,6 +50,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.robot_body = None
         self.robot_dir = None
         self.animated_artists = [self.robot_body, self.robot_dir]
+        self.path_planner_entities = []
 
         # Debug displays (TODO: Should be available from GUI)
         self.show_collision_polygons = False
@@ -112,20 +113,14 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.obj_patches = [o.viz_patch for o in (self.world.objects)]
         self.obj_texts = [o.viz_text for o in (self.world.objects)]
 
-        # Search graph
-        if self.world.search_graph is not None:
-            x = [n.pose.x for n in self.world.search_graph.nodes]
-            y = [n.pose.y for n in self.world.search_graph.nodes]
-            graph_nodes = self.axes.scatter(x, y, 15, "k")
-
-            graph_edges = []
-            for e in self.world.search_graph.edges:
-                x = (e.n0.pose.x, e.n1.pose.x)
-                y = (e.n0.pose.y, e.n1.pose.y)
-                graph_edges.append(self.axes.plot(x, y, "k:", linewidth=1))
-
-        # Plot the path if specified
-        self.show_path()
+        # Plot the path planner and latest path, if specified.
+        # This planner could be global (property of the world) or local (property of the robot).
+        if self.world.path_planner:
+            self.world.path_planner.plot(self.axes)
+        if self.world.robot.path_planner:
+            for e in self.path_planner_entities:
+                self.axes.lines.remove(e)
+            self.path_planner_entities = self.world.robot.path_planner.plot(self.axes)
 
         # Update the robot length
         self.robot_length = self.robot_normalized_length * max(
@@ -178,17 +173,17 @@ class WorldCanvas(FigureCanvasQTAgg):
             if self.displayed_path is None:
                 self.displayed_path, = self.axes.plot(
                     x, y, "m-", linewidth=3, zorder=1)
-                self.displayed_path_start = self.axes.scatter(
-                    x[0], y[0], 60, "g", "o", zorder=2)
-                self.displayed_path_goal = self.axes.scatter(
-                    x[-1], y[-1], 60, "r", "x", zorder=2)
+                self.displayed_path_start, = self.axes.plot(x[0], y[0], "go", zorder=2)
+                self.displayed_path_goal, = self.axes.plot(x[-1], y[-1], "rx", zorder=2)
             else:
                 self.displayed_path.set_xdata(x)
                 self.displayed_path.set_ydata(y)
-                self.displayed_path_start.set_offsets((x[0], y[0]))
-                self.displayed_path_goal.set_offsets((x[-1], y[-1]))
                 self.displayed_path.set_visible(True)
+                self.displayed_path_start.set_xdata(x[0])
+                self.displayed_path_start.set_ydata(y[0])
                 self.displayed_path_start.set_visible(True)
+                self.displayed_path_goal.set_xdata(x[-1])
+                self.displayed_path_goal.set_ydata(y[-1])
                 self.displayed_path_goal.set_visible(True)
         else:
             if self.displayed_path is not None:
@@ -259,6 +254,10 @@ class WorldCanvas(FigureCanvasQTAgg):
         """
         # Find a path and kick off the navigation thread
         path = self.world.find_path(goal)
+        if self.world.robot.path_planner:
+            for e in self.path_planner_entities:
+                self.axes.lines.remove(e)
+            self.path_planner_entities = self.world.robot.path_planner.plot(self.axes)
         self.show_path(path)
         self.world.robot.follow_path(
             path, realtime_factor=self.realtime_factor)
