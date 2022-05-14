@@ -11,18 +11,18 @@ from .search_graph import SearchGraph, Node, Edge
 from ..utils.pose import Pose
 
 class RRTPlanner:
-
-    # Default params
-    max_connection_dist = 0.5
-    max_nodes_sampled = 1000
-    max_time = 5
-    rewire_radius = 1.0
-
-    def __init__(self, world, bidirectional=False, rrt_connect=False, rrt_star=False):
+    def __init__(self, world, bidirectional=False, rrt_connect=False, rrt_star=False,
+                 max_connection_dist=0.5, max_nodes_sampled=1000, max_time=5.0, rewire_radius=1.0):
         # Algorithm options
         self.bidirectional = bidirectional
         self.rrt_connect = rrt_connect
         self.rrt_star = rrt_star
+
+        # Parameters
+        self.max_connection_dist = max_connection_dist
+        self.max_nodes_sampled = max_nodes_sampled
+        self.max_time = max_time
+        self.rewire_radius = rewire_radius
 
         self.world = world
         self.reset()

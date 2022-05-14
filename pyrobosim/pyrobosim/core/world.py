@@ -530,7 +530,29 @@ class World:
         :return: List of graph Node objects describing the path, or None if not found.
         :rtype: list[:class:`pyrobosim.navigation.search_graph.Node`]
         """
-        if self.path_planner:
+        if self.robot.path_planner:
+            # Plan with the robot's local planner.
+            if start is None:
+                start = self.robot.pose
+
+            if isinstance(goal, Pose):
+                goal_node = Node(goal, parent=self.get_location_from_pose(goal))
+            else:
+                goal_node = self.graph_node_from_entity(goal)
+                if goal_node is None:
+                    warnings.warn("Invalid goal specified")
+                    return None
+                else:
+                    goal = goal_node.pose
+            
+            # Do the search
+            self.current_path = self.robot.path_planner.plan(start, goal)
+            self.current_path = fill_path_yaws(self.current_path)
+            # Temporary hack for current location
+            if self.current_path is not None:
+                self.current_path[-1].parent = goal_node.parent
+
+        elif self.path_planner:
             # Plan with the robot's global planner.
             # TODO: For now, we're assuming this is the search graph.
             # Once we have other planners like PRM we need to make this more generic.
@@ -575,23 +597,6 @@ class World:
                 self.search_graph.remove(start_node)
             if created_goal_node:
                 self.search_graph.remove(goal_node)
-
-        elif self.robot.path_planner:
-            # Plan with the robot's local planner.
-            if start is None:
-                start = self.robot.pose
-
-            if not isinstance(goal, Pose):
-                goal_node = self.graph_node_from_entity(goal)
-                if goal_node is None:
-                    warnings.warn("Invalid goal specified")
-                    return None
-                else:
-                    goal = goal_node.pose
-            
-            # Do the search
-            self.current_path = self.robot.path_planner.plan(start, goal)
-            self.current_path = fill_path_yaws(self.current_path)
 
         else:
             warnings.warn("No global or local path planners specified.")
