@@ -30,6 +30,7 @@ class SearchGraph:
         self.distance_dict = {}
 
         self.solver = GraphSolver()
+        self.latest_path = None
 
     def add(self, n, autoconnect=False):
         """ 
@@ -145,7 +146,8 @@ class SearchGraph:
             warnings.warn("Did not find a path from start to goal.")
             return []
         else:
-            return list(path)
+            self.latest_path = list(path)
+            return self.latest_path
 
     def nearest_node(self, pose):
         """ 
@@ -167,6 +169,28 @@ class SearchGraph:
                 min_dist = dist
                 n_nearest = n
         return n_nearest
+
+    def plot(self, axes, show_graph=True, show_path=True):
+        """ 
+        Plots the search graph on a specified set of axes.
+        """
+        if show_graph:
+            x = [n.pose.x for n in self.nodes]
+            y = [n.pose.y for n in self.nodes]
+            axes.scatter(x, y, 15, "k")
+
+            for e in self.edges:
+                x = (e.n0.pose.x, e.n1.pose.x)
+                y = (e.n0.pose.y, e.n1.pose.y)
+                axes.plot(x, y, "k:", linewidth=1)
+
+        if show_path and self.latest_path is not None:
+            x = [p.pose.x for p in self.latest_path]
+            y = [p.pose.y for p in self.latest_path]
+            axes.plot(x, y, "m-", linewidth=3, zorder=1)
+            axes.scatter(x[0], y[0], 60, "g", "o", zorder=2)
+            axes.scatter(x[-1], y[-1], 60, "r", "x", zorder=2)
+
 
 
 class Node:

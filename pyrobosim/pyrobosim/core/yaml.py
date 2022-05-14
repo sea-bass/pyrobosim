@@ -50,7 +50,7 @@ class WorldYamlLoader:
         self.add_locations()
         self.add_objects()
         self.add_robot()
-        self.add_planner()
+        self.add_global_planner()
         return self.world
 
 
@@ -169,7 +169,7 @@ class WorldYamlLoader:
         self.world.add_robot(robot, loc=loc, pose=pose)
 
 
-    def add_planner(self):
+    def add_global_planner(self):
         """ Adds a global path planner to the world. """
         if "planning" not in self.data or "planner_type" not in self.data["planning"]:
             return

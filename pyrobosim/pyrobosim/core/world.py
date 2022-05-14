@@ -63,6 +63,7 @@ class World:
         # Search graph for navigation
         self.search_graph = None
         self.current_path = None
+        self.path_planner = None
 
         # Other parameters
         self.max_object_sample_tries = 1000 # Max number of tries to sample object locations
@@ -507,6 +508,8 @@ class World:
                     self.search_graph.add(spawn.graph_nodes, autoconnect=True)
             else:
                 self.search_graph.add(entity.graph_nodes, autoconnect=True)
+        
+        self.path_planner = self.search_graph # TODO make this more generic
 
     def update_search_graph(self):
         """ 
@@ -527,48 +530,73 @@ class World:
         :return: List of graph Node objects describing the path, or None if not found.
         :rtype: list[:class:`pyrobosim.navigation.search_graph.Node`]
         """
-        if self.search_graph is None:
-            warnings.warn("No search graph defined for this world.")
+        if self.path_planner:
+            # Plan with the robot's global planner.
+            # TODO: For now, we're assuming this is the search graph.
+            # Once we have other planners like PRM we need to make this more generic.
+            if self.search_graph is None:
+                warnings.warn("No search graph defined for this world.")
+                return None
+
+            if start is None:
+                start = self.robot.pose
+
+            created_start_node = False
+            if isinstance(start, Pose):
+                start_loc = self.robot.location if self.has_robot else None
+                if not start_loc:
+                    start_loc = self.get_location_from_pose(start)
+                start_node = Node(start, parent=start_loc)
+                self.search_graph.add(start_node, autoconnect=True)
+                created_start_node = True
+            else:
+                start_node = self.graph_node_from_entity(start)
+                if start_node is None:
+                    warnings.warn("Invalid start specified")
+                    return None
+
+            created_goal_node = False
+            if isinstance(goal, Pose):
+                goal_node = Node(goal, parent=self.get_location_from_pose(goal))
+                self.search_graph.add(goal_node, autoconnect=True)
+                created_goal_node = True
+            else:
+                goal_node = self.graph_node_from_entity(goal)
+                if goal_node is None:
+                    warnings.warn("Invalid goal specified")
+                    return None
+            
+            # Do the search
+            self.current_path = self.search_graph.find_path(start_node, goal_node)
+            self.current_path = fill_path_yaws(self.current_path)
+
+            # If we created temporary nodes for search, remove them
+            if created_start_node:
+                self.search_graph.remove(start_node)
+            if created_goal_node:
+                self.search_graph.remove(goal_node)
+
+        elif self.robot.path_planner:
+            # Plan with the robot's local planner.
+            if start is None:
+                start = self.robot.pose
+
+            if not isinstance(goal, Pose):
+                goal_node = self.graph_node_from_entity(goal)
+                if goal_node is None:
+                    warnings.warn("Invalid goal specified")
+                    return None
+                else:
+                    goal = goal_node.pose
+            
+            # Do the search
+            self.current_path = self.robot.path_planner.plan(start, goal)
+            self.current_path = fill_path_yaws(self.current_path)
+
+        else:
+            warnings.warn("No global or local path planners specified.")
             return None
-
-        if start is None:
-            start = self.robot.pose
-
-        created_start_node = False
-        if isinstance(start, Pose):
-            start_loc = self.robot.location if self.has_robot else None
-            if not start_loc:
-                start_loc = self.get_location_from_pose(start)
-            start_node = Node(start, parent=start_loc)
-            self.search_graph.add(start_node, autoconnect=True)
-            created_start_node = True
-        else:
-            start_node = self.graph_node_from_entity(start)
-            if start_node is None:
-                warnings.warn("Invalid start specified")
-                return None
-
-        created_goal_node = False
-        if isinstance(goal, Pose):
-            goal_node = Node(goal, parent=self.get_location_from_pose(goal))
-            self.search_graph.add(goal_node, autoconnect=True)
-            created_goal_node = True
-        else:
-            goal_node = self.graph_node_from_entity(goal)
-            if goal_node is None:
-                warnings.warn("Invalid goal specified")
-                return None
         
-        # Do the search
-        self.current_path = self.search_graph.find_path(start_node, goal_node)
-        self.current_path = fill_path_yaws(self.current_path)
-
-        # If we created temporary nodes for search, remove them
-        if created_start_node:
-            self.search_graph.remove(start_node)
-        if created_goal_node:
-            self.search_graph.remove(goal_node)
-
         return self.current_path
 
     def graph_node_from_entity(self, entity_query, resolution_strategy="nearest"):
