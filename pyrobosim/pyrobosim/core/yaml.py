@@ -49,8 +49,8 @@ class WorldYamlLoader:
         self.add_hallways()
         self.add_locations()
         self.add_objects()
-        self.add_global_path_planner()
         self.add_robot()
+        self.add_global_path_planner()
         return self.world
 
 
@@ -175,16 +175,29 @@ class WorldYamlLoader:
         """ Adds a global path planner to the world. """
         if "global_path_planner" not in self.data or "type" not in self.data["global_path_planner"]:
             return
-        planning = self.data["global_path_planner"]
-        planner_type = planning["type"]
+        planner_data = self.data["global_path_planner"]
+        planner_type = planner_data["type"]
         
         if planner_type == "search_graph":
-            max_edge_dist = get_value_or(planning, "max_edge_dist", default=np.inf)
-            collision_check_dist = get_value_or(planning, "collision_check_dist", default=0.1)
+            max_edge_dist = get_value_or(planner_data, "max_edge_dist", default=np.inf)
+            collision_check_dist = get_value_or(planner_data, "collision_check_dist", default=0.1)
             self.world.create_search_graph(
                 max_edge_dist=max_edge_dist, collision_check_dist=collision_check_dist, create_planner=True)
         else:
-            warnings.warn(f"Invalid global planner type specified: {planner_type}")
+            # Always make a search graph as we use it for other things.
+            max_edge_dist = get_value_or(planner_data, "max_edge_dist", default=np.inf)
+            collision_check_dist = get_value_or(planner_data, "collision_check_dist", default=0.1)
+            self.world.create_search_graph(
+                max_edge_dist=max_edge_dist, collision_check_dist=collision_check_dist, create_planner=False)
+
+            if planner_type == "prm":
+                from pyrobosim.navigation.prm import PRMPlanner
+                max_nodes = get_value_or(planner_data, "max_nodes", default=100)
+                max_connection_dist = get_value_or(planner_data, "max_connection_dist", default=1.0)
+                self.world.path_planner = PRMPlanner(
+                    self.world, max_nodes=max_nodes, max_connection_dist=max_connection_dist)
+            else:
+                warnings.warn(f"Invalid global planner type specified: {planner_type}")
 
 
     def get_local_path_planner(self, robot_data):

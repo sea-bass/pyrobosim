@@ -2,7 +2,7 @@
 import os
 
 from pyrobosim.core.yaml import WorldYamlLoader
-from pyrobosim.navigation.rrt import RRTPlanner
+from pyrobosim.navigation.prm import PRMPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
@@ -12,19 +12,19 @@ loader = WorldYamlLoader()
 w = loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
 
 
-def test_rrt():
+def test_prm():
     # Create an RRT planner and plan
-    rrt = RRTPlanner(w, bidirectional=True, rrt_connect=False, rrt_star=True)
+    prm = PRMPlanner(w, max_nodes=100, max_connection_dist=1.5)
     start = Pose(x=-0.5, y=-0.5)
     goal = Pose(x=3.0, y=3.0)
     w.robot.set_pose(start)
-    w.robot.set_path_planner(rrt)
+    w.robot.set_path_planner(prm)
     w.current_path = w.robot.plan_path(start, goal)
-    rrt.print_metrics()
+    prm.print_metrics()
 
 
 if __name__=="__main__":
-    test_rrt()
+    test_prm()
 
     import sys
     from pyrobosim.gui.main import PyRoboSimGUI
