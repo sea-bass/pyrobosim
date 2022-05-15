@@ -66,7 +66,8 @@ def create_world():
     w.add_robot(r, loc="kitchen")
 
     # Create a search graph
-    w.create_search_graph(max_edge_dist=3.0, collision_check_dist=0.05)
+    w.create_search_graph(
+        max_edge_dist=3.0, collision_check_dist=0.05, create_planner=True)
     return w
 
 

@@ -182,7 +182,7 @@ class WorldYamlLoader:
             max_edge_dist = get_value_or(planning, "max_edge_dist", default=np.inf)
             collision_check_dist = get_value_or(planning, "collision_check_dist", default=0.1)
             self.world.create_search_graph(
-                max_edge_dist=max_edge_dist, collision_check_dist=collision_check_dist)
+                max_edge_dist=max_edge_dist, collision_check_dist=collision_check_dist, create_planner=True)
         else:
             warnings.warn(f"Invalid global planner type specified: {planner_type}")
 

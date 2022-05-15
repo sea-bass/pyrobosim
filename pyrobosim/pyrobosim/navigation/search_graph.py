@@ -4,8 +4,46 @@ from astar import AStar
 import numpy as np
 import warnings
 
+from .trajectory import fill_path_yaws
 from ..utils.pose import Pose
 
+
+class SearchGraphPlanner:
+    """ Lightweight path planner that wraps around SearchGraph. """
+    def __init__(self, graph):
+        self.graph = graph
+        self.latest_path = None
+
+    def plan(self, start, goal):
+        """ Plan a path from a start to a goal node. """
+        if self.graph is None:
+            warnings.warn("No search graph defined for this world.")
+            return None
+
+        path = self.graph.find_path(start, goal)
+        path = fill_path_yaws(path)
+        self.latest_path = path
+        return self.latest_path
+
+    def plot(self, axes, show_graph=True, show_path=True):
+        """ 
+        Plots the search graph and/or path on a specified set of axes.
+        """
+        if show_graph:
+            artists = self.graph.plot(axes)
+        else:
+            artists = []
+
+        if show_path and self.latest_path is not None:
+            x = [p.pose.x for p in self.latest_path]
+            y = [p.pose.y for p in self.latest_path]
+            path, = axes.plot(x, y, "m-", linewidth=3, zorder=1)
+            start, = axes.plot(x[0], y[0], "go", zorder=2)
+            goal, = axes.plot(x[-1], y[-1], "rx", zorder=2)
+            artists.extend((path, start, goal))
+
+        return artists
+        
 
 class SearchGraph:
     """ Graph for searching using A* """
@@ -30,7 +68,6 @@ class SearchGraph:
         self.distance_dict = {}
 
         self.solver = GraphSolver()
-        self.latest_path = None
 
     def add(self, n, autoconnect=False):
         """ 
@@ -144,10 +181,9 @@ class SearchGraph:
         path = self.solver.astar(start, goal)
         if path is None:
             warnings.warn("Did not find a path from start to goal.")
-            return []
+            return path
         else:
-            self.latest_path = list(path)
-            return self.latest_path
+            return list(path)
 
     def nearest_node(self, pose):
         """ 
@@ -170,30 +206,21 @@ class SearchGraph:
                 n_nearest = n
         return n_nearest
 
-    def plot(self, axes, show_graph=True, show_path=True):
+    def plot(self, axes):
         """ 
         Plots the search graph on a specified set of axes.
         """
         artists = []
-        if show_graph:
-            x = [n.pose.x for n in self.nodes]
-            y = [n.pose.y for n in self.nodes]
-            nodes, = axes.plot(x, y, "k.", linestyle="None", markersize=10)
-            artists.append(nodes)
+        x = [n.pose.x for n in self.nodes]
+        y = [n.pose.y for n in self.nodes]
+        nodes, = axes.plot(x, y, "k.", linestyle="None", markersize=10)
+        artists.append(nodes)
 
-            for e in self.edges:
-                x = (e.n0.pose.x, e.n1.pose.x)
-                y = (e.n0.pose.y, e.n1.pose.y)
-                edge, = axes.plot(x, y, "k:", linewidth=1)
-                artists.append(edge)
-
-        if show_path and self.latest_path is not None:
-            x = [p.pose.x for p in self.latest_path]
-            y = [p.pose.y for p in self.latest_path]
-            path, = axes.plot(x, y, "m-", linewidth=3, zorder=1)
-            start, = axes.plot(x[0], y[0], "go", zorder=2)
-            goal, = axes.plot(x[-1], y[-1], "rx", zorder=2)
-            artists.extend((path, start, goal))
+        for e in self.edges:
+            x = (e.n0.pose.x, e.n1.pose.x)
+            y = (e.n0.pose.y, e.n1.pose.y)
+            edge, = axes.plot(x, y, "k:", linewidth=1)
+            artists.append(edge)
 
         return artists
 
