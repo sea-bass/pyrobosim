@@ -13,7 +13,7 @@ from ..utils.pose import Pose
 
 class RRTPlanner:
     def __init__(self, world, bidirectional=False, rrt_connect=False, rrt_star=False,
-                 max_connection_dist=0.5, max_nodes_sampled=1000, max_time=5.0, rewire_radius=1.0):
+                 max_connection_dist=0.25, max_nodes_sampled=1000, max_time=5.0, rewire_radius=1.0):
         # Algorithm options
         self.bidirectional = bidirectional
         self.rrt_connect = rrt_connect
@@ -202,6 +202,22 @@ class RRTPlanner:
             else:
                 # If not using RRT-Connect, we only get one chance to connect to the target.
                 return False, n_curr
+
+    def print_metrics(self):
+        """
+        Print metrics about the latest path.
+        """
+        if self.latest_path is None:
+            print("No path.")
+            return
+
+        print("Latest path from RRT:")
+        for n in self.latest_path:
+            print(n.pose)
+        print("")
+        print(f"Nodes sampled: {self.nodes_sampled}")
+        print(f"Time to plan: {self.planning_time} seconds")
+        print(f"Number of rewires: {self.n_rewires}")
 
     def plot(self, axes, show_graph=True, show_path=True):
         """

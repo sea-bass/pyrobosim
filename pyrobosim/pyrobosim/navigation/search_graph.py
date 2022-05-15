@@ -145,10 +145,14 @@ class SearchGraph:
         if (self.world is None) or (start == goal):
             return True
 
-        # Build up the array of test X and Y coordinates for sampling between
-        # the start and goal points.
+        # Check against the max edge distance.
         dist = start.pose.get_linear_distance(goal.pose, ignore_z=True)
         angle = start.pose.get_angular_distance(goal.pose)
+        if dist > self.max_edge_dist:
+            return False
+
+        # Build up the array of test X and Y coordinates for sampling between
+        # the start and goal points.
         dist_array = np.arange(0, dist, self.collision_check_dist)
         # If the nodes are coincident, connect them by default.
         if dist_array.size == 0:

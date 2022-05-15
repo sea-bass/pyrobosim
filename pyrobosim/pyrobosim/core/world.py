@@ -488,7 +488,7 @@ class World:
         return True
 
     def create_search_graph(self, max_edge_dist=np.inf, collision_check_dist=0.1,
-                            create_planner=True):
+                            create_planner=False):
         """ 
         Creates a search graph for the world, as a :class:`pyrobosim.navigation.search_graph.SearchGraph` attribute.
         
