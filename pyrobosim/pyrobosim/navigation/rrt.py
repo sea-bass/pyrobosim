@@ -8,6 +8,7 @@ import time
 import numpy as np
 
 from .search_graph import SearchGraph, Node, Edge
+from .trajectory import fill_path_yaws
 from ..utils.pose import Pose
 
 class RRTPlanner:
@@ -28,7 +29,7 @@ class RRTPlanner:
         self.reset()
 
     def reset(self):
-        """ Resets the search trees """
+        """ Resets the search trees and planning metrics. """
         self.graph = SearchGraph(world=self.world)
         self.graph_goal = SearchGraph(world=self.world)
         self.latest_path = None
@@ -37,6 +38,7 @@ class RRTPlanner:
         self.n_rewires = 0
 
     def plan(self, start, goal):
+        """ Plan a path from start to goal. """
         self.reset()
 
         # Create the start and goal nodes
@@ -121,6 +123,8 @@ class RRTPlanner:
                 else:
                     n = n.parent
                     path.append(n)
+
+        path = fill_path_yaws(path)
         self.latest_path = path
         return path         
 
@@ -229,7 +233,7 @@ class RRTPlanner:
 
     def show(self, show_graph=True, show_path=True):
         """
-        Shows the RRT in a new figure
+        Shows the RRT in a new figure.
         """
         import matplotlib.pyplot as plt
         f = plt.figure()
