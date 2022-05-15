@@ -171,6 +171,7 @@ class WorldCanvas(FigureCanvasQTAgg):
             p.x + np.array([0, self.robot_length*np.cos(p.yaw)]))
         self.robot_dir.set_ydata(
             p.y + np.array([0, self.robot_length*np.sin(p.yaw)]))
+        self.update_object_plot(self.world.robot.manipulated_object)
 
     def show_world_state(self, navigating=False):
         """
