@@ -1,8 +1,3 @@
-"""
-Implementation of the Rapidly-exploring Random Tree (RRT) 
-algorithm for motion planning.
-"""
-
 import copy
 import time
 import numpy as np
@@ -11,9 +6,34 @@ from .search_graph import SearchGraph, Node, Edge
 from .trajectory import fill_path_yaws
 from ..utils.pose import Pose
 
+
 class RRTPlanner:
+    """
+    Implementation of the Rapidly-exploring Random Tree (RRT) 
+    algorithm for motion planning.
+    """
     def __init__(self, world, bidirectional=False, rrt_connect=False, rrt_star=False,
                  max_connection_dist=0.25, max_nodes_sampled=1000, max_time=5.0, rewire_radius=1.0):
+        """
+        Creates an instance of an RRT planner.
+
+        :param world: World object to use in the planner.
+        :type world: :class:`pyrobosim.core.world.World`
+        :param bidirectional: If True, uses bidirectional RRT to grow trees from both start and goal.
+        :type bidirectional: bool
+        :param rrt_connect: If True, uses RRT-connect to bias tree growth towards goals.
+        :type rrt_connect: bool
+        :param rrt_star: If True, uses RRT* to rewire trees to smooth and shorten paths.
+        :type rrt_star: bool
+        :param max_connection_dist: Maximum connection distance between two nodes.
+        :type max_connection_dist: float
+        :param max_nodes_sampled: Maximum nodes sampled before stopping planning.
+        :type max_nodes_sampled: int
+        :param max_time: Maximum wall clock time before stopping planning.
+        :type max_time: float
+        :param rewire_radius: Radius around a node to rewire the RRT, if using the RRT* algorithm.
+        :param rewire_radius: float
+        """
         # Algorithm options
         self.bidirectional = bidirectional
         self.rrt_connect = rrt_connect
@@ -28,6 +48,7 @@ class RRTPlanner:
         self.world = world
         self.reset()
 
+
     def reset(self):
         """ Resets the search trees and planning metrics. """
         self.graph = SearchGraph(world=self.world)
@@ -37,8 +58,18 @@ class RRTPlanner:
         self.nodes_sampled = 0
         self.n_rewires = 0
 
+
     def plan(self, start, goal):
-        """ Plan a path from start to goal. """
+        """ 
+        Plans a path from start to goal. 
+        
+        :param start: Start pose.
+        :type start: :class:`pyrobosim.utils.pose.Pose`
+        :param goal: Goal pose.
+        :type goal: :class:`pyrobosim.utils.pose.Pose`
+        :return: List of graph Node objects describing the path, or None if not found.
+        :rtype: list[:class:`pyrobosim.navigation.search_graph.Node`] 
+        """
         self.reset()
 
         # Create the start and goal nodes
@@ -128,29 +159,58 @@ class RRTPlanner:
         self.latest_path = path
         return path         
 
+
     def sample_configuration(self):
-        """ Sample a random configuration from the world. """
+        """ 
+        Samples a random configuration from the world.
+        
+        :return: Collision-free pose if found, else ``None``.
+        :rtype: :class:`pyrobosim.utils.pose.Pose`
+        """
         return self.world.sample_free_robot_pose_uniform()
 
-    def new_node(self, n_near, q_sample):
-        """ Creates a new node based on the nearest """
-        q_start = n_near.pose
-        dist = q_start.get_linear_distance(q_sample)
+
+    def new_node(self, n_start, q_target):
+        """ 
+        Grows the RRT from a specific node towards a sampled pose in the world.
+        The maximum distance to grow the tree is dictated by ``max_connection_dist`` parameter.
+        If the target pose is nearer than this distance, a new node is created at
+        exactly that pose.
+
+        :param n_start: Tree node from which to grow the new node.
+        :type n_start: :class:`pyrobosim.navigation.search_graph.Node`
+        :param q_target: Target pose towards which to grow the new node.
+        :type q_target: :class:`pyrobosim.utils.pose.Pose`
+        :return: A new node grown from the start node towards the target pose.
+        :rtype: :class:`pyrobosim.navigation.search_graph.Node`
+        """
+        q_start = n_start.pose
+        dist = q_start.get_linear_distance(q_target)
 
         step_dist = self.max_connection_dist
         if dist <= step_dist:
-            q_new = q_sample
+            q_new = q_target
         else:
-            theta = q_start.get_angular_distance(q_sample)
+            theta = q_start.get_angular_distance(q_target)
             q_new = Pose(x=q_start.x + step_dist * np.cos(theta),
                          y=q_start.y + step_dist * np.sin(theta))
 
-        return Node(q_new, parent=n_near, cost=n_near.cost + dist)
+        return Node(q_new, parent=n_start, cost=n_start.cost + dist)
+
 
     def rewire_node(self, graph, n_tgt):
         """ 
-        Rewires a node by checking vicinity. 
-        This is the key modification for RRT*.
+        Rewires a node in the RRT by checking if switching the parent node
+        to another nearby node will reduce its total cost from the root of the tree.
+
+        This is the key modification in the RRT* algorithm which requires more
+        computation, but produces paths that are shorter and smoother than plain RRT.
+        The vicinity around the node is defined by the ``rewire_radius`` parameter.
+
+        :param graph: The tree to rewire.
+        :type graph: :class:`pyrobosim.navigation.search_graph.SearchGraph`
+        :param n_tgt: The target tree node to rewire within the tree.
+        :type n_tgt: :class:`pyrobosim.navigation.search_graph.Node`
         """
         # First, find the node to rewire, if any
         n_rewire = None
@@ -172,11 +232,21 @@ class RRTPlanner:
             graph.edges.add(Edge(n_tgt, n_tgt.parent))
             self.n_rewires += 1
 
+
     def try_connect_until(self, graph, n_curr, n_tgt):
         """
-        Try to connect a node "n_curr" to a target node "n_tgt".
+        Try to connect a node ``n_curr`` to a target node ``n_tgt``.
         This will keep extending the current node towards the target if 
         RRT-Connect is enabled, or else will just try once.
+
+        :param graph: The tree object.
+        :type graph: :class:`pyrobosim.navigation.search_graph.SearchGraph`
+        :param n_curr: The current tree node to try connect to the target node.
+        :type n_curr: :class:`pyrobosim.navigation.search_graph.Node`
+        :param n_tgt: The target tree node defining the connection goal.
+        :type n_tgt: :class:`pyrobosim.navigation.search_graph.Node`
+        :return: A tuple containing the connection success and the final node added.
+        :rtype: (bool, :class:`pyrobosim.navigation.search_graph.Node`)
         """
         # Needed for bidirectional RRT so the connection node can be in both trees.
         if self.bidirectional:
@@ -203,9 +273,10 @@ class RRTPlanner:
                 # If not using RRT-Connect, we only get one chance to connect to the target.
                 return False, n_curr
 
+
     def print_metrics(self):
         """
-        Print metrics about the latest path.
+        Print metrics about the latest path computed.
         """
         if self.latest_path is None:
             print("No path.")
@@ -219,9 +290,19 @@ class RRTPlanner:
         print(f"Time to plan: {self.planning_time} seconds")
         print(f"Number of rewires: {self.n_rewires}")
 
+
     def plot(self, axes, show_graph=True, show_path=True):
         """
-        Plots the RRT graph on a specified set of axes
+        Plots the RRTs and the planned path on a specified set of axes.
+
+        :param axes: The axes on which to draw.
+        :type axes: :class:`matplotlib.axes.Axes`
+        :param show_graph: If True, shows the RRTs used for planning.
+        :type show_graph: bool
+        :param show_path: If True, shows the last planned path.
+        :type show_path: bool
+        :return: List of Matplotlib artists containing what was drawn, used for bookkeeping.
+        :rtype: list[:class:`matplotlib.artist.Artist`]
         """
         artists = []
         if show_graph:
@@ -247,9 +328,15 @@ class RRTPlanner:
 
         return artists
 
+
     def show(self, show_graph=True, show_path=True):
         """
-        Shows the RRT in a new figure.
+        Shows the RRTs and the planned path in a new figure.
+
+        :param show_graph: If True, shows the RRTs used for planning.
+        :type show_graph: bool
+        :param show_path: If True, shows the last planned path.
+        :type show_path: bool
         """
         import matplotlib.pyplot as plt
         f = plt.figure()

@@ -6,14 +6,14 @@ from pyrobosim.navigation.rrt import RRTPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
-# Load a world
+# Load a test world.
 data_folder = get_data_folder()
 loader = WorldYamlLoader()
 w = loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
 
 
 def test_rrt():
-    # Create an RRT planner and plan
+    """ Creates an RRT planner and plans """
     rrt = RRTPlanner(w, bidirectional=True, rrt_connect=False, rrt_star=True)
     start = Pose(x=-0.5, y=-0.5)
     goal = Pose(x=3.0, y=3.0)

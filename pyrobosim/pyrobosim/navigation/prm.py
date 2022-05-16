@@ -1,16 +1,26 @@
-"""
-Implementation of Probabilistic Roadmaps (PRM) for motion planning.
-"""
-
 import time
 import warnings
 
-from .search_graph import SearchGraph, Node, Edge
+from .search_graph import SearchGraph, Node
 from .trajectory import fill_path_yaws
 from ..utils.pose import Pose
 
+
 class PRMPlanner:
+    """
+    Implementation of Probabilistic Roadmaps (PRM) for motion planning.
+    """
     def __init__(self, world, max_nodes=100, max_connection_dist=2.0):
+        """
+        Creates an instance of a PRM planner.
+
+        :param world: World object to use in the planner.
+        :type world: :class:`pyrobosim.core.world.World`
+        :param max_nodes: Maximum nodes sampled to build the PRM.
+        :type max_nodes: int
+        :param max_connection_dist: Maximum connection distance between two nodes.
+        :type max_connection_dist: float
+        """
         # Parameters
         self.max_connection_dist = max_connection_dist
         self.max_nodes = max_nodes
@@ -24,7 +34,7 @@ class PRMPlanner:
 
 
     def reset(self):
-        """ Resets the search trees and planning metrics. """
+        """ Resamples the PRM and resets planning metrics. """
         self.planning_time = self.sampling_time = 0.0
         self.latest_path = None
 
@@ -42,7 +52,16 @@ class PRMPlanner:
         
 
     def plan(self, start, goal):
-        """ Plan a path from start to goal. """
+        """ 
+        Plans a path from start to goal. 
+        
+        :param start: Start pose or graph node.
+        :type start: :class:`pyrobosim.utils.pose.Pose` / :class:`pyrobosim.navigation.search_graph.Node`
+        :param goal: Goal pose or graph node.
+        :type goal: :class:`pyrobosim.utils.pose.Pose` / :class:`pyrobosim.navigation.search_graph.Node`
+        :return: List of graph Node objects describing the path, or None if not found.
+        :rtype: list[:class:`pyrobosim.navigation.search_graph.Node`] 
+        """
         # Create the start and goal nodes
         if isinstance(start, Pose):
             start = Node(start, parent=None)
@@ -61,13 +80,18 @@ class PRMPlanner:
 
 
     def sample_configuration(self):
-        """ Sample a random configuration from the world. """
+        """ 
+        Samples a random configuration from the world.
+        
+        :return: Collision-free pose if found, else ``None``.
+        :rtype: :class:`pyrobosim.utils.pose.Pose`
+        """
         return self.world.sample_free_robot_pose_uniform()
 
 
     def print_metrics(self):
         """
-        Print metrics about the latest path.
+        Print metrics about the latest path computed
         """
         if self.latest_path is None:
             print("No path.")
@@ -80,9 +104,19 @@ class PRMPlanner:
         print(f"Time to sample nodes: {self.sampling_time} seconds")
         print(f"Time to plan: {self.planning_time} seconds")
 
+
     def plot(self, axes, show_graph=True, show_path=True):
         """
-        Plots the PRM graph on a specified set of axes
+        Plots the PRM and the planned path on a specified set of axes.
+
+        :param axes: The axes on which to draw.
+        :type axes: :class:`matplotlib.axes.Axes`
+        :param show_graph: If True, shows the RRTs used for planning.
+        :type show_graph: bool
+        :param show_path: If True, shows the last planned path.
+        :type show_path: bool
+        :return: List of Matplotlib artists containing what was drawn, used for bookkeeping.
+        :rtype: list[:class:`matplotlib.artist.Artist`]
         """
         artists = []
         if show_graph:
@@ -104,9 +138,15 @@ class PRMPlanner:
 
         return artists
 
+
     def show(self, show_graph=True, show_path=True):
         """
-        Shows the PRM in a new figure.
+        Shows the PRM and the planned path in a new figure.
+
+        :param show_graph: If True, shows the RRTs used for planning.
+        :type show_graph: bool
+        :param show_path: If True, shows the last planned path.
+        :type show_path: bool
         """
         import matplotlib.pyplot as plt
         f = plt.figure()
