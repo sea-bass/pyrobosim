@@ -24,7 +24,7 @@ def get_data_folder():
     except:
         # Else, assume it's relative to the file's current directory.
         data_folder = os.path.join(os.path.dirname(
-            os.path.abspath(__file__)), "..", "pyrobosim", "data")
+            os.path.abspath(__file__)), "..", "data")
 
     return data_folder
 

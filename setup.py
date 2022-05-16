@@ -1,7 +1,18 @@
+import os
 from os.path import join
 from setuptools import setup
 
 # This is for standalone (non-ROS) use.
+
+def get_files_in_folder(directory):
+    """ Helper function to get all files in a specific directory. """
+    file_list = []
+    for (path, _, fnames) in os.walk(directory):
+        for filename in fnames:
+            file_list.append(join("..", path, filename))
+    return file_list
+
+
 project_name = "pyrobosim"
 setup(
     name=project_name,
@@ -19,5 +30,8 @@ setup(
         join(project_name, "planning"),
         join(project_name, "utils")
     ],
+    package_data={
+        project_name: get_files_in_folder(join(project_name, "data"))
+    },
     zip_safe=True
 )
