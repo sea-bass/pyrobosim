@@ -30,6 +30,14 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
        radius: <value> # Robot radius
        location: <name> # Initial location
        pose: [<x>, <y>, <yaw>] # Initial pose, if not specified will sample
+       path_planner: # Local robot path planner -- generally refers to single-query planners
+         type: rrt # Supported types -- rrt
+         <property>: <planner_property>
+
+   # Global path planner -- generally refers to multi-query planners
+   global_path_planner:
+     type: search_graph # Supported types -- search_graph, prm
+     <property>: <planner_property>
 
    # Rooms
    rooms:
