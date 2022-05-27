@@ -11,7 +11,7 @@
 #   pyrobosim_ros
 
 # User variables -- change this to meet your needs
-export ROS_DISTRO=foxy
+export ROS_DISTRO=humble
 export VIRTUALENV_FOLDER=~/python-virtualenvs/pyrobosim
 export PYROBOSIM_WS=~/pyrobosim_ws
 

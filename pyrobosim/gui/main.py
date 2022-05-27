@@ -55,10 +55,10 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         :type screen_fraction: float
         """
         screen = QtWidgets.QDesktopWidget().availableGeometry()
-        window_width = screen.width() * screen_fraction
-        window_height = screen.height() * screen_fraction
-        window_x = screen.left() + 0.5 * (screen.width() - window_width)
-        window_y = screen.top() + 0.5 * (screen.height() - window_height)
+        window_width = int(screen.width() * screen_fraction)
+        window_height = int(screen.height() * screen_fraction)
+        window_x = int(screen.left() + 0.5 * (screen.width() - window_width))
+        window_y = int(screen.top() + 0.5 * (screen.height() - window_height))
         self.setGeometry(window_x, window_y, window_width, window_height)
 
     def create_layout(self):
