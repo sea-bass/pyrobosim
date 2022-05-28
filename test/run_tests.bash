@@ -5,4 +5,4 @@ TEST_RESULTS_DIR=$SCRIPT_DIR/../test_results
 
 python3 -m pytest \
  --junitxml=$TEST_RESULTS_DIR/test_results.xml \
- --html=$TEST_RESULTS_DIR/test_results.html --self-contained-html
+ --html=$TEST_RESULTS_DIR/test_results.html --self-contained-html \

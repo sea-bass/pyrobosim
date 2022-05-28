@@ -15,13 +15,10 @@ def get_files_in_folder(directory):
 install_requires = [
     "adjustText",
     "astar",
-    "attrs",
     "descartes",
     "numpy",
     "pycollada",
     "PyQt5",
-    "pytest",
-    "pytest-html",
     "PyYAML",   
     "shapely",
     "scipy",
