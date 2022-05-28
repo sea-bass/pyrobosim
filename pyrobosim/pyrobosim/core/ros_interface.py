@@ -5,7 +5,7 @@ from rclpy.node import Node
 import threading
 from transforms3d.euler import euler2quat
 
-from pyrobosim.msg import RobotState, TaskAction, TaskPlan
+from pyrobosim_msgs.msg import RobotState, TaskAction, TaskPlan
 from pyrobosim.planning.ros_utils import task_action_from_ros, task_plan_from_ros
 
 class WorldROSWrapper(Node):
@@ -70,7 +70,7 @@ class WorldROSWrapper(Node):
         Handle single action callback. 
         
         :param msg: Task action message to process.
-        :type msg: :class:`pyrobosim.msg.TaskAction`
+        :type msg: :class:`pyrobosim_msgs.msg.TaskAction`
         """
         if self.is_robot_busy():
             self.get_logger().info(f"Currently executing action(s). Discarding this one.")
@@ -85,7 +85,7 @@ class WorldROSWrapper(Node):
         Handle task plan callback.
         
         :param msg: Task plan message to process.
-        :type msg: :class:`pyrobosim.msg.TaskPlan`
+        :type msg: :class:`pyrobosim_msgs.msg.TaskPlan`
         """
         if self.is_robot_busy():
             self.get_logger().info(f"Currently executing action(s). Discarding this one.")

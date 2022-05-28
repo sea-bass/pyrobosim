@@ -1,8 +1,9 @@
 # VS Code metadata
 .vscode/
 
-# Python cache folders
+# Python cache and install folders
 __pycache__**
+*egg-info
 
 # Sphinx documentation
 docs/build/

@@ -3,7 +3,7 @@ Utilities to convert between standalone planning objects and
 ROS representations (messages, services, etc.).
 """
 
-import pyrobosim.msg as ros_msgs
+import pyrobosim_msgs.msg as ros_msgs
 import pyrobosim.planning.actions as acts
 
 def task_action_from_ros(msg):
@@ -11,7 +11,7 @@ def task_action_from_ros(msg):
     Converts a TaskAction ROS message to a TaskAction object.
     
     :param msg: ROS message.
-    :type msg: :class:`pyrobosim.msg.TaskAction`
+    :type msg: :class:`pyrobosim_msgs.msg.TaskAction`
     :return: Task action object.
     :rtype: :class:`pyrobosim.planning.actions.TaskAction`
     """
@@ -28,7 +28,7 @@ def task_action_to_ros(act):
     :param act: Task action object.
     :type act: :class:`pyrobosim.planning.actions.TaskAction`    
     :return: ROS message.
-    :rtype: :class:`pyrobosim.msg.TaskAction`
+    :rtype: :class:`pyrobosim_msgs.msg.TaskAction`
     """
     if not isinstance(act, acts.TaskAction):
         raise Exception("Input is not a TaskAction object")
@@ -41,7 +41,7 @@ def task_plan_from_ros(msg):
     Converts a TaskPlan ROS message to a TaskPlan object.
     
     :param msg: ROS message.
-    :type msg: :class:`pyrobosim.msg.TaskPlan`
+    :type msg: :class:`pyrobosim_msgs.msg.TaskPlan`
     :return: Task plan object.
     :rtype: :class:`pyrobosim.planning.actions.TaskPlan`
     """
@@ -57,7 +57,7 @@ def task_plan_to_ros(plan):
     :param plan: Task plan object.
     :type plan: :class:`pyrobosim.planning.actions.TaskPlan`    
     :return: ROS message.
-    :rtype: :class:`pyrobosim.msg.TaskPlan`
+    :rtype: :class:`pyrobosim_msgs.msg.TaskPlan`
     """
     if not isinstance(plan, acts.TaskPlan):
         raise Exception("Input is not a TaskPlan object")

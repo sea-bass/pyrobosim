@@ -48,15 +48,15 @@ The standalone (ROS-free) option is:
 
 ::
 
-    ros2 run pyrobosim demo.py 
+    ros2 run pyrobosim_ros demo.py 
 
 
 The ROS option is (in 2 separate Terminals):
 
 ::
 
-    ros2 run pyrobosim demo.py --ros
-    ros2 run pyrobosim demo_commands.py
+    ros2 run pyrobosim_ros demo.py --ros
+    ros2 run pyrobosim_ros demo_commands.py
 
 The first command will start a world as a ROS2 node, and the second one will publish a plan (or set of actions) to the node.
 
@@ -76,7 +76,7 @@ By default, ``demo.py`` creates a world using the API, but you can alternative t
 ::
 
     python scripts/demo.py --from-file
-    ros2 run pyrobosim demo.py --ros --from-file
+    ros2 run pyrobosim_ros demo.py --ros --from-file
 
 Refer to the :doc:`YAML Schemas </yaml_schemas>` documentation for more information.
 
@@ -95,7 +95,7 @@ ROS:
 
 ::
 
-    ros2 run pyrobosim demo_world_save.py
+    ros2 run pyrobosim_ros demo_world_save.py
 
 You can then follow the steps to see the generated world.
 

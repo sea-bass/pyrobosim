@@ -9,7 +9,7 @@ import rclpy
 from rclpy.node import Node
 import time
 
-from pyrobosim.msg import TaskAction, TaskPlan
+from pyrobosim_msgs.msg import TaskAction, TaskPlan
 
 
 class Commander(Node):
