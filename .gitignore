@@ -7,3 +7,6 @@ __pycache__**
 # Sphinx documentation
 docs/build/
 docs/source/generated
+
+# Test artifacts
+test_results/

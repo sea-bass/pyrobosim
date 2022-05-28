@@ -19,12 +19,11 @@ install_requires = [
     "numpy",
     "pycollada",
     "PyQt5",
-    "PyYAML",    
+    "PyYAML",   
     "shapely",
     "scipy",
     "transforms3d",
     "trimesh"]
-
 
 project_name = "pyrobosim"
 setup(

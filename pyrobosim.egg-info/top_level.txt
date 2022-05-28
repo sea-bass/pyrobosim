@@ -1,0 +1,6 @@
+pyrobosim
+pyrobosim/core
+pyrobosim/gui
+pyrobosim/navigation
+pyrobosim/planning
+pyrobosim/utils

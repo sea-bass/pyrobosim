@@ -1,0 +1,29 @@
+name: Pyrobosim Tests
+
+on: [push]
+
+jobs:
+  pyrobosim-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install .
+      - name: Run unit tests
+        run: |
+          pip install pytest pytest-html
+          test/run_tests.bash
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: pytest-results
+          path: test_results/test_results.xml
+        # Always publish test results even when there are failures.
+        if: ${{ always() }}
