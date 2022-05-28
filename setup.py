@@ -12,18 +12,18 @@ def get_files_in_folder(directory):
             file_list.append(join("..", path, filename))
     return file_list
 
-
 install_requires = [
-            'numpy',
-            'shapely',
-            'PyYAML',
-            'pycollada',
-            'astar',
-            'descartes',
-            'trimesh',
-            'scipy',
-            'PyQt5',
-            'adjustText']
+    "adjustText",
+    "astar",
+    "descartes",
+    "numpy",
+    "pycollada",
+    "PyQt5",
+    "PyYAML",    
+    "shapely",
+    "scipy",
+    "transforms3d",
+    "trimesh"]
 
 
 project_name = "pyrobosim"
