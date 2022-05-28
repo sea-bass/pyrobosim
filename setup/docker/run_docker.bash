@@ -12,10 +12,23 @@ MAIN_DIR=$SCRIPT_DIR/../..
 # If no command is specified, just open a terminal
 CMD=${1:-bash}
 
-docker run -it --net=host --gpus all \
-    --env="NVIDIA_DRIVER_CAPABILITIES=all" \
-    --env="DISPLAY" \
-    --env="QT_X11_NO_MITSHM=1"\
-    --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+DISPLAY_ARGS="
+--gpus all \
+--env="NVIDIA_DRIVER_CAPABILITIES=all" \
+--env="DISPLAY" \
+--env="QT_X11_NO_MITSHM=1" \
+--volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+"
+
+# If running as part of CI, disable displays and interactive mode.
+INTERACT_FLAGS=-it
+if [ "$2" == "ci_mode" ]
+then 
+  INTERACT_FLAGS=""
+  DISPLAY_ARGS=""
+fi
+
+# Finally, run the command in Docker
+docker run $INTERACT_FLAGS --net=host $DISPLAY_ARGS \
     --volume=$MAIN_DIR:/pyrobosim_ws/src/pyrobosim \
     $IMAGE_NAME $CMD
