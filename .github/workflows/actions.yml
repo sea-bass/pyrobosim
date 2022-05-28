@@ -33,14 +33,14 @@ jobs:
 
   # Testing with ROS2
   ros2-foxy-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
       - name: Set up Docker image
         run: |
           setup/docker/build_docker.bash
-      - name: Run unit tests
+      - name: Run unit tests in Docker container
         run: |
           pyrobosim/setup/docker/run_docker "src/pyrobosim/setup/docker/test_docker.bash"
       - name: Upload test results
