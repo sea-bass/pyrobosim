@@ -35,7 +35,7 @@ setup(
     author_email="sebas.a.castro@gmail.com",
     description="ROS2 enabled 2D mobile robot simulator for behavior prototyping.",
     license="BSD",
-    install_requires= install_requires,
+    install_requires=install_requires,
     packages=[
         project_name,
         join(project_name, "core"),
