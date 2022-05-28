@@ -1,8 +1,13 @@
 name: Pyrobosim Tests
 
-on: 
+on:
+  # Job on certain pull request events
   pull_request:
     types: [opened, ready_for_review, review_requested]
+  
+  # Nightly job on default (main) branch
+  schedule:
+    - cron: '0 0 * * *'
 
 jobs:
   # Pure Python testing
