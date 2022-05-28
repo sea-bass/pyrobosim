@@ -19,6 +19,8 @@ install_requires = [
     "numpy",
     "pycollada",
     "PyQt5",
+    "pytest",
+    "pytest-html",
     "PyYAML",   
     "shapely",
     "scipy",

@@ -6,4 +6,4 @@ colcon build
 . install/setup.bash
 cd src/pyrobosim
 pip3 install .
-python3 -m pytest --junitxml=test_results/test_results.xml
+./test/run_tests.bash
