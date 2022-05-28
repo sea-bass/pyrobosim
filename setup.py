@@ -15,6 +15,7 @@ def get_files_in_folder(directory):
 install_requires = [
     "adjustText",
     "astar",
+    "attrs",
     "descartes",
     "numpy",
     "pycollada",
