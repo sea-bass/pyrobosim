@@ -12,5 +12,5 @@ echo "Created Python virtual environment in $VIRTUALENV_FOLDER"
 # Install all the Python packages required
 # Note that these overlay over whatever ROS2 already contains
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-pip3 install -r $SCRIPT_DIR/python_requirements.txt
+pip3 install $SCRIPT_DIR/..
 echo "Installed Python packages"
