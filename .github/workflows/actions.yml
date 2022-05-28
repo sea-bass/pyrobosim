@@ -42,7 +42,7 @@ jobs:
           setup/docker/build_docker.bash
       - name: Run unit tests in Docker container
         run: |
-          pyrobosim/setup/docker/run_docker "src/pyrobosim/setup/docker/test_docker.bash"
+          setup/docker/run_docker.bash "src/pyrobosim/setup/docker/test_docker.bash"
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:
