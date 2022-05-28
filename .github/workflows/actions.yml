@@ -1,6 +1,9 @@
 name: Pyrobosim Tests
 
 on:
+  # Run action every time branch is pushed to
+  push:
+
   # Job on certain pull request events
   pull_request:
     types: [opened, ready_for_review, review_requested]
@@ -23,10 +26,10 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          pip3 install .
+          pip3 install -e pyrobosim
       - name: Run unit tests
         run: |
-          pip3 install pytest pytest-html
+          pip3 install lark pytest pytest-html
           test/run_tests.bash
       - name: Upload test results
         uses: actions/upload-artifact@v3
@@ -44,10 +47,33 @@ jobs:
         uses: actions/checkout@v3
       - name: Set up Docker image
         run: |
-          setup/docker/build_docker.bash
+          export ROS_DISTRO=foxy
+          docker/build_docker.bash
       - name: Run unit tests in Docker container
         run: |
-          setup/docker/run_docker.bash "src/pyrobosim/setup/docker/test_docker.bash" ci_mode
+          export ROS_DISTRO=foxy
+          docker/run_docker.bash "src/pyrobosim/docker/test_docker.bash" ci_mode
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: pytest-results
+          path: test_results/
+        # Always publish test results even when there are failures.
+        if: ${{ always() }}
+
+  ros2-humble-test:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Set up Docker image
+        run: |
+          export ROS_DISTRO=humble
+          docker/build_docker.bash
+      - name: Run unit tests in Docker container
+        run: |
+          export ROS_DISTRO=humble
+          docker/run_docker.bash "src/pyrobosim/docker/test_docker.bash" ci_mode
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:
