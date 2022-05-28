@@ -12,6 +12,18 @@ def get_files_in_folder(directory):
             file_list.append(join("..", path, filename))
     return file_list
 
+install_requires = [
+    "adjustText",
+    "astar",
+    "descartes",
+    "numpy",
+    "pycollada",
+    "PyQt5",
+    "PyYAML",   
+    "shapely",
+    "scipy",
+    "transforms3d",
+    "trimesh"]
 
 project_name = "pyrobosim"
 setup(
@@ -22,6 +34,7 @@ setup(
     author_email="sebas.a.castro@gmail.com",
     description="ROS2 enabled 2D mobile robot simulator for behavior prototyping.",
     license="BSD",
+    install_requires=install_requires,
     packages=[
         project_name,
         join(project_name, "core"),

@@ -1,0 +1,57 @@
+name: Pyrobosim Tests
+
+on:
+  # Job on certain pull request events
+  pull_request:
+    types: [opened, ready_for_review, review_requested]
+  
+  # Nightly job on default (main) branch
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  # Pure Python testing
+  python-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip3 install .
+      - name: Run unit tests
+        run: |
+          pip3 install pytest pytest-html
+          test/run_tests.bash
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: pytest-results
+          path: test_results/
+        # Always publish test results even when there are failures.
+        if: ${{ always() }}
+
+  # Testing with ROS2
+  ros2-foxy-test:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Set up Docker image
+        run: |
+          setup/docker/build_docker.bash
+      - name: Run unit tests in Docker container
+        run: |
+          setup/docker/run_docker.bash "src/pyrobosim/setup/docker/test_docker.bash" ci_mode
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: pytest-results
+          path: test_results/
+        # Always publish test results even when there are failures.
+        if: ${{ always() }}
