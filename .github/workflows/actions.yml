@@ -1,9 +1,12 @@
 name: Pyrobosim Tests
 
-on: [push]
+on: 
+  pull_request:
+    types: [opened, ready_for_review, review_requested]
 
 jobs:
-  pyrobosim-test:
+  # Pure Python testing
+  python-test:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -20,6 +23,26 @@ jobs:
         run: |
           pip install pytest pytest-html
           test/run_tests.bash
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: pytest-results
+          path: test_results/test_results.xml
+        # Always publish test results even when there are failures.
+        if: ${{ always() }}
+
+  # Testing with ROS2
+  ros2-foxy-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Set up Docker image
+        run: |
+          setup/docker/build_docker.bash
+      - name: Run unit tests
+        run: |
+          pyrobosim/setup/docker/run_docker "src/pyrobosim/setup/docker/test_docker.bash"
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:
