@@ -11,7 +11,6 @@ python:
   install:
     - method: pip
       path: pyrobosim
-    - requirements: setup/python_requirements.txt
 
 # Build documentation in the Sphinx source directory
 sphinx:
