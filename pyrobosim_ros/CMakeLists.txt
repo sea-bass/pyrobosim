@@ -12,6 +12,9 @@ find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 
 # Install Python package
+ament_python_install_package(
+    pyrobosim
+    PACKAGE_DIR ../pyrobosim/pyrobosim)
 install(PROGRAMS
   examples/demo.py
   examples/demo_commands.py
