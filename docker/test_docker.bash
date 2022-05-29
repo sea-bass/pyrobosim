@@ -4,7 +4,10 @@
 echo "Running Docker tests..."
 colcon build
 . install/setup.bash
-cd src/pyrobosim
-pip3 install -e pyrobosim
+pushd src/pyrobosim/pyrobosim
+pip3 install .
 pip3 install lark pytest pytest-html
-./test/run_tests.bash
+popd
+pushd src/pyrobosim/test
+run_tests.bash
+popd

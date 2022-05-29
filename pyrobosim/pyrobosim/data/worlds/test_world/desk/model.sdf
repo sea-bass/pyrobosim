@@ -1,0 +1,59 @@
+<?xml version='1.0'?>
+<sdf version='1.7'>
+  <!-- Model name -->
+  <model name='desk'>
+        <pose>0 0 0 0 0 0</pose>
+        <frame name='walls'/>
+    
+    <!-- All the links go here -->
+    <link name='my_desk'>
+      <pose>"0 0 0 0 0 0"</pose>
+      <frame name='my_desk'/>
+      <inertial>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+          <mass>1</mass>
+      </inertial>
+      <collision name='my_desk_collision'>
+        <geometry>
+          <polyline>
+            <point>-0.3 -0.3</point>
+            <point>0.3 -0.3</point>
+            <point>0.3 0.3</point>
+            <point>-0.3 0.3</point>
+            <point>-0.3 -0.3</point>
+
+            <height>0.3</height>
+          </polyline>
+        </geometry>
+      </collision>
+      <visual name='my_desk_visual'>
+        <geometry>
+          <polyline>
+            <point>-0.3 -0.3</point>
+            <point>0.3 -0.3</point>
+            <point>0.3 0.3</point>
+            <point>-0.3 0.3</point>
+            <point>-0.3 -0.3</point>
+
+            <height>0.3</height>
+          </polyline>
+        </geometry>
+        <material>
+            <ambient>0 0 0 1</ambient>
+            <diffuse>0 0 0 1</diffuse>
+            <specular>0 0 0 1</specular>
+        </material>
+      </visual>
+    </link>
+    
+    
+    <static>0</static>
+  </model>
+</sdf>

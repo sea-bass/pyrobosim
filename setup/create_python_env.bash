@@ -12,6 +12,8 @@ echo "Created Python virtual environment in $VIRTUALENV_FOLDER"
 # Install all the Python packages required
 # Note that these overlay over whatever ROS2 already contains
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-pip3 install -e $SCRIPT_DIR/../pyrobosim
+pushd $SCRIPT_DIR/../pyrobosim
+pip install .
+popd
 pip3 install lark pytest pytest-html
 echo "Installed Python packages"

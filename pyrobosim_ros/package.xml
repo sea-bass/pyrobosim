@@ -3,7 +3,7 @@
 <package format="3">
   <name>pyrobosim_ros</name>
   <version>0.0.0</version>
-  <description>ROS2 enabled 2D mobile robot simulator for behavior prototyping.</description>
+  <description>ROS2 wrapper around pyrobosim.</description>
   <maintainer email="sebas.a.castro@gmail.com">Sebastian Castro</maintainer>
   <license>BSD</license>
 

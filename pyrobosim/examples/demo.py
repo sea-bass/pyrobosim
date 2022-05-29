@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 Test script showing how to build a world and use it with pyrobosim
 """
@@ -82,43 +80,15 @@ def start_gui(world, args):
     sys.exit(app.exec_())
 
 
-def start_ros_node(world):
-    """ Initializes ROS node """
-    import rclpy
-    from pyrobosim.core.ros_interface import WorldROSWrapper
-
-    rclpy.init()
-    world_node = WorldROSWrapper(world, name="test_world", state_pub_rate=0.1)
-    world_node.start()
-
-
 def parse_args():
     """ Parse command-line arguments """
     parser = argparse.ArgumentParser(description="Main pyrobosim demo.")
-    parser.add_argument("--ros", action="store_true",
-                        help="Start as ROS2 node")
     parser.add_argument("--from-file", action="store_true",
                         help="Load from YAML file")
     parser.add_argument("--world-file", default="test_world.yaml",
                         help="YAML file name (should be in the pyrobosim/data folder). " +
                              "Defaults to test_world.yaml")
     return parser.parse_args()
-
-
-def main_standalone(world):
-    """ Main for standalone operation """
-    start_gui(world, sys.argv)
-
-
-def main_ros(world):
-    """ Main for ROS operation """
-    # Start ROS Node in separate thread
-    import threading
-    t = threading.Thread(target=start_ros_node, args=(world,))
-    t.start()
-
-    # Start GUI in main thread
-    start_gui(world, sys.argv)
 
 
 if __name__ == "__main__":
@@ -131,7 +101,4 @@ if __name__ == "__main__":
         w = create_world()
 
     # Start the program either as ROS2 node or standalone.
-    if args.ros:
-        main_ros(w)
-    else:
-        main_standalone(w)
+    start_gui(w, sys.argv)

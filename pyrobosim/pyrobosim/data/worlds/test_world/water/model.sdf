@@ -1,0 +1,61 @@
+<?xml version='1.0'?>
+<sdf version='1.7'>
+  <!-- Model name -->
+  <model name='water'>
+        <pose>0 0 0 0 0 0</pose>
+        <frame name='walls'/>
+    
+    <!-- All the links go here -->
+    <link name='water0'>
+      <pose>"0 0 0 0 0 0"</pose>
+      <frame name='water0'/>
+      <inertial>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+          <mass>1</mass>
+      </inertial>
+      <collision name='water0_collision'>
+        <geometry>
+          <polyline>
+            <point>0.035 -0.075</point>
+            <point>0.035 0.075</point>
+            <point>0.0 0.1</point>
+            <point>-0.035 0.075</point>
+            <point>-0.035 -0.075</point>
+            <point>0.035 -0.075</point>
+
+            <height>0.1</height>
+          </polyline>
+        </geometry>
+      </collision>
+      <visual name='water0_visual'>
+        <geometry>
+          <polyline>
+            <point>0.035 -0.075</point>
+            <point>0.035 0.075</point>
+            <point>0.0 0.1</point>
+            <point>-0.035 0.075</point>
+            <point>-0.035 -0.075</point>
+            <point>0.035 -0.075</point>
+
+            <height>0.1</height>
+          </polyline>
+        </geometry>
+        <material>
+            <ambient>0.0 0.1 0.7 1</ambient>
+            <diffuse>0.0 0.1 0.7 1</diffuse>
+            <specular>0.0 0.1 0.7 1</specular>
+        </material>
+      </visual>
+    </link>
+    
+    
+    <static>0</static>
+  </model>
+</sdf>

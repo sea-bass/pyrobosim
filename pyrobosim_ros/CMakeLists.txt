@@ -13,9 +13,9 @@ find_package(rclpy REQUIRED)
 
 # Install Python package
 install(PROGRAMS
-  scripts/demo.py
-  scripts/demo_commands.py
-  scripts/demo_world_save.py
+  examples/demo.py
+  examples/demo_commands.py
+  ../pyrobosim/examples/demo_world_save.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

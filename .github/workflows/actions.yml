@@ -26,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          pip3 install -e pyrobosim
+          pushd pyrobosim && pip3 install . && popd
       - name: Run unit tests
         run: |
           pip3 install lark pytest pytest-html
