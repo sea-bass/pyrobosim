@@ -1,4 +1,4 @@
-name: Pyrobosim Tests
+name: tests
 
 on:
   # Job on certain pull request events
