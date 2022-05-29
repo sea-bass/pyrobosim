@@ -23,10 +23,18 @@ To then source this virtual environment, run
 
     source ./setup/setup_pyrobosim.bash
 
-As documented in the above script, I recommend making a bash function in your ``~/.bashrc`` script so you can easily just call `pyrobosim_ros` from your Terminal to get started.
+As documented in the above script, I recommend making a bash function in your ``~/.bashrc`` script so you can easily just call `pyrobosim` from your Terminal to get started.
+
+::
+
+    pyrobosim() {
+       source /path/to/pyrobosim/setup/setup_pyrobosim.bash
+    }
+
+If you plan to use ROS2, you can similarly create a bash function like this:
 
 ::
 
     pyrobosim_ros() {
-       source /path/to/pyrobosim/setup/setup_pyrobosim.bash
+       source /path/to/pyrobosim/setup/setup_pyrobosim.bash humble
     }
