@@ -1,7 +1,10 @@
 Setup
 =====
 
-This package is being developed with Python 3.10 in Ubuntu 22.04, and if you use the optional ROS2 interface, with ROS2 Humble.
+This package is being tested with:
+
+* Python 3.8 in Ubuntu 20.04, optionally with ROS2 Foxy
+* Python 3.10 in Ubuntu 22.04, optionally with ROS2 Humble
 
 If using ROS2, clone this repo in a valid `colcon workspace <https://docs.ros.org/en/foxy/Tutorials/Workspace/Creating-A-Workspace.html>`_.
 Otherwise, if running standalone, clone it wherever you would like.
