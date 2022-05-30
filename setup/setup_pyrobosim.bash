@@ -25,6 +25,11 @@
 export VIRTUALENV_FOLDER=~/python-virtualenvs/pyrobosim
 export PYROBOSIM_WS=~/pyrobosim_ws
 
+if [ "$VIRTUAL_ENV" != "" ]
+then
+    deactivate
+fi
+
 # Parse ROS distro argument
 ROS_DISTRO=$1
 if [ "$ROS_DISTRO" == "" ]
@@ -33,9 +38,14 @@ then
 else
     echo "Setting up pyrobosim with ROS $ROS_DISTRO"
     source /opt/ros/$ROS_DISTRO/setup.bash
+    cd $PYROBOSIM_WS
+    if [ ! -d "build" ]
+    then
+        echo "Building colcon workspace..."
+        colcon build
+    fi
+    . install/local_setup.bash
 fi
 
-# Do not modify below this line
+# Activate the Python virtual environment
 source $VIRTUALENV_FOLDER/bin/activate
-cd $PYROBOSIM_WS
-. install/local_setup.bash
