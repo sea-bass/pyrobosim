@@ -38,11 +38,15 @@ else
     --volume="$XAUTH:$XAUTH" \
 "
 fi
-NETWORK_ARGS="--ipc=host --net=host"
 
+# Setup other Docker arguments
+NETWORK_ARGS="--ipc=host --net=host"
+VOLUMES="
+  --volume=$SCRIPT_DIR/..:/pyrobosim_ws/src/pyrobosim:rw \
+  --volume=$SCRIPT_DIR/tmp/build:/pyrobosim_ws/build:rw \
+  --volume=$SCRIPT_DIR/tmp/install:/pyrobosim_ws/install:rw \
+  --volume=$SCRIPT_DIR/tmp/log:/pyrobosim_ws/install/log:rw \
+"
 # Finally, run the command in Docker
-docker run --rm $NETWORK_ARGS $DISPLAY_ARGS \
-    --volume=$SCRIPT_DIR/..:/pyrobosim_ws/src/pyrobosim:rw \
-    --volume=$SCRIPT_DIR/tmp:/pyrobosim_ws/build:rw \
-    --volume=$SCRIPT_DIR/tmp:/pyrobosim_ws/install:rw \
+docker run --rm $NETWORK_ARGS $DISPLAY_ARGS $VOLUMES \
     $IMAGE_NAME $CMD
