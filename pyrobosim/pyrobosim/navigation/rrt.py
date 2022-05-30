@@ -45,6 +45,11 @@ class RRTPlanner:
         self.max_time = max_time
         self.rewire_radius = rewire_radius
 
+        # Visualization
+        self.color_start = [0, 0, 0]
+        self.color_goal = [0, 0.4, 0.8]
+        self.color_alpha = 0.5
+
         self.world = world
         self.reset()
 
@@ -309,13 +314,15 @@ class RRTPlanner:
             for e in self.graph.edges:
                 x = (e.n0.pose.x, e.n1.pose.x)
                 y = (e.n0.pose.y, e.n1.pose.y)
-                edge, = axes.plot(x, y, "k:", linewidth=1)
+                edge, = axes.plot(x, y, linestyle=":", linewidth=1,
+                                  color=self.color_start, alpha=self.color_alpha)
                 artists.append(edge)
             if self.bidirectional:
                 for e in self.graph_goal.edges:
                     x = (e.n0.pose.x, e.n1.pose.x)
                     y = (e.n0.pose.y, e.n1.pose.y)
-                    edge, = axes.plot(x, y, "b--", linewidth=1)
+                    edge, = axes.plot(x, y, linestyle="--", linewidth=1,
+                                      color=self.color_goal, alpha=self.color_alpha)
                     artists.append(edge)
         
         if show_path and self.latest_path is not None:
