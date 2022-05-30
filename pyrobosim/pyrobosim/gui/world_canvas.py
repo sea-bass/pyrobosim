@@ -1,4 +1,5 @@
 import adjustText
+from matplotlib.pyplot import tight_layout
 import numpy as np
 import time
 from matplotlib.figure import Figure
@@ -34,7 +35,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         :param dpi: DPI for the figure.
         :type dpi: int
         """
-        self.fig = Figure(dpi=dpi, layout="tight")
+        self.fig = Figure(dpi=dpi, tight_layout=True)
         self.axes = self.fig.add_subplot(111)
         super(WorldCanvas, self).__init__(self.fig)
 
