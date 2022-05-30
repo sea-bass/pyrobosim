@@ -19,7 +19,7 @@ IMAGE_NAME=pyrobosim_$ROS_DISTRO
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 # If no command is specified, just open a Bash terminal.
-CMD=${1:-bash}
+CMD="${1:-bash}"
 
 # If running as part of CI, do not use displays and interactive mode.
 if [ "$2" == "ci_mode" ]
@@ -38,9 +38,11 @@ else
     --volume="$XAUTH:$XAUTH" \
 "
 fi
+NETWORK_ARGS="--ipc=host --net=host"
 
 # Finally, run the command in Docker
-echo "Running image $IMAGE_NAME..."
-docker run --net=host --rm $DISPLAY_ARGS \
+docker run --rm $NETWORK_ARGS $DISPLAY_ARGS \
     --volume=$SCRIPT_DIR/..:/pyrobosim_ws/src/pyrobosim:rw \
+    --volume=$SCRIPT_DIR/tmp:/pyrobosim_ws/build:rw \
+    --volume=$SCRIPT_DIR/tmp:/pyrobosim_ws/install:rw \
     $IMAGE_NAME $CMD

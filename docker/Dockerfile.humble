@@ -1,6 +1,6 @@
 # pyrobosim Dockerfile for Ubuntu 22.04 / ROS2 Humble
 FROM osrf/ros:humble-desktop
-SHELL ["/bin/bash", "-c"]
+# SHELL ["/bin/bash", "-c"]
 
 # Install dependencies
 ARG DEBIAN_FRONTEND=noninteractive
