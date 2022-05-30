@@ -3,10 +3,6 @@ name: tests
 on:
   # Run action every time branch is pushed to
   push:
-
-  # Job on certain pull request events
-  pull_request:
-    types: [opened, ready_for_review, review_requested]
   
   # Nightly job on default (main) branch
   schedule:
