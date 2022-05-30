@@ -570,20 +570,18 @@ class World:
             self.current_path = self.robot.path_planner.plan(start, goal)
             if self.current_path is not None:
                 self.current_path[-1].parent = goal_node.parent
-
         elif self.path_planner:
             # Plan with the robot's global planner.
             self.current_path = self.path_planner.plan(start_node, goal_node)
+        else:
+            warnings.warn("No global or local path planners specified.")
+            return None
 
         # If we created temporary nodes for search, remove them
         if created_start_node:
             self.search_graph.remove(start_node)
         if created_goal_node:
             self.search_graph.remove(goal_node)
-
-        else:
-            warnings.warn("No global or local path planners specified.")
-            return None
         
         return self.current_path
 
@@ -605,6 +603,8 @@ class World:
         if isinstance(entity_query, Node):
             return entity_query
         elif isinstance(entity_query, str):
+            # Try resolve an entity based on its name. If that fails, we assume it must be a category,
+            # so try resolve it to a location or to an object by category.
             entity = self.get_entity_by_name(entity_query)
             if entity is None:
                 entity = resolve_to_location(self, category=entity_query,
