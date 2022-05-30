@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>pyrobosim_ros</name>
+  <version>0.0.0</version>
+  <description>ROS2 wrapper around pyrobosim.</description>
+  <maintainer email="sebas.a.castro@gmail.com">Sebastian Castro</maintainer>
+  <license>BSD</license>
+
+  <!-- Build dependencies -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
+  <build_depend>rclcpp</build_depend>
+  <build_depend>pyrobosim_msgs</build_depend>
+
+  <!-- Execution dependencies -->
+  <exec_depend>rclcpp</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>pyrobosim_msgs</exec_depend>
+
+  <!-- Test dependencies -->
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

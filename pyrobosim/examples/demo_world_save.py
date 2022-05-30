@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """ 
 Tests Gazebo world saving and occupancy grid export capabilities.

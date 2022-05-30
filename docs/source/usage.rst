@@ -13,14 +13,14 @@ First, install the module.
 
 ::
 
-    cd /path/to/pyrobosim
+    cd /path/to/pyrobosim/pyrobosim
     pip install .
 
 Then, run the test script.
 
 ::
 
-    python scripts/demo.py
+    python examples/demo.py
 
 You can now interact with the GUI through the buttons and text boxes.
 For example, enter "bedroom desk" in the **Goal query** text box and then
@@ -44,19 +44,18 @@ First, build and setup the colcon workspace.
     . install/local_setup.bash
 
 
-The standalone (ROS-free) option is:
+You can run a ROS2 enabled demo and interact with the GUI:
 
 ::
 
-    ros2 run pyrobosim demo.py 
+    ros2 run pyrobosim_ros demo.py 
 
 
-The ROS option is (in 2 separate Terminals):
+In a separate Terminal, you can publish a list of commands as follows:
 
 ::
 
-    ros2 run pyrobosim demo.py --ros
-    ros2 run pyrobosim demo_commands.py
+    ros2 run pyrobosim_ros demo_commands.py
 
 The first command will start a world as a ROS2 node, and the second one will publish a plan (or set of actions) to the node.
 
@@ -75,8 +74,8 @@ By default, ``demo.py`` creates a world using the API, but you can alternative t
 
 ::
 
-    python scripts/demo.py --from-file
-    ros2 run pyrobosim demo.py --ros --from-file
+    python examples/demo.py --from-file
+    ros2 run pyrobosim_ros demo.py --from-file
 
 Refer to the :doc:`YAML Schemas </yaml_schemas>` documentation for more information.
 
@@ -89,13 +88,13 @@ Standalone:
 
 ::
 
-    python scripts/demo_world_save.py
+    python examples/demo_world_save.py
 
 ROS:
 
 ::
 
-    ros2 run pyrobosim demo_world_save.py
+    ros2 run pyrobosim_ros demo_world_save.py
 
 You can then follow the steps to see the generated world.
 

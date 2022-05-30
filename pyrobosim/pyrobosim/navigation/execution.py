@@ -1,10 +1,10 @@
+""" Path execution utilities. """
+
 import time
 import warnings
 
 from ..utils.pose import Pose
 from .trajectory import get_constant_speed_trajectory, interpolate_trajectory
-
-""" Path execution utilities. """
 
 
 class ConstantVelocityExecutor:

@@ -63,4 +63,8 @@ To enable this, a typical user of pyrobosim would:
 * **Design task and motion planners** that go from task specification to task plan.
 * **Export worlds to Gazebo** to test in a more photorealistic 3D world with a better robot model.
 
+Some use cases include:
+
+* `Home Service Robotics with the Toyota HSR <https://roboticseabass.com/2020/12/30/2020-review-service-robotics-mit-csail/>`_ -- the start of this work!
+
 We look forward to your Git issues, contributions, and usage examples!

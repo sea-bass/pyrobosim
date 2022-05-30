@@ -1,4 +1,4 @@
 # Task Plan ROS Message
 
-pyrobosim/TaskAction[] actions
+pyrobosim_msgs/TaskAction[] actions
 float32 cost
