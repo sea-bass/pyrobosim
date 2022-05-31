@@ -36,7 +36,7 @@ click the **Navigate** button. Once at the destination, click **Pick**.
 With ROS2
 ---------
 
-First, build and setup the colcon workspace.
+First, build and setup the ``colcon`` workspace (or use one of our provided Docker containers).
 
 ::
 
