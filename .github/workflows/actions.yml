@@ -30,7 +30,7 @@ jobs:
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:
-          name: pytest-results
+          name: test-results
           path: test/results/
         # Always publish test results even when there are failures.
         if: ${{ always() }}
@@ -52,7 +52,7 @@ jobs:
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:
-          name: pytest-results
+          name: test-results-foxy
           path: test/results/
         # Always publish test results even when there are failures.
         if: ${{ always() }}
@@ -73,7 +73,7 @@ jobs:
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:
-          name: pytest-results
+          name: test-results-humble
           path: test/results/
         # Always publish test results even when there are failures.
         if: ${{ always() }}
