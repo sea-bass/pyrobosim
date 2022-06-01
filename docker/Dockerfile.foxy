@@ -11,6 +11,10 @@ RUN apt-get install -y \
 # Create a colcon workspace
 RUN mkdir -p /pyrobosim_ws/src
 
+# Install dependencies
+COPY setup /pyrobosim_ws/src/pyrobosim/setup
+RUN cd /pyrobosim_ws/src/pyrobosim/setup && ./setup_pddlstream.bash
+
 # Install pyrobosim and testing dependencies
 COPY pyrobosim /temp/pyrobosim
 RUN cd /temp/pyrobosim && pip3 install .

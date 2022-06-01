@@ -41,8 +41,13 @@ fi
 
 # Setup other Docker arguments
 NETWORK_ARGS="--ipc=host --net=host"
+PYROBOSIM_WS="/pyrobosim_ws/src/pyrobosim"
 VOLUMES="
-  --volume=$SCRIPT_DIR/..:/pyrobosim_ws/src/pyrobosim:rw \
+  --volume=$SCRIPT_DIR/../pyrobosim:$PYROBOSIM_WS/pyrobosim:rw \
+  --volume=$SCRIPT_DIR/../pyrobosim_msgs:$PYROBOSIM_WS/pyrobosim_msgs:rw \
+  --volume=$SCRIPT_DIR/../pyrobosim_ros:$PYROBOSIM_WS/pyrobosim_ros:rw \
+  --volume=$SCRIPT_DIR/../setup:$PYROBOSIM_WS/setup:rw \
+  --volume=$SCRIPT_DIR/../test:$PYROBOSIM_WS/test:rw \
   --volume=$SCRIPT_DIR/tmp/build:/pyrobosim_ws/build:rw \
   --volume=$SCRIPT_DIR/tmp/install:/pyrobosim_ws/install:rw \
   --volume=$SCRIPT_DIR/tmp/log:/pyrobosim_ws/install/log:rw \

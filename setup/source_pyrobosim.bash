@@ -1,4 +1,4 @@
-# Sets up the pyrobosim environment for development
+# Sets up the pyrobosim environment for development.
 #
 # One recommendation is to make a bash function for this script in 
 # your ~/.bashrc file as follows:
@@ -6,7 +6,7 @@
 # For non-ROS workflows:
 #
 #  pyrobosim() {
-#    source /path/to/pyrobosim/setup/setup_pyrobosim.bash  
+#    source /path/to/pyrobosim/setup/source_pyrobosim.bash  
 #  }
 #
 #  So you can then run this from your Terminal:
@@ -15,7 +15,7 @@
 # For ROS workflows, enter the ROS distro (foxy/humble) as an argument:
 #
 #   pyrobosim_ros() {
-#     source /path/to/pyrobosim/setup/setup_pyrobosim.bash humble
+#     source /path/to/pyrobosim/setup/source_pyrobosim.bash humble
 #   }
 #
 #   So you can then call run from your Terminal:
@@ -49,3 +49,10 @@ fi
 
 # Activate the Python virtual environment
 source $VIRTUALENV_FOLDER/bin/activate
+
+# Add dependencies to path
+PDDLSTREAM_PATH=$PYROBOSIM_WS/src/pyrobosim/dependencies/pddlstream
+if [ -d "$PDDLSTREAM_PATH" ]
+then
+    export PYTHONPATH=$PDDLSTREAM_PATH:$PYTHONPATH
+fi
