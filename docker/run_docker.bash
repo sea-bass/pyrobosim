@@ -4,10 +4,10 @@
 #   ROS_DISTRO=humble ./run_docker.bash
 #
 # To run a specific command, you can enter additional arguments:
-#   ./run_docker.bash src/pyrobosim/docker/test_docker.bash
+#   ./run_docker.bash src/pyrobosim/test/run_tests.bash
 #
 # To run without display for use in continuous integration, use the `ci_mode` argument:
-#   ./run_docker.bash src/pyrobosim/docker/test_docker.bash ci_mode
+#   ./run_docker.bash src/pyrobosim/test/run_tests.bash ci_mode
 
 if [ "$ROS_DISTRO" == "" ]
 then

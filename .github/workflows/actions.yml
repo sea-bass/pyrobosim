@@ -31,7 +31,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: pytest-results
-          path: test_results/
+          path: test/results/
         # Always publish test results even when there are failures.
         if: ${{ always() }}
 
@@ -48,12 +48,12 @@ jobs:
       - name: Run unit tests in Docker container
         run: |
           export ROS_DISTRO=foxy
-          docker/run_docker.bash "src/pyrobosim/docker/test_docker.bash" ci_mode
+          docker/run_docker.bash "src/pyrobosim/test/run_tests.bash" ci_mode
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:
           name: pytest-results
-          path: test_results/
+          path: test/results/
         # Always publish test results even when there are failures.
         if: ${{ always() }}
 
@@ -69,11 +69,11 @@ jobs:
       - name: Run unit tests in Docker container
         run: |
           export ROS_DISTRO=humble
-          docker/run_docker.bash "src/pyrobosim/docker/test_docker.bash" ci_mode
+          docker/run_docker.bash "src/pyrobosim/test/run_tests.bash" ci_mode
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:
           name: pytest-results
-          path: test_results/
+          path: test/results/
         # Always publish test results even when there are failures.
         if: ${{ always() }}

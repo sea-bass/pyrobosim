@@ -14,4 +14,4 @@ docs/build/
 docs/source/generated
 
 # Test artifacts
-test_results/
+test/results/
