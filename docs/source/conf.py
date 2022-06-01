@@ -46,7 +46,7 @@ exclude_patterns = []
 # Mock imports for ROS related packages.
 autodoc_mock_imports = [
     'rclpy',
-    'pyrobosim_msgs.msg',
+    'pyrobosim_msgs',
 ]
 
 
