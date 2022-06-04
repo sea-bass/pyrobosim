@@ -70,7 +70,7 @@ class WorldGazeboExporter:
         # Add all the model includes to the world file and write it.
         world_text = world_text.replace(
             "$MODEL_INCLUDES", self.model_include_text)
-        world_file_name = os.path.join(self.out_folder, f"{world_name}.sdf")
+        world_file_name = os.path.normpath(os.path.join(self.out_folder, f"{world_name}.sdf"))
         with open(world_file_name, "w") as f:
             f.write(world_text)
 
@@ -178,7 +178,7 @@ class WorldGazeboExporter:
                 model_path = replace_special_yaml_tokens(
                     entity.metadata["footprint"]["model_path"])
                 model_path_split = os.path.split(model_path)
-                self.include_model_paths.add(model_path_split[0])
+                self.include_model_paths.add(os.path.normpath(model_path_split[0]))
                 model_name = model_path_split[-1]
             else:
                 model_name = entity.category
