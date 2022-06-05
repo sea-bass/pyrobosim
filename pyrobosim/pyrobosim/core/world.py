@@ -607,6 +607,7 @@ class World:
             if entity is None:
                 entity = resolve_to_location(self, category=entity_query,
                     expand_locations=True, resolution_strategy=resolution_strategy)
+            # If not able to resolve to location, try to resolve to object
             if entity is None:
                 entity = resolve_to_object(self, category=entity_query,
                     resolution_strategy=resolution_strategy, ignore_grasped=True)
