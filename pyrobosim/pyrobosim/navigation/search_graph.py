@@ -240,7 +240,7 @@ class Node:
         :type pose: :class:`pyrobosim.utils.pose.Pose`
         :param parent: Parent node, if any.
         :type parent: :class:`Node`, optional
-        :param cost: Cose of the node, defaults to zero
+        :param cost: Cost of the node, defaults to zero.
         :type cost: float, optional
         """
         self.pose = pose

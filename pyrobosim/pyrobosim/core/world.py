@@ -582,7 +582,7 @@ class World:
             self.search_graph.remove(start_node)
         if created_goal_node:
             self.search_graph.remove(goal_node)
-        
+
         return self.current_path
 
     def graph_node_from_entity(self, entity_query, resolution_strategy="nearest"):
