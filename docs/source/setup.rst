@@ -20,18 +20,24 @@ To set up your Python virtual environment, configure and run
 
 By default, this will create a Python virtual environment in ``~/python-virtualenvs/pyrobosim``.
 
+If you want to use PDDLStream for task and motion planning, also run:
+
+::
+
+   ./setup/setup_pddlstream.bash
+
 To then source this virtual environment, run
 
 ::
 
-    source ./setup/setup_pyrobosim.bash
+    source ./setup/source_pyrobosim.bash
 
 As documented in the above script, I recommend making a bash function in your ``~/.bashrc`` script so you can easily just call `pyrobosim` from your Terminal to get started.
 
 ::
 
     pyrobosim() {
-       source /path/to/pyrobosim/setup/setup_pyrobosim.bash
+       source /path/to/pyrobosim/setup/source_pyrobosim.bash
     }
 
 If you plan to use ROS2, you can similarly create a bash function like this:
@@ -39,7 +45,7 @@ If you plan to use ROS2, you can similarly create a bash function like this:
 ::
 
     pyrobosim_ros() {
-       source /path/to/pyrobosim/setup/setup_pyrobosim.bash humble
+       source /path/to/pyrobosim/setup/source_pyrobosim.bash humble
     }
 
 

@@ -22,7 +22,7 @@ copyright = '2022, Sebastian Castro'
 author = 'Sebastian Castro'
 
 # The full version, including alpha/beta/rc tags
-release = '0.0'
+release = '0.0.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -43,10 +43,11 @@ templates_path = ['_templates']
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
-# Mock imports for ROS related packages.
+# Mock imports for external dependencies.
 autodoc_mock_imports = [
     'rclpy',
-    'pyrobosim_msgs',
+    'pddlstream',
+    'pyrobosim_msgs'
 ]
 
 

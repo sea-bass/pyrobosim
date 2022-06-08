@@ -1,0 +1,8 @@
+# Folders that don't need to be in the Docker build context.
+dependencies/
+docs/
+
+# Metadata that definitely doesn't need to be in the Docker build context.
+.dockerignore
+.github/
+.vscode/

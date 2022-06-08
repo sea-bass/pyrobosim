@@ -1,3 +1,6 @@
+# Dependencies folder
+dependencies/
+
 # VS Code metadata
 .vscode/
 
@@ -11,4 +14,4 @@ docs/build/
 docs/source/generated
 
 # Test artifacts
-test_results/
+test/results/

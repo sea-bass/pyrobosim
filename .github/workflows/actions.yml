@@ -23,15 +23,17 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip
           pushd pyrobosim && pip3 install . && popd
+          setup/setup_pddlstream.bash
       - name: Run unit tests
         run: |
           pip3 install lark pytest pytest-html
+          export PYTHONPATH=./dependencies/pddlstream:$PYTHONPATH
           test/run_tests.bash
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:
-          name: pytest-results
-          path: test_results/
+          name: test-results
+          path: test/results/
         # Always publish test results even when there are failures.
         if: ${{ always() }}
 
@@ -48,12 +50,12 @@ jobs:
       - name: Run unit tests in Docker container
         run: |
           export ROS_DISTRO=foxy
-          docker/run_docker.bash "src/pyrobosim/docker/test_docker.bash" ci_mode
+          docker/run_docker.bash "src/pyrobosim/test/run_tests.bash" ci_mode
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:
-          name: pytest-results
-          path: test_results/
+          name: test-results-foxy
+          path: test/results/
         # Always publish test results even when there are failures.
         if: ${{ always() }}
 
@@ -69,11 +71,11 @@ jobs:
       - name: Run unit tests in Docker container
         run: |
           export ROS_DISTRO=humble
-          docker/run_docker.bash "src/pyrobosim/docker/test_docker.bash" ci_mode
+          docker/run_docker.bash "src/pyrobosim/test/run_tests.bash" ci_mode
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:
-          name: pytest-results
-          path: test_results/
+          name: test-results-humble
+          path: test/results/
         # Always publish test results even when there are failures.
         if: ${{ always() }}

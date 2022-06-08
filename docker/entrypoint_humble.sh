@@ -8,5 +8,12 @@ then
 fi
 . /pyrobosim_ws/install/setup.bash
 
+# Add dependencies to path
+PDDLSTREAM_PATH=/pyrobosim_ws/src/pyrobosim/dependencies/pddlstream
+if [ -d "$PDDLSTREAM_PATH" ]
+then
+    export PYTHONPATH=$PDDLSTREAM_PATH:$PYTHONPATH
+fi
+
 # Execute the command passed into this entrypoint
 exec "$@"
