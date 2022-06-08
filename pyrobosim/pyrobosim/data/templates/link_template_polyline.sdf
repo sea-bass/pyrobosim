@@ -1,5 +1,5 @@
     <link name='$LINK_NAME'>
-      <pose>"0 0 0 0 0 0"</pose>
+      <pose>0 0 0 0 0 0</pose>
       <frame name='$LINK_NAME'/>
       <inertial>
           <inertia>

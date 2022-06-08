@@ -31,7 +31,7 @@ class WorldGazeboExporter:
         self.link_template_text = self.read_template_file(
             "link_template_polyline.sdf")
 
-    def export(self):
+    def export(self, ignition=False, out_folder=None):
         """
         Exports the world to an SDF file to use with Gazebo, including 
         all other necessary models for locations and/or objects.
@@ -39,6 +39,10 @@ class WorldGazeboExporter:
         Instructions to add to the Gazebo model path and spawn the world 
         are printed to the Terminal.
 
+        :param ignition: If True, exports to Ignition Gazebo, else to Gazebo classic.
+        :type ignition: bool, optional
+        :param out_folder: The output folder. If not specified, defaults to the pyrobosim `data/worlds` folder.
+        :type ignition: bool, optional
         :return: Path to output folder with generated world.
         :rtype: str
         """
@@ -47,11 +51,16 @@ class WorldGazeboExporter:
             world_name = "gen_world"
 
         # Set up text to export
-        world_text = self.read_template_file("world_template.sdf")
+        suffix = "ignition" if ignition else "gazebo"
+        world_text = self.read_template_file(f"world_template_{suffix}.sdf")
         self.model_include_text = ""
 
         # Define output folder
-        self.out_folder = os.path.join(self.data_folder, "worlds", world_name)
+        if not out_folder:
+            self.out_folder = os.path.join(self.data_folder, "worlds")
+        else:
+            self.out_folder = out_folder 
+        self.out_folder = os.path.join(self.out_folder, world_name)
         self.include_model_paths = set([self.out_folder])
 
         # Convert all the world entities for export
@@ -61,19 +70,26 @@ class WorldGazeboExporter:
         # Add all the model includes to the world file and write it.
         world_text = world_text.replace(
             "$MODEL_INCLUDES", self.model_include_text)
-        world_file_name = os.path.join(self.out_folder, f"{world_name}.sdf")
+        world_file_name = os.path.normpath(os.path.join(self.out_folder, f"{world_name}.sdf"))
         with open(world_file_name, "w") as f:
             f.write(world_text)
 
         # Print commands for the user to start the world.
         # TODO: We could generate a script to do this instead?
+        if ignition:
+            model_path_env = "IGN_GAZEBO_RESOURCE_PATH"
+            command = "ign gazebo"
+        else:
+            model_path_env = "GAZEBO_MODEL_PATH"
+            command = "gazebo"
+        
         print(f"\nWorld file saved to {world_file_name}\n")
         print(f"Ensure to update your Gazebo model path:")
         include_path_str = ":".join(self.include_model_paths)
         print(
-            f"    export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:{include_path_str}\n")
+            f"    export {model_path_env}=${model_path_env}:{include_path_str}\n")
         print(f"To start the world, enter")
-        print(f"    gazebo {world_file_name}\n")
+        print(f"    {command} {world_file_name}\n")
         return self.out_folder
 
     def create_walls_for_export(self, walls_name="walls"):
@@ -82,8 +98,6 @@ class WorldGazeboExporter:
         
         This looks at the polygons representing the walls of each entity and 
         creates a model with the "polyline" geometry.
-
-        NOTE: The "polyline" geometry is not yet supported in Ignition Gazebo.
         
         :param walls_name: The name of the Gazebo model containing walls.
         :type walls_name: str, optional
@@ -164,7 +178,7 @@ class WorldGazeboExporter:
                 model_path = replace_special_yaml_tokens(
                     entity.metadata["footprint"]["model_path"])
                 model_path_split = os.path.split(model_path)
-                self.include_model_paths.add(model_path_split[0])
+                self.include_model_paths.add(os.path.normpath(model_path_split[0]))
                 model_name = model_path_split[-1]
             else:
                 model_name = entity.category

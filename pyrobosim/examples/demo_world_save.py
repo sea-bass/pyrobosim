@@ -19,6 +19,10 @@ def parse_args():
     parser.add_argument("--world-file", default="test_world.yaml",
                         help="YAML file name (should be in the pyrobosim/data folder). " +
                              "Defaults to test_world.yaml")
+    parser.add_argument("--out-folder", default=None,
+                        help="Output folder for exporting the world")
+    parser.add_argument("--ignition", action="store_true",
+                        help="Enable to export to Ignition Gazebo")
     parser.add_argument("--save-grid", action="store_true",
                         help="Save occupancy grid")
     parser.add_argument("--grid-resolution", type=float, default=0.05,
@@ -40,14 +44,14 @@ def main():
 
     # Export a Gazebo world.
     exp = WorldGazeboExporter(w)
-    out_folder = exp.export()
+    world_folder = exp.export(ignition=args.ignition, out_folder=args.out_folder)
 
     # Save an occupancy grid to the world folder and show it, if enabled.
     if args.save_grid:
         occ_grid = occupancy_grid_from_world(
             w, resolution=args.grid_resolution,
             inflation_radius=args.grid_inflation_radius)
-        occ_grid.save_to_file(out_folder)
+        occ_grid.save_to_file(world_folder)
         if args.show_grid:
             occ_grid.show()
 
