@@ -50,7 +50,7 @@ class WorldYamlLoader:
         self.add_locations()
         self.add_objects()
         self.add_robot()
-        self.add_planner()
+        self.add_global_path_planner()
         return self.world
 
 
@@ -158,8 +158,10 @@ class WorldYamlLoader:
             warnings.warn("Multiple robots not supported. Only using the first one.")
         robot_data = self.data["robots"][0]
 
-        from pyrobosim.navigation.execution import ConstantVelocityExecutor
-        robot = Robot(radius=robot_data["radius"], path_executor=ConstantVelocityExecutor())
+        # Create the robot
+        robot = Robot(radius=robot_data["radius"],
+                      path_planner=self.get_local_path_planner(robot_data),
+                      path_executor=self.get_path_executor(robot_data))
         
         loc = robot_data["location"] if "location" in robot_data else None
         if "pose" in robot_data:
@@ -169,17 +171,60 @@ class WorldYamlLoader:
         self.world.add_robot(robot, loc=loc, pose=pose)
 
 
-    def add_planner(self):
+    def add_global_path_planner(self):
         """ Adds a global path planner to the world. """
-        if "planning" not in self.data or "planner_type" not in self.data["planning"]:
+        if "global_path_planner" not in self.data or "type" not in self.data["global_path_planner"]:
             return
-        planning = self.data["planning"]
-        planner_type = planning["planner_type"]
+        planner_data = self.data["global_path_planner"]
+        planner_type = planner_data["type"]
         
         if planner_type == "search_graph":
-            max_edge_dist = get_value_or(planning, "max_edge_dist", default=np.inf)
-            collision_check_dist = get_value_or(planning, "collision_check_dist", default=0.1)
+            max_edge_dist = get_value_or(planner_data, "max_edge_dist", default=np.inf)
+            collision_check_dist = get_value_or(planner_data, "collision_check_dist", default=0.1)
             self.world.create_search_graph(
-                max_edge_dist=max_edge_dist, collision_check_dist=collision_check_dist)
+                max_edge_dist=max_edge_dist, collision_check_dist=collision_check_dist, create_planner=True)
+        else:
+            # Always make a search graph as we use it for other things.
+            max_edge_dist = get_value_or(planner_data, "max_edge_dist", default=np.inf)
+            collision_check_dist = get_value_or(planner_data, "collision_check_dist", default=0.1)
+            self.world.create_search_graph(
+                max_edge_dist=max_edge_dist, collision_check_dist=collision_check_dist, create_planner=False)
+
+            if planner_type == "prm":
+                from pyrobosim.navigation.prm import PRMPlanner
+                max_nodes = get_value_or(planner_data, "max_nodes", default=100)
+                max_connection_dist = get_value_or(planner_data, "max_connection_dist", default=1.0)
+                self.world.path_planner = PRMPlanner(
+                    self.world, max_nodes=max_nodes, max_connection_dist=max_connection_dist)
+            else:
+                warnings.warn(f"Invalid global planner type specified: {planner_type}")
+
+
+    def get_local_path_planner(self, robot_data):
+        """ Gets local planner path planner to a robot. """
+        if "path_planner" not in robot_data:
+            return None
+        planner_data = robot_data["path_planner"]
+        planner_type = planner_data["type"]
+
+        if planner_type == "rrt":
+            from pyrobosim.navigation.rrt import RRTPlanner
+            bidirectional = get_value_or(planner_data, "bidirectional", default=False)
+            rrt_star = get_value_or(planner_data, "rrt_star", default=False)
+            rrt_connect = get_value_or(planner_data, "rrt_connect", default=False)
+            max_connection_dist = get_value_or(planner_data, "max_connection_dist", default=0.5)
+            max_nodes_sampled = get_value_or(planner_data, "max_nodes_sampled", default=1000)
+            max_time = get_value_or(planner_data, "max_time", default=5.0)
+            rewire_radius = get_value_or(planner_data, "rewire_radius", default=1.0)
+            return RRTPlanner(self.world, bidirectional=bidirectional, rrt_star=rrt_star, rrt_connect=rrt_connect,
+                              max_connection_dist=max_connection_dist, max_nodes_sampled=max_nodes_sampled,
+                              max_time=max_time, rewire_radius=rewire_radius)
         else:
             warnings.warn(f"Invalid planner type specified: {planner_type}")
+            return None
+
+
+    def get_path_executor(self, robot_data):
+        """ Adds a path executor to a robot. """
+        from pyrobosim.navigation.execution import ConstantVelocityExecutor
+        return ConstantVelocityExecutor()

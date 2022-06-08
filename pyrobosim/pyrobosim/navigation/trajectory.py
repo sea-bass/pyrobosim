@@ -15,6 +15,9 @@ def fill_path_yaws(path):
     :return: Path with filled-in yaw angle values.
     :rtype: list[:class:`pyrobosim.utils.pose.Pose`]
     """
+    if path is None:
+        return path
+
     for idx in range(1, len(path)-1):
         path[idx].pose.yaw = np.arctan2(path[idx].pose.y - path[idx-1].pose.y,
                                         path[idx].pose.x - path[idx-1].pose.x)

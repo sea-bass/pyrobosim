@@ -14,8 +14,8 @@ from ..utils.pose import Pose
 class Robot:
     """ Representation of a robot in the world. """
 
-    def __init__(self, id=0, name="robot", pose=Pose(), 
-                 radius=0.0, height=0.0, path_executor=None):
+    def __init__(self, id=0, name="robot", pose=Pose(), radius=0.0, height=0.0, 
+                 path_planner=None, path_executor=None):
         """ 
         Creates a robot instance.
         
@@ -29,6 +29,8 @@ class Robot:
         :type radius: float, optional
         :param height: Robot height, in meters.
         :type height: float, optional
+        :param path_planner: Path planner for navigation (see e.g. :class:`pyrobosim.navigation.rrt.RRTPlanner`).
+        :type path_planner: PathPlanner, optional
         :param path_executor: Path executor for navigation (see e.g. :class:`pyrobosim.navigation.execution.ConstantVelocityExecutor`).
         :type path_executor: PathExecutor, optional
         """
@@ -40,6 +42,7 @@ class Robot:
         self.height = height
 
         # Navigation properties
+        self.set_path_planner(path_planner)
         self.set_path_executor(path_executor)
         self.executing_nav = False
 
@@ -61,6 +64,31 @@ class Robot:
         """
         self.pose = pose
 
+    def set_path_planner(self, path_planner):
+        """
+        Sets a path planner for navigation.
+        
+        :param path_planner: Path planner for navigation (see e.g. :class:`pyrobosim.navigation.rrt.RRTPlanner`).
+        :type path_planner: PathPlanner, optional
+        """
+        self.path_planner = path_planner
+
+    def plan_path(self, start=None, goal=None):
+        """
+        Plans a path to a goal position.
+
+        :param start: Start pose for the robot. If not specified, will default to the robot pose.
+        :type start: :class:`pyrobosim.utils.pose.Pose`, optional
+        :param goal: Goal pose for the robot. If not specified, will return None.
+        :type goal: :class:`pyrobosim.utils.pose.Pose`, optional
+        """
+        if start is None:
+            start = self.pose
+        if goal is None:
+            warnings.warn("Did no specify a path planning goal. Returning None.")
+            return None
+        return self.path_planner.plan(start, goal)
+
     def set_path_executor(self, path_executor):
         """ 
         Sets a path executor for navigation.
@@ -68,10 +96,10 @@ class Robot:
         :param path_executor: Path executor for navigation (see e.g. :class:`pyrobosim.navigation.execution.ConstantVelocityExecutor`).
         :type path_executor: PathExecutor, optional        
         """
+        self.path_executor = path_executor
         if path_executor is None:
             return
         path_executor.robot = self
-        self.path_executor = path_executor
 
     def follow_path(self, path, realtime_factor=1.0, 
                     use_thread=True, blocking=False):

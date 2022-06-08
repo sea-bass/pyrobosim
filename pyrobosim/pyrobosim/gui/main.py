@@ -142,9 +142,9 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         sampled_pose = self.world.sample_free_robot_pose_uniform()
         if sampled_pose is not None:
             self.world.robot.set_pose(sampled_pose)
+            if self.world.robot.manipulated_object is not None:
+                self.world.robot.manipulated_object.pose = sampled_pose
         self.canvas.update_robot_plot()
-        self.world.current_path = None
-        self.canvas.show_path()
         self.canvas.show_world_state(navigating=True)
         self.canvas.draw()
 

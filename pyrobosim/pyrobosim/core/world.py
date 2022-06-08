@@ -8,8 +8,7 @@ from .hallway import Hallway
 from .locations import Location, ObjectSpawn
 from .objects import Object
 from .room import Room
-from ..navigation.search_graph import SearchGraph, Node
-from ..navigation.trajectory import fill_path_yaws
+from ..navigation.search_graph import Node, SearchGraph, SearchGraphPlanner
 from ..utils.knowledge import resolve_to_location, resolve_to_object
 from ..utils.pose import Pose
 from ..utils.polygon import inflate_polygon, sample_from_polygon, transform_polygon
@@ -63,6 +62,7 @@ class World:
         # Search graph for navigation
         self.search_graph = None
         self.current_path = None
+        self.path_planner = None
 
         # Other parameters
         self.max_object_sample_tries = 1000 # Max number of tries to sample object locations
@@ -487,7 +487,8 @@ class World:
         # If we made it through, the pose is occupied.
         return True
 
-    def create_search_graph(self, max_edge_dist=np.inf, collision_check_dist=0.1):
+    def create_search_graph(self, max_edge_dist=np.inf, collision_check_dist=0.1,
+                            create_planner=False):
         """ 
         Creates a search graph for the world, as a :class:`pyrobosim.navigation.search_graph.SearchGraph` attribute.
         
@@ -495,6 +496,8 @@ class World:
         :type max_edge_dist: float, optional
         :param collision_check_dist: Distance sampled along an edge to check for collisions, defaults to 0.1.
         :type collision_check_dist: float, optional
+        :param create_planner: If True, creates a :class:`pyrobosim.navigation.search_graph.SearchGraphPlanner`.
+        :type create_planner: bool
         """
         self.search_graph = SearchGraph(world=self,
             max_edge_dist=max_edge_dist, collision_check_dist=collision_check_dist)
@@ -507,6 +510,10 @@ class World:
                     self.search_graph.add(spawn.graph_nodes, autoconnect=True)
             else:
                 self.search_graph.add(entity.graph_nodes, autoconnect=True)
+        
+        # Optionally, create a global planner from the search graph
+        if create_planner:
+            self.path_planner = SearchGraphPlanner(self.search_graph)
 
     def update_search_graph(self):
         """ 
@@ -527,10 +534,7 @@ class World:
         :return: List of graph Node objects describing the path, or None if not found.
         :rtype: list[:class:`pyrobosim.navigation.search_graph.Node`]
         """
-        if self.search_graph is None:
-            warnings.warn("No search graph defined for this world.")
-            return None
-
+        # Prepare by adding start and goal nodes to the graph.
         if start is None:
             start = self.robot.pose
 
@@ -558,10 +562,20 @@ class World:
             if goal_node is None:
                 warnings.warn("Invalid goal specified")
                 return None
-        
-        # Do the search
-        self.current_path = self.search_graph.find_path(start_node, goal_node)
-        self.current_path = fill_path_yaws(self.current_path)
+
+        # Do the actual planning.
+        if self.robot.path_planner:
+            # Plan with the robot's local planner.
+            goal = goal_node.pose
+            self.current_path = self.robot.path_planner.plan(start, goal)
+            if self.current_path is not None:
+                self.current_path[-1].parent = goal_node.parent
+        elif self.path_planner:
+            # Plan with the robot's global planner.
+            self.current_path = self.path_planner.plan(start_node, goal_node)
+        else:
+            warnings.warn("No global or local path planners specified.")
+            return None
 
         # If we created temporary nodes for search, remove them
         if created_start_node:
@@ -589,6 +603,8 @@ class World:
         if isinstance(entity_query, Node):
             return entity_query
         elif isinstance(entity_query, str):
+            # Try resolve an entity based on its name. If that fails, we assume it must be a category,
+            # so try resolve it to a location or to an object by category.
             entity = self.get_entity_by_name(entity_query)
             if entity is None:
                 entity = resolve_to_location(self, category=entity_query,

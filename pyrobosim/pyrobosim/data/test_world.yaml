@@ -21,13 +21,25 @@ robots:
     radius: 0.1
     location: kitchen
     pose: [0, 0, 0]
+    # Rapidly-expanding Random Tree (RRT) planner
+    # path_planner:
+    #   type: rrt
+    #   max_connection_dist: 0.25
+    #   bidirectional: true
+    #   rrt_star: true
+    #   rewire_radius: 1.0
 
 
 # PLANNING: Global planner
-planning:
-  planner_type: search_graph # The only one for now
+global_path_planner:
+  # Search graph planner from manually specified nodes
+  type: search_graph
   max_edge_dist: 3.0
   collision_check_dist: 0.05
+  # Probabilistic Roadmap (PRM) planner
+  # type: prm
+  # max_connection_dist: 1.5
+  # max_nodes: 100
 
 
 # ROOMS: Polygonal regions that can contain object locations
@@ -41,7 +53,7 @@ rooms:
         - [1.5, 1.5]
         - [0.5, 1.5]
     nav_poses:
-      - [0.75, 0.75, 0.0]
+      - [0.75, 0.5, 0.0]
     wall_width: 0.2
     color: [1, 0, 0]
 
