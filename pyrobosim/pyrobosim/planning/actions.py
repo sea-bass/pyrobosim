@@ -40,7 +40,7 @@ class TaskAction:
         
         # Format actions based on their types
         # NAVIGATE
-        if self.action_type == "navigate":
+        if self.type == "navigate":
             act_str = "Navigate"
             if self.source_location is not None:
                 act_str += f" from {self.source_location}"
@@ -49,10 +49,10 @@ class TaskAction:
             if self.pose is not None:
                 act_str += f" at {self.pose}"
         # PICK
-        elif self.action_type == "pick":
+        elif self.type == "pick":
             act_str = "Pick"
             if self.object is not None:
-                act_str += f" {self.target_object}"
+                act_str += f" {self.object}"
             else:
                 act_str += " object" 
             if self.target_location is not None:
@@ -60,10 +60,10 @@ class TaskAction:
             if self.pose is not None:
                 act_str += f" at {self.pose}"
         # PLACE
-        elif self.action_type == "place":
+        elif self.type == "place":
             act_str = "Place"
             if self.object is not None:
-                act_str += f" {self.target_object}"
+                act_str += f" {self.object}"
             else:
                 act_str += " object" 
             if self.target_location is not None:

@@ -21,6 +21,7 @@ install(PROGRAMS
   ../pyrobosim/examples/test_prm.py
   ../pyrobosim/examples/test_rrt.py
   ../pyrobosim/examples/demo_world_save.py
+  ../pyrobosim/examples/demo_pddl.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

@@ -114,4 +114,8 @@ class Object:
 
     def __repr__(self):
         """ Returns printable string. """
-        return f"Object: {self.name} in {self.parent.name}\n\t{self.pose}"
+        return f"Object: {self.name}"
+
+    def print_details(self):
+        """ Prints string with details. """
+        print(f"Object: {self.name} in {self.parent.name}\n\t{self.pose}")

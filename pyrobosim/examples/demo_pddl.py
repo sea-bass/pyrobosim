@@ -93,6 +93,31 @@ def parse_args():
     return parser.parse_args()
 
 
+def start_planner(world):
+    """ Test planner """
+    from pyrobosim.planning.pddlstream.utils import world_to_pddlstream_init
+    from pyrobosim.planning.pddlstream.planner import PDDLStreamPlanner
+
+    init = world_to_pddlstream_init(world)
+    planner = PDDLStreamPlanner(world)
+
+    get = lambda entity : world.get_entity_by_name(entity)
+    goal_literals = [
+        ("At", get("robot"), get("bedroom")),
+        ("At", get("apple0"), get("table0_tabletop")),
+        ("At", get("banana0"), get("counter0_left")),
+        ("Holding", get("robot"), get("water0"))
+    ]
+    print("=== Goal Specification: ===")
+    for g in goal_literals:
+        print(g)
+    print("\n")
+
+    plan = planner.plan(goal_literals)
+    print(plan)
+    world.robot.execute_plan(plan, blocking=True)
+
+
 if __name__ == "__main__":
     args = parse_args()
 
@@ -101,6 +126,11 @@ if __name__ == "__main__":
         w = create_world_from_yaml(args.world_file)
     else:
         w = create_world()
+
+    # Start ROS Node in separate thread
+    import threading
+    t = threading.Thread(target=start_planner, args=(w,))
+    t.start()
 
     # Start the program either as ROS2 node or standalone.
     start_gui(w, sys.argv)

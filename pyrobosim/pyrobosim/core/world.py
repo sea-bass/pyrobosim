@@ -839,6 +839,8 @@ class World:
         :type name: str
         :return: Entity object instance matching the input name, or ``None`` if not valid.
         """
+        if self.robot and name == self.robot.name:
+            return self.robot # Should be part of the chain below when multiple robots are supported.
         for entity in itertools.chain(
             self.rooms, self.hallways, self.locations, self.objects):
             if entity.name == name:

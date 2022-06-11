@@ -97,7 +97,7 @@ class Location:
         if self.parent is None:
             return None
         else:
-            return self.parent.get_room_name()
+            return self.parent.name
 
     def is_inside(self, pose):
         """ 
@@ -149,7 +149,11 @@ class Location:
 
     def __repr__(self):
         """ Returns printable string. """
-        return f"Location: {self.name} in {self.parent}"
+        return f"Location: {self.name}"
+
+    def print_details(self):
+        """ Prints string with details. """
+        print(f"Location: {self.name} in {self.parent}\n\t{self.pose}")
 
 
 class ObjectSpawn:
@@ -249,4 +253,9 @@ class ObjectSpawn:
 
     def __repr__(self):
         """ Returns printable string. """
-        return f"Object spawn location: {self.name} in {self.parent.name}"
+        return f"Object spawn: {self.name}"
+
+    def print_details(self):
+        """ Prints string with details. """
+        print(f"Object spawn: {self.name} in {self.parent.name}\n\t{self.pose}")
+
