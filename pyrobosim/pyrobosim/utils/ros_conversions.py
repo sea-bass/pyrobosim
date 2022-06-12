@@ -3,11 +3,27 @@ Utilities to convert between standalone pyrobosim objects and
 ROS representations (messages, services, etc.).
 """
 
-from transforms3d.euler import euler2quat
+from transforms3d.euler import euler2quat, quat2euler
 import geometry_msgs.msg
 
 import pyrobosim_msgs.msg as ros_msgs
+from pyrobosim.utils.pose import Pose
 import pyrobosim.planning.actions as acts
+
+
+def pose_from_ros(msg):
+    """
+    Converts ROS pose message to a pyrobosim pose.
+
+    :param act: ROS message.
+    :type act: :class:`geometry_msgs.msg.Pose` 
+    :return: Pose object
+    :rtype: :class:`pyrobosim.utils.pose.Pose`
+    """
+    eul = quat2euler(msg.orientation.w, msg.orientation.x,
+                     msg.orientation.y, msg.orientation.z)
+    return Pose.from_list(
+        msg.position.x, msg.position.y, msg.position.z, eul[2])
 
 
 def pose_to_ros(pose):
@@ -47,6 +63,36 @@ def get_entity_name(entity):
         return entity
     else:
         return entity.name
+
+
+def goal_specification_from_ros(msg, world):
+    """
+    Uses a world object to resolve a GoalSpecification message to a 
+    list of goal literals for task and motion planning.
+    
+    :param msg: ROS message.
+    :type msg: :class:`pyrobosim_msgs.msg.GoalSpecification`
+    :param world: World object to use to resolve literals.
+    :type world: :class:`pyrobosim.core.world.World`
+    :return: List of literals describing a goal specification.
+    :rtype: list[tuple]
+    """
+    goal_literals = []
+    for pred_msg in msg.predicates:
+        pred = [pred_msg.type]
+
+        # For each argument in the goal predicate, try resolve it to a real entity
+        # in the world. If so, use the entity itself. Otherwise, use the name.
+        for arg in pred_msg.args:
+            entity = world.get_entity_by_name(arg)
+            if entity:
+                pred.append(entity)
+            else:
+                pred.append(arg)
+
+        goal_literals.append(tuple(pred))
+
+    return goal_literals
 
 
 def task_action_from_ros(msg):

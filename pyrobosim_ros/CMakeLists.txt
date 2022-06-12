@@ -20,6 +20,7 @@ install(PROGRAMS
   examples/demo_commands.py
   examples/demo_pddl_world.py
   examples/demo_pddl_planner.py
+  examples/demo_pddl_goal_publisher.py
   ../pyrobosim/examples/test_prm.py
   ../pyrobosim/examples/test_rrt.py
   ../pyrobosim/examples/demo_pddl.py

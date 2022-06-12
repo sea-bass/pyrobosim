@@ -14,6 +14,8 @@ find_package(geometry_msgs REQUIRED)
 
 # Generate custom messages
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/GoalPredicate.msg"
+  "msg/GoalSpecification.msg"
   "msg/RobotState.msg"
   "msg/TaskAction.msg"
   "msg/TaskPlan.msg"

@@ -370,12 +370,16 @@ class World:
 
         # If it's a string, get the location name
         if isinstance(loc, str):
-            loc = self.get_location_by_name(loc)
-        # If it's a location object, pick an object spawn at random
+            loc = self.get_entity_by_name(loc)
+        # If it's a location object, pick an object spawn at random.
+        # Otherwise, if it's an object spawn, use that entity as is.
         if isinstance(loc, Location):
             obj_spawn = np.random.choice(loc.children)
-        else:
+        elif isinstance(loc, ObjectSpawn):
             obj_spawn = loc
+        else:
+            warnings.warn(f"Location {loc} did not resolve to a valid location for an object.")
+            return None
 
         # Create the object
         obj = Object(category=category, name=name, parent=obj_spawn, pose=pose)

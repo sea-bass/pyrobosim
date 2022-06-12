@@ -163,7 +163,7 @@ class Robot:
 
         # Validate the robot location
         if obj.parent != loc:
-            warnings.warn(f"{obj.name} is at {obj.parent.name} and robot" +
+            warnings.warn(f"{obj.name} is at {obj.parent.name} and robot " +
                           f"is at {loc.name}. Cannot pick.")
             return False
     
