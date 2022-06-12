@@ -3,10 +3,10 @@
 import rclpy
 from rclpy.node import Node
 import threading
-from transforms3d.euler import euler2quat
 
 from pyrobosim_msgs.msg import RobotState, TaskAction, TaskPlan
-from pyrobosim.planning.ros_utils import task_action_from_ros, task_plan_from_ros
+from pyrobosim.planning.ros_utils import pose_to_ros, task_action_from_ros, task_plan_from_ros
+
 
 class WorldROSWrapper(Node):
     """ ROS2 wrapper node for pyrobosim worlds. """
@@ -110,14 +110,7 @@ class WorldROSWrapper(Node):
         robot = self.world.robot
         if robot:
             state_msg = RobotState()
-            state_msg.pose.position.x = robot.pose.x
-            state_msg.pose.position.y = robot.pose.y
-            state_msg.pose.position.z = robot.pose.z
-            quat = euler2quat(0, 0, robot.pose.yaw)
-            state_msg.pose.orientation.w = quat[0]
-            state_msg.pose.orientation.x = quat[1]
-            state_msg.pose.orientation.y = quat[2]
-            state_msg.pose.orientation.z = quat[3]
+            state_msg.pose = pose_to_ros(robot.pose)
             state_msg.executing_action = robot.executing_action
             if robot.manipulated_object is not None:
                 state_msg.holding_object = True

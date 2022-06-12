@@ -134,8 +134,8 @@
         )
         ; CASE 6: Robot holding an object type
         (exists (?r ?o) 
-            (and (Robot ?r) (Obj ?o) (Type ?entity) (Location ?loc)
-                 (Is ?o ?entity) (Holding ?r ?o)
+            (and (Robot ?r) (Obj ?o) (Holding ?r ?o)
+                 (Type ?entity) (Is ?o ?entity) 
                  (or (At ?r ?loc)
                      (and (Room ?loc) (exists (?s) 
                         (and (Location ?s) (At ?r ?s) (AtRoom ?s ?loc))))
