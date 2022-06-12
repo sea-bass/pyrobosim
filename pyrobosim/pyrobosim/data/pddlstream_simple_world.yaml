@@ -128,10 +128,10 @@ objects:
     location: table0
 
   - type: water
-    location: counter0_left
+    location: counter0
 
   - type: banana
-    location: counter0_right
+    location: counter0
 
   - type: water
     location: desk0

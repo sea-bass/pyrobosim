@@ -318,6 +318,45 @@ class World:
 
         return loc
 
+
+    def update_location(self, loc, pose, room=None):
+        """ 
+        Updates an existing location in the world.
+        
+        :param loc: Location instance or name to update.
+        :type loc: :class:`pyrobosim.core.locations.Location`/str
+        :param pose: Pose of the location.
+        :type pose: :class:`pyrobosim.utils.pose.Pose`
+        :param room: Room instance or name. If none, uses the previous room.
+        :type room: :class:`pyrobosim.core.room.Room`/str, optional
+        :return: True if the update was successful, else False.
+        :rtype: bool
+        """
+        if isinstance(loc, str):
+            loc = self.get_location_by_name(loc)
+        if not isinstance(loc, Location):
+            warnings.warn("Could not find location. Not updating.")
+            return False
+
+        if room is not None:
+            if isinstance(room, str):
+                room = self.get_room_by_name(room)
+        
+            if not isinstance(room, Room):
+                warnings.warn(f"Room {loc} did not resolve to a valid room for a location.")
+                return False
+
+            loc.parent.locations.remove(loc)
+            loc.parent = room
+            room.locations.append(loc)
+
+        loc.pose = pose
+        loc.update_collision_polygon(self.inflation_radius)
+        loc.update_visualization_polygon()
+
+        return True
+
+
     def remove_location(self, loc):
         """ 
         Cleanly removes a location from the world.
@@ -430,7 +469,7 @@ class World:
 
         :param obj: Object instance or name to update.
         :type obj: :class:`pyrobosim.core.objects.Object`/str
-        :param loc: Location or object spawn instance or name.
+        :param loc: Location or object spawn instance or name. If none, uses the previous location.
         :type loc: :class:`pyrobosim.core.locations.Location`/:class:`pyrobosim.core.locations.ObjectSpawn`/str, optional
         :param pose: Pose of the location. If none is specified, it will be sampled.
         :type pose: :class:`pyrobosim.utils.pose.Pose`, optional

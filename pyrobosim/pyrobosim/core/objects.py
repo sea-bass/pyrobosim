@@ -67,7 +67,7 @@ class Object:
 
     def get_room_name(self):
         """ 
-        Returns the name of the room containing the location.
+        Returns the name of the room containing the object.
         
         :return: Room name.
         :rtype: str

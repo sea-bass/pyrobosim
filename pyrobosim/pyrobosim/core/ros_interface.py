@@ -4,9 +4,9 @@ import rclpy
 from rclpy.node import Node
 import threading
 
-from pyrobosim_msgs.msg import RobotState, LocationState, ObjectState, TaskAction, TaskPlan
+from pyrobosim_msgs.msg import RobotState, LocationState, ObjectState, WorldState, TaskAction, TaskPlan
 from pyrobosim_msgs.srv import RequestWorldState
-from pyrobosim.planning.ros_utils import pose_to_ros, task_action_from_ros, task_plan_from_ros
+from pyrobosim.utils.ros_conversions import pose_from_ros, pose_to_ros, task_action_from_ros, task_plan_from_ros
 
 
 class WorldROSWrapper(Node):
@@ -144,9 +144,9 @@ class WorldROSWrapper(Node):
         for loc in self.world.locations:
             loc_msg = LocationState(
                 name=loc.name, category=loc.category, 
-                parent=loc.parent.name, pose=pose_to_ros(loc.pose))
+                parent=loc.get_room_name(), pose=pose_to_ros(loc.pose))
             response.state.locations.append(loc_msg)
-        for obj in self.world.locations:
+        for obj in self.world.objects:
             obj_msg = ObjectState(
                 name=obj.name, category=obj.category, 
                 parent=obj.parent.name, pose=pose_to_ros(obj.pose))
@@ -156,3 +156,29 @@ class WorldROSWrapper(Node):
         response.state.robot = self.package_robot_state()
 
         return response
+
+
+def update_world_from_state_msg(world, msg):
+    """
+    Updates a world given a state message.
+    
+    :param world: World object to update.
+    :type world: :class:`pyrobosim.core.world.World`
+    :param msg: ROS message describing the desired world state.
+    :type msg: :class:`pyrobosim_msgs.msg.WorldState`
+    """
+    # Update the robot state
+    # TODO: More robot validation
+    if world.robot:
+        robot_state = msg.robot
+        world.robot.set_pose(pose_from_ros(robot_state.pose))
+
+    # Update the object states
+    for obj_state in msg.objects:
+        world.update_object(obj_state.name, loc=obj_state.parent, 
+                            pose=pose_from_ros(obj_state.pose))
+
+    # Update the location states
+    for loc_state in msg.locations:
+        world.update_location(loc_state.name, room=loc_state.parent, 
+                              pose=pose_from_ros(loc_state.pose))

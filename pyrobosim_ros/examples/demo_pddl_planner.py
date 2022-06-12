@@ -8,8 +8,8 @@ import os
 import argparse
 import rclpy
 from rclpy.node import Node
-from asyncio import Future
 
+from pyrobosim.core.ros_interface import update_world_from_state_msg
 from pyrobosim.core.yaml import WorldYamlLoader
 from pyrobosim.planning.pddlstream.planner import PDDLStreamPlanner
 from pyrobosim.planning.pddlstream.utils import get_default_domains_folder
@@ -125,11 +125,11 @@ class PlannerNode(Node):
             return
 
         # Unpack the latest world state.
-        try:
-            world_state = self.world_state_future_response.result()
-            # TODO: Set world from state
-        except Exception as e:
-            self.get_logger().info("Failed to unpack world state.")
+        # try:
+        result = self.world_state_future_response.result()
+        update_world_from_state_msg(self.world, result.state)
+        # except Exception as e:
+        #     self.get_logger().info("Failed to unpack world state.")
 
         # Once the world state is set, plan.
         plan = self.planner.plan(self.latest_goal, focused=True, verbose=self.verbose)

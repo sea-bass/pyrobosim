@@ -20,10 +20,10 @@ def pose_from_ros(msg):
     :return: Pose object
     :rtype: :class:`pyrobosim.utils.pose.Pose`
     """
-    eul = quat2euler(msg.orientation.w, msg.orientation.x,
-                     msg.orientation.y, msg.orientation.z)
+    eul = quat2euler((msg.orientation.w, msg.orientation.x,
+                      msg.orientation.y, msg.orientation.z))
     return Pose.from_list(
-        msg.position.x, msg.position.y, msg.position.z, eul[2])
+        [msg.position.x, msg.position.y, msg.position.z, eul[2]])
 
 
 def pose_to_ros(pose):
