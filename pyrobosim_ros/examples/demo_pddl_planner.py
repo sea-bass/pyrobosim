@@ -8,7 +8,7 @@ import os
 import argparse
 import rclpy
 from rclpy.node import Node
-import time
+from asyncio import Future
 
 from pyrobosim.core.yaml import WorldYamlLoader
 from pyrobosim.planning.pddlstream.planner import PDDLStreamPlanner
@@ -16,6 +16,7 @@ from pyrobosim.planning.pddlstream.utils import get_default_domains_folder
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.ros_conversions import goal_specification_from_ros, task_plan_to_ros
 from pyrobosim_msgs.msg import GoalSpecification, TaskPlan
+from pyrobosim_msgs.srv import RequestWorldState
 
 
 def parse_args():
@@ -48,20 +49,28 @@ class PlannerNode(Node):
     def __init__(self, args, name="pyrobosim"):
         self.name = name
         self.verbose = args.verbose
+        self.latest_goal = None
+        self.planning = False
         super().__init__(self.name + "_pddlstream_planner", namespace=self.name)
 
         # Publisher for a task plan
         self.plan_pub = self.create_publisher(
             TaskPlan, "commanded_plan", 10)
 
-        # Need a delay to ensure publishers are ready
-        time.sleep(1.0)
+        # Service client for world state
+        self.world_state_client = self.create_client(
+            RequestWorldState, "request_world_state")
+        self.world_state_future_response = None
+        while not self.world_state_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info("Waiting for world state server...")
 
         # Create the world and planner
         self.world = load_world(args)
         domain_folder = os.path.join(
             get_default_domains_folder(), args.example)
         self.planner = PDDLStreamPlanner(self.world, domain_folder)
+
+        self.get_logger().info("Planning node ready.")
 
         if args.subscribe:
             self.get_logger().info("Waiting for goal specification...")
@@ -72,7 +81,7 @@ class PlannerNode(Node):
             get = lambda entity : self.world.get_entity_by_name(entity)
             if args.example == "01_simple":
                 # Task specification for simple example.
-                goal_literals = [
+                self.latest_goal = [
                     ("At", get("robot"), get("bedroom")),
                     ("At", get("apple0"), get("table0_tabletop")),
                     ("At", get("banana0"), get("counter0_left")),
@@ -80,7 +89,7 @@ class PlannerNode(Node):
                 ]
             elif args.example == "02_derived":
                 # Task specification for derived predicate example.
-                goal_literals = [
+                self.latest_goal = [
                     ("Has", get("desk0_desktop"), get("banana0")),
                     ("Has", "counter", get("apple1")),
                     ("HasNone", get("bathroom"), "banana"),
@@ -91,6 +100,14 @@ class PlannerNode(Node):
                 return
 
 
+    def request_world_state(self):
+        """ Requests a world state from the world. """
+        self.planning = True
+        self.get_logger().info("Requesting world state...")
+        self.world_state_future_response = \
+            self.world_state_client.call_async(RequestWorldState.Request())
+
+
     def goalspec_callback(self, msg):
         """
         Handle goal specification callback.
@@ -98,21 +115,28 @@ class PlannerNode(Node):
         :param msg: Goal specification message to process.
         :type msg: :class:`pyrobosim_msgs.msg.TaskPlan`
         """
-        print("Received message!")
-        goal_literals = goal_specification_from_ros(msg, self.world)
-        self.do_plan(goal_literals)
+        print("Received new goal specification!")
+        self.latest_goal = goal_specification_from_ros(msg, self.world)
         
     
-    def do_plan(self, goal_literals):
-        """
-        Search for a plan and publish it.
+    def do_plan(self):
+        """ Search for a plan and publish it. """
+        if not self.latest_goal:
+            return
 
-        :param goal_literals: List of literals describing a goal specification.
-        :type goal_literals: list[tuple]
-        """
-        plan = self.planner.plan(goal_literals, focused=True, verbose=self.verbose)
+        # Unpack the latest world state.
+        try:
+            world_state = self.world_state_future_response.result()
+            # TODO: Set world from state
+        except Exception as e:
+            self.get_logger().info("Failed to unpack world state.")
+
+        # Once the world state is set, plan.
+        plan = self.planner.plan(self.latest_goal, focused=True, verbose=self.verbose)
         plan_msg = task_plan_to_ros(plan)
         self.plan_pub.publish(plan_msg)
+        self.latest_goal = None
+        self.planning = False
         
 
 def main():
@@ -120,7 +144,15 @@ def main():
     args = parse_args()
     planner_node = PlannerNode(args, name="pddl_demo")
 
-    rclpy.spin(planner_node)
+    while rclpy.ok():
+        if (not planner_node.planning) and planner_node.latest_goal:
+            planner_node.request_world_state()
+
+        if planner_node.world_state_future_response and planner_node.world_state_future_response.done():
+            planner_node.do_plan()
+
+        rclpy.spin_once(planner_node)
+
     planner_node.destroy_node()
     rclpy.shutdown()
 

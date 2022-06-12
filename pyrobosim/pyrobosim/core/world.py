@@ -388,8 +388,6 @@ class World:
         if pose is None:
             obj_added = False
             for _ in range(self.max_object_sample_tries):
-                if isinstance(loc, Location):
-                    obj_spawn = np.random.choice(loc.children)
                 x_sample, y_sample = sample_from_polygon(obj_spawn.polygon)
                 yaw_sample = np.random.uniform(-np.pi, np.pi)
                 pose_sample = Pose(x=x_sample, y=y_sample, yaw=yaw_sample)
@@ -424,6 +422,54 @@ class World:
         self.objects.append(obj)
         self.num_objects += 1
         return obj
+
+
+    def update_object(self, obj, loc=None, pose=None):
+        """
+        Updates an existing object in the world.
+
+        :param obj: Object instance or name to update.
+        :type obj: :class:`pyrobosim.core.objects.Object`/str
+        :param loc: Location or object spawn instance or name.
+        :type loc: :class:`pyrobosim.core.locations.Location`/:class:`pyrobosim.core.locations.ObjectSpawn`/str, optional
+        :param pose: Pose of the location. If none is specified, it will be sampled.
+        :type pose: :class:`pyrobosim.utils.pose.Pose`, optional
+        :return: True if the update was successful, else False.
+        :rtype: bool
+        """
+        if isinstance(obj, str):
+            obj = self.get_object_by_name(obj)
+        if not isinstance(obj, Object):
+            warnings.warn("Could not find object. Not updating.")
+            return False
+
+        if loc is not None:
+            if pose is None:
+                warnings.warn("Cannot specify a location without a pose.")
+    
+            # If it's a string, get the location name
+            if isinstance(loc, str):
+                loc = self.get_entity_by_name(loc)
+            # If it's a location object, pick an object spawn at random.
+            # Otherwise, if it's an object spawn, use that entity as is.
+            if isinstance(loc, Location):
+                obj_spawn = np.random.choice(loc.children)
+            elif isinstance(loc, ObjectSpawn):
+                obj_spawn = loc
+            else:
+                warnings.warn(f"Location {loc} did not resolve to a valid location for an object.")
+                return False
+
+            obj.parent.children.remove(obj)
+            obj.parent = obj_spawn
+            obj_spawn.children.append(obj)
+
+        if pose is not None:
+            obj.set_pose(pose)
+            obj.create_polygons(self.object_radius)
+
+        return True
+        
 
     def remove_object(self, obj):
         """ 

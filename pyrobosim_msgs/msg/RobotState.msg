@@ -1,5 +1,8 @@
 # Robot state definition message
 
+# Robot information
+string name
+
 # Continuous state
 geometry_msgs/Pose pose
 

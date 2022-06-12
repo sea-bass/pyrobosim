@@ -4,7 +4,8 @@ import rclpy
 from rclpy.node import Node
 import threading
 
-from pyrobosim_msgs.msg import RobotState, TaskAction, TaskPlan
+from pyrobosim_msgs.msg import RobotState, LocationState, ObjectState, TaskAction, TaskPlan
+from pyrobosim_msgs.srv import RequestWorldState
 from pyrobosim.planning.ros_utils import pose_to_ros, task_action_from_ros, task_plan_from_ros
 
 
@@ -54,6 +55,10 @@ class WorldROSWrapper(Node):
             target=self.create_timer, 
             args=(self.state_pub_rate, self.publish_robot_state))
 
+        # World state service server
+        self.world_state_srv = self.create_service(
+            RequestWorldState, "request_world_state", self.world_state_callback)
+        
         self.get_logger().info("World node started")
 
 
@@ -105,16 +110,49 @@ class WorldROSWrapper(Node):
         return self.world.robot.executing_action or self.world.robot.executing_plan
 
 
+    def package_robot_state(self):
+        """ 
+        Creates a ROS message with the robot state.
+      
+        :return: ROS message representing the robot state.
+        :rtype: :class:`pyrobosim_msgs.msg.RobotState`
+        """
+        robot = self.world.robot
+        if not robot:
+            return None
+
+        state_msg = RobotState(name=robot.name)
+        state_msg.pose = pose_to_ros(robot.pose)
+        state_msg.executing_action = robot.executing_action
+        if robot.manipulated_object is not None:
+            state_msg.holding_object = True
+            state_msg.manipulated_object = robot.manipulated_object.name
+        state_msg.last_visited_location = robot.location.name
+        return state_msg
+
+
     def publish_robot_state(self):
         """ Publishes the robot state (this function runs on a timer). """
-        robot = self.world.robot
-        if robot:
-            state_msg = RobotState()
-            state_msg.pose = pose_to_ros(robot.pose)
-            state_msg.executing_action = robot.executing_action
-            if robot.manipulated_object is not None:
-                state_msg.holding_object = True
-                state_msg.manipulated_object = robot.manipulated_object.name
-            state_msg.last_visited_location = robot.location.name
+        self.robot_state_pub.publish(self.package_robot_state())
 
-            self.robot_state_pub.publish(state_msg)
+
+    def world_state_callback(self, request, response):
+        """ Returns the world state as a response to a service request. """
+        self.get_logger().info("Received world state request.")
+
+        # Add the object and location states.
+        for loc in self.world.locations:
+            loc_msg = LocationState(
+                name=loc.name, category=loc.category, 
+                parent=loc.parent.name, pose=pose_to_ros(loc.pose))
+            response.state.locations.append(loc_msg)
+        for obj in self.world.locations:
+            obj_msg = ObjectState(
+                name=obj.name, category=obj.category, 
+                parent=obj.parent.name, pose=pose_to_ros(obj.pose))
+            response.state.objects.append(obj_msg)
+
+        # Add the robot state.
+        response.state.robot = self.package_robot_state()
+
+        return response

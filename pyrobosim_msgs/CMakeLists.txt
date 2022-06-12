@@ -16,9 +16,13 @@ find_package(geometry_msgs REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/GoalPredicate.msg"
   "msg/GoalSpecification.msg"
+  "msg/LocationState.msg"
+  "msg/ObjectState.msg"
   "msg/RobotState.msg"
   "msg/TaskAction.msg"
   "msg/TaskPlan.msg"
+  "msg/WorldState.msg"
+  "srv/RequestWorldState.srv"
   DEPENDENCIES geometry_msgs
 )
 
