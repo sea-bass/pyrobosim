@@ -1,7 +1,6 @@
 """ Utilities to create worlds from YAML files. """
 
 import numpy as np
-import os
 import warnings
 import yaml
 

@@ -13,7 +13,7 @@ from ..utils.polygon import inflate_polygon, polygon_and_height_from_footprint
 
 class Room:
     """ Representation of a room in a world. """
-    def __init__(self, footprint, name=None, color=[0.4, 0.4, 0.4], wall_width=0.2, nav_poses=None):
+    def __init__(self, footprint, name=None, color=[0.4, 0.4, 0.4], wall_width=0.2, nav_poses=None, height=0.0):
         """ 
         Creates a Room instance.
 
@@ -27,6 +27,8 @@ class Room:
         :type wall_width: float, optional
         :param nav_poses: List of navigation poses in the room. If not specified, defaults to the centroid.
         :type nav_poses: list[:class:`pyrobosim.utils.pose.Pose`]
+        :param height: Height of room.
+        :type height: float, optional
         """
         self.name = name
         self.wall_width = wall_width
@@ -51,6 +53,7 @@ class Room:
             self.nav_poses = nav_poses
         else:
             self.nav_poses = [Pose.from_list(self.centroid)]
+        self.height = height
 
     def update_collision_polygons(self, inflation_radius=0):
         """

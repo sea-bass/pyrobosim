@@ -1,4 +1,4 @@
-; PDDL PLANNING DOMAIN (NO STREAMS)
+; PDDL PLANNING DOMAIN (SIMPLE)
 ;
 ; This planning domain contains `move`, `pick`, and `place` actions.
 ; All actions are symbolic, meaning there are no different types of grasps

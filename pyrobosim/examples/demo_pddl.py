@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Test script showing how to build a world and use it with pyrobosim
+Test script showing how to perform task and motion planning with PDDLStream
 """
 import os
 import sys
@@ -12,6 +12,7 @@ from pyrobosim.core.robot import Robot
 from pyrobosim.core.room import Room
 from pyrobosim.core.world import World
 from pyrobosim.navigation.execution import ConstantVelocityExecutor
+from pyrobosim.navigation.rrt import RRTPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
@@ -64,15 +65,22 @@ def create_world():
     r = Robot(radius=0.1, path_executor=ConstantVelocityExecutor())
     w.add_robot(r, loc="kitchen")
 
-    # Create a search graph
-    w.create_search_graph(max_edge_dist=3.0, collision_check_dist=0.05, create_planner=True)
+    # Create a search graph and planner.
+    w.create_search_graph(max_edge_dist=3.0, collision_check_dist=0.05, create_planner=False)
+    rrt = RRTPlanner(w, bidirectional=True, rrt_star=True,
+                     max_connection_dist=0.25, rewire_radius=1.5)
+    w.robot.set_path_planner(rrt)
     return w
 
 
-def create_world_from_yaml(world_file):
-    from pyrobosim.core.yaml import WorldYamlLoader
-    loader = WorldYamlLoader()
-    return loader.from_yaml(os.path.join(data_folder, world_file))
+def parse_args():
+    """ Parse command-line arguments """
+    parser = argparse.ArgumentParser(description="PDDLStream planning demo.")
+    parser.add_argument("--example", default="01_simple",
+                        help="Example name (01_simple, 02_derived)")
+    parser.add_argument("--verbose", action="store_true",
+                        help="Print planning output")
+    return parser.parse_args()
 
 
 def start_gui(world, args):
@@ -82,54 +90,48 @@ def start_gui(world, args):
     sys.exit(app.exec_())
 
 
-def parse_args():
-    """ Parse command-line arguments """
-    parser = argparse.ArgumentParser(description="Main pyrobosim demo.")
-    parser.add_argument("--from-file", action="store_true",
-                        help="Load from YAML file")
-    parser.add_argument("--world-file", default="test_world.yaml",
-                        help="YAML file name (should be in the pyrobosim/data folder). " +
-                             "Defaults to test_world.yaml")
-    return parser.parse_args()
-
-
-def start_planner(world):
-    """ Test planner """
-    from pyrobosim.planning.pddlstream.utils import world_to_pddlstream_init
+def start_planner(world, args):
+    """ Test PDDLStream planner under various scenarios. """
     from pyrobosim.planning.pddlstream.planner import PDDLStreamPlanner
+    from pyrobosim.planning.pddlstream.utils import get_default_domains_folder
 
-    init = world_to_pddlstream_init(world)
-    planner = PDDLStreamPlanner(world)
+    domain_folder = os.path.join(
+        get_default_domains_folder(), args.example)
+    planner = PDDLStreamPlanner(world, domain_folder)
 
     get = lambda entity : world.get_entity_by_name(entity)
-    goal_literals = [
-        ("At", get("robot"), get("bedroom")),
-        ("At", get("apple0"), get("table0_tabletop")),
-        ("At", get("banana0"), get("counter0_left")),
-        ("Holding", get("robot"), get("water0"))
-    ]
-    print("=== Goal Specification: ===")
-    for g in goal_literals:
-        print(g)
-    print("\n")
+    if args.example == "01_simple":
+        # Task specification for simple example.
+        goal_literals = [
+            ("At", get("robot"), get("bedroom")),
+            ("At", get("apple0"), get("table0_tabletop")),
+            ("At", get("banana0"), get("counter0_left")),
+            ("Holding", get("robot"), get("water0"))
+        ]
+    elif args.example == "02_derived":
+        # Task specification for derived predicate example.
+        goal_literals = [
+            ("Has", get("desk0_desktop"), get("banana0")),
+            ("Has", "counter", get("apple1")),
+            ("HasNone", get("table0_tabletop"), "apple"),
+            ("HasAll", get("kitchen"), "water")
+        ]
+    else:
+        print(f"Invalid example: {args.example}")
+        return
 
-    plan = planner.plan(goal_literals)
-    print(plan)
+    input("Press Enter to start planning.")
+    plan = planner.plan(goal_literals, verbose=args.verbose)
     world.robot.execute_plan(plan, blocking=True)
 
 
 if __name__ == "__main__":
     args = parse_args()
-
-    # Create a world or load it from file.
-    if args.from_file:
-        w = create_world_from_yaml(args.world_file)
-    else:
-        w = create_world()
+    w = create_world()
 
     # Start ROS Node in separate thread
     import threading
-    t = threading.Thread(target=start_planner, args=(w,))
+    t = threading.Thread(target=start_planner, args=(w, args))
     t.start()
 
     # Start the program either as ROS2 node or standalone.

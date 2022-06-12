@@ -2,7 +2,19 @@
 Utilities to connect world models with PDDLStream.
 """
 
+import os
+
 from ..actions import TaskAction, TaskPlan
+
+def get_default_domains_folder():
+    """
+    Returns the default path to the folder containing PDDLStream domains.
+
+    :return: Path to domains folder.
+    :rtype: str
+    """
+    return os.path.join(os.path.split(__file__)[0], "domains")
+
 
 def world_to_pddlstream_init(world):
     """
@@ -60,6 +72,7 @@ def world_to_pddlstream_init(world):
         init.append(("Type", obj_cat))        
 
     return init
+
 
 def pddlstream_solution_to_plan(solution):
     """
