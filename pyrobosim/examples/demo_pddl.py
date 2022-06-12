@@ -113,15 +113,15 @@ def start_planner(world, args):
         goal_literals = [
             ("Has", get("desk0_desktop"), get("banana0")),
             ("Has", "counter", get("apple1")),
-            ("HasNone", get("table0_tabletop"), "apple"),
-            ("HasAll", get("kitchen"), "water")
+            ("HasNone", get("bathroom"), "banana"),
+            ("HasAll", "counter", "water")
         ]
     else:
         print(f"Invalid example: {args.example}")
         return
 
     input("Press Enter to start planning.")
-    plan = planner.plan(goal_literals, verbose=args.verbose)
+    plan = planner.plan(goal_literals, focused=True, verbose=args.verbose)
     world.robot.execute_plan(plan, blocking=True)
 
 

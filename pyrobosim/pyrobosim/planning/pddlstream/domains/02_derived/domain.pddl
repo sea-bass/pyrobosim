@@ -21,7 +21,8 @@
                (Is ?o ?t)               ; Type correspondence of location or object
 
                (Holding ?r ?o)          ; Object the robot is holding
-               (At ?o ?l)               ; Robot/Object's location, or location's Room
+               (At ?o ?l)               ; Robot/Object's location
+               (AtRoom ?l ?r)           ; Location's corresponding room
                (Has ?loc ?entity)       ; Check existence of object types in locations
                (HasNone ?loc ?entity)   ; Check nonexistence of object types in locations
                (HasAll ?loc ?entity)    ; Check exclusivity of object types in locations
@@ -90,7 +91,7 @@
              (or (At ?entity ?loc)
                  (exists (?s) 
                     (and (Room ?loc) (Location ?s)
-                         (At ?entity ?s) (At ?s ?loc))
+                         (At ?entity ?s) (AtRoom ?s ?loc))
                  )
              )
         )
@@ -98,7 +99,7 @@
         (exists (?l) (and (or (Obj ?entity) (Robot ?entity))
                           (Location ?l)
                           (or (and (Type ?loc) (Is ?l ?loc))
-                              (and (Room ?loc) (At ?l ?loc)))
+                              (and (Room ?loc) (AtRoom ?l ?loc)))
                           (At ?entity ?l))
         )
         ; CASE 3: Location is instance, entity is a type
@@ -108,7 +109,7 @@
                           (or (At ?o ?loc)
                               (exists (?s) 
                                 (and (Room ?loc) (Location ?s)
-                                     (At ?o ?s) (At ?s ?loc)))
+                                     (At ?o ?s) (AtRoom ?s ?loc)))
                           )
                      )
         )
@@ -116,27 +117,28 @@
         (exists (?o ?l) (and (Type ?entity) (Obj ?o) 
                              (Type ?loc) (Location ?l) 
                              (or (and (Type ?loc) (Is ?l ?loc))
-                                 (and (Room ?loc) (At ?l ?loc)))
+                                 (and (Room ?loc) (AtRoom ?l ?loc)))
                              (Is ?o ?entity)
                              (At ?o ?l)
                         )
         )
         ; CASE 5: Robot holding an object instance
         (exists (?r) 
-            (and (Robot ?r) (Location ?loc)
-                 (Obj ?entity) (Holding ?r ?entity)
+            (and (Robot ?r) (Location ?loc) (Obj ?entity)
+                 (Holding ?r ?entity)
                  (or (At ?r ?loc)
-                     (exists (?s) (and (Location ?s) (At ?s ?loc) (At ?r ?s)))
+                     (and (Room ?loc) (exists (?s) 
+                        (and (Location ?s) (At ?r ?s) (AtRoom ?s ?loc))))
                  )
             )
         )
         ; CASE 6: Robot holding an object type
         (exists (?r ?o) 
-            (and (Robot ?r) (Location ?loc)
-                 (Type ?entity) (Obj ?o) (Is ?o ?entity)
-                 (Holding ?r ?o)
+            (and (Robot ?r) (Obj ?o) (Type ?entity) (Location ?loc)
+                 (Is ?o ?entity) (Holding ?r ?o)
                  (or (At ?r ?loc)
-                     (exists (?s) (and (Location ?s) (At ?s ?loc) (At ?r ?s)))
+                     (and (Room ?loc) (exists (?s) 
+                        (and (Location ?s) (At ?r ?s) (AtRoom ?s ?loc))))
                  )
             )
         )

@@ -58,9 +58,6 @@ class PDDLStreamPlanner():
         """
         # Set the initial and goal states for PDDLStream
         init = world_to_pddlstream_init(self.world)
-        print("\nInitial conditions:")
-        for i in init:
-            print(f"\t{i}")
         goal = And(*goal_literals)
         self.latest_specification = goal
 

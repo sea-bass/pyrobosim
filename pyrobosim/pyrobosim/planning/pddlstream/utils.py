@@ -48,7 +48,7 @@ def world_to_pddlstream_init(world):
         for spawn in loc.children:
             init.append(("Location", spawn))
             init.append(("Is", spawn, loc.category))
-            init.append(("At", spawn, loc.parent))
+            init.append(("AtRoom", spawn, loc.parent))
         loc_categories.add(loc.category)
     for loc_cat in loc_categories:
         init.append(("Type", loc_cat))
