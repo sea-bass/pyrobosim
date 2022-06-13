@@ -15,7 +15,8 @@ from pyrobosim_msgs.msg import GoalPredicate, GoalSpecification
 
 def parse_args():
     """ Parse command-line arguments """
-    parser = argparse.ArgumentParser(description="PDDLStream planning demo.")
+    parser = argparse.ArgumentParser(
+        description="PDDLStream demo goal specification publisher node.")
     parser.add_argument("--example", default="01_simple",
                         help="Example name (01_simple, 02_derived)")
     return parser.parse_args()

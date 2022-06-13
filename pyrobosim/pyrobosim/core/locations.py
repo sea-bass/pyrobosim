@@ -45,48 +45,16 @@ class Location:
         # Extract the model information from the model list
         self.name = name
         self.category = category
-        self.pose = pose
-        self.children = []
         self.parent = parent
 
         self.metadata = Location.metadata.get(self.category)
         if "color" in self.metadata:
             self.viz_color = self.metadata["color"]
 
-        self.polygon, self.height = polygon_and_height_from_footprint(
-            self.metadata["footprint"], pose=self.pose,
-            parent_polygon=self.parent.polygon if self.parent is not None else None)
-
-        # If navigation poses were specified, add them if they are collision free.
-        self.nav_poses = []
-        if "nav_poses" in self.metadata:
-            if "offset" in self.metadata["footprint"]:
-                p_off = self.metadata["footprint"]["offset"]
-            else:
-                p_off = (0, 0)
-            for p in self.metadata["nav_poses"]:
-                rot_p = rot2d((p[0] + p_off[0], p[1] + p_off[1]),
-                              self.pose.yaw)
-                nav_pose = Pose(x=rot_p[0] + self.pose.x,
-                                y=rot_p[1] + self.pose.y,
-                                yaw=p[2] + self.pose.yaw)
-                if self.parent.is_collision_free(nav_pose):
-                    self.nav_poses.append(nav_pose)
-
-        # Add the spawn locations
-        if "locations" in self.metadata:
-            for loc_data in self.metadata["locations"]:
-                if "name" in loc_data:
-                    name = f"{self.name}_{loc_data['name']}"
-                else:
-                    name = f"{self.name}_loc{len(self.children)}"
-                os = ObjectSpawn(name, loc_data, self)
-                self.children.append(os)
-
-        # Update the collision and visualization polygons
-        self.update_collision_polygon()
-        self.update_visualization_polygon()
-
+        self.set_pose(pose)
+        self.create_polygons()
+        self.create_spawn_locations()
+        
     def get_room_name(self):
         """ 
         Returns the name of the room containing the location.
@@ -114,6 +82,33 @@ class Location:
             p = Point(pose[0], pose[1])
         return self.polygon.intersects(p)
 
+    def set_pose(self, pose):
+        """
+        Sets the pose of a location, accounting for its navigation poses and object spawns.
+        Use this instead of directly assigning the ``pose`` attribute.
+        
+        :param pose: New pose for the object.
+        :type pose: :class:`pyrobosim.utils.pose.Pose`
+        """
+        # Update the actual pose
+        self.pose = pose
+
+        # If navigation poses were specified, add them if they are collision free.
+        self.nav_poses = []
+        if "nav_poses" in self.metadata:
+            if "offset" in self.metadata["footprint"]:
+                p_off = self.metadata["footprint"]["offset"]
+            else:
+                p_off = (0, 0)
+            for p in self.metadata["nav_poses"]:
+                rot_p = rot2d((p[0] + p_off[0], p[1] + p_off[1]),
+                              self.pose.yaw)
+                nav_pose = Pose(x=rot_p[0] + self.pose.x,
+                                y=rot_p[1] + self.pose.y,
+                                yaw=p[2] + self.pose.yaw)
+                if self.parent.is_collision_free(nav_pose):
+                    self.nav_poses.append(nav_pose)
+
     def get_raw_polygon(self):
         """ 
         Gets the raw polygon (without any pose offset).
@@ -122,6 +117,19 @@ class Location:
         :rtype: :class:`shapely.geometry.Polygon`
         """
         return polygon_and_height_from_footprint(self.metadata["footprint"])[0]
+
+    def create_polygons(self, inflation_radius=0.0):
+        """ 
+        Creates collision and visualization polygons for the location. 
+
+        :param inflation_radius: Inflation radius, in meters.
+        :type inflation_radius: float, optional
+        """
+        self.polygon, self.height = polygon_and_height_from_footprint(
+            self.metadata["footprint"], pose=self.pose,
+            parent_polygon=self.parent.polygon if self.parent is not None else None)
+        self.update_collision_polygon(inflation_radius=inflation_radius)
+        self.update_visualization_polygon()
 
     def update_collision_polygon(self, inflation_radius=0.0):
         """
@@ -141,6 +149,18 @@ class Location:
                 self.polygon,
                 fill=None, ec=self.viz_color,
                 lw=2, alpha=0.75, zorder=2)
+
+    def create_spawn_locations(self):
+        """ Creates the object spawn locations at this location. """
+        self.children = []
+        if "locations" in self.metadata:
+            for loc_data in self.metadata["locations"]:
+                if "name" in loc_data:
+                    name = f"{self.name}_{loc_data['name']}"
+                else:
+                    name = f"{self.name}_loc{len(self.children)}"
+                os = ObjectSpawn(name, loc_data, self)
+                self.children.append(os)
 
     def add_graph_nodes(self):
         """ Creates graph nodes for searching. """

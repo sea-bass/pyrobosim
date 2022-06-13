@@ -16,7 +16,7 @@ from pyrobosim.utils.general import get_data_folder
 
 def parse_args():
     """ Parse command-line arguments """
-    parser = argparse.ArgumentParser(description="PDDLStream planning demo.")
+    parser = argparse.ArgumentParser(description="PDDLStream demo world node.")
     parser.add_argument("--example", default="01_simple",
                         help="Example name (01_simple, 02_derived)")
     return parser.parse_args()

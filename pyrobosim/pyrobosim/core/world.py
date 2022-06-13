@@ -346,16 +346,24 @@ class World:
                 warnings.warn(f"Room {loc} did not resolve to a valid room for a location.")
                 return False
 
-            loc.parent.locations.remove(loc)
-            loc.parent = room
-            room.locations.append(loc)
+        # Check that the location fits within the room and is not in collision with
+        # other locations already in the room. Else, warn and do not add it.
+        new_polygon = transform_polygon(loc.get_raw_polygon(), pose)
+        is_valid_pose = new_polygon.within(room.polygon)
+        for other_loc in room.locations:
+            is_valid_pose = is_valid_pose and not new_polygon.intersects(other_loc.polygon)
+        if not is_valid_pose:
+            warnings.warn(f"Location {loc.name} in collision. Cannot add to world.")
+            return False
 
-        loc.pose = pose
-        loc.update_collision_polygon(self.inflation_radius)
-        loc.update_visualization_polygon()
-
+        # If we passed all checks, update the polygon.
+        loc.parent.locations.remove(loc)
+        loc.parent = room
+        room.locations.append(loc)
+        loc.set_pose(pose)
+        loc.create_polygons(self.inflation_radius)
+        loc.create_spawn_locations()
         return True
-
 
     def remove_location(self, loc):
         """ 

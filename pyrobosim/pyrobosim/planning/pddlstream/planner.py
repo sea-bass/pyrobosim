@@ -1,3 +1,5 @@
+""" Task and Motion Planning tools using PDDLStream. """
+
 import os
 from pddlstream.algorithms.focused import solve_focused
 from pddlstream.algorithms.incremental import solve_incremental

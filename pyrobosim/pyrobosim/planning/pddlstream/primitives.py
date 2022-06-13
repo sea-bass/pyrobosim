@@ -1,12 +1,12 @@
 """
-Helper primitives for PDDLStream
+Helper primitives for PDDLStream based planning.
 """
 
 import numpy as np
 
 def get_pick_place_cost(l, o):
     """
-    EStimates a dummy pick / place cost for a specific location / object combination,
+    Estimates a dummy pick / place cost for a specific location / object combination,
     which a constant value plus the height of the location and half height of the object.
     
     :param l: Location where pick / place action occurs.

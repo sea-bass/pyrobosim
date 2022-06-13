@@ -67,7 +67,7 @@ To start a world, a planner, and a separate node that publishes a goal specifica
 
     ros2 run pyrobosim_ros demo_pddl_world.py --example 01_simple
     ros2 run pyrobosim_ros demo_pddl_planner.py --example 01_simple --verbose --subscribe
-    ros2 run pyrobosim_ros demo_pddl_goalpublisher.py --example 01_simple
+    ros2 run pyrobosim_ros demo_pddl_goal_publisher.py --example 01_simple
 
 The output should look as follows:
 

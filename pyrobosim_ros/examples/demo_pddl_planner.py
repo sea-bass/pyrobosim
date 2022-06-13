@@ -21,7 +21,7 @@ from pyrobosim_msgs.srv import RequestWorldState
 
 def parse_args():
     """ Parse command-line arguments """
-    parser = argparse.ArgumentParser(description="PDDLStream planning demo.")
+    parser = argparse.ArgumentParser(description="PDDLStream demo planner node.")
     parser.add_argument("--example", default="01_simple",
                         help="Example name (01_simple, 02_derived)")
     parser.add_argument("--subscribe", action="store_true",

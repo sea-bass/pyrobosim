@@ -59,7 +59,7 @@ class WorldROSWrapper(Node):
         self.world_state_srv = self.create_service(
             RequestWorldState, "request_world_state", self.world_state_callback)
         
-        self.get_logger().info("World node started")
+        self.get_logger().info("World node started.")
 
 
     def start(self):
@@ -112,7 +112,8 @@ class WorldROSWrapper(Node):
 
     def package_robot_state(self):
         """ 
-        Creates a ROS message with the robot state.
+        Creates a ROS message containing the robot state.
+        This state can be published standalone or packaged into the overall world state.
       
         :return: ROS message representing the robot state.
         :rtype: :class:`pyrobosim_msgs.msg.RobotState`
@@ -137,7 +138,16 @@ class WorldROSWrapper(Node):
 
 
     def world_state_callback(self, request, response):
-        """ Returns the world state as a response to a service request. """
+        """ 
+        Returns the world state as a response to a service request. 
+        
+        :param request: The service request.
+        :type request: :class:`pyrobosim_msgs.srv._request_world_state.RequestWorldState_Request`
+        :param response: The unmodified service response.
+        :type response: :class:`pyrobosim_msgs.srv._request_world_state.RequestWorldState_Response`
+        :return: The modified service response containing the world state.
+        :rtype: :class:`pyrobosim_msgs.srv._request_world_state.RequestWorldState_Response`
+        """
         self.get_logger().info("Received world state request.")
 
         # Add the object and location states.
@@ -168,7 +178,7 @@ def update_world_from_state_msg(world, msg):
     :type msg: :class:`pyrobosim_msgs.msg.WorldState`
     """
     # Update the robot state
-    # TODO: More robot validation
+    # NOTE: currently assumes both the world and state message have a single robot.
     if world.robot:
         robot_state = msg.robot
         world.robot.set_pose(pose_from_ros(robot_state.pose))

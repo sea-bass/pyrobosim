@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Test script showing how to perform task and motion planning with PDDLStream
+Test script showing how to perform task and motion planning with PDDLStream.
 """
 
 import os
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     args = parse_args()
     w = load_world(args)
 
-    # Start ROS Node in separate thread
+    # Start ROS Node in separate thread.
     t = threading.Thread(target=start_planner, args=(w, args))
     t.start()
 
