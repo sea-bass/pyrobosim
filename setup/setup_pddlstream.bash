@@ -9,8 +9,9 @@ then
 fi
 
 # Clone and build PDDLStream
+# TODO: Once PDDLStream works with Python 3.10, go back to the original repo.
 pushd $SCRIPT_DIR/../dependencies
-git clone https://github.com/caelan/pddlstream.git
+git clone https://github.com/sea-bass/pddlstream.git
 pushd pddlstream
 touch COLCON_IGNORE
 git submodule update --init --recursive
