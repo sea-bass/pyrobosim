@@ -1,9 +1,6 @@
-Usage
-=====
-This package works with or without ROS2, and with or without a 
-PyQt5 based GUI for visualization.
-
-All the top-level scripts are found in the ``scripts`` folder.
+Basic Usage
+===========
+To get started with pyrobosim, you can run the following examples.
 
 
 Standalone

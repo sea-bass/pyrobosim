@@ -26,6 +26,6 @@ Refer to the following sections for more details on the schemas
 .. toctree::
    :maxdepth: 1
 
-   /yaml/world_schema
-   /yaml/location_schema
-   /yaml/object_schema
+   world_schema
+   location_schema
+   object_schema
