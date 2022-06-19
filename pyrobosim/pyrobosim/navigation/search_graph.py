@@ -163,7 +163,7 @@ class SearchGraph:
         y_pts = start.pose.y + dist_array * np.sin(angle)
 
         # Check the occupancy of all the test points.
-        for x_check, y_check in zip(x_pts, y_pts):
+        for x_check, y_check in zip(x_pts[1:], y_pts[1:]):
             if self.world.check_occupancy(Pose(x=x_check, y=y_check)):
                 return False
 
