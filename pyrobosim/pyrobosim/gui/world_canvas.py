@@ -151,9 +151,29 @@ class WorldCanvas(FigureCanvasQTAgg):
         adjustText.adjust_text(objs, lim=100,
                                add_objects=self.obj_patches)
 
+    def show_path(self, path):
+        """ 
+        Plots a standalone path. 
+        
+        :param path: The path to display.
+        :type path: :class:`pyrobosim.utils.motion.Path`
+        """
+        for e in self.path_planner_artists:
+            self.axes.lines.remove(e)
+        self.path_planner_artists = []
+        x = [p.x for p in path.poses]
+        y = [p.y for p in path.poses]
+        path, = self.axes.plot(x, y, "m-", linewidth=3, zorder=1)
+        start, = self.axes.plot(x[0], y[0], "go", zorder=2)
+        goal, = self.axes.plot(x[-1], y[-1], "rx", zorder=2)
+        self.path_planner_artists.extend((path, start, goal))
+
+
     def show_planner_and_path(self):
-        # Plot the path planner and latest path, if specified.
-        # This planner could be global (property of the world) or local (property of the robot).
+        """
+        Plot the path planner and latest path, if specified.
+        This planner could be global (property of the world) or local (property of the robot).
+        """
         for e in self.path_planner_artists:
             self.axes.lines.remove(e)
 
@@ -161,6 +181,7 @@ class WorldCanvas(FigureCanvasQTAgg):
             self.path_planner_artists = self.world.robot.path_planner.plot(self.axes)
         elif self.world.path_planner:
             self.path_planner_artists = self.world.path_planner.plot(self.axes)
+
 
     def update_robot_plot(self):
         """ Updates the robot visualization graphics objects. """
@@ -224,11 +245,16 @@ class WorldCanvas(FigureCanvasQTAgg):
         :return: True if navigation succeeds, else False
         :rtype: bool
         """
-        # Find a path and kick off the navigation thread
-        path = self.world.find_path(goal)
-        self.show_planner_and_path()
+        # Find a path, or use an existing one, and kick off the navigation thread
+        if self.world.current_path is None or self.world.current_path.num_poses < 1:
+            path = self.world.find_path(goal)
+            self.show_planner_and_path()
+        else:
+            path = self.world.current_path
+            self.show_path(path)
         self.world.robot.follow_path(
-            path, realtime_factor=self.realtime_factor)
+            path, target_location=self.world.current_goal,
+            realtime_factor=self.realtime_factor)
 
         # Animate while navigation is active
         do_blit = True  # Keeping this around to disable if needed

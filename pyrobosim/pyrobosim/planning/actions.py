@@ -1,11 +1,13 @@
 """ Defines actions for task and motion planning. """
 
+from ..utils.motion import Path
+
 class TaskAction:
     """ Task Action representation class. """
 
     def __init__(self, type, object=None, room=None,
                  source_location=None, target_location=None,
-                 pose=None, cost=None):
+                 pose=None, path=Path(), cost=None):
         """ 
         Creates a new task action representation.
 
@@ -21,6 +23,8 @@ class TaskAction:
         :type target_location: str, optional
         :param pose: Optional pose parameter for the action.
         :type pose: :class:`pyrobosim.utils.pose.Pose`, optional
+        :param path: A specific path to follow, if provided.
+        :type path: :class:`pyrobosim.utils.motion.Path`, optional
         :param cost: Optional action cost.
         :type cost: float
         """
@@ -34,6 +38,7 @@ class TaskAction:
         self.source_location = source_location  # Source location name
         self.target_location = target_location  # Target location name
         self.pose = pose                        # Target pose
+        self.path = path                        # Path object containing a list of poses
 
     def __repr__(self):
         """ Returns printable string describing an action. """
@@ -48,6 +53,8 @@ class TaskAction:
                 act_str += f" to {self.target_location}"
             if self.pose is not None:
                 act_str += f" at {self.pose}"
+            if self.path.num_poses > 0:
+                act_str += f"\n{self.path}"
         # PICK
         elif self.type == "pick":
             act_str = "Pick"

@@ -34,8 +34,8 @@ class ConstantVelocityExecutor:
         """ 
         Generates and executes a trajectory on the robot. 
         
-        :param path: A list of Pose objects defining the path. 
-        :type path: list
+        :param path: Path to execute on the robot.
+        :type path: :class:`pyrobosim.utils.motion.Path`
         :param realtime_factor: A multiplier on the execution time relative to real time, defaults to 1.0.
         :type realtime_factor: float, optional
         :return: True if execution is complete, else False.
@@ -64,6 +64,5 @@ class ConstantVelocityExecutor:
             time.sleep(max(0, sleep_time - (time.time()-start_time)))
 
         # Finalize path execution
-        self.robot.location = path[-1].parent
         self.robot.executing_nav = False
         return True

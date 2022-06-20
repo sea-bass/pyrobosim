@@ -101,13 +101,15 @@ class Robot:
             return
         path_executor.robot = self
 
-    def follow_path(self, path, realtime_factor=1.0, 
-                    use_thread=True, blocking=False):
+    def follow_path(self, path, target_location=None, 
+                    realtime_factor=1.0, use_thread=True, blocking=False):
         """ 
         Follows a specified path using the attached path executor.
         
-        :param path: A list of Pose objects defining the path. 
-        :type path: list[:class:`pyrobosim.utils.pose.Pose`]
+        :param path: The path to follow.
+        :type path: :class:`pyrobosim.utils.motion.Path`
+        :param target_location: The target location at the intended goal, used for tracking robot state.
+        :type target_location: Entity.
         :param realtime_factor: A real-time multiplier on execution speed, defaults to 1.0.
         :type realtime_factor: float
         :param use_thread: If True, spawns a new thread to execute the path.
@@ -131,6 +133,10 @@ class Robot:
                 success = True
         else:
             success = self.path_executor.execute(path, realtime_factor)
+
+        # Update the robot state if successful.
+        if success and target_location is not None:
+            self.location = target_location
         return success
 
     def pick_object(self, obj_query):
@@ -247,29 +253,36 @@ class Robot:
             self.world.gui.set_buttons_during_action(False)
 
         if action.type == "navigate":
+            self.world.current_path = action.path
             if self.world.has_gui:
                 self.executing_nav = True
                 if isinstance(action.target_location, str):
                     tgt_loc = action.target_location
                 else:
                     tgt_loc = action.target_location.name
+                
                 self.world.gui.canvas.nav_trigger.emit(tgt_loc)
                 while self.executing_nav:
                     time.sleep(0.5) # Delay to wait for navigation
                 success = True # TODO Need to keep track of nav status
             else:
                 path = self.world.find_path(action.target_location)
-                success = robot.follow_path(path, realtime_factor=1.0, blocking=blocking)
+                success = robot.follow_path(path, target_location=action.target_location, 
+                                            realtime_factor=1.0, blocking=blocking)
+            self.world.current_path = None
+
         elif action.type == "pick":
             if self.world.has_gui:
                 success = self.world.gui.canvas.pick_object(action.object)
             else:
                 success = self.pick_object(action.object)
+
         elif action.type == "place":
             if self.world.has_gui:
                 success = self.world.gui.canvas.place_object()
             else:
                 success = self.place_object()
+
         else:
             print(f"Invalid action type: {action.type}")
             success = False

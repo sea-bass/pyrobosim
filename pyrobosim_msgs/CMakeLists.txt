@@ -18,6 +18,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/GoalSpecification.msg"
   "msg/LocationState.msg"
   "msg/ObjectState.msg"
+  "msg/Path.msg"
   "msg/RobotState.msg"
   "msg/TaskAction.msg"
   "msg/TaskPlan.msg"

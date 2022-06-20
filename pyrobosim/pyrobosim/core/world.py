@@ -61,6 +61,7 @@ class World:
 
         # Search graph for navigation
         self.search_graph = None
+        self.current_goal = None
         self.current_path = None
         self.path_planner = None
 
@@ -659,14 +660,13 @@ class World:
             if goal_node is None:
                 warnings.warn("Invalid goal specified")
                 return None
+        self.current_goal = goal_node.parent
 
         # Do the actual planning.
         if self.robot.path_planner:
             # Plan with the robot's local planner.
             goal = goal_node.pose
             self.current_path = self.robot.path_planner.plan(start, goal)
-            if self.current_path is not None:
-                self.current_path[-1].parent = goal_node.parent
         elif self.path_planner:
             # Plan with the robot's global planner.
             self.current_path = self.path_planner.plan(start_node, goal_node)

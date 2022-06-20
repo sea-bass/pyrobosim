@@ -2,7 +2,6 @@ import time
 import warnings
 
 from .search_graph import SearchGraph, Node
-from .trajectory import fill_path_yaws
 from ..utils.pose import Pose
 
 
@@ -59,8 +58,8 @@ class PRMPlanner:
         :type start: :class:`pyrobosim.utils.pose.Pose` / :class:`pyrobosim.navigation.search_graph.Node`
         :param goal: Goal pose or graph node.
         :type goal: :class:`pyrobosim.utils.pose.Pose` / :class:`pyrobosim.navigation.search_graph.Node`
-        :return: List of graph Node objects describing the path, or None if not found.
-        :rtype: list[:class:`pyrobosim.navigation.search_graph.Node`] 
+        :return: Path from start to goal.
+        :rtype: :class:`pyrobosim.utils.motion.Path`
         """
         # Create the start and goal nodes
         if isinstance(start, Pose):
@@ -72,10 +71,9 @@ class PRMPlanner:
 
         # Find a path from start to goal nodes
         t_start = time.time()
-        path = self.graph.find_path(start, goal)
-        path = fill_path_yaws(path)
+        self.latest_path = self.graph.find_path(start, goal)
+        self.latest_path.fill_yaws()
         self.planning_time = time.time() - t_start
-        self.latest_path = path
         return self.latest_path       
 
 
@@ -91,15 +89,14 @@ class PRMPlanner:
 
     def print_metrics(self):
         """
-        Print metrics about the latest path computed
+        Print metrics about the latest path computed.
         """
         if self.latest_path is None:
             print("No path.")
             return
 
         print("Latest path from PRM:")
-        for n in self.latest_path:
-            print(n.pose)
+        self.latest_path.print_details()
         print("")
         print(f"Time to sample nodes: {self.sampling_time} seconds")
         print(f"Time to plan: {self.planning_time} seconds")
@@ -129,8 +126,8 @@ class PRMPlanner:
                 artists.append(edge)
         
         if show_path and self.latest_path is not None:
-            x = [p.pose.x for p in self.latest_path]
-            y = [p.pose.y for p in self.latest_path]
+            x = [p.x for p in self.latest_path.poses]
+            y = [p.y for p in self.latest_path.poses]
             path, = axes.plot(x, y, "m-", linewidth=3, zorder=1)
             start, = axes.plot(x[0], y[0], "go", zorder=2)
             goal, = axes.plot(x[-1], y[-1], "rx", zorder=2)

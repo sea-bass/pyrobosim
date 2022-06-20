@@ -3,7 +3,7 @@ import time
 import numpy as np
 
 from .search_graph import SearchGraph, Node, Edge
-from .trajectory import fill_path_yaws
+from ..utils.motion import Path
 from ..utils.pose import Pose
 
 
@@ -72,8 +72,8 @@ class RRTPlanner:
         :type start: :class:`pyrobosim.utils.pose.Pose`
         :param goal: Goal pose.
         :type goal: :class:`pyrobosim.utils.pose.Pose`
-        :return: List of graph Node objects describing the path, or None if not found.
-        :rtype: list[:class:`pyrobosim.navigation.search_graph.Node`] 
+        :return: Path from start to goal.
+        :rtype: :class:`pyrobosim.utils.motion.Path`
         """
         self.reset()
 
@@ -141,15 +141,15 @@ class RRTPlanner:
             n = n_goal_start_tree
         else:
             n = n_goal
-        path = [n]
+        path_poses = [n.pose]
         path_built = False
         while not path_built:
             if n.parent is None:
                 path_built = True
             else:
                 n = n.parent
-                path.append(n)
-        path.reverse()
+                path_poses.append(n.pose)
+        path_poses.reverse()
         if self.bidirectional:
             n = n_goal_goal_tree
             path_built = False
@@ -158,11 +158,11 @@ class RRTPlanner:
                     path_built = True
                 else:
                     n = n.parent
-                    path.append(n)
+                    path_poses.append(n.pose)
 
-        path = fill_path_yaws(path)
-        self.latest_path = path
-        return path         
+        self.latest_path = Path(poses=path_poses)
+        self.latest_path.fill_yaws()
+        return self.latest_path         
 
 
     def sample_configuration(self):
@@ -288,8 +288,7 @@ class RRTPlanner:
             return
 
         print("Latest path from RRT:")
-        for n in self.latest_path:
-            print(n.pose)
+        self.latest_path.print_details()
         print("")
         print(f"Nodes sampled: {self.nodes_sampled}")
         print(f"Time to plan: {self.planning_time} seconds")
@@ -326,8 +325,8 @@ class RRTPlanner:
                     artists.append(edge)
         
         if show_path and self.latest_path is not None:
-            x = [p.pose.x for p in self.latest_path]
-            y = [p.pose.y for p in self.latest_path]
+            x = [p.x for p in self.latest_path.poses]
+            y = [p.y for p in self.latest_path.poses]
             path, = axes.plot(x, y, "m-", linewidth=3, zorder=1)
             start, = axes.plot(x[0], y[0], "go", zorder=2)
             goal, = axes.plot(x[-1], y[-1], "rx", zorder=2)

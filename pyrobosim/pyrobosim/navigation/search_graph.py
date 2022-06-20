@@ -4,7 +4,7 @@ from astar import AStar
 import numpy as np
 import warnings
 
-from .trajectory import fill_path_yaws
+from ..utils.motion import Path
 from ..utils.pose import Pose
 
 
@@ -20,9 +20,8 @@ class SearchGraphPlanner:
             warnings.warn("No search graph defined for this world.")
             return None
 
-        path = self.graph.find_path(start, goal)
-        path = fill_path_yaws(path)
-        self.latest_path = path
+        self.latest_path = self.graph.find_path(start, goal)
+        self.latest_path.fill_yaws()
         return self.latest_path
 
     def plot(self, axes, show_graph=True, show_path=True):
@@ -35,8 +34,8 @@ class SearchGraphPlanner:
             artists = []
 
         if show_path and self.latest_path is not None:
-            x = [p.pose.x for p in self.latest_path]
-            y = [p.pose.y for p in self.latest_path]
+            x = [p.x for p in self.latest_path.poses]
+            y = [p.y for p in self.latest_path.poses]
             path, = axes.plot(x, y, "m-", linewidth=3, zorder=1)
             start, = axes.plot(x[0], y[0], "go", zorder=2)
             goal, = axes.plot(x[-1], y[-1], "rx", zorder=2)
@@ -179,15 +178,15 @@ class SearchGraph:
         :type start: :class:`Node`
         :param goal: Goal node
         :type goal: :class:`Node`
-        :return: List of graph Node objects describing the path
-        :rtype: list[:class:`Node`]
+        :return: Path from start to goal.
+        :rtype: :class:`pyrobosim.utils.motion.Path`
         """
         path = self.solver.astar(start, goal)
         if path is None:
             warnings.warn("Did not find a path from start to goal.")
-            return path
+            return Path()
         else:
-            return list(path)
+            return Path(poses=[p.pose for p in path])
 
     def nearest_node(self, pose):
         """ 

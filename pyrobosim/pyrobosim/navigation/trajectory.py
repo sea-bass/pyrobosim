@@ -6,24 +6,6 @@ from scipy.spatial.transform import Slerp, Rotation
 from ..utils.pose import wrap_angle
 
 
-def fill_path_yaws(path):
-    """ 
-    Fills in any yaw angles along a path to point at the next waypoint.
-    
-    :param path: List of poses representing a path.
-    :type path: list[:class:`pyrobosim.utils.pose.Pose`]
-    :return: Path with filled-in yaw angle values.
-    :rtype: list[:class:`pyrobosim.utils.pose.Pose`]
-    """
-    if path is None:
-        return path
-
-    for idx in range(1, len(path)-1):
-        path[idx].pose.yaw = np.arctan2(path[idx].pose.y - path[idx-1].pose.y,
-                                        path[idx].pose.x - path[idx-1].pose.x)
-    return path
-
-
 def get_constant_speed_trajectory(path, linear_velocity=0.2, max_angular_velocity=None):
     """
     Gets a trajectory from a path (list of Pose objects) by
@@ -32,8 +14,8 @@ def get_constant_speed_trajectory(path, linear_velocity=0.2, max_angular_velocit
     The trajectory is returned as a tuple of numpy arrays
     (t_pts, x_pts, y_pts, theta_pts).
 
-    :param path: List of poses representing a path.
-    :type path: list[:class:`pyrobosim.utils.pose.Pose`]
+    :param path: Path object from which to compute a trajectory.
+    :type path: :class:`pyrobosim.utils.motion.Path`
     :param linear_velocity: Constant linear velocity in m/s, defaults to 0.2.
     :type linear_velocity: float
     :param max_angular_velocity: Maximum angular velocity in rad/s, defaults to None.
@@ -41,15 +23,15 @@ def get_constant_speed_trajectory(path, linear_velocity=0.2, max_angular_velocit
     :return: Trajectory type of the form (t_pts, x_pts, y_pts, theta_pts).
     :rtype: tuple(:class:`numpy.array`)
     """
-    if len(path) == 0:
+    if path.num_poses == 0:
         return None
 
     # Calculate the time points for the path at constant velocity, also accounting for
     # the maximum angular velocity if one is specified
-    t_pts = np.zeros_like(path, dtype=np.float)
-    for idx in range(len(path)-1):
-        start_pose = path[idx].pose
-        end_pose = path[idx+1].pose
+    t_pts = np.zeros_like(path.poses, dtype=np.float)
+    for idx in range(path.num_poses - 1):
+        start_pose = path.poses[idx]
+        end_pose = path.poses[idx+1]
         lin_time = start_pose.get_linear_distance(end_pose) / linear_velocity
         if max_angular_velocity is None:
             ang_time = 0
@@ -59,9 +41,9 @@ def get_constant_speed_trajectory(path, linear_velocity=0.2, max_angular_velocit
         t_pts[idx+1] = t_pts[idx] + max(lin_time, ang_time)
 
     # Package up the trajectory
-    x_pts = np.array([p.pose.x for p in path])
-    y_pts = np.array([p.pose.y for p in path])
-    yaw_pts = np.array([p.pose.yaw for p in path])
+    x_pts = np.array([p.x for p in path.poses])
+    y_pts = np.array([p.y for p in path.poses])
+    yaw_pts = np.array([p.yaw for p in path.poses])
     traj = (t_pts, x_pts, y_pts, yaw_pts)
     return traj
 
