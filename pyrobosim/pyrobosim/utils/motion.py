@@ -13,8 +13,23 @@ class Path:
         :param poses: List of poses representing a path.
         :type poses: list[:class:`pyrobosim.utils.pose.Pose`], optional
         """
+        self.set_poses(poses)
+
+
+    def set_poses(self, poses):
+        """
+        Sets the list of poses and computes derived quantities.
+        Use this method to change the poses of an existing path, 
+        rather than directly assigning the `poses` attribute.
+
+        :param poses: List of poses representing a path.
+        :type poses: list[:class:`pyrobosim.utils.pose.Pose`], optional
+        """
         self.poses = poses
         self.num_poses = len(self.poses)
+        self.length = 0.0
+        for i in range(self.num_poses - 1):
+            self.length += self.poses[i].get_linear_distance(self.poses[i + 1])
 
 
     def fill_yaws(self):
@@ -33,12 +48,14 @@ class Path:
 
     def __repr__(self):
         """ Return brief description of the path. """
-        print_str = f"Path with f{self.num_poses} waypoints."
+        print_str = f"Path with {self.num_poses} points, Length {self.length:.3f}"
         return print_str
 
 
     def print_details(self):
         """ Print detailed description of the path. """
-        print_str = f"Path with f{self.num_poses} waypoints."
-        for p in self.poses:
-            print_str += f"\t{p}"
+        print_str = f"Path with {self.num_poses} points."
+        for i, p in enumerate(self.poses):
+            print_str += f"\n  {i + 1}. {p}"
+        print_str += f"\nTotal Length: {self.length:.3f}"
+        print(print_str)
