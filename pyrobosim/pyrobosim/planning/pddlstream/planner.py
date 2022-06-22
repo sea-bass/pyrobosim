@@ -71,7 +71,7 @@ class PDDLStreamPlanner():
         prob = PDDLProblem(self.domain_pddl, 
                           constant_map,
                           external_pddl, 
-                          get_stream_map(),
+                          get_stream_map(self.world),
                           init,
                           goal)
 

@@ -30,6 +30,8 @@ def load_world(args):
     loader = WorldYamlLoader()
     if (args.example == "01_simple") or (args.example == "02_derived"):
         world_file = "pddlstream_simple_world.yaml"
+    elif (args.example == "03_nav_stream"):
+        world_file = "pddlstream_simple_world.yaml"
     else:
         print(f"Invalid example: {args.example}")
         return
@@ -63,6 +65,14 @@ def start_planner(world, args):
         ]
     elif args.example == "02_derived":
         # Task specification for derived predicate example.
+        goal_literals = [
+            ("Has", get("desk0_desktop"), get("banana0")),
+            ("Has", "counter", get("apple1")),
+            ("HasNone", get("bathroom"), "banana"),
+            ("HasAll", "counter", "water")
+        ]
+    elif args.example == "03_nav_stream":
+        # Task specification for navigation stream example.
         goal_literals = [
             ("Has", get("desk0_desktop"), get("banana0")),
             ("Has", "counter", get("apple1")),

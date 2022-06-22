@@ -251,6 +251,7 @@ class WorldCanvas(FigureCanvasQTAgg):
             self.show_planner_and_path()
         else:
             path = self.world.current_path
+            self.world.current_goal = self.world.get_entity_by_name(goal)
             self.show_path(path)
         self.world.robot.follow_path(
             path, target_location=self.world.current_goal,

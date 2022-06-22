@@ -1,17 +1,17 @@
-; PDDL PLANNING DOMAIN (DERIVED PREDICATES)
+; PDDL PLANNING DOMAIN (NAVIGATION STREAMS)
 ;
 ; This planning domain contains `navigate`, `pick`, and `place` actions.
 ;
-; All actions are symbolic, meaning there are no different types of grasps
-; or feasibility checks, under the assumption that a downstream planner exists.
-;
-; This domain introduces the derived predicates `Has`, `HasNone`, and `HasAll`,
-; which allow for more complex goal specifications.
+; The `navigate` action uses streams to sample two sets of parameters:
+; 1. A goal pose for a location is sampled from a discrete list of navigation poses,
+;    denoted with the verified predicate `NavPose`.
+; 2. A path from a motion planner is sampled from a motion planner,
+;    denoted with the verified predicate `Motion`.
 ;
 ; Accompanying streams are defined in the `stream.pddl` file.
 
 
-(define (domain domain_derived)
+(define (domain domain_nav_stream)
   (:requirements :strips :equality)
   (:predicates  ; Static predicates
                 (Robot ?r)              ; Represents the robot
@@ -21,33 +21,44 @@
                 (Location ?l)           ; Location representation
                 (Type ?t)               ; Type of location or object
                 (Is ?o ?t)              ; Type correspondence of location or object
-
+                (Pose ?p)               ; Pose of an entity
+                (Path ?pth)            ; Path from one pose to another
+                
                 ; Fluent predicates
                 (Holding ?r ?o)         ; Object the robot is holding
                 (At ?o ?l)              ; Robot/Object's location
+                (AtPose ?e ?p)          ; Robot/Object's pose
                 (AtRoom ?l ?r)          ; Location's corresponding room
                 (Has ?loc ?entity)      ; Check existence of object types in locations
                 (HasNone ?loc ?entity)  ; Check nonexistence of object types in locations
                 (HasAll ?loc ?entity)   ; Check exclusivity of object types in locations
+
+                ; Stream verified predicates
+                (NavPose ?l ?p)         ; Navigation pose for a location
+                (Motion ?p1 ?p2 ?pth)   ; Valid motion from one pose to another
   )
 
   ; FUNCTIONS : See their descriptions in the stream PDDL file
   (:functions 
-    (Dist ?l1 ?l2)
-    (PickPlaceCost)
+    (PathLength ?pth)
+    (PickPlaceCost ?l ?o)
   )
 
   ; ACTIONS 
-  ; NAVIGATE: Moves the robot from one location to the other
+  ; NAVIGATE: Moves the robot from its current pose to a location at a specific pose
   (:action navigate
-    :parameters (?r ?l1 ?l2)
-    :precondition (and (Robot ?r) 
-                       (Location ?l1) 
-                       (Location ?l2) 
-                       (At ?r ?l1))
-    :effect (and (At ?r ?l2)
-                 (not (At ?r ?l1))
-                 (increase (total-cost) (Dist ?l1 ?l2)))
+    :parameters (?r ?l1 ?l2 ?p1 ?p2 ?pth)
+    :precondition (and (Robot ?r)
+                       (Location ?l1) (Location ?l2)
+                       (Pose ?p1) (Pose ?p2)
+                       (At ?r ?l1) (not (At ?r ?l2))
+                       (AtPose ?r ?p1)
+                       (NavPose ?l2 ?p2)
+                       (Path ?pth) (Motion ?p1 ?p2 ?pth)
+                  )
+    :effect (and (At ?r ?l2) (not (At ?r ?l1))
+                 (AtPose ?r ?p2) (not (AtPose ?r ?p1))
+                 (increase (total-cost) (PathLength ?pth)))
   )
 
   ; PICK: Picks up an object from a specified location

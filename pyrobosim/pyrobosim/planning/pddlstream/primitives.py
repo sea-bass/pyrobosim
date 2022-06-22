@@ -36,3 +36,47 @@ def get_straight_line_distance(l1, l2):
             if dist < min_dist:
                 min_dist = dist
     return min_dist
+
+
+def get_nav_poses(l):
+    """
+    Gets a finite list of navigation poses for a specific location.
+
+    :param l: Location from which get navigation poses.
+    :type l: Location
+    :return: List of tuples containing navigation poses.
+    :rtype: list[tuple]
+    """
+    return [(p,) for p in l.nav_poses]
+
+
+def get_path_length(path):
+    """ 
+    Simple wrapper to get the length of a path.
+
+    :param path: Path from start to goal.
+    :type path: :class:`pyrobosim.utils.motion.Path`
+    :return: Length of the path.
+    :rtype: float
+    """
+    return path.length
+
+
+def sample_motion(planner, p1, p2):
+    """
+    Samples a feasible motion plan from a start to a goal pose.
+
+    :param planner: Motion planner object.
+    :type planner: Planner
+    :param start: Start pose.
+    :type start: :class:`pyrobosim.utils.pose.Pose`
+    :param goal: Goal pose.
+    :type goal: :class:`pyrobosim.utils.pose.Pose`
+    :return: Generator yielding tuple containing a path from start to goal
+    :rtype: generator[tuple[:class:`pyrobosim.utils.motion.Path`]]
+    """
+    while True:
+        path = planner.plan(p1, p2)
+        if path.num_poses == 0:
+            break
+        yield (path,)

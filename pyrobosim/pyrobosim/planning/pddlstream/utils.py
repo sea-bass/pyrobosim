@@ -5,6 +5,7 @@ Utilities to connect world models with PDDLStream.
 import os
 
 from ..actions import TaskAction, TaskPlan
+from ...utils.motion import Path
 
 def get_default_domains_folder():
     """
@@ -35,7 +36,7 @@ def world_to_pddlstream_init(world):
     init = [("Robot", robot),
             ("HandEmpty", robot), 
             ("At", robot, init_loc),
-            ("Pose", robot, robot.pose),
+            ("Pose", robot.pose),
             ("AtPose", robot, robot.pose)]
 
     # Loop through all the locations and their relationships.
@@ -65,8 +66,6 @@ def world_to_pddlstream_init(world):
             init.append(("Holding", robot, obj))
         else:
             init.append(("At", obj, obj.parent))
-            init.append(("Pose", obj, obj.pose))
-            init.append(("AtPose", obj, obj.pose))
         obj_categories.add(obj.category)
     for obj_cat in obj_categories:
         init.append(("Type", obj_cat))        
@@ -92,11 +91,15 @@ def pddlstream_solution_to_plan(solution):
     plan_out = TaskPlan(actions=[])
     for act_pddl in plan:
         # Convert the PDDL action to a TaskAction
-        act = TaskAction(act_pddl.name) 
+        act = TaskAction(act_pddl.name)
         # Parse a NAVIGATE action
         if act.type == "navigate":
             act.source_location = act_pddl.args[1]
             act.target_location = act_pddl.args[2]
+            # Search for a path.
+            for arg in act_pddl.args[3:]:
+                if isinstance(arg, Path):
+                    act.path = arg
         # Parse a PICK or PLACE action
         elif act.type == "pick" or act.type == "place":
             act.object = act_pddl.args[1]
