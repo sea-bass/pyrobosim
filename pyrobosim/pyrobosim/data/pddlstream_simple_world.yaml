@@ -26,7 +26,7 @@ robots:
       max_connection_dist: 0.25
       bidirectional: false
       rrt_star: true
-      rewire_radius: 1.0
+      rewire_radius: 1.5
 
 
 # PLANNING: Global planner

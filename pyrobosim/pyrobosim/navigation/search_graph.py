@@ -127,7 +127,7 @@ class SearchGraph:
                 if e.n0 == ndel or e.n1 == ndel:
                     self.edges.remove(e)
 
-    def check_connectivity(self, start, goal):
+    def check_connectivity(self, start, goal, ignore_max_dist=False):
         """
         Checks connectivity between two nodes `start` and `goal` in the world
         by sampling points spaced by the `self.collision_check_dist` parameter and verifying
@@ -137,6 +137,8 @@ class SearchGraph:
         :type start: :class:`Node`
         :param goal: Goal node
         :type goal: :class:`Node`
+        :param ignore_max_dist: If True, ignores maximum connection distance.
+        :type ignore_max_dist: bool, optional
         :return: True if nodes can be connected, else False.
         :rtype: bool
         """
@@ -147,7 +149,7 @@ class SearchGraph:
         # Check against the max edge distance.
         dist = start.pose.get_linear_distance(goal.pose, ignore_z=True)
         angle = start.pose.get_angular_distance(goal.pose)
-        if dist > self.max_edge_dist:
+        if (not ignore_max_dist) and (dist > self.max_edge_dist):
             return False
 
         # Build up the array of test X and Y coordinates for sampling between

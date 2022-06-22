@@ -224,16 +224,19 @@ class RRTPlanner:
             if (n != n_tgt) and (dist <= self.rewire_radius):
                 alt_cost = n.cost + dist
                 if (alt_cost < n_tgt.cost) and \
-                    graph.check_connectivity(n, n_tgt):
+                    graph.check_connectivity(n, n_tgt, ignore_max_dist=True):
                     n_rewire = n
                     n_tgt.cost = alt_cost
 
         # If we found a rewire node, do the rewire
         if n_rewire is not None:
             n_tgt.parent = n_rewire
-            for e in graph.edges.copy():
+            for e in graph.edges:
                 if e.n0 == n_tgt or e.n1 == n_tgt:
+                    e.n0.neighbors.remove(e.n1)
+                    e.n1.neighbors.remove(e.n0)
                     graph.edges.remove(e)
+                    break
             graph.edges.add(Edge(n_tgt, n_tgt.parent))
             self.n_rewires += 1
 
@@ -264,6 +267,8 @@ class RRTPlanner:
             if dist < self.max_connection_dist and self.graph.connect(n_curr, n_tgt):
                 n_tgt.parent = n_curr
                 graph.nodes.add(n_tgt)
+                if self.rrt_star:
+                    self.rewire_node(graph, n_tgt)
                 return True, n_tgt
 
             if self.rrt_connect:
