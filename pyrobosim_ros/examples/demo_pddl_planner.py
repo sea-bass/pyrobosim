@@ -23,7 +23,7 @@ def parse_args():
     """ Parse command-line arguments """
     parser = argparse.ArgumentParser(description="PDDLStream demo planner node.")
     parser.add_argument("--example", default="01_simple",
-                        help="Example name (01_simple, 02_derived)")
+                        help="Example name (01_simple, 02_derived, 03_nav_stream)")
     parser.add_argument("--subscribe", action="store_true",
                         help="If True, waits to receive goal on a subscriber.")
     parser.add_argument("--verbose", action="store_true",
@@ -31,15 +31,10 @@ def parse_args():
     return parser.parse_args()
 
 
-def load_world(args):
+def load_world():
     """ Load a test world. """
     loader = WorldYamlLoader()
-    if (args.example == "01_simple") or (args.example == "02_derived"):
-        world_file = "pddlstream_simple_world.yaml"
-    else:
-        print(f"Invalid example: {args.example}")
-        return
-
+    world_file = "pddlstream_simple_world.yaml"
     data_folder = get_data_folder()
     w = loader.from_yaml(os.path.join(data_folder, world_file))
     return w
@@ -65,7 +60,7 @@ class PlannerNode(Node):
             self.get_logger().info("Waiting for world state server...")
 
         # Create the world and planner
-        self.world = load_world(args)
+        self.world = load_world()
         domain_folder = os.path.join(
             get_default_domains_folder(), args.example)
         self.planner = PDDLStreamPlanner(self.world, domain_folder)
@@ -93,7 +88,15 @@ class PlannerNode(Node):
                     ("Has", get("desk0_desktop"), get("banana0")),
                     ("Has", "counter", get("apple1")),
                     ("HasNone", get("bathroom"), "banana"),
-                    ("HasAll", "counter", "water")
+                    ("HasAll", "table", "water")
+                ]
+            elif args.example == "03_nav_stream":
+                # Task specification for derived predicate example.
+                self.latest_goal = [
+                    ("Has", get("desk0_desktop"), get("banana0")),
+                    ("Has", "counter", get("apple1")),
+                    ("HasNone", get("bathroom"), "banana"),
+                    ("HasAll", "table", "water")
                 ]
             else:
                 print(f"Invalid example: {args.example}")
