@@ -7,7 +7,7 @@ from descartes.patch import PolygonPatch
 from ..navigation.search_graph import Node
 from ..utils.general import EntityMetadata
 from ..utils.pose import Pose, rot2d
-from ..utils.polygon import inflate_polygon, polygon_and_height_from_footprint
+from ..utils.polygon import inflate_polygon, polygon_and_height_from_footprint, transform_polygon
 
 
 class Location:
@@ -109,15 +109,6 @@ class Location:
                 if self.parent.is_collision_free(nav_pose):
                     self.nav_poses.append(nav_pose)
 
-    def get_raw_polygon(self):
-        """ 
-        Gets the raw polygon (without any pose offset).
-        
-        :return: Raw polygon.
-        :rtype: :class:`shapely.geometry.Polygon`
-        """
-        return polygon_and_height_from_footprint(self.metadata["footprint"])[0]
-
     def create_polygons(self, inflation_radius=0.0):
         """ 
         Creates collision and visualization polygons for the location. 
@@ -125,9 +116,10 @@ class Location:
         :param inflation_radius: Inflation radius, in meters.
         :type inflation_radius: float, optional
         """
-        self.polygon, self.height = polygon_and_height_from_footprint(
-            self.metadata["footprint"], pose=self.pose,
+        self.raw_polygon, self.height = polygon_and_height_from_footprint(
+            self.metadata["footprint"],
             parent_polygon=self.parent.polygon if self.parent is not None else None)
+        self.polygon = transform_polygon(self.raw_polygon, self.pose)
         self.update_collision_polygon(inflation_radius=inflation_radius)
         self.update_visualization_polygon()
 

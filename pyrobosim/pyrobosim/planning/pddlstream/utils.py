@@ -7,6 +7,7 @@ import os
 from ..actions import TaskAction, TaskPlan
 from ...utils.general import get_data_folder
 from ...utils.motion import Path
+from ...utils.pose import Pose
 
 
 def get_default_domains_folder():
@@ -68,6 +69,8 @@ def world_to_pddlstream_init(world):
             init.append(("Holding", robot, obj))
         else:
             init.append(("At", obj, obj.parent))
+            init.append(("Pose", obj.pose))
+            init.append(("AtPose", obj, obj.pose))
         obj_categories.add(obj.category)
     for obj_cat in obj_categories:
         init.append(("Type", obj_cat))        
@@ -107,8 +110,9 @@ def pddlstream_solution_to_plan(solution):
             act.object = act_pddl.args[1]
             act.target_location = act_pddl.args[2]
             # If a pick/place pose is specified, add it.
-            if len(act_pddl.args) > 3:
-                act.pose = act_pddl.args[3]
+            for arg in act_pddl.args[3:]:
+                if isinstance(arg, Pose):
+                    act.pose = arg
 
         # Add the action to the task plan
         plan_out.actions.append(act)

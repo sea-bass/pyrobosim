@@ -4,7 +4,7 @@ Mappings for PDDLStream functions, streams, and certificate tests.
 
 from pddlstream.language.function import FunctionInfo
 from pddlstream.language.stream import StreamInfo
-from pddlstream.language.generator import from_fn, from_gen_fn, from_list_fn
+from pddlstream.language.generator import from_fn, from_gen_fn, from_list_fn, from_test
 
 from . import primitives
 
@@ -22,10 +22,18 @@ def get_stream_map(world):
         "Dist": primitives.get_straight_line_distance,
         "PickPlaceCost": primitives.get_pick_place_cost,
         "PathLength": primitives.get_path_length,
-        # Streams
+        # Streams (that sample)
         "s-navpose": from_list_fn(primitives.get_nav_poses),
         "s-motion": from_gen_fn(
-            lambda p1, p2: primitives.sample_motion(planner, p1, p2))
+            lambda p1, p2: primitives.sample_motion(planner, p1, p2)),
+        "s-place": from_gen_fn(
+            lambda l, o: primitives.sample_place_pose(
+                l, o, padding=world.object_radius, 
+                max_tries=world.max_object_sample_tries)),
+        # Streams (no sampling, just testing)
+        "t-collision-free": from_test(
+            lambda o1, p1, o2, p2: primitives.test_collision_free(
+                o1, p1, o2, p2, padding=world.object_radius)),
     }
 
 def get_stream_info():
@@ -36,11 +44,10 @@ def get_stream_info():
     :rtype: dict(str, FunctionInfo/StreamInfo)
     """
     return {
-        # Functions
-        "Dist": FunctionInfo(opt_fn=primitives.get_straight_line_distance),
-        "PickPlaceCost": FunctionInfo(opt_fn=primitives.get_pick_place_cost),
-        "PathLength": FunctionInfo(opt_fn=primitives.get_path_length),
-        # Streams
+        # Streams (that sample)
         "s-navpose": StreamInfo(eager=True),
-        "s-motion": StreamInfo(eager=True)
+        "s-motion": StreamInfo(eager=False),
+        "s-place": StreamInfo(eager=False),
+        # Streams (no sampling, just testing)
+        "t-collision-free": StreamInfo(eager=False, negate=True),
     }

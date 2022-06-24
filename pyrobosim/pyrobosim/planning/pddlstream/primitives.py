@@ -4,6 +4,9 @@ Helper primitives for PDDLStream based planning.
 
 import numpy as np
 
+from ...utils.pose import Pose
+from ...utils.polygon import inflate_polygon, sample_from_polygon, transform_polygon
+
 def get_pick_place_cost(l, o):
     """
     Estimates a dummy pick / place cost for a specific location / object combination,
@@ -80,3 +83,60 @@ def sample_motion(planner, p1, p2):
         if path is None or path.num_poses == 0:
             break
         yield (path,)
+
+
+def sample_place_pose(l, o, padding=0.0, max_tries=100):
+    """
+    Samples a feasible placement pose for an object at a specific location.
+
+    :param l: Location at which to place object.
+    :type l: Location
+    :param o: Object to place.
+    :type o: Object
+    :param padding: Padding around edge of location polygon for collision checking.
+    :type padding: float, optional
+    :param max_tries: Maximum samples to try before giving up.
+    :type max_tries: int, optional
+    :return: Generator yielding tuple containing a placement pose
+    :rtype: generator[tuple[:class:`pyrobosim.utils.pose.Pose`]]
+    """
+    obj_poly = inflate_polygon(o.raw_polygon, padding)
+    while True:
+        # Sample a pose
+        x_sample, y_sample = sample_from_polygon(l.polygon, max_tries=max_tries)
+        if not x_sample or not y_sample:
+            break # If we can't sample a pose, we should give up.
+        yaw_sample = np.random.uniform(-np.pi, np.pi)
+        pose_sample = Pose(x=x_sample, y=y_sample, yaw=yaw_sample,
+                           z=l.height + o.height/2.0)
+
+        # Check that the object is inside the polygon.
+        poly_sample = transform_polygon(obj_poly, pose_sample)
+        is_valid_pose = poly_sample.within(l.polygon)
+        if not is_valid_pose:
+            continue # If our sample is in collision, simply retry.
+
+        yield (pose_sample,)
+
+
+def test_collision_free(o1, p1, o2, p2, padding=0.0):
+    """
+    Test for collisions between two objects at specified poses and padding.
+    
+    :param o1: First object
+    :type o1: :class:`pyrobosim.core.objects.Object`
+    :param p1: Pose of first object
+    :type p1: :class:`pyrobosim.utils.pose.Pose`
+    :param o2: Second object
+    :type o2: :class:`pyrobosim.core.objects.Object`
+    :param p2: Pose of second object
+    :type p2: :class:`pyrobosim.utils.pose.Pose`
+    :param padding: Padding for collision checking.
+    :type padding: float, optional
+    :return: True if the two objects are collision free.
+    :rtype: bool
+    """
+    o1_poly = transform_polygon(
+        inflate_polygon(o1.raw_polygon, padding), p1)
+    o2_poly = transform_polygon(o2.raw_polygon, p2)
+    return not o1_poly.intersects(o2_poly)

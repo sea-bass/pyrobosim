@@ -18,7 +18,7 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="PDDLStream demo goal specification publisher node.")
     parser.add_argument("--example", default="01_simple",
-                        help="Example name (01_simple, 02_derived, 03_nav_stream)")
+                        help="Example name (01_simple, 02_derived, 03_nav_stream, 04_nav_manip_stream)")
     return parser.parse_args()
 
 
@@ -43,15 +43,7 @@ class GoalPublisher(Node):
                 GoalPredicate(type="At", args=("banana0", "counter0_left")),
                 GoalPredicate(type="Holding", args=("robot", "water0"))
             ]
-        elif args.example == "02_derived":
-            # Goal specification for derived predicate example.
-            goal_predicates = [
-                GoalPredicate(type="Has", args=("desk0_desktop", "banana0")),
-                GoalPredicate(type="Has", args=("counter", "apple1")),
-                GoalPredicate(type="HasNone", args=("bathroom", "banana")),
-                GoalPredicate(type="HasAll", args=("table", "water"))
-            ]
-        elif args.example == "03_nav_stream":
+        elif args.example in ["02_derived", "03_nav_stream", "04_nav_manip_stream"]:
             # Goal specification for derived predicate example.
             goal_predicates = [
                 GoalPredicate(type="Has", args=("desk0_desktop", "banana0")),

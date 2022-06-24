@@ -81,7 +81,7 @@ class PDDLStreamPlanner():
         if focused:
             solution = solve_focused(prob,
                 planner=planner,
-                #stream_info=get_stream_info(),
+                stream_info=get_stream_info(),
                 search_sample_ratio=search_sample_ratio,
                 max_time=max_time,
                 max_planner_time=max_time,

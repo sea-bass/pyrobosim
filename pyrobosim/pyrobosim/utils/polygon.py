@@ -108,11 +108,11 @@ def transform_polygon(polygon, pose):
     :return: The transformed Shapely polygon.
     :rtype: :class:`shapely.geometry.Polygon`
     """
-    polygon = translate(polygon,
-                        xoff=pose.x, yoff=pose.y)
-    polygon = rotate(
-        polygon, pose.yaw, origin=(pose.x, pose.y), use_radians=True)
-
+    if pose is not None:
+        polygon = translate(polygon,
+                            xoff=pose.x, yoff=pose.y)
+        polygon = rotate(
+            polygon, pose.yaw, origin=(pose.x, pose.y), use_radians=True)
     return polygon
 
 

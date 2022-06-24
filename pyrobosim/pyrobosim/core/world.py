@@ -350,7 +350,7 @@ class World:
 
         # Check that the location fits within the room and is not in collision with
         # other locations already in the room. Else, warn and do not add it.
-        new_polygon = transform_polygon(loc.get_raw_polygon(), pose)
+        new_polygon = transform_polygon(loc.raw_polygon, pose)
         is_valid_pose = new_polygon.within(room.polygon)
         for other_loc in room.locations:
             is_valid_pose = is_valid_pose and not new_polygon.intersects(other_loc.polygon)

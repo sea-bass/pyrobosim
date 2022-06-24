@@ -52,7 +52,7 @@ class TaskAction:
             if self.target_location is not None:
                 act_str += f" to {self.target_location}"
             if self.pose is not None:
-                act_str += f" at {self.pose}"
+                act_str += f"\nAt {self.pose}"
             if self.path.num_poses > 0:
                 act_str += f"\n{self.path}"
         # PICK
@@ -65,7 +65,7 @@ class TaskAction:
             if self.target_location is not None:
                 act_str += f" from {self.target_location}"
             if self.pose is not None:
-                act_str += f" at {self.pose}"
+                act_str += f"\nAt {self.pose}"
         # PLACE
         elif self.type == "place":
             act_str = "Place"
@@ -76,7 +76,7 @@ class TaskAction:
             if self.target_location is not None:
                 act_str += f" at {self.target_location}"
             if self.pose is not None:
-                act_str += f" at {self.pose}"
+                act_str += f" \nAt {self.pose}"
         else:
             print(f"Invalid action type {self.action_type}")
             return None

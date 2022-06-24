@@ -23,7 +23,7 @@ def parse_args():
     """ Parse command-line arguments """
     parser = argparse.ArgumentParser(description="PDDLStream demo planner node.")
     parser.add_argument("--example", default="01_simple",
-                        help="Example name (01_simple, 02_derived, 03_nav_stream)")
+                        help="Example name (01_simple, 02_derived, 03_nav_stream, 04_nav_manip_stream)")
     parser.add_argument("--subscribe", action="store_true",
                         help="If True, waits to receive goal on a subscriber.")
     parser.add_argument("--verbose", action="store_true",
@@ -82,15 +82,7 @@ class PlannerNode(Node):
                     ("At", get("banana0"), get("counter0_left")),
                     ("Holding", get("robot"), get("water0"))
                 ]
-            elif args.example == "02_derived":
-                # Task specification for derived predicate example.
-                self.latest_goal = [
-                    ("Has", get("desk0_desktop"), get("banana0")),
-                    ("Has", "counter", get("apple1")),
-                    ("HasNone", get("bathroom"), "banana"),
-                    ("HasAll", "table", "water")
-                ]
-            elif args.example == "03_nav_stream":
+            elif args.example in ["02_derived", "03_nav_stream", "04_nav_manip_stream"]:
                 # Task specification for derived predicate example.
                 self.latest_goal = [
                     ("Has", get("desk0_desktop"), get("banana0")),
@@ -128,11 +120,11 @@ class PlannerNode(Node):
             return
 
         # Unpack the latest world state.
-        # try:
-        result = self.world_state_future_response.result()
-        update_world_from_state_msg(self.world, result.state)
-        # except Exception as e:
-        #     self.get_logger().info("Failed to unpack world state.")
+        try:
+            result = self.world_state_future_response.result()
+            update_world_from_state_msg(self.world, result.state)
+        except Exception as e:
+            self.get_logger().info("Failed to unpack world state.")
 
         # Once the world state is set, plan.
         plan = self.planner.plan(self.latest_goal, focused=True, verbose=self.verbose)

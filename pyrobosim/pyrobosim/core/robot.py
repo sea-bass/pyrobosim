@@ -150,7 +150,7 @@ class Robot:
         """
         # Validate input
         if self.manipulated_object is not None:
-            warnings.warn(f"Robot is already holding {self.robot.manipulated_object.name}.")
+            warnings.warn(f"Robot is already holding {self.manipulated_object.name}.")
             return False
 
         # Get object
@@ -201,11 +201,11 @@ class Robot:
             return False
 
         # Place the object somewhere in the current location
-        poly = inflate_polygon(self.manipulated_object.get_raw_polygon(),
+        is_valid_pose = False
+        poly = inflate_polygon(self.manipulated_object.raw_polygon,
                                self.world.object_radius)
         if pose is None:
             # If no pose was specified, sample one
-            is_valid_pose = False
             for _ in range(self.world.max_object_sample_tries):
                 x_sample, y_sample = sample_from_polygon(loc.polygon)
                 yaw_sample = np.random.uniform(-np.pi, np.pi)
@@ -215,25 +215,28 @@ class Robot:
                 for other_obj in loc.children:
                     is_valid_pose = is_valid_pose and not sample_poly.intersects(other_obj.polygon)
                 if is_valid_pose:
-                    self.manipulated_object.parent = loc
-                    self.manipulated_object.set_pose(pose_sample)
-                    self.manipulated_object.create_polygons()
-                    loc.children.append(self.manipulated_object)
-                    self.manipulated_object = None
-                    return True
-            warnings.warn(f"Could not sample a placement position at {loc.name}")
-            return False
+                    pose = pose_sample
+                    break
+            if not is_valid_pose:
+                warnings.warn(f"Could not sample a placement position at {loc.name}")
+                return False
         else:
             # If a pose was specified, collision check it
-            poly = transform_polygon(poly, pose_sample)
+            poly = transform_polygon(poly, pose)
             is_valid_pose = poly.within(loc.polygon)
             for other_obj in loc.children:
                 is_valid_pose = is_valid_pose and not poly.intersects(other_obj.polygon)
-            if is_valid_pose:
-                return True
-            else:
+            if not is_valid_pose:
                 warnings.warn(f"Pose in collision or not in location {loc.name}.")
                 return False
+
+        if is_valid_pose:
+            self.manipulated_object.parent = loc
+            self.manipulated_object.set_pose(pose)
+            self.manipulated_object.create_polygons()
+            loc.children.append(self.manipulated_object)
+            self.manipulated_object = None
+            return True
 
     def execute_action(self, action, blocking=False):
         """ 
@@ -279,9 +282,9 @@ class Robot:
 
         elif action.type == "place":
             if self.world.has_gui:
-                success = self.world.gui.canvas.place_object()
+                success = self.world.gui.canvas.place_object(action.pose)
             else:
-                success = self.place_object()
+                success = self.place_object(action.pose)
 
         else:
             print(f"Invalid action type: {action.type}")

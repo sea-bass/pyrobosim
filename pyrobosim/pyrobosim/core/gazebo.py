@@ -212,7 +212,7 @@ class WorldGazeboExporter:
             poly = entity.viz_polygon
         elif entity_type == "object":
             height = entity.height
-            poly = entity.get_raw_polygon()
+            poly = entity.raw_polygon
         else:
             raise Exception(f"Invalid option specified: {entity_type}")
 

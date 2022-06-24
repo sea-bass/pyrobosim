@@ -310,10 +310,12 @@ class WorldCanvas(FigureCanvasQTAgg):
             return success
         return False
 
-    def place_object(self):
+    def place_object(self, pose=None):
         """
         Places an object at the robot's current location.
         
+        :param pose: Optional placement pose, defaults to None.
+        :type pose: :class:`pyrobosim.utils.pose.Pose`
         :return: True if placing succeeds, else False
         :rtype: bool
         """
@@ -323,7 +325,7 @@ class WorldCanvas(FigureCanvasQTAgg):
             if obj is None:
                 return
             obj.viz_patch.remove()
-            success = robot.place_object()
+            success = robot.place_object(pose=pose)
             self.axes.add_patch(obj.viz_patch)
             self.update_object_plot(obj)
             self.show_world_state()

@@ -4,7 +4,7 @@ import warnings
 from descartes.patch import PolygonPatch
 
 from ..utils.general import EntityMetadata
-from ..utils.polygon import inflate_polygon, polygon_and_height_from_footprint
+from ..utils.polygon import inflate_polygon, polygon_and_height_from_footprint, transform_polygon
 
 
 class Object:
@@ -74,14 +74,6 @@ class Object:
         """
         return self.parent.get_room_name()
 
-    def get_raw_polygon(self):
-        """ 
-        Gets the raw polygon (without any pose offset).
-        
-        :return: Raw polygon.
-        :rtype: :class:`shapely.geometry.Polygon`
-        """
-        return polygon_and_height_from_footprint(self.metadata["footprint"])[0]
 
     def create_polygons(self, inflation_radius=0.0):
         """ 
@@ -90,13 +82,15 @@ class Object:
         :param inflation_radius: Inflation radius, in meters.
         :type inflation_radius: float, optional
         """
-        self.polygon, height = polygon_and_height_from_footprint(
-            self.metadata["footprint"], pose=self.pose)
+        self.raw_polygon, height = polygon_and_height_from_footprint(
+            self.metadata["footprint"])
+        self.polygon = transform_polygon(self.raw_polygon, self.pose)
         if height is not None:
             self.height = height
         self.centroid = list(self.polygon.centroid.coords)[0]
         self.update_collision_polygon(inflation_radius)
         self.update_visualization_polygon()
+        
 
     def update_collision_polygon(self, inflation_radius=0.0):
         """
