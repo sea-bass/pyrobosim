@@ -21,7 +21,9 @@ The current example list is:
 
 * ``01_simple`` - Simple domain with purely discrete actions
 * ``02_derived`` - Purely discrete actions, but uses *derived predicates* for more complex goals
-* Continuous action parameters coming soon!
+* ``03_nav_stream`` - Samples navigation poses and entire motion plan instances
+
+These PDDL domain and stream description files can be found in the ``pyrobosim/pyrobosim/data/pddlstream/domains`` folder.
 
 Standalone
 ----------
