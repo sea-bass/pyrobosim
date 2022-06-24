@@ -307,6 +307,10 @@ class Robot:
         :return: True if the plan succeeds, or False otherwise.
         :rtype: bool
         """
+        if plan is None:
+            print(f"Plan is None. Returning.")
+            return False
+
         self.executing_plan = True
         self.current_plan = plan
         print(f"Executing task plan...")

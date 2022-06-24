@@ -77,6 +77,6 @@ def sample_motion(planner, p1, p2):
     """
     while True:
         path = planner.plan(p1, p2)
-        if path.num_poses == 0:
+        if path is None or path.num_poses == 0:
             break
         yield (path,)

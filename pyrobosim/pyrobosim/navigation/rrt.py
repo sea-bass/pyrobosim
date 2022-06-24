@@ -58,7 +58,7 @@ class RRTPlanner:
         """ Resets the search trees and planning metrics. """
         self.graph = SearchGraph(world=self.world)
         self.graph_goal = SearchGraph(world=self.world)
-        self.latest_path = None
+        self.latest_path = Path()
         self.planning_time = 0.0
         self.nodes_sampled = 0
         self.n_rewires = 0
@@ -134,8 +134,9 @@ class RRTPlanner:
             # Check max nodes samples or max time elapsed
             self.planning_time = time.time() - t_start
             if self.planning_time > self.max_time or self.nodes_sampled > self.max_nodes_sampled:
-                break
-            
+                self.latest_path = Path()
+                return
+
         # Now back out the path
         if self.bidirectional:
             n = n_goal_start_tree
@@ -288,12 +289,11 @@ class RRTPlanner:
         """
         Print metrics about the latest path computed.
         """
-        if self.latest_path is None:
+        if self.latest_path.num_poses == 0:
             print("No path.")
-            return
-
-        print("Latest path from RRT:")
-        self.latest_path.print_details()
+        else:
+            print("Latest path from RRT:")
+            self.latest_path.print_details()
         print("")
         print(f"Nodes sampled: {self.nodes_sampled}")
         print(f"Time to plan: {self.planning_time} seconds")
@@ -329,7 +329,7 @@ class RRTPlanner:
                                       color=self.color_goal, alpha=self.color_alpha)
                     artists.append(edge)
         
-        if show_path and self.latest_path is not None:
+        if show_path and self.latest_path.num_poses > 0:
             x = [p.x for p in self.latest_path.poses]
             y = [p.y for p in self.latest_path.poses]
             path, = axes.plot(x, y, "m-", linewidth=3, zorder=1)

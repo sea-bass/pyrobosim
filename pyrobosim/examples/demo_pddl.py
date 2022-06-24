@@ -69,7 +69,7 @@ def start_planner(world, args):
             ("Has", get("desk0_desktop"), get("banana0")),
             ("Has", "counter", get("apple1")),
             ("HasNone", get("bathroom"), "banana"),
-            ("HasAll", "counter", "water")
+            ("HasAll", "table", "water"),
         ]
     elif args.example == "03_nav_stream":
         # Task specification for navigation stream example.
@@ -77,7 +77,7 @@ def start_planner(world, args):
             ("Has", get("desk0_desktop"), get("banana0")),
             ("Has", "counter", get("apple1")),
             ("HasNone", get("bathroom"), "banana"),
-            ("HasAll", "counter", "water")
+            ("HasAll", "table", "water")
         ]
     else:
         print(f"Invalid example: {args.example}")
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     args = parse_args()
     w = load_world(args)
 
-    # Start ROS Node in separate thread.
+    # Start task and motion planner in separate thread.
     t = threading.Thread(target=start_planner, args=(w, args))
     t.start()
 
