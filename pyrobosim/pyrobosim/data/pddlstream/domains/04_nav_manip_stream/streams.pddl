@@ -11,9 +11,10 @@
              (and (Path ?pth))
   )
 
-  ; PICKPLACECOST: Cost to perform pick and place at a location.
-  (:function (PickPlaceCost ?l ?o)
-             (and (Location ?l) (Obj ?o))
+  ; PICKPLACEATPOSECOST: Cost to perform pick and place at a location.
+  ;                      The object is at Pose p and robot at Pose pr.
+  (:function (PickPlaceAtPoseCost ?l ?o ?p ?pr)
+             (and (Location ?l) (Obj ?o) (Pose ?p) (Pose ?pr))
   )
 
   ; S-NAVPOSE: Samples a pose from a finite set of navigation poses for that location.

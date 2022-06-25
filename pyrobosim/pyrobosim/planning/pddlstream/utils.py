@@ -37,7 +37,7 @@ def world_to_pddlstream_init(world):
     if not init_loc:
         init_loc = world.get_location_from_pose(robot.pose)
     init = [("Robot", robot),
-            ("HandEmpty", robot), 
+            ("HandEmpty", robot),
             ("At", robot, init_loc),
             ("Pose", robot.pose),
             ("AtPose", robot, robot.pose)]
@@ -110,7 +110,8 @@ def pddlstream_solution_to_plan(solution):
             act.object = act_pddl.args[1]
             act.target_location = act_pddl.args[2]
             # If a pick/place pose is specified, add it.
-            for arg in act_pddl.args[3:]:
+            if len(act_pddl.args) > 3:
+                arg = act_pddl.args[3]
                 if isinstance(arg, Pose):
                     act.pose = arg
 

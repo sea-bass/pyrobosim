@@ -69,30 +69,31 @@
 
   ; PICK: Picks up an object from a specified location
   (:action pick
-    :parameters (?r ?o ?l ?p)
+    :parameters (?r ?o ?l ?p ?pr)
     :precondition (and (Robot ?r)
                        (Obj ?o)
                        (Location ?l)
-                       (Pose ?p)
+                       (Pose ?p) (AtPose ?o ?p)
+                       (Pose ?pr) (AtPose ?r ?pr)
                        (not (Room ?l))
                        (HandEmpty ?r) 
                        (At ?r ?l)
-                       (At ?o ?l)
-                       (AtPose ?o ?p))
+                       (At ?o ?l))
     :effect (and (Holding ?r ?o)
                  (not (HandEmpty ?r)) 
                  (not (At ?o ?l))
                  (not (AtPose ?o ?p))
-                 (increase (total-cost) (PickPlaceCost ?l ?o)))
+                 (increase (total-cost) (PickPlaceAtPoseCost ?l ?o ?p ?pr)))
   )
 
   ; PLACE: Places an object in a specified location
   (:action place
-    :parameters (?r ?o ?l ?p)
+    :parameters (?r ?o ?l ?p ?pr)
     :precondition (and (Robot ?r)
                        (Obj ?o)
                        (Location ?l)
-                       (Pose ?p)
+                       (Pose ?p) 
+                       (Pose ?pr) (AtPose ?r ?pr)
                        (not (Room ?l))
                        (At ?r ?l)
                        (not (HandEmpty ?r)) 
@@ -102,7 +103,7 @@
     :effect (and (HandEmpty ?r) 
                  (At ?o ?l) (AtPose ?o ?p)
                  (not (Holding ?r ?o))
-                 (increase (total-cost) (PickPlaceCost ?l ?o)))
+                 (increase (total-cost) (PickPlaceAtPoseCost ?l ?o ?p ?pr)))
   )
 
 

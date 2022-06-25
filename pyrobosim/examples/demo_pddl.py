@@ -22,6 +22,8 @@ def parse_args():
                         help="Example name (01_simple, 02_derived, 03_nav_stream, 04_nav_manip_stream)")
     parser.add_argument("--verbose", action="store_true",
                         help="Print planning output")
+    parser.add_argument("--search-sample-ratio", type=float, default=1.0,
+                        help="Search to sample ratio for planner")
     return parser.parse_args()
 
 
@@ -69,7 +71,8 @@ def start_planner(world, args):
         return
 
     input("Press Enter to start planning.")
-    plan = planner.plan(goal_literals, focused=True, verbose=args.verbose)
+    plan = planner.plan(goal_literals, focused=True, verbose=args.verbose,
+                        search_sample_ratio=args.search_sample_ratio)
     world.robot.execute_plan(plan, blocking=True)
 
 
@@ -81,5 +84,5 @@ if __name__ == "__main__":
     t = threading.Thread(target=start_planner, args=(w, args))
     t.start()
 
-    # Start the program either as ROS2 node or standalone.
+    # Start GUI in main thread.
     start_gui(w, sys.argv)

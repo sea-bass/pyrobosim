@@ -28,6 +28,8 @@ def parse_args():
                         help="If True, waits to receive goal on a subscriber.")
     parser.add_argument("--verbose", action="store_true",
                         help="Print planning output")
+    parser.add_argument("--search-sample-ratio", type=float, default=1.0,
+                        help="Search to sample ratio for planner")
     return parser.parse_args()
 
 
@@ -114,7 +116,7 @@ class PlannerNode(Node):
         self.latest_goal = goal_specification_from_ros(msg, self.world)
         
     
-    def do_plan(self):
+    def do_plan(self, args):
         """ Search for a plan and publish it. """
         if not self.latest_goal:
             return
@@ -127,7 +129,8 @@ class PlannerNode(Node):
             self.get_logger().info("Failed to unpack world state.")
 
         # Once the world state is set, plan.
-        plan = self.planner.plan(self.latest_goal, focused=True, verbose=self.verbose)
+        plan = self.planner.plan(self.latest_goal, focused=True, 
+            verbose=self.verbose, search_sample_ratio=args.search_sample_ratio)
         plan_msg = task_plan_to_ros(plan)
         self.plan_pub.publish(plan_msg)
         self.latest_goal = None
@@ -144,7 +147,7 @@ def main():
             planner_node.request_world_state()
 
         if planner_node.world_state_future_response and planner_node.world_state_future_response.done():
-            planner_node.do_plan()
+            planner_node.do_plan(args)
 
         rclpy.spin_once(planner_node)
 

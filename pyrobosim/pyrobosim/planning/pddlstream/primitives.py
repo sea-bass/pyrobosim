@@ -16,8 +16,29 @@ def get_pick_place_cost(l, o):
     :type l: Location
     :param o: Object that is manipulated.
     :type o: Object
+    :return: Cost of performing action.
+    :rtype: float
     """
     return 0.5 + l.height + (0.5 * o.height)
+
+
+def get_pick_place_at_pose_cost(l, o, p, pr):
+    """
+    Estimates a dummy pick / place cost for a specific location / object combination,
+    given the pose of the object and the robot.
+    
+    :param l: Location where pick / place action occurs.
+    :type l: Location
+    :param o: Object that is manipulated.
+    :type o: Object
+    :param p: Object pose.
+    :type p: :class:`pyrobosim.utils.pose.Pose`
+    :param pr: Robot pose.
+    :type pr: :class:`pyrobosim.utils.pose.Pose`
+    :return: Cost of performing action.
+    :rtype: float
+    """
+    return p.get_linear_distance(pr) + get_pick_place_cost(l, o)
 
 
 def get_straight_line_distance(l1, l2):
