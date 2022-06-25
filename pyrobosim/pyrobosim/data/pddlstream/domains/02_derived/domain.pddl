@@ -23,6 +23,7 @@
                 (Is ?o ?t)              ; Type correspondence of location or object
 
                 ; Fluent predicates
+                (CanMove ?r)            ; Whether the robot can move (prevents duplicate moves)
                 (Holding ?r ?o)         ; Object the robot is holding
                 (At ?o ?l)              ; Robot/Object's location
                 (AtRoom ?l ?r)          ; Location's corresponding room
@@ -41,12 +42,13 @@
   ; NAVIGATE: Moves the robot from one location to the other
   (:action navigate
     :parameters (?r ?l1 ?l2)
-    :precondition (and (Robot ?r) 
+    :precondition (and (Robot ?r)
+                       (CanMove ?r)
                        (Location ?l1) 
                        (Location ?l2) 
                        (At ?r ?l1))
-    :effect (and (At ?r ?l2)
-                 (not (At ?r ?l1))
+    :effect (and (not (CanMove ?r))
+                 (At ?r ?l2) (not (At ?r ?l1))
                  (increase (total-cost) (Dist ?l1 ?l2)))
   )
 
@@ -60,7 +62,7 @@
                        (HandEmpty ?r) 
                        (At ?r ?l)
                        (At ?o ?l))
-    :effect (and (Holding ?r ?o)
+    :effect (and (Holding ?r ?o) (CanMove ?r)
                  (not (HandEmpty ?r)) 
                  (not (At ?o ?l))
                  (increase (total-cost) (PickPlaceCost ?l ?o)))
@@ -76,7 +78,7 @@
                        (At ?r ?l)
                        (not (HandEmpty ?r)) 
                        (Holding ?r ?o))
-    :effect (and (HandEmpty ?r) 
+    :effect (and (HandEmpty ?r) (CanMove ?r)
                  (At ?o ?l)
                  (not (Holding ?r ?o))
                  (increase (total-cost) (PickPlaceCost ?l ?o)))

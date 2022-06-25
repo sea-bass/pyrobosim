@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
 """
-Test script for PDDLStream planning with navigation streams.
+Test script for PDDLStream planning with manipulation streams.
 """
 import os
 import sys
+import numpy as np
 
 from pyrobosim.core.robot import Robot
 from pyrobosim.core.room import Room
@@ -16,8 +17,8 @@ from pyrobosim.planning.pddlstream.utils import get_default_domains_folder
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
-def create_test_world(add_hallway=True):
-    w = World()
+def create_test_world(add_alt_desk=True):
+    w = World(object_radius=0.1)
 
     # Set the location and object metadata
     data_folder = get_data_folder()
@@ -25,34 +26,32 @@ def create_test_world(add_hallway=True):
                    objects=os.path.join(data_folder, "example_object_data.yaml"))
 
     # Add rooms
-    main_room_coords = [(-1, -1), (1, -1), (1, 1), (-1, 1)]
-    main_room = Room(main_room_coords, name="main_room", color=[1, 0, 0])
-    w.add_room(main_room)
-    unreachable_coords = [(2, -1), (4, -1), (4, 1), (2, 1)]
-    unreachable_room = Room(unreachable_coords, name="unreachable", color=[0, 0, 1])
-    w.add_room(unreachable_room)
-    goal_room_coords = [(2, 2), (4, 2), (4, 4), (2, 4)]
-    goal_room = Room(goal_room_coords, name="goal_room", color=[0, 0.6, 0])
-    w.add_room(goal_room)
-
-    # Add hallway, if enabled.
-    if add_hallway:
-        hallway_points = [(0.0, 0.0), (0.0, 5.0),
-                          (3.0, 5.0), (3.0, 3.0)]
-        w.add_hallway("main_room", "goal_room", width=0.7,
-                      conn_method="points", conn_points=hallway_points)
+    home_coords = [(-1, -1), (1, -1), (1, 1), (-1, 1)]
+    home = Room(home_coords, name="home", color=[1, 0, 0])
+    w.add_room(home)
+    storage_coords = [(2, -2), (5, -2), (5, 2), (2, 2)]
+    storage = Room(storage_coords, name="storage", color=[0, 0, 1])
+    w.add_room(storage)
+    w.add_hallway(home, storage, width=0.75, conn_method="auto")
 
     # Add locations and objects
-    table0 = w.add_location("table", "unreachable", 
-        Pose(x=3.5, y=-0.25, yaw=0.0))
-    w.add_object("apple", table0)
-    table1 = w.add_location("table", "goal_room", 
-        Pose(x=3.5, y=2.75, yaw=0.0))
-    w.add_object("apple", table1)
+    table0 = w.add_location("table", "home", 
+        Pose(x=0.0, y=0.5, yaw=np.pi/2))
+    desk0 = w.add_location("desk", "storage", 
+        Pose(x=2.5, y=-1.5, yaw=0.0))
+    if add_alt_desk:
+        desk1 = w.add_location("desk", "storage", 
+            Pose(x=4.5, y=1.5, yaw=0.0))
+
+    w.add_object("banana", table0)
+    w.add_object("water", desk0, pose=Pose(x=2.4, y=-1.4, yaw=np.pi/4.0))
+    w.add_object("water", desk0, pose=Pose(x=2.575, y=-1.575, yaw=-np.pi/4.0))
+    # w.add_object("apple", desk0, pose=Pose(x=2.375, y=-1.625))
+    # w.add_object("apple", desk0, pose=Pose(x=2.625, y=-1.625))
 
     # Add a robot
     r = Robot(radius=0.1, path_executor=ConstantVelocityExecutor())
-    w.add_robot(r, loc="main_room")
+    w.add_robot(r, loc="home")
 
     # Create a search graph and motion planner
     w.create_search_graph(max_edge_dist=3.0, collision_check_dist=0.05)
@@ -62,13 +61,13 @@ def create_test_world(add_hallway=True):
     return w
 
 
-def start_planner(world, domain_name="03_nav_stream", interactive=False):
+def start_planner(world, domain_name="04_nav_manip_stream", interactive=False):
     domain_folder = os.path.join(
         get_default_domains_folder(), domain_name)
     planner = PDDLStreamPlanner(world, domain_folder)
 
     get = lambda entity : world.get_entity_by_name(entity)
-    goal_literals = [("Has", get("robot"), "apple")]
+    goal_literals = [("Has", "desk", "banana")]
 
     if interactive:
         input("Press Enter to start planning.")
@@ -81,29 +80,23 @@ def start_planner(world, domain_name="03_nav_stream", interactive=False):
 #####################
 # ACTUAL UNIT TESTS #
 #####################
-def test_symbolic_plan():
-    w = create_test_world()
-    plan = start_planner(w, domain_name="02_derived")
+def test_plan_single_desk():
+    w = create_test_world(add_alt_desk=False)
+    plan = start_planner(w)
     assert(plan is not None)
 
-def test_stream_plan_no_hallway():
-    w = create_test_world(add_hallway=False)
-    plan = start_planner(w, domain_name="03_nav_stream")
-    assert(plan is None)
-
-def test_stream_plan_with_hallway():
-    w = create_test_world(add_hallway=True)
-    plan = start_planner(w, domain_name="03_nav_stream")
+def test_plan_double_desk():
+    w = create_test_world(add_alt_desk=True)
+    plan = start_planner(w)
     assert(plan is not None)
 
 
 if __name__=="__main__":
-    w = create_test_world(add_hallway=True)
+    w = create_test_world(add_alt_desk=False)
 
     # Start task and motion planner in separate thread.
     import threading
-    # domain_name = "02_derived" # Will get infeasible plan
-    domain_name = "03_nav_stream" # Will get feasible plan
+    domain_name = "04_nav_manip_stream"
     t = threading.Thread(target=start_planner, 
                          args=(w, domain_name, True))
     t.start()

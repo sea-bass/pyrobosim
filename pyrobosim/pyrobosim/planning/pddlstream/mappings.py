@@ -46,7 +46,7 @@ def get_stream_info():
     """
     return {
         # Streams (that sample)
-        "s-navpose": StreamInfo(eager=True),
+        "s-navpose": StreamInfo(eager=False),
         "s-motion": StreamInfo(eager=False),
         "s-place": StreamInfo(eager=False),
         # Streams (no sampling, just testing)

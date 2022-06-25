@@ -123,19 +123,21 @@ def sample_place_pose(l, o, padding=0.0, max_tries=100):
     """
     obj_poly = inflate_polygon(o.raw_polygon, padding)
     while True:
-        # Sample a pose
-        x_sample, y_sample = sample_from_polygon(l.polygon, max_tries=max_tries)
-        if not x_sample or not y_sample:
-            break # If we can't sample a pose, we should give up.
-        yaw_sample = np.random.uniform(-np.pi, np.pi)
-        pose_sample = Pose(x=x_sample, y=y_sample, yaw=yaw_sample,
-                           z=l.height + o.height/2.0)
+        is_valid_pose = False
+        while not is_valid_pose:
+            # Sample a pose
+            x_sample, y_sample = sample_from_polygon(l.polygon, max_tries=max_tries)
+            if not x_sample or not y_sample:
+                break # If we can't sample a pose, we should give up.
+            yaw_sample = np.random.uniform(-np.pi, np.pi)
+            pose_sample = Pose(x=x_sample, y=y_sample, yaw=yaw_sample,
+                            z=l.height + o.height/2.0)
 
-        # Check that the object is inside the polygon.
-        poly_sample = transform_polygon(obj_poly, pose_sample)
-        is_valid_pose = poly_sample.within(l.polygon)
-        if not is_valid_pose:
-            continue # If our sample is in collision, simply retry.
+            # Check that the object is inside the polygon.
+            poly_sample = transform_polygon(obj_poly, pose_sample)
+            is_valid_pose = poly_sample.within(l.polygon)
+            if not is_valid_pose:
+                continue # If our sample is in collision, simply retry.
 
         yield (pose_sample,)
 

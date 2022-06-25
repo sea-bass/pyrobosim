@@ -37,6 +37,7 @@ def world_to_pddlstream_init(world):
     if not init_loc:
         init_loc = world.get_location_from_pose(robot.pose)
     init = [("Robot", robot),
+            ("CanMove", robot),
             ("HandEmpty", robot),
             ("At", robot, init_loc),
             ("Pose", robot.pose),

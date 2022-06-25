@@ -28,6 +28,7 @@
                 (Path ?pth)             ; Path from one pose to another
                 
                 ; Fluent predicates
+                (CanMove ?r)                    ; Whether the robot can move (prevents duplicate moves)
                 (Holding ?r ?o)                 ; Object the robot is holding
                 (At ?o ?l)                      ; Robot/Object's location
                 (AtPose ?e ?p)                  ; Robot/Object's pose
@@ -54,7 +55,7 @@
   ; NAVIGATE: Moves the robot from its current pose to a location at a specific pose
   (:action navigate
     :parameters (?r ?l1 ?l2 ?p1 ?p2 ?pth)
-    :precondition (and (Robot ?r)
+    :precondition (and (Robot ?r) (CanMove ?r)
                        (Location ?l1) (Location ?l2)
                        (Pose ?p1) (Pose ?p2)
                        (At ?r ?l1) (not (At ?r ?l2))
@@ -62,7 +63,8 @@
                        (NavPose ?l2 ?p2)
                        (Path ?pth) (Motion ?p1 ?p2 ?pth)
                   )
-    :effect (and (At ?r ?l2) (not (At ?r ?l1))
+    :effect (and (not (CanMove ?r))
+                 (At ?r ?l2) (not (At ?r ?l1))
                  (AtPose ?r ?p2) (not (AtPose ?r ?p1))
                  (increase (total-cost) (PathLength ?pth)))
   )
@@ -79,7 +81,7 @@
                        (HandEmpty ?r) 
                        (At ?r ?l)
                        (At ?o ?l))
-    :effect (and (Holding ?r ?o)
+    :effect (and (Holding ?r ?o) (CanMove ?r)
                  (not (HandEmpty ?r)) 
                  (not (At ?o ?l))
                  (not (AtPose ?o ?p))
@@ -100,7 +102,7 @@
                        (Holding ?r ?o)
                        (Placeable ?l ?o ?p)
                        (IsCollisionFree ?l ?o ?p))
-    :effect (and (HandEmpty ?r) 
+    :effect (and (HandEmpty ?r) (CanMove ?r)
                  (At ?o ?l) (AtPose ?o ?p)
                  (not (Holding ?r ?o))
                  (increase (total-cost) (PickPlaceAtPoseCost ?l ?o ?p ?pr)))
