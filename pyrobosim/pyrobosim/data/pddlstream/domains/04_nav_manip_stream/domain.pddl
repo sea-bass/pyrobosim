@@ -48,7 +48,7 @@
   ; FUNCTIONS : See their descriptions in the stream PDDL file
   (:functions 
     (PathLength ?pth)
-    (PickPlaceCost ?l ?o)
+    (PickPlaceAtPoseCost ?l ?o ?p ?pr)
   )
 
   ; ACTIONS 

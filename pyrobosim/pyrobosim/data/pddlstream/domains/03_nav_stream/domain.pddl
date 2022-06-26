@@ -22,7 +22,7 @@
                 (Type ?t)               ; Type of location or object
                 (Is ?o ?t)              ; Type correspondence of location or object
                 (Pose ?p)               ; Pose of an entity
-                (Path ?pth)            ; Path from one pose to another
+                (Path ?pth)             ; Path from one pose to another
                 
                 ; Fluent predicates
                 (CanMove ?r)            ; Whether the robot can move (prevents duplicate moves)

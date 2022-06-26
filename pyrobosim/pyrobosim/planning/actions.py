@@ -2,13 +2,22 @@
 
 from ..utils.motion import Path
 
-class TaskAction:
-    """ Task Action representation class. """
 
-    def __init__(self, type, object=None, room=None,
-                 source_location=None, target_location=None,
-                 pose=None, path=Path(), cost=None):
-        """ 
+class TaskAction:
+    """Task Action representation class."""
+
+    def __init__(
+        self,
+        type,
+        object=None,
+        room=None,
+        source_location=None,
+        target_location=None,
+        pose=None,
+        path=Path(),
+        cost=None,
+    ):
+        """
         Creates a new task action representation.
 
         :param type: Action type.
@@ -33,16 +42,16 @@ class TaskAction:
         self.cost = cost
 
         # Action-specific parameters
-        self.object = object                    # Target object name
-        self.room = room                        # Target room name
+        self.object = object  # Target object name
+        self.room = room  # Target room name
         self.source_location = source_location  # Source location name
         self.target_location = target_location  # Target location name
-        self.pose = pose                        # Target pose
-        self.path = path                        # Path object containing a list of poses
+        self.pose = pose  # Target pose
+        self.path = path  # Path object containing a list of poses
 
     def __repr__(self):
-        """ Returns printable string describing an action. """
-        
+        """Returns printable string describing an action."""
+
         # Format actions based on their types
         # NAVIGATE
         if self.type == "navigate":
@@ -61,7 +70,7 @@ class TaskAction:
             if self.object is not None:
                 act_str += f" {self.object}"
             else:
-                act_str += " object" 
+                act_str += " object"
             if self.target_location is not None:
                 act_str += f" from {self.target_location}"
             if self.pose is not None:
@@ -72,7 +81,7 @@ class TaskAction:
             if self.object is not None:
                 act_str += f" {self.object}"
             else:
-                act_str += " object" 
+                act_str += " object"
             if self.target_location is not None:
                 act_str += f" at {self.target_location}"
             if self.pose is not None:
@@ -89,21 +98,22 @@ class TaskAction:
 class TaskPlan:
     """
     Task Plan representation class.
-    
-    A task plan is simply described as a sequence of task actions 
+
+    A task plan is simply described as a sequence of task actions
     (:class:`pyrobosim.planning.actions.TaskAction`).
     """
+
     def __init__(self, actions=[]):
-        """ 
+        """
         Creates a new task plan.
-        
+
         :param actions: List of actions.
         :type actions: list[:class:`pyrobosim.planning.actions.TaskAction`], optional
         """
         self.set_actions(actions)
 
     def set_actions(self, actions):
-        """ 
+        """
         Sets actions and updates the total cost over all the actions.
         Use this method rather than directly setting the actions variable.
 
@@ -116,14 +126,14 @@ class TaskPlan:
     def size(self):
         """
         Get the total number of actions comprising this task plan.
-        
+
         :return: Size of plan.
         :rtype: int
         """
         return len(self.actions)
 
     def __repr__(self):
-        """ Returns printable string describing a task plan. """
+        """Returns printable string describing a task plan."""
         # Check for empty plan
         if len(self.actions) == 0:
             return "Empty plan"

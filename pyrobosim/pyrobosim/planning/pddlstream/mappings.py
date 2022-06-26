@@ -2,18 +2,18 @@
 Mappings for PDDLStream functions, streams, and certificate tests.
 """
 
-from pddlstream.language.function import FunctionInfo
 from pddlstream.language.stream import StreamInfo
-from pddlstream.language.generator import from_fn, from_gen_fn, from_list_fn, from_test
+from pddlstream.language.generator import from_gen_fn, from_list_fn, from_test
 
 from . import primitives
 
+
 def get_stream_map(world):
     """
-    Returns a dictionary mapping stream names to actual function implementations.
-    
+    Returns a dictionary mapping stream names to function implementations.
+
     :return: The stream map dictionary.
-    :rtype: dict(str, function) 
+    :rtype: dict(str, function)
     """
     planner = world.robot.path_planner
 
@@ -26,20 +26,29 @@ def get_stream_map(world):
         # Streams (that sample)
         "s-navpose": from_list_fn(primitives.get_nav_poses),
         "s-motion": from_gen_fn(
-            lambda p1, p2: primitives.sample_motion(planner, p1, p2)),
+            lambda p1, p2: primitives.sample_motion(planner, p1, p2)
+        ),
         "s-place": from_gen_fn(
-            lambda l, o: primitives.sample_place_pose(
-                l, o, padding=world.object_radius, 
-                max_tries=world.max_object_sample_tries)),
+            lambda loc, obj: primitives.sample_place_pose(
+                loc,
+                obj,
+                padding=world.object_radius,
+                max_tries=world.max_object_sample_tries,
+            )
+        ),
         # Streams (no sampling, just testing)
         "t-collision-free": from_test(
             lambda o1, p1, o2, p2: primitives.test_collision_free(
-                o1, p1, o2, p2, padding=world.object_radius)),
+                o1, p1, o2, p2, padding=world.object_radius
+            )
+        ),
     }
+
 
 def get_stream_info():
     """
-    Returns a dictionary from stream name to StreamInfo altering how individual streams are handled.
+    Returns a dictionary from stream name to StreamInfo altering how
+    individual streams are handled.
 
     :return: The stream information dictionary.
     :rtype: dict(str, FunctionInfo/StreamInfo)

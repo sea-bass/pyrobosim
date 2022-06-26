@@ -9,8 +9,9 @@ from pddlstream.utils import read
 from .mappings import get_stream_info, get_stream_map
 from .utils import world_to_pddlstream_init, pddlstream_solution_to_plan
 
-class PDDLStreamPlanner():
-    """ Task and Motion Planner using PDDLStream. """
+
+class PDDLStreamPlanner:
+    """Task and Motion Planner using PDDLStream."""
 
     def __init__(self, world, domain_folder):
         """
@@ -18,12 +19,12 @@ class PDDLStreamPlanner():
 
         :param world: World object to use for planning.
         :type world: :class:`pyrobosim.core.world.World`
-        :param domain_folder: Path to folder containing the PDDL domain and streams
+        :param domain_folder: Path to folder containing PDDL domain and streams
         :type domain_folder: str
         """
         # Set the world model
         self.world = world
-        
+
         # Configuration parameters
         domain_pddl_file = os.path.join(domain_folder, "domain.pddl")
         self.domain_pddl = read(domain_pddl_file)
@@ -34,11 +35,18 @@ class PDDLStreamPlanner():
         self.latest_specification = None
         self.latest_plan = None
 
-
-    def plan(self, goal_literals, focused=True, planner="ff-astar", 
-             max_time=60.0, max_iterations=10, search_sample_ratio=1.0, verbose=False):
+    def plan(
+        self,
+        goal_literals,
+        focused=True,
+        planner="ff-astar",
+        max_time=60.0,
+        max_iterations=10,
+        search_sample_ratio=1.0,
+        verbose=False,
+    ):
         """
-        Searches for a set of actions that completes a goal specification 
+        Searches for a set of actions that completes a goal specification
         given an initial state of the world.
 
         :param goal_literals: List of literals describing a goal specification.
@@ -64,22 +72,25 @@ class PDDLStreamPlanner():
         self.latest_specification = goal
 
         # Set up the PDDL problem.
-        # The ``get_stream_map()`` function comes from the ``mappings.py`` file, 
-        # so as you add  new functionality you should fill it out there.
+        # The ``get_stream_map()`` function comes from the ``mappings.py``
+        # file, so as you add new functionality you should fill it out there.
         external_pddl = [self.stream_pddl]
         constant_map = {}
-        prob = PDDLProblem(self.domain_pddl, 
-                          constant_map,
-                          external_pddl, 
-                          get_stream_map(self.world),
-                          init,
-                          goal)
+        prob = PDDLProblem(
+            self.domain_pddl,
+            constant_map,
+            external_pddl,
+            get_stream_map(self.world),
+            init,
+            goal,
+        )
 
         # Solve the problem using either focused or incremental algorithms.
-        # The ``get_stream_info()`` function comes from the ``mappings.py`` file,
-        # so as you add new functionality you should fill it out there.
+        # The ``get_stream_info()`` function comes from the ``mappings.py``
+        # file, so as you add new functionality you should fill it out there.
         if focused:
-            solution = solve_focused(prob,
+            solution = solve_focused(
+                prob,
                 planner=planner,
                 stream_info=get_stream_info(),
                 search_sample_ratio=search_sample_ratio,
@@ -87,12 +98,12 @@ class PDDLStreamPlanner():
                 max_planner_time=max_time,
                 max_iterations=max_iterations,
                 initial_complexity=0,
-                verbose=verbose)
+                verbose=verbose,
+            )
         else:
-            solution = solve_incremental(prob,
-                planner=planner,
-                max_time=max_time,
-                verbose=verbose)
+            solution = solve_incremental(
+                prob, planner=planner, max_time=max_time, verbose=verbose
+            )
 
         # Convert the solution to a TaskPlan object.
         plan_out = pddlstream_solution_to_plan(solution)
