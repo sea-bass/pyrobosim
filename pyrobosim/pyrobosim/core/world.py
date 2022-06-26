@@ -61,6 +61,7 @@ class World:
 
         # Search graph for navigation
         self.search_graph = None
+        self.current_goal = None
         self.current_path = None
         self.path_planner = None
 
@@ -233,6 +234,7 @@ class World:
         room_end.update_visualization_polygon()
         self.num_hallways += 1
         h.update_collision_polygons(self.inflation_radius)
+        self.update_bounds()
 
         # Update the search graph, if any
         if self.search_graph is not None:
@@ -348,7 +350,7 @@ class World:
 
         # Check that the location fits within the room and is not in collision with
         # other locations already in the room. Else, warn and do not add it.
-        new_polygon = transform_polygon(loc.get_raw_polygon(), pose)
+        new_polygon = transform_polygon(loc.raw_polygon, pose)
         is_valid_pose = new_polygon.within(room.polygon)
         for other_loc in room.locations:
             is_valid_pose = is_valid_pose and not new_polygon.intersects(other_loc.polygon)
@@ -557,8 +559,8 @@ class World:
         TODO: If we're just adding a single room, we only need to check that one
         and there is probably a more efficient way to do this.
         """
-        for r in self.rooms:
-            (xmin, ymin, xmax, ymax) = r.polygon.bounds
+        for entity in itertools.chain(self.rooms, self.hallways):
+            (xmin, ymin, xmax, ymax) = entity.polygon.bounds
             self.x_bounds[0] = min(self.x_bounds[0], xmin)
             self.x_bounds[1] = max(self.x_bounds[1], xmax)
             self.y_bounds[0] = min(self.y_bounds[0], ymin)
@@ -659,14 +661,13 @@ class World:
             if goal_node is None:
                 warnings.warn("Invalid goal specified")
                 return None
+        self.current_goal = goal_node.parent
 
         # Do the actual planning.
         if self.robot.path_planner:
             # Plan with the robot's local planner.
             goal = goal_node.pose
             self.current_path = self.robot.path_planner.plan(start, goal)
-            if self.current_path is not None:
-                self.current_path[-1].parent = goal_node.parent
         elif self.path_planner:
             # Plan with the robot's global planner.
             self.current_path = self.path_planner.plan(start_node, goal_node)

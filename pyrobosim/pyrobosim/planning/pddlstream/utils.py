@@ -5,6 +5,10 @@ Utilities to connect world models with PDDLStream.
 import os
 
 from ..actions import TaskAction, TaskPlan
+from ...utils.general import get_data_folder
+from ...utils.motion import Path
+from ...utils.pose import Pose
+
 
 def get_default_domains_folder():
     """
@@ -13,7 +17,7 @@ def get_default_domains_folder():
     :return: Path to domains folder.
     :rtype: str
     """
-    return os.path.join(os.path.split(__file__)[0], "domains")
+    return os.path.join(get_data_folder(), "pddlstream", "domains")
 
 
 def world_to_pddlstream_init(world):
@@ -23,7 +27,7 @@ def world_to_pddlstream_init(world):
 
     :param world: World model.
     :type world: :class:`pyrobosim.core.world.World`
-    :return: PDDLStream compatible initial state representation. 
+    :return: PDDLStream compatible initial state representation.
     :rtype: list[tuple]
     """
 
@@ -32,11 +36,14 @@ def world_to_pddlstream_init(world):
     init_loc = robot.location
     if not init_loc:
         init_loc = world.get_location_from_pose(robot.pose)
-    init = [("Robot", robot),
-            ("HandEmpty", robot), 
-            ("At", robot, init_loc),
-            ("Pose", robot, robot.pose),
-            ("AtPose", robot, robot.pose)]
+    init = [
+        ("Robot", robot),
+        ("CanMove", robot),
+        ("HandEmpty", robot),
+        ("At", robot, init_loc),
+        ("Pose", robot.pose),
+        ("AtPose", robot, robot.pose),
+    ]
 
     # Loop through all the locations and their relationships.
     # This includes rooms and object spawns (which are children of locations).
@@ -58,18 +65,18 @@ def world_to_pddlstream_init(world):
     for obj in world.objects:
         init.append(("Obj", obj))
         init.append(("Is", obj, obj.category))
-        # If the object is the current manipulated object, change the robot state.
-        # Otherwise, the object is at its parent location.
+        # If the object is the current manipulated object, change the state of
+        # the robot. Otherwise, the object is at its parent location.
         if robot.manipulated_object == obj:
             init.remove(("HandEmpty", robot))
             init.append(("Holding", robot, obj))
         else:
             init.append(("At", obj, obj.parent))
-            init.append(("Pose", obj, obj.pose))
+            init.append(("Pose", obj.pose))
             init.append(("AtPose", obj, obj.pose))
         obj_categories.add(obj.category)
     for obj_cat in obj_categories:
-        init.append(("Type", obj_cat))        
+        init.append(("Type", obj_cat))
 
     return init
 
@@ -79,36 +86,42 @@ def pddlstream_solution_to_plan(solution):
     Converts the output plan of a PDDLStream solution to a plan
     list compatible with plan execution infrastructure.
 
-    :param: PDDLStream compatible initial state representation. 
+    :param: PDDLStream compatible initial state representation.
     :type: list[tuple]
     :return: Task plan object.
     :rtype: :class:`pyrobosim.planning.actions.TaskPlan`
     """
     # Unpack the PDDLStream solution and handle the None case
     plan, total_cost, _ = solution
-    if plan is None or len(plan)==0:
+    if plan is None or len(plan) == 0:
         return None
 
     plan_out = TaskPlan(actions=[])
     for act_pddl in plan:
         # Convert the PDDL action to a TaskAction
-        act = TaskAction(act_pddl.name) 
+        act = TaskAction(act_pddl.name)
         # Parse a NAVIGATE action
         if act.type == "navigate":
             act.source_location = act_pddl.args[1]
             act.target_location = act_pddl.args[2]
+            # Search for a path.
+            for arg in act_pddl.args[3:]:
+                if isinstance(arg, Path):
+                    act.path = arg
         # Parse a PICK or PLACE action
         elif act.type == "pick" or act.type == "place":
             act.object = act_pddl.args[1]
             act.target_location = act_pddl.args[2]
             # If a pick/place pose is specified, add it.
             if len(act_pddl.args) > 3:
-                act.pose = act_pddl.args[3]
+                arg = act_pddl.args[3]
+                if isinstance(arg, Pose):
+                    act.pose = arg
 
         # Add the action to the task plan
         plan_out.actions.append(act)
 
     # TODO: Find a way to get the individual action costs from PDDLStream.
-    # For now, just set the total cost, which is readily available from the solution.
+    # For now, set total plan cost, which is available from the solution.
     plan_out.total_cost = total_cost
     return plan_out

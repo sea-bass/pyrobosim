@@ -171,7 +171,7 @@ class Hallway:
                                 for p in intersect_line.coords]
         elif isinstance(intersect_line, MultiLineString):
             self.graph_nodes = []
-            for line in intersect_line:
+            for line in intersect_line.geoms:
                 self.graph_nodes.extend(
                     [Node(Pose(x=p[0], y=p[1]), parent=self) 
                      for p in line.coords])

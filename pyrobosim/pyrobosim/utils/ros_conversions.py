@@ -7,8 +7,9 @@ from transforms3d.euler import euler2quat, quat2euler
 import geometry_msgs.msg
 
 import pyrobosim_msgs.msg as ros_msgs
-from pyrobosim.utils.pose import Pose
 import pyrobosim.planning.actions as acts
+from pyrobosim.utils.motion import Path
+from pyrobosim.utils.pose import Pose
 
 
 def pose_from_ros(msg):
@@ -46,6 +47,32 @@ def pose_to_ros(pose):
         pose_msg.orientation.y = quat[2]
         pose_msg.orientation.z = quat[3]
     return pose_msg
+
+
+def path_from_ros(msg):
+    """
+    Converts ROS path message to a pyrobosim motion Path.
+
+    :param act: ROS message.
+    :type act: :class:`pyrobosim_msgs.msg.Path` 
+    :return: Path object
+    :rtype: :class:`pyrobosim.utils.motion.Path`
+    """
+    return Path(poses=[pose_from_ros(p) for p in msg.poses])
+
+
+def path_to_ros(path):
+    """
+    Converts a pyrobosim motion Path to a ROS message.
+
+    :param act: Path object.
+    :type act: :class:`pyrobosim.utils.motion.Path`    
+    :return: ROS message.
+    :rtype: :class:`pyrobosim_msgs.msg.Path`
+    """
+    path_msg = ros_msgs.Path()
+    path_msg.poses = [pose_to_ros(p) for p in path.poses]
+    return path_msg
 
 
 def get_entity_name(entity):
@@ -107,8 +134,8 @@ def task_action_from_ros(msg):
     if not isinstance(msg, ros_msgs.TaskAction):
         raise Exception("Input is not a TaskAction ROS message")
     return acts.TaskAction(msg.type, object=msg.object, room=msg.room,
-                 source_location=msg.source_location, target_location=msg.target_location,
-                 pose=msg.pose, cost=msg.cost)
+                source_location=msg.source_location, target_location=msg.target_location,
+                pose=pose_from_ros(msg.pose), path=path_from_ros(msg.path), cost=msg.cost)
 
 
 def task_action_to_ros(act):
@@ -128,7 +155,8 @@ def task_action_to_ros(act):
     act_msg.room = get_entity_name(act.room)
     act_msg.source_location = get_entity_name(act.source_location)
     act_msg.target_location = get_entity_name(act.target_location)
-    act_msg.pose = pose_to_ros(act.pose)    
+    act_msg.pose = pose_to_ros(act.pose)
+    act_msg.path = path_to_ros(act.path)  
     if act.cost:
         act_msg.cost = float(act.cost)
 

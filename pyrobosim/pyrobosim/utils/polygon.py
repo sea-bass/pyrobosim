@@ -19,7 +19,7 @@ from .pose import Pose, rot2d
 
 def add_coords(coords, offset):
     """
-    Adds an offset (x,y) vector to a Shapely compatible list 
+    Adds an offset (x,y) vector to a Shapely compatible list
     of coordinate tuples.
 
     :param coords: A list of 2D coordinates representing the polygon.
@@ -30,12 +30,12 @@ def add_coords(coords, offset):
     :rtype: list[(float, float)]
     """
     x, y = offset
-    return [(c[0]+x, c[1]+y) for c in coords]
+    return [(c[0] + x, c[1] + y) for c in coords]
 
 
 def box_to_coords(dims, origin=[0, 0], ang=0):
-    """ 
-    Converts box dimensions and origin to a Shapely compatible 
+    """
+    Converts box dimensions and origin to a Shapely compatible
     list of coordinate tuples.
 
     :param dims: The box dimensions (width, height).
@@ -50,16 +50,16 @@ def box_to_coords(dims, origin=[0, 0], ang=0):
     Example:
 
     .. code-block:: python
-       
+
        coords = box_to_coords(dims=[2.5, 2.5], origin=[1, 2], ang=0.5)
     """
     x, y = origin
     w, h = dims
     coords = [
-        rot2d((-0.5*w, -0.5*h), ang),
-        rot2d((0.5*w, -0.5*h), ang),
-        rot2d((0.5*w,  0.5*h), ang),
-        rot2d((-0.5*w,  0.5*h), ang),
+        rot2d((-0.5 * w, -0.5 * h), ang),
+        rot2d((0.5 * w, -0.5 * h), ang),
+        rot2d((0.5 * w, 0.5 * h), ang),
+        rot2d((-0.5 * w, 0.5 * h), ang),
     ]
     coords.append(coords[0])
     coords = add_coords(coords, (x, y))
@@ -67,7 +67,7 @@ def box_to_coords(dims, origin=[0, 0], ang=0):
 
 
 def get_polygon_centroid(poly):
-    """ 
+    """
     Gets a Shapely polygon centroid as a list.
 
     :param poly: Shapely polygon.
@@ -79,8 +79,8 @@ def get_polygon_centroid(poly):
 
 
 def inflate_polygon(poly, radius):
-    """ 
-    Inflates a Shapely polygon with options preconfigured for 
+    """
+    Inflates a Shapely polygon with options preconfigured for
     this world modeling framework.
 
     :param poly: Shapely polygon.
@@ -90,15 +90,13 @@ def inflate_polygon(poly, radius):
     :return: The inflated Shapely polygon.
     :rtype: :class:`shapely.geometry.Polygon`
     """
-    return poly.buffer(radius,
-                       cap_style=CAP_STYLE.flat,
-                       join_style=JOIN_STYLE.mitre)
+    return poly.buffer(radius, cap_style=CAP_STYLE.flat, join_style=JOIN_STYLE.mitre)
 
 
 def transform_polygon(polygon, pose):
-    """ 
+    """
     Transforms a Shapely polygon by a Pose object.
-    The order of operations is first translation, and then rotation 
+    The order of operations is first translation, and then rotation
     about the new translated position.
 
     :param poly: Shapely polygon.
@@ -108,11 +106,9 @@ def transform_polygon(polygon, pose):
     :return: The transformed Shapely polygon.
     :rtype: :class:`shapely.geometry.Polygon`
     """
-    polygon = translate(polygon,
-                        xoff=pose.x, yoff=pose.y)
-    polygon = rotate(
-        polygon, pose.yaw, origin=(pose.x, pose.y), use_radians=True)
-
+    if pose is not None:
+        polygon = translate(polygon, xoff=pose.x, yoff=pose.y)
+        polygon = rotate(polygon, pose.yaw, origin=(pose.x, pose.y), use_radians=True)
     return polygon
 
 
@@ -120,7 +116,7 @@ def polygon_and_height_from_footprint(footprint, pose=None, parent_polygon=None)
     """
     Returns a Shapely polygon and vertical (Z) height given footprint metadata.
     Valid footprint metadata comes from YAML files, and can include:
-    
+
     * ``"type"``: Type of footprint. Supported geometries include:
         * ``"box"``: Box geometry
             * ``"dims"``: (x, y) dimensions
@@ -134,7 +130,7 @@ def polygon_and_height_from_footprint(footprint, pose=None, parent_polygon=None)
         * ``"parent"``: Requires ``parent_polygon`` argument to also be passed in
             * ``"padding"``: Additional padding relative to the parent polygon
     * ``"offset"``: Offset (x, y) or (x, y, yaw) from the specified geometry above
-    
+
     :param footprint: Footprint metadata from YAML file
     :type footprint: dict
     :param pose: Pose with which to transform the resulting polygon
@@ -166,8 +162,7 @@ def polygon_and_height_from_footprint(footprint, pose=None, parent_polygon=None)
 
     # Offset the polygon, if specified
     if "offset" in footprint:
-        polygon = transform_polygon(
-            polygon, Pose.from_list(footprint["offset"]))
+        polygon = transform_polygon(polygon, Pose.from_list(footprint["offset"]))
 
     if pose is not None and ftype != "parent":
         polygon = transform_polygon(polygon, pose)
@@ -180,9 +175,9 @@ def polygon_and_height_from_footprint(footprint, pose=None, parent_polygon=None)
 
 
 def polygon_and_height_from_mesh(mesh_data):
-    """ 
-    Returns the 2D footprint and the max height from a mesh 
-    NOTE: Right now this supports only DAE files, which is a 
+    """
+    Returns the 2D footprint and the max height from a mesh
+    NOTE: Right now this supports only DAE files, which is a
     commonly used format for Gazebo models.
 
     :param mesh_data: Mesh geometry metadata from YAML file
@@ -191,7 +186,8 @@ def polygon_and_height_from_mesh(mesh_data):
     :rtype: (class:`shapely.geometry.Polygon`, float)
     """
     mesh_filename = replace_special_yaml_tokens(
-        os.path.join(mesh_data["model_path"], mesh_data["mesh_path"]))
+        os.path.join(mesh_data["model_path"], mesh_data["mesh_path"])
+    )
     mesh = trimesh.load_mesh(mesh_filename, "dae")
 
     # Get the unit scale.
@@ -199,8 +195,7 @@ def polygon_and_height_from_mesh(mesh_data):
     scale = c.assetInfo.unitmeter
 
     # Get the convex hull of the 2D points.
-    footprint_pts = [[p[0]*scale, p[1]*scale]
-                     for p in mesh.convex_hull.vertices]
+    footprint_pts = [[p[0] * scale, p[1] * scale] for p in mesh.convex_hull.vertices]
     hull = ConvexHull(footprint_pts)
     hull_pts = hull.points[hull.vertices, :]
 
@@ -211,10 +206,10 @@ def polygon_and_height_from_mesh(mesh_data):
 
 
 def sample_from_polygon(polygon, max_tries=100):
-    """ 
+    """
     Samples a valid (x, y) tuple that is inside a Shapely polygon.
-    This is done using rejection sampling, in which we sample from the 
-    x-y bounds of the polygon and check whether the point is inside the 
+    This is done using rejection sampling, in which we sample from the
+    x-y bounds of the polygon and check whether the point is inside the
     (potentially more complex) polygon geometry.
 
     :param polygon: Shapely polygon from which to sample

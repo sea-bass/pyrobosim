@@ -1,6 +1,6 @@
 import os
 from os.path import join
-from setuptools import setup
+from setuptools import setup, find_packages
 
 # This is for standalone (non-ROS) use.
 
@@ -35,14 +35,7 @@ setup(
     description="ROS2 enabled 2D mobile robot simulator for behavior prototyping.",
     license="BSD",
     install_requires=install_requires,
-    packages=[
-        project_name,
-        join(project_name, "core"),
-        join(project_name, "gui"),
-        join(project_name, "navigation"),
-        join(project_name, "planning"),
-        join(project_name, "utils")
-    ],
+    packages=find_packages(),
     package_data={
         project_name: get_files_in_folder(join(project_name, "data"))
     },

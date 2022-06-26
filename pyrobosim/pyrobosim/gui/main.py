@@ -1,3 +1,5 @@
+""" Main utilities for pyrobosim GUI. """
+
 import numpy as np
 from PyQt5 import QtWidgets
 from matplotlib.backends.qt_compat import QtCore
@@ -8,7 +10,7 @@ from ..utils.knowledge import query_to_entity
 
 
 class PyRoboSimGUI(QtWidgets.QApplication):
-    """ Main pyrobosim GUI class. """
+    """Main pyrobosim GUI class."""
 
     def __init__(self, world, args):
         """
@@ -24,7 +26,7 @@ class PyRoboSimGUI(QtWidgets.QApplication):
 
 
 class PyRoboSimMainWindow(QtWidgets.QMainWindow):
-    """ Main application window for the pyrobosim GUI. """
+    """Main application window for the pyrobosim GUI."""
 
     def __init__(self, world, *args, **kwargs):
         """
@@ -48,10 +50,10 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.canvas.show()
 
     def set_window_dims(self, screen_fraction=0.8):
-        """ 
-        Set window dimensions. 
-        
-        :param screen_fraction: Fraction of screen (0.0 to 1.0 that the window uses)
+        """
+        Set window dimensions.
+
+        :param screen_fraction: Fraction of screen (0.0 to 1.0) used by window.
         :type screen_fraction: float
         """
         screen = QtWidgets.QDesktopWidget().availableGeometry()
@@ -62,7 +64,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.setGeometry(window_x, window_y, window_width, window_height)
 
     def create_layout(self):
-        """ Creates the main GUI layout. """
+        """Creates the main GUI layout."""
         self.main_widget = QtWidgets.QWidget()
 
         # Push buttons
@@ -115,18 +117,17 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
     # State Management #
     ####################
     def update_manip_state(self):
-        """ Update the manipulation state to enable/disable buttons. """
-        can_pick = self.world.has_robot and \
-            self.world.robot.manipulated_object is None
+        """Update the manipulation state to enable/disable buttons."""
+        can_pick = self.world.has_robot and not self.world.robot.manipulated_object
         self.pick_button.setEnabled(can_pick)
         self.place_button.setEnabled(not can_pick)
 
     def set_buttons_during_action(self, state):
-        """ 
+        """
         Enables or disables buttons that should not be pressed while
         the robot is executing an action.
-    
-        :param state: The desired button state (True for enabled or False for disabled)
+
+        :param state: Desired button state (True to enable, False to disable)
         :type state: bool
         """
         self.nav_button.setEnabled(state)
@@ -138,7 +139,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
     # Button Callbacks #
     ####################
     def rand_pose_cb(self):
-        """ Callback to randomize robot pose. """
+        """Callback to randomize robot pose."""
         sampled_pose = self.world.sample_free_robot_pose_uniform()
         if sampled_pose is not None:
             self.world.robot.set_pose(sampled_pose)
@@ -149,25 +150,25 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.canvas.draw()
 
     def rand_goal_cb(self):
-        """ Callback to randomize robot goal. """
-        all_entities = self.world.get_location_names() + \
-            self.world.get_room_names()
+        """Callback to randomize robot goal."""
+        all_entities = self.world.get_location_names() + self.world.get_room_names()
         entity_name = np.random.choice(all_entities)
         self.goal_textbox.setText(entity_name)
 
     def rand_obj_cb(self):
-        """ Callback to randomize manipulation object goal. """
+        """Callback to randomize manipulation object goal."""
         obj_name = np.random.choice(self.world.get_object_names())
         self.goal_textbox.setText(obj_name)
 
     def on_navigate_click(self):
-        """ Callback to navigate to a goal location. """
+        """Callback to navigate to a goal location."""
         if self.world.robot and self.world.robot.executing_action:
             return
 
         query_list = self.goal_textbox.text().split(" ")
-        loc = query_to_entity(self.world, query_list, mode="location",
-                              resolution_strategy="nearest")
+        loc = query_to_entity(
+            self.world, query_list, mode="location", resolution_strategy="nearest"
+        )
         if not loc:
             return
 
@@ -177,18 +178,19 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.set_buttons_during_action(True)
 
     def on_pick_click(self):
-        """ Callback to pick an object. """
+        """Callback to pick an object."""
         if self.world.robot:
             loc = self.world.robot.location
             query_list = [loc] + self.goal_textbox.text().split(" ")
-            obj = query_to_entity(self.world, query_list, mode="object",
-                                  resolution_strategy="nearest")
+            obj = query_to_entity(
+                self.world, query_list, mode="object", resolution_strategy="nearest"
+            )
             print(f"Picking {obj.name}")
             self.canvas.pick_object(obj)
             self.update_manip_state()
 
     def on_place_click(self):
-        """ Callback to place an object. """
+        """Callback to place an object."""
         if self.world.robot:
             if self.world.robot.manipulated_object is not None:
                 print(f"Placing {self.world.robot.manipulated_object.name}")

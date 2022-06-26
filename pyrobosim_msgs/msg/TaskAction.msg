@@ -12,3 +12,4 @@ float32 cost
 
 # Other parameters
 geometry_msgs/Pose pose
+pyrobosim_msgs/Path path
