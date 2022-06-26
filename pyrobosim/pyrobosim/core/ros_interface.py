@@ -3,10 +3,11 @@
 import rclpy
 from rclpy.node import Node
 import threading
-from transforms3d.euler import euler2quat
 
-from pyrobosim_msgs.msg import RobotState, TaskAction, TaskPlan
-from pyrobosim.planning.ros_utils import task_action_from_ros, task_plan_from_ros
+from pyrobosim_msgs.msg import RobotState, LocationState, ObjectState, WorldState, TaskAction, TaskPlan
+from pyrobosim_msgs.srv import RequestWorldState
+from pyrobosim.utils.ros_conversions import pose_from_ros, pose_to_ros, task_action_from_ros, task_plan_from_ros
+
 
 class WorldROSWrapper(Node):
     """ ROS2 wrapper node for pyrobosim worlds. """
@@ -54,7 +55,11 @@ class WorldROSWrapper(Node):
             target=self.create_timer, 
             args=(self.state_pub_rate, self.publish_robot_state))
 
-        self.get_logger().info("World node started")
+        # World state service server
+        self.world_state_srv = self.create_service(
+            RequestWorldState, "request_world_state", self.world_state_callback)
+        
+        self.get_logger().info("World node started.")
 
 
     def start(self):
@@ -105,23 +110,85 @@ class WorldROSWrapper(Node):
         return self.world.robot.executing_action or self.world.robot.executing_plan
 
 
+    def package_robot_state(self):
+        """ 
+        Creates a ROS message containing the robot state.
+        This state can be published standalone or packaged into the overall world state.
+      
+        :return: ROS message representing the robot state.
+        :rtype: :class:`pyrobosim_msgs.msg.RobotState`
+        """
+        robot = self.world.robot
+        if not robot:
+            return None
+
+        state_msg = RobotState(name=robot.name)
+        state_msg.pose = pose_to_ros(robot.pose)
+        state_msg.executing_action = robot.executing_action
+        if robot.manipulated_object is not None:
+            state_msg.holding_object = True
+            state_msg.manipulated_object = robot.manipulated_object.name
+        state_msg.last_visited_location = robot.location.name
+        return state_msg
+
+
     def publish_robot_state(self):
         """ Publishes the robot state (this function runs on a timer). """
-        robot = self.world.robot
-        if robot:
-            state_msg = RobotState()
-            state_msg.pose.position.x = robot.pose.x
-            state_msg.pose.position.y = robot.pose.y
-            state_msg.pose.position.z = robot.pose.z
-            quat = euler2quat(0, 0, robot.pose.yaw)
-            state_msg.pose.orientation.w = quat[0]
-            state_msg.pose.orientation.x = quat[1]
-            state_msg.pose.orientation.y = quat[2]
-            state_msg.pose.orientation.z = quat[3]
-            state_msg.executing_action = robot.executing_action
-            if robot.manipulated_object is not None:
-                state_msg.holding_object = True
-                state_msg.manipulated_object = robot.manipulated_object.name
-            state_msg.last_visited_location = robot.location.name
+        self.robot_state_pub.publish(self.package_robot_state())
 
-            self.robot_state_pub.publish(state_msg)
+
+    def world_state_callback(self, request, response):
+        """ 
+        Returns the world state as a response to a service request. 
+        
+        :param request: The service request.
+        :type request: :class:`pyrobosim_msgs.srv._request_world_state.RequestWorldState_Request`
+        :param response: The unmodified service response.
+        :type response: :class:`pyrobosim_msgs.srv._request_world_state.RequestWorldState_Response`
+        :return: The modified service response containing the world state.
+        :rtype: :class:`pyrobosim_msgs.srv._request_world_state.RequestWorldState_Response`
+        """
+        self.get_logger().info("Received world state request.")
+
+        # Add the object and location states.
+        for loc in self.world.locations:
+            loc_msg = LocationState(
+                name=loc.name, category=loc.category, 
+                parent=loc.get_room_name(), pose=pose_to_ros(loc.pose))
+            response.state.locations.append(loc_msg)
+        for obj in self.world.objects:
+            obj_msg = ObjectState(
+                name=obj.name, category=obj.category, 
+                parent=obj.parent.name, pose=pose_to_ros(obj.pose))
+            response.state.objects.append(obj_msg)
+
+        # Add the robot state.
+        response.state.robot = self.package_robot_state()
+
+        return response
+
+
+def update_world_from_state_msg(world, msg):
+    """
+    Updates a world given a state message.
+    
+    :param world: World object to update.
+    :type world: :class:`pyrobosim.core.world.World`
+    :param msg: ROS message describing the desired world state.
+    :type msg: :class:`pyrobosim_msgs.msg.WorldState`
+    """
+    # Update the robot state
+    # NOTE: currently assumes both the world and state message have a single robot.
+    if world.robot:
+        robot_state = msg.robot
+        world.robot.set_pose(pose_from_ros(robot_state.pose))
+
+    # Update the object states
+    for obj_state in msg.objects:
+        world.update_object(obj_state.name, loc=obj_state.parent, 
+                            pose=pose_from_ros(obj_state.pose))
+
+    # Update the location states
+    for loc_state in msg.locations:
+        world.update_location(loc_state.name, room=loc_state.parent, 
+                              pose=pose_from_ros(loc_state.pose))

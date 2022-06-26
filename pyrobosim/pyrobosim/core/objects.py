@@ -67,7 +67,7 @@ class Object:
 
     def get_room_name(self):
         """ 
-        Returns the name of the room containing the location.
+        Returns the name of the room containing the object.
         
         :return: Room name.
         :rtype: str
@@ -83,14 +83,19 @@ class Object:
         """
         return polygon_and_height_from_footprint(self.metadata["footprint"])[0]
 
-    def create_polygons(self):
-        """ Creates collision and visualization polygons for the object. """
+    def create_polygons(self, inflation_radius=0.0):
+        """ 
+        Creates collision and visualization polygons for the object. 
+
+        :param inflation_radius: Inflation radius, in meters.
+        :type inflation_radius: float, optional
+        """
         self.polygon, height = polygon_and_height_from_footprint(
             self.metadata["footprint"], pose=self.pose)
         if height is not None:
             self.height = height
         self.centroid = list(self.polygon.centroid.coords)[0]
-        self.update_collision_polygon()
+        self.update_collision_polygon(inflation_radius)
         self.update_visualization_polygon()
 
     def update_collision_polygon(self, inflation_radius=0.0):
@@ -114,4 +119,8 @@ class Object:
 
     def __repr__(self):
         """ Returns printable string. """
-        return f"Object: {self.name} in {self.parent.name}\n\t{self.pose}"
+        return f"Object: {self.name}"
+
+    def print_details(self):
+        """ Prints string with details. """
+        print(f"Object: {self.name} in {self.parent.name}\n\t{self.pose}")

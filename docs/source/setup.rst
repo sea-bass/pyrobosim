@@ -20,7 +20,8 @@ To set up your Python virtual environment, configure and run
 
 By default, this will create a Python virtual environment in ``~/python-virtualenvs/pyrobosim``.
 
-If you want to use PDDLStream for task and motion planning, also run:
+If you want to use `PDDLStream <https://github.com/caelan/pddlstream>`_ for 
+task and motion planning, you should also run:
 
 ::
 

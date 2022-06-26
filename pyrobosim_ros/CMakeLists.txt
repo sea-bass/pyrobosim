@@ -18,8 +18,12 @@ ament_python_install_package(
 install(PROGRAMS
   examples/demo.py
   examples/demo_commands.py
+  examples/demo_pddl_world.py
+  examples/demo_pddl_planner.py
+  examples/demo_pddl_goal_publisher.py
   ../pyrobosim/examples/test_prm.py
   ../pyrobosim/examples/test_rrt.py
+  ../pyrobosim/examples/demo_pddl.py
   ../pyrobosim/examples/demo_world_save.py
   DESTINATION lib/${PROJECT_NAME}
 )

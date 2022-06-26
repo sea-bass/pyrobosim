@@ -318,6 +318,53 @@ class World:
 
         return loc
 
+
+    def update_location(self, loc, pose, room=None):
+        """ 
+        Updates an existing location in the world.
+        
+        :param loc: Location instance or name to update.
+        :type loc: :class:`pyrobosim.core.locations.Location`/str
+        :param pose: Pose of the location.
+        :type pose: :class:`pyrobosim.utils.pose.Pose`
+        :param room: Room instance or name. If none, uses the previous room.
+        :type room: :class:`pyrobosim.core.room.Room`/str, optional
+        :return: True if the update was successful, else False.
+        :rtype: bool
+        """
+        if isinstance(loc, str):
+            loc = self.get_location_by_name(loc)
+        if not isinstance(loc, Location):
+            warnings.warn("Could not find location. Not updating.")
+            return False
+
+        if room is not None:
+            if isinstance(room, str):
+                room = self.get_room_by_name(room)
+        
+            if not isinstance(room, Room):
+                warnings.warn(f"Room {loc} did not resolve to a valid room for a location.")
+                return False
+
+        # Check that the location fits within the room and is not in collision with
+        # other locations already in the room. Else, warn and do not add it.
+        new_polygon = transform_polygon(loc.get_raw_polygon(), pose)
+        is_valid_pose = new_polygon.within(room.polygon)
+        for other_loc in room.locations:
+            is_valid_pose = is_valid_pose and not new_polygon.intersects(other_loc.polygon)
+        if not is_valid_pose:
+            warnings.warn(f"Location {loc.name} in collision. Cannot add to world.")
+            return False
+
+        # If we passed all checks, update the polygon.
+        loc.parent.locations.remove(loc)
+        loc.parent = room
+        room.locations.append(loc)
+        loc.set_pose(pose)
+        loc.create_polygons(self.inflation_radius)
+        loc.create_spawn_locations()
+        return True
+
     def remove_location(self, loc):
         """ 
         Cleanly removes a location from the world.
@@ -370,12 +417,16 @@ class World:
 
         # If it's a string, get the location name
         if isinstance(loc, str):
-            loc = self.get_location_by_name(loc)
-        # If it's a location object, pick an object spawn at random
+            loc = self.get_entity_by_name(loc)
+        # If it's a location object, pick an object spawn at random.
+        # Otherwise, if it's an object spawn, use that entity as is.
         if isinstance(loc, Location):
             obj_spawn = np.random.choice(loc.children)
-        else:
+        elif isinstance(loc, ObjectSpawn):
             obj_spawn = loc
+        else:
+            warnings.warn(f"Location {loc} did not resolve to a valid location for an object.")
+            return None
 
         # Create the object
         obj = Object(category=category, name=name, parent=obj_spawn, pose=pose)
@@ -384,8 +435,6 @@ class World:
         if pose is None:
             obj_added = False
             for _ in range(self.max_object_sample_tries):
-                if isinstance(loc, Location):
-                    obj_spawn = np.random.choice(loc.children)
                 x_sample, y_sample = sample_from_polygon(obj_spawn.polygon)
                 yaw_sample = np.random.uniform(-np.pi, np.pi)
                 pose_sample = Pose(x=x_sample, y=y_sample, yaw=yaw_sample)
@@ -420,6 +469,54 @@ class World:
         self.objects.append(obj)
         self.num_objects += 1
         return obj
+
+
+    def update_object(self, obj, loc=None, pose=None):
+        """
+        Updates an existing object in the world.
+
+        :param obj: Object instance or name to update.
+        :type obj: :class:`pyrobosim.core.objects.Object`/str
+        :param loc: Location or object spawn instance or name. If none, uses the previous location.
+        :type loc: :class:`pyrobosim.core.locations.Location`/:class:`pyrobosim.core.locations.ObjectSpawn`/str, optional
+        :param pose: Pose of the location. If none is specified, it will be sampled.
+        :type pose: :class:`pyrobosim.utils.pose.Pose`, optional
+        :return: True if the update was successful, else False.
+        :rtype: bool
+        """
+        if isinstance(obj, str):
+            obj = self.get_object_by_name(obj)
+        if not isinstance(obj, Object):
+            warnings.warn("Could not find object. Not updating.")
+            return False
+
+        if loc is not None:
+            if pose is None:
+                warnings.warn("Cannot specify a location without a pose.")
+    
+            # If it's a string, get the location name
+            if isinstance(loc, str):
+                loc = self.get_entity_by_name(loc)
+            # If it's a location object, pick an object spawn at random.
+            # Otherwise, if it's an object spawn, use that entity as is.
+            if isinstance(loc, Location):
+                obj_spawn = np.random.choice(loc.children)
+            elif isinstance(loc, ObjectSpawn):
+                obj_spawn = loc
+            else:
+                warnings.warn(f"Location {loc} did not resolve to a valid location for an object.")
+                return False
+
+            obj.parent.children.remove(obj)
+            obj.parent = obj_spawn
+            obj_spawn.children.append(obj)
+
+        if pose is not None:
+            obj.set_pose(pose)
+            obj.create_polygons(self.object_radius)
+
+        return True
+        
 
     def remove_object(self, obj):
         """ 
@@ -839,6 +936,8 @@ class World:
         :type name: str
         :return: Entity object instance matching the input name, or ``None`` if not valid.
         """
+        if self.robot and name == self.robot.name:
+            return self.robot # Should be part of the chain below when multiple robots are supported.
         for entity in itertools.chain(
             self.rooms, self.hallways, self.locations, self.objects):
             if entity.name == name:

@@ -83,7 +83,20 @@ def interpolate_trajectory(traj, dt):
     (t_pts, x_pts, y_pts, yaw_pts) = traj
     t_final = t_pts[-1]
 
-    # Set up Slerp interpolation for the angle
+    # De-duplicate time points ensure that Slerp doesn't throw an error.
+    # Right now, we're just keeping the later point.
+    i = 0
+    while i < len(t_pts):
+        if (i > 0) and (t_pts[i] <= t_pts[i-1]):
+            print("Warning: De-duplicated trajectory points at the same time.")
+            t_pts = np.delete(t_pts, i-1)
+            x_pts = np.delete(x_pts, i-1)
+            y_pts = np.delete(y_pts, i-1)
+            yaw_pts = np.delete(yaw_pts, i-1)
+        else:
+            i += 1
+
+    # Set up Slerp interpolation for the angle.
     if t_final > 0:
         euler_angs = [[0, 0, th] for th in yaw_pts]
         slerp = Slerp(t_pts, Rotation.from_euler("xyz", euler_angs))

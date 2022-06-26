@@ -163,7 +163,7 @@ class Robot:
 
         # Validate the robot location
         if obj.parent != loc:
-            warnings.warn(f"{obj.name} is at {obj.parent.name} and robot" +
+            warnings.warn(f"{obj.name} is at {obj.parent.name} and robot " +
                           f"is at {loc.name}. Cannot pick.")
             return False
     
@@ -249,7 +249,11 @@ class Robot:
         if action.type == "navigate":
             if self.world.has_gui:
                 self.executing_nav = True
-                self.world.gui.canvas.nav_trigger.emit(action.target_location)
+                if isinstance(action.target_location, str):
+                    tgt_loc = action.target_location
+                else:
+                    tgt_loc = action.target_location.name
+                self.world.gui.canvas.nav_trigger.emit(tgt_loc)
                 while self.executing_nav:
                     time.sleep(0.5) # Delay to wait for navigation
                 success = True # TODO Need to keep track of nav status
@@ -315,4 +319,8 @@ class Robot:
 
     def __repr__(self):
         """ Returns printable string. """
-        return f"Robot {self.name}, ID={self.id}\n\t{self.pose}"
+        return f"Robot: {self.name}"
+
+    def print_details(self):
+        """ Prints string with details. """
+        print(f"Robot: {self.name}, ID={self.id}\n\t{self.pose}")
