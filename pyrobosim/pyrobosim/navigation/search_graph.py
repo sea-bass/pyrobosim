@@ -9,13 +9,14 @@ from ..utils.pose import Pose
 
 
 class SearchGraphPlanner:
-    """ Lightweight path planner that wraps around SearchGraph. """
+    """Lightweight path planner that wraps around SearchGraph."""
+
     def __init__(self, graph):
         self.graph = graph
         self.latest_path = None
 
     def plan(self, start, goal):
-        """ Plan a path from a start to a goal node. """
+        """Plan a path from a start to a goal node."""
         if self.graph is None:
             warnings.warn("No search graph defined for this world.")
             return None
@@ -25,7 +26,7 @@ class SearchGraphPlanner:
         return self.latest_path
 
     def plot(self, axes, show_graph=True, show_path=True):
-        """ 
+        """
         Plots the search graph and/or path on a specified set of axes.
         """
         if show_graph:
@@ -33,24 +34,24 @@ class SearchGraphPlanner:
         else:
             artists = []
 
-        if show_path and self.latest_path is not None:
+        if show_path and self.latest_path and self.latest_path.num_poses > 0:
             x = [p.x for p in self.latest_path.poses]
             y = [p.y for p in self.latest_path.poses]
-            path, = axes.plot(x, y, "m-", linewidth=3, zorder=1)
-            start, = axes.plot(x[0], y[0], "go", zorder=2)
-            goal, = axes.plot(x[-1], y[-1], "rx", zorder=2)
+            (path,) = axes.plot(x, y, "m-", linewidth=3, zorder=1)
+            (start,) = axes.plot(x[0], y[0], "go", zorder=2)
+            (goal,) = axes.plot(x[-1], y[-1], "rx", zorder=2)
             artists.extend((path, start, goal))
 
         return artists
-        
+
 
 class SearchGraph:
-    """ Graph for searching using A* """
+    """Graph for searching using A*"""
 
     def __init__(self, world=None, max_edge_dist=np.inf, collision_check_dist=0.1):
         """
         Creates a new search graph.
-        
+
         :param world: World object from which to create the search graph.
         :type world: :class:`pyrobosim.core.world.World`
         :param max_edge_dist: Maximum distance to automatically connect two edges, defaults to infinity.
@@ -69,9 +70,9 @@ class SearchGraph:
         self.solver = GraphSolver()
 
     def add(self, n, autoconnect=False):
-        """ 
+        """
         Adds a new node or list of nodes to the graph.
-        
+
         :param n: Node to add to the graph
         :type n: :class:`Node`
         :param autoconnect: Whether to autoconnect the node to existing nodes in the graph, defaults to False.
@@ -89,7 +90,7 @@ class SearchGraph:
     def connect(self, n0, n1):
         """
         Connects two nodes in a graph, if collision free.
-        
+
         :param n0: First node to connect
         :type n0: :class:`Node`
         :param n1: Second node to connect
@@ -105,9 +106,9 @@ class SearchGraph:
         return False
 
     def remove(self, ndel):
-        """ 
+        """
         Removes a node or list of nodes and all its connections from the graph.
-        
+
         :param ndel: Node or list of nodes to remove
         :type ndel: :class:`Node`/list[:class:`Node`]
         """
@@ -130,8 +131,8 @@ class SearchGraph:
     def check_connectivity(self, start, goal, ignore_max_dist=False):
         """
         Checks connectivity between two nodes `start` and `goal` in the world
-        by sampling points spaced by the `self.collision_check_dist` parameter and verifying
-        that every point is in the free configuration space.
+        by sampling points spaced by the `self.collision_check_dist` parameter
+        and verifying that every point is in the free configuration space.
 
         :param start: Start node
         :type start: :class:`Node`
@@ -168,14 +169,15 @@ class SearchGraph:
             if self.world.check_occupancy(Pose(x=x_check, y=y_check)):
                 return False
 
-        # If the loop was traversed for all points without returning, we can connect.
+        # If the loop was traversed for all points without returning, we can
+        # connect the points.
         return True
 
     def find_path(self, start, goal):
         """
         Gets a path from start to goal poses by searching the graph
         The path consists of a tuple of Pose objects
-        
+
         :param start: Start node
         :type start: :class:`Node`
         :param goal: Goal node
@@ -191,9 +193,9 @@ class SearchGraph:
             return Path(poses=[p.pose for p in path])
 
     def nearest_node(self, pose):
-        """ 
-        Get the nearest node in the graph to a specified pose. 
-        
+        """
+        Get the nearest node in the graph to a specified pose.
+
         :param pose: Query pose
         :type pose: :class:`pyrobosim.utils.pose.Pose`
         :return: The nearest node to the query pose, or None if the graph is empty
@@ -201,7 +203,7 @@ class SearchGraph:
         """
         if len(self.nodes) == 0:
             return None
-        
+
         # Find the nearest node
         min_dist = np.inf
         for n in self.nodes:
@@ -212,31 +214,31 @@ class SearchGraph:
         return n_nearest
 
     def plot(self, axes):
-        """ 
+        """
         Plots the search graph on a specified set of axes.
         """
         artists = []
         x = [n.pose.x for n in self.nodes]
         y = [n.pose.y for n in self.nodes]
-        nodes, = axes.plot(x, y, "k.", linestyle="None", markersize=10)
+        (nodes,) = axes.plot(x, y, "k.", linestyle="None", markersize=10)
         artists.append(nodes)
 
         for e in self.edges:
             x = (e.n0.pose.x, e.n1.pose.x)
             y = (e.n0.pose.y, e.n1.pose.y)
-            edge, = axes.plot(x, y, "k:", linewidth=1)
+            (edge,) = axes.plot(x, y, "k:", linewidth=1)
             artists.append(edge)
 
         return artists
 
 
 class Node:
-    """ Graph node representation. """
+    """Graph node representation."""
 
     def __init__(self, pose, parent=None, cost=0.0):
         """
-        Creates a graph node. 
-        
+        Creates a graph node.
+
         :param pose: Pose of the node.
         :type pose: :class:`pyrobosim.utils.pose.Pose`
         :param parent: Parent node, if any.
@@ -251,12 +253,12 @@ class Node:
 
 
 class Edge:
-    """ Graph edge representation. """
+    """Graph edge representation."""
 
     def __init__(self, n0, n1):
         """
         Creates a graph edge.
-        
+
         :param n0: First node
         :type n0: :class:`Node`
         :param n1: Second node
@@ -268,13 +270,13 @@ class Edge:
 
 
 class GraphSolver(AStar):
-    """ 
+    """
     Implementation of the AStar class from python-astar to solve
     the A* shortest path algorithm for our graph representation.
     """
 
     def heuristic_cost_estimate(self, n0, n1):
-        """ 
+        """
         Compute heuristic cost estimate using linear distance.
 
         :param n0: First node
@@ -289,7 +291,7 @@ class GraphSolver(AStar):
     def distance_between(self, n0, n1):
         """
         Compute distance between two nodes
-        
+
         :param n0: First node
         :type n0: :class:`Node`
         :param n1: Second node
@@ -302,7 +304,7 @@ class GraphSolver(AStar):
     def neighbors(self, n):
         """
         Get neighbors of a graph node.
-        
+
         :param n: Node
         :type n: :class:`Node`
         :return: List of node neighbors

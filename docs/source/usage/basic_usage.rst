@@ -23,7 +23,7 @@ You can now interact with the GUI through the buttons and text boxes.
 For example, enter "bedroom desk" in the **Goal query** text box and then
 click the **Navigate** button. Once at the destination, click **Pick**.
 
-.. image:: media/pyrobosim_demo.png
+.. image:: ../media/pyrobosim_demo.png
     :align: center
     :width: 600px
     :alt: Basic standalone demo.
@@ -56,7 +56,7 @@ In a separate Terminal, you can publish a list of commands as follows:
 
 The first command will start a world as a ROS2 node, and the second one will publish a plan (or set of actions) to the node.
 
-.. image:: media/pyrobosim_demo_ros.png
+.. image:: ../media/pyrobosim_demo_ros.png
     :align: center
     :width: 600px
     :alt: Basic ROS2 demo.
@@ -74,7 +74,7 @@ By default, ``demo.py`` creates a world using the API, but you can alternative t
     python examples/demo.py --from-file
     ros2 run pyrobosim_ros demo.py --from-file
 
-Refer to the :doc:`YAML Schemas </yaml_schemas>` documentation for more information.
+Refer to the :doc:`YAML Schemas </yaml/index>` documentation for more information.
 
 
 Exporting Worlds to Gazebo
@@ -95,7 +95,7 @@ ROS:
 
 You can then follow the steps to see the generated world.
 
-.. image:: media/gazebo_demo_world.png
+.. image:: ../media/gazebo_demo_world.png
     :align: center
     :width: 600px
     :alt: Example world exported to Gazebo classic.
@@ -106,7 +106,7 @@ If you add the ``--ignition`` flag to this demo, you can similarly export to Ign
 
     ros2 run pyrobosim_ros demo_world_save.py --ignition
 
-.. image:: media/ignition_demo_world.png
+.. image:: ../media/ignition_demo_world.png
     :align: center
     :width: 600px
     :alt: Example world exported to Ignition Gazebo.

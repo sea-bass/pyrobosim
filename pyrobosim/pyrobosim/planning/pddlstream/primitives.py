@@ -139,7 +139,7 @@ def sample_place_pose(loc, obj, padding=0.0, max_tries=100):
 
             # Check that the object is inside the polygon.
             poly_sample = transform_polygon(obj_poly, pose_sample)
-            is_valid_pose = poly_sample.within(l.polygon)
+            is_valid_pose = poly_sample.within(loc.polygon)
             if not is_valid_pose:
                 continue  # If our sample is in collision, simply retry.
 

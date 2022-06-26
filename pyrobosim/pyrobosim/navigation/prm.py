@@ -1,3 +1,5 @@
+""" Probabilistic Roadmap (PRM) implementation. """
+
 import time
 import warnings
 
@@ -9,6 +11,7 @@ class PRMPlanner:
     """
     Implementation of Probabilistic Roadmaps (PRM) for motion planning.
     """
+
     def __init__(self, world, max_nodes=100, max_connection_dist=2.0):
         """
         Creates an instance of a PRM planner.
@@ -17,7 +20,7 @@ class PRMPlanner:
         :type world: :class:`pyrobosim.core.world.World`
         :param max_nodes: Maximum nodes sampled to build the PRM.
         :type max_nodes: int
-        :param max_connection_dist: Maximum connection distance between two nodes.
+        :param max_connection_dist: Maximum connection distance between nodes.
         :type max_connection_dist: float
         """
         # Parameters
@@ -31,15 +34,15 @@ class PRMPlanner:
         self.world = world
         self.reset()
 
-
     def reset(self):
-        """ Resamples the PRM and resets planning metrics. """
+        """Resamples the PRM and resets planning metrics."""
         self.planning_time = self.sampling_time = 0.0
         self.latest_path = None
 
         # Create a search graph and sample nodes.
         self.graph = SearchGraph(
-            world=self.world, max_edge_dist=self.max_connection_dist)
+            world=self.world, max_edge_dist=self.max_connection_dist
+        )
         t_start = time.time()
         for i in range(self.max_nodes):
             n_sample = self.sample_configuration()
@@ -48,16 +51,17 @@ class PRMPlanner:
                 break
             self.graph.add(Node(n_sample), autoconnect=True)
         self.sampling_time = time.time() - t_start
-        
 
     def plan(self, start, goal):
-        """ 
-        Plans a path from start to goal. 
-        
+        """
+        Plans a path from start to goal.
+
         :param start: Start pose or graph node.
-        :type start: :class:`pyrobosim.utils.pose.Pose` / :class:`pyrobosim.navigation.search_graph.Node`
+        :type start: :class:`pyrobosim.utils.pose.Pose` /
+            :class:`pyrobosim.navigation.search_graph.Node`
         :param goal: Goal pose or graph node.
-        :type goal: :class:`pyrobosim.utils.pose.Pose` / :class:`pyrobosim.navigation.search_graph.Node`
+        :type goal: :class:`pyrobosim.utils.pose.Pose` /
+            :class:`pyrobosim.navigation.search_graph.Node`
         :return: Path from start to goal.
         :rtype: :class:`pyrobosim.utils.motion.Path`
         """
@@ -65,7 +69,7 @@ class PRMPlanner:
         if isinstance(start, Pose):
             start = Node(start, parent=None)
         self.graph.add(start, autoconnect=True)
-        if isinstance(goal, Pose):  
+        if isinstance(goal, Pose):
             goal = Node(goal, parent=None)
         self.graph.add(goal, autoconnect=True)
 
@@ -74,18 +78,16 @@ class PRMPlanner:
         self.latest_path = self.graph.find_path(start, goal)
         self.latest_path.fill_yaws()
         self.planning_time = time.time() - t_start
-        return self.latest_path       
-
+        return self.latest_path
 
     def sample_configuration(self):
-        """ 
+        """
         Samples a random configuration from the world.
-        
+
         :return: Collision-free pose if found, else ``None``.
         :rtype: :class:`pyrobosim.utils.pose.Pose`
         """
         return self.world.sample_free_robot_pose_uniform()
-
 
     def print_metrics(self):
         """
@@ -101,7 +103,6 @@ class PRMPlanner:
         print(f"Time to sample nodes: {self.sampling_time} seconds")
         print(f"Time to plan: {self.planning_time} seconds")
 
-
     def plot(self, axes, show_graph=True, show_path=True):
         """
         Plots the PRM and the planned path on a specified set of axes.
@@ -112,7 +113,8 @@ class PRMPlanner:
         :type show_graph: bool
         :param show_path: If True, shows the last planned path.
         :type show_path: bool
-        :return: List of Matplotlib artists containing what was drawn, used for bookkeeping.
+        :return: List of Matplotlib artists containing what was drawn,
+            used for bookkeeping.
         :rtype: list[:class:`matplotlib.artist.Artist`]
         """
         artists = []
@@ -120,21 +122,29 @@ class PRMPlanner:
             for e in self.graph.edges:
                 x = (e.n0.pose.x, e.n1.pose.x)
                 y = (e.n0.pose.y, e.n1.pose.y)
-                edge, = axes.plot(x, y, color=self.color, alpha=self.color_alpha,
-                                  linewidth=0.5, marker="o", markerfacecolor=self.color,
-                                  markeredgecolor=self.color, markersize=3, zorder=1)
+                (edge,) = axes.plot(
+                    x,
+                    y,
+                    color=self.color,
+                    alpha=self.color_alpha,
+                    linewidth=0.5,
+                    marker="o",
+                    markerfacecolor=self.color,
+                    markeredgecolor=self.color,
+                    markersize=3,
+                    zorder=1,
+                )
                 artists.append(edge)
-        
-        if show_path and self.latest_path is not None:
+
+        if show_path and self.latest_path.num_poses > 0:
             x = [p.x for p in self.latest_path.poses]
             y = [p.y for p in self.latest_path.poses]
-            path, = axes.plot(x, y, "m-", linewidth=3, zorder=1)
-            start, = axes.plot(x[0], y[0], "go", zorder=2)
-            goal, = axes.plot(x[-1], y[-1], "rx", zorder=2)
+            (path,) = axes.plot(x, y, "m-", linewidth=3, zorder=1)
+            (start,) = axes.plot(x[0], y[0], "go", zorder=2)
+            (goal,) = axes.plot(x[-1], y[-1], "rx", zorder=2)
             artists.extend((path, start, goal))
 
         return artists
-
 
     def show(self, show_graph=True, show_path=True):
         """
@@ -146,6 +156,7 @@ class PRMPlanner:
         :type show_path: bool
         """
         import matplotlib.pyplot as plt
+
         f = plt.figure()
         ax = f.add_subplot(111)
         self.plot(ax, show_graph=show_graph, show_path=show_path)
