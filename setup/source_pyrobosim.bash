@@ -51,7 +51,8 @@ fi
 source $VIRTUALENV_FOLDER/bin/activate
 
 # Add dependencies to path
-PDDLSTREAM_PATH=$PYROBOSIM_WS/src/pyrobosim/dependencies/pddlstream
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+PDDLSTREAM_PATH=$SCRIPT_DIR/../dependencies/pddlstream
 if [ -d "$PDDLSTREAM_PATH" ]
 then
     export PYTHONPATH=$PDDLSTREAM_PATH:$PYTHONPATH
