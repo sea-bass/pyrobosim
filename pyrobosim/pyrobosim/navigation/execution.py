@@ -30,7 +30,7 @@ class ConstantVelocityExecutor:
         self.dt = dt
         self.robot = None
 
-    def execute(self, path, realtime_factor=1.0):
+    def execute(self, path, realtime_factor=1.0)->bool:
         """
         Generates and executes a trajectory on the robot.
 
