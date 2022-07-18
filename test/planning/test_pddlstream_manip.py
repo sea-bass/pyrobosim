@@ -5,7 +5,10 @@ Test script for PDDLStream planning with manipulation streams.
 """
 import os
 import sys
+import pytest
 import numpy as np
+
+docutils = pytest.importorskip("pddlstream")
 
 from pyrobosim.core.robot import Robot
 from pyrobosim.core.room import Room
