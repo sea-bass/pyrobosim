@@ -133,9 +133,10 @@ def task_action_from_ros(msg):
     """
     if not isinstance(msg, ros_msgs.TaskAction):
         raise Exception("Input is not a TaskAction ROS message")
+    pose = pose_from_ros(msg.pose) if msg.has_pose else None
     return acts.TaskAction(msg.type, object=msg.object, room=msg.room,
                 source_location=msg.source_location, target_location=msg.target_location,
-                pose=pose_from_ros(msg.pose), path=path_from_ros(msg.path), cost=msg.cost)
+                pose=pose, path=path_from_ros(msg.path), cost=msg.cost)
 
 
 def task_action_to_ros(act):
@@ -155,7 +156,9 @@ def task_action_to_ros(act):
     act_msg.room = get_entity_name(act.room)
     act_msg.source_location = get_entity_name(act.source_location)
     act_msg.target_location = get_entity_name(act.target_location)
-    act_msg.pose = pose_to_ros(act.pose)
+    if act.pose:
+        act_msg.has_pose = True
+        act_msg.pose = pose_to_ros(act.pose)
     act_msg.path = path_to_ros(act.path)  
     if act.cost:
         act_msg.cost = float(act.cost)

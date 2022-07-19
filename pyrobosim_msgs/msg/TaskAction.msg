@@ -11,5 +11,6 @@ string target_location
 float32 cost
 
 # Other parameters
+bool has_pose
 geometry_msgs/Pose pose
 pyrobosim_msgs/Path path
