@@ -11,7 +11,7 @@ from ..core.locations import Location, ObjectSpawn
 from ..core.objects import Object
 
 
-def apply_resolution_strategy(world, entity_list, resolution_strategy):
+def apply_resolution_strategy(world, entity_list, resolution_strategy)->None:
     """
     Accepts a list of entities in the world (e.g. rooms, objects, etc.) and 
     applies a resolution strategy to get a single entity from that list that best 
@@ -31,7 +31,7 @@ def apply_resolution_strategy(world, entity_list, resolution_strategy):
     :rtype: Entity
     """
     if entity_list is None or len(entity_list) == 0:
-        return None
+        raise Exception("Entitity List Cannot Be Null or 0")
 
     if resolution_strategy == "first":
         return entity_list[0]
@@ -40,19 +40,18 @@ def apply_resolution_strategy(world, entity_list, resolution_strategy):
     elif resolution_strategy == "nearest":
         if not world.has_robot:
             warnings.warn("Cannot apply nearest resolution strategy without a robot!")
-            return None
-        nearest_dist = sys.float_info.max
-        nearest_entity = None
-        robot_pose = world.robot.pose
-        for entity in entity_list:
-            dist = robot_pose.get_linear_distance(entity.pose)
-            if dist < nearest_dist:
-                nearest_dist = dist
-                nearest_entity = entity
-        return nearest_entity
+        else:   
+            nearest_dist = sys.float_info.max
+            nearest_entity = None
+            robot_pose = world.robot.pose
+            for entity in entity_list:
+                dist = robot_pose.get_linear_distance(entity.pose)
+                if dist < nearest_dist:
+                    nearest_dist = dist
+                    nearest_entity = entity
+            return nearest_entity
     else:
         warnings.warn(f"Invalid resolution strategy: {resolution_strategy}")
-        return None
 
 
 def query_to_entity(world, query_list, mode, resolution_strategy="first"):

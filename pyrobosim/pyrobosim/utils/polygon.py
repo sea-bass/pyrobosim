@@ -112,7 +112,7 @@ def transform_polygon(polygon, pose):
     return polygon
 
 
-def polygon_and_height_from_footprint(footprint, pose=None, parent_polygon=None):
+def polygon_and_height_from_footprint(footprint, pose=None, parent_polygon=None)->None:
     """
     Returns a Shapely polygon and vertical (Z) height given footprint metadata.
     Valid footprint metadata comes from YAML files, and can include:
@@ -158,7 +158,6 @@ def polygon_and_height_from_footprint(footprint, pose=None, parent_polygon=None)
             polygon, height = polygon_and_height_from_mesh(footprint)
         else:
             warnings.warn(f"Invalid footprint type: {ftype}")
-            return None
 
     # Offset the polygon, if specified
     if "offset" in footprint:
@@ -205,7 +204,7 @@ def polygon_and_height_from_mesh(mesh_data):
     return (Polygon(hull_pts), height)
 
 
-def sample_from_polygon(polygon, max_tries=100):
+def sample_from_polygon(polygon, max_tries=100)->None:
     """
     Samples a valid (x, y) tuple that is inside a Shapely polygon.
     This is done using rejection sampling, in which we sample from the
@@ -227,4 +226,4 @@ def sample_from_polygon(polygon, max_tries=100):
             return sample_x, sample_y
 
     warnings.warn(f"Exceeded max polygon samples samples: {max_tries}")
-    return None, None
+    
