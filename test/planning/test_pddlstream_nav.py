@@ -5,9 +5,6 @@ Test script for PDDLStream planning with navigation streams.
 """
 import os
 import sys
-import pytest
-
-docutils = pytest.importorskip("pddlstream")
 
 from pyrobosim.core.robot import Robot
 from pyrobosim.core.room import Room
