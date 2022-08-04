@@ -19,7 +19,7 @@ def test_create_room():
     world = World()
     room_name = "room1"
     room_coords = [(-1, -1), (1.5, -1), (1.5, 1.5), (0.5, 1.5)]
-    room = Room(room_cords,
+    room = Room(room_coords,
                 name=room_name,
                 color=[1, 0, 0])
     world.add_room(room)
