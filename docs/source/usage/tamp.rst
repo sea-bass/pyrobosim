@@ -4,11 +4,12 @@ We use `PDDLStream <https://github.com/caelan/pddlstream>`_ to perform integrate
 This tool expands task planning with purely discrete parameters using `Planning Domain Definition Language (PDDL) <https://planning.wiki/guide/whatis/pddl>`_ 
 by adding the concept of *streams* for sampling continuous parameters in actions.
 
-If you did not already install PDDLStream, ensure you do so with this script.
+If you did not already install PDDLStream, ensure you do so with this script, then re-source.
 
 ::
 
-   ./setup/setup_pddlstream.bash
+    ./setup/setup_pddlstream.bash
+    source ./setup/source_pyrobosim.bash
 
 
 Examples
@@ -34,7 +35,7 @@ You can try running a sample script as follows
 ::
 
     cd /path/to/pyrobosim/pyrobosim
-    python examples/demo_pddl.py --example 01_simple verbose
+    python examples/demo_pddl.py --example 01_simple --verbose
 
 .. image:: ../media/pddlstream_demo_standalone.png
     :align: center
