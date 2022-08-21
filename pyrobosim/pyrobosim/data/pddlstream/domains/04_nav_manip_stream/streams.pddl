@@ -40,7 +40,7 @@
     :certified (and (Pose ?p) (Placeable ?l ?o ?p))
   )
 
-  ; T-COLLISION-FREE: Check if a pose pose is collision free
+  ; T-COLLISION-FREE: Check if a placement pose is collision free
   (:stream t-collision-free
     :inputs (?o1 ?p1 ?o2 ?p2)
     :domain (and (Obj ?o1) (Pose ?p1)

@@ -48,11 +48,12 @@ You can run a ROS2 enabled demo and interact with the GUI:
     ros2 run pyrobosim_ros demo.py 
 
 
-In a separate Terminal, you can publish a list of commands as follows:
+In a separate node, you can publish a list of commands:
 
 ::
 
-    ros2 run pyrobosim_ros demo_commands.py
+    ros2 launch pyrobosim_ros demo_commands.py
+
 
 The first command will start a world as a ROS2 node, and the second one will publish a plan (or set of actions) to the node.
 
@@ -67,12 +68,12 @@ Creating Worlds
 ---------------
 Worlds can be created either with the pyrobosim API, or loaded from a YAML file using the :doc:`WorldYamlLoader </generated/pyrobosim.core.yaml.WorldYamlLoader>` utility:
 
-By default, ``demo.py`` creates a world using the API, but you can alternative try a demo YAML file using the ``--from-file`` argument. For example:
+By default, ``demo.py`` creates a world using the API, but you can alternatively try a demo YAML file using the ``--world-file`` argument. For example:
 
 ::
 
-    python examples/demo.py --from-file
-    ros2 run pyrobosim_ros demo.py --from-file
+    python examples/demo.py --world-file test_world.yaml
+    ros2 launch pyrobosim_ros demo.py world_file:=test_world.yaml
 
 Refer to the :doc:`YAML Schemas </yaml/index>` documentation for more information.
 
