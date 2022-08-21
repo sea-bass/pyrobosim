@@ -32,18 +32,22 @@ def main():
     rclpy.init()
     cmd = Commander()
 
-    # Add delay to ensure publishers and the world are ready.
-    # TODO: Wait for the world node to be running instead of hard-coded delay.
-    time.sleep(3.0)
-
     # Choose between action or plan command, based on input parameter.
     mode = cmd.get_parameter("mode").value
     if mode == "action":
+        cmd.get_logger().info("Waiting for subscription")
+        while cmd.action_pub.get_subscription_count() < 1:
+            time.sleep(2.0)
+
         cmd.get_logger().info("Publishing sample task action...")
         action_msg = TaskAction(type="navigate", target_location="desk")
         cmd.action_pub.publish(action_msg)
 
     elif mode == "plan":
+        cmd.get_logger().info("Waiting for subscription")
+        while cmd.plan_pub.get_subscription_count() < 1:
+            time.sleep(2.0)
+
         cmd.get_logger().info("Publishing sample task plan...")
         task_actions = [
             TaskAction(type="navigate", target_location="desk"),
