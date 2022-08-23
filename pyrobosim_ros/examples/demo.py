@@ -6,7 +6,6 @@ additionally starting up a ROS interface.
 """
 import os
 import sys
-import argparse
 import numpy as np
 
 from pyrobosim.core.robot import Robot

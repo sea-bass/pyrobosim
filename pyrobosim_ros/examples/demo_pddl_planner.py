@@ -5,7 +5,7 @@ Test script showing how to use a PDDLStream planner as a ROS2 node.
 """
 
 import os
-import argparse
+import time
 import rclpy
 from rclpy.node import Node
 
@@ -19,20 +19,6 @@ from pyrobosim_msgs.msg import GoalSpecification, TaskPlan
 from pyrobosim_msgs.srv import RequestWorldState
 
 
-def parse_args():
-    """ Parse command-line arguments """
-    parser = argparse.ArgumentParser(description="PDDLStream demo planner node.")
-    parser.add_argument("--example", default="01_simple",
-                        help="Example name (01_simple, 02_derived, 03_nav_stream, 04_nav_manip_stream)")
-    parser.add_argument("--subscribe", action="store_true",
-                        help="If True, waits to receive goal on a subscriber.")
-    parser.add_argument("--verbose", action="store_true",
-                        help="Print planning output")
-    parser.add_argument("--search-sample-ratio", type=float, default=1.0,
-                        help="Search to sample ratio for planner")
-    return parser.parse_args()
-
-
 def load_world():
     """ Load a test world. """
     loader = WorldYamlLoader()
@@ -43,12 +29,16 @@ def load_world():
 
 
 class PlannerNode(Node):
-    def __init__(self, args, name="pyrobosim"):
-        self.name = name
-        self.verbose = args.verbose
+    def __init__(self):
         self.latest_goal = None
         self.planning = False
-        super().__init__(self.name + "_pddlstream_planner", namespace=self.name)
+        super().__init__("demo_pddlstream_planner")
+
+        # Declare parameters
+        self.declare_parameter("example", value="01_simple")
+        self.declare_parameter("subscribe", value=True)
+        self.declare_parameter("verbose", value=True)
+        self.declare_parameter("search_sample_ratio", value=1.0)
 
         # Publisher for a task plan
         self.plan_pub = self.create_publisher(
@@ -63,20 +53,21 @@ class PlannerNode(Node):
 
         # Create the world and planner
         self.world = load_world()
+        example = self.get_parameter("example").value
         domain_folder = os.path.join(
-            get_default_domains_folder(), args.example)
+            get_default_domains_folder(), example)
         self.planner = PDDLStreamPlanner(self.world, domain_folder)
 
         self.get_logger().info("Planning node ready.")
 
-        if args.subscribe:
+        if self.get_parameter("subscribe").value == True:
             self.get_logger().info("Waiting for goal specification...")
             # Subscriber to task plan
             self.goalspec_sub = self.create_subscription(
                 GoalSpecification, "goal_specification", self.goalspec_callback, 10)
         else:
             get = lambda entity : self.world.get_entity_by_name(entity)
-            if args.example == "01_simple":
+            if example == "01_simple":
                 # Task specification for simple example.
                 self.latest_goal = [
                     ("At", get("robot"), get("bedroom")),
@@ -84,7 +75,7 @@ class PlannerNode(Node):
                     ("At", get("banana0"), get("counter0_left")),
                     ("Holding", get("robot"), get("water0"))
                 ]
-            elif args.example in ["02_derived", "03_nav_stream", "04_nav_manip_stream"]:
+            elif example in ["02_derived", "03_nav_stream", "04_nav_manip_stream"]:
                 # Task specification for derived predicate example.
                 self.latest_goal = [
                     ("Has", get("desk0_desktop"), get("banana0")),
@@ -93,8 +84,9 @@ class PlannerNode(Node):
                     ("HasAll", "table", "water")
                 ]
             else:
-                print(f"Invalid example: {args.example}")
+                print(f"Invalid example: {example}")
                 return
+            time.sleep(2.0)
 
 
     def request_world_state(self):
@@ -116,7 +108,7 @@ class PlannerNode(Node):
         self.latest_goal = goal_specification_from_ros(msg, self.world)
         
     
-    def do_plan(self, args):
+    def do_plan(self):
         """ Search for a plan and publish it. """
         if not self.latest_goal:
             return
@@ -129,8 +121,11 @@ class PlannerNode(Node):
             self.get_logger().info("Failed to unpack world state.")
 
         # Once the world state is set, plan.
+        self.get_logger().info("Planning...")
         plan = self.planner.plan(self.latest_goal, focused=True, 
-            verbose=self.verbose, search_sample_ratio=args.search_sample_ratio)
+            search_sample_ratio=self.get_parameter("search_sample_ratio").value)
+        if self.get_parameter("verbose").value == True:
+            self.get_logger().info(f"{plan}")
         plan_msg = task_plan_to_ros(plan)
         self.plan_pub.publish(plan_msg)
         self.latest_goal = None
@@ -139,15 +134,14 @@ class PlannerNode(Node):
 
 def main():
     rclpy.init()
-    args = parse_args()
-    planner_node = PlannerNode(args, name="pddl_demo")
+    planner_node = PlannerNode()
 
     while rclpy.ok():
         if (not planner_node.planning) and planner_node.latest_goal:
             planner_node.request_world_state()
 
         if planner_node.world_state_future_response and planner_node.world_state_future_response.done():
-            planner_node.do_plan(args)
+            planner_node.do_plan()
 
         rclpy.spin_once(planner_node)
 

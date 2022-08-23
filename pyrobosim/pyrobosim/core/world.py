@@ -353,7 +353,8 @@ class World:
         new_polygon = transform_polygon(loc.raw_polygon, pose)
         is_valid_pose = new_polygon.within(room.polygon)
         for other_loc in room.locations:
-            is_valid_pose = is_valid_pose and not new_polygon.intersects(other_loc.polygon)
+            if loc != other_loc:
+                is_valid_pose = is_valid_pose and not new_polygon.intersects(other_loc.polygon)
         if not is_valid_pose:
             warnings.warn(f"Location {loc.name} in collision. Cannot add to world.")
             return False
@@ -364,7 +365,8 @@ class World:
         room.locations.append(loc)
         loc.set_pose(pose)
         loc.create_polygons(self.inflation_radius)
-        loc.create_spawn_locations()
+        for spawn in loc.children:
+            spawn.set_pose_from_parent()
         return True
 
     def remove_location(self, loc):
