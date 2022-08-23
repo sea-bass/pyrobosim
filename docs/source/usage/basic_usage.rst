@@ -45,14 +45,15 @@ You can run a ROS2 enabled demo and interact with the GUI:
 
 ::
 
-    ros2 run pyrobosim_ros demo.py 
+    ros2 run pyrobosim_ros demo.py
 
 
-In a separate Terminal, you can publish a single action or a plan (list of commands):
+In a separate Terminal, you can publish a plan or a single action:
 
 ::
 
-    ros2 run pyrobosim_ros demo_commands.py
+    ros2 run pyrobosim_ros demo_commands.py --ros-args -p mode:=action
+    ros2 run pyrobosim_ros demo_commands.py --ros-args -p mode:=plan
 
 
 Or, you can run both of these nodes together using a provided launch file:
@@ -60,7 +61,7 @@ Or, you can run both of these nodes together using a provided launch file:
 ::
 
     ros2 launch pyrobosim_ros demo_commands.py mode:=plan
-    ros2 launch pyrobosim_ros demo_commands.py mode:=plan
+    ros2 launch pyrobosim_ros demo_commands.py mode:=action
 
 
 The first command will start a world as a ROS2 node, and the second one will publish a plan (or set of actions) to the node.
