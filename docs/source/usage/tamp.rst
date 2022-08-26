@@ -62,16 +62,23 @@ To start a world and then a planner with a hard-coded goal specification:
 
 ::
 
-    ros2 run pyrobosim_ros demo_pddl_world.py --example 01_simple
-    ros2 run pyrobosim_ros demo_pddl_planner.py --example 01_simple --verbose
+    ros2 run pyrobosim_ros demo_pddl_world.py
+    ros2 run pyrobosim_ros demo_pddl_planner.py --ros-args -p example:=01_simple -p subscribe:=false
 
 To start a world, a planner, and a separate node that publishes a goal specification:
 
 ::
 
-    ros2 run pyrobosim_ros demo_pddl_world.py --example 01_simple
-    ros2 run pyrobosim_ros demo_pddl_planner.py --example 01_simple --verbose --subscribe
-    ros2 run pyrobosim_ros demo_pddl_goal_publisher.py --example 01_simple
+    ros2 run pyrobosim_ros demo_pddl_world.py
+    ros2 run pyrobosim_ros demo_pddl_planner.py --ros-args -p example:=01_simple -p subscribe:=true
+    ros2 run pyrobosim_ros demo_pddl_goal_publisher.py --ros-args -p example:=01_simple
+
+Alternatively, you can use a single launch file to run the full example and configure it:
+
+::
+
+    ros2 launch pyrobosim_ros demo_pddl.py example:=01_simple
+    ros2 launch pyrobosim_ros demo_pddl.py example:=04_nav_manip_stream subscribe:=true verbose:=true
 
 The output should look as follows:
 

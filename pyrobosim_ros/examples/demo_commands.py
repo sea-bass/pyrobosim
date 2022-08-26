@@ -4,7 +4,6 @@
 Test script showing how to publish actions and plans
 """
 
-import argparse
 import rclpy
 from rclpy.node import Node
 import time
@@ -13,9 +12,10 @@ from pyrobosim_msgs.msg import TaskAction, TaskPlan
 
 
 class Commander(Node):
-    def __init__(self, name="pyrobosim"):
-        self.name = name
-        super().__init__(self.name + "_command_publisher", namespace=self.name)
+    def __init__(self):
+        super().__init__("demo_command_publisher")
+
+        self.declare_parameter("mode", value="plan")
 
         # Publisher for a single action
         self.action_pub = self.create_publisher(
@@ -25,30 +25,23 @@ class Commander(Node):
         self.plan_pub = self.create_publisher(
             TaskPlan, "commanded_plan", 10)
 
-        # Need a delay to ensure publishers are ready
-        time.sleep(1.0)
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Test publishing commands to pyrobosim.")
-    parser.add_argument("--mode", default="plan",
-                        help="Command mode (action or plan)")
-    return parser.parse_args()
+        # Delay to ensure world is loaded.
+        time.sleep(2.0)
 
 
 def main():
     rclpy.init()
-    cmd = Commander(name="test_world")
-    args = parse_args()
+    cmd = Commander()
 
-    if args.mode == "action":
-        print("Publishing sample task action...")
+    # Choose between action or plan command, based on input parameter.
+    mode = cmd.get_parameter("mode").value
+    if mode == "action":
+        cmd.get_logger().info("Publishing sample task action...")
         action_msg = TaskAction(type="navigate", target_location="desk")
         cmd.action_pub.publish(action_msg)
 
-    elif args.mode == "plan":
-        print("Publishing sample task plan...")
+    elif mode == "plan":
+        cmd.get_logger().info("Publishing sample task plan...")
         task_actions = [
             TaskAction(type="navigate", target_location="desk"),
             TaskAction(type="pick", object="water"),

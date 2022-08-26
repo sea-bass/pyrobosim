@@ -68,11 +68,7 @@ Alternatively, you can directly run a command in a Docker container:
 
 ::
 
-    ./docker/run_docker.bash "ros2 run pyrobosim_ros demo.py"
+    ./docker/run_docker.bash "ros2 launch pyrobosim_ros demo.py"
 
-Colcon workspace build artifacts are shared across containers by mounting volumes, so you
-can run a different command in a new Terminal without rebuilding. For example,
-
-::
-
-    ./docker/run_docker.bash "ros2 run pyrobosim_ros demo_commands.py"
+Colcon workspace build artifacts are shared across containers by mounting volumes,
+so you can run a different command in a new Terminal without rebuilding.

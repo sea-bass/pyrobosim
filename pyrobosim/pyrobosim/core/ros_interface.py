@@ -11,7 +11,7 @@ from pyrobosim.utils.ros_conversions import pose_from_ros, pose_to_ros, task_act
 
 class WorldROSWrapper(Node):
     """ ROS2 wrapper node for pyrobosim worlds. """
-    def __init__(self, world, name="pyrobosim", state_pub_rate=0.1):
+    def __init__(self, world=None, name="pyrobosim", state_pub_rate=0.1):
         """
         Creates a ROS2 world wrapper node.
 
@@ -21,7 +21,7 @@ class WorldROSWrapper(Node):
             * Publish robot state on the ``pyrobosim/robot_state`` topic
 
         :param world: World model instance.
-        :type world: :class:`pyrobosim.core.world.World`
+        :type world: :class:`pyrobosim.core.world.World`, optional
         :param name: Node name prefix and namespace, defaults to ``"pyrobosim"``.
         :type name: str, optional
         :param state_pub_rate: Rate, in seconds, to publish robot state.
@@ -29,12 +29,11 @@ class WorldROSWrapper(Node):
         """
         self.name = name
         self.state_pub_rate = state_pub_rate
-        super().__init__(self.name + "_world", namespace=self.name)
+        super().__init__(self.name)
 
-        # Connect the ROS node to the world
-        self.world = world
-        self.world.ros_node = self
-        self.world.has_ros_node = True
+        # Set world, if one is specified.
+        if world:
+            self.set_world(world)
 
         # Internal state
         self.executing_plan = False
@@ -62,8 +61,23 @@ class WorldROSWrapper(Node):
         self.get_logger().info("World node started.")
 
 
+    def set_world(self, world):
+        """
+        Sets a world.
+
+        :param world: World model instance.
+        :type world: :class:`pyrobosim.core.world.World`, optional
+        """
+        self.world = world
+        self.world.ros_node = self
+        self.world.has_ros_node = True
+
+
     def start(self):
         """ Starts the node. """
+        if not self.world:
+            self.get_logger().error("Must set a world")
+
         self.robot_state_pub_thread.start()
         rclpy.spin(self)
         self.destroy_node()

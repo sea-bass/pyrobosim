@@ -4,8 +4,6 @@
 Test script showing how to publish a goal specification to a PDDLStream planner node.
 """
 
-import os
-import argparse
 import rclpy
 from rclpy.node import Node
 import time
@@ -13,29 +11,24 @@ import time
 from pyrobosim_msgs.msg import GoalPredicate, GoalSpecification
 
 
-def parse_args():
-    """ Parse command-line arguments """
-    parser = argparse.ArgumentParser(
-        description="PDDLStream demo goal specification publisher node.")
-    parser.add_argument("--example", default="01_simple",
-                        help="Example name (01_simple, 02_derived, 03_nav_stream, 04_nav_manip_stream)")
-    return parser.parse_args()
-
-
 class GoalPublisher(Node):
-    def __init__(self, args, name="pyrobosim"):
-        self.name = name
-        super().__init__(self.name + "_pddlstream_goal_publisher", namespace=self.name)
+    def __init__(self):
+        super().__init__("demo_pddlstream_goal_publisher")
 
-        # Publisher for a task plan
+        # Declare parameters
+        self.declare_parameter("example", value="01_simple")
+        self.declare_parameter("verbose", value=True)
+
+        # Publisher for a goal specification
         self.goalspec_pub = self.create_publisher(
             GoalSpecification, "goal_specification", 10)
-
-        # Need a delay to ensure publishers are ready
-        time.sleep(1.0)
+        self.get_logger().info("Waiting for subscription")
+        while self.goalspec_pub.get_subscription_count() < 1:
+            time.sleep(2.0)
 
         # Create goal specifications for different examples
-        if args.example == "01_simple":
+        example = self.get_parameter("example").value
+        if example == "01_simple":
             # Goal specification for simple example.
             goal_predicates = [
                 GoalPredicate(type="At", args=("robot", "bedroom")),
@@ -43,7 +36,7 @@ class GoalPublisher(Node):
                 GoalPredicate(type="At", args=("banana0", "counter0_left")),
                 GoalPredicate(type="Holding", args=("robot", "water0"))
             ]
-        elif args.example in ["02_derived", "03_nav_stream", "04_nav_manip_stream"]:
+        elif example in ["02_derived", "03_nav_stream", "04_nav_manip_stream"]:
             # Goal specification for derived predicate example.
             goal_predicates = [
                 GoalPredicate(type="Has", args=("desk0_desktop", "banana0")),
@@ -52,21 +45,22 @@ class GoalPublisher(Node):
                 GoalPredicate(type="HasAll", args=("table", "water"))
             ]
         else:
-            print(f"Invalid example: {args.example}")
+            self.get_logger().info(f"Invalid example: {example}")
             return
 
-        goal_msg = GoalSpecification(predicates=goal_predicates)
+        # Publish and optionally display the goal specification message.
+        goal_msg = GoalSpecification(predicates=goal_predicates)        
+        if self.get_parameter("verbose").value == True:
+            msg = "Published goal specification:"
+            for pred in goal_msg.predicates:
+                msg += f"\n{pred}"
+            self.get_logger().info(msg)
         self.goalspec_pub.publish(goal_msg)
-        
-        print(f"Published goal specification:")
-        for pred in goal_msg.predicates:
-            print(pred)
-        
+
 
 def main():
     rclpy.init()
-    args = parse_args()
-    goal_node = GoalPublisher(args, name="pddl_demo")
+    goal_node = GoalPublisher()
 
     rclpy.spin(goal_node)
     goal_node.destroy_node()

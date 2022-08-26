@@ -1,9 +1,6 @@
 name: tests
 
 on:
-  # Run action every time branch is pushed to
-  push:
-
   # Run action on certain pull request events
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]

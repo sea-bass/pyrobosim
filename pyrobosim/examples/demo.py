@@ -85,11 +85,9 @@ def start_gui(world, args):
 def parse_args():
     """ Parse command-line arguments """
     parser = argparse.ArgumentParser(description="Main pyrobosim demo.")
-    parser.add_argument("--from-file", action="store_true",
-                        help="Load from YAML file")
-    parser.add_argument("--world-file", default="test_world.yaml",
+    parser.add_argument("--world-file", default="",
                         help="YAML file name (should be in the pyrobosim/data folder). " +
-                             "Defaults to test_world.yaml")
+                             "If not specified, a world will be created programmatically.")
     return parser.parse_args()
 
 
@@ -97,10 +95,10 @@ if __name__ == "__main__":
     args = parse_args()
 
     # Create a world or load it from file.
-    if args.from_file:
-        w = create_world_from_yaml(args.world_file)
-    else:
+    if args.world_file == "":
         w = create_world()
+    else:
+        w = create_world_from_yaml(args.world_file)        
 
     # Start the program either as ROS2 node or standalone.
     start_gui(w, sys.argv)

@@ -194,6 +194,10 @@ class ObjectSpawn:
         else:
             self.viz_color = self.parent.viz_color
 
+        self.set_pose_from_parent()
+
+    def set_pose_from_parent(self):
+        """ Updates the object spawn's pose from its parent's pose. """
         # Get the footprint and height data
         if "footprint" not in self.metadata:
             self.metadata["footprint"] = {"type": "parent"}
