@@ -7,7 +7,8 @@ from pddlstream.language.constants import And, PDDLProblem
 from pddlstream.utils import read
 
 from .mappings import get_stream_info, get_stream_map
-from .utils import world_to_pddlstream_init, pddlstream_solution_to_plan
+from .utils import process_goal_specification, world_to_pddlstream_init, \
+    pddlstream_solution_to_plan
 
 
 class PDDLStreamPlanner:
@@ -68,6 +69,7 @@ class PDDLStreamPlanner:
         """
         # Set the initial and goal states for PDDLStream
         init = world_to_pddlstream_init(self.world)
+        process_goal_specification(goal_literals, self.world)
         goal = And(*goal_literals)
         self.latest_specification = goal
 

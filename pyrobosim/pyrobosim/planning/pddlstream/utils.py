@@ -81,6 +81,41 @@ def world_to_pddlstream_init(world):
     return init
 
 
+def process_goal_specification(goal_literals, world):
+    """
+    Processes and validates a goal specification for planning.
+
+    :param goal_literals: List of literals describing a goal specification.
+    :type goal_literals: list[tuple]
+    """
+    for i, literal in enumerate(goal_literals):
+        # If any predicate has a string argument, check whether it corresponds
+        # to a named entity in the world. If it does, replace it.
+        for j, elem in enumerate(literal):
+            if j > 0 and isinstance(elem, str):
+                entity = world.get_entity_by_name(elem)
+                if entity:
+                    replace_goal_literal_tuple(goal_literals, i, j, entity)
+
+
+def replace_goal_literal_tuple(goal_literals, literal_idx, arg_idx, new_val):
+    """
+    Utility function to replace the element of a goal literal tuple in place.
+    
+    :param goal_literals: List of literals describing a goal specification.
+    :type goal_literals: list[tuple]   
+    :param literal_idx: Index of goal literal in list to replace.
+    :type literal_idx: int
+    :param arg_idx: Index of argument in goal literal to replace.
+    :type arg_idx: int
+    :param new_val: New value to replace inside the goal literal tuple.
+    :type new_val: Any
+    """
+    literal_copy = list(goal_literals[literal_idx])
+    literal_copy[arg_idx] = new_val
+    goal_literals[literal_idx] = tuple(literal_copy)
+
+
 def pddlstream_solution_to_plan(solution):
     """
     Converts the output plan of a PDDLStream solution to a plan
