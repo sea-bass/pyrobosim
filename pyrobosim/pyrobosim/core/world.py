@@ -885,6 +885,36 @@ class World:
                     return spawn
         return None
 
+    def get_object_spawns(self, category_list=None):
+        """ 
+        Gets all object spawn locations, optionally filtered by category.
+        
+        :param category_list: Optional list of categories to filter by.
+        :type category_list: list[str]
+        :return: List of object spawn locations that match the input category
+            list, if specified.
+        :rtype: list[:class:`pyrobosim.core.locations.ObjectSpawn`]
+        """
+        spawn_list = []
+        for loc in self.locations:
+            if not category_list or loc.category in category_list:
+                spawn_list.extend(loc.children)
+
+    def get_object_spawn_names(self, category_list=None):
+        """ 
+        Gets all object spawn location names, optionally filtered by category.
+        
+        :param category_list: Optional list of categories to filter by.
+        :type category_list: list[str]
+        :return: List of object spawn location names that match the input
+            category list, if specified.
+        :rtype: list[str]
+        """
+        spawn_name_list = []
+        for loc in self.locations:
+            if not category_list or loc.category in category_list:
+                spawn_name_list.extend([spawn.name for spawn in loc.children])
+
     def get_objects(self, category_list=None):
         """ 
         Gets all objects in the world, optionally filtered by category. 
