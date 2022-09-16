@@ -49,21 +49,20 @@ def start_planner(world, args):
         get_default_domains_folder(), args.example)
     planner = PDDLStreamPlanner(world, domain_folder)
 
-    get = lambda entity : world.get_entity_by_name(entity)
     if args.example == "01_simple":
         # Task specification for simple example.
         goal_literals = [
-            ("At", get("robot"), get("bedroom")),
-            ("At", get("apple0"), get("table0_tabletop")),
-            ("At", get("banana0"), get("counter0_left")),
-            ("Holding", get("robot"), get("water0"))
+            ("At", "robot", "bedroom"),
+            ("At", "apple0", "table0_tabletop"),
+            ("At", "banana0", "counter0_left"),
+            ("Holding", "robot", "water0")
         ]
     elif args.example in ["02_derived", "03_nav_stream", "04_nav_manip_stream"]:
         # Task specification for derived predicate example.
         goal_literals = [
-            ("Has", get("desk0_desktop"), get("banana0")),
-            ("Has", "counter", get("apple1")),
-            ("HasNone", get("bathroom"), "banana"),
+            ("Has", "desk0_desktop", "banana0"),
+            ("Has", "counter", "apple1"),
+            ("HasNone", "bathroom", "banana"),
             ("HasAll", "table", "water"),
         ]
     else:

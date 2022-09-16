@@ -70,9 +70,7 @@ def create_test_world(add_hallway=True):
 def start_planner(world, domain_name="03_nav_stream", interactive=False):
     domain_folder = os.path.join(get_default_domains_folder(), domain_name)
     planner = PDDLStreamPlanner(world, domain_folder)
-
-    get = lambda entity: world.get_entity_by_name(entity)
-    goal_literals = [("Has", get("robot"), "apple")]
+    goal_literals = [("Has", "robot", "apple")]
 
     if interactive:
         input("Press Enter to start planning.")
