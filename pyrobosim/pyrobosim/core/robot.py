@@ -1,16 +1,26 @@
 """ Defines a robot which operates in a world. """
 
-import time
-import threading
 import numpy as np
+import threading
+import time
 import warnings
 
+from geometry_msgs.msg import PoseStamped
+from nav2_msgs.action import NavigateToPose
 from .locations import ObjectSpawn
 from .objects import Object
+from rclpy.action import ActionClient
+from rclpy.node import Node
 from ..utils.knowledge import resolve_to_object
 from ..utils.polygon import inflate_polygon, sample_from_polygon, transform_polygon
 from ..utils.pose import Pose
 
+class NavActionClient(Node):
+    """An action client for NavigateToPose"""
+
+    def __init__(self):
+        super().__init__('navigate_to_pose_action_client')
+        self.action_client = ActionClient(self, NavigateToPose, 'navigate_to_pose')
 
 class Robot:
     """Representation of a robot in the world."""
@@ -65,6 +75,9 @@ class Robot:
         self.executing_plan = False
         self.location = None
         self.manipulated_object = None
+
+        # ROS interaction properties
+        self.nav_action_client = NavActionClient()
 
     def set_pose(self, pose):
         """
@@ -292,6 +305,18 @@ class Robot:
 
         if action.type == "navigate":
             self.world.current_path = action.path
+            if self.world.has_ros_node:
+                # send Gazebo nav action request
+                target_pose = PoseStamped()
+                target_pose.header.stamp = self.world.ros_node.get_clock().now().to_msg()
+                target_pose.header.frame_id = 'map'
+                # TODO: get x/y target location from action.target_location
+                target_pose.pose.position.x = 2.0
+                target_pose.pose.position.y = -0.5
+                target_pose.pose.orientation.z = 1.0
+                goal_msg = NavigateToPose.Goal()
+                goal_msg.pose = target_pose
+                self.nav_action_client.action_client.send_goal_async(goal_msg)
             if self.world.has_gui:
                 self.executing_nav = True
                 if isinstance(action.target_location, str):
