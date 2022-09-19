@@ -24,26 +24,28 @@ def create_world():
     """ Create a test world """
     w = World()
 
+    # TODO(andyz): load test_world.yaml, since that's what exports to Gazebo
+
     # Set the location and object metadata
     w.set_metadata(locations=os.path.join(data_folder, "example_location_data.yaml"),
                    objects=os.path.join(data_folder, "example_object_data.yaml"))
 
     # Add rooms
-    r1coords = [(-1, -1), (1.5, -1), (1.5, 1.5), (0.5, 1.5)]
+    r1coords = [(-2.0, -6.0), (5.0, -6.0), (5.0, 1.5), (-2.0, 1.5)]
     w.add_room(Room(r1coords, name="kitchen", color=[1, 0, 0],
                nav_poses=[Pose(x=0.75, y=0.75, yaw=0)]))
-    r2coords = [(1.75, 2.5), (3.5, 2.5), (3.5, 4), (1.75, 4)]
+    r2coords = [(1.75, 2.5), (7.0, 2.5), (7.0, 6.0), (1.75, 6.0)]
     w.add_room(Room(r2coords, name="bedroom", color=[0, 0.6, 0]))
-    r3coords = [(-1, 1), (-1, 3.5), (-3.0, 3.5), (-2.5, 1)]
+    r3coords = [(0.0, 2.0), (0.0, 7.0), (-5.0, 7.0), (-5.0, 2.0)]
     w.add_room(Room(r3coords, name="bathroom", color=[0, 0, 0.6]))
 
     # Add hallways between the rooms
-    w.add_hallway("kitchen", "bathroom", width=0.7)
-    w.add_hallway("bathroom", "bedroom", width=0.5,
-                  conn_method="angle", conn_angle=0, offset=0.8)
-    w.add_hallway("kitchen", "bedroom", width=0.6,
-                  conn_method="points",
-                  conn_points=[(1.0, 0.5), (2.5, 0.5), (2.5, 3.0)])
+    w.add_hallway("kitchen", "bathroom", width=2.0,
+                  conn_method="auto")
+    w.add_hallway("bathroom", "bedroom", width=2.0,
+                  conn_method="auto")
+    w.add_hallway("kitchen", "bedroom", width=2.0,
+                  conn_method="auto")
 
     # Add locations
     table = w.add_location("table", "kitchen", Pose(
@@ -114,11 +116,6 @@ if __name__ == "__main__":
     import threading
     node_thread = threading.Thread(target=n.start)
     node_thread.start()
-
-    # Load Gazebo world
-    #TODO(andyz): don't have this in a python3.10-specific folder
-#    gazebo_cmd = "ign gazebo /home/$USER/ws_mobile_pick_place/install/pyrobosim_ros/local/lib/python3.10/dist-packages/pyrobosim/data/worlds/test_world/test_world.sdf"
-#    gazebo_process = subprocess.Popen(gazebo_cmd, shell=True, stdout=subprocess.PIPE)
 
     # Start GUI in main thread
     start_gui(n.world, sys.argv)
