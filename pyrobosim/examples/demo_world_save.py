@@ -6,6 +6,7 @@ Tests Gazebo world saving and occupancy grid export capabilities.
 
 import argparse
 import os
+import rclpy
 
 from pyrobosim.core.gazebo import WorldGazeboExporter
 from pyrobosim.core.yaml import WorldYamlLoader
@@ -36,6 +37,8 @@ def parse_args():
 
 def main():
     args = parse_args()
+
+    rclpy.init()
 
     # Load a test world from YAML file.
     data_folder = get_data_folder()

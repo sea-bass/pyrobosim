@@ -306,13 +306,14 @@ class Robot:
         if action.type == "navigate":
             self.world.current_path = action.path
             if self.world.has_ros_node:
+                path = self.world.find_path(action.target_location)
                 # send Gazebo nav action request
                 target_pose = PoseStamped()
                 target_pose.header.stamp = self.world.ros_node.get_clock().now().to_msg()
                 target_pose.header.frame_id = 'map'
-                # TODO: get x/y target location from action.target_location
-                target_pose.pose.position.x = 2.0
-                target_pose.pose.position.y = -0.5
+                target_pose.pose.position.x = path.poses[-1].x
+                target_pose.pose.position.y = path.poses[-1].y
+                # TODO(andyz): get orientation from the planned path
                 target_pose.pose.orientation.z = 1.0
                 goal_msg = NavigateToPose.Goal()
                 goal_msg.pose = target_pose

@@ -5,6 +5,7 @@ Test script showing how to build a world and use it with pyrobosim,
 additionally starting up a ROS interface.
 """
 import os
+import subprocess
 import sys
 import numpy as np
 
@@ -111,8 +112,13 @@ if __name__ == "__main__":
 
     # Start ROS node in separate thread
     import threading
-    t = threading.Thread(target=n.start)
-    t.start()
+    node_thread = threading.Thread(target=n.start)
+    node_thread.start()
+
+    # Load Gazebo world
+    #TODO(andyz): don't have this in a python3.10-specific folder
+#    gazebo_cmd = "ign gazebo /home/$USER/ws_mobile_pick_place/install/pyrobosim_ros/local/lib/python3.10/dist-packages/pyrobosim/data/worlds/test_world/test_world.sdf"
+#    gazebo_process = subprocess.Popen(gazebo_cmd, shell=True, stdout=subprocess.PIPE)
 
     # Start GUI in main thread
     start_gui(n.world, sys.argv)
