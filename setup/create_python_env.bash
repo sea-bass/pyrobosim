@@ -13,7 +13,7 @@ echo "Created Python virtual environment in $VIRTUALENV_FOLDER"
 # Note that these overlay over whatever ROS2 already contains
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 pushd $SCRIPT_DIR/../pyrobosim
-pip3 install lark pytest pytest-html wheel
+pip3 install lark pytest pytest-dependency pytest-html wheel
 pip install .
 popd
 echo "Installed Python packages"
