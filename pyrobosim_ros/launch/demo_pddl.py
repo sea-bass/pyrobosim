@@ -1,9 +1,28 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch.substitutions import TextSubstitution
 from launch_ros.actions import Node
+
+
+def launch_planner_node(context, *args, **kwargs):
+    verbose_bool = LaunchConfiguration("verbose").perform(context).lower() == "true"
+    planner_node = Node(
+        package="pyrobosim_ros",
+        executable="demo_pddl_planner.py",
+        name="pddl_demo_planner",
+        namespace="pyrobosim",
+        parameters=[{
+            "example": LaunchConfiguration("example"),
+            "subscribe": LaunchConfiguration("subscribe"),
+            "verbose": LaunchConfiguration("verbose"),
+            "search_sample_ratio": LaunchConfiguration("search_sample_ratio"),
+        }],
+        output="screen",
+        emulate_tty=verbose_bool
+    )
+    return [planner_node]
 
 
 def generate_launch_description():
@@ -38,17 +57,8 @@ def generate_launch_description():
         name="pddl_demo",
         namespace="pyrobosim"
     )
-    planner_node = Node(
-        package="pyrobosim_ros",
-        executable="demo_pddl_planner.py",
-        name="pddl_demo_planner",
-        namespace="pyrobosim",
-        parameters=[{
-            "example": LaunchConfiguration("example"),
-            "subscribe": LaunchConfiguration("subscribe"),
-            "verbose": LaunchConfiguration("verbose"),
-            "search_sample_ratio": LaunchConfiguration("search_sample_ratio"),
-        }]
+    planner_node = OpaqueFunction(
+        function=launch_planner_node
     )
     goalspec_node = Node(
         package="pyrobosim_ros",
