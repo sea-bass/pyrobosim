@@ -27,7 +27,7 @@ jobs:
           setup/setup_pddlstream.bash
       - name: Run unit tests
         run: |
-          pip3 install lark pytest pytest-html
+          pip3 install lark pytest pytest-dependency pytest-html
           export PYTHONPATH=./dependencies/pddlstream:$PYTHONPATH
           test/run_tests.bash
       - name: Upload test results

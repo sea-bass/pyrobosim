@@ -42,6 +42,7 @@ class World:
         self.has_robot = False
 
         # World entities (rooms, locations, objects, etc.)
+        self.name_to_entity = {}
         self.rooms = []
         self.hallways = []
         self.locations = []
@@ -136,6 +137,7 @@ class World:
             return False
 
         self.rooms.append(room)
+        self.name_to_entity[room.name] = room
         self.num_rooms += 1
         self.update_bounds()
 
@@ -158,19 +160,20 @@ class World:
         :return: True if the room was successfully removed, else False.
         :rtype: bool
         """
-        for i, room in enumerate(self.rooms):
-            if room.name == room_name:
-                self.rooms.pop(i)
-                self.num_rooms -= 1
-                self.update_bounds()
-                
-                # Update the search graph, if any
-                if self.search_graph is not None:
-                    self.search_graph.remove(room.graph_nodes)
-                return True
+        room = self.get_room_by_name(room_name)
+        if room is None:
+            warnings.warn(f"No room {room_name} found for removal.")
+            return False
 
-        warnings.warn(f"No room {room_name} found for removal.")
-        return False
+        self.rooms.remove(room)
+        self.name_to_entity.pop(room_name)
+        self.num_rooms -= 1
+        self.update_bounds()
+        
+        # Update the search graph, if any
+        if self.search_graph is not None:
+            self.search_graph.remove(room.graph_nodes)
+        return True
 
     def add_hallway(self, room_start, room_end, width,
                     conn_method="auto", offset=0, conn_angle=0,
@@ -228,6 +231,7 @@ class World:
 
         # Do all the necessary bookkeeping
         self.hallways.append(h)
+        self.name_to_entity[h.name] = h
         room_start.hallways.append(h)
         room_start.update_visualization_polygon()
         room_end.hallways.append(h)
@@ -260,6 +264,7 @@ class World:
 
         # Remove the hallways from the world and relevant rooms.
         self.hallways.remove(hallway)
+        self.name_to_entity.pop(hallway.name)
         for r in [hallway.room_start, hallway.room_end]:
             r.hallways.remove(hallway)
             r.update_collision_polygons()
@@ -311,6 +316,9 @@ class World:
         self.locations.append(loc)
         self.location_instance_counts[category] +=1
         self.num_locations += 1
+        self.name_to_entity[loc.name] = loc
+        for spawn in loc.children:
+            self.name_to_entity[spawn.name] = spawn
 
         # Update the search graph, if any
         if self.search_graph is not None:
@@ -319,7 +327,6 @@ class World:
                 self.search_graph.add(spawn.graph_nodes, autoconnect=True)
 
         return loc
-
 
     def update_location(self, loc, pose, room=None):
         """ 
@@ -389,6 +396,9 @@ class World:
             room = loc.parent
             room.locations.remove(loc)
             room.update_collision_polygons(self.inflation_radius)
+            self.name_to_entity.pop(loc.name)
+            for spawn in loc.children:
+                self.name_to_entity.pop(spawn.name)
             return True
         return False
 
@@ -471,9 +481,9 @@ class World:
         # Do the necessary bookkeeping
         obj_spawn.children.append(obj)
         self.objects.append(obj)
+        self.name_to_entity[obj.name] = obj
         self.num_objects += 1
         return obj
-
 
     def update_object(self, obj, loc=None, pose=None):
         """
@@ -521,7 +531,6 @@ class World:
 
         return True
         
-
     def remove_object(self, obj):
         """ 
         Cleanly removes an object from the world.
@@ -535,6 +544,7 @@ class World:
             obj = self.get_object_by_name(obj)
         if obj in self.objects:
             self.objects.remove(obj)
+            self.name_to_entity.pop(obj.name)
             self.num_objects -= 1
             obj.parent.children.remove(obj)
             return True
@@ -777,13 +787,16 @@ class World:
         :return: Room instance matching the input name, or ``None`` if not valid.
         :rtype: :class:`pyrobosim.core.room.Room`
         """
-        names = self.get_room_names()
-        if name in names:
-            idx = names.index(name)
-            return self.rooms[idx]
-        else:
+        if name not in self.name_to_entity:
             warnings.warn(f"Room not found: {name}")
             return None
+        
+        entity = self.name_to_entity[name]
+        if not isinstance(entity, Room):
+            warnings.warn(f"Entity {name} found but it is not a Room.")
+            return None
+        
+        return entity            
 
     def get_hallways_from_rooms(self, room1, room2):
         """ 
@@ -800,12 +813,12 @@ class World:
         if isinstance(room1, str):
             room1 = self.get_room_by_name(room1)
         if not isinstance(room1, Room):
-            warnings.warn("Invalid room1 specified")
+            warnings.warn("Invalid room1 specified.")
             return []
         if isinstance(room2, str):
             room2 = self.get_room_by_name(room2)
         if not isinstance(room2, Room):
-            warnings.warn("Invalid room2 specified")
+            warnings.warn("Invalid room2 specified.")
             return []
 
         # Now search through the hallways and add any valid ones to the list
@@ -857,12 +870,16 @@ class World:
         :return: Location instance matching the input name, or ``None`` if not valid.
         :rtype: :class:`pyrobosim.core.locations.Location`
         """
-        names = self.get_location_names()
-        if name in names:
-            idx = names.index(name)
-            return self.locations[idx]
-        else:
+        if name not in self.name_to_entity:
+            warnings.warn(f"Location not found: {name}")
             return None
+        
+        entity = self.name_to_entity[name]
+        if not isinstance(entity, Location):
+            warnings.warn(f"Entity {name} found but it is not a Location.")
+            return None
+        
+        return entity  
 
     def get_location_from_pose(self, pose):
         """ 
@@ -954,12 +971,16 @@ class World:
         :return: Object instance matching the input name, or ``None`` if not valid.
         :rtype: :class:`pyrobosim.core.object.Object`
         """
-        names = self.get_object_names()
-        if name in names:
-            idx = names.index(name)
-            return self.objects[idx]
-        else:
+        if name not in self.name_to_entity:
+            warnings.warn(f"Object not found: {name}")
             return None
+        
+        entity = self.name_to_entity[name]
+        if not isinstance(entity, Object):
+            warnings.warn(f"Entity {name} found but it is not an Object.")
+            return None
+        
+        return entity  
 
     def get_entity_by_name(self, name):
         """ 
@@ -969,17 +990,10 @@ class World:
         :type name: str
         :return: Entity object instance matching the input name, or ``None`` if not valid.
         """
-        if self.robot and name == self.robot.name:
-            return self.robot # Should be part of the chain below when multiple robots are supported.
-        for entity in itertools.chain(
-            self.rooms, self.hallways, self.locations, self.objects):
-            if entity.name == name:
-                return entity
-            elif isinstance(entity, Location):
-                for spawn in entity.children:
-                    if spawn.name == name:
-                        return spawn
-        return None
+        if name in self.name_to_entity:
+            return self.name_to_entity[name]
+        else:
+            return None
 
     def add_robot(self, robot, loc=None, pose=None, use_robot_pose=False):
         """
@@ -1062,6 +1076,7 @@ class World:
             self.robot.set_pose(robot_pose)
             self.robot.world = self
             self.has_robot = True
+            self.name_to_entity[robot.name] = robot
         else:
             warnings.warn("Could not add robot.")
             self.set_inflation_radius(old_inflation_radius)
@@ -1074,8 +1089,9 @@ class World:
         :rtype: bool
         """
         if self.has_robot:
-            self.robot = None
             self.has_robot = False
+            self.name_to_entity.pop(self.robot.name)
+            self.robot = None
             return True
         else:
             warnings.warn("No robot to remove.")

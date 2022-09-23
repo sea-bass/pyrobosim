@@ -18,7 +18,7 @@ RUN cd /pyrobosim_ws/src/pyrobosim/setup && ./setup_pddlstream.bash
 # Install pyrobosim and testing dependencies
 COPY pyrobosim /temp/pyrobosim
 RUN cd /temp/pyrobosim && pip3 install .
-RUN pip3 install lark pytest pytest-html
+RUN pip3 install lark pytest pytest-dependency pytest-html
 
 # Setup an entrypoint and working folder
 COPY docker/entrypoint_foxy.sh /entrypoint.sh
