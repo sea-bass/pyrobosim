@@ -113,7 +113,7 @@ locations:
   - name: counter0
     type: counter
     room: bathroom
-    pose: [-2.45, 2.5, 1.767]
+    pose: [-3.0, 5.0, 0.0]
 
   - name: trash
     type: trash_can
