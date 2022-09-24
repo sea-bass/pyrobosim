@@ -139,6 +139,8 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             can_pick = robot.manipulated_object is None
             self.pick_button.setEnabled(can_pick)
             self.place_button.setEnabled(not can_pick)
+            self.canvas.show_world_state(robot, navigating=False)
+            self.canvas.draw_and_sleep()
 
     def set_buttons_during_action(self, state):
         """

@@ -95,7 +95,6 @@ class WorldCanvas(FigureCanvasQTAgg):
         """
         # Robots
         self.show_robots()
-        self.show_world_state()
 
         # Rooms and hallways
         for r in self.world.rooms:
@@ -167,9 +166,10 @@ class WorldCanvas(FigureCanvasQTAgg):
     def get_animated_artists(self):
         """Returns a list of artists to animate when blitting."""
         animated_artists = self.robot_bodies + self.robot_dirs + [self.axes.title]
-        held_object = self.world.robots[0].manipulated_object
-        if held_object is not None:
-            animated_artists.extend([held_object.viz_patch, held_object.viz_text])
+        for robot in self.world.robots:
+            held_object = robot.manipulated_object
+            if held_object is not None:
+                animated_artists.extend([held_object.viz_patch, held_object.viz_text])
         return animated_artists
 
     def adjust_text(self, objs):
@@ -198,7 +198,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         (goal,) = self.axes.plot(x[-1], y[-1], "rx", zorder=2)
         self.path_planner_artists.extend((path, start, goal))
 
-    def show_planner_and_path(self):
+    def show_planner_and_path(self, robot=None):
         """
         Plot the path planner and latest path, if specified.
         This planner could be global (property of the world)
@@ -207,8 +207,8 @@ class WorldCanvas(FigureCanvasQTAgg):
         for e in self.path_planner_artists:
             self.axes.lines.remove(e)
 
-        if self.world.robots[0].path_planner:
-            self.path_planner_artists = self.world.robots[0].path_planner.plot(self.axes)
+        if robot and robot.path_planner:
+            self.path_planner_artists = robot.path_planner.plot(self.axes)
         elif self.world.path_planner:
             self.path_planner_artists = self.world.path_planner.plot(self.axes)
 
@@ -222,26 +222,27 @@ class WorldCanvas(FigureCanvasQTAgg):
             self.robot_dirs[i].set_ydata(p.y + np.array([0, self.robot_length * np.sin(p.yaw)]))
             self.update_object_plot(robot.manipulated_object)
 
-    def show_world_state(self, navigating=False):
+    def show_world_state(self, robot=None, navigating=False):
         """
         Shows the world state in the figure title.
 
+        :param robot: If set to a Robot instance, uses that robot for showing state.
+        :type robot: :class:`pyrobosim.core.robot.Robot`, optional
         :param navigating: Flag that indicates that the robot is moving so we
             should continuously update the title containing the robot location.
         :type navigating: bool, optional
         """
-        r = self.world.robots[0]
-        if r is not None:
+        if robot is not None:
             title_bits = []
             if navigating:
-                robot_loc = self.world.get_location_from_pose(r.pose)
+                robot_loc = self.world.get_location_from_pose(robot.pose)
                 if robot_loc is not None:
                     title_bits.append(f"Location: {robot_loc.name}")
-            elif r.location is not None:
-                title_bits.append(f"Location: {r.location.name}")
-            if r.manipulated_object is not None:
-                title_bits.append(f"Holding: {r.manipulated_object.name}")
-            title_str = ", ".join(title_bits)
+            elif robot.location is not None:
+                title_bits.append(f"Location: {robot.location.name}")
+            if robot.manipulated_object is not None:
+                title_bits.append(f"Holding: {robot.manipulated_object.name}")
+            title_str = f"[{robot.name}] " + ", ".join(title_bits)
             self.axes.set_title(title_str)
 
     def update_object_plot(self, obj):
@@ -281,7 +282,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         # Find a path, or use an existing one, and start the navigation thread.
         if not self.world.current_path or self.world.current_path.num_poses < 1:
             path = self.world.find_path(goal, robot=robot)
-            self.show_planner_and_path()
+            self.show_planner_and_path(robot)
         else:
             path = self.world.current_path
             self.world.current_goal = self.world.get_entity_by_name(goal)
@@ -307,7 +308,7 @@ class WorldCanvas(FigureCanvasQTAgg):
                 self.fig.canvas.restore_region(bg)
                 self.update_robot_plot()
                 self.update_object_plot(robot.manipulated_object)
-                self.show_world_state(navigating=True)
+                self.show_world_state(robot, navigating=True)
                 for a in animated_artists:
                     self.axes.draw_artist(a)
                 self.fig.canvas.blit(self.fig.bbox)
@@ -318,11 +319,11 @@ class WorldCanvas(FigureCanvasQTAgg):
             while robot.executing_nav:
                 self.update_robot_plot()
                 self.update_object_plot(robot.manipulated_object)
-                self.show_world_state(navigating=True)
+                self.show_world_state(robot, navigating=True)
                 self.draw_and_sleep()
                 time.sleep(sleep_time)
 
-        self.show_world_state()
+        self.show_world_state(robot)
         self.draw_and_sleep()
         return True
 
@@ -341,7 +342,7 @@ class WorldCanvas(FigureCanvasQTAgg):
             success = robot.pick_object(obj_name)
             if success:
                 self.update_object_plot(robot.manipulated_object)
-                self.show_world_state()
+                self.show_world_state(robot)
                 self.draw_and_sleep()
             return success
         return False
@@ -365,7 +366,7 @@ class WorldCanvas(FigureCanvasQTAgg):
             success = robot.place_object(pose=pose)
             self.axes.add_patch(obj.viz_patch)
             self.update_object_plot(obj)
-            self.show_world_state()
+            self.show_world_state(robot)
             self.draw_and_sleep()
             return success
         return False
