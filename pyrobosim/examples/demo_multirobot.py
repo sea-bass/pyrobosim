@@ -88,7 +88,6 @@ def start_gui(world, args):
     app = PyRoboSimGUI(world, args)
     sys.exit(app.exec_())
 
-
 def parse_args():
     """ Parse command-line arguments """
     parser = argparse.ArgumentParser(description="Main pyrobosim demo.")
@@ -105,7 +104,7 @@ if __name__ == "__main__":
     if args.world_file == "":
         w = create_world()
     else:
-        w = create_world_from_yaml(args.world_file)        
+        w = create_world_from_yaml(args.world_file)
 
     # Start the program either as ROS2 node or standalone.
     start_gui(w, sys.argv)

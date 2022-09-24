@@ -3,6 +3,7 @@
 import adjustText
 import numpy as np
 import time
+import threading
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.transforms import Affine2D
@@ -34,6 +35,8 @@ class WorldCanvas(FigureCanvasQTAgg):
         """
         Creates an instance of a pyrobosim figure canvas.
 
+        :param world: World object to attach.
+        :type world: :class:`pyrobosim.core.world.World`
         :param dpi: DPI for the figure.
         :type dpi: int
         """
@@ -54,11 +57,15 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.robot_dirs = []
         self.path_planner_artists = []
 
-        # Debug displays (TODO: Should be available from GUI)
+        # Debug displays (TODO: Should be available from GUI).
         self.show_collision_polygons = False
 
-        # Connect triggers for thread-safe execution
+        # Connect triggers for thread-safe execution.
         self.nav_trigger.connect(self.navigate)
+
+        # Start thread for monitoring robot navigation state.
+        self.nav_animator = threading.Thread(target=self.monitor_nav_animation)
+        self.nav_animator.start()
 
     def show_robots(self):
         """Draws robots as circles with heading lines for visualization."""
@@ -172,6 +179,66 @@ class WorldCanvas(FigureCanvasQTAgg):
                 animated_artists.extend([held_object.viz_patch, held_object.viz_text])
         return animated_artists
 
+    def monitor_nav_animation(self):
+        """
+        Monitors the navigation animation (to be started in a separate thread).
+        """
+        do_blit = False  # Keeping this around to toggle if needed.
+        sleep_time = self.animation_dt / self.realtime_factor
+        while True:
+            # Check if any robot is currently navigating.
+            nav_status = [robot.executing_nav for robot in self.world.robots]
+            if any(nav_status):
+                active_robot_indices = [i for i, status in enumerate(nav_status) if status]
+                
+                # Update the animation.
+                if do_blit:
+                    animated_artists = self.get_animated_artists()
+                    for a in animated_artists:
+                        a.set_animated(True)
+                    self.draw_and_sleep()
+                    bg = self.fig.canvas.copy_from_bbox(self.fig.bbox)
+                    # Needs to happen before blitting to avoid race condition
+                    time.sleep(sleep_time)
+                    self.fig.canvas.restore_region(bg)
+                    self.update_robots_plot()
+                    for idx in active_robot_indices:    
+                        self.update_object_plot(
+                            self.world.robots[idx].manipulated_object)
+                    self.show_world_state(
+                        self.world.robots[active_robot_indices[0]],
+                        navigating=True)
+                    for a in animated_artists:
+                        self.axes.draw_artist(a)
+                    self.fig.canvas.blit(self.fig.bbox)
+                    self.fig.canvas.flush_events()
+                    for a in animated_artists:
+                        a.set_animated(False)
+                else:
+                    self.update_robots_plot()
+                    for idx in active_robot_indices:    
+                        self.update_object_plot(
+                            self.world.robots[idx].manipulated_object)
+                    self.show_world_state(
+                        self.world.robots[active_robot_indices[0]],
+                        navigating=True)
+                    self.draw_and_sleep()
+
+                # Check if GUI buttons should be disabled
+                if self.world.has_gui and self.world.gui.layout_created:
+                    cur_robot = self.world.gui.get_current_robot()
+                    is_cur_robot_moving = cur_robot in self.world.robots and \
+                                          cur_robot.executing_nav
+                    self.world.gui.set_buttons_during_action(not is_cur_robot_moving)
+            
+            else:
+                # If the GUI button states did not toggle correctly, force them
+                # to be active once no robots are moving.
+                if self.world.has_gui and self.world.gui.layout_created:
+                    self.world.gui.set_buttons_during_action(True)
+            
+            time.sleep(sleep_time)
+
     def adjust_text(self, objs):
         """
         Adjust text in a figure.
@@ -212,7 +279,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         elif self.world.path_planner:
             self.path_planner_artists = self.world.path_planner.plot(self.axes)
 
-    def update_robot_plot(self):
+    def update_robots_plot(self):
         """Updates the robot visualization graphics objects."""
         for i, robot in enumerate(self.world.robots):
             p = robot.pose
@@ -293,38 +360,9 @@ class WorldCanvas(FigureCanvasQTAgg):
             realtime_factor=self.realtime_factor,
         )
 
-        # Animate while navigation is active
-        do_blit = True  # Keeping this around to disable if needed
-        sleep_time = self.animation_dt / self.realtime_factor
-        if do_blit:
-            animated_artists = self.get_animated_artists()
-            for a in animated_artists:
-                a.set_animated(True)
-            self.draw_and_sleep()
-            bg = self.fig.canvas.copy_from_bbox(self.fig.bbox)
-            while robot.executing_nav:
-                # Needs to happen before blitting to avoid race condition
-                time.sleep(sleep_time)
-                self.fig.canvas.restore_region(bg)
-                self.update_robot_plot()
-                self.update_object_plot(robot.manipulated_object)
-                self.show_world_state(robot, navigating=True)
-                for a in animated_artists:
-                    self.axes.draw_artist(a)
-                self.fig.canvas.blit(self.fig.bbox)
-                self.fig.canvas.flush_events()
-            for a in animated_artists:
-                a.set_animated(False)
-        else:
-            while robot.executing_nav:
-                self.update_robot_plot()
-                self.update_object_plot(robot.manipulated_object)
-                self.show_world_state(robot, navigating=True)
-                self.draw_and_sleep()
-                time.sleep(sleep_time)
-
-        self.show_world_state(robot)
-        self.draw_and_sleep()
+        # Sleep while the robot is executing the action.
+        while robot.executing_nav:
+            time.sleep(0.1)
         return True
 
     def pick_object(self, robot, obj_name):

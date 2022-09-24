@@ -1,8 +1,8 @@
 """ Main utilities for pyrobosim GUI. """
 
+import threading
 import numpy as np
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import Qt
 from matplotlib.backends.qt_compat import QtCore
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
 
@@ -33,7 +33,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         """
         Creates an instance of the pyrobosim application main window.
 
-        :param world: World object to attach
+        :param world: World object to attach.
         :type world: :class:`pyrobosim.core.world.World`
         """
         super(PyRoboSimMainWindow, self).__init__(*args, **kwargs)
@@ -45,6 +45,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.world.gui = self
         self.world.has_gui = True
 
+        self.layout_created = False
         self.canvas = WorldCanvas(world)
         self.create_layout()
         self.update_manip_state()
@@ -124,6 +125,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
 
         self.main_widget.setLayout(self.main_layout)
         self.setCentralWidget(self.main_widget)
+        self.layout_created = True
 
     def get_current_robot(self):
         robot_name = self.robot_textbox.currentText()
@@ -170,7 +172,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             robot.set_pose(sampled_pose)
             if robot.manipulated_object is not None:
                 robot.manipulated_object.pose = sampled_pose
-        self.canvas.update_robot_plot()
+        self.canvas.update_robots_plot()
         self.canvas.show_world_state(navigating=True)
         self.canvas.draw()
 
@@ -199,9 +201,8 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             return
 
         print(f"[{robot.name}] Navigating to {loc.name}")
-        self.set_buttons_during_action(False)
-        self.canvas.navigate(robot, loc)
-        self.set_buttons_during_action(True)
+        t = threading.Thread(target=self.canvas.navigate, args=(robot, loc))
+        t.start()
 
     def on_pick_click(self):
         """Callback to pick an object."""
