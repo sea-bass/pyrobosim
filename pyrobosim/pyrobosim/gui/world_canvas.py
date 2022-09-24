@@ -152,7 +152,11 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.obj_texts = [o.viz_text for o in (self.world.objects)]
 
         # Path planner and path
-        self.show_planner_and_path()
+        if len(self.world.robots) > 0:
+            robot_to_show = self.world.robots[0]
+        else:
+            robot_to_show = None
+        self.show_planner_and_path(robot_to_show)
 
         # Update the robot length
         self.robot_length = self.robot_normalized_length * max(
