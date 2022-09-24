@@ -8,6 +8,7 @@ from .hallway import Hallway
 from .locations import Location, ObjectSpawn
 from .objects import Object
 from .room import Room
+from .robot import Robot
 from ..navigation.search_graph import Node, SearchGraph, SearchGraphPlanner
 from ..utils.knowledge import resolve_to_location, resolve_to_object
 from ..utils.pose import Pose
@@ -37,8 +38,8 @@ class World:
         self.has_ros_node = False
         self.ros_node = False
 
-        # Robot
-        self.robot = None
+        # Robots
+        self.robots = []
         self.has_robot = False
 
         # World entities (rooms, locations, objects, etc.)
@@ -635,7 +636,7 @@ class World:
         self.create_search_graph(max_edge_dist=self.search_graph.max_edge_dist,
                                  collision_check_dist=self.search_graph.collision_check_dist)
 
-    def find_path(self, goal, start=None):
+    def find_path(self, goal, start=None, robot=None):
         """
         Finds a path from a start to goal location.
         If no start argument is provided, we assume it is the current robot pose.
@@ -647,11 +648,15 @@ class World:
         """
         # Prepare by adding start and goal nodes to the graph.
         if start is None:
-            start = self.robot.pose
+            if robot is None:
+                warnings.warn("Cannot find path if no start pose or robot specified.")
+                return None
+            else:
+                start = robot.pose
 
         created_start_node = False
         if isinstance(start, Pose):
-            start_loc = self.robot.location if self.has_robot else None
+            start_loc = robot.location if robot else None
             if not start_loc:
                 start_loc = self.get_location_from_pose(start)
             start_node = Node(start, parent=start_loc)
@@ -676,10 +681,10 @@ class World:
         self.current_goal = goal_node.parent
 
         # Do the actual planning.
-        if self.robot.path_planner:
+        if robot and robot.path_planner:
             # Plan with the robot's local planner.
             goal = goal_node.pose
-            self.current_path = self.robot.path_planner.plan(start, goal)
+            self.current_path = robot.path_planner.plan(start, goal)
         elif self.path_planner:
             # Plan with the robot's global planner.
             self.current_path = self.path_planner.plan(start_node, goal_node)
@@ -1071,29 +1076,29 @@ class World:
 
         # If we got a valid location / pose combination, add the robot
         if valid_pose:
-            self.robot = robot
-            self.robot.location = loc
-            self.robot.set_pose(robot_pose)
-            self.robot.world = self
+            robot.location = loc
+            robot.set_pose(robot_pose)
+            robot.world = self
+            self.robots.append(robot)
             self.has_robot = True
             self.name_to_entity[robot.name] = robot
         else:
             warnings.warn("Could not add robot.")
             self.set_inflation_radius(old_inflation_radius)
 
-    def remove_robot(self):
+    def remove_robot(self, robot_name):
         """ 
         Removes a robot from the world.
         
         :return: True if the robot was successfully removed, else False.
         :rtype: bool
         """
-        if self.has_robot:
+        robot = self.get_entity_by_name(robot_name)
+        if robot and isinstance(robot, Robot):
+            self.robots.remove(robot)
+            self.name_to_entity.pop(robot_name)
             self.has_robot = False
-            self.name_to_entity.pop(self.robot.name)
-            self.robot = None
             return True
         else:
-            warnings.warn("No robot to remove.")
+            warnings.warn(f"Could not find robot {robot_name} to remove.")
             return False
-            
