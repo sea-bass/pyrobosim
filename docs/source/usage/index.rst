@@ -9,4 +9,5 @@ Refer to the following pages for different types of usage guides.
    :maxdepth: 1
 
    basic_usage
+   multirobot
    tamp

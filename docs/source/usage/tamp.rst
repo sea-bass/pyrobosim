@@ -35,7 +35,7 @@ You can try running a sample script as follows
 ::
 
     cd /path/to/pyrobosim/pyrobosim
-    python examples/demo_pddl.py --example 01_simple --verbose
+    python3 examples/demo_pddl.py --example 01_simple --verbose
 
 .. image:: ../media/pddlstream_demo_standalone.png
     :align: center

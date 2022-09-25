@@ -328,12 +328,12 @@ class Robot:
                 success = self.place_object(action.pose)
 
         else:
-            print(f"Invalid action type: {action.type}")
+            print(f"[{self.name}] Invalid action type: {action.type}")
             success = False
 
         if self.world.has_gui:
             self.world.gui.set_buttons_during_action(True)
-        print(f"Action completed with success: {success}")
+        print(f"[{self.name}] Action completed with success: {success}")
         self.current_action = None
         self.executing_action = False
         return success
@@ -353,28 +353,28 @@ class Robot:
         :rtype: bool
         """
         if plan is None:
-            print("Plan is None. Returning.")
+            print(f"[{self.name}] Plan is None. Returning.")
             return False
 
         self.executing_plan = True
         self.current_plan = plan
-        print("Executing task plan...")
+        print(f"[{self.name}] Executing task plan...")
         if self.world.has_gui:
             self.world.gui.set_buttons_during_action(False)
 
         success = True
         num_acts = len(plan.actions)
         for n, act_msg in enumerate(plan.actions):
-            print(f"Executing action {act_msg.type} [{n+1}/{num_acts}]")
+            print(f"[{self.name}] Executing action {act_msg.type} [{n+1}/{num_acts}]")
             success = self.execute_action(act_msg, blocking=blocking)
             if not success:
-                print(f"Task plan failed to execute on action {n+1}")
+                print(f"[{self.name}] Task plan failed to execute on action {n+1}")
                 break
             time.sleep(delay)  # Artificial delay between actions
 
         if self.world.has_gui:
             self.world.gui.set_buttons_during_action(True)
-        print(f"Task plan completed with success: {success}")
+        print(f"[{self.name}] Task plan completed with success: {success}")
         self.current_plan = None
         self.executing_plan = False
         return success

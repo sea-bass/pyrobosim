@@ -63,6 +63,8 @@ class WorldCanvas(FigureCanvasQTAgg):
         # Connect triggers for thread-safe execution.
         self.nav_trigger.connect(self.navigate_in_thread)
 
+        self.draw_lock = False
+
         # Start thread for monitoring robot navigation state.
         self.nav_animator = threading.Thread(target=self.monitor_nav_animation)
         self.nav_animator.start()
@@ -179,9 +181,14 @@ class WorldCanvas(FigureCanvasQTAgg):
 
     def draw_and_sleep(self):
         """Redraws the figure and waits a small amount of time."""
+        if self.draw_lock:
+            return
+
+        self.draw_lock = True
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
         time.sleep(0.001)
+        self.draw_lock = False
 
     def get_animated_artists(self):
         """Returns a list of artists to animate when blitting."""
@@ -196,7 +203,6 @@ class WorldCanvas(FigureCanvasQTAgg):
         """
         Monitors the navigation animation (to be started in a separate thread).
         """
-        do_blit = False  # Keeping this around to toggle if needed.
         sleep_time = self.animation_dt / self.realtime_factor
         while True:
             # Check if any robot is currently navigating.
@@ -205,37 +211,14 @@ class WorldCanvas(FigureCanvasQTAgg):
                 active_robot_indices = [i for i, status in enumerate(nav_status) if status]
                 
                 # Update the animation.
-                if do_blit:
-                    animated_artists = self.get_animated_artists()
-                    for a in animated_artists:
-                        a.set_animated(True)
-                    self.draw_and_sleep()
-                    bg = self.fig.canvas.copy_from_bbox(self.fig.bbox)
-                    # Needs to happen before blitting to avoid race condition
-                    time.sleep(sleep_time)
-                    self.fig.canvas.restore_region(bg)
-                    self.update_robots_plot()
-                    for idx in active_robot_indices:    
-                        self.update_object_plot(
-                            self.world.robots[idx].manipulated_object)
-                    self.show_world_state(
-                        self.world.robots[active_robot_indices[0]],
-                        navigating=True)
-                    for a in animated_artists:
-                        self.axes.draw_artist(a)
-                    self.fig.canvas.blit(self.fig.bbox)
-                    self.fig.canvas.flush_events()
-                    for a in animated_artists:
-                        a.set_animated(False)
-                else:
-                    self.update_robots_plot()
-                    for idx in active_robot_indices:    
-                        self.update_object_plot(
-                            self.world.robots[idx].manipulated_object)
-                    self.show_world_state(
-                        self.world.robots[active_robot_indices[0]],
-                        navigating=True)
-                    self.draw_and_sleep()
+                self.update_robots_plot()
+                for idx in active_robot_indices:    
+                    self.update_object_plot(
+                        self.world.robots[idx].manipulated_object)
+                self.show_world_state(
+                    self.world.robots[active_robot_indices[0]],
+                    navigating=True)
+                self.draw_and_sleep()
 
                 # Check if GUI buttons should be disabled
                 if self.world.has_gui and self.world.gui.layout_created:

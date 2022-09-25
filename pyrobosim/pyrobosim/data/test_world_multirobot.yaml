@@ -150,10 +150,10 @@ objects:
     location: trash
 
   - type: water
-    location: counter0
+    location: counter0_left
 
   - type: banana
-    location: counter0
+    location: counter0_right
 
   - type: water
     location: my_desk

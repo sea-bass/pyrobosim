@@ -11,13 +11,13 @@ First, install the module.
 ::
 
     cd /path/to/pyrobosim/pyrobosim
-    pip install .
+    pip3 install .
 
 Then, run the test script.
 
 ::
 
-    python examples/demo.py
+    python3 examples/demo.py
 
 You can now interact with the GUI through the buttons and text boxes.
 For example, enter "bedroom desk" in the **Goal query** text box and then
@@ -95,7 +95,7 @@ Standalone:
 
 ::
 
-    python examples/demo_world_save.py
+    python3 examples/demo_world_save.py
 
 ROS:
 
