@@ -195,7 +195,8 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
 
         query_list = self.goal_textbox.text().split(" ")
         loc = query_to_entity(
-            self.world, query_list, mode="location", resolution_strategy="nearest"
+            self.world, query_list, mode="location", robot=robot,
+            resolution_strategy="nearest"
         )
         if not loc:
             return
@@ -210,7 +211,8 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             loc = robot.location
             query_list = [loc] + self.goal_textbox.text().split(" ")
             obj = query_to_entity(
-                self.world, query_list, mode="object", resolution_strategy="nearest"
+                self.world, query_list, mode="object", robot=robot,
+                resolution_strategy="nearest"
             )
             print(f"[{robot.name}] Picking {obj.name}")
             self.canvas.pick_object(robot, obj)

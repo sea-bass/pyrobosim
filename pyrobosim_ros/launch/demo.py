@@ -10,7 +10,7 @@ def generate_launch_description():
     # Arguments
     world_file_arg = DeclareLaunchArgument(
         "world_file",
-        default_value=TextSubstitution(text="")
+        default_value=TextSubstitution(text=""),
         description="YAML file name (should be in the pyrobosim/data folder). " +
                     "If not specified, a world will be created programmatically."
     )

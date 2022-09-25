@@ -47,17 +47,14 @@ class WorldROSWrapper(Node):
         self.plan_sub = self.create_subscription(
             TaskPlan, "commanded_plan", self.plan_callback, 10)
 
-        # Robot state publisher
-        # self.robot_state_pub = self.create_publisher(
-        #     RobotState, "robot_state", 10)
-        # self.robot_state_pub_thread = threading.Thread(
-        #     target=self.create_timer, 
-        #     args=(self.state_pub_rate, self.publish_robot_state))
-
         # World state service server
         self.world_state_srv = self.create_service(
             RequestWorldState, "request_world_state", self.world_state_callback)
         
+        # Initialize robot state publisher and thread list
+        self.robot_state_pubs = []
+        self.robot_state_pub_threads = []
+
         self.get_logger().info("World node started.")
 
 
@@ -76,12 +73,47 @@ class WorldROSWrapper(Node):
     def start(self):
         """ Starts the node. """
         if not self.world:
-            self.get_logger().error("Must set a world")
+            self.get_logger().error("Must set a world before starting node.")
 
-        # self.robot_state_pub_thread.start()
+        for robot in self.world.robots:
+            self.add_robot_state_publisher(robot)
         rclpy.spin(self)
         self.destroy_node()
         rclpy.shutdown()
+
+
+    def add_robot_state_publisher(self, robot):
+        """
+        Adds a state publisher for a specific robot.
+        
+        :param robot: Robot instance.
+        :type robot: :class:`pyrobosim.core.robot.Robot`
+        """
+        pub = self.create_publisher(
+            RobotState, f"{robot.name}/robot_state", 10)
+        self.robot_state_pubs.append(pub)
+
+        pub_fn = lambda: pub.publish(self.package_robot_state(robot))
+        pub_thread = threading.Thread(
+            target=self.create_timer, 
+            args=(self.state_pub_rate, pub_fn))
+        self.robot_state_pub_threads.append(pub_thread)
+        pub_thread.start()
+
+
+    def remove_robot_state_publisher(self, robot):
+        """
+        Removes a state publisher for a specific robot.
+        
+        :param robot: Robot instance.
+        :type robot: :class:`pyrobosim.core.robot.Robot`
+        """
+        for i, r in self.world.robots:
+            if r == robot:
+                pub = self.robot_state_pubs.pop(i)
+                del(pub)
+                pub_thread = self.robot_state_pub_threads.pop(i)
+                del(pub_thread)
 
 
     def action_callback(self, msg):
@@ -91,10 +123,13 @@ class WorldROSWrapper(Node):
         :param msg: Task action message to process.
         :type msg: :class:`pyrobosim_msgs.msg.TaskAction`
         """
-        # if self.is_robot_busy():
-        #     self.get_logger().info(f"Currently executing action(s). Discarding this one.")
-        #     return
         robot = self.world.get_entity_by_name(msg.robot)
+        if not robot:
+            self.get_logger().info(f"Invalid robot name: {msg.robot}")
+            return   
+        if self.is_robot_busy(robot):
+            self.get_logger().info(f"Currently executing action(s). Discarding this one.")
+            return
         t = threading.Thread(target=robot.execute_action,
                              args=(task_action_from_ros(msg),))
         t.start()
@@ -107,10 +142,13 @@ class WorldROSWrapper(Node):
         :param msg: Task plan message to process.
         :type msg: :class:`pyrobosim_msgs.msg.TaskPlan`
         """
-        # if self.is_robot_busy():
-        #     self.get_logger().info(f"Currently executing action(s). Discarding this one.")
-        #     return
         robot = self.world.get_entity_by_name(msg.robot)
+        if not robot:
+            self.get_logger().info(f"Invalid robot name: {msg.robot}")
+            return   
+        if self.is_robot_busy(robot):
+            self.get_logger().info(f"Currently executing action(s). Discarding this one.")
+            return
         t = threading.Thread(target=robot.execute_plan,
                              args=(task_plan_from_ros(msg),))
         t.start()
@@ -146,11 +184,6 @@ class WorldROSWrapper(Node):
             state_msg.manipulated_object = robot.manipulated_object.name
         state_msg.last_visited_location = robot.location.name
         return state_msg
-
-
-    def publish_robot_state(self):
-        """ Publishes the robot state (this function runs on a timer). """
-        self.robot_state_pub.publish(self.package_robot_state())
 
 
     def world_state_callback(self, request, response):

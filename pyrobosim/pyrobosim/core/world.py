@@ -1088,6 +1088,9 @@ class World:
             warnings.warn("Could not add robot.")
             self.set_inflation_radius(old_inflation_radius)
 
+        if self.has_ros_node:
+            self.ros_node.add_robot_state_publishers()
+
     def remove_robot(self, robot_name):
         """ 
         Removes a robot from the world.
@@ -1097,6 +1100,8 @@ class World:
         """
         robot = self.get_entity_by_name(robot_name)
         if robot and isinstance(robot, Robot):
+            if self.has_ros_node:
+                self.ros_node.remove_robot_state_publisher(robot)
             self.robots.remove(robot)
             self.name_to_entity.pop(robot_name)
             self.has_robot = False

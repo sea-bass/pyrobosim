@@ -257,7 +257,9 @@ def resolve_to_object(world, category=None, location=None, room=None,
 
     if location is not None:
         possible_objects = [o for o in possible_objects if 
-            (o.parent == location or o.parent.category == location or o.parent.parent.name == location)]
+            (o.parent == location or o.parent.name == location or
+             o.parent.parent == location or o.parent.parent.name == location or
+             o.parent.category == location or o.parent.parent.category == location)]
 
     if ignore_grasped and robot is not None and robot.manipulated_object in possible_objects:
         possible_objects.remove(robot.manipulated_object)
