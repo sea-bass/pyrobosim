@@ -61,7 +61,8 @@ def create_world():
     w.add_object("water", desk)
 
     # Add a robot
-    r = Robot(radius=0.1, path_executor=ConstantVelocityExecutor())
+    r = Robot(name="robot", radius=0.1,
+              path_executor=ConstantVelocityExecutor())
     w.add_robot(r, loc="kitchen")
 
     # Create a search graph

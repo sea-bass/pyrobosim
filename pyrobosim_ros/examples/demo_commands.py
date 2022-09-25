@@ -37,7 +37,8 @@ def main():
     mode = cmd.get_parameter("mode").value
     if mode == "action":
         cmd.get_logger().info("Publishing sample task action...")
-        action_msg = TaskAction(type="navigate", target_location="desk")
+        action_msg = TaskAction(robot="robot", type="navigate",
+                                target_location="desk")
         cmd.action_pub.publish(action_msg)
 
     elif mode == "plan":
@@ -49,7 +50,7 @@ def main():
             TaskAction(type="place"),
             TaskAction(type="navigate", target_location="kitchen")
         ]
-        plan_msg = TaskPlan(actions=task_actions)
+        plan_msg = TaskPlan(robot="robot", actions=task_actions)
         cmd.plan_pub.publish(plan_msg)
 
     rclpy.spin(cmd)

@@ -663,7 +663,7 @@ class World:
             self.search_graph.add(start_node, autoconnect=True)
             created_start_node = True
         else:
-            start_node = self.graph_node_from_entity(start)
+            start_node = self.graph_node_from_entity(start, robot=robot)
             if start_node is None:
                 warnings.warn("Invalid start specified")
                 return None
@@ -674,7 +674,7 @@ class World:
             self.search_graph.add(goal_node, autoconnect=True)
             created_goal_node = True
         else:
-            goal_node = self.graph_node_from_entity(goal)
+            goal_node = self.graph_node_from_entity(goal, robot=robot)
             if goal_node is None:
                 warnings.warn("Invalid goal specified")
                 return None
@@ -700,7 +700,7 @@ class World:
 
         return self.current_path
 
-    def graph_node_from_entity(self, entity_query, resolution_strategy="nearest"):
+    def graph_node_from_entity(self, entity_query, resolution_strategy="nearest", robot=None):
         """
         Gets a graph node from an entity query, which could be any combination of
         room, hallway, location, object spawn, or object in the world, as well as 
@@ -712,6 +712,8 @@ class World:
         :type entity_query: list[Entity/str]
         :param resolution_strategy: Resolution strategy to apply
         :type resolution_strategy: str
+        :param robot: If set to a Robot instance, uses that robot for resolution strategy.
+        :type robot: :class:`pyrobosim.core.robot.Robot`, optional
         :return: A graph node for the entity that meets the resolution strategy, or None.
         :rtype: :class:`pyrobosim.navigation.search_graph.Node`
         """
@@ -723,10 +725,10 @@ class World:
             entity = self.get_entity_by_name(entity_query)
             if entity is None:
                 entity = resolve_to_location(self, category=entity_query,
-                    expand_locations=True, resolution_strategy=resolution_strategy)
+                    expand_locations=True, resolution_strategy=resolution_strategy, robot=robot)
             if entity is None:
                 entity = resolve_to_object(self, category=entity_query,
-                    resolution_strategy=resolution_strategy, ignore_grasped=True)
+                    resolution_strategy=resolution_strategy, robot=robot, ignore_grasped=True)
         else:
             entity = entity_query
 
@@ -977,7 +979,7 @@ class World:
         :rtype: :class:`pyrobosim.core.object.Object`
         """
         if name not in self.name_to_entity:
-            warnings.warn(f"Object not found: {name}")
+            # warnings.warn(f"Object not found: {name}")
             return None
         
         entity = self.name_to_entity[name]

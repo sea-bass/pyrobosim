@@ -191,6 +191,7 @@ class Robot:
                     category=obj_query,
                     location=loc,
                     resolution_strategy="nearest",
+                    robot=self
                 )
             if not obj:
                 warnings.warn(f"Found no object {obj_query} to pick.")
@@ -284,7 +285,6 @@ class Robot:
         :return: True if the action succeeds, or False otherwise.
         :rtype: bool
         """
-        robot = self.world.robot
         self.executing_action = True
         self.current_action = action
         if self.world.has_gui:
@@ -299,13 +299,13 @@ class Robot:
                 else:
                     tgt_loc = action.target_location.name
 
-                self.world.gui.canvas.nav_trigger.emit(tgt_loc)
+                self.world.gui.canvas.nav_trigger.emit(self.name, tgt_loc)
                 while self.executing_nav:
                     time.sleep(0.5)  # Delay to wait for navigation
                 success = True  # TODO Need to keep track of nav status
             else:
-                path = self.world.find_path(action.target_location)
-                success = robot.follow_path(
+                path = self.world.find_path(action.target_location, robot=self)
+                success = self.follow_path(
                     path,
                     target_location=action.target_location,
                     realtime_factor=1.0,
@@ -315,13 +315,13 @@ class Robot:
 
         elif action.type == "pick":
             if self.world.has_gui:
-                success = self.world.gui.canvas.pick_object(action.object)
+                success = self.world.gui.canvas.pick_object(self, action.object)
             else:
                 success = self.pick_object(action.object)
 
         elif action.type == "place":
             if self.world.has_gui:
-                success = self.world.gui.canvas.place_object(action.pose)
+                success = self.world.gui.canvas.place_object(self, action.pose)
             else:
                 success = self.place_object(action.pose)
 

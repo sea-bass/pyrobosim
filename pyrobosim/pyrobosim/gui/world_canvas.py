@@ -28,7 +28,7 @@ class WorldCanvas(FigureCanvasQTAgg):
     robot_zorder = 3
     """ zorder for robot visualization. """
 
-    nav_trigger = pyqtSignal(str)
+    nav_trigger = pyqtSignal(str, str)
     """ Signal to trigger navigation method in a thread-safe way. """
 
     def __init__(self, world, dpi=100):
@@ -61,7 +61,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.show_collision_polygons = False
 
         # Connect triggers for thread-safe execution.
-        self.nav_trigger.connect(self.navigate)
+        self.nav_trigger.connect(self.navigate_in_thread)
 
         # Start thread for monitoring robot navigation state.
         self.nav_animator = threading.Thread(target=self.monitor_nav_animation)
@@ -339,6 +339,22 @@ class WorldCanvas(FigureCanvasQTAgg):
         y = obj.pose.y + 1.0 * (ymax - ymin)
         obj.viz_text.set_position((x, y))
 
+    def navigate_in_thread(self, robot, goal):
+        """
+        Starts a thread to navigate a robot to a goal.
+
+        :param robot: Robot instance or name to execute action.
+        :type robot: :class:`pyrobosim.core.robot.Robot` or str
+        :param goal: Name of goal location (resolved by the world model).
+        :type goal: str
+        :return: True if navigation succeeds, else False
+        :rtype: bool
+        """
+        if isinstance(robot, str):
+            robot = self.world.get_entity_by_name(robot)
+        t = threading.Thread(target=self.navigate, args=(robot, goal))
+        t.start()
+
     def navigate(self, robot, goal):
         """
         Animates a path to a goal location using a robot's path executor.
@@ -350,6 +366,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         :return: True if navigation succeeds, else False
         :rtype: bool
         """
+
         # Find a path, or use an existing one, and start the navigation thread.
         if not self.world.current_path or self.world.current_path.num_poses < 1:
             path = self.world.find_path(goal, robot=robot)

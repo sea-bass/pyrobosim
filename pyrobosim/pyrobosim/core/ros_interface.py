@@ -48,11 +48,11 @@ class WorldROSWrapper(Node):
             TaskPlan, "commanded_plan", self.plan_callback, 10)
 
         # Robot state publisher
-        self.robot_state_pub = self.create_publisher(
-            RobotState, "robot_state", 10)
-        self.robot_state_pub_thread = threading.Thread(
-            target=self.create_timer, 
-            args=(self.state_pub_rate, self.publish_robot_state))
+        # self.robot_state_pub = self.create_publisher(
+        #     RobotState, "robot_state", 10)
+        # self.robot_state_pub_thread = threading.Thread(
+        #     target=self.create_timer, 
+        #     args=(self.state_pub_rate, self.publish_robot_state))
 
         # World state service server
         self.world_state_srv = self.create_service(
@@ -78,7 +78,7 @@ class WorldROSWrapper(Node):
         if not self.world:
             self.get_logger().error("Must set a world")
 
-        self.robot_state_pub_thread.start()
+        # self.robot_state_pub_thread.start()
         rclpy.spin(self)
         self.destroy_node()
         rclpy.shutdown()
@@ -91,10 +91,11 @@ class WorldROSWrapper(Node):
         :param msg: Task action message to process.
         :type msg: :class:`pyrobosim_msgs.msg.TaskAction`
         """
-        if self.is_robot_busy():
-            self.get_logger().info(f"Currently executing action(s). Discarding this one.")
-            return
-        t = threading.Thread(target=self.world.robot.execute_action,
+        # if self.is_robot_busy():
+        #     self.get_logger().info(f"Currently executing action(s). Discarding this one.")
+        #     return
+        robot = self.world.get_entity_by_name(msg.robot)
+        t = threading.Thread(target=robot.execute_action,
                              args=(task_action_from_ros(msg),))
         t.start()
 
@@ -106,36 +107,37 @@ class WorldROSWrapper(Node):
         :param msg: Task plan message to process.
         :type msg: :class:`pyrobosim_msgs.msg.TaskPlan`
         """
-        if self.is_robot_busy():
-            self.get_logger().info(f"Currently executing action(s). Discarding this one.")
-            return
-        t = threading.Thread(target=self.world.robot.execute_plan,
+        # if self.is_robot_busy():
+        #     self.get_logger().info(f"Currently executing action(s). Discarding this one.")
+        #     return
+        robot = self.world.get_entity_by_name(msg.robot)
+        t = threading.Thread(target=robot.execute_plan,
                              args=(task_plan_from_ros(msg),))
         t.start()
 
 
-    def is_robot_busy(self):
+    def is_robot_busy(self, robot):
         """
-        Check if the robot is currently executing an action or plan. 
-        
+        Check if a robot is currently executing an action or plan. 
+
+        :param robot: Robot instance to check.
+        :type robot: :class:`pyrobosim.core.robot.Robot`
         :return: True if the robot is busy, else False.
         :rtype: bool
         """
-        return self.world.robot.executing_action or self.world.robot.executing_plan
+        return robot.executing_action or robot.executing_plan
 
 
-    def package_robot_state(self):
+    def package_robot_state(self, robot):
         """ 
-        Creates a ROS message containing the robot state.
+        Creates a ROS message containing a robot state.
         This state can be published standalone or packaged into the overall world state.
       
+        :param robot: Robot instance from which to extract state.
+        :type robot: :class:`pyrobosim.core.robot.Robot`
         :return: ROS message representing the robot state.
         :rtype: :class:`pyrobosim_msgs.msg.RobotState`
         """
-        robot = self.world.robot
-        if not robot:
-            return None
-
         state_msg = RobotState(name=robot.name)
         state_msg.pose = pose_to_ros(robot.pose)
         state_msg.executing_action = robot.executing_action
@@ -176,8 +178,9 @@ class WorldROSWrapper(Node):
                 parent=obj.parent.name, pose=pose_to_ros(obj.pose))
             response.state.objects.append(obj_msg)
 
-        # Add the robot state.
-        response.state.robot = self.package_robot_state()
+        # Add the robot states.
+        for robot in self.world.robots:
+            response.state.robots.append(self.package_robot_state(robot))
 
         return response
 
@@ -191,11 +194,13 @@ def update_world_from_state_msg(world, msg):
     :param msg: ROS message describing the desired world state.
     :type msg: :class:`pyrobosim_msgs.msg.WorldState`
     """
-    # Update the robot state
-    # NOTE: currently assumes both the world and state message have a single robot.
-    if world.robot:
-        robot_state = msg.robot
-        world.robot.set_pose(pose_from_ros(robot_state.pose))
+    # Update the robot states
+    for robot_state in msg.robots:
+        robot = world.get_entity_by_name(robot_state.name)
+        if robot is not None:
+            robot.set_pose(pose_from_ros(robot_state.pose))
+        else:
+            print(f"Tried to update state for nonexistent robot {robot_state.name}")
 
     # Update the object states
     for obj_state in msg.objects:

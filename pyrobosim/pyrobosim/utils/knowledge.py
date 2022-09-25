@@ -141,7 +141,8 @@ def query_to_entity(world, query_list, mode,
     if obj_category or mode=="object":
         obj_candidate = resolve_to_object(world, category=obj_category, 
                                           location=loc_category, room=room,
-                                          resolution_strategy=resolution_strategy)
+                                          resolution_strategy=resolution_strategy,
+                                          robot=robot)
         if not obj_candidate:
             warnings.warn(f"Could not resolve query {query_list}")
         else:
@@ -151,7 +152,8 @@ def query_to_entity(world, query_list, mode,
                 return obj_candidate.parent
     else:
         loc_candidate = resolve_to_location(world, category=loc_category, room=room,
-                                            resolution_strategy=resolution_strategy)
+                                            resolution_strategy=resolution_strategy,
+                                            robot=robot)
         if not loc_candidate:
             warnings.warn(f"Could not resolve query {query_list}")
         else:
@@ -257,10 +259,11 @@ def resolve_to_object(world, category=None, location=None, room=None,
         possible_objects = [o for o in possible_objects if 
             (o.parent == location or o.parent.category == location or o.parent.parent.name == location)]
 
-    if ignore_grasped and robot is not None:
+    if ignore_grasped and robot is not None and robot.manipulated_object in possible_objects:
         possible_objects.remove(robot.manipulated_object)
 
-    obj = apply_resolution_strategy(world, possible_objects, resolution_strategy)
+    obj = apply_resolution_strategy(world, possible_objects,
+                                    resolution_strategy, robot=robot)
     if not obj:
         warnings.warn(f"Could not resolve object query with category: {category}, location: {location}, room: {room}.")   
         return None

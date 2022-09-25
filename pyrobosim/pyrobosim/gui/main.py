@@ -201,8 +201,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             return
 
         print(f"[{robot.name}] Navigating to {loc.name}")
-        t = threading.Thread(target=self.canvas.navigate, args=(robot, loc))
-        t.start()
+        self.canvas.navigate_in_thread(robot, loc)
 
     def on_pick_click(self):
         """Callback to pick an object."""

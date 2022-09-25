@@ -1,6 +1,5 @@
 # World state definition message
-# TODO: Expand to multiple robots
 
-RobotState robot
+RobotState[] robots
 LocationState[] locations
 ObjectState[] objects

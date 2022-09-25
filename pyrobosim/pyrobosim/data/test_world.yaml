@@ -17,7 +17,7 @@ metadata:
 
 # ROBOTS: For now, we only support a single robot
 robots:
-  - id: 0
+  - name: robot
     radius: 0.1
     location: kitchen
     pose: [0, 0, 0]
