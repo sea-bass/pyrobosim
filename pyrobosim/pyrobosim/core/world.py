@@ -40,7 +40,6 @@ class World:
 
         # Robots
         self.robots = []
-        self.has_robot = False
 
         # World entities (rooms, locations, objects, etc.)
         self.name_to_entity = {}
@@ -63,8 +62,6 @@ class World:
 
         # Search graph for navigation
         self.search_graph = None
-        self.current_goal = None
-        self.current_path = None
         self.path_planner = None
 
         # Other parameters
@@ -678,27 +675,32 @@ class World:
             if goal_node is None:
                 warnings.warn("Invalid goal specified")
                 return None
-        self.current_goal = goal_node.parent
 
         # Do the actual planning.
+        current_path = None
         if robot and robot.path_planner:
             # Plan with the robot's local planner.
             goal = goal_node.pose
-            self.current_path = robot.path_planner.plan(start, goal)
+            current_path = robot.path_planner.plan(start, goal)
         elif self.path_planner:
             # Plan with the robot's global planner.
-            self.current_path = self.path_planner.plan(start_node, goal_node)
+            current_path = self.path_planner.plan(start_node, goal_node)
         else:
             warnings.warn("No global or local path planners specified.")
             return None
 
-        # If we created temporary nodes for search, remove them
+        # If we created temporary nodes for search, remove them.
         if created_start_node:
             self.search_graph.remove(start_node)
         if created_goal_node:
             self.search_graph.remove(goal_node)
 
-        return self.current_path
+        # Assign current path and goal to robot, if one specified.
+        if robot:
+            robot.current_path = current_path
+            robot.current_goal = goal_node.parent
+
+        return current_path
 
     def graph_node_from_entity(self, entity_query, resolution_strategy="nearest", robot=None):
         """
@@ -1082,7 +1084,6 @@ class World:
             robot.set_pose(robot_pose)
             robot.world = self
             self.robots.append(robot)
-            self.has_robot = True
             self.name_to_entity[robot.name] = robot
         else:
             warnings.warn("Could not add robot.")
@@ -1104,7 +1105,6 @@ class World:
                 self.ros_node.remove_robot_state_publisher(robot)
             self.robots.remove(robot)
             self.name_to_entity.pop(robot_name)
-            self.has_robot = False
             return True
         else:
             warnings.warn(f"Could not find robot {robot_name} to remove.")

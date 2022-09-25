@@ -21,7 +21,7 @@ def test_prm():
     robot = w.robots[0]
     robot.set_pose(start)
     robot.set_path_planner(prm)
-    w.current_path = robot.plan_path(start, goal)
+    robot.current_path = robot.plan_path(start, goal)
     prm.print_metrics()
 
 

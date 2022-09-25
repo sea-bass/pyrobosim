@@ -154,13 +154,11 @@ class WorldYamlLoader:
 
         for id, robot_data in enumerate(self.data["robots"]):
             # Create the robot
-            if "name" in robot_data:
-                robot_name = robot_data["name"]
-            else:
-                robot_name = f"robot{id}"
-
+            robot_name = get_value_or(robot_data, "name", f"robot{id}")
+            robot_color = get_value_or(robot_data, "color", default=(0.8, 0.0, 0.8))
             robot = Robot(name=robot_name,
                           radius=robot_data["radius"],
+                          color=robot_color,
                           path_planner=self.get_local_path_planner(robot_data),
                           path_executor=self.get_path_executor(robot_data))
             

@@ -61,13 +61,13 @@ def create_world():
     w.add_object("water", desk)
 
     # Add multiple robots
-    robot0 = Robot(name="robot0", radius=0.1,
+    robot0 = Robot(name="robot0", radius=0.1, color=(0.8, 0, 0.8),
                    path_executor=ConstantVelocityExecutor())
     w.add_robot(robot0, loc="kitchen")
-    robot1 = Robot(name="robot1", radius=0.1,
+    robot1 = Robot(name="robot1", radius=0.1, color=(0.8, 0.8, 0),
                    path_executor=ConstantVelocityExecutor())
     w.add_robot(robot1, loc="bedroom")
-    robot2 = Robot(name="robot2", radius=0.1,
+    robot2 = Robot(name="robot2", radius=0.1, color=(0, 0.8, 0.8),
                    path_executor=ConstantVelocityExecutor())
     w.add_robot(robot2, loc="bathroom")
 

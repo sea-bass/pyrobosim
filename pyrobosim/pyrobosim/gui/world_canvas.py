@@ -82,7 +82,8 @@ class WorldCanvas(FigureCanvasQTAgg):
             (self.robot_bodies[i],) = self.axes.plot(
                 p.x,
                 p.y,
-                "mo",
+                marker="o",
+                markeredgecolor=robot.color,
                 markersize=10,
                 markeredgewidth=2,
                 markerfacecolor="None",
@@ -91,10 +92,18 @@ class WorldCanvas(FigureCanvasQTAgg):
             (self.robot_dirs[i],) = self.axes.plot(
                 p.x + np.array([0, self.robot_length * np.cos(p.yaw)]),
                 p.y + np.array([0, self.robot_length * np.sin(p.yaw)]),
-                "m-",
+                linestyle="-",
+                color=robot.color,
                 linewidth=2,
                 zorder=self.robot_zorder,
             )
+            x = p.x
+            y = p.y - 2.0 * robot.radius
+            robot.viz_text = self.axes.text(
+                x, y, robot.name, clip_on=True, color=robot.color,
+                horizontalalignment="center", fontsize=10
+            )
+        self.robot_texts = [r.viz_text for r in (self.world.robots)]
 
     def show(self):
         """
@@ -252,7 +261,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         """
         adjustText.adjust_text(objs, lim=100, add_objects=self.obj_patches)
 
-    def show_path(self, path):
+    def show_path(self, path, robot=None):
         """
         Plots a standalone path.
 
@@ -264,7 +273,9 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.path_planner_artists = []
         x = [p.x for p in path.poses]
         y = [p.y for p in path.poses]
-        (path,) = self.axes.plot(x, y, "m-", linewidth=3, zorder=1)
+        color = robot.color if robot is not None else "m"
+        (path,) = self.axes.plot(x, y, linestyle="-", color=color,
+                                 linewidth=3, zorder=1)
         (start,) = self.axes.plot(x[0], y[0], "go", zorder=2)
         (goal,) = self.axes.plot(x[-1], y[-1], "rx", zorder=2)
         self.path_planner_artists.extend((path, start, goal))
@@ -281,10 +292,14 @@ class WorldCanvas(FigureCanvasQTAgg):
         for e in self.path_planner_artists:
             self.axes.lines.remove(e)
 
+        color = robot.color if robot is not None else "m"
+
         if robot and robot.path_planner:
-            self.path_planner_artists = robot.path_planner.plot(self.axes)
+            self.path_planner_artists = robot.path_planner.plot(
+                self.axes, path_color=color)
         elif self.world.path_planner:
-            self.path_planner_artists = self.world.path_planner.plot(self.axes)
+            self.path_planner_artists = self.world.path_planner.plot(
+                self.axes, path_color=color)
 
     def update_robots_plot(self):
         """Updates the robot visualization graphics objects."""
@@ -294,6 +309,7 @@ class WorldCanvas(FigureCanvasQTAgg):
             self.robot_bodies[i].set_ydata(p.y)
             self.robot_dirs[i].set_xdata(p.x + np.array([0, self.robot_length * np.cos(p.yaw)]))
             self.robot_dirs[i].set_ydata(p.y + np.array([0, self.robot_length * np.sin(p.yaw)]))
+            robot.viz_text.set_position((p.x, p.y - 2.0 * robot.radius))
             self.update_object_plot(robot.manipulated_object)
 
     def show_world_state(self, robot=None, navigating=False):
@@ -371,16 +387,16 @@ class WorldCanvas(FigureCanvasQTAgg):
         """
 
         # Find a path, or use an existing one, and start the navigation thread.
-        if not self.world.current_path or self.world.current_path.num_poses < 1:
+        if not robot.current_path or robot.current_path.num_poses < 1:
             path = self.world.find_path(goal, robot=robot)
             self.show_planner_and_path(robot)
         else:
-            path = self.world.current_path
-            self.world.current_goal = self.world.get_entity_by_name(goal)
-            self.show_path(path)
+            path = robot.current_path
+            robot.current_goal = self.world.get_entity_by_name(goal)
+            self.show_path(path, robot=robot)
         robot.follow_path(
             path,
-            target_location=self.world.current_goal,
+            target_location=robot.current_goal,
             realtime_factor=self.realtime_factor,
         )
 

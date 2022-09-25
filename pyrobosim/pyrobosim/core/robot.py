@@ -17,19 +17,17 @@ class Robot:
 
     def __init__(
         self,
-        id=0,
         name="robot",
         pose=Pose(),
         radius=0.0,
         height=0.0,
+        color=(0.8, 0, 0.8),
         path_planner=None,
         path_executor=None,
     ):
         """
         Creates a robot instance.
 
-        :param id: Numeric ID for the robot.
-        :type id: int, optional
         :param name: Robot name.
         :type name: str, optional
         :param pose: Robot initial pose.
@@ -38,6 +36,8 @@ class Robot:
         :type radius: float, optional
         :param height: Robot height, in meters.
         :type height: float, optional
+        :param color: Robot color, as an RGB tuple or string.
+        :type color: tuple[float] / str, optional
         :param path_planner: Path planner for navigation
             (see e.g., :class:`pyrobosim.navigation.rrt.RRTPlanner`).
         :type path_planner: PathPlanner, optional
@@ -46,15 +46,17 @@ class Robot:
         :type path_executor: PathExecutor, optional
         """
         # Basic properties
-        self.id = id
         self.name = name
         self.set_pose(pose)
         self.radius = radius
         self.height = height
+        self.color = color
 
         # Navigation properties
         self.set_path_planner(path_planner)
         self.set_path_executor(path_executor)
+        self.current_path = None
+        self.current_goal = None
         self.executing_nav = False
 
         # World interaction properties
@@ -161,7 +163,7 @@ class Robot:
         # Update the robot state if successful.
         if success and target_location is not None:
             self.location = target_location
-        self.world.current_path = None
+        self.current_path = None
         return success
 
     def pick_object(self, obj_query):
@@ -291,7 +293,7 @@ class Robot:
             self.world.gui.set_buttons_during_action(False)
 
         if action.type == "navigate":
-            self.world.current_path = action.path
+            self.current_path = action.path
             if self.world.has_gui:
                 self.executing_nav = True
                 if isinstance(action.target_location, str):
@@ -311,7 +313,7 @@ class Robot:
                     realtime_factor=1.0,
                     blocking=blocking,
                 )
-            self.world.current_path = None
+            self.current_path = None
 
         elif action.type == "pick":
             if self.world.has_gui:
