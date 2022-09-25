@@ -28,9 +28,7 @@ def generate_launch_description():
         namespace="pyrobosim",
         parameters=[{
             "world_file": LaunchConfiguration("world_file")
-        }],
-        output="screen",
-        emulate_tty=True
+        }]
     )
     command_node = Node(
         package="pyrobosim_ros",

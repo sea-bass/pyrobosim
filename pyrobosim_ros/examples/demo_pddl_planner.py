@@ -119,9 +119,10 @@ class PlannerNode(Node):
         except Exception as e:
             self.get_logger().info("Failed to unpack world state.")
 
-        # Once the world state is set, plan.
+        # Once the world state is set, plan using the first robot.
         self.get_logger().info("Planning...")
-        plan = self.planner.plan(self.latest_goal, focused=True, 
+        robot = self.world.robots[0]
+        plan = self.planner.plan(robot, self.latest_goal, focused=True, 
             search_sample_ratio=self.get_parameter("search_sample_ratio").value)
         if self.get_parameter("verbose").value == True:
             self.get_logger().info(f"{plan}")

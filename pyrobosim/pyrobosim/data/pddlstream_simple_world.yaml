@@ -15,9 +15,9 @@ metadata:
   objects: $DATA/example_object_data.yaml
 
 
-# ROBOTS: For now, we only support a single robot
+# ROBOTS
 robots:
-  - id: 0
+  - name: robot
     radius: 0.1
     location: kitchen
     pose: [0, 0, 0]

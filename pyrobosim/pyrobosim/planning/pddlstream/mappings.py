@@ -8,14 +8,18 @@ from pddlstream.language.generator import from_gen_fn, from_list_fn, from_test
 from . import primitives
 
 
-def get_stream_map(world):
+def get_stream_map(world, robot):
     """
     Returns a dictionary mapping stream names to function implementations.
 
+    :param world: World object for planning.
+    :type world: :class:`pyrobosim.core.world.World`
+    :param robot: Robot object for planning.
+    :type robot: :class:`pyrobosim.core.robot.Robot`
     :return: The stream map dictionary.
     :rtype: dict(str, function)
     """
-    planner = world.robot.path_planner
+    planner = robot.path_planner
 
     return {
         # Functions

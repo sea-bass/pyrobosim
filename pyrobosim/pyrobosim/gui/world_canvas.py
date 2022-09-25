@@ -274,6 +274,9 @@ class WorldCanvas(FigureCanvasQTAgg):
         Plot the path planner and latest path, if specified.
         This planner could be global (property of the world)
         or local (property of the robot).
+
+        :param robot: If set to a Robot instance, uses that robot for display.
+        :type robot: :class:`pyrobosim.core.robot.Robot`, optional
         """
         for e in self.path_planner_artists:
             self.axes.lines.remove(e)

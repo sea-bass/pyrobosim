@@ -134,7 +134,7 @@ def task_action_from_ros(msg):
     if not isinstance(msg, ros_msgs.TaskAction):
         raise Exception("Input is not a TaskAction ROS message")
     pose = pose_from_ros(msg.pose) if msg.has_pose else None
-    return acts.TaskAction(msg.type, object=msg.object, room=msg.room,
+    return acts.TaskAction(msg.type, robot=msg.robot, object=msg.object, room=msg.room,
                 source_location=msg.source_location, target_location=msg.target_location,
                 pose=pose, path=path_from_ros(msg.path), cost=msg.cost)
 
@@ -152,6 +152,7 @@ def task_action_to_ros(act):
         raise Exception("Input is not a TaskAction object")
     
     act_msg = ros_msgs.TaskAction(type=act.type)
+    act_msg.robot = get_entity_name(act.robot)
     act_msg.object = get_entity_name(act.object)
     act_msg.room = get_entity_name(act.room)
     act_msg.source_location = get_entity_name(act.source_location)
@@ -178,7 +179,7 @@ def task_plan_from_ros(msg):
     if not isinstance(msg, ros_msgs.TaskPlan):
         raise Exception("Input is not a TaskPlan ROS message")
     actions = [task_action_from_ros(act_msg) for act_msg in msg.actions]
-    return acts.TaskPlan(actions=actions)
+    return acts.TaskPlan(robot=msg.robot, actions=actions)
 
 
 def task_plan_to_ros(plan):
@@ -193,4 +194,4 @@ def task_plan_to_ros(plan):
     if not isinstance(plan, acts.TaskPlan):
         raise Exception("Input is not a TaskPlan object")
     act_msgs = [task_action_to_ros(act) for act in plan.actions]
-    return ros_msgs.TaskPlan(actions=act_msgs, cost=plan.total_cost)
+    return ros_msgs.TaskPlan(robot=plan.robot, actions=act_msgs, cost=plan.total_cost)
