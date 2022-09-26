@@ -272,6 +272,11 @@ class WorldCanvas(FigureCanvasQTAgg):
         :param robot: If set to a Robot instance, uses that robot for display.
         :type robot: :class:`pyrobosim.core.robot.Robot`, optional
         """
+        # Since removing artists while drawing can cause issues,
+        # this function should also lock drawing.
+        while self.draw_lock:
+            time.sleep(0.001)
+        self.draw_lock = True
         for e in self.path_planner_artists:
             self.axes.lines.remove(e)
 
@@ -283,6 +288,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         elif self.world.path_planner:
             self.path_planner_artists = self.world.path_planner.plot(
                 self.axes, path_color=color)
+        self.draw_lock = False
 
     def update_robots_plot(self):
         """Updates the robot visualization graphics objects."""

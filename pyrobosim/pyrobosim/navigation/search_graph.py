@@ -3,6 +3,7 @@
 from astar import AStar
 import numpy as np
 import warnings
+import time
 
 from ..utils.motion import Path
 from ..utils.pose import Pose
@@ -81,6 +82,7 @@ class SearchGraph:
         self.distance_dict = {}
 
         self.solver = GraphSolver()
+        self.lock = False  # To prevent adding/removing nodes while plotting.
 
     def add(self, n, autoconnect=False):
         """
@@ -95,10 +97,16 @@ class SearchGraph:
             for i in n:
                 self.add(i, autoconnect=autoconnect)
         else:
+            while self.lock:
+                time.sleep(0.001)
+            self.lock = True
+
             self.nodes.add(n)
             if autoconnect:
                 for nconn in self.nodes:
                     self.connect(n, nconn)
+
+            self.lock = False
 
     def connect(self, n0, n1):
         """
@@ -129,6 +137,10 @@ class SearchGraph:
             for i in ndel:
                 self.remove(i)
         else:
+            while self.lock:
+                time.sleep(0.001)
+            self.lock = True
+
             # Remove node from the node set in the graph
             if ndel in self.nodes:
                 self.nodes.remove(ndel)
@@ -140,6 +152,8 @@ class SearchGraph:
             for e in self.edges.copy():
                 if e.n0 == ndel or e.n1 == ndel:
                     self.edges.remove(e)
+
+            self.lock = False
 
     def check_connectivity(self, start, goal, ignore_max_dist=False):
         """
@@ -230,6 +244,10 @@ class SearchGraph:
         """
         Plots the search graph on a specified set of axes.
         """
+        while self.lock:
+            time.sleep(0.001)
+        self.lock = True
+
         artists = []
         x = [n.pose.x for n in self.nodes]
         y = [n.pose.y for n in self.nodes]
@@ -242,6 +260,7 @@ class SearchGraph:
             (edge,) = axes.plot(x, y, "k:", linewidth=1)
             artists.append(edge)
 
+        self.lock = False
         return artists
 
 
