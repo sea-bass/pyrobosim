@@ -1025,7 +1025,6 @@ class World:
         """
         return [r.name for r in self.robots]
 
-
     def get_robot_by_name(self, name):
         """ 
         Gets a robot by its name.

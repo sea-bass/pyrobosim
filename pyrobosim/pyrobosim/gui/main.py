@@ -1,6 +1,5 @@
 """ Main utilities for pyrobosim GUI. """
 
-import threading
 import numpy as np
 from PyQt5 import QtWidgets
 from matplotlib.backends.qt_compat import QtCore
