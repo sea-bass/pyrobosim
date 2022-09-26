@@ -22,11 +22,11 @@ robots:
     color: [0.8, 0.0, 0.8]
     location: kitchen
     pose: [0, 0, 0]
-  - radius: 0.1
+  - radius: 0.08
     color: [0.8, 0.8, 0.0]
     location: bathroom
   - name: "robby"
-    radius: 0.1
+    radius: 0.06
     color: [0.0, 0.8, 0.8]
     location: bedroom
     path_planner:  # Rapidly-expanding Random Tree (RRT) planner

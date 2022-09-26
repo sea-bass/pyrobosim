@@ -65,11 +65,11 @@ def create_world(multirobot=False):
               path_executor=ConstantVelocityExecutor())
     w.add_robot(r, loc="kitchen")
     if multirobot:
-        robot1 = Robot(name="robot1", radius=0.1, color=(0.8, 0.8, 0),
+        robot1 = Robot(name="robot1", radius=0.08, color=(0.8, 0.8, 0),
                 path_executor=ConstantVelocityExecutor())
         w.add_robot(robot1, loc="bathroom")
 
-        robby = Robot(name="robby", radius=0.1, color=(0, 0.8, 0.8),
+        robby = Robot(name="robby", radius=0.06, color=(0, 0.8, 0.8),
                     path_executor=ConstantVelocityExecutor())
         w.add_robot(robby, loc="bedroom")
         from pyrobosim.navigation.rrt import RRTPlanner

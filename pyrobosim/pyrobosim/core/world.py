@@ -1076,10 +1076,15 @@ class World:
             warnings.warn(f"Robot name {robot.name} already exists in world.")
             return
 
+        # If the new robot has a bigger inflation radius than previously,
+        # use this new one. Otherwise, we can leave it as is.
         old_inflation_radius = self.inflation_radius
-        self.set_inflation_radius(robot.radius)
-        valid_pose = True
+        new_inflation_radius = max(
+            [r.radius for r in self.robots] + [robot.radius])
+        if new_inflation_radius > old_inflation_radius:
+            self.set_inflation_radius(new_inflation_radius)
 
+        valid_pose = True
         if use_robot_pose:
             # If using the robot pose, simply add the robot and we're done!
             robot_pose = robot.pose
@@ -1165,6 +1170,12 @@ class World:
                 self.ros_node.remove_robot_state_publisher(robot)
             self.robots.remove(robot)
             self.name_to_entity.pop(robot_name)
+
+            # Find the new max inflation radius and revert it.
+            new_inflation_radius = max(
+                [r.radius for r in self.robots] + [robot.radius])
+            if new_inflation_radius != self.inflation_radius:
+                self.set_inflation_radius(new_inflation_radius)
             return True
         else:
             warnings.warn(f"Could not find robot {robot_name} to remove.")
