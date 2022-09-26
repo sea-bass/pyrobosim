@@ -167,7 +167,8 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             print("No robot available.")
             return None
 
-        sampled_pose = self.world.sample_free_robot_pose_uniform()
+        sampled_pose = self.world.sample_free_robot_pose_uniform(
+            robot, ignore_robots=False)
         if sampled_pose is not None:
             robot.set_pose(sampled_pose)
             if robot.manipulated_object is not None:

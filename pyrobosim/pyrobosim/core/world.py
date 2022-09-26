@@ -596,6 +596,26 @@ class World:
         # If we made it through, the pose is occupied.
         return True
 
+    def collides_with_robots(self, pose, robot=None):
+        """
+        Checks if a pose collides with robots in the world.
+        Currently assumes that robots are circles, so we can do simple checks.
+        If this changes, should account for polygon collisions.
+
+        :param pose: Candidate pose to check.
+        :type pose: :class:`pyrobosim.utils.pose.Pose`
+        :param robot: Robot instance, if specified.
+        :type robot: :class:`pyrobosim.core.robot.Robot`, optional
+        :return: True if the pose collides with a robot besides the input.
+        :rtype: bool
+        """
+        radius = self.inflation_radius if robot is None else robot.radius
+        robot_list = [r for r in self.robots if r is not robot]
+        for r in robot_list:
+            if pose.get_linear_distance(r.pose) < (radius + robot.radius):
+                return True
+        return False  
+
     def create_search_graph(self, max_edge_dist=np.inf, collision_check_dist=0.1,
                             create_planner=False):
         """ 
@@ -750,7 +770,7 @@ class World:
         graph_node = graph_nodes[0]
         return graph_node
 
-    def sample_free_robot_pose_uniform(self):
+    def sample_free_robot_pose_uniform(self, robot=None, ignore_robots=True):
         """ 
         Sample an unoccupied robot pose in the world.
         
@@ -759,22 +779,28 @@ class World:
         If no valid samples could be found within the `max_object_sample_tries` instance
         attribute, this will return ``None``.
 
+        :param robot: Robot instance, if specified.
+        :type robot: :class:`pyrobosim.core.robot.Robot`, optional
+        :param ignore_robots: If True, ignore collisions with other robots.
+        :type ignore_robots: bool
         :return: Collision-free pose if found, else ``None``.
         :rtype: :class:`pyrobosim.utils.pose.Pose`
         """
         xmin, xmax = self.x_bounds
         ymin, ymax = self.y_bounds
-        r = self.inflation_radius
+        r = self.inflation_radius if robot is None else robot.radius
 
         for _ in range(self.max_object_sample_tries):
             x = (xmax - xmin - 2*r) * np.random.random() + xmin + r
             y = (ymax - ymin - 2*r) * np.random.random() + ymin + r
             yaw = 2.0 * np.pi * np.random.random()
-            if not self.check_occupancy((x, y)):
-                return Pose(x=x, y=y, yaw=yaw)
+            pose = Pose(x=x, y=y, yaw=yaw)
+            if (not self.check_occupancy(pose) and
+                ignore_robots or not self.collides_with_robots(pose, robot)):
+                return pose
         warnings.warn("Could not sample pose.")
         return None
-
+  
     ################################
     # Lookup Functionality Methods #
     ################################
@@ -1064,7 +1090,8 @@ class World:
         elif loc is None:
             if pose is None:
                 # If nothing is specified, sample any valid location in the world
-                robot_pose = self.sample_free_robot_pose_uniform()
+                robot_pose = self.sample_free_robot_pose_uniform(
+                    robot, ignore_robots=False)
                 if robot_pose is None:
                     warnings.warn("Unable to sample free pose.")
                     valid_pose = False
