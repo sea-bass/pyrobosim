@@ -796,7 +796,7 @@ class World:
             yaw = 2.0 * np.pi * np.random.random()
             pose = Pose(x=x, y=y, yaw=yaw)
             if (not self.check_occupancy(pose) and
-                ignore_robots or not self.collides_with_robots(pose, robot)):
+                (ignore_robots or not self.collides_with_robots(pose, robot))):
                 return pose
         warnings.warn("Could not sample pose.")
         return None

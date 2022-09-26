@@ -6,6 +6,7 @@ import time
 import threading
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
+from matplotlib.pyplot import Circle
 from matplotlib.transforms import Affine2D
 from PyQt5.QtCore import pyqtSignal
 
@@ -46,15 +47,16 @@ class WorldCanvas(FigureCanvasQTAgg):
 
         self.world = world
 
-        self.robot_normalized_length = 0.1
-        self.robot_length = None
-
         self.displayed_path = None
         self.displayed_path_start = None
         self.displayed_path_goal = None
 
+        # Multiplier of robot radius for plotting robot orientation lines.
+        self.robot_dir_line_factor = 3.0
+
         self.robot_bodies = []
         self.robot_dirs = []
+        self.robot_lengths = []
         self.path_planner_artists = []
 
         # Debug displays (TODO: Should be available from GUI).
@@ -74,36 +76,36 @@ class WorldCanvas(FigureCanvasQTAgg):
         n_robots = len(self.world.robots)
         self.robot_bodies = n_robots*[None]
         self.robot_dirs = n_robots*[None]
+        self.robot_lengths = n_robots*[None]
 
         for i, robot in enumerate(self.world.robots):
-            self.robot_length = self.robot_normalized_length * max(
-                (self.world.x_bounds[1] - self.world.x_bounds[0]),
-                (self.world.y_bounds[1] - self.world.y_bounds[0]),
-            )
             p = robot.pose
-            (self.robot_bodies[i],) = self.axes.plot(
-                p.x,
-                p.y,
-                marker="o",
-                markeredgecolor=robot.color,
-                markersize=10,
-                markeredgewidth=2,
-                markerfacecolor="None",
-                zorder=self.robot_zorder,
-            )
+            self.robot_bodies[i] = Circle(
+                (p.x, p.y),
+                radius=robot.radius,
+                edgecolor=robot.color,
+                fill=False,
+                linewidth=2,
+                zorder=self.robot_zorder)
+            self.axes.add_patch(self.robot_bodies[i])
+
+            robot_length = self.robot_dir_line_factor * robot.radius
             (self.robot_dirs[i],) = self.axes.plot(
-                p.x + np.array([0, self.robot_length * np.cos(p.yaw)]),
-                p.y + np.array([0, self.robot_length * np.sin(p.yaw)]),
+                p.x + np.array([0, robot_length * np.cos(p.yaw)]),
+                p.y + np.array([0, robot_length * np.sin(p.yaw)]),
                 linestyle="-",
                 color=robot.color,
                 linewidth=2,
                 zorder=self.robot_zorder,
             )
+            self.robot_lengths[i] = robot_length
+
             x = p.x
             y = p.y - 2.0 * robot.radius
             robot.viz_text = self.axes.text(
                 x, y, robot.name, clip_on=True, color=robot.color,
-                horizontalalignment="center", fontsize=10
+                horizontalalignment="center", verticalalignment="top",
+                fontsize=10
             )
         self.robot_texts = [r.viz_text for r in (self.world.robots)]
 
@@ -168,12 +170,6 @@ class WorldCanvas(FigureCanvasQTAgg):
         else:
             robot_to_show = None
         self.show_planner_and_path(robot_to_show)
-
-        # Update the robot length
-        self.robot_length = self.robot_normalized_length * max(
-            (self.world.x_bounds[1] - self.world.x_bounds[0]),
-            (self.world.y_bounds[1] - self.world.y_bounds[0]),
-        )
 
         self.axes.autoscale()
         self.axes.axis("equal")
@@ -294,10 +290,9 @@ class WorldCanvas(FigureCanvasQTAgg):
         """Updates the robot visualization graphics objects."""
         for i, robot in enumerate(self.world.robots):
             p = robot.pose
-            self.robot_bodies[i].set_xdata(p.x)
-            self.robot_bodies[i].set_ydata(p.y)
-            self.robot_dirs[i].set_xdata(p.x + np.array([0, self.robot_length * np.cos(p.yaw)]))
-            self.robot_dirs[i].set_ydata(p.y + np.array([0, self.robot_length * np.sin(p.yaw)]))
+            self.robot_bodies[i].center = p.x, p.y
+            self.robot_dirs[i].set_xdata(p.x + np.array([0, self.robot_lengths[i] * np.cos(p.yaw)]))
+            self.robot_dirs[i].set_ydata(p.y + np.array([0, self.robot_lengths[i] * np.sin(p.yaw)]))
             robot.viz_text.set_position((p.x, p.y - 2.0 * robot.radius))
             self.update_object_plot(robot.manipulated_object)
 
