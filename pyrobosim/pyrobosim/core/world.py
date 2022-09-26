@@ -981,12 +981,40 @@ class World:
         :rtype: :class:`pyrobosim.core.object.Object`
         """
         if name not in self.name_to_entity:
-            # warnings.warn(f"Object not found: {name}")
             return None
         
         entity = self.name_to_entity[name]
         if not isinstance(entity, Object):
             warnings.warn(f"Entity {name} found but it is not an Object.")
+            return None
+        
+        return entity 
+
+    def get_robot_names(self):
+        """ 
+        Gets all robot names in the world.
+        
+        :return: List of robot names.
+        :rtype: list[str]
+        """
+        return [r.name for r in self.robots]
+
+
+    def get_robot_by_name(self, name):
+        """ 
+        Gets a robot by its name.
+        
+        :param name: Name of robot.
+        :type name: str
+        :return: Robot instance matching the input name, or ``None`` if not valid.
+        :rtype: :class:`pyrobosim.core.robot.Robot`
+        """
+        if name not in self.name_to_entity:
+            return None
+        
+        entity = self.name_to_entity[name]
+        if not isinstance(entity, Robot):
+            warnings.warn(f"Entity {name} found but it is not a Robot.")
             return None
         
         return entity  
@@ -1017,6 +1045,11 @@ class World:
         :param use_robot_pose: If True, uses the pose already specified in the robot instance.
         :type use_robot_pose: bool, optional
         """
+        # Check that the robot name doesn't already exist.
+        if robot.name in self.get_robot_names():
+            warnings.warn(f"Robot name {robot.name} already exists in world.")
+            return
+
         old_inflation_radius = self.inflation_radius
         self.set_inflation_radius(robot.radius)
         valid_pose = True
@@ -1099,8 +1132,8 @@ class World:
         :return: True if the robot was successfully removed, else False.
         :rtype: bool
         """
-        robot = self.get_entity_by_name(robot_name)
-        if robot and isinstance(robot, Robot):
+        robot = self.get_robot_by_name(robot_name)
+        if robot:
             if self.has_ros_node:
                 self.ros_node.remove_robot_state_publisher(robot)
             self.robots.remove(robot)

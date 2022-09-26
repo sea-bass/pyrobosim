@@ -123,7 +123,7 @@ class WorldROSWrapper(Node):
         :param msg: Task action message to process.
         :type msg: :class:`pyrobosim_msgs.msg.TaskAction`
         """
-        robot = self.world.get_entity_by_name(msg.robot)
+        robot = self.world.get_robot_by_name(msg.robot)
         if not robot:
             self.get_logger().info(f"Invalid robot name: {msg.robot}")
             return   
@@ -142,7 +142,7 @@ class WorldROSWrapper(Node):
         :param msg: Task plan message to process.
         :type msg: :class:`pyrobosim_msgs.msg.TaskPlan`
         """
-        robot = self.world.get_entity_by_name(msg.robot)
+        robot = self.world.get_robot_by_name(msg.robot)
         if not robot:
             self.get_logger().info(f"Invalid robot name: {msg.robot}")
             return   
@@ -229,11 +229,11 @@ def update_world_from_state_msg(world, msg):
     """
     # Update the robot states
     for robot_state in msg.robots:
-        robot = world.get_entity_by_name(robot_state.name)
+        robot = world.get_robot_by_name(robot_state.name)
         if robot is not None:
             robot.set_pose(pose_from_ros(robot_state.pose))
         else:
-            print(f"Tried to update state for nonexistent robot {robot_state.name}")
+            print(f"Tried to update state for invalid robot {robot_state.name}")
 
     # Update the object states
     for obj_state in msg.objects:

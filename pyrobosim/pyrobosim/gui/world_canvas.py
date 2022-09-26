@@ -359,7 +359,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         :rtype: bool
         """
         if isinstance(robot, str):
-            robot = self.world.get_entity_by_name(robot)
+            robot = self.world.get_robot_by_name(robot)
         t = threading.Thread(target=self.navigate, args=(robot, goal))
         t.start()
 
