@@ -48,7 +48,7 @@ class WorldYamlLoader:
         self.add_hallways()
         self.add_locations()
         self.add_objects()
-        self.add_robot()
+        self.add_robots()
         self.add_global_path_planner()
         return self.world
 
@@ -147,27 +147,27 @@ class WorldYamlLoader:
             self.world.add_object(category, loc, pose=pose, name=name)
 
 
-    def add_robot(self):
-        """ Add a robot to the world. """
+    def add_robots(self):
+        """ Add robots to the world. """
         if "robots" not in self.data:
             return
 
-        # We only support a single robot now, so output the appropriate warning.
-        if len(self.data["robots"]) > 1:
-            warnings.warn("Multiple robots not supported. Only using the first one.")
-        robot_data = self.data["robots"][0]
-
-        # Create the robot
-        robot = Robot(radius=robot_data["radius"],
-                      path_planner=self.get_local_path_planner(robot_data),
-                      path_executor=self.get_path_executor(robot_data))
-        
-        loc = robot_data["location"] if "location" in robot_data else None
-        if "pose" in robot_data:
-            pose = Pose.from_list(robot_data["pose"])
-        else:
-            pose = None
-        self.world.add_robot(robot, loc=loc, pose=pose)
+        for id, robot_data in enumerate(self.data["robots"]):
+            # Create the robot
+            robot_name = get_value_or(robot_data, "name", f"robot{id}")
+            robot_color = get_value_or(robot_data, "color", default=(0.8, 0.0, 0.8))
+            robot = Robot(name=robot_name,
+                          radius=robot_data["radius"],
+                          color=robot_color,
+                          path_planner=self.get_local_path_planner(robot_data),
+                          path_executor=self.get_path_executor(robot_data))
+            
+            loc = robot_data["location"] if "location" in robot_data else None
+            if "pose" in robot_data:
+                pose = Pose.from_list(robot_data["pose"])
+            else:
+                pose = None
+            self.world.add_robot(robot, loc=loc, pose=pose)
 
 
     def add_global_path_planner(self):

@@ -17,19 +17,17 @@ class Robot:
 
     def __init__(
         self,
-        id=0,
         name="robot",
         pose=Pose(),
         radius=0.0,
         height=0.0,
+        color=(0.8, 0, 0.8),
         path_planner=None,
         path_executor=None,
     ):
         """
         Creates a robot instance.
 
-        :param id: Numeric ID for the robot.
-        :type id: int, optional
         :param name: Robot name.
         :type name: str, optional
         :param pose: Robot initial pose.
@@ -38,6 +36,8 @@ class Robot:
         :type radius: float, optional
         :param height: Robot height, in meters.
         :type height: float, optional
+        :param color: Robot color, as an RGB tuple or string.
+        :type color: tuple[float] / str, optional
         :param path_planner: Path planner for navigation
             (see e.g., :class:`pyrobosim.navigation.rrt.RRTPlanner`).
         :type path_planner: PathPlanner, optional
@@ -46,15 +46,17 @@ class Robot:
         :type path_executor: PathExecutor, optional
         """
         # Basic properties
-        self.id = id
         self.name = name
         self.set_pose(pose)
         self.radius = radius
         self.height = height
+        self.color = color
 
         # Navigation properties
         self.set_path_planner(path_planner)
         self.set_path_executor(path_executor)
+        self.current_path = None
+        self.current_goal = None
         self.executing_nav = False
 
         # World interaction properties
@@ -161,7 +163,7 @@ class Robot:
         # Update the robot state if successful.
         if success and target_location is not None:
             self.location = target_location
-        self.world.current_path = None
+        self.current_path = None
         return success
 
     def pick_object(self, obj_query):
@@ -191,6 +193,7 @@ class Robot:
                     category=obj_query,
                     location=loc,
                     resolution_strategy="nearest",
+                    robot=self
                 )
             if not obj:
                 warnings.warn(f"Found no object {obj_query} to pick.")
@@ -284,14 +287,13 @@ class Robot:
         :return: True if the action succeeds, or False otherwise.
         :rtype: bool
         """
-        robot = self.world.robot
         self.executing_action = True
         self.current_action = action
         if self.world.has_gui:
             self.world.gui.set_buttons_during_action(False)
 
         if action.type == "navigate":
-            self.world.current_path = action.path
+            self.current_path = action.path
             if self.world.has_gui:
                 self.executing_nav = True
                 if isinstance(action.target_location, str):
@@ -299,39 +301,39 @@ class Robot:
                 else:
                     tgt_loc = action.target_location.name
 
-                self.world.gui.canvas.nav_trigger.emit(tgt_loc)
+                self.world.gui.canvas.nav_trigger.emit(self.name, tgt_loc)
                 while self.executing_nav:
                     time.sleep(0.5)  # Delay to wait for navigation
                 success = True  # TODO Need to keep track of nav status
             else:
-                path = self.world.find_path(action.target_location)
-                success = robot.follow_path(
+                path = self.world.find_path(action.target_location, robot=self)
+                success = self.follow_path(
                     path,
                     target_location=action.target_location,
                     realtime_factor=1.0,
                     blocking=blocking,
                 )
-            self.world.current_path = None
+            self.current_path = None
 
         elif action.type == "pick":
             if self.world.has_gui:
-                success = self.world.gui.canvas.pick_object(action.object)
+                success = self.world.gui.canvas.pick_object(self, action.object)
             else:
                 success = self.pick_object(action.object)
 
         elif action.type == "place":
             if self.world.has_gui:
-                success = self.world.gui.canvas.place_object(action.pose)
+                success = self.world.gui.canvas.place_object(self, action.pose)
             else:
                 success = self.place_object(action.pose)
 
         else:
-            print(f"Invalid action type: {action.type}")
+            print(f"[{self.name}] Invalid action type: {action.type}")
             success = False
 
         if self.world.has_gui:
             self.world.gui.set_buttons_during_action(True)
-        print(f"Action completed with success: {success}")
+        print(f"[{self.name}] Action completed with success: {success}")
         self.current_action = None
         self.executing_action = False
         return success
@@ -351,28 +353,28 @@ class Robot:
         :rtype: bool
         """
         if plan is None:
-            print("Plan is None. Returning.")
+            print(f"[{self.name}] Plan is None. Returning.")
             return False
 
         self.executing_plan = True
         self.current_plan = plan
-        print("Executing task plan...")
+        print(f"[{self.name}] Executing task plan...")
         if self.world.has_gui:
             self.world.gui.set_buttons_during_action(False)
 
         success = True
         num_acts = len(plan.actions)
         for n, act_msg in enumerate(plan.actions):
-            print(f"Executing action {act_msg.type} [{n+1}/{num_acts}]")
+            print(f"[{self.name}] Executing action {act_msg.type} [{n+1}/{num_acts}]")
             success = self.execute_action(act_msg, blocking=blocking)
             if not success:
-                print(f"Task plan failed to execute on action {n+1}")
+                print(f"[{self.name}] Task plan failed to execute on action {n+1}")
                 break
             time.sleep(delay)  # Artificial delay between actions
 
         if self.world.has_gui:
             self.world.gui.set_buttons_during_action(True)
-        print(f"Task plan completed with success: {success}")
+        print(f"[{self.name}] Task plan completed with success: {success}")
         self.current_plan = None
         self.executing_plan = False
         return success

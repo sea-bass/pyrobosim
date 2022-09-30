@@ -11,7 +11,7 @@ from ..core.locations import Location, ObjectSpawn
 from ..core.objects import Object
 
 
-def apply_resolution_strategy(world, entity_list, resolution_strategy):
+def apply_resolution_strategy(world, entity_list, resolution_strategy, robot=None):
     """
     Accepts a list of entities in the world (e.g. rooms, objects, etc.) and 
     applies a resolution strategy to get a single entity from that list that best 
@@ -27,6 +27,8 @@ def apply_resolution_strategy(world, entity_list, resolution_strategy):
     :type entity_list: list[Entity]
     :param resolution_strategy: Resolution strategy to apply
     :type resolution_strategy: str
+    :param robot: If set to a Robot instance, uses that robot for resolution strategy.
+    :type robot: :class:`pyrobosim.core.robot.Robot`, optional
     :return: The entity that meets the resolution strategy, or None.
     :rtype: Entity
     """
@@ -38,12 +40,12 @@ def apply_resolution_strategy(world, entity_list, resolution_strategy):
     elif resolution_strategy == "random":
         return np.random.choice(entity_list)
     elif resolution_strategy == "nearest":
-        if not world.has_robot:
+        if not robot:
             warnings.warn("Cannot apply nearest resolution strategy without a robot!")
             return None
         nearest_dist = sys.float_info.max
         nearest_entity = None
-        robot_pose = world.robot.pose
+        robot_pose = robot.pose
         for entity in entity_list:
             dist = robot_pose.get_linear_distance(entity.pose)
             if dist < nearest_dist:
@@ -55,7 +57,8 @@ def apply_resolution_strategy(world, entity_list, resolution_strategy):
         return None
 
 
-def query_to_entity(world, query_list, mode, resolution_strategy="first"):
+def query_to_entity(world, query_list, mode,
+                    resolution_strategy="first", robot=None):
     """ 
     Resolves a generic query list of strings to an entity 
     mode can be "location" or "object"
@@ -68,6 +71,8 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first"):
     :type mode: str
     :param resolution_strategy: Resolution strategy to apply (see :func:`apply_resolution_strategy`)
     :type resolution_strategy: str
+    :param robot: If set to a Robot instance, uses that robot for resolution strategy.
+    :type robot: :class:`pyrobosim.core.robot.Robot`, optional
     :return: The entity that meets the mode and resolution strategy, or None.
     :rtype: Entity
     """
@@ -122,7 +127,8 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first"):
 
         entity_list = [o for o in entity_list if o.category == obj_category]
         obj_candidate = apply_resolution_strategy(world, entity_list,
-                                                  resolution_strategy=resolution_strategy)
+                                                  resolution_strategy=resolution_strategy,
+                                                  robot=robot)
         if not obj_candidate:
             warnings.warn(f"Could not resolve query {query_list}")
         else:
@@ -135,7 +141,8 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first"):
     if obj_category or mode=="object":
         obj_candidate = resolve_to_object(world, category=obj_category, 
                                           location=loc_category, room=room,
-                                          resolution_strategy=resolution_strategy)
+                                          resolution_strategy=resolution_strategy,
+                                          robot=robot)
         if not obj_candidate:
             warnings.warn(f"Could not resolve query {query_list}")
         else:
@@ -145,7 +152,8 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first"):
                 return obj_candidate.parent
     else:
         loc_candidate = resolve_to_location(world, category=loc_category, room=room,
-                                            resolution_strategy=resolution_strategy)
+                                            resolution_strategy=resolution_strategy,
+                                            robot=robot)
         if not loc_candidate:
             warnings.warn(f"Could not resolve query {query_list}")
         else:
@@ -153,7 +161,8 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first"):
     
 
 def resolve_to_location(world, category=None, room=None,
-                        resolution_strategy="first", expand_locations=False):
+                        resolution_strategy="first", robot=None,
+                        expand_locations=False):
     """ 
     Resolves a category/room query combination to a single specific location. 
 
@@ -165,6 +174,8 @@ def resolve_to_location(world, category=None, room=None,
     :type room: str, optional
     :param resolution_strategy: Resolution strategy to apply (see :func:`apply_resolution_strategy`)
     :type resolution_strategy: str
+    :param robot: If set to a Robot instance, uses that robot for resolution strategy.
+    :type robot: :class:`pyrobosim.core.robot.Robot`, optional
     :param expand_locations: If True, expands location to individual object spawns.
     :type expand_locations: bool
     :return: The location or object spawn that meets the category and/or room filters, or None.
@@ -200,7 +211,7 @@ def resolve_to_location(world, category=None, room=None,
     else:
         expanded_locations = possible_locations
 
-    loc = apply_resolution_strategy(world, expanded_locations, resolution_strategy)
+    loc = apply_resolution_strategy(world, expanded_locations, resolution_strategy, robot=robot)
     if not loc:
         warnings.warn(f"Could not resolve location query with category: {category}, room: {room_name}.")
         return None
@@ -208,7 +219,7 @@ def resolve_to_location(world, category=None, room=None,
 
 
 def resolve_to_object(world, category=None, location=None, room=None, 
-                      resolution_strategy="first", ignore_grasped=True):
+                      resolution_strategy="first", robot=None, ignore_grasped=True):
     """ 
     Resolves a category/location/room query to an object 
 
@@ -222,6 +233,8 @@ def resolve_to_object(world, category=None, location=None, room=None,
     :type category: str, optional
     :param resolution_strategy: Resolution strategy to apply (see :func:`apply_resolution_strategy`)
     :type resolution_strategy: str
+    :param robot: If set to a Robot instance, uses that robot for resolution strategy.
+    :type robot: :class:`pyrobosim.core.robot.Robot`, optional
     :param ignore_grasped: If True, ignores the current manipulated object.
     :type ignore_grasped: bool
     :return: The object that meets the category, location, and/or room filters, or None.
@@ -244,14 +257,15 @@ def resolve_to_object(world, category=None, location=None, room=None,
 
     if location is not None:
         possible_objects = [o for o in possible_objects if 
-            (o.parent == location or o.parent.category == location or o.parent.parent.name == location)]
+            (o.parent == location or o.parent.name == location or
+             o.parent.parent == location or o.parent.parent.name == location or
+             o.parent.category == location or o.parent.parent.category == location)]
 
-    if ignore_grasped:
-        if world.robot is not None:
-            if world.robot.manipulated_object in possible_objects:
-                possible_objects.remove(world.robot.manipulated_object)
+    if ignore_grasped and robot is not None and robot.manipulated_object in possible_objects:
+        possible_objects.remove(robot.manipulated_object)
 
-    obj = apply_resolution_strategy(world, possible_objects, resolution_strategy)
+    obj = apply_resolution_strategy(world, possible_objects,
+                                    resolution_strategy, robot=robot)
     if not obj:
         warnings.warn(f"Could not resolve object query with category: {category}, location: {location}, room: {room}.")   
         return None

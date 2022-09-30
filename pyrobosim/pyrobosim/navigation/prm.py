@@ -103,12 +103,14 @@ class PRMPlanner:
         print(f"Time to sample nodes: {self.sampling_time} seconds")
         print(f"Time to plan: {self.planning_time} seconds")
 
-    def plot(self, axes, show_graph=True, show_path=True):
+    def plot(self, axes, path_color="m", show_graph=True, show_path=True):
         """
         Plots the PRM and the planned path on a specified set of axes.
 
         :param axes: The axes on which to draw.
         :type axes: :class:`matplotlib.axes.Axes`
+        :param path_color: Color of the path, as an RGB tuple or string.
+        :type path_color: tuple[float] / str, optional
         :param show_graph: If True, shows the RRTs used for planning.
         :type show_graph: bool
         :param show_path: If True, shows the last planned path.
@@ -139,7 +141,8 @@ class PRMPlanner:
         if show_path and self.latest_path.num_poses > 0:
             x = [p.x for p in self.latest_path.poses]
             y = [p.y for p in self.latest_path.poses]
-            (path,) = axes.plot(x, y, "m-", linewidth=3, zorder=1)
+            (path,) = axes.plot(x, y, linestyle="-", color=path_color,
+                                linewidth=3, alpha=0.5, zorder=1)
             (start,) = axes.plot(x[0], y[0], "go", zorder=2)
             (goal,) = axes.plot(x[-1], y[-1], "rx", zorder=2)
             artists.extend((path, start, goal))

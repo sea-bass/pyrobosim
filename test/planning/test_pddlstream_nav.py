@@ -62,7 +62,7 @@ def create_test_world(add_hallway=True):
     # Create a search graph and motion planner
     w.create_search_graph(max_edge_dist=3.0, collision_check_dist=0.05)
     rrt = RRTPlanner(w, bidirectional=True, rrt_star=True)
-    w.robot.set_path_planner(rrt)
+    r.set_path_planner(rrt)
 
     return w
 
@@ -74,7 +74,8 @@ def start_planner(world, domain_name="03_nav_stream", interactive=False):
 
     if interactive:
         input("Press Enter to start planning.")
-    plan = planner.plan(goal_literals, focused=True, verbose=interactive)
+    robot = world.robots[0]
+    plan = planner.plan(robot, goal_literals, focused=True, verbose=interactive)
     if interactive:
         world.robot.execute_plan(plan, blocking=True)
     return plan

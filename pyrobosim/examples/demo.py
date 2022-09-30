@@ -19,7 +19,7 @@ from pyrobosim.utils.pose import Pose
 data_folder = get_data_folder()
 
 
-def create_world():
+def create_world(multirobot=False):
     """ Create a test world """
     w = World()
 
@@ -60,9 +60,22 @@ def create_world():
     w.add_object("banana", counter)
     w.add_object("water", desk)
 
-    # Add a robot
-    r = Robot(radius=0.1, path_executor=ConstantVelocityExecutor())
+    # Add robots
+    r = Robot(name="robot", radius=0.1,
+              path_executor=ConstantVelocityExecutor())
     w.add_robot(r, loc="kitchen")
+    if multirobot:
+        robot1 = Robot(name="robot1", radius=0.08, color=(0.8, 0.8, 0),
+                path_executor=ConstantVelocityExecutor())
+        w.add_robot(robot1, loc="bathroom")
+
+        robby = Robot(name="robby", radius=0.06, color=(0, 0.8, 0.8),
+                    path_executor=ConstantVelocityExecutor())
+        w.add_robot(robby, loc="bedroom")
+        from pyrobosim.navigation.rrt import RRTPlanner
+        robby.set_path_planner(
+            RRTPlanner(w, bidirectional=True, rrt_connect=False, rrt_star=True)
+        )
 
     # Create a search graph
     w.create_search_graph(max_edge_dist=3.0, collision_check_dist=0.05, create_planner=True)
@@ -85,6 +98,9 @@ def start_gui(world, args):
 def parse_args():
     """ Parse command-line arguments """
     parser = argparse.ArgumentParser(description="Main pyrobosim demo.")
+    parser.add_argument("--multirobot", action="store_true",
+                        help="If no YAML file is specified, this option will add "
+                             "multiple robots to the world defined in this file.")
     parser.add_argument("--world-file", default="",
                         help="YAML file name (should be in the pyrobosim/data folder). " +
                              "If not specified, a world will be created programmatically.")
@@ -96,7 +112,7 @@ if __name__ == "__main__":
 
     # Create a world or load it from file.
     if args.world_file == "":
-        w = create_world()
+        w = create_world(args.multirobot)
     else:
         w = create_world_from_yaml(args.world_file)        
 

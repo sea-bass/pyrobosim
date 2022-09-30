@@ -104,7 +104,7 @@ class Room:
 
     def is_collision_free(self, pose):
         """
-        Checks whether a pose in the hallway is collision-free.
+        Checks whether a pose in the room is collision-free.
         
         :param pose: Pose to test.
         :type pose: :class:`pyrobosim.utils.pose.Pose`/(float, float)

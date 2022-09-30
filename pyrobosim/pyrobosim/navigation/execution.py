@@ -67,5 +67,6 @@ class ConstantVelocityExecutor:
             time.sleep(max(0, sleep_time - (time.time() - start_time)))
 
         # Finalize path execution
+        time.sleep(0.1)  # To ensure background threads get the end of the path.
         self.robot.executing_nav = False
         return True

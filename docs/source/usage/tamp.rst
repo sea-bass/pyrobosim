@@ -35,7 +35,7 @@ You can try running a sample script as follows
 ::
 
     cd /path/to/pyrobosim/pyrobosim
-    python examples/demo_pddl.py --example 01_simple --verbose
+    python3 examples/demo_pddl.py --example 01_simple --verbose
 
 .. image:: ../media/pddlstream_demo_standalone.png
     :align: center
@@ -77,8 +77,8 @@ Alternatively, you can use a single launch file to run the full example and conf
 
 ::
 
-    ros2 launch pyrobosim_ros demo_pddl.py example:=01_simple
-    ros2 launch pyrobosim_ros demo_pddl.py example:=04_nav_manip_stream subscribe:=true verbose:=true
+    ros2 launch pyrobosim_ros demo_pddl.launch.py example:=01_simple
+    ros2 launch pyrobosim_ros demo_pddl.launch.py example:=04_nav_manip_stream subscribe:=true verbose:=true
 
 The output should look as follows:
 

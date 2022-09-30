@@ -1,10 +1,10 @@
-####################################
-# PDDLStream Example: Simple world #
-####################################
+#####################################
+# Multirobot test world description #
+#####################################
 
 # WORLD PARAMETERS
 params:
-  name: pddlstream_simple_world
+  name: test_world
   object_radius: 0.05 # Radius around objects
   wall_height: 2.0 # Wall height for exporting to Gazebo
 
@@ -15,18 +15,26 @@ metadata:
   objects: $DATA/example_object_data.yaml
 
 
-# ROBOTS
+# ROBOTS: For now, we only support a single robot
 robots:
-  - name: robot
+  - name: "robot"
     radius: 0.1
+    color: [0.8, 0.0, 0.8]
     location: kitchen
     pose: [0, 0, 0]
-    path_planner:
+  - radius: 0.08
+    color: [0.8, 0.8, 0.0]
+    location: bathroom
+  - name: "robby"
+    radius: 0.06
+    color: [0.0, 0.8, 0.8]
+    location: bedroom
+    path_planner:  # Rapidly-expanding Random Tree (RRT) planner
       type: rrt
       max_connection_dist: 0.25
-      bidirectional: false
+      bidirectional: true
       rrt_star: true
-      rewire_radius: 1.5
+      rewire_radius: 1.0
 
 
 # PLANNING: Global planner
@@ -35,6 +43,10 @@ global_path_planner:
   type: search_graph
   max_edge_dist: 3.0
   collision_check_dist: 0.05
+  # Probabilistic Roadmap (PRM) planner
+  # type: prm
+  # max_connection_dist: 1.5
+  # max_nodes: 100
 
 
 # ROOMS: Polygonal regions that can contain object locations
@@ -98,17 +110,25 @@ hallways:
 
 # LOCATIONS: Can contain objects
 locations:
-  - type: table
+  - name: table0
+    type: table
     room: kitchen
     pose: [0.85, -0.5, -1.57]
 
-  - type: desk
+  - name: my_desk
+    type: desk
     room: bedroom
     pose: [3.15, 3.65, 0.0]
 
-  - type: counter
+  - name: counter0
+    type: counter
     room: bathroom
     pose: [-2.45, 2.5, 1.767]
+
+  - name: trash
+    type: trash_can
+    room: kitchen
+    pose: [0.9, 1.1, 1.57]
 
 
 # OBJECTS: Can be picked, placed, and move by robot
@@ -118,20 +138,26 @@ objects:
     pose: [1.0, -0.5, 0.707]
 
   - type: apple
-    location: desk0
+    location: my_desk
     pose: [3.2, 3.5, 0.0]
 
-  - type: apple
+  - name: gala
+    type: apple
     location: table0
 
-  - type: apple
-    location: table0
+  - name: fuji
+    type: apple
+    location: trash
 
   - type: water
-    location: counter0
+    location: counter0_left
 
   - type: banana
-    location: counter0
+    location: counter0_right
 
   - type: water
-    location: desk0
+    location: my_desk
+
+  - name: soda
+    type: coke
+    location: my_desk

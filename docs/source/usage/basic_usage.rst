@@ -11,13 +11,13 @@ First, install the module.
 ::
 
     cd /path/to/pyrobosim/pyrobosim
-    pip install .
+    pip3 install .
 
 Then, run the test script.
 
 ::
 
-    python examples/demo.py
+    python3 examples/demo.py
 
 You can now interact with the GUI through the buttons and text boxes.
 For example, enter "bedroom desk" in the **Goal query** text box and then
@@ -60,8 +60,8 @@ Or, you can run both of these nodes together using a provided launch file:
 
 ::
 
-    ros2 launch pyrobosim_ros demo_commands.py mode:=plan
-    ros2 launch pyrobosim_ros demo_commands.py mode:=action
+    ros2 launch pyrobosim_ros demo_commands.launch.py mode:=plan
+    ros2 launch pyrobosim_ros demo_commands.launch.py mode:=action
 
 
 The first command will start a world as a ROS2 node, and the second one will publish a plan (or set of actions) to the node.
@@ -82,7 +82,7 @@ By default, ``demo.py`` creates a world using the API, but you can alternatively
 ::
 
     python examples/demo.py --world-file test_world.yaml
-    ros2 launch pyrobosim_ros demo.py world_file:=test_world.yaml
+    ros2 launch pyrobosim_ros demo.launch.py world_file:=test_world.yaml
 
 Refer to the :doc:`YAML Schemas </yaml/index>` documentation for more information.
 
@@ -95,7 +95,7 @@ Standalone:
 
 ::
 
-    python examples/demo_world_save.py
+    python3 examples/demo_world_save.py
 
 ROS:
 

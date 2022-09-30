@@ -9,6 +9,7 @@ class TaskAction:
     def __init__(
         self,
         type,
+        robot=None,
         object=None,
         room=None,
         source_location=None,
@@ -22,6 +23,8 @@ class TaskAction:
 
         :param type: Action type.
         :type type: str
+        :param robot: Name of robot to execute the action.
+        :type robot: str, optional
         :param object: Target object type or name.
         :type object: str, optional
         :param room: Target room name.
@@ -39,6 +42,7 @@ class TaskAction:
         """
         # Action-agnostic parameters
         self.type = type.lower()
+        self.robot = robot
         self.cost = cost
 
         # Action-specific parameters
@@ -51,11 +55,16 @@ class TaskAction:
 
     def __repr__(self):
         """Returns printable string describing an action."""
+        # Include the robot name if any.
+        if self.robot is not None:
+            act_str = f"[{self.robot}] "
+        else:
+            act_str = ""
 
         # Format actions based on their types
         # NAVIGATE
         if self.type == "navigate":
-            act_str = "Navigate"
+            act_str += "Navigate"
             if self.source_location is not None:
                 act_str += f" from {self.source_location}"
             if self.target_location is not None:
@@ -66,7 +75,7 @@ class TaskAction:
                 act_str += f"\n{self.path}"
         # PICK
         elif self.type == "pick":
-            act_str = "Pick"
+            act_str += "Pick"
             if self.object is not None:
                 act_str += f" {self.object}"
             else:
@@ -77,7 +86,7 @@ class TaskAction:
                 act_str += f"\nAt {self.pose}"
         # PLACE
         elif self.type == "place":
-            act_str = "Place"
+            act_str += "Place"
             if self.object is not None:
                 act_str += f" {self.object}"
             else:
@@ -103,13 +112,16 @@ class TaskPlan:
     (:class:`pyrobosim.planning.actions.TaskAction`).
     """
 
-    def __init__(self, actions=[]):
+    def __init__(self, robot=None, actions=[]):
         """
         Creates a new task plan.
 
+        :param robot: Name of robot to execute the plan.
+        :type robot: str, optional
         :param actions: List of actions.
         :type actions: list[:class:`pyrobosim.planning.actions.TaskAction`], optional
         """
+        self.robot = robot
         self.set_actions(actions)
 
     def set_actions(self, actions):

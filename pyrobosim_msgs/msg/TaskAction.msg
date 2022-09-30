@@ -1,6 +1,7 @@
 # Task Action ROS Message
 
 # Main Action information
+string robot
 string type
 string object
 string room

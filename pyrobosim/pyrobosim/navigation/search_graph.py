@@ -3,6 +3,7 @@
 from astar import AStar
 import numpy as np
 import warnings
+import time
 
 from ..utils.motion import Path
 from ..utils.pose import Pose
@@ -25,9 +26,21 @@ class SearchGraphPlanner:
         self.latest_path.fill_yaws()
         return self.latest_path
 
-    def plot(self, axes, show_graph=True, show_path=True):
+    def plot(self, axes, path_color="m", show_graph=True, show_path=True):
         """
         Plots the search graph and/or path on a specified set of axes.
+
+        :param axes: The axes on which to draw.
+        :type axes: :class:`matplotlib.axes.Axes`
+        :param path_color: Color of the path, as an RGB tuple or string.
+        :type path_color: tuple[float] / str, optional
+        :param show_graph: If True, shows the RRTs used for planning.
+        :type show_graph: bool
+        :param show_path: If True, shows the last planned path.
+        :type show_path: bool
+        :return: List of Matplotlib artists containing what was drawn,
+            used for bookkeeping.
+        :rtype: list[:class:`matplotlib.artist.Artist`]
         """
         if show_graph:
             artists = self.graph.plot(axes)
@@ -37,7 +50,8 @@ class SearchGraphPlanner:
         if show_path and self.latest_path and self.latest_path.num_poses > 0:
             x = [p.x for p in self.latest_path.poses]
             y = [p.y for p in self.latest_path.poses]
-            (path,) = axes.plot(x, y, "m-", linewidth=3, zorder=1)
+            (path,) = axes.plot(x, y, linestyle="-", color=path_color,
+                                linewidth=3, alpha=0.5, zorder=1)
             (start,) = axes.plot(x[0], y[0], "go", zorder=2)
             (goal,) = axes.plot(x[-1], y[-1], "rx", zorder=2)
             artists.extend((path, start, goal))
@@ -68,6 +82,7 @@ class SearchGraph:
         self.distance_dict = {}
 
         self.solver = GraphSolver()
+        self.lock = False  # To prevent adding/removing nodes while plotting.
 
     def add(self, n, autoconnect=False):
         """
@@ -82,10 +97,16 @@ class SearchGraph:
             for i in n:
                 self.add(i, autoconnect=autoconnect)
         else:
+            while self.lock:
+                time.sleep(0.001)
+            self.lock = True
+
             self.nodes.add(n)
             if autoconnect:
                 for nconn in self.nodes:
                     self.connect(n, nconn)
+
+            self.lock = False
 
     def connect(self, n0, n1):
         """
@@ -116,6 +137,10 @@ class SearchGraph:
             for i in ndel:
                 self.remove(i)
         else:
+            while self.lock:
+                time.sleep(0.001)
+            self.lock = True
+
             # Remove node from the node set in the graph
             if ndel in self.nodes:
                 self.nodes.remove(ndel)
@@ -127,6 +152,8 @@ class SearchGraph:
             for e in self.edges.copy():
                 if e.n0 == ndel or e.n1 == ndel:
                     self.edges.remove(e)
+
+            self.lock = False
 
     def check_connectivity(self, start, goal, ignore_max_dist=False):
         """
@@ -217,6 +244,10 @@ class SearchGraph:
         """
         Plots the search graph on a specified set of axes.
         """
+        while self.lock:
+            time.sleep(0.001)
+        self.lock = True
+
         artists = []
         x = [n.pose.x for n in self.nodes]
         y = [n.pose.y for n in self.nodes]
@@ -229,6 +260,7 @@ class SearchGraph:
             (edge,) = axes.plot(x, y, "k:", linewidth=1)
             artists.append(edge)
 
+        self.lock = False
         return artists
 
 

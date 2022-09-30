@@ -159,10 +159,10 @@ class TestGetEntities:
 
     def test_valid_robot(self):
         """ Checks for existence of a valid robot. """
-        result = self.world.get_entity_by_name("robby")
+        result = self.world.get_robot_by_name("robby")
         assert isinstance(result, Robot) and result.name == "robby"
 
     def test_invalid_robot(self):
         """ Checks for existence of an invalid robot. """
-        result = self.world.get_entity_by_name("robot0")
+        result = self.world.get_robot_by_name("robot0")
         assert result is None

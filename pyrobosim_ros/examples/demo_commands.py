@@ -37,7 +37,8 @@ def main():
     mode = cmd.get_parameter("mode").value
     if mode == "action":
         cmd.get_logger().info("Publishing sample task action...")
-        action_msg = TaskAction(type="navigate", target_location="desk")
+        action_msg = TaskAction(robot="robot", type="navigate",
+                                target_location="desk")
         cmd.action_pub.publish(action_msg)
 
     elif mode == "plan":
@@ -49,8 +50,46 @@ def main():
             TaskAction(type="place"),
             TaskAction(type="navigate", target_location="kitchen")
         ]
-        plan_msg = TaskPlan(actions=task_actions)
+        plan_msg = TaskPlan(robot="robot", actions=task_actions)
         cmd.plan_pub.publish(plan_msg)
+
+    elif mode == "multirobot-plan":
+        cmd.get_logger().info("Publishing sample multirobot task plan...")
+        task_actions = [
+            TaskAction(type="navigate", target_location="desk"),
+            TaskAction(type="pick", object="water"),
+            TaskAction(type="navigate", target_location="counter"),
+            TaskAction(type="place"),
+            TaskAction(type="navigate", target_location="kitchen")
+        ]
+        plan_msg = TaskPlan(robot="robot", actions=task_actions)
+        cmd.plan_pub.publish(plan_msg)
+
+        time.sleep(2.0)
+
+        task_actions = [
+            TaskAction(type="navigate", target_location="table"),
+            TaskAction(type="pick", object="apple"),
+            TaskAction(type="navigate", target_location="desk"),
+            TaskAction(type="place"),
+            TaskAction(type="navigate", target_location="bedroom")
+        ]
+        plan_msg = TaskPlan(robot="robot1", actions=task_actions)
+        cmd.plan_pub.publish(plan_msg)
+
+        time.sleep(2.0)
+
+        task_actions = [
+            TaskAction(type="navigate", target_location="table"),
+            TaskAction(type="pick", object="banana"),
+            TaskAction(type="navigate", target_location="counter0_left"),
+            TaskAction(type="place")
+        ]
+        plan_msg = TaskPlan(robot="robby", actions=task_actions)
+        cmd.plan_pub.publish(plan_msg)
+
+    else:
+        cmd.get_logger().error(f"Invalid mode specified: {mode}")
 
     rclpy.spin(cmd)
     cmd.destroy_node()
