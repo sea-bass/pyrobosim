@@ -37,7 +37,7 @@ def main():
     mode = cmd.get_parameter("mode").value
     if mode == "action":
         cmd.get_logger().info("Publishing sample task action...")
-        action_msg = TaskAction(type="navigate", target_location="desk")
+        action_msg = TaskAction(type="navigate", target_location="bedroom")
         cmd.action_pub.publish(action_msg)
 
     elif mode == "plan":
