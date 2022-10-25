@@ -74,6 +74,12 @@ class WorldCanvas(FigureCanvasQTAgg):
     def show_robots(self):
         """Draws robots as circles with heading lines for visualization."""
         n_robots = len(self.world.robots)
+        for b in self.robot_bodies:
+            b.remove()
+        for d in self.robot_dirs:
+            b.remove()
+        for l in self.robot_lengths:
+            l.remove()
         self.robot_bodies = n_robots*[None]
         self.robot_dirs = n_robots*[None]
         self.robot_lengths = n_robots*[None]
@@ -288,6 +294,8 @@ class WorldCanvas(FigureCanvasQTAgg):
 
     def update_robots_plot(self):
         """Updates the robot visualization graphics objects."""
+        if len(self.world.robots) != len(self.robot_bodies):
+            self.show_robots()
         for i, robot in enumerate(self.world.robots):
             p = robot.pose
             self.robot_bodies[i].center = p.x, p.y

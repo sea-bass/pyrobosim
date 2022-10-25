@@ -1153,6 +1153,8 @@ class World:
             warnings.warn("Could not add robot.")
             self.set_inflation_radius(old_inflation_radius)
 
+        if self.has_gui:
+            self.gui.canvas.show_robots()
         if self.has_ros_node:
             self.ros_node.add_robot_state_publishers()
 
@@ -1165,10 +1167,12 @@ class World:
         """
         robot = self.get_robot_by_name(robot_name)
         if robot:
-            if self.has_ros_node:
-                self.ros_node.remove_robot_state_publisher(robot)
             self.robots.remove(robot)
             self.name_to_entity.pop(robot_name)
+            if self.has_gui:
+                self.gui.canvas.show_robots()
+            if self.has_ros_node:
+                self.ros_node.remove_robot_state_publisher(robot)
 
             # Find the new max inflation radius and revert it.
             new_inflation_radius = max(

@@ -182,7 +182,10 @@ class WorldROSWrapper(Node):
         if robot.manipulated_object is not None:
             state_msg.holding_object = True
             state_msg.manipulated_object = robot.manipulated_object.name
-        state_msg.last_visited_location = robot.location.name
+        if isinstance(robot.location, str):
+            state_msg.last_visited_location = robot.location
+        else:
+            state_msg.last_visited_location = robot.location.name
         return state_msg
 
 
