@@ -313,7 +313,11 @@ class WorldCanvas(FigureCanvasQTAgg):
                 if robot_loc is not None:
                     title_bits.append(f"Location: {robot_loc.name}")
             elif robot.location is not None:
-                title_bits.append(f"Location: {robot.location.name}")
+                if isinstance(robot.location, str):
+                    robot_loc = robot.location
+                else:
+                    robot_loc = robot.location.name
+                title_bits.append(f"Location: {robot_loc}")
             if robot.manipulated_object is not None:
                 title_bits.append(f"Holding: {robot.manipulated_object.name}")
             title_str = f"[{robot.name}] " + ", ".join(title_bits)
