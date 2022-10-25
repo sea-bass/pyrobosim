@@ -68,17 +68,24 @@ class EntityMetadata:
             return None
 
 
-def replace_special_yaml_tokens(in_text):
+def replace_special_yaml_tokens(in_text, root_dir=None):
     """ 
     Replaces special tokens permitted in our YAML specification.
     If you want to add any other special tokens, you should do that here.
     
     :param in_text: Input YAML text.
     :type in_text: str
+    :param root_dir: Root directory for basing some tokens, uses the current directory if not specified.
+    :type root_dir: str, optional
     :return: YAML text with all special tokens substituted.
     :rtype: str
     """
     out_text = in_text
     out_text = out_text.replace("$HOME", os.environ["HOME"])
     out_text = out_text.replace("$DATA", get_data_folder())
+
+    if root_dir is None:
+        root_dir = os.getcwd()
+    out_text = out_text.replace("$PWD", root_dir)
+
     return out_text

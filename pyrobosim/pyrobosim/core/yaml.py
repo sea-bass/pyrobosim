@@ -1,6 +1,7 @@
 """ Utilities to create worlds from YAML files. """
 
 import numpy as np
+import os
 import warnings
 import yaml
 
@@ -67,13 +68,14 @@ class WorldYamlLoader:
             self.world = World()
 
         # Set the location/object metadata
+        (world_dir, _) = os.path.split(self.filename) 
         metadata = self.data["metadata"]
         if "locations" in metadata:
-            loc_data = replace_special_yaml_tokens(metadata["locations"])
+            loc_data = replace_special_yaml_tokens(metadata["locations"], world_dir)
         else:
             loc_data = None
         if "objects" in metadata:
-            obj_data = replace_special_yaml_tokens(metadata["objects"])
+            obj_data = replace_special_yaml_tokens(metadata["objects"], world_dir)
         else:
             obj_data = None
         self.world.set_metadata(locations=loc_data, objects=obj_data)
