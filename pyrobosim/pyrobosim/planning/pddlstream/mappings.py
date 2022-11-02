@@ -27,7 +27,7 @@ def get_stream_map(world, robot):
         "PickPlaceCost": primitives.get_pick_place_cost,
         "PickPlaceAtPoseCost": primitives.get_pick_place_at_pose_cost,
         "PathLength": primitives.get_path_length,
-        # Streams (that sample)
+        # Streams that sample and test
         "s-navpose": from_list_fn(primitives.get_nav_poses),
         "s-motion": from_gen_fn(
             lambda p1, p2: primitives.sample_motion(planner, p1, p2)
