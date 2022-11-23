@@ -12,7 +12,7 @@ from pyrobosim.core.room import Room
 from pyrobosim.core.locations import Location, ObjectSpawn
 from pyrobosim.core.objects import Object
 from pyrobosim.core.world import World
-from pyrobosim.utils.general import get_data_folder
+from pyrobosim.utils.general import get_data_folder, yaw_to_quaternion
 from pyrobosim.utils.pose import Pose
 
 
@@ -31,7 +31,7 @@ class TestGetEntities:
         # Add rooms
         r1coords = [(-1, -1), (1.5, -1), (1.5, 1.5), (0.5, 1.5)]
         w.add_room(Room(r1coords, name="kitchen", color=[1, 0, 0],
-                nav_poses=[Pose(x=0.75, y=0.75, yaw=0)]))
+                nav_poses=[Pose(x=0.75, y=0.75, z=0.0, qw=1.0, qx=0.0, qy=0.0, qz=0.0)]))
         r2coords = [(1.75, 2.5), (3.5, 2.5), (3.5, 4), (1.75, 4)]
         w.add_room(Room(r2coords, name="bedroom", color=[0, 0.6, 0]))
         r3coords = [(-1, 1), (-1, 3.5), (-3.0, 3.5), (-2.5, 1)]
@@ -46,15 +46,18 @@ class TestGetEntities:
                     conn_points=[(1.0, 0.5), (2.5, 0.5), (2.5, 3.0)])
 
         # Add locations
+        quaternion = yaw_to_quaternion(-np.pi/2)
         table = w.add_location("table", "kitchen", Pose(
-            x=0.85, y=-0.5, yaw=-np.pi/2))
-        desk = w.add_location("desk", "bedroom", Pose(x=3.15, y=3.65, yaw=0))
+            x=0.85, y=-0.5, z=0, qw=quaternion[0], qx=quaternion[1], qy=quaternion[2], qz=quaternion[3]))
+        desk = w.add_location("desk", "bedroom", Pose(x=3.15, y=3.65, z=0.0, qw=1.0, qx=0.0, qy=0.0, qz=0.0))
+        quaternion = yaw_to_quaternion(-np.pi/16)
         counter = w.add_location("counter", "bathroom", Pose(
-            x=-2.45, y=2.5, yaw=np.pi/2 + np.pi/16))
+            x=-2.45, y=2.5, z=0, qw=quaternion[0], qx=quaternion[1], qy=quaternion[2], qz=quaternion[3]))
 
         # Add objects
-        w.add_object("banana", table, pose=Pose(x=1.0, y=-0.5, yaw=np.pi/4))
-        w.add_object("apple", desk, pose=Pose(x=3.2, y=3.5, yaw=0))
+        quaternion = yaw_to_quaternion(np.pi/4)
+        w.add_object("banana", table, pose=Pose(x=1.0, y=-0.5, z=0, qw=quaternion[0], qx=quaternion[1], qy=quaternion[2], qz=quaternion[3]))
+        w.add_object("apple", desk, pose=Pose(x=3.2, y=3.5, z=0.0, qw=1.0, qx=0.0, qy=0.0, qz=0.0))
         w.add_object("apple", table)
         w.add_object("apple", table)
         w.add_object("water", counter)

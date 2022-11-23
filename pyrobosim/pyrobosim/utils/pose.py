@@ -6,14 +6,25 @@ import numpy as np
 
 
 class Pose:
-    """ Represents a 2.5D (X, Y, Z, yaw) pose. """
+    """ Represents a 3D pose. """
 
-    def __init__(self, x=0.0, y=0.0, z=0.0, yaw=0.0):
+    def __init__(self, x=0.0, y=0.0, z=0.0, qw=1.0, qx=0.0, qy=0.0, qz=0.0):
         """ Creates a new Pose object. """
         self.x = x
         self.y = y
         self.z = z
-        self.yaw = wrap_angle(yaw)
+        self.qw = qw
+        self.qx = qx
+        self.qy = qy
+        self.qz = qz
+
+    def get_yaw(self):
+        """
+        Convert quaternion to yaw (i.e. rotation about Z only)
+        See: https://stackoverflow.com/a/18115837/3499467
+        """
+
+        return np.arctan2(2.0 * (self.qy*self.qz + self.qw*self.qx), self.qw*self.qw - self.qx*self.qx - self.qy*self.qy + self.qz*self.qz)
 
     @classmethod
     def from_list(cls, plist):
@@ -21,8 +32,9 @@ class Pose:
         Creates a pose from a list. The assumptions are:
         
         * 2-element lists: ``[x, y]``
-        * 3-element lists: ``[x, y, yaw]``
-        * 4-element lists: ``[x, y, z, yaw]``
+        * 3-element lists: ``[x, y, z]``
+        * 7-element lists: ``[x, y, z, qw, qx, qy, qz]``
+        * other lengths: invalid
 
         :param plist: List containing the input pose (see format above).
         :type plist: list[float]
@@ -34,11 +46,11 @@ class Pose:
         if num_elems == 2:
             return cls(x=plist[0], y=plist[1])
         elif num_elems == 3:
-            return cls(x=plist[0], y=plist[1], yaw=plist[2])
-        elif num_elems == 4:
-            return cls(x=plist[0], y=plist[1], z=plist[2], yaw=plist[3])
+            return cls(x=plist[0], y=plist[1], z=plist[2])
+        elif num_elems == 6:
+            return cls(x=plist[0], y=plist[1], z=plist[2], qw=plist[3], qx=plist[4], qy=plist[5], qz=plist[6])
         else:
-            raise Exception("List must contain 2, 3, or 4 elements.")
+            raise Exception("List must contain 2, 3, or 6 elements.")
 
 
     def get_linear_distance(self, other, ignore_z=False):
@@ -75,7 +87,13 @@ class Pose:
         :return: Printable string.
         :rtype: str
         """
-        return f"Pose: [x={self.x:.2f}, y={self.y:.2f}, z={self.z:.2f}, yaw={self.yaw:.2f}]"
+        return f"Pose: [x={self.x:.2f},\
+                        y={self.y:.2f},\
+                        z={self.z:.2f},\
+                        qw={self.qy:.2f},\
+                        qx={self.qx:.2f},\
+                        qy={self.qy:.2f},\
+                        qz={self.qz:.2f}]"
 
 
 def get_angle(p1, p2):

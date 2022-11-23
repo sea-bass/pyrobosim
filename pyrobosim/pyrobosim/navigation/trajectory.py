@@ -46,7 +46,7 @@ def get_constant_speed_trajectory(path, linear_velocity=0.2, max_angular_velocit
     # Package up the trajectory
     x_pts = np.array([p.x for p in path.poses])
     y_pts = np.array([p.y for p in path.poses])
-    yaw_pts = np.array([p.yaw for p in path.poses])
+    yaw_pts = np.array([p.get_yaw() for p in path.poses])
     traj = (t_pts, x_pts, y_pts, yaw_pts)
     return traj
 
