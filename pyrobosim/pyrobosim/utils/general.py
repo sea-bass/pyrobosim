@@ -1,6 +1,5 @@
 """ General package utilities. """
 
-import numpy as np
 import os
 import yaml
 
@@ -29,25 +28,6 @@ def get_data_folder():
 
     return data_folder
 
-
-def yaw_to_quaternion(yaw_in_rad):
-    """ Convert planar yaw to 3D quaternion """
-
-    # See https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
-
-    cr = 1.0
-    sr = 0.0
-    cp = 1.0
-    sp = 0.0
-    cy = np.cos(yaw_in_rad * 0.5)
-    sy = np.sin(yaw_in_rad * 0.5)
-
-    q_w = cr * cp * cy + sr * sp * sy
-    q_x = sr * cp * cy - cr * sp * sy
-    q_y = cr * sp * cy + sr * cp * sy
-    q_z = cr * cp * sy - sr * sp * cy
-
-    return [q_w, q_x, q_y, q_z]
 
 class EntityMetadata:
     """ Represents metadata about entities, such as locations or objects. """

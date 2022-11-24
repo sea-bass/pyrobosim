@@ -14,7 +14,7 @@ from pyrobosim.navigation.execution import ConstantVelocityExecutor
 from pyrobosim.navigation.rrt import RRTPlanner
 from pyrobosim.planning.pddlstream.planner import PDDLStreamPlanner
 from pyrobosim.planning.pddlstream.utils import get_default_domains_folder
-from pyrobosim.utils.general import get_data_folder, yaw_to_quaternion
+from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
 
@@ -38,16 +38,13 @@ def create_test_world(add_alt_desk=True):
     w.add_hallway(home, storage, width=0.75, conn_method="auto")
 
     # Add locations and objects
-    quaternion = yaw_to_quaternion(np.pi / 2)
-    table0 = w.add_location("table", "home", Pose(x=0.0, y=0.5, z=0, qw=quaternion[0], qx=quaternion[1], qy=quaternion[2], qz=quaternion[3]))
-    desk0 = w.add_location("desk", "storage", Pose(x=2.5, y=-1.5, z=0.0, qw=1.0, qx=0.0, qy=0.0, qz=0.0))
+    table0 = w.add_location("table", "home", Pose(x=0.0, y=0.5, z=0, yaw=np.pi/2))
+    desk0 = w.add_location("desk", "storage", Pose(x=2.5, y=-1.5, z=0.0, yaw=0.0))
     if add_alt_desk:
-        desk1 = w.add_location("desk", "storage", Pose(x=4.5, y=1.5, z=0.0, qw=1.0, qx=0.0, qy=0.0, qz=0.0))
+        desk1 = w.add_location("desk", "storage", Pose(x=4.5, y=1.5, z=0.0, yaw=0.0))
     w.add_object("banana", table0)
-    quaternion = yaw_to_quaternion(np.pi / 4.0)
-    w.add_object("water", desk0, pose=Pose(x=2.4, y=-1.4, z=0, qw=quaternion[0], qx=quaternion[1], qy=quaternion[2], qz=quaternion[3]))
-    quaternion = yaw_to_quaternion(-np.pi / 4.0)
-    w.add_object("water", desk0, pose=Pose(x=2.575, y=-1.57, z=0, qw=quaternion[0], qx=quaternion[1], qy=quaternion[2], qz=quaternion[3]))
+    w.add_object("water", desk0, pose=Pose(x=2.4, y=-1.4, z=0, yaw=np.pi/4.0))
+    w.add_object("water", desk0, pose=Pose(x=2.575, y=-1.57, z=0, yaw=-np.pi/4.0))
 
     # Add a robot
     r = Robot(radius=0.1, path_executor=ConstantVelocityExecutor())

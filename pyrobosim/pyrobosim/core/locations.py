@@ -5,7 +5,7 @@ from shapely.geometry import Point
 from descartes.patch import PolygonPatch
 
 from ..navigation.search_graph import Node
-from ..utils.general import EntityMetadata, yaw_to_quaternion
+from ..utils.general import EntityMetadata
 from ..utils.pose import Pose, rot2d
 from ..utils.polygon import inflate_polygon, polygon_and_height_from_footprint, transform_polygon
 
@@ -106,10 +106,7 @@ class Location:
                 nav_pose = Pose(x=rot_p[0] + self.pose.x,
                                 y=rot_p[1] + self.pose.y,
                                 z=self.pose.z,
-                                qw=self.pose.qw,
-                                qx=self.pose.qx,
-                                qy=self.pose.qy,
-                                qz=self.pose.qz)
+                                q=self.pose.q)
                 if self.parent.is_collision_free(nav_pose):
                     self.nav_poses.append(nav_pose)
 
@@ -214,7 +211,7 @@ class ObjectSpawn:
         self.update_visualization_polygon()
         self.centroid = list(self.polygon.centroid.coords)[0]
         self.pose = Pose(
-            x=self.centroid[0], y=self.centroid[1], z=0.0, qw=self.parent.pose.qw, qx=self.parent.pose.qx, qy=self.parent.pose.qy, qz=self.parent.pose.qz)
+            x=self.centroid[0], y=self.centroid[1], z=0.0, q=self.parent.pose.q)
 
         # If navigation poses were specified, add them. Else, use the parent poses.
         # Of course, only add these if they are collision-free.
@@ -228,14 +225,10 @@ class ObjectSpawn:
                 rot_p = rot2d((p[0] + p_off[0], p[1] + p_off[1]),
                               self.parent.pose.get_yaw())
                 yaw = p[2] + self.parent.pose.get_yaw()
-                quaternion = yaw_to_quaternion(yaw)
                 nav_pose = Pose(x=rot_p[0] + self.parent.pose.x,
                                 y=rot_p[1] + self.parent.pose.y,
                                 z=self.parent.pose.z,
-                                qw=quaternion[0],
-                                qx=quaternion[1],
-                                qy=quaternion[2],
-                                qz=quaternion[3])
+                                yaw=yaw)
                 if self.parent.parent.is_collision_free(nav_pose):
                     self.nav_poses.append(nav_pose)
         else:

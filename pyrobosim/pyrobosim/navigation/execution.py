@@ -3,7 +3,6 @@
 import time
 import warnings
 
-from ..utils.general import yaw_to_quaternion
 from ..utils.pose import Pose
 from .trajectory import get_constant_speed_trajectory, interpolate_trajectory
 
@@ -61,14 +60,10 @@ class ConstantVelocityExecutor:
         is_holding_object = self.robot.manipulated_object is not None
         for i in range(len(traj_t)):
             start_time = time.time()
-            quaternion = yaw_to_quaternion(traj_yaw[i])
             cur_pose = Pose(x=traj_x[i],
                             y=traj_y[i],
                             z=0.0,
-                            qw=quaternion[0],
-                            qx=quaternion[1],
-                            qy=quaternion[2],
-                            qz=quaternion[3])
+                            yaw=traj_yaw[i])
             self.robot.set_pose(cur_pose)
             if is_holding_object:
                 self.robot.manipulated_object.set_pose(cur_pose)

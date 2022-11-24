@@ -3,28 +3,42 @@ Pose representation utilities.
 """
 
 import numpy as np
-
+from transforms3d.euler import euler2quat, quat2euler
+from transforms3d.quaternions import qnorm
 
 class Pose:
     """ Represents a 3D pose. """
 
-    def __init__(self, x=0.0, y=0.0, z=0.0, qw=1.0, qx=0.0, qy=0.0, qz=0.0):
-        """ Creates a new Pose object. """
+    def __init__(self, x=0.0, y=0.0, z=0.0,
+                 roll=0.0, pitch=0.0, yaw=0.0,
+                 q=None):
+        """
+        Creates a new Pose object.
+        
+        :param x: X position
+        :type x: float
+        :param y: Y position
+        :type y: float
+        :param z: Z position
+        :type z: float
+        :param roll: Roll angle (about X axis), in radians
+        :type roll: float
+        :param pitch: Pitch angle (about Y axis), in radians
+        :type pitch: float
+        :param yaw: Yaw angle (about Z axis), in radians
+        :type yaw: float
+        :param q: Quaternion, specified at [qw, qx, qy, qz] 
+            If specified, will override roll/pitch/yaw values.
+        :type q: list[float]
+        """
         self.x = x
         self.y = y
         self.z = z
-        self.qw = qw
-        self.qx = qx
-        self.qy = qy
-        self.qz = qz
 
-    def get_yaw(self):
-        """
-        Convert quaternion to yaw (i.e. rotation about Z only)
-        See: https://stackoverflow.com/a/18115837/3499467
-        """
-
-        return np.arctan2(2.0 * (self.qy*self.qz + self.qw*self.qx), self.qw*self.qw - self.qx*self.qx - self.qy*self.qy + self.qz*self.qz)
+        if q is not None:
+            self.set_quaternion(q)
+        else:
+            self.set_euler_angles(roll, pitch, yaw)
 
     @classmethod
     def from_list(cls, plist):
@@ -33,6 +47,8 @@ class Pose:
         
         * 2-element lists: ``[x, y]``
         * 3-element lists: ``[x, y, z]``
+        * 4-element lists: ``[x, y, z, yaw]``
+        * 6-element lists: ``[x, y, z, roll, pitch, yaw]``
         * 7-element lists: ``[x, y, z, qw, qx, qy, qz]``
         * other lengths: invalid
 
@@ -47,10 +63,16 @@ class Pose:
             return cls(x=plist[0], y=plist[1])
         elif num_elems == 3:
             return cls(x=plist[0], y=plist[1], z=plist[2])
+        elif num_elems == 4:
+            return cls(x=plist[0], y=plist[1], z=plist[2], yaw=plist[3])
         elif num_elems == 6:
-            return cls(x=plist[0], y=plist[1], z=plist[2], qw=plist[3], qx=plist[4], qy=plist[5], qz=plist[6])
+            return cls(x=plist[0], y=plist[1], z=plist[2], roll=plist[3],
+                       pitch=plist[4], yaw=plist[5])
+        elif num_elems == 7:
+            return cls(x=plist[0], y=plist[1], z=plist[2], qw=plist[3],
+                       qx=plist[4], qy=plist[5], qz=plist[6])
         else:
-            raise Exception("List must contain 2, 3, or 6 elements.")
+            raise Exception("List must contain 2, 3, 4, 6, or 7 elements.")
 
 
     def get_linear_distance(self, other, ignore_z=False):
@@ -80,6 +102,41 @@ class Pose:
         """
         return np.arctan2(other.y - self.y, other.x - self.x)
 
+    def get_yaw(self):
+        """
+        Gets the yaw angle, in radians.
+        This is a handy utility for 2D (or 2.5D) calculations.
+
+        :param yaw: Yaw angle (about Z axis), in radians
+        :type yaw: float
+        """
+        return self.eul[2]
+
+    def set_euler_angles(self, roll=0.0, pitch=0.0, yaw=0.0):
+        """
+        Sets the orientation component as Euler angles.
+        
+        :param roll: Roll angle (about X axis), in radians
+        :type roll: float
+        :param pitch: Pitch angle (about Y axis), in radians
+        :type pitch: float
+        :param yaw: Yaw angle (about Z axis), in radians
+        :type yaw: float
+        """
+        self.eul = [roll, pitch, yaw]
+        self.q = euler2quat(roll, pitch, yaw)
+
+    def set_quaternion(self, q):
+        """
+        Sets the orientation component as a quaternion.
+        
+        :param q: Quaternion, specified at [qw, qx, qy, qz] 
+            If specified, will override roll/pitch/yaw values.
+        :type q: list[float]
+        """
+        self.q = q / qnorm(q)
+        self.eul = quat2euler(self.q)
+
     def __repr__(self):
         """ 
         Representation for printing a Pose object.
@@ -90,10 +147,10 @@ class Pose:
         return f"Pose: [x={self.x:.2f},\
                         y={self.y:.2f},\
                         z={self.z:.2f},\
-                        qw={self.qy:.2f},\
-                        qx={self.qx:.2f},\
-                        qy={self.qy:.2f},\
-                        qz={self.qz:.2f}]"
+                        qw={self.q[0]:.3f},\
+                        qx={self.q[1]:.3f},\
+                        qy={self.q[2]:.3f},\
+                        qz={self.q[3]:.3f}]"
 
 
 def get_angle(p1, p2):

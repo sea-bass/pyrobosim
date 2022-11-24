@@ -50,9 +50,9 @@ def create_test_world(add_hallway=True):
         )
 
     # Add locations and objects
-    table0 = w.add_location("table", "unreachable", Pose(x=3.5, y=-0.25, z=0.0, qw=1.0, qx=0.0, qy=0.0, qz=0.0))
+    table0 = w.add_location("table", "unreachable", Pose(x=3.5, y=-0.25, z=0.0))
     w.add_object("apple", table0)
-    table1 = w.add_location("table", "goal_room", Pose(x=3.5, y=2.75, z=0.0, qw=1.0, qx=0.0, qy=0.0, qz=0.0))
+    table1 = w.add_location("table", "goal_room", Pose(x=3.5, y=2.75, z=0.0))
     w.add_object("apple", table1)
 
     # Add a robot
