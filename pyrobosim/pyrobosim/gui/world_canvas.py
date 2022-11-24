@@ -344,7 +344,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         tf = (
             Affine2D()
             .translate(-obj.centroid[0], -obj.centroid[1])
-            .rotate(obj.pose.yaw)
+            .rotate(obj.pose.get_yaw())
             .translate(obj.pose.x, obj.pose.y)
         )
         obj.viz_patch.set_transform(tf + self.axes.transData)

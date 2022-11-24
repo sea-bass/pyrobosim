@@ -188,7 +188,8 @@ class WorldGazeboExporter:
             self.model_include_text += " "*8 + \
                 f"<uri>model://{model_name}</uri>\n"
             self.model_include_text += " "*8 + f"<name>{entity.name}</name>\n"
-            pose_str = f"{entity.pose.x} {entity.pose.y} {entity.pose.z} 0 0 {entity.pose.yaw}"
+            pose_str = f"{entity.pose.x} {entity.pose.y} {entity.pose.z} " + \
+                       f"{entity.pose.eul[0]} {entity.pose.eul[1]} {entity.pose.eul[2]}"
             self.model_include_text += " "*8 + f"<pose>{pose_str}</pose>\n"
             self.model_include_text += " "*4 + "</include>\n"
 
