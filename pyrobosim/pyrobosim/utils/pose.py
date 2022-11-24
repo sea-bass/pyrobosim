@@ -69,8 +69,7 @@ class Pose:
             return cls(x=plist[0], y=plist[1], z=plist[2], roll=plist[3],
                        pitch=plist[4], yaw=plist[5])
         elif num_elems == 7:
-            return cls(x=plist[0], y=plist[1], z=plist[2], qw=plist[3],
-                       qx=plist[4], qy=plist[5], qz=plist[6])
+            return cls(x=plist[0], y=plist[1], z=plist[2], q=plist[3:])
         else:
             raise Exception("List must contain 2, 3, 4, 6, or 7 elements.")
 
