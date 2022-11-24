@@ -1126,9 +1126,9 @@ class World:
                         valid_pose = False
                     yaw_sample = np.random.uniform(-np.pi, np.pi)
                     robot_pose = Pose(x=x_sample,
-                                    y=y_sample,
-                                    z=0.0,
-                                    yaw=yaw_sample)
+                                      y=y_sample,
+                                      z=0.0,
+                                      yaw=yaw_sample)
                 else:
                     # Validate that the pose is unoccupied and in the right location 
                     if not loc.is_collision_free(pose):
