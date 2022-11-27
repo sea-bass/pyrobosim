@@ -11,3 +11,4 @@ Refer to the following pages for different types of usage guides.
    basic_usage
    multirobot
    tamp
+   geometry_conventions
