@@ -70,9 +70,10 @@ def start_planner(world, args):
         return
 
     input("Press Enter to start planning.")
-    plan = planner.plan(goal_literals, focused=True, verbose=args.verbose,
+    robot = world.robots[0]
+    plan = planner.plan(robot, goal_literals, focused=True, verbose=args.verbose,
                         search_sample_ratio=args.search_sample_ratio)
-    world.robot.execute_plan(plan, blocking=True)
+    robot.execute_plan(plan, blocking=True)
 
 
 if __name__ == "__main__":
