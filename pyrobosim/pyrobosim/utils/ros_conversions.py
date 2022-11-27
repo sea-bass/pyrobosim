@@ -3,7 +3,6 @@ Utilities to convert between standalone pyrobosim objects and
 ROS representations (messages, services, etc.).
 """
 
-from transforms3d.euler import euler2quat, quat2euler
 import geometry_msgs.msg
 
 import pyrobosim_msgs.msg as ros_msgs
@@ -21,10 +20,9 @@ def pose_from_ros(msg):
     :return: Pose object
     :rtype: :class:`pyrobosim.utils.pose.Pose`
     """
-    eul = quat2euler((msg.orientation.w, msg.orientation.x,
-                      msg.orientation.y, msg.orientation.z))
     return Pose.from_list(
-        [msg.position.x, msg.position.y, msg.position.z, eul[2]])
+        [msg.position.x, msg.position.y, msg.position.z, msg.orientation.w,
+         msg.orientation.x, msg.orientation.y, msg.orientation.z])
 
 
 def pose_to_ros(pose):
@@ -41,11 +39,10 @@ def pose_to_ros(pose):
         pose_msg.position.x = pose.x
         pose_msg.position.y = pose.y
         pose_msg.position.z = pose.z
-        quat = euler2quat(0, 0, pose.yaw)
-        pose_msg.orientation.w = quat[0]
-        pose_msg.orientation.x = quat[1]
-        pose_msg.orientation.y = quat[2]
-        pose_msg.orientation.z = quat[3]
+        pose_msg.orientation.w = pose.q[0]
+        pose_msg.orientation.x = pose.q[1]
+        pose_msg.orientation.y = pose.q[2]
+        pose_msg.orientation.z = pose.q[3]
     return pose_msg
 
 

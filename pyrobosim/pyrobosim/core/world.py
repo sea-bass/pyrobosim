@@ -449,7 +449,10 @@ class World:
             for _ in range(self.max_object_sample_tries):
                 x_sample, y_sample = sample_from_polygon(obj_spawn.polygon)
                 yaw_sample = np.random.uniform(-np.pi, np.pi)
-                pose_sample = Pose(x=x_sample, y=y_sample, yaw=yaw_sample)
+                pose_sample = Pose(x=x_sample,
+                                   y=y_sample,
+                                   z=0.0,
+                                   yaw=yaw_sample)
                 poly = inflate_polygon(
                     transform_polygon(obj.polygon, pose_sample), self.object_radius)
                 
@@ -794,7 +797,7 @@ class World:
             x = (xmax - xmin - 2*r) * np.random.random() + xmin + r
             y = (ymax - ymin - 2*r) * np.random.random() + ymin + r
             yaw = 2.0 * np.pi * np.random.random()
-            pose = Pose(x=x, y=y, yaw=yaw)
+            pose = Pose(x=x, y=y, z=0.0, yaw=yaw)
             if (not self.check_occupancy(pose) and
                 (ignore_robots or not self.collides_with_robots(pose, robot))):
                 return pose
@@ -1122,7 +1125,10 @@ class World:
                         warnings.warn(f"Could not sample pose in {loc.name}.")
                         valid_pose = False
                     yaw_sample = np.random.uniform(-np.pi, np.pi)
-                    robot_pose = Pose(x=x_sample, y=y_sample, yaw=yaw_sample)
+                    robot_pose = Pose(x=x_sample,
+                                      y=y_sample,
+                                      z=0.0,
+                                      yaw=yaw_sample)
                 else:
                     # Validate that the pose is unoccupied and in the right location 
                     if not loc.is_collision_free(pose):

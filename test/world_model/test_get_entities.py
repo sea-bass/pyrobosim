@@ -31,7 +31,7 @@ class TestGetEntities:
         # Add rooms
         r1coords = [(-1, -1), (1.5, -1), (1.5, 1.5), (0.5, 1.5)]
         w.add_room(Room(r1coords, name="kitchen", color=[1, 0, 0],
-                nav_poses=[Pose(x=0.75, y=0.75, yaw=0)]))
+                nav_poses=[Pose(x=0.75, y=0.75, z=0.0, q=[1.0, 0.0, 0.0, 0.0])]))
         r2coords = [(1.75, 2.5), (3.5, 2.5), (3.5, 4), (1.75, 4)]
         w.add_room(Room(r2coords, name="bedroom", color=[0, 0.6, 0]))
         r3coords = [(-1, 1), (-1, 3.5), (-3.0, 3.5), (-2.5, 1)]
@@ -47,14 +47,14 @@ class TestGetEntities:
 
         # Add locations
         table = w.add_location("table", "kitchen", Pose(
-            x=0.85, y=-0.5, yaw=-np.pi/2))
-        desk = w.add_location("desk", "bedroom", Pose(x=3.15, y=3.65, yaw=0))
+            x=0.85, y=-0.5, z=0, yaw=-np.pi/2))
+        desk = w.add_location("desk", "bedroom", Pose(x=3.15, y=3.65, z=0.0))
         counter = w.add_location("counter", "bathroom", Pose(
-            x=-2.45, y=2.5, yaw=np.pi/2 + np.pi/16))
+            x=-2.45, y=2.5, z=0, yaw=np.pi/2 + np.pi/16))
 
         # Add objects
-        w.add_object("banana", table, pose=Pose(x=1.0, y=-0.5, yaw=np.pi/4))
-        w.add_object("apple", desk, pose=Pose(x=3.2, y=3.5, yaw=0))
+        w.add_object("banana", table, pose=Pose(x=1.0, y=-0.5, z=0, yaw=np.pi/4))
+        w.add_object("apple", desk, pose=Pose(x=3.2, y=3.5, z=0.0, q=[1.0, 0.0, 0.0, 0.0]))
         w.add_object("apple", table)
         w.add_object("apple", table)
         w.add_object("water", counter)

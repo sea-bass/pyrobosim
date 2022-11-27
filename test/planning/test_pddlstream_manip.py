@@ -38,13 +38,13 @@ def create_test_world(add_alt_desk=True):
     w.add_hallway(home, storage, width=0.75, conn_method="auto")
 
     # Add locations and objects
-    table0 = w.add_location("table", "home", Pose(x=0.0, y=0.5, yaw=np.pi / 2))
-    desk0 = w.add_location("desk", "storage", Pose(x=2.5, y=-1.5, yaw=0.0))
+    table0 = w.add_location("table", "home", Pose(x=0.0, y=0.5, z=0, yaw=np.pi/2))
+    desk0 = w.add_location("desk", "storage", Pose(x=2.5, y=-1.5, z=0.0, yaw=0.0))
     if add_alt_desk:
-        desk1 = w.add_location("desk", "storage", Pose(x=4.5, y=1.5, yaw=0.0))
+        desk1 = w.add_location("desk", "storage", Pose(x=4.5, y=1.5, z=0.0, yaw=0.0))
     w.add_object("banana", table0)
-    w.add_object("water", desk0, pose=Pose(x=2.4, y=-1.4, yaw=np.pi / 4.0))
-    w.add_object("water", desk0, pose=Pose(x=2.575, y=-1.57, yaw=-np.pi / 4.0))
+    w.add_object("water", desk0, pose=Pose(x=2.4, y=-1.4, z=0, yaw=np.pi/4.0))
+    w.add_object("water", desk0, pose=Pose(x=2.575, y=-1.57, z=0, yaw=-np.pi/4.0))
 
     # Add a robot
     r = Robot(radius=0.1, path_executor=ConstantVelocityExecutor())

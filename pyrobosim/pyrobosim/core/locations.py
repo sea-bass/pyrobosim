@@ -102,10 +102,11 @@ class Location:
                 p_off = (0, 0)
             for p in self.metadata["nav_poses"]:
                 rot_p = rot2d((p[0] + p_off[0], p[1] + p_off[1]),
-                              self.pose.yaw)
+                              self.pose.get_yaw())
                 nav_pose = Pose(x=rot_p[0] + self.pose.x,
                                 y=rot_p[1] + self.pose.y,
-                                yaw=p[2] + self.pose.yaw)
+                                z=self.pose.z,
+                                q=self.pose.q)
                 if self.parent.is_collision_free(nav_pose):
                     self.nav_poses.append(nav_pose)
 
@@ -210,7 +211,7 @@ class ObjectSpawn:
         self.update_visualization_polygon()
         self.centroid = list(self.polygon.centroid.coords)[0]
         self.pose = Pose(
-            x=self.centroid[0], y=self.centroid[1], yaw=self.parent.pose.yaw)
+            x=self.centroid[0], y=self.centroid[1], z=0.0, q=self.parent.pose.q)
 
         # If navigation poses were specified, add them. Else, use the parent poses.
         # Of course, only add these if they are collision-free.
@@ -222,10 +223,12 @@ class ObjectSpawn:
                 p_off = (0, 0)
             for p in self.metadata["nav_poses"]:
                 rot_p = rot2d((p[0] + p_off[0], p[1] + p_off[1]),
-                              self.parent.pose.yaw)
+                              self.parent.pose.get_yaw())
+                yaw = p[2] + self.parent.pose.get_yaw()
                 nav_pose = Pose(x=rot_p[0] + self.parent.pose.x,
                                 y=rot_p[1] + self.parent.pose.y,
-                                yaw=p[2] + self.parent.pose.yaw)
+                                z=self.parent.pose.z,
+                                yaw=yaw)
                 if self.parent.parent.is_collision_free(nav_pose):
                     self.nav_poses.append(nav_pose)
         else:

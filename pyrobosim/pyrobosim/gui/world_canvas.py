@@ -97,8 +97,8 @@ class WorldCanvas(FigureCanvasQTAgg):
 
             robot_length = self.robot_dir_line_factor * robot.radius
             (self.robot_dirs[i],) = self.axes.plot(
-                p.x + np.array([0, robot_length * np.cos(p.yaw)]),
-                p.y + np.array([0, robot_length * np.sin(p.yaw)]),
+                p.x + np.array([0, robot_length * np.cos(p.get_yaw())]),
+                p.y + np.array([0, robot_length * np.sin(p.get_yaw())]),
                 linestyle="-",
                 color=robot.color,
                 linewidth=2,
@@ -299,8 +299,8 @@ class WorldCanvas(FigureCanvasQTAgg):
         for i, robot in enumerate(self.world.robots):
             p = robot.pose
             self.robot_bodies[i].center = p.x, p.y
-            self.robot_dirs[i].set_xdata(p.x + np.array([0, self.robot_lengths[i] * np.cos(p.yaw)]))
-            self.robot_dirs[i].set_ydata(p.y + np.array([0, self.robot_lengths[i] * np.sin(p.yaw)]))
+            self.robot_dirs[i].set_xdata(p.x + np.array([0, self.robot_lengths[i] * np.cos(p.get_yaw())]))
+            self.robot_dirs[i].set_ydata(p.y + np.array([0, self.robot_lengths[i] * np.sin(p.get_yaw())]))
             robot.viz_text.set_position((p.x, p.y - 2.0 * robot.radius))
             self.update_object_plot(robot.manipulated_object)
 
@@ -344,7 +344,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         tf = (
             Affine2D()
             .translate(-obj.centroid[0], -obj.centroid[1])
-            .rotate(obj.pose.yaw)
+            .rotate(obj.pose.get_yaw())
             .translate(obj.pose.x, obj.pose.y)
         )
         obj.viz_patch.set_transform(tf + self.axes.transData)
