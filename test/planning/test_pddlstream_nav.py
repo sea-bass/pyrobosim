@@ -77,7 +77,7 @@ def start_planner(world, domain_name="03_nav_stream", interactive=False):
     robot = world.robots[0]
     plan = planner.plan(robot, goal_literals, focused=True, verbose=interactive)
     if interactive:
-        world.robot.execute_plan(plan, blocking=True)
+        robot.execute_plan(plan, blocking=True)
     return plan
 
 
