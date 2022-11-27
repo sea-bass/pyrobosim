@@ -16,7 +16,7 @@ Worlds in pyrobosim consist of a hierarchy of polygonal *entities*, including:
 * **Object Spawns**: Subregions of locations where objects may exist (e.g., a left vs. right countertop).
 * **Objects**: Discrete entities that can be manipulated around the world.
 
-This is all represented in a 2.5D environment (SE(2) pose with vertical (Z) height).
+This is all represented in a 2.5D environment (SE(2) pose with vertical (Z) height). However, full 3D poses are representable as well. For more information, refer to the :doc:`Geometry Conventions </usage/geometry_conventions.rst>` section.
 
 .. image:: media/world_entities.png
     :align: center

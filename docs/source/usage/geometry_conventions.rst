@@ -1,6 +1,8 @@
 Geometry Conventions
 ====================
 
-Extrinsic XYZ Euler angles are often used to specify rotations (in radians). For fully 3D worlds, quaternions are used and the order convention is [qw, qx, qy, qz].
+3D orientations can be represented using Euler angles or quaternions. For simplicity, if you are representing poses in 2D, you can use the yaw angle (Z Euler angle), but we recommend using quaternions for generic 3D pose calculations and for interfacing with ROS.
 
-When ROS2 is connected to pyrobosim, the reference frame is `map`.
+The Euler angle convention is extrinsic XYZ (roll = X, pitch = Y, yaw = Z) in radians. Quaternions use the order convention [qw, qx, qy, qz]. There is more documentation in the :doc:`Pose </generated/pyrobosim.utils.pose.Pose>` source code.
+
+When ROS 2 is connected to pyrobosim, the reference frame is `map`.
