@@ -1,6 +1,7 @@
 """ ROS interfaces to world model. """
 
 import rclpy
+from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 import threading
 
@@ -72,14 +73,22 @@ class WorldROSWrapper(Node):
 
     def start(self):
         """ Starts the node. """
+
+        executor = MultiThreadedExecutor(num_threads=8)
+        executor.add_node(self)
+
         if not self.world:
             self.get_logger().error("Must set a world before starting node.")
 
         for robot in self.world.robots:
             self.add_robot_state_publisher(robot)
-        rclpy.spin(self)
-        self.destroy_node()
-        rclpy.shutdown()
+
+        try:
+            executor.spin()
+        finally:
+            executor.shutdown()
+            self.destroy_node()
+            rclpy.shutdown()
 
 
     def add_robot_state_publisher(self, robot):
