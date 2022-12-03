@@ -1,6 +1,7 @@
 """ ROS interfaces to world model. """
 
 import rclpy
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 import threading
@@ -12,7 +13,8 @@ from pyrobosim.utils.ros_conversions import pose_from_ros, pose_to_ros, task_act
 
 class WorldROSWrapper(Node):
     """ ROS2 wrapper node for pyrobosim worlds. """
-    def __init__(self, world=None, name="pyrobosim", state_pub_rate=0.1):
+    def __init__(self, world=None, name="pyrobosim",
+                 num_threads=4, state_pub_rate=0.1):
         """
         Creates a ROS2 world wrapper node.
 
@@ -25,10 +27,13 @@ class WorldROSWrapper(Node):
         :type world: :class:`pyrobosim.core.world.World`, optional
         :param name: Node name prefix and namespace, defaults to ``"pyrobosim"``.
         :type name: str, optional
+        :param num_threads: Number of threads in the multi-threaded executor.
+        :type num_threads: float, optional
         :param state_pub_rate: Rate, in seconds, to publish robot state.
-        :type state_pub_rate: float, optional.
+        :type state_pub_rate: float, optional
         """
         self.name = name
+        self.num_threads = num_threads
         self.state_pub_rate = state_pub_rate
         super().__init__(self.name)
 
@@ -40,17 +45,24 @@ class WorldROSWrapper(Node):
         self.executing_plan = False
         self.last_command_status = None
 
+        # Set up different callback groups
+        self.action_cb_group = MutuallyExclusiveCallbackGroup()
+        self.query_cb_group = MutuallyExclusiveCallbackGroup()
+
         # Subscriber to single action
         self.action_sub = self.create_subscription(
-            TaskAction, "commanded_action", self.action_callback, 10)
+            TaskAction, "commanded_action", self.action_callback, 10,
+            callback_group=self.action_cb_group)
 
         # Subscriber to task plan
         self.plan_sub = self.create_subscription(
-            TaskPlan, "commanded_plan", self.plan_callback, 10)
+            TaskPlan, "commanded_plan", self.plan_callback, 10,
+            callback_group=self.action_cb_group)
 
         # World state service server
         self.world_state_srv = self.create_service(
-            RequestWorldState, "request_world_state", self.world_state_callback)
+            RequestWorldState, "request_world_state", self.world_state_callback,
+            callback_group=self.query_cb_group)
         
         # Initialize robot state publisher and thread list
         self.robot_state_pubs = []
@@ -73,8 +85,7 @@ class WorldROSWrapper(Node):
 
     def start(self):
         """ Starts the node. """
-
-        executor = MultiThreadedExecutor(num_threads=8)
+        executor = MultiThreadedExecutor(num_threads=self.num_threads)
         executor.add_node(self)
 
         if not self.world:
