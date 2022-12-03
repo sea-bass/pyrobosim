@@ -28,7 +28,7 @@ class WorldROSWrapper(Node):
         :param name: Node name prefix and namespace, defaults to ``"pyrobosim"``.
         :type name: str, optional
         :param num_threads: Number of threads in the multi-threaded executor.
-        :type num_threads: float, optional
+        :type num_threads: int, optional
         :param state_pub_rate: Rate, in seconds, to publish robot state.
         :type state_pub_rate: float, optional
         """
