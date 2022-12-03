@@ -72,8 +72,7 @@ def start_planner(world, domain_name="04_nav_manip_stream",
                         max_attempts=max_attempts, verbose=interactive)
     if interactive:
         robot.execute_plan(plan, blocking=True)
-    if plan is not None:
-        return plan
+    return plan
 
 #####################
 # ACTUAL UNIT TESTS #
