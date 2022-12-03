@@ -44,6 +44,7 @@ class PDDLStreamPlanner:
         planner="ff-astar",
         max_time=60.0,
         max_iterations=10,
+        max_attempts=1,
         search_sample_ratio=1.0,
         verbose=False,
     ):
@@ -63,6 +64,8 @@ class PDDLStreamPlanner:
         :type max_time: float, optional
         :param max_iterations: Maximum planning iterations.
         :type max_iterations: int, optional
+        :param max_attempts: Maximum planning attempts.
+        :type max_attempts: int, optional
         :param search_sample_ratio: Search to sample time ratio, used only for the focused algorithm.
         :type search_sample_ratio: float, optional
         :param verbose: If True, prints additional information. Defaults to False.
@@ -90,25 +93,33 @@ class PDDLStreamPlanner:
             goal,
         )
 
-        # Solve the problem using either focused or incremental algorithms.
-        # The ``get_stream_info()`` function comes from the ``mappings.py``
-        # file, so as you add new functionality you should fill it out there.
-        if focused:
-            solution = solve_focused(
-                prob,
-                planner=planner,
-                stream_info=get_stream_info(),
-                search_sample_ratio=search_sample_ratio,
-                max_time=max_time,
-                max_planner_time=max_time,
-                max_iterations=max_iterations,
-                initial_complexity=0,
-                verbose=verbose,
-            )
-        else:
-            solution = solve_incremental(
-                prob, planner=planner, max_time=max_time, verbose=verbose
-            )
+        for i in range(max_attempts):
+
+            # Solve the problem using either focused or incremental algorithms.
+            # The ``get_stream_info()`` function comes from the ``mappings.py``
+            # file, so as you add new functionality you should fill it out there.
+            if focused:
+                solution = solve_focused(
+                    prob,
+                    planner=planner,
+                    stream_info=get_stream_info(),
+                    search_sample_ratio=search_sample_ratio,
+                    max_time=max_time,
+                    max_planner_time=max_time,
+                    max_iterations=max_iterations,
+                    initial_complexity=0,
+                    verbose=verbose,
+                )
+            else:
+                solution = solve_incremental(
+                    prob, planner=planner, max_time=max_time, verbose=verbose
+                )
+
+            # If the solution is valid, no need to try again
+            # TODO: Could later consider an option to execute all the attempts
+            # and take the minimum-cost plan from that batch.
+            if solution is not None:
+                break
 
         # Convert the solution to a TaskPlan object.
         plan_out = pddlstream_solution_to_plan(solution, robot.name)

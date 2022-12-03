@@ -58,7 +58,8 @@ def create_test_world(add_alt_desk=True):
     return w
 
 
-def start_planner(world, domain_name="04_nav_manip_stream", interactive=False):
+def start_planner(world, domain_name="04_nav_manip_stream",
+                  interactive=False, max_attempts=1):
     domain_folder = os.path.join(get_default_domains_folder(), domain_name)
     planner = PDDLStreamPlanner(world, domain_folder)
 
@@ -67,24 +68,25 @@ def start_planner(world, domain_name="04_nav_manip_stream", interactive=False):
     if interactive:
         input("Press Enter to start planning.")
     robot = world.robots[0]
-    plan = planner.plan(robot, goal_literals, focused=True, verbose=interactive)
+    plan = planner.plan(robot, goal_literals, focused=True,
+                        max_attempts=max_attempts, verbose=interactive)
     if interactive:
         robot.execute_plan(plan, blocking=True)
-    return plan
-
+    if plan is not None:
+        return plan
 
 #####################
 # ACTUAL UNIT TESTS #
 #####################
 def test_plan_single_desk():
     w = create_test_world(add_alt_desk=False)
-    plan = start_planner(w)
+    plan = start_planner(w, max_attempts=3)
     assert plan is not None
 
 
 def test_plan_double_desk():
     w = create_test_world(add_alt_desk=True)
-    plan = start_planner(w)
+    plan = start_planner(w, max_attempts=3)
     assert plan is not None
 
 
