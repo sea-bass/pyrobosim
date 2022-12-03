@@ -143,13 +143,10 @@ class Pose:
         :return: Printable string.
         :rtype: str
         """
-        return f"Pose: [x={self.x:.2f},\
-                        y={self.y:.2f},\
-                        z={self.z:.2f},\
-                        qw={self.q[0]:.3f},\
-                        qx={self.q[1]:.3f},\
-                        qy={self.q[2]:.3f},\
-                        qz={self.q[3]:.3f}]"
+        pos_str = f"x={self.x:.2f}, y={self.y:.2f}, z={self.z:.2f}"
+        quat_str = f"qw={self.q[0]:.3f}, qx={self.q[1]:.3f}, " + \
+                   f"qy={self.q[2]:.3f}, qz={self.q[3]:.3f}"
+        return f"Pose: [{pos_str}, {quat_str}]"
 
 
 def get_angle(p1, p2):
