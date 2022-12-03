@@ -1,5 +1,6 @@
 """ ROS interfaces to world model. """
 
+import os
 import rclpy
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
@@ -14,7 +15,7 @@ from pyrobosim.utils.ros_conversions import pose_from_ros, pose_to_ros, task_act
 class WorldROSWrapper(Node):
     """ ROS2 wrapper node for pyrobosim worlds. """
     def __init__(self, world=None, name="pyrobosim",
-                 num_threads=4, state_pub_rate=0.1):
+                 num_threads=os.cpu_count(), state_pub_rate=0.1):
         """
         Creates a ROS2 world wrapper node.
 
