@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Source ROS and the Colcon workspace
-source /opt/ros/humble/setup.bash
+source /opt/ros/${ROS_DISTRO}/setup.bash
 if [ ! -f /pyrobosim_ws/install/setup.bash ]
 then
   colcon build

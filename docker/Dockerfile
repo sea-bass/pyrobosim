@@ -1,6 +1,9 @@
-# pyrobosim Dockerfile for Ubuntu 20.04 / ROS2 Foxy
-FROM osrf/ros:foxy-desktop
+ARG ROS_DISTRO=humble
+
+# pyrobosim Dockerfile for Ubuntu / ROS
+FROM osrf/ros:${ROS_DISTRO}-desktop
 SHELL ["/bin/bash", "-c"]
+ENV ROS_DISTRO=${ROS_DISTRO}
 
 # Install dependencies
 ARG DEBIAN_FRONTEND=noninteractive
@@ -21,6 +24,6 @@ RUN cd /temp/pyrobosim && pip3 install .
 RUN pip3 install lark pytest pytest-dependency pytest-html
 
 # Setup an entrypoint and working folder
-COPY docker/entrypoint_foxy.sh /entrypoint.sh
+COPY docker/entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
 WORKDIR /pyrobosim_ws

@@ -11,8 +11,8 @@
 
 if [ "$ROS_DISTRO" == "" ]
 then
-    echo "ROS Distro not specified or found in the ROS_DISTRO environment variable, using Foxy"
-    ROS_DISTRO=foxy
+    echo "ROS Distro not specified or found in the ROS_DISTRO environment variable, using Humble"
+    ROS_DISTRO=humble
 fi
 
 IMAGE_NAME=pyrobosim_$ROS_DISTRO
