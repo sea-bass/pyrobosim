@@ -96,7 +96,7 @@ if __name__ == "__main__":
     import threading
 
     domain_name = "04_nav_manip_stream"
-    t = threading.Thread(target=start_planner, args=(w, domain_name, True))
+    t = threading.Thread(target=start_planner, args=(w, domain_name, True, 3))
     t.start()
 
     from pyrobosim.gui.main import PyRoboSimGUI
