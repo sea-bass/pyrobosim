@@ -118,11 +118,11 @@ class PDDLStreamPlanner:
             # If the solution is valid, no need to try again
             # TODO: Could later consider an option to execute all the attempts
             # and take the minimum-cost plan from that batch.
-            if solution is not None and len(solution) > 0:
+            plan_out = pddlstream_solution_to_plan(solution, robot.name)
+            if plan_out is not None:
                 break
 
         # Convert the solution to a TaskPlan object.
-        plan_out = pddlstream_solution_to_plan(solution, robot.name)
         self.latest_plan = plan_out
         if verbose:
             print("\nInitial conditions:")
