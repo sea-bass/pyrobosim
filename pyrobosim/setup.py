@@ -20,7 +20,7 @@ install_requires = [
     "pycollada",
     "PyQt5",
     "PyYAML",   
-    "shapely",
+    "shapely==1.8",
     "scipy",
     "transforms3d",
     "trimesh"]
