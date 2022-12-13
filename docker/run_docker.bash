@@ -1,6 +1,6 @@
 # Run docker container
 #
-# To get a specific ROS2 distro, specify the ROS_DISTRO environment variable as follows:
+# To get a specific ROS 2 distro, specify the ROS_DISTRO environment variable as follows:
 #   ROS_DISTRO=humble ./run_docker.bash
 #
 # To run a specific command, you can enter additional arguments:

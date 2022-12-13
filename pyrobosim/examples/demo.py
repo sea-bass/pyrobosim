@@ -117,5 +117,5 @@ if __name__ == "__main__":
     else:
         w = create_world_from_yaml(args.world_file)        
 
-    # Start the program either as ROS2 node or standalone.
+    # Start the program either as ROS node or standalone.
     start_gui(w, sys.argv)

@@ -32,7 +32,7 @@ setup(
     url="https://github.com/sea-bass/pyrobosim",
     author="Sebastian Castro",
     author_email="sebas.a.castro@gmail.com",
-    description="ROS2 enabled 2D mobile robot simulator for behavior prototyping.",
+    description="ROS 2 enabled 2D mobile robot simulator for behavior prototyping.",
     license="BSD",
     install_requires=install_requires,
     packages=find_packages(),

@@ -30,8 +30,8 @@ click the **Navigate** button. Once at the destination, click **Pick**.
 
 |
 
-With ROS2
----------
+With ROS 2
+----------
 
 First, build and setup the ``colcon`` workspace (or use one of our provided Docker containers).
 
@@ -41,7 +41,7 @@ First, build and setup the ``colcon`` workspace (or use one of our provided Dock
     . install/local_setup.bash
 
 
-You can run a ROS2 enabled demo and interact with the GUI:
+You can run a ROS 2 enabled demo and interact with the GUI:
 
 ::
 
@@ -64,12 +64,12 @@ Or, you can run both of these nodes together using a provided launch file:
     ros2 launch pyrobosim_ros demo_commands.launch.py mode:=action
 
 
-The first command will start a world as a ROS2 node, and the second one will publish a plan (or set of actions) to the node.
+The first command will start a world as a ROS 2 node, and the second one will publish a plan (or set of actions) to the node.
 
 .. image:: ../media/pyrobosim_demo_ros.png
     :align: center
     :width: 600px
-    :alt: Basic ROS2 demo.
+    :alt: Basic ROS 2 demo.
 
 |
 

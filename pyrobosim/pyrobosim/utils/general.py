@@ -17,7 +17,7 @@ def get_data_folder():
     :rtype: str
     """
     try:
-        # If running as a ROS2 node, get the data folder from the package share directory.
+        # If running as a ROS 2 node, get the data folder from the package share directory.
         from ament_index_python.packages import get_package_share_directory
         data_folder = os.path.join(
             get_package_share_directory("pyrobosim"), "data")

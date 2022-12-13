@@ -38,7 +38,7 @@ jobs:
         # Always publish test results even when there are failures.
         if: ${{ always() }}
 
-  # Testing with ROS2
+  # Testing with ROS 2
   ros2-test:
     strategy:
       matrix:
