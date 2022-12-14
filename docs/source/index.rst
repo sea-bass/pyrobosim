@@ -3,7 +3,7 @@
 pyrobosim
 =========
 
-pyrobosim is a ROS2 enabled 2D mobile robot simulator for behavior prototyping.
+pyrobosim is a ROS 2 enabled 2D mobile robot simulator for behavior prototyping.
 
 .. raw:: html
 

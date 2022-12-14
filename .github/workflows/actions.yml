@@ -38,45 +38,27 @@ jobs:
         # Always publish test results even when there are failures.
         if: ${{ always() }}
 
-  # Testing with ROS2
-  ros2-foxy-test:
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
-      - name: Set up Docker image
-        run: |
-          export ROS_DISTRO=foxy
-          docker/build_docker.bash
-      - name: Run unit tests in Docker container
-        run: |
-          export ROS_DISTRO=foxy
-          docker/run_docker.bash "src/pyrobosim/test/run_tests.bash" ci_mode
-      - name: Upload test results
-        uses: actions/upload-artifact@v3
-        with:
-          name: test-results-foxy
-          path: test/results/
-        # Always publish test results even when there are failures.
-        if: ${{ always() }}
+  # Testing with ROS 2
+  ros2-test:
+    strategy:
+      matrix:
+        ros_distro: [foxy, humble]
+    env:
+      ROS_DISTRO: ${{ matrix.ros_distro }}
 
-  ros2-humble-test:
+    name: ros-${{ matrix.ros_distro }}-test
     runs-on: ubuntu-22.04
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
       - name: Set up Docker image
-        run: |
-          export ROS_DISTRO=humble
-          docker/build_docker.bash
+        run: docker/build_docker.bash
       - name: Run unit tests in Docker container
-        run: |
-          export ROS_DISTRO=humble
-          docker/run_docker.bash "src/pyrobosim/test/run_tests.bash" ci_mode
+        run: docker/run_docker.bash "src/pyrobosim/test/run_tests.bash" ci_mode
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:
-          name: test-results-humble
+          name: test-results-${{ matrix.version }}
           path: test/results/
         # Always publish test results even when there are failures.
         if: ${{ always() }}

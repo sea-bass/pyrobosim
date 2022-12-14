@@ -14,7 +14,7 @@ If you did not already install PDDLStream, ensure you do so with this script, th
 
 Examples
 --------
-Regardless of running PDDLStream standalone or using ROS2, we have included a set of examples
+Regardless of running PDDLStream standalone or using ROS 2, we have included a set of examples
 that gradually build up from simple, purely discrete planning, to a more complex integrated TAMP
 demo with continuous action parameters.
 
@@ -44,8 +44,8 @@ You can try running a sample script as follows
 
 |
 
-With ROS2
----------
+With ROS 2
+----------
 
 First, build and setup the ``colcon`` workspace (or use one of our provided Docker containers).
 
@@ -56,7 +56,7 @@ First, build and setup the ``colcon`` workspace (or use one of our provided Dock
     . install/local_setup.bash
 
 
-With ROS2, the idea is to separate out functionality into different *nodes*.
+With ROS 2, the idea is to separate out functionality into different *nodes*.
 
 To start a world and then a planner with a hard-coded goal specification:
 
@@ -85,6 +85,6 @@ The output should look as follows:
 .. image:: ../media/pddlstream_demo_ros.png
     :align: center
     :width: 720px
-    :alt: PDDLStream demo with ROS2.
+    :alt: PDDLStream demo with ROS 2.
 
 |

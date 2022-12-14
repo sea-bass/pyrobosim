@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Test script showing how to use a PDDLStream planner as a ROS2 node.
+Test script showing how to use a PDDLStream planner as a ROS 2 node.
 """
 
 import os

@@ -13,11 +13,11 @@ from pyrobosim.utils.ros_conversions import pose_from_ros, pose_to_ros, task_act
 
 
 class WorldROSWrapper(Node):
-    """ ROS2 wrapper node for pyrobosim worlds. """
+    """ ROS 2 wrapper node for pyrobosim worlds. """
     def __init__(self, world=None, name="pyrobosim",
                  num_threads=os.cpu_count(), state_pub_rate=0.1):
         """
-        Creates a ROS2 world wrapper node.
+        Creates a ROS 2 world wrapper node.
 
         Given a node name (default is ``"pyrobosim"``), this node will:
             * Subscribe to single actions on the ``pyrobosim/commanded_action`` topic.

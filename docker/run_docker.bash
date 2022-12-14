@@ -1,6 +1,6 @@
 # Run docker container
 #
-# To get a specific ROS2 distro, specify the ROS_DISTRO environment variable as follows:
+# To get a specific ROS 2 distro, specify the ROS_DISTRO environment variable as follows:
 #   ROS_DISTRO=humble ./run_docker.bash
 #
 # To run a specific command, you can enter additional arguments:
@@ -11,8 +11,8 @@
 
 if [ "$ROS_DISTRO" == "" ]
 then
-    echo "ROS Distro not specified or found in the ROS_DISTRO environment variable, using Foxy"
-    ROS_DISTRO=foxy
+    echo "ROS Distro not specified or found in the ROS_DISTRO environment variable, using Humble"
+    ROS_DISTRO=humble
 fi
 
 IMAGE_NAME=pyrobosim_$ROS_DISTRO
