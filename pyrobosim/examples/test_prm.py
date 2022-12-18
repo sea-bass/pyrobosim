@@ -17,9 +17,11 @@ def test_prm():
     prm = PRMPlanner(w, max_nodes=100, max_connection_dist=1.5)
     start = Pose(x=-0.5, y=-0.5)
     goal = Pose(x=3.0, y=3.0)
-    w.robot.set_pose(start)
-    w.robot.set_path_planner(prm)
-    w.current_path = w.robot.plan_path(start, goal)
+
+    robot = w.robots[0]
+    robot.set_pose(start)
+    robot.set_path_planner(prm)
+    robot.current_path = robot.plan_path(start, goal)
     prm.print_metrics()
 
 

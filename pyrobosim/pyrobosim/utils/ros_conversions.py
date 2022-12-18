@@ -3,7 +3,6 @@ Utilities to convert between standalone pyrobosim objects and
 ROS representations (messages, services, etc.).
 """
 
-from transforms3d.euler import euler2quat, quat2euler
 import geometry_msgs.msg
 
 import pyrobosim_msgs.msg as ros_msgs
@@ -21,10 +20,9 @@ def pose_from_ros(msg):
     :return: Pose object
     :rtype: :class:`pyrobosim.utils.pose.Pose`
     """
-    eul = quat2euler((msg.orientation.w, msg.orientation.x,
-                      msg.orientation.y, msg.orientation.z))
     return Pose.from_list(
-        [msg.position.x, msg.position.y, msg.position.z, eul[2]])
+        [msg.position.x, msg.position.y, msg.position.z, msg.orientation.w,
+         msg.orientation.x, msg.orientation.y, msg.orientation.z])
 
 
 def pose_to_ros(pose):
@@ -41,11 +39,10 @@ def pose_to_ros(pose):
         pose_msg.position.x = pose.x
         pose_msg.position.y = pose.y
         pose_msg.position.z = pose.z
-        quat = euler2quat(0, 0, pose.yaw)
-        pose_msg.orientation.w = quat[0]
-        pose_msg.orientation.x = quat[1]
-        pose_msg.orientation.y = quat[2]
-        pose_msg.orientation.z = quat[3]
+        pose_msg.orientation.w = pose.q[0]
+        pose_msg.orientation.x = pose.q[1]
+        pose_msg.orientation.y = pose.q[2]
+        pose_msg.orientation.z = pose.q[3]
     return pose_msg
 
 
@@ -133,9 +130,10 @@ def task_action_from_ros(msg):
     """
     if not isinstance(msg, ros_msgs.TaskAction):
         raise Exception("Input is not a TaskAction ROS message")
-    return acts.TaskAction(msg.type, object=msg.object, room=msg.room,
+    pose = pose_from_ros(msg.pose) if msg.has_pose else None
+    return acts.TaskAction(msg.type, robot=msg.robot, object=msg.object, room=msg.room,
                 source_location=msg.source_location, target_location=msg.target_location,
-                pose=pose_from_ros(msg.pose), path=path_from_ros(msg.path), cost=msg.cost)
+                pose=pose, path=path_from_ros(msg.path), cost=msg.cost)
 
 
 def task_action_to_ros(act):
@@ -151,11 +149,14 @@ def task_action_to_ros(act):
         raise Exception("Input is not a TaskAction object")
     
     act_msg = ros_msgs.TaskAction(type=act.type)
+    act_msg.robot = get_entity_name(act.robot)
     act_msg.object = get_entity_name(act.object)
     act_msg.room = get_entity_name(act.room)
     act_msg.source_location = get_entity_name(act.source_location)
     act_msg.target_location = get_entity_name(act.target_location)
-    act_msg.pose = pose_to_ros(act.pose)
+    if act.pose:
+        act_msg.has_pose = True
+        act_msg.pose = pose_to_ros(act.pose)
     act_msg.path = path_to_ros(act.path)  
     if act.cost:
         act_msg.cost = float(act.cost)
@@ -175,7 +176,7 @@ def task_plan_from_ros(msg):
     if not isinstance(msg, ros_msgs.TaskPlan):
         raise Exception("Input is not a TaskPlan ROS message")
     actions = [task_action_from_ros(act_msg) for act_msg in msg.actions]
-    return acts.TaskPlan(actions=actions)
+    return acts.TaskPlan(robot=msg.robot, actions=actions)
 
 
 def task_plan_to_ros(plan):
@@ -190,4 +191,4 @@ def task_plan_to_ros(plan):
     if not isinstance(plan, acts.TaskPlan):
         raise Exception("Input is not a TaskPlan object")
     act_msgs = [task_action_to_ros(act) for act in plan.actions]
-    return ros_msgs.TaskPlan(actions=act_msgs, cost=plan.total_cost)
+    return ros_msgs.TaskPlan(robot=plan.robot, actions=act_msgs, cost=plan.total_cost)

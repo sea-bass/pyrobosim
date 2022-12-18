@@ -108,7 +108,7 @@ def transform_polygon(polygon, pose):
     """
     if pose is not None:
         polygon = translate(polygon, xoff=pose.x, yoff=pose.y)
-        polygon = rotate(polygon, pose.yaw, origin=(pose.x, pose.y), use_radians=True)
+        polygon = rotate(polygon, pose.get_yaw(), origin=(pose.x, pose.y), use_radians=True)
     return polygon
 
 

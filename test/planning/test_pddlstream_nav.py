@@ -50,9 +50,9 @@ def create_test_world(add_hallway=True):
         )
 
     # Add locations and objects
-    table0 = w.add_location("table", "unreachable", Pose(x=3.5, y=-0.25, yaw=0.0))
+    table0 = w.add_location("table", "unreachable", Pose(x=3.5, y=-0.25, z=0.0))
     w.add_object("apple", table0)
-    table1 = w.add_location("table", "goal_room", Pose(x=3.5, y=2.75, yaw=0.0))
+    table1 = w.add_location("table", "goal_room", Pose(x=3.5, y=2.75, z=0.0))
     w.add_object("apple", table1)
 
     # Add a robot
@@ -62,7 +62,7 @@ def create_test_world(add_hallway=True):
     # Create a search graph and motion planner
     w.create_search_graph(max_edge_dist=3.0, collision_check_dist=0.05)
     rrt = RRTPlanner(w, bidirectional=True, rrt_star=True)
-    w.robot.set_path_planner(rrt)
+    r.set_path_planner(rrt)
 
     return w
 
@@ -70,15 +70,14 @@ def create_test_world(add_hallway=True):
 def start_planner(world, domain_name="03_nav_stream", interactive=False):
     domain_folder = os.path.join(get_default_domains_folder(), domain_name)
     planner = PDDLStreamPlanner(world, domain_folder)
-
-    get = lambda entity: world.get_entity_by_name(entity)
-    goal_literals = [("Has", get("robot"), "apple")]
+    goal_literals = [("Has", "robot", "apple")]
 
     if interactive:
         input("Press Enter to start planning.")
-    plan = planner.plan(goal_literals, focused=True, verbose=interactive)
+    robot = world.robots[0]
+    plan = planner.plan(robot, goal_literals, focused=True, verbose=interactive)
     if interactive:
-        world.robot.execute_plan(plan, blocking=True)
+        robot.execute_plan(plan, blocking=True)
     return plan
 
 

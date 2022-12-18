@@ -32,7 +32,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         """
         Creates an instance of the pyrobosim application main window.
 
-        :param world: World object to attach
+        :param world: World object to attach.
         :type world: :class:`pyrobosim.core.world.World`
         """
         super(PyRoboSimMainWindow, self).__init__(*args, **kwargs)
@@ -44,6 +44,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.world.gui = self
         self.world.has_gui = True
 
+        self.layout_created = False
         self.canvas = WorldCanvas(world)
         self.create_layout()
         self.update_manip_state()
@@ -79,11 +80,21 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.rand_obj_button.clicked.connect(self.rand_obj_cb)
         self.buttons_layout.addWidget(self.rand_obj_button)
 
-        # Navigation buttons
-        self.goal_layout = QtWidgets.QHBoxLayout()
-        self.goal_layout.addWidget(QtWidgets.QLabel("Goal query:"))
+        # Robot edit box
+        self.robot_layout = QtWidgets.QGridLayout()
+        self.robot_layout.addWidget(QtWidgets.QLabel("Robot name:"), 0, 1)
+        self.robot_textbox = QtWidgets.QComboBox()
+        robot_names = [r.name for r in self.world.robots]
+        self.robot_textbox.addItems(robot_names)
+        self.robot_textbox.setEditable(True)
+        self.robot_textbox.currentTextChanged.connect(self.update_manip_state)
+        self.robot_layout.addWidget(self.robot_textbox, 0, 2, 0, 8)
+
+        # Goal query edit box
+        self.goal_layout = QtWidgets.QGridLayout()
+        self.goal_layout.addWidget(QtWidgets.QLabel("Goal query:"), 0, 1)
         self.goal_textbox = QtWidgets.QLineEdit()
-        self.goal_layout.addWidget(self.goal_textbox)
+        self.goal_layout.addWidget(self.goal_textbox, 0, 2, 0, 8)
 
         # Action buttons
         self.action_layout = QtWidgets.QHBoxLayout()
@@ -106,21 +117,31 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         # Main layout
         self.main_layout = QtWidgets.QVBoxLayout(self.main_widget)
         self.main_layout.addLayout(self.buttons_layout)
+        self.main_layout.addLayout(self.robot_layout)
         self.main_layout.addLayout(self.goal_layout)
         self.main_layout.addLayout(self.action_layout)
         self.main_layout.addLayout(self.world_layout)
 
         self.main_widget.setLayout(self.main_layout)
         self.setCentralWidget(self.main_widget)
+        self.layout_created = True
+
+    def get_current_robot(self):
+        robot_name = self.robot_textbox.currentText()
+        return self.world.get_robot_by_name(robot_name)
 
     ####################
     # State Management #
     ####################
     def update_manip_state(self):
         """Update the manipulation state to enable/disable buttons."""
-        can_pick = self.world.has_robot and not self.world.robot.manipulated_object
-        self.pick_button.setEnabled(can_pick)
-        self.place_button.setEnabled(not can_pick)
+        robot = self.get_current_robot()
+        if robot:
+            can_pick = robot.manipulated_object is None
+            self.pick_button.setEnabled(can_pick)
+            self.place_button.setEnabled(not can_pick)
+            self.canvas.show_world_state(robot, navigating=False)
+            self.canvas.draw_and_sleep()
 
     def set_buttons_during_action(self, state):
         """
@@ -140,12 +161,18 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
     ####################
     def rand_pose_cb(self):
         """Callback to randomize robot pose."""
-        sampled_pose = self.world.sample_free_robot_pose_uniform()
+        robot = self.get_current_robot()
+        if not robot:
+            print("No robot available.")
+            return None
+
+        sampled_pose = self.world.sample_free_robot_pose_uniform(
+            robot, ignore_robots=False)
         if sampled_pose is not None:
-            self.world.robot.set_pose(sampled_pose)
-            if self.world.robot.manipulated_object is not None:
-                self.world.robot.manipulated_object.pose = sampled_pose
-        self.canvas.update_robot_plot()
+            robot.set_pose(sampled_pose)
+            if robot.manipulated_object is not None:
+                robot.manipulated_object.pose = sampled_pose
+        self.canvas.update_robots_plot()
         self.canvas.show_world_state(navigating=True)
         self.canvas.draw()
 
@@ -162,37 +189,40 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
 
     def on_navigate_click(self):
         """Callback to navigate to a goal location."""
-        if self.world.robot and self.world.robot.executing_action:
+        robot = self.get_current_robot()
+        if robot and robot.executing_action:
             return
 
         query_list = self.goal_textbox.text().split(" ")
         loc = query_to_entity(
-            self.world, query_list, mode="location", resolution_strategy="nearest"
+            self.world, query_list, mode="location", robot=robot,
+            resolution_strategy="nearest"
         )
         if not loc:
             return
 
-        print(f"Navigating to {loc.name}")
-        self.set_buttons_during_action(False)
-        self.canvas.navigate(loc)
-        self.set_buttons_during_action(True)
+        print(f"[{robot.name}] Navigating to {loc.name}")
+        self.canvas.navigate_in_thread(robot, loc)
 
     def on_pick_click(self):
         """Callback to pick an object."""
-        if self.world.robot:
-            loc = self.world.robot.location
+        robot = self.get_current_robot()
+        if robot:
+            loc = robot.location
             query_list = [loc] + self.goal_textbox.text().split(" ")
             obj = query_to_entity(
-                self.world, query_list, mode="object", resolution_strategy="nearest"
+                self.world, query_list, mode="object", robot=robot,
+                resolution_strategy="nearest"
             )
-            print(f"Picking {obj.name}")
-            self.canvas.pick_object(obj)
+            print(f"[{robot.name}] Picking {obj.name}")
+            self.canvas.pick_object(robot, obj)
             self.update_manip_state()
 
     def on_place_click(self):
         """Callback to place an object."""
-        if self.world.robot:
-            if self.world.robot.manipulated_object is not None:
-                print(f"Placing {self.world.robot.manipulated_object.name}")
-            self.canvas.place_object()
+        robot = self.get_current_robot()
+        if robot and robot.manipulated_object is not None:
+            print(f"[{robot.name}] Placing {robot.manipulated_object.name}")
+            self.canvas.place_object(robot)
             self.update_manip_state()
+

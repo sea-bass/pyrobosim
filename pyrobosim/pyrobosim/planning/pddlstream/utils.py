@@ -20,19 +20,20 @@ def get_default_domains_folder():
     return os.path.join(get_data_folder(), "pddlstream", "domains")
 
 
-def world_to_pddlstream_init(world):
+def world_to_pddlstream_init(world, robot):
     """
     Converts a world representation object to a PDDLStream compatible
     initial condition specification.
 
     :param world: World model.
     :type world: :class:`pyrobosim.core.world.World`
+    :param robot: Robot to use for planning.
+    :type robot: :class:`pyrobosim.core.robot.Robot`
     :return: PDDLStream compatible initial state representation.
     :rtype: list[tuple]
     """
 
     # Start with the robot initial conditions
-    robot = world.robot
     init_loc = robot.location
     if not init_loc:
         init_loc = world.get_location_from_pose(robot.pose)
@@ -81,13 +82,50 @@ def world_to_pddlstream_init(world):
     return init
 
 
-def pddlstream_solution_to_plan(solution):
+def process_goal_specification(goal_literals, world):
+    """
+    Processes and validates a goal specification for planning.
+
+    :param goal_literals: List of literals describing a goal specification.
+    :type goal_literals: list[tuple]
+    """
+    for i, literal in enumerate(goal_literals):
+        # If any predicate has a string argument, check whether it corresponds
+        # to a named entity in the world. If it does, replace it.
+        for j, elem in enumerate(literal):
+            if j > 0 and isinstance(elem, str):
+                entity = world.get_entity_by_name(elem)
+                if entity:
+                    replace_goal_literal_tuple(goal_literals, i, j, entity)
+
+
+def replace_goal_literal_tuple(goal_literals, literal_idx, arg_idx, new_val):
+    """
+    Utility function to replace the element of a goal literal tuple in place.
+    
+    :param goal_literals: List of literals describing a goal specification.
+    :type goal_literals: list[tuple]   
+    :param literal_idx: Index of goal literal in list to replace.
+    :type literal_idx: int
+    :param arg_idx: Index of argument in goal literal to replace.
+    :type arg_idx: int
+    :param new_val: New value to replace inside the goal literal tuple.
+    :type new_val: Any
+    """
+    literal_copy = list(goal_literals[literal_idx])
+    literal_copy[arg_idx] = new_val
+    goal_literals[literal_idx] = tuple(literal_copy)
+
+
+def pddlstream_solution_to_plan(solution, robot):
     """
     Converts the output plan of a PDDLStream solution to a plan
     list compatible with plan execution infrastructure.
 
-    :param: PDDLStream compatible initial state representation.
-    :type: list[tuple]
+    :param solution: PDDLStream compatible initial state representation.
+    :type solution: list[tuple]
+    :param robot: Name of robot to execute plan.
+    :type robot: str
     :return: Task plan object.
     :rtype: :class:`pyrobosim.planning.actions.TaskPlan`
     """
@@ -96,10 +134,11 @@ def pddlstream_solution_to_plan(solution):
     if plan is None or len(plan) == 0:
         return None
 
-    plan_out = TaskPlan(actions=[])
+    plan_out = TaskPlan(robot=robot, actions=[])
     for act_pddl in plan:
         # Convert the PDDL action to a TaskAction
         act = TaskAction(act_pddl.name)
+        act.robot = robot
         # Parse a NAVIGATE action
         if act.type == "navigate":
             act.source_location = act_pddl.args[1]

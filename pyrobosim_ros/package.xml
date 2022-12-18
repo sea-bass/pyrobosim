@@ -3,7 +3,7 @@
 <package format="3">
   <name>pyrobosim_ros</name>
   <version>0.0.0</version>
-  <description>ROS2 wrapper around pyrobosim.</description>
+  <description>ROS 2 wrapper around pyrobosim.</description>
   <maintainer email="sebas.a.castro@gmail.com">Sebastian Castro</maintainer>
   <license>BSD</license>
 
@@ -16,6 +16,7 @@
   <!-- Execution dependencies -->
   <exec_depend>rclcpp</exec_depend>
   <exec_depend>rclpy</exec_depend>
+  <exec_depend>ros2launch</exec_depend>
   <exec_depend>pyrobosim_msgs</exec_depend>
 
   <!-- Test dependencies -->

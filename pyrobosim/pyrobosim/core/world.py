@@ -8,6 +8,7 @@ from .hallway import Hallway
 from .locations import Location, ObjectSpawn
 from .objects import Object
 from .room import Room
+from .robot import Robot
 from ..navigation.search_graph import Node, SearchGraph, SearchGraphPlanner
 from ..utils.knowledge import resolve_to_location, resolve_to_object
 from ..utils.pose import Pose
@@ -37,11 +38,11 @@ class World:
         self.has_ros_node = False
         self.ros_node = False
 
-        # Robot
-        self.robot = None
-        self.has_robot = False
+        # Robots
+        self.robots = []
 
         # World entities (rooms, locations, objects, etc.)
+        self.name_to_entity = {}
         self.rooms = []
         self.hallways = []
         self.locations = []
@@ -61,8 +62,6 @@ class World:
 
         # Search graph for navigation
         self.search_graph = None
-        self.current_goal = None
-        self.current_path = None
         self.path_planner = None
 
         # Other parameters
@@ -136,6 +135,7 @@ class World:
             return False
 
         self.rooms.append(room)
+        self.name_to_entity[room.name] = room
         self.num_rooms += 1
         self.update_bounds()
 
@@ -158,19 +158,20 @@ class World:
         :return: True if the room was successfully removed, else False.
         :rtype: bool
         """
-        for i, room in enumerate(self.rooms):
-            if room.name == room_name:
-                self.rooms.pop(i)
-                self.num_rooms -= 1
-                self.update_bounds()
-                
-                # Update the search graph, if any
-                if self.search_graph is not None:
-                    self.search_graph.remove(room.graph_nodes)
-                return True
+        room = self.get_room_by_name(room_name)
+        if room is None:
+            warnings.warn(f"No room {room_name} found for removal.")
+            return False
 
-        warnings.warn(f"No room {room_name} found for removal.")
-        return False
+        self.rooms.remove(room)
+        self.name_to_entity.pop(room_name)
+        self.num_rooms -= 1
+        self.update_bounds()
+        
+        # Update the search graph, if any
+        if self.search_graph is not None:
+            self.search_graph.remove(room.graph_nodes)
+        return True
 
     def add_hallway(self, room_start, room_end, width,
                     conn_method="auto", offset=0, conn_angle=0,
@@ -228,6 +229,7 @@ class World:
 
         # Do all the necessary bookkeeping
         self.hallways.append(h)
+        self.name_to_entity[h.name] = h
         room_start.hallways.append(h)
         room_start.update_visualization_polygon()
         room_end.hallways.append(h)
@@ -260,6 +262,7 @@ class World:
 
         # Remove the hallways from the world and relevant rooms.
         self.hallways.remove(hallway)
+        self.name_to_entity.pop(hallway.name)
         for r in [hallway.room_start, hallway.room_end]:
             r.hallways.remove(hallway)
             r.update_collision_polygons()
@@ -311,6 +314,9 @@ class World:
         self.locations.append(loc)
         self.location_instance_counts[category] +=1
         self.num_locations += 1
+        self.name_to_entity[loc.name] = loc
+        for spawn in loc.children:
+            self.name_to_entity[spawn.name] = spawn
 
         # Update the search graph, if any
         if self.search_graph is not None:
@@ -319,7 +325,6 @@ class World:
                 self.search_graph.add(spawn.graph_nodes, autoconnect=True)
 
         return loc
-
 
     def update_location(self, loc, pose, room=None):
         """ 
@@ -353,7 +358,8 @@ class World:
         new_polygon = transform_polygon(loc.raw_polygon, pose)
         is_valid_pose = new_polygon.within(room.polygon)
         for other_loc in room.locations:
-            is_valid_pose = is_valid_pose and not new_polygon.intersects(other_loc.polygon)
+            if loc != other_loc:
+                is_valid_pose = is_valid_pose and not new_polygon.intersects(other_loc.polygon)
         if not is_valid_pose:
             warnings.warn(f"Location {loc.name} in collision. Cannot add to world.")
             return False
@@ -364,7 +370,8 @@ class World:
         room.locations.append(loc)
         loc.set_pose(pose)
         loc.create_polygons(self.inflation_radius)
-        loc.create_spawn_locations()
+        for spawn in loc.children:
+            spawn.set_pose_from_parent()
         return True
 
     def remove_location(self, loc):
@@ -387,6 +394,9 @@ class World:
             room = loc.parent
             room.locations.remove(loc)
             room.update_collision_polygons(self.inflation_radius)
+            self.name_to_entity.pop(loc.name)
+            for spawn in loc.children:
+                self.name_to_entity.pop(spawn.name)
             return True
         return False
 
@@ -439,7 +449,10 @@ class World:
             for _ in range(self.max_object_sample_tries):
                 x_sample, y_sample = sample_from_polygon(obj_spawn.polygon)
                 yaw_sample = np.random.uniform(-np.pi, np.pi)
-                pose_sample = Pose(x=x_sample, y=y_sample, yaw=yaw_sample)
+                pose_sample = Pose(x=x_sample,
+                                   y=y_sample,
+                                   z=0.0,
+                                   yaw=yaw_sample)
                 poly = inflate_polygon(
                     transform_polygon(obj.polygon, pose_sample), self.object_radius)
                 
@@ -469,9 +482,9 @@ class World:
         # Do the necessary bookkeeping
         obj_spawn.children.append(obj)
         self.objects.append(obj)
+        self.name_to_entity[obj.name] = obj
         self.num_objects += 1
         return obj
-
 
     def update_object(self, obj, loc=None, pose=None):
         """
@@ -519,7 +532,6 @@ class World:
 
         return True
         
-
     def remove_object(self, obj):
         """ 
         Cleanly removes an object from the world.
@@ -533,6 +545,7 @@ class World:
             obj = self.get_object_by_name(obj)
         if obj in self.objects:
             self.objects.remove(obj)
+            self.name_to_entity.pop(obj.name)
             self.num_objects -= 1
             obj.parent.children.remove(obj)
             return True
@@ -586,6 +599,26 @@ class World:
         # If we made it through, the pose is occupied.
         return True
 
+    def collides_with_robots(self, pose, robot=None):
+        """
+        Checks if a pose collides with robots in the world.
+        Currently assumes that robots are circles, so we can do simple checks.
+        If this changes, should account for polygon collisions.
+
+        :param pose: Candidate pose to check.
+        :type pose: :class:`pyrobosim.utils.pose.Pose`
+        :param robot: Robot instance, if specified.
+        :type robot: :class:`pyrobosim.core.robot.Robot`, optional
+        :return: True if the pose collides with a robot besides the input.
+        :rtype: bool
+        """
+        radius = self.inflation_radius if robot is None else robot.radius
+        robot_list = [r for r in self.robots if r is not robot]
+        for r in robot_list:
+            if pose.get_linear_distance(r.pose) < (radius + robot.radius):
+                return True
+        return False  
+
     def create_search_graph(self, max_edge_dist=np.inf, collision_check_dist=0.1,
                             create_planner=False):
         """ 
@@ -623,7 +656,7 @@ class World:
         self.create_search_graph(max_edge_dist=self.search_graph.max_edge_dist,
                                  collision_check_dist=self.search_graph.collision_check_dist)
 
-    def find_path(self, goal, start=None):
+    def find_path(self, goal, start=None, robot=None):
         """
         Finds a path from a start to goal location.
         If no start argument is provided, we assume it is the current robot pose.
@@ -635,18 +668,22 @@ class World:
         """
         # Prepare by adding start and goal nodes to the graph.
         if start is None:
-            start = self.robot.pose
+            if robot is None:
+                warnings.warn("Cannot find path if no start pose or robot specified.")
+                return None
+            else:
+                start = robot.pose
 
         created_start_node = False
         if isinstance(start, Pose):
-            start_loc = self.robot.location if self.has_robot else None
+            start_loc = robot.location if robot else None
             if not start_loc:
                 start_loc = self.get_location_from_pose(start)
             start_node = Node(start, parent=start_loc)
             self.search_graph.add(start_node, autoconnect=True)
             created_start_node = True
         else:
-            start_node = self.graph_node_from_entity(start)
+            start_node = self.graph_node_from_entity(start, robot=robot)
             if start_node is None:
                 warnings.warn("Invalid start specified")
                 return None
@@ -657,33 +694,38 @@ class World:
             self.search_graph.add(goal_node, autoconnect=True)
             created_goal_node = True
         else:
-            goal_node = self.graph_node_from_entity(goal)
+            goal_node = self.graph_node_from_entity(goal, robot=robot)
             if goal_node is None:
                 warnings.warn("Invalid goal specified")
                 return None
-        self.current_goal = goal_node.parent
 
         # Do the actual planning.
-        if self.robot.path_planner:
+        current_path = None
+        if robot and robot.path_planner:
             # Plan with the robot's local planner.
             goal = goal_node.pose
-            self.current_path = self.robot.path_planner.plan(start, goal)
+            current_path = robot.path_planner.plan(start, goal)
         elif self.path_planner:
             # Plan with the robot's global planner.
-            self.current_path = self.path_planner.plan(start_node, goal_node)
+            current_path = self.path_planner.plan(start_node, goal_node)
         else:
             warnings.warn("No global or local path planners specified.")
             return None
 
-        # If we created temporary nodes for search, remove them
+        # If we created temporary nodes for search, remove them.
         if created_start_node:
             self.search_graph.remove(start_node)
         if created_goal_node:
             self.search_graph.remove(goal_node)
 
-        return self.current_path
+        # Assign current path and goal to robot, if one specified.
+        if robot:
+            robot.current_path = current_path
+            robot.current_goal = goal_node.parent
 
-    def graph_node_from_entity(self, entity_query, resolution_strategy="nearest"):
+        return current_path
+
+    def graph_node_from_entity(self, entity_query, resolution_strategy="nearest", robot=None):
         """
         Gets a graph node from an entity query, which could be any combination of
         room, hallway, location, object spawn, or object in the world, as well as 
@@ -695,6 +737,8 @@ class World:
         :type entity_query: list[Entity/str]
         :param resolution_strategy: Resolution strategy to apply
         :type resolution_strategy: str
+        :param robot: If set to a Robot instance, uses that robot for resolution strategy.
+        :type robot: :class:`pyrobosim.core.robot.Robot`, optional
         :return: A graph node for the entity that meets the resolution strategy, or None.
         :rtype: :class:`pyrobosim.navigation.search_graph.Node`
         """
@@ -706,10 +750,10 @@ class World:
             entity = self.get_entity_by_name(entity_query)
             if entity is None:
                 entity = resolve_to_location(self, category=entity_query,
-                    expand_locations=True, resolution_strategy=resolution_strategy)
+                    expand_locations=True, resolution_strategy=resolution_strategy, robot=robot)
             if entity is None:
                 entity = resolve_to_object(self, category=entity_query,
-                    resolution_strategy=resolution_strategy, ignore_grasped=True)
+                    resolution_strategy=resolution_strategy, robot=robot, ignore_grasped=True)
         else:
             entity = entity_query
 
@@ -729,7 +773,7 @@ class World:
         graph_node = graph_nodes[0]
         return graph_node
 
-    def sample_free_robot_pose_uniform(self):
+    def sample_free_robot_pose_uniform(self, robot=None, ignore_robots=True):
         """ 
         Sample an unoccupied robot pose in the world.
         
@@ -738,22 +782,28 @@ class World:
         If no valid samples could be found within the `max_object_sample_tries` instance
         attribute, this will return ``None``.
 
+        :param robot: Robot instance, if specified.
+        :type robot: :class:`pyrobosim.core.robot.Robot`, optional
+        :param ignore_robots: If True, ignore collisions with other robots.
+        :type ignore_robots: bool
         :return: Collision-free pose if found, else ``None``.
         :rtype: :class:`pyrobosim.utils.pose.Pose`
         """
         xmin, xmax = self.x_bounds
         ymin, ymax = self.y_bounds
-        r = self.inflation_radius
+        r = self.inflation_radius if robot is None else robot.radius
 
         for _ in range(self.max_object_sample_tries):
             x = (xmax - xmin - 2*r) * np.random.random() + xmin + r
             y = (ymax - ymin - 2*r) * np.random.random() + ymin + r
             yaw = 2.0 * np.pi * np.random.random()
-            if not self.check_occupancy((x, y)):
-                return Pose(x=x, y=y, yaw=yaw)
+            pose = Pose(x=x, y=y, z=0.0, yaw=yaw)
+            if (not self.check_occupancy(pose) and
+                (ignore_robots or not self.collides_with_robots(pose, robot))):
+                return pose
         warnings.warn("Could not sample pose.")
         return None
-
+  
     ################################
     # Lookup Functionality Methods #
     ################################
@@ -775,13 +825,16 @@ class World:
         :return: Room instance matching the input name, or ``None`` if not valid.
         :rtype: :class:`pyrobosim.core.room.Room`
         """
-        names = self.get_room_names()
-        if name in names:
-            idx = names.index(name)
-            return self.rooms[idx]
-        else:
+        if name not in self.name_to_entity:
             warnings.warn(f"Room not found: {name}")
             return None
+        
+        entity = self.name_to_entity[name]
+        if not isinstance(entity, Room):
+            warnings.warn(f"Entity {name} found but it is not a Room.")
+            return None
+        
+        return entity            
 
     def get_hallways_from_rooms(self, room1, room2):
         """ 
@@ -798,12 +851,12 @@ class World:
         if isinstance(room1, str):
             room1 = self.get_room_by_name(room1)
         if not isinstance(room1, Room):
-            warnings.warn("Invalid room1 specified")
+            warnings.warn("Invalid room1 specified.")
             return []
         if isinstance(room2, str):
             room2 = self.get_room_by_name(room2)
         if not isinstance(room2, Room):
-            warnings.warn("Invalid room2 specified")
+            warnings.warn("Invalid room2 specified.")
             return []
 
         # Now search through the hallways and add any valid ones to the list
@@ -855,12 +908,16 @@ class World:
         :return: Location instance matching the input name, or ``None`` if not valid.
         :rtype: :class:`pyrobosim.core.locations.Location`
         """
-        names = self.get_location_names()
-        if name in names:
-            idx = names.index(name)
-            return self.locations[idx]
-        else:
+        if name not in self.name_to_entity:
+            warnings.warn(f"Location not found: {name}")
             return None
+        
+        entity = self.name_to_entity[name]
+        if not isinstance(entity, Location):
+            warnings.warn(f"Entity {name} found but it is not a Location.")
+            return None
+        
+        return entity  
 
     def get_location_from_pose(self, pose):
         """ 
@@ -882,6 +939,36 @@ class World:
                 if spawn.is_inside(pose):
                     return spawn
         return None
+
+    def get_object_spawns(self, category_list=None):
+        """ 
+        Gets all object spawn locations, optionally filtered by category.
+        
+        :param category_list: Optional list of categories to filter by.
+        :type category_list: list[str]
+        :return: List of object spawn locations that match the input category
+            list, if specified.
+        :rtype: list[:class:`pyrobosim.core.locations.ObjectSpawn`]
+        """
+        spawn_list = []
+        for loc in self.locations:
+            if not category_list or loc.category in category_list:
+                spawn_list.extend(loc.children)
+
+    def get_object_spawn_names(self, category_list=None):
+        """ 
+        Gets all object spawn location names, optionally filtered by category.
+        
+        :param category_list: Optional list of categories to filter by.
+        :type category_list: list[str]
+        :return: List of object spawn location names that match the input
+            category list, if specified.
+        :rtype: list[str]
+        """
+        spawn_name_list = []
+        for loc in self.locations:
+            if not category_list or loc.category in category_list:
+                spawn_name_list.extend([spawn.name for spawn in loc.children])
 
     def get_objects(self, category_list=None):
         """ 
@@ -922,12 +1009,43 @@ class World:
         :return: Object instance matching the input name, or ``None`` if not valid.
         :rtype: :class:`pyrobosim.core.object.Object`
         """
-        names = self.get_object_names()
-        if name in names:
-            idx = names.index(name)
-            return self.objects[idx]
-        else:
+        if name not in self.name_to_entity:
             return None
+        
+        entity = self.name_to_entity[name]
+        if not isinstance(entity, Object):
+            warnings.warn(f"Entity {name} found but it is not an Object.")
+            return None
+        
+        return entity 
+
+    def get_robot_names(self):
+        """ 
+        Gets all robot names in the world.
+        
+        :return: List of robot names.
+        :rtype: list[str]
+        """
+        return [r.name for r in self.robots]
+
+    def get_robot_by_name(self, name):
+        """ 
+        Gets a robot by its name.
+        
+        :param name: Name of robot.
+        :type name: str
+        :return: Robot instance matching the input name, or ``None`` if not valid.
+        :rtype: :class:`pyrobosim.core.robot.Robot`
+        """
+        if name not in self.name_to_entity:
+            return None
+        
+        entity = self.name_to_entity[name]
+        if not isinstance(entity, Robot):
+            warnings.warn(f"Entity {name} found but it is not a Robot.")
+            return None
+        
+        return entity  
 
     def get_entity_by_name(self, name):
         """ 
@@ -937,17 +1055,10 @@ class World:
         :type name: str
         :return: Entity object instance matching the input name, or ``None`` if not valid.
         """
-        if self.robot and name == self.robot.name:
-            return self.robot # Should be part of the chain below when multiple robots are supported.
-        for entity in itertools.chain(
-            self.rooms, self.hallways, self.locations, self.objects):
-            if entity.name == name:
-                return entity
-            elif isinstance(entity, Location):
-                for spawn in entity.children:
-                    if spawn.name == name:
-                        return spawn
-        return None
+        if name in self.name_to_entity:
+            return self.name_to_entity[name]
+        else:
+            return None
 
     def add_robot(self, robot, loc=None, pose=None, use_robot_pose=False):
         """
@@ -962,10 +1073,20 @@ class World:
         :param use_robot_pose: If True, uses the pose already specified in the robot instance.
         :type use_robot_pose: bool, optional
         """
-        old_inflation_radius = self.inflation_radius
-        self.set_inflation_radius(robot.radius)
-        valid_pose = True
+        # Check that the robot name doesn't already exist.
+        if robot.name in self.get_robot_names():
+            warnings.warn(f"Robot name {robot.name} already exists in world.")
+            return
 
+        # If the new robot has a bigger inflation radius than previously,
+        # use this new one. Otherwise, we can leave it as is.
+        old_inflation_radius = self.inflation_radius
+        new_inflation_radius = max(
+            [r.radius for r in self.robots] + [robot.radius])
+        if new_inflation_radius > old_inflation_radius:
+            self.set_inflation_radius(new_inflation_radius)
+
+        valid_pose = True
         if use_robot_pose:
             # If using the robot pose, simply add the robot and we're done!
             robot_pose = robot.pose
@@ -976,7 +1097,8 @@ class World:
         elif loc is None:
             if pose is None:
                 # If nothing is specified, sample any valid location in the world
-                robot_pose = self.sample_free_robot_pose_uniform()
+                robot_pose = self.sample_free_robot_pose_uniform(
+                    robot, ignore_robots=False)
                 if robot_pose is None:
                     warnings.warn("Unable to sample free pose.")
                     valid_pose = False
@@ -1003,7 +1125,10 @@ class World:
                         warnings.warn(f"Could not sample pose in {loc.name}.")
                         valid_pose = False
                     yaw_sample = np.random.uniform(-np.pi, np.pi)
-                    robot_pose = Pose(x=x_sample, y=y_sample, yaw=yaw_sample)
+                    robot_pose = Pose(x=x_sample,
+                                      y=y_sample,
+                                      z=0.0,
+                                      yaw=yaw_sample)
                 else:
                     # Validate that the pose is unoccupied and in the right location 
                     if not loc.is_collision_free(pose):
@@ -1025,27 +1150,42 @@ class World:
 
         # If we got a valid location / pose combination, add the robot
         if valid_pose:
-            self.robot = robot
-            self.robot.location = loc
-            self.robot.set_pose(robot_pose)
-            self.robot.world = self
-            self.has_robot = True
+            robot.location = loc
+            robot.set_pose(robot_pose)
+            robot.world = self
+            self.robots.append(robot)
+            self.name_to_entity[robot.name] = robot
         else:
             warnings.warn("Could not add robot.")
             self.set_inflation_radius(old_inflation_radius)
 
-    def remove_robot(self):
+        if self.has_gui:
+            self.gui.canvas.show_robots()
+        if self.has_ros_node:
+            self.ros_node.add_robot_state_publishers()
+
+    def remove_robot(self, robot_name):
         """ 
         Removes a robot from the world.
         
         :return: True if the robot was successfully removed, else False.
         :rtype: bool
         """
-        if self.has_robot:
-            self.robot = None
-            self.has_robot = False
+        robot = self.get_robot_by_name(robot_name)
+        if robot:
+            self.robots.remove(robot)
+            self.name_to_entity.pop(robot_name)
+            if self.has_gui:
+                self.gui.canvas.show_robots()
+            if self.has_ros_node:
+                self.ros_node.remove_robot_state_publisher(robot)
+
+            # Find the new max inflation radius and revert it.
+            new_inflation_radius = max(
+                [r.radius for r in self.robots] + [robot.radius])
+            if new_inflation_radius != self.inflation_radius:
+                self.set_inflation_radius(new_inflation_radius)
             return True
         else:
-            warnings.warn("No robot to remove.")
+            warnings.warn(f"Could not find robot {robot_name} to remove.")
             return False
-            

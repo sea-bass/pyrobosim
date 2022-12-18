@@ -38,13 +38,13 @@ def create_test_world(add_alt_desk=True):
     w.add_hallway(home, storage, width=0.75, conn_method="auto")
 
     # Add locations and objects
-    table0 = w.add_location("table", "home", Pose(x=0.0, y=0.5, yaw=np.pi / 2))
-    desk0 = w.add_location("desk", "storage", Pose(x=2.5, y=-1.5, yaw=0.0))
+    table0 = w.add_location("table", "home", Pose(x=0.0, y=0.5, z=0, yaw=np.pi/2))
+    desk0 = w.add_location("desk", "storage", Pose(x=2.5, y=-1.5, z=0.0, yaw=0.0))
     if add_alt_desk:
-        desk1 = w.add_location("desk", "storage", Pose(x=4.5, y=1.5, yaw=0.0))
+        desk1 = w.add_location("desk", "storage", Pose(x=4.5, y=1.5, z=0.0, yaw=0.0))
     w.add_object("banana", table0)
-    w.add_object("water", desk0, pose=Pose(x=2.4, y=-1.4, yaw=np.pi / 4.0))
-    w.add_object("water", desk0, pose=Pose(x=2.575, y=-1.57, yaw=-np.pi / 4.0))
+    w.add_object("water", desk0, pose=Pose(x=2.4, y=-1.4, z=0, yaw=np.pi/4.0))
+    w.add_object("water", desk0, pose=Pose(x=2.575, y=-1.57, z=0, yaw=-np.pi/4.0))
 
     # Add a robot
     r = Robot(radius=0.1, path_executor=ConstantVelocityExecutor())
@@ -53,12 +53,13 @@ def create_test_world(add_alt_desk=True):
     # Create a search graph and motion planner
     w.create_search_graph(max_edge_dist=3.0, collision_check_dist=0.05)
     rrt = RRTPlanner(w, bidirectional=True, rrt_star=True)
-    w.robot.set_path_planner(rrt)
+    r.set_path_planner(rrt)
 
     return w
 
 
-def start_planner(world, domain_name="04_nav_manip_stream", interactive=False):
+def start_planner(world, domain_name="04_nav_manip_stream",
+                  interactive=False, max_attempts=1):
     domain_folder = os.path.join(get_default_domains_folder(), domain_name)
     planner = PDDLStreamPlanner(world, domain_folder)
 
@@ -66,24 +67,25 @@ def start_planner(world, domain_name="04_nav_manip_stream", interactive=False):
 
     if interactive:
         input("Press Enter to start planning.")
-    plan = planner.plan(goal_literals, focused=True, verbose=interactive)
+    robot = world.robots[0]
+    plan = planner.plan(robot, goal_literals, focused=True,
+                        max_attempts=max_attempts, verbose=interactive)
     if interactive:
-        world.robot.execute_plan(plan, blocking=True)
+        robot.execute_plan(plan, blocking=True)
     return plan
-
 
 #####################
 # ACTUAL UNIT TESTS #
 #####################
 def test_plan_single_desk():
     w = create_test_world(add_alt_desk=False)
-    plan = start_planner(w)
+    plan = start_planner(w, max_attempts=3)
     assert plan is not None
 
 
 def test_plan_double_desk():
     w = create_test_world(add_alt_desk=True)
-    plan = start_planner(w)
+    plan = start_planner(w, max_attempts=3)
     assert plan is not None
 
 
@@ -94,7 +96,7 @@ if __name__ == "__main__":
     import threading
 
     domain_name = "04_nav_manip_stream"
-    t = threading.Thread(target=start_planner, args=(w, domain_name, True))
+    t = threading.Thread(target=start_planner, args=(w, domain_name, True, 3))
     t.start()
 
     from pyrobosim.gui.main import PyRoboSimGUI

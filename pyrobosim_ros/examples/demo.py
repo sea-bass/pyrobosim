@@ -6,7 +6,6 @@ additionally starting up a ROS interface.
 """
 import os
 import sys
-import argparse
 import numpy as np
 
 from pyrobosim.core.robot import Robot
@@ -62,7 +61,8 @@ def create_world():
     w.add_object("water", desk)
 
     # Add a robot
-    r = Robot(radius=0.1, path_executor=ConstantVelocityExecutor())
+    r = Robot(name="robot", radius=0.1,
+              path_executor=ConstantVelocityExecutor())
     w.add_robot(r, loc="kitchen")
 
     # Create a search graph
@@ -84,40 +84,36 @@ def start_gui(world, args):
     sys.exit(app.exec_())
 
 
-def start_ros_node(world):
+def create_ros_node():
     """ Initializes ROS node """
     import rclpy
     from pyrobosim.core.ros_interface import WorldROSWrapper
 
     rclpy.init()
-    world_node = WorldROSWrapper(world, name="test_world", state_pub_rate=0.1)
-    world_node.start()
+    node = WorldROSWrapper(state_pub_rate=0.1)
+    node.declare_parameter("world_file", value="")
+    
+    # Set the world
+    world_file = node.get_parameter("world_file").value
+    if world_file == "":
+        node.get_logger().info("Creating demo world programmatically.")
+        w = create_world()
+    else:
+        node.get_logger().info(f"Using world file {world_file}.")
+        w = create_world_from_yaml(world_file)
+        
+    node.set_world(w)
 
-
-def parse_args():
-    """ Parse command-line arguments """
-    parser = argparse.ArgumentParser(description="Main pyrobosim ROS2 demo.")
-    parser.add_argument("--from-file", action="store_true",
-                        help="Load from YAML file")
-    parser.add_argument("--world-file", default="test_world.yaml",
-                        help="YAML file name (should be in the pyrobosim/data folder). " +
-                             "Defaults to test_world.yaml")
-    return parser.parse_args()
+    return node
 
 
 if __name__ == "__main__":
-    args = parse_args()
+    n = create_ros_node()
 
-    # Create a world or load it from file.
-    if args.from_file:
-        w = create_world_from_yaml(args.world_file)
-    else:
-        w = create_world()
-
-    # Start ROS Node in separate thread
+    # Start ROS node in separate thread
     import threading
-    t = threading.Thread(target=start_ros_node, args=(w,))
+    t = threading.Thread(target=n.start)
     t.start()
 
     # Start GUI in main thread
-    start_gui(w, sys.argv)
+    start_gui(n.world, sys.argv)

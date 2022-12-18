@@ -7,7 +7,8 @@ from pddlstream.language.constants import And, PDDLProblem
 from pddlstream.utils import read
 
 from .mappings import get_stream_info, get_stream_map
-from .utils import world_to_pddlstream_init, pddlstream_solution_to_plan
+from .utils import process_goal_specification, world_to_pddlstream_init, \
+    pddlstream_solution_to_plan
 
 
 class PDDLStreamPlanner:
@@ -37,11 +38,13 @@ class PDDLStreamPlanner:
 
     def plan(
         self,
+        robot,
         goal_literals,
         focused=True,
         planner="ff-astar",
         max_time=60.0,
         max_iterations=10,
+        max_attempts=1,
         search_sample_ratio=1.0,
         verbose=False,
     ):
@@ -49,6 +52,8 @@ class PDDLStreamPlanner:
         Searches for a set of actions that completes a goal specification
         given an initial state of the world.
 
+        :param robot: Robot to use for planning.
+        :type robot: :class:`pyrobosim.core.robot.Robot`
         :param goal_literals: List of literals describing a goal specification.
         :type goal_literals: list[tuple]
         :param focused: If True (default), uses the focused algorithm; else, uses incremental.
@@ -59,6 +64,8 @@ class PDDLStreamPlanner:
         :type max_time: float, optional
         :param max_iterations: Maximum planning iterations.
         :type max_iterations: int, optional
+        :param max_attempts: Maximum planning attempts.
+        :type max_attempts: int, optional
         :param search_sample_ratio: Search to sample time ratio, used only for the focused algorithm.
         :type search_sample_ratio: float, optional
         :param verbose: If True, prints additional information. Defaults to False.
@@ -67,7 +74,8 @@ class PDDLStreamPlanner:
         :rtype: :class:`pyrobosim.planning.actions.TaskPlan`
         """
         # Set the initial and goal states for PDDLStream
-        init = world_to_pddlstream_init(self.world)
+        init = world_to_pddlstream_init(self.world, robot)
+        process_goal_specification(goal_literals, self.world)
         goal = And(*goal_literals)
         self.latest_specification = goal
 
@@ -80,33 +88,41 @@ class PDDLStreamPlanner:
             self.domain_pddl,
             constant_map,
             external_pddl,
-            get_stream_map(self.world),
+            get_stream_map(self.world, robot),
             init,
             goal,
         )
 
-        # Solve the problem using either focused or incremental algorithms.
-        # The ``get_stream_info()`` function comes from the ``mappings.py``
-        # file, so as you add new functionality you should fill it out there.
-        if focused:
-            solution = solve_focused(
-                prob,
-                planner=planner,
-                stream_info=get_stream_info(),
-                search_sample_ratio=search_sample_ratio,
-                max_time=max_time,
-                max_planner_time=max_time,
-                max_iterations=max_iterations,
-                initial_complexity=0,
-                verbose=verbose,
-            )
-        else:
-            solution = solve_incremental(
-                prob, planner=planner, max_time=max_time, verbose=verbose
-            )
+        for i in range(max_attempts):
+
+            # Solve the problem using either focused or incremental algorithms.
+            # The ``get_stream_info()`` function comes from the ``mappings.py``
+            # file, so as you add new functionality you should fill it out there.
+            if focused:
+                solution = solve_focused(
+                    prob,
+                    planner=planner,
+                    stream_info=get_stream_info(),
+                    search_sample_ratio=search_sample_ratio,
+                    max_time=max_time,
+                    max_planner_time=max_time,
+                    max_iterations=max_iterations,
+                    initial_complexity=0,
+                    verbose=verbose,
+                )
+            else:
+                solution = solve_incremental(
+                    prob, planner=planner, max_time=max_time, verbose=verbose
+                )
+
+            # If the solution is valid, no need to try again
+            # TODO: Could later consider an option to execute all the attempts
+            # and take the minimum-cost plan from that batch.
+            plan_out = pddlstream_solution_to_plan(solution, robot.name)
+            if plan_out is not None:
+                break
 
         # Convert the solution to a TaskPlan object.
-        plan_out = pddlstream_solution_to_plan(solution)
         self.latest_plan = plan_out
         if verbose:
             print("\nInitial conditions:")

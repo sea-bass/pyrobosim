@@ -7,19 +7,10 @@ Task and Motion Planner such as PDDLStream.
 
 import os
 import sys
-import argparse
 import threading
 
 from pyrobosim.core.yaml import WorldYamlLoader
 from pyrobosim.utils.general import get_data_folder
-
-
-def parse_args():
-    """ Parse command-line arguments """
-    parser = argparse.ArgumentParser(description="PDDLStream demo world node.")
-    parser.add_argument("--example", default="01_simple",
-                        help="Example name (01_simple, 02_derived, 03_nav_stream, 04_nav_manip_stream)")
-    return parser.parse_args()
 
 
 def load_world():
@@ -38,24 +29,24 @@ def start_gui(world, args):
     sys.exit(app.exec_())
 
 
-def start_ros_node(world):
+def create_ros_node():
     """ Initializes ROS node """
     import rclpy
-    from pyrobosim.core.ros_interface import WorldROSWrapper
-
     rclpy.init()
-    world_node = WorldROSWrapper(world, name="pddl_demo", state_pub_rate=0.1)
-    world_node.start()
+
+    from pyrobosim.core.ros_interface import WorldROSWrapper
+    w = load_world()
+    node = WorldROSWrapper(world=w, name="pddl_demo", state_pub_rate=0.1)
+    return node
 
 
 if __name__ == "__main__":
-    args = parse_args()
-    w = load_world()
+    n = create_ros_node()
 
     # Start ROS Node in separate thread
     import threading
-    t = threading.Thread(target=start_ros_node, args=(w,))
+    t = threading.Thread(target=n.start)
     t.start()
 
     # Start GUI in main thread
-    start_gui(w, sys.argv)
+    start_gui(n.world, sys.argv)

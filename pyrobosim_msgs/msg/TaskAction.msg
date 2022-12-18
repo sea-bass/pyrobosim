@@ -1,6 +1,7 @@
 # Task Action ROS Message
 
 # Main Action information
+string robot
 string type
 string object
 string room
@@ -11,5 +12,6 @@ string target_location
 float32 cost
 
 # Other parameters
+bool has_pose
 geometry_msgs/Pose pose
 pyrobosim_msgs/Path path

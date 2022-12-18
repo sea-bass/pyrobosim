@@ -1,6 +1,6 @@
-##########################
-# Test world description #
-##########################
+#####################################
+# Multirobot test world description #
+#####################################
 
 # WORLD PARAMETERS
 params:
@@ -17,17 +17,24 @@ metadata:
 
 # ROBOTS: For now, we only support a single robot
 robots:
-  - name: robot
+  - name: "robot"
     radius: 0.1
+    color: [0.8, 0.0, 0.8]
     location: kitchen
     pose: [0, 0, 0]
-    # Rapidly-expanding Random Tree (RRT) planner
-    # path_planner:
-    #   type: rrt
-    #   max_connection_dist: 0.25
-    #   bidirectional: true
-    #   rrt_star: true
-    #   rewire_radius: 1.0
+  - radius: 0.08
+    color: [0.8, 0.8, 0.0]
+    location: bathroom
+  - name: "robby"
+    radius: 0.06
+    color: [0.0, 0.8, 0.8]
+    location: bedroom
+    path_planner:  # Rapidly-expanding Random Tree (RRT) planner
+      type: rrt
+      max_connection_dist: 0.25
+      bidirectional: true
+      rrt_star: true
+      rewire_radius: 1.0
 
 
 # PLANNING: Global planner
@@ -143,10 +150,10 @@ objects:
     location: trash
 
   - type: water
-    location: counter0
+    location: counter0_left
 
   - type: banana
-    location: counter0
+    location: counter0_right
 
   - type: water
     location: my_desk

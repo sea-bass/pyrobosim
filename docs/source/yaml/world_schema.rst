@@ -29,7 +29,7 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
      - id: <value>
        radius: <value> # Robot radius
        location: <name> # Initial location
-       pose: [<x>, <y>, <yaw>] # Initial pose, if not specified will sample
+       pose: [<x>, <y>, <z>, <yaw>] # Initial pose, if not specified will sample
        path_planner: # Local robot path planner -- generally refers to single-query planners
          type: rrt # Supported types -- rrt
          <property>: <planner_property>
@@ -46,9 +46,9 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
          type: <footprint_type>
          <property>: <footprint_property>
        nav_poses:
-         - [<x1>, <y1>, <yaw1>]
+         - [<x1>, <y1>, <z1>, <yaw1>]
          - ...
-         - [<xN>, <yN>, <yawN>]
+         - [<xN>, <yN>, <zN>, <yawN>]
        wall_width: <value>
        color: [<r>, <g>, <b>]
      - ...
@@ -69,7 +69,7 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
      - name: <loc_name> # If not specified, will be automatic
        type: <loc_category> # From location YAML file
        room: <room_name>
-       pose: [<x>, <y>, <yaw>] # If not specified, will sample
+       pose: [<x>, <y>, <z>, <yaw>] # If not specified, will sample
      - ...
      - ...
 
@@ -78,5 +78,5 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
      - name: <obj_name> # If not specified, will be automatic
        type: <obj_category> # From object YAML file
        location: <loc_name>
-       pose: [<x>, <y>, <yaw>] # If not specified, will sample
+       pose: [<x>, <y>, <z>, <yaw>] # If not specified, will sample
 
