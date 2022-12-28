@@ -4,7 +4,7 @@ Pose representation utilities.
 
 import numpy as np
 from transforms3d.euler import euler2quat, quat2euler
-from transforms3d.quaternions import qnorm
+from transforms3d.quaternions import qnorm, quat2mat
 
 class Pose:
     """ Represents a 3D pose. """
@@ -106,8 +106,8 @@ class Pose:
         Gets the yaw angle, in radians.
         This is a handy utility for 2D (or 2.5D) calculations.
 
-        :param yaw: Yaw angle (about Z axis), in radians
-        :type yaw: float
+        :return: Yaw angle (about Z axis), in radians
+        :rtype: float
         """
         return self.eul[2]
 
@@ -135,6 +135,37 @@ class Pose:
         """
         self.q = q / qnorm(q)
         self.eul = quat2euler(self.q)
+
+    def get_translation_matrix(self):
+        """
+        Gets a translation matrix from the pose representation.
+
+        :return: 4-by-4 translation matrix
+        :rtype: :class:`numpy.ndarray`
+        """
+        trans_mat = np.zeros((4, 4))
+        trans_mat[:,3] = [self.x, self.y, self.z, 1]
+        return trans_mat
+
+    def get_rotation_matrix(self):
+        """
+        Gets a rotation matrix from the pose representation.
+
+        :return: 3-by-3 rotation matrix
+        :rtype: :class:`numpy.ndarray`
+        """
+        return quat2mat(self.q)
+
+    def get_transform_matrix(self):
+        """
+        Gets a homogeneous transformation matrix from the pose representation.
+
+        :return: 4-by-4 transformation matrix
+        :rtype: :class:`numpy.ndarray`
+        """
+        tf_mat = self.get_translation_matrix()
+        tf_mat[:3, :3] = self.get_rotation_matrix()
+        return tf_mat
 
     def __repr__(self):
         """ 
