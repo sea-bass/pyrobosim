@@ -113,8 +113,9 @@ class ParallelGraspProperties:
         -----     ^           |_________     v
                   |
                               |<-depth->|
+           depth_clearance -->||<--
     """
-    def __init__(self, max_width, depth, height):
+    def __init__(self, max_width, depth, height, width_clearance=0.0, depth_clearance=0.0):
         """
         Creates a parallel gripper grasp properties instance.
 
@@ -124,10 +125,16 @@ class ParallelGraspProperties:
         :type depth: float
         :param height: Height of end effector finger tips (or equivalent)
         :type height: float
+        :param width_clearance: Width clearance so grasps are not flush with gripper fingers
+        :type width_clearance: float, optional
+        :param depth_clearance: Depth clearance so grasps are not flush with gripper base
+        :type depth_clearance: float, optional
         """
         self.max_width = max_width
         self.depth = depth
         self.height = height
+        self.width_clearance = width_clearance
+        self.depth_clearance = depth_clearance
 
     def __repr__(self):
         """ Printable string representation """
@@ -149,7 +156,8 @@ class GraspGenerator:
         """
         self.properties = properties
 
-    def generate(self, object_dims, p_robot_rt_object=None):
+    def generate(self, object_dims, p_robot_rt_object=None,
+                 top_grasps=True, front_grasps=True, side_grasps=True):
         """
         Generates a set of axis-aligned grasps for a cuboid object.
 
@@ -157,34 +165,108 @@ class GraspGenerator:
         :type object_dims: list[float]
         :param p_robot_rt_object: The pose of the robot with respect to the object center
         :type p_robot_rt_object: :class:`pyrobosim.utils.pose.Pose`, optional
+        :param top_grasps: Enable top grasp generation, defaults to True
+        :type top_grasps: bool, optional
+        :param front_grasps: Enable front grasp generation, defaults to True
+        :type front_grasps: bool, optional
+        :param side_grasps: Enable side grasp generation, defaults to True
+        :type side_grasps: bool, optional
         :return: A list of generated grasps
         :rtype: list[:class:`pyrobosim.manipulation.grasping.Grasp`]      
         """
         grasps = []
+    
+        # Unpack useful variables
+        object_x, object_y, object_z = object_dims
+        effective_max_width = self.properties.max_width - self.properties.width_clearance
+        effective_depth = self.properties.depth - self.properties.depth_clearance
 
-        # Front grasp
-        grasp_center = Pose(x=0.0, y=0.0, z=0.0 - 0.01,
-                            pitch=-np.pi/2, yaw=np.pi/2)
-        grasps.append(
-            Grasp(origin=grasp_center, properties=self.properties,
-                  direction=GraspDirection.FRONT)
-        )
+        ################
+        # Front grasps #
+        ################
+        if front_grasps:
+            # Front grasp with horizontal gripper, uses Y dimension
+            if effective_max_width >= object_y:
+                x = min(0.0, effective_depth - object_x / 2)
+                grasp_center = Pose(x=x, y=0.0, z=0.0,
+                                    pitch=-np.pi/2, yaw=np.pi/2)
+                grasps.append(
+                    Grasp(origin=grasp_center, properties=self.properties,
+                        direction=GraspDirection.FRONT)
+                )
+            # Front grasp with vertical gripper, uses Z dimension
+            if effective_max_width >= object_z:
+                x = min(0.0, effective_depth - object_x / 2)
+                grasp_center = Pose(x=x, y=0.0, z=0.0,
+                                    pitch=-np.pi/2, yaw=0.0)
+                grasps.append(
+                    Grasp(origin=grasp_center, properties=self.properties,
+                        direction=GraspDirection.FRONT)
+                )
 
-        # Top grasp
-        grasp_center = Pose(x=0.0, y=0.0, z=0.0 + 0.05,
-                            pitch=np.pi, yaw=np.pi/2)
-        grasps.append(
-            Grasp(origin=grasp_center, properties=self.properties,
-                  direction=GraspDirection.TOP)
-        )
+        ##############
+        # Top grasps #
+        ##############
+        if top_grasps:
+            # Top grasp with horizontal gripper, uses Y dimension
+            if effective_max_width >= object_y:
+                z = max(0.0, object_z / 2 - effective_depth)
+                grasp_center = Pose(x=0.0, y=0.0, z=z,
+                                    pitch=np.pi, yaw=np.pi/2)
+                grasps.append(
+                    Grasp(origin=grasp_center, properties=self.properties,
+                        direction=GraspDirection.TOP)
+                )
+            # Top grasp with vertical gripper, uses X dimension
+            if effective_max_width >= object_x:
+                z = max(0.0, object_z / 2 - effective_depth)
+                grasp_center = Pose(x=0.0, y=0.0, z=z,
+                                    pitch=np.pi, yaw=0.0)
+                grasps.append(
+                    Grasp(origin=grasp_center, properties=self.properties,
+                        direction=GraspDirection.TOP)
+            )
 
-        # Side grasp
-        grasp_center = Pose(x=0.0, y=0.0, z=0.0 + 0.03,
-                            roll=np.pi/2)
-        grasps.append(
-            Grasp(origin=grasp_center, properties=self.properties,
-            direction=GraspDirection.RIGHT)
-        )
+        ###############
+        # Side grasps #
+        ###############
+        if side_grasps:
+            # Right grasp with horizontal gripper, uses X dimension
+            if effective_max_width >= object_x:
+                y = min(0.0, effective_depth - object_y / 2)
+                grasp_center = Pose(x=0.0, y=y, z=0.0,
+                                    roll=np.pi/2)
+                grasps.append(
+                    Grasp(origin=grasp_center, properties=self.properties,
+                    direction=GraspDirection.RIGHT)
+                )
+            # Right grasp with vertical gripper, uses Z dimension
+            if effective_max_width >= object_z:
+                y = min(0.0, effective_depth - object_y / 2)
+                grasp_center = Pose(x=0.0, y=y, z=0.0,
+                                    roll=np.pi/2, yaw=np.pi/2)
+                grasps.append(
+                    Grasp(origin=grasp_center, properties=self.properties,
+                    direction=GraspDirection.RIGHT)
+                )
+            # Left grasp with horizontal gripper, uses X dimension
+            if effective_max_width >= object_x:
+                y = max(0.0, object_y / 2 - effective_depth)
+                grasp_center = Pose(x=0.0, y=y, z=0.0,
+                                    roll=-np.pi/2)
+                grasps.append(
+                    Grasp(origin=grasp_center, properties=self.properties,
+                    direction=GraspDirection.LEFT)
+                )
+            # Left grasp with vertical gripper, uses Z dimension
+            if effective_max_width >= object_z:
+                y = max(0.0, object_y / 2 - effective_depth)
+                grasp_center = Pose(x=0.0, y=y, z=0.0,
+                                    roll=-np.pi/2, yaw=-np.pi/2)
+                grasps.append(
+                    Grasp(origin=grasp_center, properties=self.properties,
+                    direction=GraspDirection.LEFT)
+                )
 
         return grasps
 
