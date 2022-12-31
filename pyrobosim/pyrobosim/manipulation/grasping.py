@@ -22,12 +22,12 @@ class GraspFace(Enum):
 
 normal_from_face = {
     GraspFace.UNKNOWN: None,
-    GraspFace.FRONT:  np.array([-1.0, 0.0, 0.0]),
-    GraspFace.BACK:   np.array([1.0, 0.0, 0.0]),
-    GraspFace.TOP:    np.array([0.0, 0.0, 1.0]),
-    GraspFace.BOTTOM: np.array([0.0, 0.0, -1.0]),
-    GraspFace.LEFT:   np.array([0.0, 1.0, 0.0]),
-    GraspFace.RIGHT:  np.array([0.0, -1.0, 0.0]),
+    GraspFace.FRONT:   np.array([-1.0, 0.0, 0.0]),
+    GraspFace.BACK:    np.array([1.0, 0.0, 0.0]),
+    GraspFace.TOP:     np.array([0.0, 0.0, 1.0]),
+    GraspFace.BOTTOM:  np.array([0.0, 0.0, -1.0]),
+    GraspFace.LEFT:    np.array([0.0, 1.0, 0.0]),
+    GraspFace.RIGHT:   np.array([0.0, -1.0, 0.0]),
 }
 
 class GraspDirection(Enum):
@@ -41,12 +41,13 @@ class GraspDirection(Enum):
     Z_NEG = 6
 
 vec_from_direction = {
-    GraspDirection.X_POS: np.array([1.0, 0.0, 0.0]),
-    GraspDirection.X_NEG: np.array([-1.0, 0.0, 0.0]),
-    GraspDirection.Y_POS: np.array([0.0, 1.0, 0.0]),
-    GraspDirection.Y_NEG: np.array([0.0, -1.0, 0.0]),
-    GraspDirection.Z_POS: np.array([0.0, 0.0, 1.0]),
-    GraspDirection.Z_NEG: np.array([0.0, 0.0, -1.0]),
+    GraspDirection.UNKNOWN: None,
+    GraspDirection.X_POS:   np.array([1.0, 0.0, 0.0]),
+    GraspDirection.X_NEG:   np.array([-1.0, 0.0, 0.0]),
+    GraspDirection.Y_POS:   np.array([0.0, 1.0, 0.0]),
+    GraspDirection.Y_NEG:   np.array([0.0, -1.0, 0.0]),
+    GraspDirection.Z_POS:   np.array([0.0, 0.0, 1.0]),
+    GraspDirection.Z_NEG:   np.array([0.0, 0.0, -1.0]),
 }
 
 class Grasp:
@@ -216,7 +217,9 @@ class GraspGenerator:
                 front_face_dir = face
 
         # Figure out what the top face is
-        unit_z = np.array([0.0, 0.0, v_robot_to_object[2]])
+        unit_z = np.dot(
+            tform_robot_to_object[:3, :3].T,
+            np.array([[0.0], [0.0], [1.0]])).T
         max_dot_prod = -10  # Unrealistic value for dot product
         for face in all_grasp_faces:
             dot_prod = np.dot(unit_z, normal_from_face[face])
@@ -495,7 +498,7 @@ class GraspGenerator:
                 np.matmul(
                     np.linalg.inv(object_pose.get_transform_matrix()),
                     robot_pose.get_transform_matrix())
-             )
+            )
             xr = p_robot_rt_object.x
             yr = p_robot_rt_object.y
             zr = p_robot_rt_object.z
