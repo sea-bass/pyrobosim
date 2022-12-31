@@ -460,7 +460,8 @@ class GraspGenerator:
         return grasps
 
 
-    def show_grasps(self, object_dims, grasps, object_pose=Pose(), robot_pose=None):
+    def show_grasps(self, object_dims, grasps, object_pose=Pose(),
+                    robot_pose=None, object_footprint=None):
         """
         Display the grasps on top of an object.
 
@@ -472,12 +473,14 @@ class GraspGenerator:
         :type object_pose: :class:`pyrobosim.utils.pose.Pose`, optional
         :param robot_pose: The pose of the robot. If none specified, it is not used in calculations.
         :type robot_pose: :class:`pyrobosim.utils.pose.Pose`, optional
+        :param object_footprint: Optional N-by-2 array of the object footprint points to overlay
+        :type object_footprint: :class:`numpy.ndarray`, optional
         """
         fig = plt.figure()
         ax = Axes3D(fig)
         fig.add_axes(ax)
         
-        # Show the object
+        # Show the object cuboid
         max_dim = max(object_dims)
         min_x = min_y = min_z = -max_dim
         max_x = max_y = max_z = max_dim
@@ -491,6 +494,13 @@ class GraspGenerator:
             [(-x, y,-z), ( x, y,-z), ( x, y, z), (-x, y, z)],
         ]
         ax.add_collection3d(Poly3DCollection(verts, color=[0.3, 0.3, 0.3, 0.3]))
+
+        # Show the object footprint points, if specified
+        if object_footprint is not None:
+            footprint_verts = [[(pt[0], pt[1], -z) for pt in object_footprint]]
+            ax.add_collection3d(
+                Poly3DCollection(footprint_verts, color=[0.3, 0.3, 0.3, 0.6])
+            )
 
         # Show the robot pose, if present
         if robot_pose is not None:

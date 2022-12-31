@@ -228,3 +228,72 @@ def sample_from_polygon(polygon, max_tries=100):
 
     warnings.warn(f"Exceeded max polygon samples samples: {max_tries}")
     return None, None
+
+
+def convhull_to_rectangle(points):
+    """
+    Find the smallest bounding rectangle for a set of points.
+    Returns a set of points representing the corners of the bounding box.
+    :param points: an Nx2 matrix of convex hull XY coordinates
+    :type points: :class:`numpy.ndarray`
+    :return: A tuple of rectangle origin pose and XY dimensions
+    :rtype: (:class:`pyrobosim.utils.pose.Pose`, list[float])
+    """
+    
+    # calculate edge angles
+    edges = np.zeros((len(points)-1, 2))
+    edges = points[1:] - points[:-1]
+    angles = np.zeros((len(edges)))
+    angles = np.arctan2(edges[:, 1], edges[:, 0])
+    angles = np.abs(np.mod(angles, np.pi/2))
+    angles = np.unique(angles)
+
+    # Calculate rotation matrices
+    rotations = np.vstack([
+        np.cos(angles),
+        np.cos(angles - np.pi/2),
+        np.cos(angles + np.pi/2),
+        np.cos(angles)]).T
+    rotations = rotations.reshape((-1, 2, 2))
+
+    # Rotate the convex hull points
+    rot_points = np.dot(rotations, points[:, 0:2].T)
+
+    # Find the bounding points
+    min_x = np.nanmin(rot_points[:, 0], axis=1)
+    max_x = np.nanmax(rot_points[:, 0], axis=1)
+    min_y = np.nanmin(rot_points[:, 1], axis=1)
+    max_y = np.nanmax(rot_points[:, 1], axis=1)
+
+    # Find the box with the lowest area
+    areas = (max_x - min_x) * (max_y - min_y)
+    best_idx = np.argmin(areas)
+
+    # Return the minimum area box
+    x1 = max_x[best_idx]
+    x2 = min_x[best_idx]
+    y1 = max_y[best_idx]
+    y2 = min_y[best_idx]
+    yaw = angles[best_idx]
+    r = rotations[best_idx]
+
+    # Compute the rectangle points
+    rect_pts = np.zeros((5, 2))
+    rect_pts[0] = np.dot([x1, y2], r)
+    rect_pts[1] = np.dot([x2, y2], r)
+    rect_pts[2] = np.dot([x2, y1], r)
+    rect_pts[3] = np.dot([x1, y1], r)
+    rect_pts[4] = rect_pts[0]
+
+    # Compute the origin pose and dimensions
+    orig = np.dot([0.5 * (x1 + x2), 0.5 * (y1 + y2)], r)
+    pose = Pose(x=orig[0], y=orig[1], yaw=yaw)
+
+    rect_pts_rot = [rot2d(pt, -yaw) for pt in rect_pts[:-1, :]]
+    x_min_rot = min([pt[0] for pt in rect_pts_rot])
+    x_max_rot = max([pt[0] for pt in rect_pts_rot])
+    y_min_rot = min([pt[1] for pt in rect_pts_rot])
+    y_max_rot = max([pt[1] for pt in rect_pts_rot])
+    dims = [x_max_rot - x_min_rot, y_max_rot - y_min_rot]
+
+    return (pose, dims, rect_pts)
