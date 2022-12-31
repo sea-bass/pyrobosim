@@ -2,6 +2,7 @@
 
 from pyrobosim.manipulation.grasping import GraspGenerator, ParallelGraspProperties
 from pyrobosim.utils.pose import Pose
+
 if __name__ == "__main__":
     # Define inputs
     object_dims = [0.1, 0.05, 0.25]
