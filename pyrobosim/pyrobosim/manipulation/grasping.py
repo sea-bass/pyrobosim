@@ -164,21 +164,31 @@ class GraspGenerator:
         """
         self.properties = properties
 
-    def compute_robot_facing_rot(self, p_robot_rt_object=None):
+    def compute_robot_facing_rot(self, object_pose=Pose(), robot_pose=None):
         """
         Computes the rotation matrix to convert from nominal cuboid orientation to robot-facing orientation.
         
-        :param p_robot_rt_object: The pose of the robot with respect to the object center
-        :type p_robot_rt_object: :class:`pyrobosim.utils.pose.Pose`, optional
+        :param object_pose: The pose of the object center, defaults to identity transform
+        :type object_pose: :class:`pyrobosim.utils.pose.Pose`, optional
+        :param robot_pose: The pose of the robot. If none specified, it is not used in calculations.
+        :type robot_pose: :class:`pyrobosim.utils.pose.Pose`, optional
         :return: Rotation matrix transforming the nominal cuboid orientation to a robot-facing orientation
         :rtype: :class:`numpy.ndarray`
         """
         rot_matrix = np.eye(3)
-        if p_robot_rt_object is None:
+        if robot_pose is None:
             return rot_matrix
 
+        tform_robot_to_object = np.matmul(
+            np.linalg.inv(robot_pose.get_transform_matrix()),
+            object_pose.get_transform_matrix())
+        v_robot_to_object = np.dot(
+            tform_robot_to_object[:3, :3].T, tform_robot_to_object[:3, 3])
+
         # Figure out what the front face is
-        v_robot_rt_object_proj = np.array([p_robot_rt_object.x, p_robot_rt_object.y, 0.0])
+        v_robot_rt_object_proj = np.array([-v_robot_to_object[0],
+                                           -v_robot_to_object[1],
+                                           0.0])
         v_robot_rt_object_proj /= np.linalg.norm(v_robot_rt_object_proj)
         all_grasp_directions = [GraspDirection.FRONT, GraspDirection.BACK,
                                 GraspDirection.TOP, GraspDirection.BOTTOM,
@@ -191,7 +201,7 @@ class GraspGenerator:
                 front_face_dir = dir
 
         # Figure out what the top face is
-        unit_z = np.array([0.0, 0.0, 1.0])
+        unit_z = np.array([0.0, 0.0, v_robot_to_object[2]])
         all_grasp_directions = [GraspDirection.FRONT, GraspDirection.BACK,
                                 GraspDirection.TOP, GraspDirection.BOTTOM,
                                 GraspDirection.LEFT, GraspDirection.RIGHT]
@@ -246,15 +256,17 @@ class GraspGenerator:
 
         return (try_grasp, grasp_dir)
 
-    def generate(self, object_dims, p_robot_rt_object=None,
+    def generate(self, object_dims, object_pose=Pose(), robot_pose=None,
                  top_grasps=True, front_grasps=True, side_grasps=True):
         """
         Generates a set of axis-aligned grasps for a cuboid object.
 
         :param object_dims: List containing the object [x, y, z] dimensions
         :type object_dims: list[float]
-        :param p_robot_rt_object: The pose of the robot with respect to the object center
-        :type p_robot_rt_object: :class:`pyrobosim.utils.pose.Pose`, optional
+        :param object_pose: The pose of the object center, defaults to identity transform
+        :type object_pose: :class:`pyrobosim.utils.pose.Pose`, optional
+        :param robot_pose: The pose of the robot. If none specified, it is not used in calculations.
+        :type robot_pose: :class:`pyrobosim.utils.pose.Pose`, optional
         :param top_grasps: Enable top grasp generation, defaults to True
         :type top_grasps: bool, optional
         :param front_grasps: Enable front grasp generation, defaults to True
@@ -265,7 +277,7 @@ class GraspGenerator:
         :rtype: list[:class:`pyrobosim.manipulation.grasping.Grasp`]      
         """
         grasps = []
-        rot_matrix = self.compute_robot_facing_rot(p_robot_rt_object)
+        rot_matrix = self.compute_robot_facing_rot(object_pose, robot_pose)
         front_face_vec = np.dot(rot_matrix, normal_from_direction[GraspDirection.FRONT])
         top_face_vec = np.dot(rot_matrix, normal_from_direction[GraspDirection.TOP])
         left_face_vec = np.dot(rot_matrix, normal_from_direction[GraspDirection.LEFT])
@@ -427,7 +439,7 @@ class GraspGenerator:
         return grasps
 
 
-    def show_grasps(self, object_dims, grasps, p_robot_rt_object=None):
+    def show_grasps(self, object_dims, grasps, object_pose=Pose(), robot_pose=None):
         """
         Display the grasps on top of an object.
 
@@ -435,8 +447,10 @@ class GraspGenerator:
         :type object_dims: list[float]
         :param grasps: A list of grasps
         :type grasps: list[:class:`pyrobosim.manipulation.grasping.Grasp`]
-        :param p_robot_rt_object: The pose of the robot with respect to the object center
-        :type p_robot_rt_object: :class:`pyrobosim.utils.pose.Pose`, optional
+        :param object_pose: The pose of the object center, defaults to identity transform
+        :type object_pose: :class:`pyrobosim.utils.pose.Pose`, optional
+        :param robot_pose: The pose of the robot. If none specified, it is not used in calculations.
+        :type robot_pose: :class:`pyrobosim.utils.pose.Pose`, optional
         """
         fig = plt.figure()
         ax = Axes3D(fig)
@@ -458,12 +472,17 @@ class GraspGenerator:
         ax.add_collection3d(Poly3DCollection(verts, color=[0.3, 0.3, 0.3, 0.3]))
 
         # Show the robot pose, if present
-        if p_robot_rt_object is not None:
+        if robot_pose is not None:
+            p_robot_rt_object = Pose.from_transform(
+                np.matmul(
+                    np.linalg.inv(object_pose.get_transform_matrix()),
+                    robot_pose.get_transform_matrix())
+             )
             xr = p_robot_rt_object.x
             yr = p_robot_rt_object.y
             zr = p_robot_rt_object.z
             ax.plot3D(xr, yr, zr, "ko", markersize=10)
-            ax.plot3D([xr, 0], [yr, 0], [zr, 0], "k--", linewidth=1)
+            ax.plot3D([0, xr], [0, yr], [0, zr], "k--", linewidth=1)
 
         # Show the grasps
         color_idx = 0
