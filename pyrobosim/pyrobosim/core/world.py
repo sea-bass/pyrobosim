@@ -441,7 +441,8 @@ class World:
             return None
 
         # Create the object
-        obj = Object(category=category, name=name, parent=obj_spawn, pose=pose)
+        obj = Object(category=category, name=name, parent=obj_spawn, pose=pose,
+                     inflation_radius=self.object_radius)
         
         # If no pose is specified, sample a valid one
         if pose is None:
@@ -528,7 +529,7 @@ class World:
 
         if pose is not None:
             obj.set_pose(pose)
-            obj.create_polygons(self.object_radius)
+            obj.create_polygons()
 
         return True
         

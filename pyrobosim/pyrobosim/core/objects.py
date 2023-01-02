@@ -1,10 +1,15 @@
 """ Representations for objects that exist in the world. """
 
+import numpy as np
 import warnings
 from descartes.patch import PolygonPatch
+from scipy.spatial import ConvexHull
 
 from ..utils.general import EntityMetadata
-from ..utils.polygon import inflate_polygon, polygon_and_height_from_footprint, transform_polygon
+from ..utils.polygon import (
+    convhull_to_rectangle, inflate_polygon,
+    polygon_and_height_from_footprint, transform_polygon
+)
 
 
 class Object:
@@ -26,7 +31,8 @@ class Object:
         """
         cls.metadata = EntityMetadata(filename)
 
-    def __init__(self, category=None, name=None, parent=None, pose=None):
+    def __init__(self, category=None, name=None, parent=None, pose=None,
+                 inflation_radius=0.0):
         """
         Creates an object instance.
 
@@ -38,11 +44,14 @@ class Object:
         :type parent: Entity
         :param pose: Pose of the location.
         :type pose: :class:`pyrobosim.utils.pose.Pose`
+        :param inflation_radius: Inflation radius for polygon collision checks.
+        :type inflatoin_radius: float, optional
         """
         self.category = category
         self.name = name
         self.parent = parent
 
+        self.inflation_radius = inflation_radius
         self.collision_polygon = None
         self.viz_patch = None
         self.viz_text = None
@@ -52,10 +61,13 @@ class Object:
             self.viz_color = self.metadata["color"]
         self.set_pose(pose)
         self.create_polygons()
+        self.create_grasp_cuboid()
+
 
     def set_pose(self, pose):
         """
-        Sets the pose of an object, accounting for any height offsets in the target location.
+        Sets the pose of an object, accounting for any height offsets in the target location,
+        and update the corresponding object polygons.
         Use this instead of directly assigning the ``pose`` attribute.
         
         :param pose: New pose for the object.
@@ -64,6 +76,7 @@ class Object:
         self.pose = pose
         if self.pose is not None and self.parent is not None:
             self.pose.z += self.parent.height
+
 
     def get_room_name(self):
         """ 
@@ -75,9 +88,11 @@ class Object:
         return self.parent.get_room_name()
 
 
-    def create_polygons(self, inflation_radius=0.0):
+    def create_polygons(self, inflation_radius=None):
         """ 
-        Creates collision and visualization polygons for the object. 
+        Creates collision and visualization polygons for the object.
+        If no inflation radius is specified, uses the inflation radius attribute
+        set at construction time.
 
         :param inflation_radius: Inflation radius, in meters.
         :type inflation_radius: float, optional
@@ -92,15 +107,21 @@ class Object:
         self.update_visualization_polygon()
         
 
-    def update_collision_polygon(self, inflation_radius=0.0):
+    def update_collision_polygon(self, inflation_radius=None):
         """
         Updates the collision polygon using the specified inflation radius.
+        If no inflation radius is specified, uses the inflation radius attribute
+        set at construction time.
         
         :param inflation_radius: Inflation radius, in meters.
         :type inflation_radius: float, optional
         """
-        self.collision_polygon = inflate_polygon(
-            self.polygon, inflation_radius)
+        if inflation_radius is not None:
+            radius = inflation_radius
+        else:
+            radius = self.inflation_radius
+        self.collision_polygon = inflate_polygon(self.polygon, radius)
+
 
     def update_visualization_polygon(self):
         """ Updates the visualization polygon for the object. """
@@ -111,9 +132,24 @@ class Object:
                 fill=None, ec=self.viz_color,
                 lw=2, alpha=0.75, zorder=3)
 
+
+    def create_grasp_cuboid(self):
+        """ Fits a grasp cuboid from the object footprint and height. """
+        # Fit a cuboid to the irregular object footprint
+        obj_footprint = np.array(list(self.raw_polygon.exterior.coords))
+        hull = ConvexHull(obj_footprint)
+        hull_pts = obj_footprint[hull.vertices, :]
+        (rect_pose, rect_dims, _) = convhull_to_rectangle(hull_pts)
+
+        # Define the object dimension and pose
+        self.cuboid_pose = rect_pose
+        self.cuboid_dims = [rect_dims[0], rect_dims[1], self.height]
+
+
     def __repr__(self):
         """ Returns printable string. """
         return f"Object: {self.name}"
+
 
     def print_details(self):
         """ Prints string with details. """

@@ -76,7 +76,7 @@ class Pose:
     @classmethod
     def from_transform(cls, tform):
         """ 
-        Creates a pose from a transformation matrix
+        Creates a pose from a transformation matrix.
 
         :param tform: 4-by-4 transformation matrix
         :type tform: :class:`numpy.ndarray`

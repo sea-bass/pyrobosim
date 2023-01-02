@@ -234,6 +234,7 @@ def convhull_to_rectangle(points):
     """
     Find the smallest bounding rectangle for a set of points.
     Returns a set of points representing the corners of the bounding box.
+
     :param points: an Nx2 matrix of convex hull XY coordinates
     :type points: :class:`numpy.ndarray`
     :return: A tuple of rectangle origin pose and XY dimensions
