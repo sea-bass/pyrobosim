@@ -29,7 +29,7 @@ def get_constant_speed_trajectory(path, linear_velocity=0.2, max_angular_velocit
 
     # Calculate the time points for the path at constant velocity, also 
     # accounting for the maximum angular velocity if specified.
-    t_pts = np.zeros_like(path.poses, dtype=np.float)
+    t_pts = np.zeros_like(path.poses, dtype=np.float64)
     for idx in range(path.num_poses - 1):
         start_pose = path.poses[idx]
         end_pose = path.poses[idx + 1]
