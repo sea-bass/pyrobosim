@@ -7,6 +7,7 @@ import warnings
 
 from .locations import ObjectSpawn
 from .objects import Object
+from ..manipulation.grasping import Grasp
 from ..utils.knowledge import resolve_to_object
 from ..utils.polygon import inflate_polygon, sample_from_polygon, transform_polygon
 from ..utils.pose import Pose
@@ -24,6 +25,7 @@ class Robot:
         color=(0.8, 0, 0.8),
         path_planner=None,
         path_executor=None,
+        grasp_generator=None
     ):
         """
         Creates a robot instance.
@@ -44,6 +46,8 @@ class Robot:
         :param path_executor: Path executor for navigation (see e.g.,
             :class:`pyrobosim.navigation.execution.ConstantVelocityExecutor`).
         :type path_executor: PathExecutor, optional
+        :param grasp_generator: Grasp generator for manipulating objects.
+        :type grasp_generator: :class:`pyrobosim.manipulation.grasping.GraspGenerator`, optional
         """
         # Basic properties
         self.name = name
@@ -58,6 +62,10 @@ class Robot:
         self.current_path = None
         self.current_goal = None
         self.executing_nav = False
+
+        # Manipulation properties
+        self.grasp_generator = grasp_generator
+        self.latest_grasp = None
 
         # World interaction properties
         self.world = None
@@ -166,12 +174,14 @@ class Robot:
         self.current_path = None
         return success
 
-    def pick_object(self, obj_query):
+    def pick_object(self, obj_query, grasp_pose=None):
         """
         Picks up an object in the world given an object and/or location query.
 
         :param obj_query: The object query (name, category, etc.).
         :type obj_query: str
+        :param grasp_pose: A pose describing how to manipulate the object.
+        :type grasp_pose: :class:`pyrobosim.utils.pose.Pose`, optional
         :return: True if picking succeeds, else False
         :rtype: bool
         """
@@ -207,11 +217,42 @@ class Robot:
             )
             return False
 
+        # If a grasp generator has been specified and no explicit grasp has been provided,
+        # generate grasps here.
+        # TODO: Specify allowed grasp types
+        if grasp_pose is not None:
+            self.latest_grasp = Grasp(origin=grasp_pose)
+        elif self.grasp_generator is not None:
+            cuboid_pose = Pose.from_transform(
+                np.matmul(obj.cuboid_pose.get_transform_matrix(),
+                          obj.pose.get_transform_matrix(),      
+                )
+            )
+            grasps = self.grasp_generator.generate(
+                obj.cuboid_dims, cuboid_pose, self.pose,
+                front_grasps=True, top_grasps=True, side_grasps=False
+            )
+
+            # DEBUG DISPLAY
+            # obj_footprint = np.array(list(obj.raw_polygon.exterior.coords))
+            # self.grasp_generator.show_grasps(
+            #     obj.cuboid_dims, grasps, cuboid_pose,
+            #     self.pose, obj_footprint)
+            # END DEBUG DISPLAY
+
+            if len(grasps) == 0:
+                warnings.warn(f"Could not generate valid grasps. Cannot pick.")
+                return False
+            else:
+                # TODO: For now, just pick a random grasp. Logic could be improved.
+                self.latest_grasp = np.random.choice(grasps)
+                print(self.latest_grasp)
+
         # Denote the target object as the manipulated object
         self.manipulated_object = obj
         obj.parent.children.remove(obj)
         obj.parent = self
-        obj.pose = self.pose
+        obj.set_pose(self.pose)
         return True
 
     def place_object(self, pose=None):
@@ -321,7 +362,7 @@ class Robot:
             if self.world.has_gui:
                 success = self.world.gui.canvas.pick_object(self, action.object)
             else:
-                success = self.pick_object(action.object)
+                success = self.pick_object(action.object, action.pose)
 
         elif action.type == "place":
             if self.world.has_gui:

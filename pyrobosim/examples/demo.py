@@ -11,6 +11,7 @@ import numpy as np
 from pyrobosim.core.robot import Robot
 from pyrobosim.core.room import Room
 from pyrobosim.core.world import World
+from pyrobosim.manipulation.grasping import GraspGenerator, ParallelGraspProperties
 from pyrobosim.navigation.execution import ConstantVelocityExecutor
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
@@ -62,16 +63,23 @@ def create_world(multirobot=False):
     w.add_object("water", desk)
 
     # Add robots
+    grasp_props = ParallelGraspProperties(
+        max_width=0.15, depth=0.1, height=0.04,
+        width_clearance=0.01, depth_clearance=0.01
+    )
     r = Robot(name="robot", radius=0.1,
-              path_executor=ConstantVelocityExecutor())
+              path_executor=ConstantVelocityExecutor(),
+              grasp_generator=GraspGenerator(grasp_props))
     w.add_robot(r, loc="kitchen")
     if multirobot:
         robot1 = Robot(name="robot1", radius=0.08, color=(0.8, 0.8, 0),
-                path_executor=ConstantVelocityExecutor())
+                       path_executor=ConstantVelocityExecutor(),
+                       grasp_generator=GraspGenerator(grasp_props))
         w.add_robot(robot1, loc="bathroom")
 
         robby = Robot(name="robby", radius=0.06, color=(0, 0.8, 0.8),
-                    path_executor=ConstantVelocityExecutor())
+                      path_executor=ConstantVelocityExecutor(),
+                      grasp_generator=GraspGenerator(grasp_props))
         w.add_robot(robby, loc="bedroom")
         from pyrobosim.navigation.rrt import RRTPlanner
         robby.set_path_planner(
