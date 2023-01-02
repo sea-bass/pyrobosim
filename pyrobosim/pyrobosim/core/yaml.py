@@ -143,11 +143,14 @@ class WorldYamlLoader:
             # Create the robot
             robot_name = robot_data.get("name", f"robot{id}")
             robot_color = robot_data.get("color", (0.8, 0.0, 0.8))
-            robot = Robot(name=robot_name,
-                          radius=robot_data["radius"],
-                          color=robot_color,
-                          path_planner=self.get_local_path_planner(robot_data),
-                          path_executor=self.get_path_executor(robot_data))
+            robot = Robot(
+                name=robot_name,
+                radius=robot_data["radius"],
+                color=robot_color,
+                path_planner=self.get_local_path_planner(robot_data),
+                path_executor=self.get_path_executor(robot_data),
+                grasp_generator=self.get_grasp_generator(robot_data)
+            )
             
             loc = robot_data["location"] if "location" in robot_data else None
             if "pose" in robot_data:
@@ -211,6 +214,28 @@ class WorldYamlLoader:
 
 
     def get_path_executor(self, robot_data):
-        """ Adds a path executor to a robot. """
+        """ Gets a path executor to add to a robot. """
         from pyrobosim.navigation.execution import ConstantVelocityExecutor
         return ConstantVelocityExecutor()
+
+
+    def get_grasp_generator(self, robot_data):
+        """ Gets a grasp generator to add to a robot. """
+        from pyrobosim.manipulation.grasping import GraspGenerator, ParallelGraspProperties
+        if "grasping" not in robot_data:
+            return None
+
+        grasp_params = robot_data["grasping"]
+        grasp_gen_type = grasp_params["generator"]
+        if grasp_gen_type == "parallel_grasp":
+            grasp_properties = ParallelGraspProperties(
+                max_width=grasp_params.get("max_width", 0.15),
+                depth=grasp_params.get("depth", 0.1),
+                height=grasp_params.get("height", 0.04),
+                width_clearance=grasp_params.get("width_clearance", 0.01),
+                depth_clearance=grasp_params.get("depth_clearance", 0.01)
+            )
+            return GraspGenerator(grasp_properties)
+        else:
+            warnings.warn(f"Invalid grasp generator type specified: {grasp_gen_type}")
+            return None

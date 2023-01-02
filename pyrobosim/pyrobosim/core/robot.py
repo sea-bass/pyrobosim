@@ -233,18 +233,11 @@ class Robot:
                 front_grasps=True, top_grasps=True, side_grasps=False
             )
 
-            # DEBUG DISPLAY
-            # obj_footprint = np.array(list(obj.raw_polygon.exterior.coords))
-            # self.grasp_generator.show_grasps(
-            #     obj.cuboid_dims, grasps, cuboid_pose,
-            #     self.pose, obj_footprint)
-            # END DEBUG DISPLAY
-
             if len(grasps) == 0:
                 warnings.warn(f"Could not generate valid grasps. Cannot pick.")
                 return False
             else:
-                # TODO: For now, just pick a random grasp. Logic could be improved.
+                # TODO: For now, just pick a random grasp.
                 self.latest_grasp = np.random.choice(grasps)
                 print(self.latest_grasp)
 
