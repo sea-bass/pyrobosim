@@ -45,7 +45,7 @@ class Object:
         :param pose: Pose of the location.
         :type pose: :class:`pyrobosim.utils.pose.Pose`
         :param inflation_radius: Inflation radius for polygon collision checks.
-        :type inflatoin_radius: float, optional
+        :type inflation_radius: float, optional
         """
         self.category = category
         self.name = name
