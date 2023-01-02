@@ -249,7 +249,7 @@ class Robot:
                 is_valid_pose = sample_poly.within(loc.polygon)
                 for other_obj in loc.children:
                     is_valid_pose = is_valid_pose and not sample_poly.intersects(
-                        other_obj.polygon
+                        other_obj.collision_polygon
                     )
                 if is_valid_pose:
                     pose = pose_sample
