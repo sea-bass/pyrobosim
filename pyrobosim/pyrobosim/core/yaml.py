@@ -12,21 +12,6 @@ from ..utils.general import replace_special_yaml_tokens
 from ..utils.pose import Pose
 
 
-def get_value_or(data, key, default=None):
-    """ 
-    Utility function to get a value from a dictionary if the key exists,
-    or else get a default value.
-
-    :param data: Dictionary containing the data.
-    :type data: dict
-    :param key: Dictionary key.
-    :type key: str
-    :param default: Default value to use if key does not exist, defaults to None.
-    :return: Value from the dictionary, or the default value if the key does not exist.
-    """
-    return data[key] if key in data else default
-
-
 class WorldYamlLoader:
     """ Creates world models from YAML files. """
 
@@ -58,10 +43,10 @@ class WorldYamlLoader:
         """ Creates an initial world with the specified global parameters. """
         if "params" in self.data:
             params = self.data["params"]
-            name = get_value_or(params, "name", default="world")
-            inf_radius = get_value_or(params, "inflation_radius", default=0.0)
-            obj_radius = get_value_or(params, "object_radius", default=0.0)
-            wall_height = get_value_or(params, "wall_height", default=2.0)
+            name = params.get("name", "world")
+            inf_radius = params.get("inflation_radius", 0.0)
+            obj_radius = params.get("object_radius", 0.0)
+            wall_height = params.get("wall_height", 2.0)
             self.world = World(name=name, inflation_radius=inf_radius,
                                object_radius=obj_radius, wall_height=wall_height)
         else:
@@ -87,9 +72,9 @@ class WorldYamlLoader:
             return
 
         for room_data in self.data["rooms"]:
-            name = get_value_or(room_data, "name", default=None)
-            color = get_value_or(room_data, "color", default=[0.4, 0.4, 0.4])
-            wall_width = get_value_or(room_data, "wall_width", default=0.2)
+            name = room_data.get("name", None)
+            color = room_data.get("color", [0.4, 0.4, 0.4])
+            wall_width = room_data.get("wall_width", 0.2)
             if "nav_poses" in room_data:
                 nav_poses = [Pose.from_list(p) for p in room_data["nav_poses"]]
             else:
@@ -106,12 +91,12 @@ class WorldYamlLoader:
             return
 
         for hall in self.data["hallways"]:
-            conn_method = get_value_or(hall, "conn_method", default="auto")
-            offset = get_value_or(hall, "offset", default=0.0)
-            conn_angle = get_value_or(hall, "conn_angle", default=0.0)
-            conn_points = get_value_or(hall, "conn_points", default=[])
-            color = get_value_or(hall, "color", default=[0.4, 0.4, 0.4])
-            wall_width = get_value_or(hall, "wall_width", default=0.2)
+            conn_method = hall.get("conn_method", "auto")
+            offset = hall.get("offset", 0.0)
+            conn_angle = hall.get("conn_angle", 0.0)
+            conn_points = hall.get("conn_points", [])
+            color = hall.get("color", [0.4, 0.4, 0.4])
+            wall_width = hall.get("wall_width", 0.2)
 
             self.world.add_hallway(
                 hall["from"], hall["to"], hall["width"],
@@ -129,7 +114,7 @@ class WorldYamlLoader:
             category = loc["type"]
             room = loc["room"]
             pose = Pose.from_list(loc["pose"])
-            name = get_value_or(loc, "name", default=None)
+            name = loc.get("name", None)
             self.world.add_location(category, room, pose, name=name)
         
 
@@ -145,7 +130,7 @@ class WorldYamlLoader:
                 pose = Pose.from_list(obj["pose"])
             else:
                 pose = None
-            name = get_value_or(obj, "name", default=None)
+            name = obj.get("name", None)
             self.world.add_object(category, loc, pose=pose, name=name)
 
 
@@ -156,8 +141,8 @@ class WorldYamlLoader:
 
         for id, robot_data in enumerate(self.data["robots"]):
             # Create the robot
-            robot_name = get_value_or(robot_data, "name", f"robot{id}")
-            robot_color = get_value_or(robot_data, "color", default=(0.8, 0.0, 0.8))
+            robot_name = robot_data.get("name", f"robot{id}")
+            robot_color = robot_data.get("color", (0.8, 0.0, 0.8))
             robot = Robot(name=robot_name,
                           radius=robot_data["radius"],
                           color=robot_color,
@@ -180,21 +165,21 @@ class WorldYamlLoader:
         planner_type = planner_data["type"]
         
         if planner_type == "search_graph":
-            max_edge_dist = get_value_or(planner_data, "max_edge_dist", default=np.inf)
-            collision_check_dist = get_value_or(planner_data, "collision_check_dist", default=0.1)
+            max_edge_dist = planner_data.get("max_edge_dist", np.inf)
+            collision_check_dist = planner_data.get("collision_check_dist", 0.1)
             self.world.create_search_graph(
                 max_edge_dist=max_edge_dist, collision_check_dist=collision_check_dist, create_planner=True)
         else:
             # Always make a search graph as we use it for other things.
-            max_edge_dist = get_value_or(planner_data, "max_edge_dist", default=np.inf)
-            collision_check_dist = get_value_or(planner_data, "collision_check_dist", default=0.1)
+            max_edge_dist = planner_data.get("max_edge_dist", np.inf)
+            collision_check_dist = planner_data.get("collision_check_dist", 0.1)
             self.world.create_search_graph(
                 max_edge_dist=max_edge_dist, collision_check_dist=collision_check_dist, create_planner=False)
 
             if planner_type == "prm":
                 from pyrobosim.navigation.prm import PRMPlanner
-                max_nodes = get_value_or(planner_data, "max_nodes", default=100)
-                max_connection_dist = get_value_or(planner_data, "max_connection_dist", default=1.0)
+                max_nodes = planner_data.get("max_nodes", 100)
+                max_connection_dist = planner_data.get("max_connection_dist", 1.0)
                 self.world.path_planner = PRMPlanner(
                     self.world, max_nodes=max_nodes, max_connection_dist=max_connection_dist)
             else:
@@ -210,13 +195,13 @@ class WorldYamlLoader:
 
         if planner_type == "rrt":
             from pyrobosim.navigation.rrt import RRTPlanner
-            bidirectional = get_value_or(planner_data, "bidirectional", default=False)
-            rrt_star = get_value_or(planner_data, "rrt_star", default=False)
-            rrt_connect = get_value_or(planner_data, "rrt_connect", default=False)
-            max_connection_dist = get_value_or(planner_data, "max_connection_dist", default=0.5)
-            max_nodes_sampled = get_value_or(planner_data, "max_nodes_sampled", default=1000)
-            max_time = get_value_or(planner_data, "max_time", default=5.0)
-            rewire_radius = get_value_or(planner_data, "rewire_radius", default=1.0)
+            bidirectional = planner_data.get("bidirectional", False)
+            rrt_star = planner_data.get("rrt_star", False)
+            rrt_connect = planner_data.get("rrt_connect", False)
+            max_connection_dist = planner_data.get("max_connection_dist", 0.5)
+            max_nodes_sampled = planner_data.get("max_nodes_sampled", 1000)
+            max_time = planner_data.get("max_time", 5.0)
+            rewire_radius = planner_data.get("rewire_radius", 1.0)
             return RRTPlanner(self.world, bidirectional=bidirectional, rrt_star=rrt_star, rrt_connect=rrt_connect,
                               max_connection_dist=max_connection_dist, max_nodes_sampled=max_nodes_sampled,
                               max_time=max_time, rewire_radius=rewire_radius)
