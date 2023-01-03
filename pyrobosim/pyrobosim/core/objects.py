@@ -1,7 +1,7 @@
 """ Representations for objects that exist in the world. """
 
 import warnings
-from descartes.patch import PolygonPatch
+from shapely.plotting import patch_from_polygon
 
 from ..utils.general import EntityMetadata
 from ..utils.polygon import inflate_polygon, polygon_and_height_from_footprint, transform_polygon
@@ -106,10 +106,10 @@ class Object:
         """ Updates the visualization polygon for the object. """
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            self.viz_patch = PolygonPatch(
+            self.viz_patch = patch_from_polygon(
                 self.polygon,
-                fill=None, ec=self.viz_color,
-                lw=2, alpha=0.75, zorder=3)
+                facecolor=None, edgecolor=self.viz_color,
+                linewidth=2, fill=None, alpha=0.75, zorder=3)
 
     def __repr__(self):
         """ Returns printable string. """
