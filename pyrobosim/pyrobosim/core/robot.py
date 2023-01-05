@@ -249,7 +249,7 @@ class Robot:
                 is_valid_pose = sample_poly.within(loc.polygon)
                 for other_obj in loc.children:
                     is_valid_pose = is_valid_pose and not sample_poly.intersects(
-                        other_obj.polygon
+                        other_obj.collision_polygon
                     )
                 if is_valid_pose:
                     pose = pose_sample
@@ -262,7 +262,9 @@ class Robot:
             poly = transform_polygon(poly, pose)
             is_valid_pose = poly.within(loc.polygon)
             for other_obj in loc.children:
-                is_valid_pose = is_valid_pose and not poly.intersects(other_obj.polygon)
+                is_valid_pose = is_valid_pose and not poly.intersects(
+                    other_obj.collision_polygon
+                )
             if not is_valid_pose:
                 warnings.warn(f"Pose in collision or not in location {loc.name}.")
                 return False

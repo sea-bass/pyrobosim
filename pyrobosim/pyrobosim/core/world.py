@@ -441,7 +441,8 @@ class World:
             return None
 
         # Create the object
-        obj = Object(category=category, name=name, parent=obj_spawn, pose=pose)
+        obj = Object(category=category, name=name, parent=obj_spawn, pose=pose,
+                     inflation_radius=self.object_radius)
         
         # If no pose is specified, sample a valid one
         if pose is None:
@@ -453,12 +454,11 @@ class World:
                                    y=y_sample,
                                    z=0.0,
                                    yaw=yaw_sample)
-                poly = inflate_polygon(
-                    transform_polygon(obj.polygon, pose_sample), self.object_radius)
+                poly = transform_polygon(obj.collision_polygon, pose_sample)
                 
                 is_valid_pose = poly.within(obj_spawn.polygon)
                 for other_obj in obj_spawn.children:
-                    is_valid_pose = is_valid_pose and not poly.intersects(other_obj.polygon)
+                    is_valid_pose = is_valid_pose and not poly.intersects(other_obj.collision_polygon)
                 if is_valid_pose:
                     obj.parent = obj_spawn
                     obj.set_pose(pose_sample)
@@ -471,10 +471,10 @@ class World:
 
         # If a pose was specified, collision check it
         else:
-            poly = inflate_polygon(obj.polygon, self.object_radius)
+            poly = obj.collision_polygon
             is_valid_pose = poly.within(obj_spawn.polygon)
             for other_obj in obj_spawn.children:
-                is_valid_pose = is_valid_pose and not poly.intersects(other_obj.polygon)
+                is_valid_pose = is_valid_pose and not poly.intersects(other_obj.collision_polygon)
             if not is_valid_pose:
                 warnings.warn(f"Object {obj.name} in collision or not in location {loc.name}. Cannot add to world.")
                 return None
@@ -528,7 +528,7 @@ class World:
 
         if pose is not None:
             obj.set_pose(pose)
-            obj.create_polygons(self.object_radius)
+            obj.create_polygons()
 
         return True
         

@@ -4,7 +4,7 @@ Pose representation utilities.
 
 import numpy as np
 from transforms3d.euler import euler2quat, quat2euler
-from transforms3d.quaternions import qnorm, quat2mat
+from transforms3d.quaternions import mat2quat, qnorm, quat2mat
 
 class Pose:
     """ Represents a 3D pose. """
@@ -73,6 +73,18 @@ class Pose:
         else:
             raise Exception("List must contain 2, 3, 4, 6, or 7 elements.")
 
+    @classmethod
+    def from_transform(cls, tform):
+        """ 
+        Creates a pose from a transformation matrix.
+
+        :param tform: 4-by-4 transformation matrix
+        :type tform: :class:`numpy.ndarray`
+        :return: Pose object
+        :rtype: :class:`pyrobosim.utils.pose.Pose`
+        """
+        return cls(x=tform[0, 3], y=tform[1, 3], z=tform[2, 3],
+                   q=mat2quat(tform[:3, :3]))
 
     def get_linear_distance(self, other, ignore_z=False):
         """
