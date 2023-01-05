@@ -2,10 +2,12 @@
 
 import numpy as np
 import warnings
+
 from descartes.patch import PolygonPatch
 from scipy.spatial import ConvexHull
 
 from ..utils.general import EntityMetadata
+from ..utils.pose import Pose
 from ..utils.polygon import (
     convhull_to_rectangle, inflate_polygon,
     polygon_and_height_from_footprint, transform_polygon
@@ -133,17 +135,42 @@ class Object:
                 lw=2, alpha=0.75, zorder=3)
 
 
+    def get_footprint(self):
+        """
+        Returns the object footprint cooridnates.
+
+        :return: N-by-2 array of object footprint XY coordinates
+        :rtype: :class:`numpy.ndarray`
+        """
+        return np.array(list(self.raw_polygon.exterior.coords))
+
+
     def create_grasp_cuboid(self):
         """ Fits a grasp cuboid from the object footprint and height. """
         # Fit a cuboid to the irregular object footprint
-        obj_footprint = np.array(list(self.raw_polygon.exterior.coords))
-        hull = ConvexHull(obj_footprint)
-        hull_pts = obj_footprint[hull.vertices, :]
+        footprint = self.get_footprint()
+        hull = ConvexHull(footprint)
+        hull_pts = footprint[hull.vertices, :]
         (rect_pose, rect_dims, _) = convhull_to_rectangle(hull_pts)
 
         # Define the object dimension and pose
         self.cuboid_pose = rect_pose
         self.cuboid_dims = [rect_dims[0], rect_dims[1], self.height]
+
+
+    def get_grasp_cuboid_pose(self):
+        """
+        Gets the cuboid pose with respect to the reference world frame.
+        This is done by multiplying the object pose and the grasp cuboid relative pose.
+
+        :return: A Pose object representing the pose of the grasp cuboid.
+        :rtype: :class:`pyrobosim.utils.pose.Pose`
+        """
+        return Pose.from_transform(
+            np.matmul(self.cuboid_pose.get_transform_matrix(),
+                      self.pose.get_transform_matrix(),      
+            )
+        )
 
 
     def __repr__(self):

@@ -2,9 +2,10 @@
 
 from ..utils.pose import Pose
 
-from enum import Enum
 import numpy as np
 import matplotlib.pyplot as plt
+
+from enum import Enum
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from transforms3d.quaternions import rotate_vector, qinverse
@@ -133,8 +134,8 @@ class ParallelGraspProperties:
         SIDE VIEW               TOP VIEW
                   |            _________
         _____     v           |              ^
-    ===|     |  height     ===|          max_width
-        -----     ^           |_________     v
+    ===|_____|  height     ===|          max_width
+                  ^           |_________     v
                   |
                               |<-depth->|
            depth_clearance -->||<--
@@ -183,6 +184,20 @@ class GraspGenerator:
     def compute_robot_facing_rot(self, object_pose=Pose(), robot_pose=None):
         """
         Computes the rotation matrix to convert from nominal cuboid orientation to robot-facing orientation.
+        
+        The nominal orientation is such that the front face of the cuboid is -X, the sides are -Y and +Y,
+        and the top is +Z, as shown below:
+
+                                    Z
+                      +----+        ^ 
+        robot -->     |    |        |
+                      +----+        +--> X
+
+        If the robot is facing from another direction, for example the left side, then the front face in the
+        robot reference frame is the +Y and the side faces are -X and +X.
+        This function therefore returns the rotation matrix to perform this alignment to correspond which of
+        the 6 cuboid faces corresponds to directions such as "front", "right", "top", etc. from the perspective
+        of the robot.
         
         :param object_pose: The pose of the object center, defaults to identity transform
         :type object_pose: :class:`pyrobosim.utils.pose.Pose`, optional
@@ -239,12 +254,24 @@ class GraspGenerator:
     def should_try_grasp(self, faces_enabled, face_normals, face_vec):
         """
         Helper function to validate whether to compute grasps on a specific face.
+
+        Given the set of enabled grasp types, and the normal vectors of the cuboid faces, this function
+        determines whether grasping along a specific normal vector is permitted.
+        For example, if 
+          - Only top and front grasps are enabled
+          - The top face normal vector is [0, 0, 1]
+          - The front face normal vector is [-1, 0, 0]
+
+        Then this function will
+          - Allow grasps along the vectors [0, 0, 1] and [-1, 0, 0] because these are the top and front faces
+          - Disallow a grasp along the vectors [0, 1, 0]  and [0, -1, 0] because side grasps are disabled
+          - Disallow a grasp along the vector [1, 0, 0] because this would be a back grasp which is not supported
         
-        :param faces_enabled: Faces enabled, in the form (front, top, side)
+        :param faces_enabled: Faces for which grasp generation is enabled, in the form (front, top, side)
         :type faces_enabled: list[bool]
         :param face_normals: Face normals in the canonical directions, in the form (front, top, left, right)
         :type face_normals: list[:class:`numpy.ndarray`]
-        :param face_vec: Face vector to check against
+        :param face_vec: Normal vector of the cuboid face to check.
         :type face_vec: :class:`numpy.ndarray`
         :return: A tuple determining whether the grasp should be attempted, and what face that corresponds to
         :type face_vec: (bool, :class:`pyrobosim.manipulation.grasping.GraspFace`)
