@@ -223,11 +223,7 @@ class Robot:
         if grasp_pose is not None:
             self.latest_grasp = Grasp(origin=grasp_pose)
         elif self.grasp_generator is not None:
-            cuboid_pose = Pose.from_transform(
-                np.matmul(obj.cuboid_pose.get_transform_matrix(),
-                          obj.pose.get_transform_matrix(),      
-                )
-            )
+            cuboid_pose = obj.get_grasp_cuboid_pose()
             grasps = self.grasp_generator.generate(
                 obj.cuboid_dims, cuboid_pose, self.pose,
                 front_grasps=True, top_grasps=True, side_grasps=False
