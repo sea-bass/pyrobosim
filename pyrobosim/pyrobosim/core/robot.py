@@ -65,7 +65,7 @@ class Robot:
 
         # Manipulation properties
         self.grasp_generator = grasp_generator
-        self.latest_grasp = None
+        self.last_grasp_selection = None
 
         # World interaction properties
         self.world = None
@@ -174,6 +174,20 @@ class Robot:
         self.current_path = None
         return success
 
+    def _attach_object(self, obj):
+        """
+        Helper function to attach an object in the world to the robot.
+        Be careful calling this function directly as is does not do any validation.
+        When possible, you should be using `pick_object`.
+
+        :param obj: Object to manipulate
+        :type obj: :class:`pyrobosim.core.objects.Object`
+        """
+        self.manipulated_object = obj
+        obj.parent.children.remove(obj)
+        obj.parent = self
+        obj.set_pose(self.pose)
+
     def pick_object(self, obj_query, grasp_pose=None):
         """
         Picks up an object in the world given an object and/or location query.
@@ -225,7 +239,7 @@ class Robot:
                 grasp_properties = self.grasp_generator.properties
             else:
                 grasp_properties = None
-            self.latest_grasp = Grasp(origin=grasp_pose, properties=grasp_properties)
+            self.last_grasp_selection = Grasp(origin=grasp_pose, properties=grasp_properties)
         elif self.grasp_generator is not None:
             cuboid_pose = obj.get_grasp_cuboid_pose()
             grasps = self.grasp_generator.generate(
@@ -238,14 +252,11 @@ class Robot:
                 return False
             else:
                 # TODO: For now, just pick a random grasp.
-                self.latest_grasp = np.random.choice(grasps)
-                print(self.latest_grasp)
+                self.last_grasp_selection = np.random.choice(grasps)
+                print(f"Selected grasp:\n{self.last_grasp_selection}")
 
         # Denote the target object as the manipulated object
-        self.manipulated_object = obj
-        obj.parent.children.remove(obj)
-        obj.parent = self
-        obj.set_pose(self.pose)
+        self._attach_object(obj)
         return True
 
     def place_object(self, pose=None):
