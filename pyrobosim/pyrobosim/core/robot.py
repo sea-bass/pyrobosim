@@ -221,7 +221,11 @@ class Robot:
         # generate grasps here.
         # TODO: Specify allowed grasp types
         if grasp_pose is not None:
-            self.latest_grasp = Grasp(origin=grasp_pose)
+            if self.grasp_generator is not None:
+                grasp_properties = self.grasp_generator.properties
+            else:
+                grasp_properties = None
+            self.latest_grasp = Grasp(origin=grasp_pose, properties=grasp_properties)
         elif self.grasp_generator is not None:
             cuboid_pose = obj.get_grasp_cuboid_pose()
             grasps = self.grasp_generator.generate(
