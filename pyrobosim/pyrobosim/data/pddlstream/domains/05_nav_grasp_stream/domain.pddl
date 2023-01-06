@@ -1,4 +1,4 @@
-; PDDL PLANNING DOMAIN (NAVIGATION + MANIPULATION STREAMS)
+; PDDL PLANNING DOMAIN (NAVIGATION + MANIPULATION + GRASP STREAMS)
 ;
 ; This planning domain contains `navigate`, `pick`, and `place` actions.
 ;
@@ -7,6 +7,8 @@
 ;    denoted with the verified predicate `NavPose`.
 ; 2. A path from a motion planner is sampled from a motion planner,
 ;    denoted with the verified predicate `Motion`.
+;
+; The `pick` action uses streams to sample valid grasps assuming cuboid objects.
 ;
 ; The `place` action uses streams to sample a collision-free pose, taking into
 ; account the extents of the location itself as well as other objects at that location.
@@ -89,7 +91,7 @@
                  (not (HandEmpty ?r)) 
                  (not (At ?o ?l))
                  (not (AtPose ?o ?p))
-                 (increase (total-cost) (PickPlaceAtPoseCost ?l ?o ?p ?pr)))
+                 (increase (total-cost) (GraspAtPoseCost ?g ?pr)))
   )
 
   ; PLACE: Places an object in a specified location

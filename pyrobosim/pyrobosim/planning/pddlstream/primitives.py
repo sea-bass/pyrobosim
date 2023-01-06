@@ -4,6 +4,7 @@ Helper primitives for PDDLStream based planning.
 
 import numpy as np
 
+from ...manipulation.grasping import GraspFace
 from ...utils.pose import Pose
 from ...utils.polygon import inflate_polygon, sample_from_polygon, transform_polygon
 
@@ -41,6 +42,29 @@ def get_pick_place_at_pose_cost(loc, obj, p, pr):
     :rtype: float
     """
     return p.get_linear_distance(pr) + get_pick_place_cost(loc, obj)
+
+
+def get_grasp_at_pose_cost(g, pr):
+    """
+    Estimates the cost of grasping a specific object,
+    given the grasp properties and the pose of the robot.
+
+    :param g: Object grasp.
+    :type g: :class:`pyrobosim.manipulation.grasping.Grasp`
+    :param pr: Robot pose.
+    :type pr: :class:`pyrobosim.utils.pose.Pose`
+    :return: Cost of performing action.
+    :rtype: float
+    """
+    # Define dummy costs for types of grasps
+    if g.face == GraspFace.TOP:
+        face_cost = 0.0
+    elif g.face == GraspFace.FRONT:
+        face_cost = 0.5
+    else:
+        face_cost = 1.0
+
+    return g.origin.get_linear_distance(pr) + face_cost
 
 
 def get_straight_line_distance(l1, l2):

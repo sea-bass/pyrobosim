@@ -1,4 +1,4 @@
-; STREAMS FOR PDDL PLANNING DOMAIN (NAVIGATION + MANIPULATION STREAMS)
+; STREAMS FOR PDDL PLANNING DOMAIN (NAVIGATION + MANIPULATION + GRASP STREAMS)
 ;
 ; Contains cost functions for actions and streams for navigation and manipulation.
 ;
@@ -9,6 +9,12 @@
   ; PATHLENGTH: Length of a path.
   (:function (PathLength ?pth)
              (and (Path ?pth))
+  )
+
+  ; GRASPATPOSECOST: Cost to perform a grasp on an object.
+  ;                  The robot is at Pose pr, and the grasp is defined by Grasp g.
+  (:function (GraspAtPoseCost ?g ?pr)
+             (and (Grasp ?g) (Pose ?pr))
   )
 
   ; PICKPLACEATPOSECOST: Cost to perform pick and place at a location.
