@@ -108,6 +108,54 @@ def sample_motion(planner, p1, p2):
         yield (path,)
 
 
+def sample_grasp_pose(grasp_gen, obj, p_obj, p_robot,
+                      front_grasps=True, top_grasps=True, side_grasps=False):
+    """
+    Samples feasible grasps for an object given its pose and the relative robot pose.
+
+    :param grasp_gen: Grasp generator object
+    :type grasp_gen: Planner
+    :param obj: Target object
+    :type obj: :class:`pyrobosim.core.objects.Object`
+    :param p_obj: Object pose.
+    :type p_obj: :class:`pyrobosim.utils.pose.Pose`
+    :param p_robot: Robot pose.
+    :type p_robot: :class:`pyrobosim.utils.pose.Pose`
+    :param front_grasps: Enable front grasps
+    :type front_grasps: bool, optional
+    :param top_grasps: Enable top grasps
+    :type top_grasps: bool, optional
+    :param side_grasps: Enable side grasps
+    :type side_grasps: bool, optional
+    :return: Generator yielding tuple containing a grasp
+    :rtype: generator[tuple[:class:`pyrobosim.manipulation.grasping.Grasp`]]
+        
+    """
+    # Get the object cuboid pose assuming the object is at pose p_obj
+    cuboid_pose = Pose.from_transform(
+        np.matmul(obj.cuboid_pose.get_transform_matrix(),
+                  p_obj.get_transform_matrix(),      
+        )
+    )
+
+    # Generate grasps up front and yield them as requested
+    grasps = grasp_gen.generate(
+        obj.cuboid_dims, cuboid_pose, p_robot,
+        front_grasps=front_grasps,
+        top_grasps=top_grasps,
+        side_grasps=side_grasps
+    )
+    for g in grasps:
+        # Convert the grasp origin from object to world cooridnates
+        g.origin = Pose.from_transform(
+            np.matmul(
+                g.origin.get_transform_matrix(),
+                cuboid_pose.get_transform_matrix(),
+            )
+        )
+        yield (g,)
+
+
 def sample_place_pose(loc, obj, padding=0.0, max_tries=100):
     """
     Samples a feasible placement pose for an object at a specific location.
@@ -164,5 +212,5 @@ def test_collision_free(o1, p1, o2, p2, padding=0.0):
     :rtype: bool
     """
     o1_poly = transform_polygon(inflate_polygon(o1.raw_polygon, padding), p1)
-    o2_poly = transform_polygon(o2.raw_polygon, p2)
+    o2_poly = transform_polygon(inflate_polygon(o2.raw_polygon, padding), p2)
     return not o1_poly.intersects(o2_poly)

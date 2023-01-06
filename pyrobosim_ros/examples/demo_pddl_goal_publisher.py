@@ -36,7 +36,7 @@ class GoalPublisher(Node):
                 GoalPredicate(type="At", args=("banana0", "counter0_left")),
                 GoalPredicate(type="Holding", args=("robot", "water0"))
             ]
-        elif example in ["02_derived", "03_nav_stream", "04_nav_manip_stream"]:
+        elif example in ["02_derived", "03_nav_stream", "04_nav_manip_stream", "05_nav_grasp_stream"]:
             # Goal specification for derived predicate example.
             goal_predicates = [
                 GoalPredicate(type="Has", args=("desk0_desktop", "banana0")),

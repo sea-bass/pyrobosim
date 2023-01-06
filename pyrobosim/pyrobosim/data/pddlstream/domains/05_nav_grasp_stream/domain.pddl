@@ -26,7 +26,8 @@
                 (Is ?o ?t)              ; Type correspondence of location or object
                 (Pose ?p)               ; Pose of an entity
                 (Path ?pth)             ; Path from one pose to another
-                
+                (Grasp ?g)              ; Object grasp
+
                 ; Fluent predicates
                 (CanMove ?r)                    ; Whether the robot can move (prevents duplicate moves)
                 (Holding ?r ?o)                 ; Object the robot is holding
@@ -37,6 +38,7 @@
                 (HasNone ?loc ?entity)          ; Check nonexistence of object types in locations
                 (HasAll ?loc ?entity)           ; Check exclusivity of object types in locations
                 (IsCollisionFree ?l ?o ?p)      ; Checks collisions when placing an object
+                (Graspable ?o ?po ?pr ?g)       ; Checks valid grasp for an object
 
                 ; Stream verified predicates
                 (NavPose ?l ?p)                 ; Navigation pose for a location
@@ -71,16 +73,18 @@
 
   ; PICK: Picks up an object from a specified location
   (:action pick
-    :parameters (?r ?o ?l ?p ?pr)
+    :parameters (?r ?o ?l ?p ?pr ?g)
     :precondition (and (Robot ?r)
                        (Obj ?o)
                        (Location ?l)
                        (Pose ?p) (AtPose ?o ?p)
                        (Pose ?pr) (AtPose ?r ?pr)
+                       (Grasp ?g)
                        (not (Room ?l))
                        (HandEmpty ?r) 
                        (At ?r ?l)
-                       (At ?o ?l))
+                       (At ?o ?l)
+                       (Graspable ?o ?p ?pr ?g))
     :effect (and (Holding ?r ?o) (CanMove ?r)
                  (not (HandEmpty ?r)) 
                  (not (At ?o ?l))

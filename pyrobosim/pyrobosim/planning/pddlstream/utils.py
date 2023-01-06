@@ -5,6 +5,7 @@ Utilities to connect world models with PDDLStream.
 import os
 
 from ..actions import TaskAction, TaskPlan
+from ...manipulation.grasping import Grasp
 from ...utils.general import get_data_folder
 from ...utils.motion import Path
 from ...utils.pose import Pose
@@ -156,6 +157,11 @@ def pddlstream_solution_to_plan(solution, robot):
                 arg = act_pddl.args[3]
                 if isinstance(arg, Pose):
                     act.pose = arg
+            # If a grasp pose is specified, add that instead
+            if act.type == "pick" and len(act_pddl.args) > 5:
+                arg = act_pddl.args[5]
+                if isinstance(arg, Grasp):
+                    act.pose = arg.origin
 
         # Add the action to the task plan
         plan_out.actions.append(act)

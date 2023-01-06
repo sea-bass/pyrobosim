@@ -20,6 +20,7 @@ def get_stream_map(world, robot):
     :rtype: dict(str, function)
     """
     planner = robot.path_planner
+    grasp_gen = robot.grasp_generator
 
     return {
         # Functions
@@ -31,6 +32,12 @@ def get_stream_map(world, robot):
         "s-navpose": from_list_fn(primitives.get_nav_poses),
         "s-motion": from_gen_fn(
             lambda p1, p2: primitives.sample_motion(planner, p1, p2)
+        ),
+        "s-grasp": from_gen_fn(
+            lambda obj, p_obj, p_robot: primitives.sample_grasp_pose(
+                grasp_gen, obj, p_obj, p_robot,
+                front_grasps=True, top_grasps=True, side_grasps=False
+            )
         ),
         "s-place": from_gen_fn(
             lambda loc, obj: primitives.sample_place_pose(
@@ -61,6 +68,7 @@ def get_stream_info():
         # Streams (that sample)
         "s-navpose": StreamInfo(eager=False),
         "s-motion": StreamInfo(eager=False),
+        "s-grasp": StreamInfo(eager=False),
         "s-place": StreamInfo(eager=False),
         # Streams (no sampling, just testing)
         "t-collision-free": StreamInfo(eager=False, negate=True),

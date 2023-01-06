@@ -19,7 +19,7 @@ def parse_args():
     """ Parse command-line arguments """
     parser = argparse.ArgumentParser(description="PDDLStream planning demo.")
     parser.add_argument("--example", default="01_simple",
-                        help="Example name (01_simple, 02_derived, 03_nav_stream, 04_nav_manip_stream)")
+                        help="Example name (01_simple, 02_derived, 03_nav_stream, 04_nav_manip_stream, 05_nav_grasp_stream)")
     parser.add_argument("--verbose", action="store_true",
                         help="Print planning output")
     parser.add_argument("--search-sample-ratio", type=float, default=1.0,
@@ -57,7 +57,7 @@ def start_planner(world, args):
             ("At", "banana0", "counter0_left"),
             ("Holding", "robot", "water0")
         ]
-    elif args.example in ["02_derived", "03_nav_stream", "04_nav_manip_stream"]:
+    elif args.example in ["02_derived", "03_nav_stream", "04_nav_manip_stream", "05_nav_grasp_stream"]:
         # Task specification for derived predicate example.
         goal_literals = [
             ("Has", "desk0_desktop", "banana0"),

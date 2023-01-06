@@ -74,7 +74,7 @@ class PlannerNode(Node):
                     ("At", "banana0", "counter0_left"),
                     ("Holding", "robot", "water0")
                 ]
-            elif example in ["02_derived", "03_nav_stream", "04_nav_manip_stream"]:
+            elif example in ["02_derived", "03_nav_stream", "04_nav_manip_stream", "05_nav_grasp_stream"]:
                 # Task specification for derived predicate example.
                 self.latest_goal = [
                     ("Has", "desk0_desktop", "banana0"),
