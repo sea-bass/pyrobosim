@@ -349,7 +349,7 @@ class Robot:
 
         elif action.type == "pick":
             if self.world.has_gui:
-                success = self.world.gui.canvas.pick_object(self, action.object)
+                success = self.world.gui.canvas.pick_object(self, action.object, action.pose)
             else:
                 success = self.pick_object(action.object, action.pose)
 

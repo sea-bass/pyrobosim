@@ -401,7 +401,7 @@ class WorldCanvas(FigureCanvasQTAgg):
             time.sleep(0.1)
         return True
 
-    def pick_object(self, robot, obj_name):
+    def pick_object(self, robot, obj_name, grasp_pose=None):
         """
         Picks an object with a specified robot.
 
@@ -409,11 +409,13 @@ class WorldCanvas(FigureCanvasQTAgg):
         :type robot: :class:`pyrobosim.core.robot.Robot`
         :param obj_name: The name of the object.
         :type obj_name: str
+        :param grasp_pose: A pose describing how to manipulate the object.
+        :type grasp_pose: :class:`pyrobosim.utils.pose.Pose`, optional
         :return: True if picking succeeds, else False
         :rtype: bool
         """
         if robot is not None:
-            success = robot.pick_object(obj_name)
+            success = robot.pick_object(obj_name, grasp_pose)
             if success:
                 self.update_object_plot(robot.manipulated_object)
                 self.show_world_state(robot)
