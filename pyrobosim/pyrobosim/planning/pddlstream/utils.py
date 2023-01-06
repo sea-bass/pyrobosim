@@ -157,11 +157,11 @@ def pddlstream_solution_to_plan(solution, robot):
                 arg = act_pddl.args[3]
                 if isinstance(arg, Pose):
                     act.pose = arg
-            # If a grasp pose is specified, add that instead
-            if act.type == "pick" and len(act_pddl.args) > 5:
-                arg = act_pddl.args[5]
-                if isinstance(arg, Grasp):
-                    act.pose = arg.origin
+            # If a grasp pose is specified for the pick action, use that instead.
+            if act.type == "pick":
+                for arg in act_pddl.args:
+                    if isinstance(arg, Grasp):
+                        act.pose = arg.origin
 
         # Add the action to the task plan
         plan_out.actions.append(act)
