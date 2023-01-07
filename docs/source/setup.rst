@@ -61,14 +61,29 @@ then you should have a ``ROS_DISTRO`` environment variable set. Otherwise,
 ::
 
     export ROS_DISTRO=humble
-    ./docker/build_docker.bash
-    ./docker/run_docker.bash
+    docker compose build
 
-Alternatively, you can directly run a command in a Docker container:
+Then, you can start any of the existing demos.
+To see all the available services, refer to the ``docker-compose.yaml`` file or use Tab completion.
 
 ::
 
-    ./docker/run_docker.bash "ros2 launch pyrobosim_ros demo.py"
+    docker compose up demo
+    docker compose up demo_ros
 
-Colcon workspace build artifacts are shared across containers by mounting volumes,
-so you can run a different command in a new Terminal without rebuilding.
+Alternatively, you can start a Docker container.
+
+::
+
+    docker compose run base
+    # python3 src/pyrobosim/examples/demo.py
+
+You can also start a new Terminal and go into the same container as follows.
+
+::
+
+    docker exec -it <pyrobosim-base-1> bash
+    # ros2 launch pyrobosim_ros demo.py
+
+The source code on your host machine is mounted as a volume, 
+so you can make modifications on your host and rebuild the Colcon workspace inside the container.

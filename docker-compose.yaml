@@ -35,7 +35,7 @@ services:
     - ./:/pyrobosim_ws/src/:rw
     # Allows graphical programs in the container.
     - /tmp/.X11-unix:/tmp/.X11-unix:rw
-    command: sleep infinity
+    command: /bin/bash
 
   test:
     extends: base
