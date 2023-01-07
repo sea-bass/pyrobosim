@@ -3,10 +3,10 @@
 """
 Test script for PDDLStream planning with manipulation streams.
 """
-import os
-import sys
 import numpy as np
+import os
 import pytest
+import sys
 
 from pyrobosim.core.robot import Robot
 from pyrobosim.core.room import Room
