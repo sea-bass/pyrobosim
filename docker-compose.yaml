@@ -1,0 +1,68 @@
+# Docker Compose file for pyrobosim
+#
+# Usage:
+#
+# To build the images:
+#   docker compose build
+#
+# To start up a specific service by name:
+#   docker compose up <service_name>
+#
+# To open an interactive shell to a running container:
+#   docker exec -it <container_name> bash
+
+services:
+  base:
+    image: pyrobosim
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        ROS_DISTRO: ${ROS_DISTRO:-humble}
+    # Interactive shell
+    stdin_open: true
+    tty: true
+    # Networking and IPC for ROS 2
+    network_mode: host
+    ipc: host
+    # Allows graphical programs in the container.
+    environment:
+    - DISPLAY=${DISPLAY}
+    - QT_X11_NO_MITSHM=1
+    - NVIDIA_DRIVER_CAPABILITIES=all
+    volumes:
+    # Mount the source code
+    - ./:/pyrobosim_ws/src/:rw
+    # Allows graphical programs in the container.
+    - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    command: sleep infinity
+
+  test:
+    extends: base
+    command: src/test/run_tests.bash
+
+  ###############
+  # Basic demos #
+  ###############
+  demo:
+    extends: base
+    command: python3 src/pyrobosim/examples/demo.py
+  demo_multirobot:
+    extends: base
+    command: python3 src/pyrobosim/examples/demo.py --multirobot
+  demo_ros:
+    extends: base
+    command: ros2 launch pyrobosim_ros demo.launch.py
+  demo_multirobot_ros:
+    extends: base
+    command: ros2 launch pyrobosim_ros demo_commands_multirobot.launch.py
+
+  ##################################
+  # Task and Motion Planning demos #
+  ##################################
+  demo_pddl:
+    extends: base
+    command: python3 src/pyrobosim/examples/demo_pddl.py --example 01_simple --verbose
+  demo_pddl_ros:
+    extends: base
+    command: ros2 launch pyrobosim_ros demo_pddl.launch.py example:=01_simple subscribe:=true verbose:=true
