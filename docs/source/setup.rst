@@ -68,8 +68,8 @@ To see all the available services, refer to the ``docker-compose.yaml`` file or 
 
 ::
 
-    docker compose up demo
-    docker compose up demo_ros
+    docker compose run demo
+    docker compose run demo_ros
 
 Alternatively, you can start a Docker container.
 

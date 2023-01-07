@@ -6,7 +6,6 @@ Test script showing how to perform task and motion planning with PDDLStream.
 
 import os
 import sys
-import time
 import argparse
 import threading
 
@@ -70,7 +69,7 @@ def start_planner(world, args):
         print(f"Invalid example: {args.example}")
         return
 
-    time.sleep(1.0)
+    input("Press Enter to start planning.")
     robot = world.robots[0]
     plan = planner.plan(robot, goal_literals, focused=True, verbose=args.verbose,
                         search_sample_ratio=args.search_sample_ratio)
