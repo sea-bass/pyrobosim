@@ -54,7 +54,7 @@ jobs:
       - name: Build Docker image
         run: docker compose build
       - name: Run unit tests in Docker container
-        run: docker compose up test
+        run: docker compose run test
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:

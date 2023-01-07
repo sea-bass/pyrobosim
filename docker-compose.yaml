@@ -32,7 +32,10 @@ services:
     - NVIDIA_DRIVER_CAPABILITIES=all
     volumes:
     # Mount the source code
-    - ./:/pyrobosim_ws/src/:rw
+    - ./pyrobosim/:/pyrobosim_ws/src/pyrobosim/:rw
+    - ./pyrobosim_msgs/:/pyrobosim_ws/src/pyrobosim_msgs/:rw
+    - ./pyrobosim_ros/:/pyrobosim_ws/src/pyrobosim_ros/:rw
+    - ./test/:/pyrobosim_ws/src/test/:rw
     # Allows graphical programs in the container.
     - /tmp/.X11-unix:/tmp/.X11-unix:rw
     command: /bin/bash
