@@ -50,7 +50,7 @@ def create_test_world(add_alt_desk=True):
 
     # Add a robot
     grasp_props = ParallelGraspProperties(
-        max_width=0.15, depth=0.1, height=0.04,
+        max_width=0.175, depth=0.1, height=0.04,
         width_clearance=0.01, depth_clearance=0.01
     )
     r = Robot(
@@ -58,7 +58,7 @@ def create_test_world(add_alt_desk=True):
         path_executor=ConstantVelocityExecutor(),
         grasp_generator=GraspGenerator(grasp_props)
     )
-    w.add_robot(r, loc="home")
+    w.add_robot(r, loc="home", pose=Pose(x=0.0, y=-0.5))
 
     # Create a search graph and motion planner
     w.create_search_graph(max_edge_dist=3.0, collision_check_dist=0.05)
