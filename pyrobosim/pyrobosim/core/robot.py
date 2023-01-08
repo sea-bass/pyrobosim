@@ -255,7 +255,8 @@ class Robot:
             else:
                 # TODO: For now, just pick a random grasp.
                 self.last_grasp_selection = np.random.choice(grasps)
-        print(f"Selected {self.last_grasp_selection}")
+        if self.last_grasp_selection is not None:
+            print(f"Selected {self.last_grasp_selection}")
 
         # Denote the target object as the manipulated object
         self._attach_object(obj)
