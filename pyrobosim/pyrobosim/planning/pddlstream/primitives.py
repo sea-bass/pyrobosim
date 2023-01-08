@@ -56,6 +56,9 @@ def get_grasp_at_pose_cost(g, pr):
     :return: Cost of performing action.
     :rtype: float
     """
+    # Define cost for distance between robot and grasp pose
+    distance_cost = g.origin_wrt_world.get_linear_distance(pr)
+
     # Define dummy costs for types of grasps
     if g.face == GraspFace.TOP:
         face_cost = 0.0
@@ -64,7 +67,7 @@ def get_grasp_at_pose_cost(g, pr):
     else:
         face_cost = 1.0
 
-    return g.origin.get_linear_distance(pr) + face_cost
+    return distance_cost + face_cost
 
 
 def get_straight_line_distance(l1, l2):
@@ -170,13 +173,6 @@ def sample_grasp_pose(grasp_gen, obj, p_obj, p_robot,
         side_grasps=side_grasps
     )
     for g in grasps:
-        # Convert the grasp origin from object to world cooridnates
-        g.origin = Pose.from_transform(
-            np.matmul(
-                g.origin.get_transform_matrix(),
-                cuboid_pose.get_transform_matrix(),
-            )
-        )
         yield (g,)
 
 

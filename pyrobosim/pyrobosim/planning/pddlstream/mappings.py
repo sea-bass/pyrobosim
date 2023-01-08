@@ -67,7 +67,10 @@ def get_stream_info():
     """
     return {
         # Streams (that sample)
-        "s-navpose": StreamInfo(eager=False),
+        # Nav poses can be eagerly sampled since locations don't move.
+        "s-navpose": StreamInfo(eager=True),
+        # Other streams cannot be eagerly sampled as they depend on the
+        # instantaneous pose of entities in the world during planning.
         "s-motion": StreamInfo(eager=False),
         "s-grasp": StreamInfo(eager=False),
         "s-place": StreamInfo(eager=False),

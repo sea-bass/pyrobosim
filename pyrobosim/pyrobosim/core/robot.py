@@ -239,7 +239,9 @@ class Robot:
                 grasp_properties = self.grasp_generator.properties
             else:
                 grasp_properties = None
-            self.last_grasp_selection = Grasp(origin=grasp_pose, properties=grasp_properties)
+            self.last_grasp_selection = Grasp(properties=grasp_properties,
+                                              origin_wrt_object=Pose(),
+                                              origin_wrt_world=grasp_pose)
         elif self.grasp_generator is not None:
             cuboid_pose = obj.get_grasp_cuboid_pose()
             grasps = self.grasp_generator.generate(
@@ -253,7 +255,7 @@ class Robot:
             else:
                 # TODO: For now, just pick a random grasp.
                 self.last_grasp_selection = np.random.choice(grasps)
-                print(f"Selected grasp:\n{self.last_grasp_selection}")
+        print(f"Selected {self.last_grasp_selection}")
 
         # Denote the target object as the manipulated object
         self._attach_object(obj)

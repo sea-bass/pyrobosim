@@ -161,7 +161,7 @@ def pddlstream_solution_to_plan(solution, robot):
             if act.type == "pick":
                 for arg in act_pddl.args:
                     if isinstance(arg, Grasp):
-                        act.pose = arg.origin
+                        act.pose = arg.origin_wrt_world
 
         # Add the action to the task plan
         plan_out.actions.append(act)
