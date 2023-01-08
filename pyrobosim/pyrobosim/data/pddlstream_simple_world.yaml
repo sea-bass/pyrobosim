@@ -27,6 +27,13 @@ robots:
       bidirectional: false
       rrt_star: true
       rewire_radius: 1.5
+    grasping:
+      generator: parallel_grasp
+      max_width: 0.15
+      depth: 0.1
+      height: 0.04
+      width_clearance: 0.01
+      depth_clearance: 0.01
 
 
 # PLANNING: Global planner

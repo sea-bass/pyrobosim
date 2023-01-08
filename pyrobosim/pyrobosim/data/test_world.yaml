@@ -15,7 +15,7 @@ metadata:
   objects: $DATA/example_object_data.yaml
 
 
-# ROBOTS: For now, we only support a single robot
+# ROBOTS
 robots:
   - name: robot
     radius: 0.1
@@ -28,7 +28,14 @@ robots:
     #   bidirectional: true
     #   rrt_star: true
     #   rewire_radius: 1.0
-
+    # Grasp generation
+    grasping:
+      generator: parallel_grasp
+      max_width: 0.15
+      depth: 0.1
+      height: 0.04
+      width_clearance: 0.01
+      depth_clearance: 0.01
 
 # PLANNING: Global planner
 global_path_planner:
