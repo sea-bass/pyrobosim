@@ -22,7 +22,7 @@
                 (Type ?t)               ; Type of location or object
                 (Is ?o ?t)              ; Type correspondence of location or object
                 (Pose ?p)               ; Pose of an entity
-                (Path ?pth)             ; Path from one pose to another
+                (Path ?pth)             ; Path to navigate from one pose to another
                 
                 ; Fluent predicates
                 (CanMove ?r)            ; Whether the robot can move (prevents duplicate moves)
@@ -30,9 +30,9 @@
                 (At ?o ?l)              ; Robot/Object's location
                 (AtPose ?e ?p)          ; Robot/Object's pose
                 (AtRoom ?l ?r)          ; Location's corresponding room
-                (Has ?loc ?entity)      ; Check existence of object types in locations
-                (HasNone ?loc ?entity)  ; Check nonexistence of object types in locations
-                (HasAll ?loc ?entity)   ; Check exclusivity of object types in locations
+                (Has ?loc ?entity)      ; Check existence of entities (object instances or types) in locations
+                (HasNone ?loc ?entity)  ; Check nonexistence of entities (object instances or types) in locations
+                (HasAll ?loc ?entity)   ; Check exclusivity of entities (object instances or types) in locations
 
                 ; Stream verified predicates
                 (NavPose ?l ?p)         ; Navigation pose for a location
