@@ -3,8 +3,11 @@ Unit tests for core world modeling
 """
 
 import pytest
+import numpy as np
+
 from pyrobosim.core.world import World
 from pyrobosim.core.world import Room
+from pyrobosim.utils.pose import Pose
 
 
 class TestWorldModeling():
@@ -52,3 +55,17 @@ class TestWorldModeling():
         TestWorldModeling.world.add_hallway("kitchen", "bedroom", offset=0.5,
             conn_method="auto", width = 0.5)
         assert len(TestWorldModeling.world.hallways) == 1
+
+    @staticmethod
+    @pytest.mark.dependency(depends=
+        ["TestWorldModeling::test_create_world_default","TestWorldModeling::test_create_room", 
+        "TestWorldModeling::test_create_hallway"])
+    def test_create_location():
+        """ Tests the creation of locations"""
+        # TODO : add tests for named locations.
+        table = TestWorldModeling.world.add_location("table", "kitchen", Pose(
+            x=0.85, y=-0.5, z=0.0, yaw=-np.pi/2))
+
+        table_name = "table0" # We expect the suffix '0' to be added due to automatic naming
+        assert len(TestWorldModeling.world.locations) == 1
+        assert TestWorldModeling.world.get_location_by_name(table_name) == table
