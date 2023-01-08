@@ -129,7 +129,7 @@ class Grasp:
             display_str += f"\tOrigin w.r.t. world:{self.origin_wrt_world}\n"
         display_str += f"\tFace: {self.face}\n\tDirection: {self.direction}\n"
         if self.properties is not None:
-            display_str += "\t{self.properties}\n"
+            display_str += f"\t{self.properties}\n"
         return display_str
 
 

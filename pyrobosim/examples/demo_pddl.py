@@ -22,7 +22,7 @@ def parse_args():
                         help="Example name (01_simple, 02_derived, 03_nav_stream, 04_nav_manip_stream, 05_nav_grasp_stream)")
     parser.add_argument("--verbose", action="store_true",
                         help="Print planning output")
-    parser.add_argument("--search-sample-ratio", type=float, default=1.0,
+    parser.add_argument("--search-sample-ratio", type=float, default=2.0,
                         help="Search to sample ratio for planner")
     return parser.parse_args()
 

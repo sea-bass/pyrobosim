@@ -43,7 +43,8 @@ class PDDLStreamPlanner:
         focused=True,
         planner="ff-astar",
         max_time=60.0,
-        max_iterations=10,
+        max_iterations=5,
+        max_complexity=3,
         max_attempts=1,
         search_sample_ratio=1.0,
         verbose=False,
@@ -64,6 +65,8 @@ class PDDLStreamPlanner:
         :type max_time: float, optional
         :param max_iterations: Maximum planning iterations.
         :type max_iterations: int, optional
+        :param max_complexity: Maximum stream complexity limit.
+        :type max_complexity: int, optional
         :param max_attempts: Maximum planning attempts.
         :type max_attempts: int, optional
         :param search_sample_ratio: Search to sample time ratio, used only for the focused algorithm.
@@ -107,12 +110,13 @@ class PDDLStreamPlanner:
                     max_time=max_time,
                     max_planner_time=max_time,
                     max_iterations=max_iterations,
-                    initial_complexity=0,
+                    max_complexity=max_complexity,
                     verbose=verbose,
                 )
             else:
                 solution = solve_incremental(
-                    prob, planner=planner, max_time=max_time, verbose=verbose
+                    prob, planner=planner, max_time=max_time,
+                    max_complexity=max_complexity, verbose=verbose
                 )
 
             # If the solution is valid, no need to try again

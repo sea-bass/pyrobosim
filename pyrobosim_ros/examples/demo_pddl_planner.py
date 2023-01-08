@@ -38,7 +38,7 @@ class PlannerNode(Node):
         self.declare_parameter("example", value="01_simple")
         self.declare_parameter("subscribe", value=True)
         self.declare_parameter("verbose", value=True)
-        self.declare_parameter("search_sample_ratio", value=1.0)
+        self.declare_parameter("search_sample_ratio", value=2.0)
 
         # Publisher for a task plan
         self.plan_pub = self.create_publisher(

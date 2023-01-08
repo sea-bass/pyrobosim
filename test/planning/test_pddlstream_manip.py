@@ -21,7 +21,7 @@ from pyrobosim.utils.pose import Pose
 
 
 def create_test_world(add_alt_desk=True):
-    w = World(object_radius=0.1)
+    w = World(object_radius=0.05)
 
     # Set the location and object metadata
     data_folder = get_data_folder()
@@ -78,7 +78,8 @@ def start_planner(world, domain_name, interactive=False, max_attempts=1):
         input("Press Enter to start planning.")
     robot = world.robots[0]
     plan = planner.plan(robot, goal_literals, focused=True,
-                        max_attempts=max_attempts, verbose=interactive)
+                        search_sample_ratio=0.5, max_attempts=max_attempts,
+                        verbose=interactive)
     if interactive:
         robot.execute_plan(plan, blocking=True)
     return plan
