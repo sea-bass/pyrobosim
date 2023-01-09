@@ -51,14 +51,14 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
-      - name: Set up Docker image
-        run: docker/build_docker.bash
+      - name: Build Docker image
+        run: docker compose build
       - name: Run unit tests in Docker container
-        run: docker/run_docker.bash "src/pyrobosim/test/run_tests.bash" ci_mode
+        run: docker compose run test
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:
-          name: test-results-${{ matrix.version }}
+          name: test-results-${{ matrix.ros_distro }}
           path: test/results/
         # Always publish test results even when there are failures.
         if: ${{ always() }}

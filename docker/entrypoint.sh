@@ -6,10 +6,10 @@ if [ ! -f /pyrobosim_ws/install/setup.bash ]
 then
   colcon build
 fi
-. /pyrobosim_ws/install/setup.bash
+source /pyrobosim_ws/install/setup.bash
 
 # Add dependencies to path
-PDDLSTREAM_PATH=/pyrobosim_ws/src/pyrobosim/dependencies/pddlstream
+PDDLSTREAM_PATH=/pyrobosim_ws/src/dependencies/pddlstream
 if [ -d "$PDDLSTREAM_PATH" ]
 then
     export PYTHONPATH=$PDDLSTREAM_PATH:$PYTHONPATH
