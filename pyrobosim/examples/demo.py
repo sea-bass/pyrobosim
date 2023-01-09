@@ -64,7 +64,7 @@ def create_world(multirobot=False):
 
     # Add robots
     grasp_props = ParallelGraspProperties(
-        max_width=0.15, depth=0.1, height=0.04,
+        max_width=0.175, depth=0.1, height=0.04,
         width_clearance=0.01, depth_clearance=0.01
     )
     r = Robot(name="robot", radius=0.1,

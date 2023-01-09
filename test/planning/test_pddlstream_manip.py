@@ -3,13 +3,15 @@
 """
 Test script for PDDLStream planning with manipulation streams.
 """
-import os
-import sys
 import numpy as np
+import os
+import pytest
+import sys
 
 from pyrobosim.core.robot import Robot
 from pyrobosim.core.room import Room
 from pyrobosim.core.world import World
+from pyrobosim.manipulation.grasping import GraspGenerator, ParallelGraspProperties
 from pyrobosim.navigation.execution import ConstantVelocityExecutor
 from pyrobosim.navigation.rrt import RRTPlanner
 from pyrobosim.planning.pddlstream.planner import PDDLStreamPlanner
@@ -19,7 +21,7 @@ from pyrobosim.utils.pose import Pose
 
 
 def create_test_world(add_alt_desk=True):
-    w = World(object_radius=0.1)
+    w = World(object_radius=0.05)
 
     # Set the location and object metadata
     data_folder = get_data_folder()
@@ -47,8 +49,16 @@ def create_test_world(add_alt_desk=True):
     w.add_object("water", desk0, pose=Pose(x=2.575, y=-1.57, z=0, yaw=-np.pi/4.0))
 
     # Add a robot
-    r = Robot(radius=0.1, path_executor=ConstantVelocityExecutor())
-    w.add_robot(r, loc="home")
+    grasp_props = ParallelGraspProperties(
+        max_width=0.175, depth=0.1, height=0.04,
+        width_clearance=0.01, depth_clearance=0.01
+    )
+    r = Robot(
+        radius=0.1, 
+        path_executor=ConstantVelocityExecutor(),
+        grasp_generator=GraspGenerator(grasp_props)
+    )
+    w.add_robot(r, loc="home", pose=Pose(x=0.0, y=-0.5))
 
     # Create a search graph and motion planner
     w.create_search_graph(max_edge_dist=3.0, collision_check_dist=0.05)
@@ -58,8 +68,7 @@ def create_test_world(add_alt_desk=True):
     return w
 
 
-def start_planner(world, domain_name="04_nav_manip_stream",
-                  interactive=False, max_attempts=1):
+def start_planner(world, domain_name, interactive=False, max_attempts=1):
     domain_folder = os.path.join(get_default_domains_folder(), domain_name)
     planner = PDDLStreamPlanner(world, domain_folder)
 
@@ -69,7 +78,8 @@ def start_planner(world, domain_name="04_nav_manip_stream",
         input("Press Enter to start planning.")
     robot = world.robots[0]
     plan = planner.plan(robot, goal_literals, focused=True,
-                        max_attempts=max_attempts, verbose=interactive)
+                        search_sample_ratio=0.5, max_attempts=max_attempts,
+                        verbose=interactive)
     if interactive:
         robot.execute_plan(plan, blocking=True)
     return plan
@@ -77,26 +87,34 @@ def start_planner(world, domain_name="04_nav_manip_stream",
 #####################
 # ACTUAL UNIT TESTS #
 #####################
-def test_plan_single_desk():
+domains_to_test = ["04_nav_manip_stream", "05_nav_grasp_stream"]
+
+@pytest.mark.parametrize("domain_name", domains_to_test)
+def test_manip_single_desk(domain_name):
     w = create_test_world(add_alt_desk=False)
-    plan = start_planner(w, max_attempts=3)
+    plan = start_planner(w, domain_name=domain_name, max_attempts=3)
     assert plan is not None
 
-
-def test_plan_double_desk():
+@pytest.mark.parametrize("domain_name", domains_to_test)
+def test_manip_double_desk(domain_name):
     w = create_test_world(add_alt_desk=True)
-    plan = start_planner(w, max_attempts=3)
+    plan = start_planner(w, domain_name=domain_name, max_attempts=3)
     assert plan is not None
 
 
 if __name__ == "__main__":
     w = create_test_world(add_alt_desk=False)
 
+    domain_name = "05_nav_grasp_stream"
+    interactive = True
+    max_attempts = 3
+
     # Start task and motion planner in separate thread.
     import threading
-
-    domain_name = "04_nav_manip_stream"
-    t = threading.Thread(target=start_planner, args=(w, domain_name, True, 3))
+    t = threading.Thread(
+        target=start_planner,
+        args=(w, domain_name, interactive, max_attempts)
+    )
     t.start()
 
     from pyrobosim.gui.main import PyRoboSimGUI

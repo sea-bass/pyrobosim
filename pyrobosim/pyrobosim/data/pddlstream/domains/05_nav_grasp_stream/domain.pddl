@@ -1,4 +1,4 @@
-; PDDL PLANNING DOMAIN (NAVIGATION STREAMS)
+; PDDL PLANNING DOMAIN (NAVIGATION + MANIPULATION + GRASP STREAMS)
 ;
 ; This planning domain contains `navigate`, `pick`, and `place` actions.
 ;
@@ -8,10 +8,15 @@
 ; 2. A path from a motion planner is sampled from a motion planner,
 ;    denoted with the verified predicate `Motion`.
 ;
+; The `pick` action uses streams to sample valid grasps assuming cuboid objects.
+;
+; The `place` action uses streams to sample a collision-free pose, taking into
+; account the extents of the location itself as well as other objects at that location.
+;
 ; Accompanying streams are defined in the `stream.pddl` file.
 
 
-(define (domain domain_nav_stream)
+(define (domain domain_nav_manip_stream)
   (:requirements :strips :equality)
   (:predicates  ; Static predicates
                 (Robot ?r)              ; Represents the robot
@@ -23,26 +28,31 @@
                 (Is ?o ?t)              ; Type correspondence of location or object
                 (Pose ?p)               ; Pose of an entity
                 (Path ?pth)             ; Path to navigate from one pose to another
-                
+                (Grasp ?g)              ; Object grasp
+
                 ; Fluent predicates
-                (CanMove ?r)            ; Whether the robot can move (prevents duplicate moves)
-                (Holding ?r ?o)         ; Object the robot is holding
-                (At ?o ?l)              ; Robot/Object's location
-                (AtPose ?e ?p)          ; Robot/Object's pose
-                (AtRoom ?l ?r)          ; Location's corresponding room
-                (Has ?loc ?entity)      ; Check existence of entities (object instances or types) in locations
-                (HasNone ?loc ?entity)  ; Check nonexistence of entities (object instances or types) in locations
-                (HasAll ?loc ?entity)   ; Check exclusivity of entities (object instances or types) in locations
+                (CanMove ?r)                    ; Whether the robot can move (prevents duplicate moves)
+                (Holding ?r ?o)                 ; Object the robot is holding
+                (At ?o ?l)                      ; Robot/Object's location
+                (AtPose ?e ?p)                  ; Robot/Object's pose
+                (AtRoom ?l ?r)                  ; Location's corresponding room
+                (Has ?loc ?entity)              ; Check existence of entities (object instances or types) in locations
+                (HasNone ?loc ?entity)          ; Check nonexistence of entities (object instances or types) in locations
+                (HasAll ?loc ?entity)           ; Check exclusivity of entities (object instances or types) in locations
+                (IsCollisionFree ?l ?o ?p)      ; Checks collisions when placing an object
+                (Graspable ?o ?po ?pr ?g)       ; Checks valid grasp for an object given its pose and the robot pose
 
                 ; Stream verified predicates
-                (NavPose ?l ?p)         ; Navigation pose for a location
-                (Motion ?p1 ?p2 ?pth)   ; Valid motion from one pose to another
+                (NavPose ?l ?p)                 ; Navigation pose for a location
+                (Motion ?p1 ?p2 ?pth)           ; Valid motion from one pose to another
+                (Placeable ?l ?o ?p)            ; Object placeability at a specific location
+                (CollisionFree ?o1 ?p1 ?o2 ?p2) ; Checks collisions between two objects at specific poses
   )
 
   ; FUNCTIONS : See their descriptions in the stream PDDL file
   (:functions 
     (PathLength ?pth)
-    (PickPlaceCost ?l ?o)
+    (PickPlaceAtPoseCost ?l ?o ?p ?pr)
   )
 
   ; ACTIONS 
@@ -65,38 +75,59 @@
 
   ; PICK: Picks up an object from a specified location
   (:action pick
-    :parameters (?r ?o ?l)
+    :parameters (?r ?o ?l ?p ?pr ?g)
     :precondition (and (Robot ?r)
                        (Obj ?o)
                        (Location ?l)
+                       (Pose ?p) (AtPose ?o ?p)
+                       (Pose ?pr) (AtPose ?r ?pr)
+                       (Grasp ?g)
                        (not (Room ?l))
                        (HandEmpty ?r) 
                        (At ?r ?l)
-                       (At ?o ?l))
+                       (At ?o ?l)
+                       (Graspable ?o ?p ?pr ?g))
     :effect (and (Holding ?r ?o) (CanMove ?r)
                  (not (HandEmpty ?r)) 
                  (not (At ?o ?l))
-                 (increase (total-cost) (PickPlaceCost ?l ?o)))
+                 (not (AtPose ?o ?p))
+                 (increase (total-cost) (GraspAtPoseCost ?g ?pr)))
   )
 
   ; PLACE: Places an object in a specified location
   (:action place
-    :parameters (?r ?o ?l)
+    :parameters (?r ?o ?l ?p ?pr)
     :precondition (and (Robot ?r)
                        (Obj ?o)
                        (Location ?l)
+                       (Pose ?p) 
+                       (Pose ?pr) (AtPose ?r ?pr)
                        (not (Room ?l))
                        (At ?r ?l)
                        (not (HandEmpty ?r)) 
-                       (Holding ?r ?o))
+                       (Holding ?r ?o)
+                       (Placeable ?l ?o ?p)
+                       (IsCollisionFree ?l ?o ?p))
     :effect (and (HandEmpty ?r) (CanMove ?r)
-                 (At ?o ?l)
+                 (At ?o ?l) (AtPose ?o ?p)
                  (not (Holding ?r ?o))
-                 (increase (total-cost) (PickPlaceCost ?l ?o)))
+                 (increase (total-cost) (PickPlaceAtPoseCost ?l ?o ?p ?pr)))
   )
 
 
   ; DERIVED PREDICATES
+  ; ISCOLLISIONFREE: Checks that an object pose at a particular location is
+  ;                  collision free with all other objects at that location.
+  (:derived (IsCollisionFree ?l ?o ?p)
+    (not (exists (?obs ?pobs)
+                 (and (Obj ?obs) (Pose ?pobs)
+                      (At ?obs ?l) (AtPose ?obs ?pobs)
+                      (not (CollisionFree ?o ?p ?obs ?pobs)) 
+                 )
+         )
+    ) 
+  )
+  
   ; HAS: Checks locations using entity and location types or instances, 
   ;      or even room names as locations
   (:derived (Has ?loc ?entity)
@@ -153,8 +184,8 @@
         )
         ; CASE 6: Robot holding an object type
         (exists (?o) 
-            (and (Robot ?loc) (Obj ?o) (Type ?entity)
-                 (Is ?o ?entity) (Holding ?loc ?o))
+            (and (Robot ?loc) (Obj ?o) (Holding ?loc ?o)
+                 (Type ?entity) (Is ?o ?entity))
         )
         (exists (?r ?o) 
             (and (Robot ?r) (Location ?loc) (Obj ?o) (Holding ?r ?o)

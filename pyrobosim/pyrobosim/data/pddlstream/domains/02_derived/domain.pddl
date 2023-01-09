@@ -27,9 +27,9 @@
                 (Holding ?r ?o)         ; Object the robot is holding
                 (At ?o ?l)              ; Robot/Object's location
                 (AtRoom ?l ?r)          ; Location's corresponding room
-                (Has ?loc ?entity)      ; Check existence of object types in locations
-                (HasNone ?loc ?entity)  ; Check nonexistence of object types in locations
-                (HasAll ?loc ?entity)   ; Check exclusivity of object types in locations
+                (Has ?loc ?entity)      ; Check existence of entities (object instances or types) in locations
+                (HasNone ?loc ?entity)  ; Check nonexistence of entities (object instances or types) in locations
+                (HasAll ?loc ?entity)   ; Check exclusivity of entities (object instances or types) in locations
   )
 
   ; FUNCTIONS : See their descriptions in the stream PDDL file

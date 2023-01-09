@@ -31,7 +31,7 @@ robots:
     # Grasp generation
     grasping:
       generator: parallel_grasp
-      max_width: 0.15
+      max_width: 0.175
       depth: 0.1
       height: 0.04
       width_clearance: 0.01
