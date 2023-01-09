@@ -18,7 +18,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'pyrobosim'
-copyright = '2022, Sebastian Castro'
+copyright = '2022-2023, Sebastian Castro'
 author = 'Sebastian Castro'
 
 # The full version, including alpha/beta/rc tags
