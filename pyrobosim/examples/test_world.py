@@ -86,8 +86,6 @@ class TestWorldModeling():
         """ Tests adding objects to a location"""
 
         TestWorldModeling.world.add_object("apple","table0")
-        # TestWorldModeling.world.add_object("apple","table0")
-
         TestWorldModeling.world.add_object("apple","study_desk")
         assert len(TestWorldModeling.world.objects) == 2
 
@@ -132,7 +130,7 @@ class TestWorldModeling():
     @staticmethod
     @pytest.mark.dependency(depends=["TestWorldModeling::test_create_room"])
     def test_remove_room():
-        """ Testes deleting rooms """
+        """ Tests deleting rooms """
 
         assert TestWorldModeling.world.remove_room("bedroom") is True
         assert len(TestWorldModeling.world.rooms) == 1
