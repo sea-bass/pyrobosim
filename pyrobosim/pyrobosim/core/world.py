@@ -404,7 +404,7 @@ class World:
         """
         Adds an object to a specific location.
 
-        If the location does not have a specified name, it will be given an
+        If the object does not have a specified name, it will be given an
         automatic name using its category, e.g., ``"apple0"``.
 
         If the location contains multiple object spawns, one will be selected at random.
