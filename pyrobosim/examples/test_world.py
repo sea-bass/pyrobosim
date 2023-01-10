@@ -8,6 +8,7 @@ import numpy as np
 from pyrobosim.core.world import World
 from pyrobosim.core.world import Room
 from pyrobosim.utils.pose import Pose
+from pyrobosim.core.world import Object
 
 
 class TestWorldModeling():
@@ -69,3 +70,26 @@ class TestWorldModeling():
         table_name = "table0" # We expect the suffix '0' to be added due to automatic naming
         assert len(TestWorldModeling.world.locations) == 1
         assert TestWorldModeling.world.get_location_by_name(table_name) == table
+
+    @staticmethod
+    @pytest.mark.dependency(depends=
+        ["TestWorldModeling::test_create_world_default","TestWorldModeling::test_create_room", 
+        "TestWorldModeling::test_create_hallway", "TestWorldModeling::test_create_location"])
+    def test_add_objects():
+
+        apple = Object(category="apple")
+        apple.viz_color = [1, 0, 0]
+
+        TestWorldModeling.world.add_object("apple","table0")
+        TestWorldModeling.world.add_object("apple","table0")
+        assert len(TestWorldModeling.world.objects) == 2
+
+        # first apple
+        test_obj = TestWorldModeling.world.objects[0]
+        assert isinstance(test_obj, Object)
+        assert test_obj.name == "apple0" # Automatic naming
+
+        # second apple
+        test_obj = TestWorldModeling.world.objects[1]
+        assert isinstance(test_obj, Object)
+        assert test_obj.name == "apple1" # Automatic naming
