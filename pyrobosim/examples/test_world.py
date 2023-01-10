@@ -1,7 +1,7 @@
 """
 Unit tests for core world modeling
 """
-
+import os
 import pytest
 import numpy as np
 
@@ -9,7 +9,9 @@ from pyrobosim.core.world import World
 from pyrobosim.core.world import Room
 from pyrobosim.utils.pose import Pose
 from pyrobosim.core.world import Object
+from pyrobosim.core.world import Hallway
 
+from pyrobosim.utils.general import get_data_folder
 
 class TestWorldModeling():
     """ Tests for the world modelling tools"""
@@ -20,6 +22,8 @@ class TestWorldModeling():
         """ Tests the creation of a world """
         
         TestWorldModeling.world = World()
+        TestWorldModeling.world.set_metadata(locations=os.path.join(get_data_folder(), "example_location_data.yaml"),
+                   objects=os.path.join(get_data_folder(), "example_object_data.yaml"))
         assert TestWorldModeling.world is not None
     
     @staticmethod
@@ -63,34 +67,75 @@ class TestWorldModeling():
         "TestWorldModeling::test_create_hallway"])
     def test_create_location():
         """ Tests the creation of locations"""
-        # TODO : add tests for named locations.
         table = TestWorldModeling.world.add_location("table", "kitchen", Pose(
             x=0.85, y=-0.5, z=0.0, yaw=-np.pi/2))
 
-        table_name = "table0" # We expect the suffix '0' to be added due to automatic naming
         assert len(TestWorldModeling.world.locations) == 1
-        assert TestWorldModeling.world.get_location_by_name(table_name) == table
+        assert TestWorldModeling.world.get_location_by_name("table0") == table #automatic naming check
+
+        desk = TestWorldModeling.world.add_location("desk", "bedroom", name="study_desk", pose=Pose(x=3.15, y=3.65, z=0.0, yaw=0.0))
+        assert len(TestWorldModeling.world.locations) == 2
+        assert TestWorldModeling.world.get_location_by_name("study_desk") == desk
+
 
     @staticmethod
     @pytest.mark.dependency(depends=
         ["TestWorldModeling::test_create_world_default","TestWorldModeling::test_create_room", 
         "TestWorldModeling::test_create_hallway", "TestWorldModeling::test_create_location"])
-    def test_add_objects():
+    def test_create_object():
         """ Tests adding objects to a location"""
 
-        apple = Object(category="apple")
-        apple.viz_color = [1, 0, 0]
+        TestWorldModeling.world.add_object("apple","table0")
+        # TestWorldModeling.world.add_object("apple","table0")
 
-        TestWorldModeling.world.add_object("apple","table0")
-        TestWorldModeling.world.add_object("apple","table0")
+        TestWorldModeling.world.add_object("apple","study_desk")
         assert len(TestWorldModeling.world.objects) == 2
-
-        # first apple
-        test_obj = TestWorldModeling.world.objects[0]
-        assert isinstance(test_obj, Object)
-        assert test_obj.name == "apple0" # Automatic naming
 
         # second apple
         test_obj = TestWorldModeling.world.objects[1]
         assert isinstance(test_obj, Object)
         assert test_obj.name == "apple1" # Automatic naming
+
+
+    @staticmethod
+    @pytest.mark.dependency(depends=["TestWorldModeling::test_create_object"])
+    def test_remove_object():
+        """ Tests deleting objects from the world """
+
+        assert TestWorldModeling.world.remove_object("apple1") is True
+        assert len(TestWorldModeling.world.locations) == 2
+        assert TestWorldModeling.world.get_object_by_name("apple1") is None
+        assert TestWorldModeling.world.objects[0].name == "apple0"
+
+    @staticmethod
+    @pytest.mark.dependency(depends=["TestWorldModeling::test_create_location"])
+    def test_remove_location():
+        """ Tests removing a location from the world """
+
+        assert TestWorldModeling.world.remove_location("study_desk") is True
+        assert len(TestWorldModeling.world.locations) == 1
+        assert TestWorldModeling.world.get_location_by_name("study_desk") is None # Raises a warning
+
+    @staticmethod
+    @pytest.mark.dependency(depends=["TestWorldModeling::test_create_hallway"])
+    def test_remove_hallway():
+        """ Tests removing a hallway """
+
+        hallways = TestWorldModeling.world.get_hallways_from_rooms("kitchen", "bedroom")
+        assert len(hallways) == 1
+        assert isinstance(hallways[0], Hallway)
+
+        assert TestWorldModeling.world.remove_hallway(hallways[0]) is True
+        hallways = TestWorldModeling.world.get_hallways_from_rooms("kitchen", "bedroom")
+        assert len(hallways) == 0
+  
+    @staticmethod
+    @pytest.mark.dependency(depends=["TestWorldModeling::test_create_room"])
+    def test_remove_room():
+        """ Testes deleting rooms """
+
+        assert TestWorldModeling.world.remove_room("bedroom") is True
+        assert len(TestWorldModeling.world.rooms) == 1
+        assert TestWorldModeling.world.rooms[0].name == "kitchen"
+
+        
