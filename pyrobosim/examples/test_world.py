@@ -76,6 +76,7 @@ class TestWorldModeling():
         ["TestWorldModeling::test_create_world_default","TestWorldModeling::test_create_room", 
         "TestWorldModeling::test_create_hallway", "TestWorldModeling::test_create_location"])
     def test_add_objects():
+        """ Tests adding objects to a location"""
 
         apple = Object(category="apple")
         apple.viz_color = [1, 0, 0]
