@@ -3,4 +3,9 @@ repos:
 -    repo: https://github.com/psf/black.git
      rev: 23.1a1
      hooks: 
-     -    id: black
+     - id: black
+          name: Black Python code formatting
+          entry: bash -c 'black "$@"; git add -u' --
+          language: python
+          types: [python]
+          args: ["--line-length=120"]
