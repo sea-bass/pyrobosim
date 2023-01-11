@@ -163,6 +163,15 @@ class World:
             warnings.warn(f"No room {room_name} found for removal.")
             return False
 
+        # Remove hallways assosciated with the room
+        while len(room.hallways) > 0:
+            self.remove_hallway(room.hallways[-1])
+        
+        # Remove locations in the room
+        while len(room.locations) > 0:
+            self.remove_location(room.locations[-1]) 
+        
+        # Remove the room itself
         self.rooms.remove(room)
         self.name_to_entity.pop(room_name)
         self.num_rooms -= 1
