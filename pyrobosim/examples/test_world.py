@@ -135,4 +135,13 @@ class TestWorldModeling():
         assert TestWorldModeling.world.remove_room("bedroom") is True
         assert len(TestWorldModeling.world.rooms) == 1
         assert TestWorldModeling.world.rooms[0].name == "kitchen"
-      
+
+    @staticmethod
+    def test_heirarcial_cleanup():
+        """ Tests if an entity is automatically deleted on parent deletion """
+
+        TestWorldModeling.world.add_object("apple", "table0")
+        loc = TestWorldModeling.world.get_location_by_name("table0")
+        assert len(loc.children[0].children) == 2
+        assert TestWorldModeling.world.remove_location(loc) is True
+        assert len(TestWorldModeling.world.objects) == 0      
