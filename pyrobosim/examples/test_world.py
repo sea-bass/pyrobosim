@@ -53,7 +53,7 @@ class TestWorldModeling():
 
     @staticmethod
     @pytest.mark.dependency(depends=
-        ["TestWorldModeling::test_create_world_default","TestWorldModeling::test_create_room"])
+        ["TestWorldModeling::test_create_world_default", "TestWorldModeling::test_create_room"])
     def test_create_hallway():
         """ Tests the creation of a hallway between 2 rooms"""
 
@@ -63,7 +63,7 @@ class TestWorldModeling():
 
     @staticmethod
     @pytest.mark.dependency(depends=
-        ["TestWorldModeling::test_create_world_default","TestWorldModeling::test_create_room", 
+        ["TestWorldModeling::test_create_world_default", "TestWorldModeling::test_create_room", 
         "TestWorldModeling::test_create_hallway"])
     def test_create_location():
         """ Tests the creation of locations"""
@@ -80,19 +80,19 @@ class TestWorldModeling():
 
     @staticmethod
     @pytest.mark.dependency(depends=
-        ["TestWorldModeling::test_create_world_default","TestWorldModeling::test_create_room", 
+        ["TestWorldModeling::test_create_world_default", "TestWorldModeling::test_create_room", 
         "TestWorldModeling::test_create_hallway", "TestWorldModeling::test_create_location"])
     def test_create_object():
         """ Tests adding objects to a location"""
 
-        TestWorldModeling.world.add_object("apple","table0")
-        TestWorldModeling.world.add_object("apple","study_desk")
+        TestWorldModeling.world.add_object("apple", "table0")
+        TestWorldModeling.world.add_object("apple", "study_desk")
         assert len(TestWorldModeling.world.objects) == 2
 
         # second apple
         test_obj = TestWorldModeling.world.objects[1]
         assert isinstance(test_obj, Object)
-        assert test_obj.name == "apple1" # Automatic naming
+        assert TestWorldModeling.world.get_object_by_name("apple1") == test_obj # Automatic naming
 
 
     @staticmethod
