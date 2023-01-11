@@ -143,5 +143,8 @@ class TestWorldModeling():
         TestWorldModeling.world.add_object("apple", "table0")
         loc = TestWorldModeling.world.get_location_by_name("table0")
         assert len(loc.children[0].children) == 2
-        assert TestWorldModeling.world.remove_location(loc) is True
+        assert TestWorldModeling.world.remove_room("kitchen") is True
+        assert len(TestWorldModeling.world.rooms) == 0
+        assert len(TestWorldModeling.world.hallways) == 0
+        assert len(TestWorldModeling.world.locations) == 0
         assert len(TestWorldModeling.world.objects) == 0      
