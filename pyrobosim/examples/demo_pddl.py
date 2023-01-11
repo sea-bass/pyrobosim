@@ -71,7 +71,7 @@ def start_planner(world, args):
 
     input("Press Enter to start planning.")
     robot = world.robots[0]
-    plan = planner.plan(robot, goal_literals, focused=True, verbose=args.verbose,
+    plan = planner.plan(robot, goal_literals, adaptive=True, verbose=args.verbose,
                         search_sample_ratio=args.search_sample_ratio)
     robot.execute_plan(plan, blocking=True)
 

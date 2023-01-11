@@ -38,7 +38,7 @@ class PlannerNode(Node):
         self.declare_parameter("example", value="01_simple")
         self.declare_parameter("subscribe", value=True)
         self.declare_parameter("verbose", value=True)
-        self.declare_parameter("search_sample_ratio", value=2.0)
+        self.declare_parameter("search_sample_ratio", value=1.0)
 
         # Publisher for a task plan
         self.plan_pub = self.create_publisher(
@@ -122,7 +122,7 @@ class PlannerNode(Node):
         # Once the world state is set, plan using the first robot.
         self.get_logger().info("Planning...")
         robot = self.world.robots[0]
-        plan = self.planner.plan(robot, self.latest_goal, focused=True, 
+        plan = self.planner.plan(robot, self.latest_goal, adaptive=True, 
             search_sample_ratio=self.get_parameter("search_sample_ratio").value)
         if self.get_parameter("verbose").value == True:
             self.get_logger().info(f"{plan}")

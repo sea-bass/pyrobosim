@@ -1,7 +1,7 @@
 """ Task and Motion Planning tools using PDDLStream. """
 
 import os
-from pddlstream.algorithms.focused import solve_focused
+from pddlstream.algorithms.focused import solve_adaptive
 from pddlstream.algorithms.incremental import solve_incremental
 from pddlstream.language.constants import And, PDDLProblem
 from pddlstream.utils import read
@@ -40,11 +40,10 @@ class PDDLStreamPlanner:
         self,
         robot,
         goal_literals,
-        focused=True,
+        adaptive=True,
         planner="ff-astar",
         max_time=60.0,
         max_iterations=5,
-        max_complexity=3,
         max_attempts=1,
         search_sample_ratio=1.0,
         verbose=False,
@@ -56,17 +55,15 @@ class PDDLStreamPlanner:
         :param robot: Robot to use for planning.
         :type robot: :class:`pyrobosim.core.robot.Robot`
         :param goal_literals: List of literals describing a goal specification.
-        :type goal_literals: list[tuple]
-        :param focused: If True (default), uses the focused algorithm; else, uses incremental.
-        :type focused: bool, optional
+        :type goal: list[tuple]
+        :param adaptive: If True (default), uses the adaptive algorithm; else, uses incremental.
+        :type adaptive: bool, optional
         :param planner: Planner used by PDDLStream, defaults to ``ff-astar``.
         :type planner: str, optional
         :param max_time: Max planning time.
         :type max_time: float, optional
         :param max_iterations: Maximum planning iterations.
         :type max_iterations: int, optional
-        :param max_complexity: Maximum stream complexity limit.
-        :type max_complexity: int, optional
         :param max_attempts: Maximum planning attempts.
         :type max_attempts: int, optional
         :param search_sample_ratio: Search to sample time ratio, used only for the focused algorithm.
@@ -98,11 +95,11 @@ class PDDLStreamPlanner:
 
         for i in range(max_attempts):
 
-            # Solve the problem using either focused or incremental algorithms.
+            # Solve the problem using the specified PDDLStream algorithm.
             # The ``get_stream_info()`` function comes from the ``mappings.py``
             # file, so as you add new functionality you should fill it out there.
-            if focused:
-                solution = solve_focused(
+            if adaptive:
+                solution = solve_adaptive(
                     prob,
                     planner=planner,
                     stream_info=get_stream_info(),
@@ -110,13 +107,12 @@ class PDDLStreamPlanner:
                     max_time=max_time,
                     max_planner_time=max_time,
                     max_iterations=max_iterations,
-                    max_complexity=max_complexity,
                     verbose=verbose,
                 )
             else:
                 solution = solve_incremental(
-                    prob, planner=planner, max_time=max_time,
-                    max_complexity=max_complexity, verbose=verbose
+                    prob, planner=planner,
+                    max_time=max_time, verbose=verbose
                 )
 
             # If the solution is valid, no need to try again

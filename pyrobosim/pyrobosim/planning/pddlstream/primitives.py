@@ -214,9 +214,9 @@ def sample_place_pose(loc, obj, padding=0.0, max_tries=100):
         yield (pose_sample,)
 
 
-def test_collision_free(o1, p1, o2, p2, padding=0.0):
+def test_collision_free(o1, p1, o2, p2):
     """
-    Test for collisions between two objects at specified poses and padding.
+    Test for collisions between two objects at specified poses.
 
     :param o1: First object
     :type o1: :class:`pyrobosim.core.objects.Object`
@@ -226,11 +226,9 @@ def test_collision_free(o1, p1, o2, p2, padding=0.0):
     :type o2: :class:`pyrobosim.core.objects.Object`
     :param p2: Pose of second object
     :type p2: :class:`pyrobosim.utils.pose.Pose`
-    :param padding: Padding for collision checking.
-    :type padding: float, optional
     :return: True if the two objects are collision free.
     :rtype: bool
     """
-    o1_poly = transform_polygon(inflate_polygon(o1.raw_polygon, padding), p1)
-    o2_poly = transform_polygon(inflate_polygon(o2.raw_polygon, padding), p2)
+    o1_poly = transform_polygon(o1.raw_collision_polygon, p1)
+    o2_poly = transform_polygon(o2.raw_collision_polygon, p2)
     return not o1_poly.intersects(o2_poly)
