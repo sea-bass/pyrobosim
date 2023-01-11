@@ -14,7 +14,7 @@ from pyrobosim.utils.pose import Pose
 from pyrobosim.utils.general import get_data_folder
 
 class TestWorldModeling():
-    """ Tests for the world modelling tools"""
+    """ Tests for the world modeling tools"""
 
     @staticmethod
     @pytest.mark.dependency()
@@ -137,7 +137,9 @@ class TestWorldModeling():
         assert TestWorldModeling.world.rooms[0].name == "kitchen"
 
     @staticmethod
-    def test_heirarcial_cleanup():
+    @pytest.mark.dependency(depends=["TestWorldModeling::test_remove_room", "TestWorldModeling::test_remove_hallway",
+            "TestWorldModeling::test_remove_location", "TestWorldModeling::test_remove_object"])
+    def test_hierarchical_cleanup():
         """ Tests if an entity is automatically deleted on parent deletion """
 
         TestWorldModeling.world.add_object("apple", "table0")
@@ -147,4 +149,5 @@ class TestWorldModeling():
         assert len(TestWorldModeling.world.rooms) == 0
         assert len(TestWorldModeling.world.hallways) == 0
         assert len(TestWorldModeling.world.locations) == 0
-        assert len(TestWorldModeling.world.objects) == 0      
+        assert len(TestWorldModeling.world.objects) == 0
+     
