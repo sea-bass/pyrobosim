@@ -388,6 +388,11 @@ class World:
             loc = self.get_location_by_name(loc)
 
         if loc in self.locations:
+            # remove objects at the location before removing the location
+            for spawn in loc.children:
+                while len(spawn.children) > 0:
+                    self.remove_object(spawn.children[-1])
+            # Remove location
             self.locations.remove(loc)
             self.num_locations -= 1
             self.location_instance_counts[loc.category] -= 1
