@@ -135,5 +135,4 @@ class TestWorldModeling():
         assert TestWorldModeling.world.remove_room("bedroom") is True
         assert len(TestWorldModeling.world.rooms) == 1
         assert TestWorldModeling.world.rooms[0].name == "kitchen"
-
-        
+      
