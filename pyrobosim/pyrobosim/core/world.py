@@ -163,6 +163,15 @@ class World:
             warnings.warn(f"No room {room_name} found for removal.")
             return False
 
+        # Remove hallways associated with the room
+        while len(room.hallways) > 0:
+            self.remove_hallway(room.hallways[-1])
+        
+        # Remove locations in the room
+        while len(room.locations) > 0:
+            self.remove_location(room.locations[-1]) 
+        
+        # Remove the room itself
         self.rooms.remove(room)
         self.name_to_entity.pop(room_name)
         self.num_rooms -= 1
@@ -388,6 +397,11 @@ class World:
             loc = self.get_location_by_name(loc)
 
         if loc in self.locations:
+            # remove objects at the location before removing the location
+            for spawn in loc.children:
+                while len(spawn.children) > 0:
+                    self.remove_object(spawn.children[-1])
+            # Remove location
             self.locations.remove(loc)
             self.num_locations -= 1
             self.location_instance_counts[loc.category] -= 1
@@ -404,7 +418,7 @@ class World:
         """
         Adds an object to a specific location.
 
-        If the location does not have a specified name, it will be given an
+        If the object does not have a specified name, it will be given an
         automatic name using its category, e.g., ``"apple0"``.
 
         If the location contains multiple object spawns, one will be selected at random.
