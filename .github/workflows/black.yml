@@ -8,6 +8,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: psf/black@stable
-          with:
-            options: "--check --verbose"
-            version: "23.1a1"
+        with:
+          options: "--check --verbose"
+          version: "23.1a1"
