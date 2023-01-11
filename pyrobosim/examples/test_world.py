@@ -150,4 +150,3 @@ class TestWorldModeling():
         assert len(TestWorldModeling.world.hallways) == 0
         assert len(TestWorldModeling.world.locations) == 0
         assert len(TestWorldModeling.world.objects) == 0
-     
