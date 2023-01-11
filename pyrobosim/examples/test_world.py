@@ -24,7 +24,7 @@ class TestWorldModeling():
         TestWorldModeling.world = World()
         TestWorldModeling.world.set_metadata(locations=os.path.join(get_data_folder(), "example_location_data.yaml"),
                    objects=os.path.join(get_data_folder(), "example_object_data.yaml"))
-        assert TestWorldModeling.world is not None
+        assert isinstance(TestWorldModeling.world, World)
     
     @staticmethod
     @pytest.mark.dependency(depends=["TestWorldModeling::test_create_world_default"])
