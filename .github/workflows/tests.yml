@@ -9,10 +9,6 @@ on:
   schedule:
     - cron: '0 0 * * *'
 
-defaults:
- run:
-  working-directory: ./pyrobosim_tests
-
 jobs:
   # Pure Python testing
   python-test:
@@ -51,7 +47,7 @@ jobs:
       ROS_DISTRO: ${{ matrix.ros_distro }}
 
     name: ros-${{ matrix.ros_distro }}-test
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
