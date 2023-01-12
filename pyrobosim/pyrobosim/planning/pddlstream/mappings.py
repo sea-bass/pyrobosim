@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Mappings for PDDLStream functions, streams, and certificate tests.
 """
@@ -36,8 +37,13 @@ def get_stream_map(world, robot):
         ),
         "s-grasp": from_gen_fn(
             lambda obj, p_obj, p_robot: primitives.sample_grasp_pose(
-                grasp_gen, obj, p_obj, p_robot,
-                front_grasps=True, top_grasps=True, side_grasps=False
+                grasp_gen,
+                obj,
+                p_obj,
+                p_robot,
+                front_grasps=True,
+                top_grasps=True,
+                side_grasps=False,
             )
         ),
         "s-place": from_gen_fn(

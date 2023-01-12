@@ -4,10 +4,10 @@
   <model name='$NAME'>
         <pose>$POSE</pose>
         <frame name='walls'/>
-    
+
     <!-- All the links go here -->
-$LINKS    
-    
+$LINKS
+
     <static>$STATIC</static>
   </model>
 </sdf>

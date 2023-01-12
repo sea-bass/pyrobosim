@@ -7,8 +7,8 @@ ENV ROS_DISTRO=${ROS_DISTRO}
 
 # Install dependencies
 ARG DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get upgrade -y 
-RUN apt-get install -y \ 
+RUN apt-get update && apt-get upgrade -y
+RUN apt-get install -y \
     apt-utils python3-pip python3-tk
 
 # Create a colcon workspace
@@ -27,7 +27,7 @@ RUN pip3 install lark pytest pytest-dependency pytest-html
 WORKDIR /pyrobosim_ws
 COPY . /pyrobosim_ws/src/
 RUN source /opt/ros/${ROS_DISTRO}/setup.bash && \
-    colcon build   
+    colcon build
 
 # Remove display warnings
 RUN mkdir /tmp/runtime-root

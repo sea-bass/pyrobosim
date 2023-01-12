@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 """
 Test script showing how to use a PDDLStream planner as a ROS 2 node.
@@ -14,13 +15,16 @@ from pyrobosim.core.yaml import WorldYamlLoader
 from pyrobosim.planning.pddlstream.planner import PDDLStreamPlanner
 from pyrobosim.planning.pddlstream.utils import get_default_domains_folder
 from pyrobosim.utils.general import get_data_folder
-from pyrobosim.utils.ros_conversions import goal_specification_from_ros, task_plan_to_ros
+from pyrobosim.utils.ros_conversions import (
+    goal_specification_from_ros,
+    task_plan_to_ros,
+)
 from pyrobosim_msgs.msg import GoalSpecification, TaskPlan
 from pyrobosim_msgs.srv import RequestWorldState
 
 
 def load_world():
-    """ Load a test world. """
+    """Load a test world."""
     loader = WorldYamlLoader()
     world_file = "pddlstream_simple_world.yaml"
     data_folder = get_data_folder()
@@ -41,12 +45,12 @@ class PlannerNode(Node):
         self.declare_parameter("search_sample_ratio", value=1.0)
 
         # Publisher for a task plan
-        self.plan_pub = self.create_publisher(
-            TaskPlan, "commanded_plan", 10)
+        self.plan_pub = self.create_publisher(TaskPlan, "commanded_plan", 10)
 
         # Service client for world state
         self.world_state_client = self.create_client(
-            RequestWorldState, "request_world_state")
+            RequestWorldState, "request_world_state"
+        )
         self.world_state_future_response = None
         while not self.world_state_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info("Waiting for world state server...")
@@ -54,8 +58,7 @@ class PlannerNode(Node):
         # Create the world and planner
         self.world = load_world()
         example = self.get_parameter("example").value
-        domain_folder = os.path.join(
-            get_default_domains_folder(), example)
+        domain_folder = os.path.join(get_default_domains_folder(), example)
         self.planner = PDDLStreamPlanner(self.world, domain_folder)
 
         self.get_logger().info("Planning node ready.")
@@ -64,7 +67,8 @@ class PlannerNode(Node):
             self.get_logger().info("Waiting for goal specification...")
             # Subscriber to task plan
             self.goalspec_sub = self.create_subscription(
-                GoalSpecification, "goal_specification", self.goalspec_callback, 10)
+                GoalSpecification, "goal_specification", self.goalspec_callback, 10
+            )
         else:
             if example == "01_simple":
                 # Task specification for simple example.
@@ -72,29 +76,33 @@ class PlannerNode(Node):
                     ("At", "robot", "bedroom"),
                     ("At", "apple0", "table0_tabletop"),
                     ("At", "banana0", "counter0_left"),
-                    ("Holding", "robot", "water0")
+                    ("Holding", "robot", "water0"),
                 ]
-            elif example in ["02_derived", "03_nav_stream", "04_nav_manip_stream", "05_nav_grasp_stream"]:
+            elif example in [
+                "02_derived",
+                "03_nav_stream",
+                "04_nav_manip_stream",
+                "05_nav_grasp_stream",
+            ]:
                 # Task specification for derived predicate example.
                 self.latest_goal = [
                     ("Has", "desk0_desktop", "banana0"),
                     ("Has", "counter", "apple1"),
                     ("HasNone", "bathroom", "banana"),
-                    ("HasAll", "table", "water")
+                    ("HasAll", "table", "water"),
                 ]
             else:
                 print(f"Invalid example: {example}")
                 return
             time.sleep(2.0)
 
-
     def request_world_state(self):
-        """ Requests a world state from the world. """
+        """Requests a world state from the world."""
         self.planning = True
         self.get_logger().info("Requesting world state...")
-        self.world_state_future_response = \
-            self.world_state_client.call_async(RequestWorldState.Request())
-
+        self.world_state_future_response = self.world_state_client.call_async(
+            RequestWorldState.Request()
+        )
 
     def goalspec_callback(self, msg):
         """
@@ -105,10 +113,9 @@ class PlannerNode(Node):
         """
         print("Received new goal specification!")
         self.latest_goal = goal_specification_from_ros(msg, self.world)
-        
-    
+
     def do_plan(self):
-        """ Search for a plan and publish it. """
+        """Search for a plan and publish it."""
         if not self.latest_goal:
             return
 
@@ -122,15 +129,19 @@ class PlannerNode(Node):
         # Once the world state is set, plan using the first robot.
         self.get_logger().info("Planning...")
         robot = self.world.robots[0]
-        plan = self.planner.plan(robot, self.latest_goal, adaptive=True, 
-            search_sample_ratio=self.get_parameter("search_sample_ratio").value)
+        plan = self.planner.plan(
+            robot,
+            self.latest_goal,
+            adaptive=True,
+            search_sample_ratio=self.get_parameter("search_sample_ratio").value,
+        )
         if self.get_parameter("verbose").value == True:
             self.get_logger().info(f"{plan}")
         plan_msg = task_plan_to_ros(plan)
         self.plan_pub.publish(plan_msg)
         self.latest_goal = None
         self.planning = False
-        
+
 
 def main():
     rclpy.init()
@@ -140,7 +151,10 @@ def main():
         if (not planner_node.planning) and planner_node.latest_goal:
             planner_node.request_world_state()
 
-        if planner_node.world_state_future_response and planner_node.world_state_future_response.done():
+        if (
+            planner_node.world_state_future_response
+            and planner_node.world_state_future_response.done()
+        ):
             planner_node.do_plan()
 
         rclpy.spin_once(planner_node)

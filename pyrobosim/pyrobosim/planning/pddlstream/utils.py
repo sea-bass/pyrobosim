@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Utilities to connect world models with PDDLStream.
 """
@@ -103,9 +104,9 @@ def process_goal_specification(goal_literals, world):
 def replace_goal_literal_tuple(goal_literals, literal_idx, arg_idx, new_val):
     """
     Utility function to replace the element of a goal literal tuple in place.
-    
+
     :param goal_literals: List of literals describing a goal specification.
-    :type goal_literals: list[tuple]   
+    :type goal_literals: list[tuple]
     :param literal_idx: Index of goal literal in list to replace.
     :type literal_idx: int
     :param arg_idx: Index of argument in goal literal to replace.

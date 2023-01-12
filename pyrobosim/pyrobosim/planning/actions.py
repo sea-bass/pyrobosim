@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Defines actions for task and motion planning. """
 
 from ..utils.motion import Path

@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Sets up the pyrobosim virtual environment
 
 # User variables

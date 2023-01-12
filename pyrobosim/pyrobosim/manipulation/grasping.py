@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Grasping utilities. """
 
 from ..utils.pose import Pose
@@ -12,7 +13,8 @@ from transforms3d.quaternions import rotate_vector, qinverse
 
 
 class GraspFace(Enum):
-    """ Enumerates grasp face types. """
+    """Enumerates grasp face types."""
+
     UNKNOWN = 0
     FRONT = 1
     BACK = 2
@@ -21,18 +23,21 @@ class GraspFace(Enum):
     LEFT = 5
     RIGHT = 6
 
+
 normal_from_face = {
     GraspFace.UNKNOWN: None,
-    GraspFace.FRONT:   np.array([-1.0, 0.0, 0.0]),
-    GraspFace.BACK:    np.array([1.0, 0.0, 0.0]),
-    GraspFace.TOP:     np.array([0.0, 0.0, 1.0]),
-    GraspFace.BOTTOM:  np.array([0.0, 0.0, -1.0]),
-    GraspFace.LEFT:    np.array([0.0, 1.0, 0.0]),
-    GraspFace.RIGHT:   np.array([0.0, -1.0, 0.0]),
+    GraspFace.FRONT: np.array([-1.0, 0.0, 0.0]),
+    GraspFace.BACK: np.array([1.0, 0.0, 0.0]),
+    GraspFace.TOP: np.array([0.0, 0.0, 1.0]),
+    GraspFace.BOTTOM: np.array([0.0, 0.0, -1.0]),
+    GraspFace.LEFT: np.array([0.0, 1.0, 0.0]),
+    GraspFace.RIGHT: np.array([0.0, -1.0, 0.0]),
 }
 
+
 class GraspDirection(Enum):
-    """ Enumerates grasp direction types. """
+    """Enumerates grasp direction types."""
+
     UNKNOWN = 0
     X_POS = 1
     X_NEG = 2
@@ -41,25 +46,34 @@ class GraspDirection(Enum):
     Z_POS = 5
     Z_NEG = 6
 
+
 vec_from_direction = {
     GraspDirection.UNKNOWN: None,
-    GraspDirection.X_POS:   np.array([1.0, 0.0, 0.0]),
-    GraspDirection.X_NEG:   np.array([-1.0, 0.0, 0.0]),
-    GraspDirection.Y_POS:   np.array([0.0, 1.0, 0.0]),
-    GraspDirection.Y_NEG:   np.array([0.0, -1.0, 0.0]),
-    GraspDirection.Z_POS:   np.array([0.0, 0.0, 1.0]),
-    GraspDirection.Z_NEG:   np.array([0.0, 0.0, -1.0]),
+    GraspDirection.X_POS: np.array([1.0, 0.0, 0.0]),
+    GraspDirection.X_NEG: np.array([-1.0, 0.0, 0.0]),
+    GraspDirection.Y_POS: np.array([0.0, 1.0, 0.0]),
+    GraspDirection.Y_NEG: np.array([0.0, -1.0, 0.0]),
+    GraspDirection.Z_POS: np.array([0.0, 0.0, 1.0]),
+    GraspDirection.Z_NEG: np.array([0.0, 0.0, -1.0]),
 }
+
 
 class Grasp:
     """
     Representation of an object grasp.
     """
-    def __init__(self, properties, origin_wrt_object, origin_wrt_world=None,
-                 face=GraspFace.UNKNOWN, direction=GraspDirection.UNKNOWN):
+
+    def __init__(
+        self,
+        properties,
+        origin_wrt_object,
+        origin_wrt_world=None,
+        face=GraspFace.UNKNOWN,
+        direction=GraspDirection.UNKNOWN,
+    ):
         """
         Creates a grasp object instance.
-        
+
         :param origin_wrt_object: Grasp origin pose, expressed with respect to the object
         :type origin_wrt_object: :class:`pyrobosim.utils.pose.Pose`
         :param origin_wrt_world: Grasp origin pose, expressed with respect to the world
@@ -78,20 +92,22 @@ class Grasp:
         self.direction = direction
 
     def translate_origin(self, vec):
-        """ 
+        """
         Adds the origin position to a specified position vector.
-        
+
         :param vec: Original position vector
         :type vec: list[float]
         :return: Translated position vector
         :rype: list[float]
         """
-        return [self.origin_wrt_object.x + vec[0],
-                self.origin_wrt_object.y + vec[1],
-                self.origin_wrt_object.z + vec[2]]
+        return [
+            self.origin_wrt_object.x + vec[0],
+            self.origin_wrt_object.y + vec[1],
+            self.origin_wrt_object.z + vec[2],
+        ]
 
     def plot(self, ax, color, alpha=0.8):
-        """ Displays the grasp on an existing set of axes. """
+        """Displays the grasp on an existing set of axes."""
         d = self.properties.depth
         h = self.properties.height / 2
         w = self.properties.max_width / 2
@@ -108,21 +124,16 @@ class Grasp:
 
         gripper_verts = [
             # Right gripper
-            [right_bottom_base, right_bottom_tip,
-                right_top_tip, right_top_base],
+            [right_bottom_base, right_bottom_tip, right_top_tip, right_top_base],
             # Left gripper
-            [left_bottom_base, left_bottom_tip,
-                left_top_tip, left_top_base],
+            [left_bottom_base, left_bottom_tip, left_top_tip, left_top_base],
             # Gripper base
-            [right_bottom_base, left_bottom_base,
-                left_top_base, right_top_base]
+            [right_bottom_base, left_bottom_base, left_top_base, right_top_base],
         ]
-        ax.add_collection3d(
-            Poly3DCollection(gripper_verts, color=color, alpha=alpha)
-        )
+        ax.add_collection3d(Poly3DCollection(gripper_verts, color=color, alpha=alpha))
 
     def __repr__(self):
-        """ Printable string representation """
+        """Printable string representation"""
         display_str = f"Grasp:\n"
         display_str += f"\tOrigin w.r.t. object:{self.origin_wrt_object}\n"
         if self.origin_wrt_world is not None:
@@ -146,11 +157,14 @@ class ParallelGraspProperties:
                               |<-depth->|
            depth_clearance -->||<--
     """
-    def __init__(self, max_width, depth, height, width_clearance=0.0, depth_clearance=0.0):
+
+    def __init__(
+        self, max_width, depth, height, width_clearance=0.0, depth_clearance=0.0
+    ):
         """
         Creates a parallel gripper grasp properties instance.
 
-        :param max_width: Maximum gripper opening width 
+        :param max_width: Maximum gripper opening width
         :type max_width: float
         :param depth: Distance from end effector base to finger tips (or equivalent)
         :type depth: float
@@ -168,9 +182,11 @@ class ParallelGraspProperties:
         self.depth_clearance = depth_clearance
 
     def __repr__(self):
-        """ Printable string representation """
+        """Printable string representation"""
         display_str = "Parallel jaw gripper properties:\n"
-        display_str += f"\tMax width: {self.max_width}, depth: {self.depth}, height: {self.height}"
+        display_str += (
+            f"\tMax width: {self.max_width}, depth: {self.depth}, height: {self.height}"
+        )
         return display_str
 
 
@@ -178,6 +194,7 @@ class GraspGenerator:
     """
     Generates grasps given object dimensions and pose relative to a robot.
     """
+
     def __init__(self, properties):
         """
         Creates a grasp generator instance given grasping properties.
@@ -190,12 +207,12 @@ class GraspGenerator:
     def compute_robot_facing_rot(self, object_pose=Pose(), robot_pose=None):
         """
         Computes the rotation matrix to convert from nominal cuboid orientation to robot-facing orientation.
-        
+
         The nominal orientation is such that the front face of the cuboid is -X, the sides are -Y and +Y,
         and the top is +Z, as shown below:
 
                                     Z
-                      +----+        ^ 
+                      +----+        ^
         robot -->     |    |        |
                       +----+        +--> X
 
@@ -204,7 +221,7 @@ class GraspGenerator:
         This function therefore returns the rotation matrix to perform this alignment to correspond which of
         the 6 cuboid faces corresponds to directions such as "front", "right", "top", etc. from the perspective
         of the robot.
-        
+
         :param object_pose: The pose of the object center, defaults to identity transform
         :type object_pose: :class:`pyrobosim.utils.pose.Pose`, optional
         :param robot_pose: The pose of the robot. If none specified, it is not used in calculations.
@@ -218,18 +235,25 @@ class GraspGenerator:
 
         tform_robot_to_object = np.matmul(
             np.linalg.inv(robot_pose.get_transform_matrix()),
-            object_pose.get_transform_matrix())
+            object_pose.get_transform_matrix(),
+        )
         v_robot_to_object = np.dot(
-            tform_robot_to_object[:3, :3].T, tform_robot_to_object[:3, 3])
+            tform_robot_to_object[:3, :3].T, tform_robot_to_object[:3, 3]
+        )
 
         # Figure out what the front face is
-        v_robot_rt_object_proj = np.array([-v_robot_to_object[0],
-                                           -v_robot_to_object[1],
-                                           0.0])
+        v_robot_rt_object_proj = np.array(
+            [-v_robot_to_object[0], -v_robot_to_object[1], 0.0]
+        )
         v_robot_rt_object_proj /= np.linalg.norm(v_robot_rt_object_proj)
-        all_grasp_faces = [GraspFace.FRONT, GraspFace.BACK,
-                           GraspFace.TOP, GraspFace.BOTTOM,
-                           GraspFace.LEFT, GraspFace.RIGHT]
+        all_grasp_faces = [
+            GraspFace.FRONT,
+            GraspFace.BACK,
+            GraspFace.TOP,
+            GraspFace.BOTTOM,
+            GraspFace.LEFT,
+            GraspFace.RIGHT,
+        ]
         max_dot_prod = -10  # Unrealistic value for dot product
         for face in all_grasp_faces:
             dot_prod = np.dot(v_robot_rt_object_proj, normal_from_face[face])
@@ -239,8 +263,8 @@ class GraspGenerator:
 
         # Figure out what the top face is
         unit_z = np.dot(
-            tform_robot_to_object[:3, :3].T,
-            np.array([[0.0], [0.0], [1.0]])).T
+            tform_robot_to_object[:3, :3].T, np.array([[0.0], [0.0], [1.0]])
+        ).T
         max_dot_prod = -10  # Unrealistic value for dot product
         for face in all_grasp_faces:
             dot_prod = np.dot(unit_z, normal_from_face[face])
@@ -252,9 +276,9 @@ class GraspGenerator:
         x_vec = -1.0 * normal_from_face[front_face_dir]
         z_vec = normal_from_face[top_face_dir]
         y_vec = np.cross(-1.0 * x_vec, z_vec)
-        rot_matrix[:,0] = x_vec
-        rot_matrix[:,1] = y_vec
-        rot_matrix[:,2] = z_vec
+        rot_matrix[:, 0] = x_vec
+        rot_matrix[:, 1] = y_vec
+        rot_matrix[:, 2] = z_vec
         return rot_matrix
 
     def should_try_grasp(self, faces_enabled, face_normals, face_vec):
@@ -263,7 +287,7 @@ class GraspGenerator:
 
         Given the set of enabled grasp types, and the normal vectors of the cuboid faces, this function
         determines whether grasping along a specific normal vector is permitted.
-        For example, if 
+        For example, if
           - Only top and front grasps are enabled
           - The top face normal vector is [0, 0, 1]
           - The front face normal vector is [-1, 0, 0]
@@ -272,7 +296,7 @@ class GraspGenerator:
           - Allow grasps along the vectors [0, 0, 1] and [-1, 0, 0] because these are the top and front faces
           - Disallow a grasp along the vectors [0, 1, 0]  and [0, -1, 0] because side grasps are disabled
           - Disallow a grasp along the vector [1, 0, 0] because this would be a back grasp which is not supported
-        
+
         :param faces_enabled: Faces for which grasp generation is enabled, in the form (front, top, side)
         :type faces_enabled: list[bool]
         :param face_normals: Face normals in the canonical directions, in the form (front, top, left, right)
@@ -324,15 +348,24 @@ class GraspGenerator:
                 grasp_center.get_transform_matrix(),
                 object_pose.get_transform_matrix(),
             )
-        )       
-        return Grasp(properties=self.properties,
-                     origin_wrt_object=grasp_center,
-                     origin_wrt_world=grasp_wrt_world,
-                     face=grasp_face,
-                     direction=grasp_dir)
+        )
+        return Grasp(
+            properties=self.properties,
+            origin_wrt_object=grasp_center,
+            origin_wrt_world=grasp_wrt_world,
+            face=grasp_face,
+            direction=grasp_dir,
+        )
 
-    def generate(self, object_dims, object_pose=Pose(), robot_pose=None,
-                 top_grasps=True, front_grasps=True, side_grasps=True):
+    def generate(
+        self,
+        object_dims,
+        object_pose=Pose(),
+        robot_pose=None,
+        top_grasps=True,
+        front_grasps=True,
+        side_grasps=True,
+    ):
         """
         Generates a set of axis-aligned grasps for a cuboid object.
 
@@ -349,7 +382,7 @@ class GraspGenerator:
         :param side_grasps: Enable side grasp generation, defaults to True
         :type side_grasps: bool, optional
         :return: A list of generated grasps
-        :rtype: list[:class:`pyrobosim.manipulation.grasping.Grasp`]      
+        :rtype: list[:class:`pyrobosim.manipulation.grasping.Grasp`]
         """
         grasps = []
         rot_matrix = self.compute_robot_facing_rot(object_pose, robot_pose)
@@ -360,7 +393,9 @@ class GraspGenerator:
 
         # Unpack useful variables
         object_x, object_y, object_z = object_dims
-        effective_max_width = self.properties.max_width - self.properties.width_clearance
+        effective_max_width = (
+            self.properties.max_width - self.properties.width_clearance
+        )
         effective_depth = self.properties.depth - self.properties.depth_clearance
 
         # Compute all feasible grasps
@@ -372,20 +407,19 @@ class GraspGenerator:
         #################
         grasp_dir = GraspDirection.X_NEG
         (try_grasp, grasp_face) = self.should_try_grasp(
-            directions_enabled, face_normals, vec_from_direction[grasp_dir])
+            directions_enabled, face_normals, vec_from_direction[grasp_dir]
+        )
         if try_grasp:
             x = min(0.0, effective_depth - object_x / 2)
             # Grasp with horizontal gripper, uses Y dimension
             if effective_max_width >= object_y:
-                grasp_center = Pose(x=x, y=0.0, z=0.0,
-                                    pitch=-np.pi/2, yaw=np.pi/2)
+                grasp_center = Pose(x=x, y=0.0, z=0.0, pitch=-np.pi / 2, yaw=np.pi / 2)
                 grasps.append(
                     self._create_grasp(grasp_center, grasp_face, grasp_dir, object_pose)
                 )
             # Grasp with vertical gripper, uses Z dimension
             if effective_max_width >= object_z:
-                grasp_center = Pose(x=x, y=0.0, z=0.0,
-                                    pitch=-np.pi/2, yaw=0.0)
+                grasp_center = Pose(x=x, y=0.0, z=0.0, pitch=-np.pi / 2, yaw=0.0)
                 grasps.append(
                     self._create_grasp(grasp_center, grasp_face, grasp_dir, object_pose)
                 )
@@ -395,20 +429,19 @@ class GraspGenerator:
         #################
         grasp_dir = GraspDirection.X_POS
         (try_grasp, grasp_face) = self.should_try_grasp(
-            directions_enabled, face_normals, vec_from_direction[grasp_dir])
+            directions_enabled, face_normals, vec_from_direction[grasp_dir]
+        )
         if try_grasp:
             x = max(0.0, object_x / 2 - effective_depth)
             # Grasp with horizontal gripper, uses Y dimension
             if effective_max_width >= object_y:
-                grasp_center = Pose(x=x, y=0.0, z=0.0,
-                                    pitch=np.pi/2, yaw=np.pi/2)
+                grasp_center = Pose(x=x, y=0.0, z=0.0, pitch=np.pi / 2, yaw=np.pi / 2)
                 grasps.append(
                     self._create_grasp(grasp_center, grasp_face, grasp_dir, object_pose)
                 )
             # Grasp with vertical gripper, uses Z dimension
             if effective_max_width >= object_z:
-                grasp_center = Pose(x=x, y=0.0, z=0.0,
-                                    pitch=np.pi/2, yaw=0.0)
+                grasp_center = Pose(x=x, y=0.0, z=0.0, pitch=np.pi / 2, yaw=0.0)
                 grasps.append(
                     self._create_grasp(grasp_center, grasp_face, grasp_dir, object_pose)
                 )
@@ -418,20 +451,19 @@ class GraspGenerator:
         #################
         grasp_dir = GraspDirection.Z_NEG
         (try_grasp, grasp_face) = self.should_try_grasp(
-            directions_enabled, face_normals, vec_from_direction[grasp_dir])
+            directions_enabled, face_normals, vec_from_direction[grasp_dir]
+        )
         if try_grasp:
             z = min(0.0, effective_depth - object_z / 2)
             # Top grasp with horizontal gripper, uses Y dimension
             if effective_max_width >= object_y:
-                grasp_center = Pose(x=0.0, y=0.0, z=z,
-                                    pitch=0.0, yaw=np.pi/2)
+                grasp_center = Pose(x=0.0, y=0.0, z=z, pitch=0.0, yaw=np.pi / 2)
                 grasps.append(
                     self._create_grasp(grasp_center, grasp_face, grasp_dir, object_pose)
                 )
             # Top grasp with vertical gripper, uses X dimension
             if effective_max_width >= object_x:
-                grasp_center = Pose(x=0.0, y=0.0, z=z,
-                                    pitch=0.0, yaw=0.0)
+                grasp_center = Pose(x=0.0, y=0.0, z=z, pitch=0.0, yaw=0.0)
                 grasps.append(
                     self._create_grasp(grasp_center, grasp_face, grasp_dir, object_pose)
                 )
@@ -441,20 +473,19 @@ class GraspGenerator:
         #################
         grasp_dir = GraspDirection.Z_POS
         (try_grasp, grasp_face) = self.should_try_grasp(
-            directions_enabled, face_normals, vec_from_direction[grasp_dir])
+            directions_enabled, face_normals, vec_from_direction[grasp_dir]
+        )
         if try_grasp:
             z = max(0.0, object_z / 2 - effective_depth)
             # Top grasp with horizontal gripper, uses Y dimension
             if effective_max_width >= object_y:
-                grasp_center = Pose(x=0.0, y=0.0, z=z,
-                                    pitch=np.pi, yaw=np.pi/2)
+                grasp_center = Pose(x=0.0, y=0.0, z=z, pitch=np.pi, yaw=np.pi / 2)
                 grasps.append(
                     self._create_grasp(grasp_center, grasp_face, grasp_dir, object_pose)
                 )
             # Top grasp with vertical gripper, uses X dimension
             if effective_max_width >= object_x:
-                grasp_center = Pose(x=0.0, y=0.0, z=z,
-                                    pitch=np.pi, yaw=0.0)
+                grasp_center = Pose(x=0.0, y=0.0, z=z, pitch=np.pi, yaw=0.0)
                 grasps.append(
                     self._create_grasp(grasp_center, grasp_face, grasp_dir, object_pose)
                 )
@@ -464,20 +495,19 @@ class GraspGenerator:
         #################
         grasp_dir = GraspDirection.Y_NEG
         (try_grasp, grasp_face) = self.should_try_grasp(
-            directions_enabled, face_normals, vec_from_direction[grasp_dir])
+            directions_enabled, face_normals, vec_from_direction[grasp_dir]
+        )
         if try_grasp:
             y = min(0.0, effective_depth - object_y / 2)
             # Grasp with horizontal gripper, uses X dimension
             if effective_max_width >= object_x:
-                grasp_center = Pose(x=0.0, y=y, z=0.0,
-                                    roll=np.pi/2)
+                grasp_center = Pose(x=0.0, y=y, z=0.0, roll=np.pi / 2)
                 grasps.append(
                     self._create_grasp(grasp_center, grasp_face, grasp_dir, object_pose)
                 )
             # Grasp with vertical gripper, uses Z dimension
             if effective_max_width >= object_z:
-                grasp_center = Pose(x=0.0, y=y, z=0.0,
-                                    roll=np.pi/2, yaw=np.pi/2)
+                grasp_center = Pose(x=0.0, y=y, z=0.0, roll=np.pi / 2, yaw=np.pi / 2)
                 grasps.append(
                     self._create_grasp(grasp_center, grasp_face, grasp_dir, object_pose)
                 )
@@ -487,29 +517,33 @@ class GraspGenerator:
         #################
         grasp_dir = GraspDirection.Y_POS
         (try_grasp, grasp_face) = self.should_try_grasp(
-            directions_enabled, face_normals, vec_from_direction[grasp_dir])
+            directions_enabled, face_normals, vec_from_direction[grasp_dir]
+        )
         if try_grasp:
             y = max(0.0, object_y / 2 - effective_depth)
             # Left grasp with horizontal gripper, uses X dimension
             if effective_max_width >= object_x:
-                grasp_center = Pose(x=0.0, y=y, z=0.0,
-                                    roll=-np.pi/2)
+                grasp_center = Pose(x=0.0, y=y, z=0.0, roll=-np.pi / 2)
                 grasps.append(
                     self._create_grasp(grasp_center, grasp_face, grasp_dir, object_pose)
                 )
             # Left grasp with vertical gripper, uses Z dimension
             if effective_max_width >= object_z:
-                grasp_center = Pose(x=0.0, y=y, z=0.0,
-                                    roll=-np.pi/2, yaw=-np.pi/2)
+                grasp_center = Pose(x=0.0, y=y, z=0.0, roll=-np.pi / 2, yaw=-np.pi / 2)
                 grasps.append(
                     self._create_grasp(grasp_center, grasp_face, grasp_dir, object_pose)
                 )
 
         return grasps
 
-
-    def show_grasps(self, object_dims, grasps, object_pose=Pose(),
-                    robot_pose=None, object_footprint=None):
+    def show_grasps(
+        self,
+        object_dims,
+        grasps,
+        object_pose=Pose(),
+        robot_pose=None,
+        object_footprint=None,
+    ):
         """
         Display the grasps on top of an object.
 
@@ -527,19 +561,19 @@ class GraspGenerator:
         fig = plt.figure()
         ax = Axes3D(fig)
         fig.add_axes(ax)
-        
+
         # Show the object cuboid
         max_dim = max(object_dims)
         min_x = min_y = min_z = -max_dim
         max_x = max_y = max_z = max_dim
-        x, y, z = [d/2 for d in object_dims]
+        x, y, z = [d / 2 for d in object_dims]
         verts = [
-            [(-x,-y,-z), ( x,-y,-z), ( x, y,-z), (-x, y,-z)],
-            [(-x,-y, z), ( x,-y, z), ( x, y, z), (-x, y, z)],
-            [(-x,-y,-z), (-x, y,-z), (-x, y, z), (-x,-y, z)],
-            [( x,-y,-z), ( x, y,-z), ( x, y, z), ( x,-y, z)],
-            [(-x,-y,-z), ( x,-y,-z), ( x,-y, z), (-x,-y, z)],
-            [(-x, y,-z), ( x, y,-z), ( x, y, z), (-x, y, z)],
+            [(-x, -y, -z), (x, -y, -z), (x, y, -z), (-x, y, -z)],
+            [(-x, -y, z), (x, -y, z), (x, y, z), (-x, y, z)],
+            [(-x, -y, -z), (-x, y, -z), (-x, y, z), (-x, -y, z)],
+            [(x, -y, -z), (x, y, -z), (x, y, z), (x, -y, z)],
+            [(-x, -y, -z), (x, -y, -z), (x, -y, z), (-x, -y, z)],
+            [(-x, y, -z), (x, y, -z), (x, y, z), (-x, y, z)],
         ]
         ax.add_collection3d(Poly3DCollection(verts, color=[0.3, 0.3, 0.3, 0.3]))
 
@@ -555,7 +589,8 @@ class GraspGenerator:
             p_robot_rt_object = Pose.from_transform(
                 np.matmul(
                     np.linalg.inv(object_pose.get_transform_matrix()),
-                    robot_pose.get_transform_matrix())
+                    robot_pose.get_transform_matrix(),
+                )
             )
             xr = p_robot_rt_object.x
             yr = p_robot_rt_object.y
@@ -576,14 +611,17 @@ class GraspGenerator:
             # Plot the grasp point
             color = colors[color_idx]
             ax.plot3D(xo, yo, zo, "o", color=color)
-            ax.plot3D([xo, xo + depth * xd],
-                      [yo, yo + depth * yd],
-                      [zo, zo + depth * zd],
-                      ":", color=color)
+            ax.plot3D(
+                [xo, xo + depth * xd],
+                [yo, yo + depth * yd],
+                [zo, zo + depth * zd],
+                ":",
+                color=color,
+            )
 
             # Plot the grasp itself
             grasp.plot(ax, color)
-            
+
             color_idx += 1
 
         ax.set_xlabel("X")

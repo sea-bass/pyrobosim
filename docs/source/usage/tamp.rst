@@ -1,7 +1,7 @@
 Task and Motion Planning
 ========================
 We use `PDDLStream <https://github.com/caelan/pddlstream>`_ to perform integrated task and motion planning (TAMP).
-This tool expands task planning with purely discrete parameters using `Planning Domain Definition Language (PDDL) <https://planning.wiki/guide/whatis/pddl>`_ 
+This tool expands task planning with purely discrete parameters using `Planning Domain Definition Language (PDDL) <https://planning.wiki/guide/whatis/pddl>`_
 by adding the concept of *streams* for sampling continuous parameters in actions.
 
 If you did not already install PDDLStream, ensure you do so with this script, then re-source.

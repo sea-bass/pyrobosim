@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Trajectory generation and interpolation utilities. """
 
 import numpy as np
@@ -8,7 +9,7 @@ from ..utils.pose import wrap_angle
 
 def get_constant_speed_trajectory(path, linear_velocity=0.2, max_angular_velocity=None):
     """
-    Gets a trajectory from a path (list of Pose objects) by calculating 
+    Gets a trajectory from a path (list of Pose objects) by calculating
     time points based on constant velocity and maximum angular velocity.
 
     The trajectory is returned as a tuple of numpy arrays
@@ -27,7 +28,7 @@ def get_constant_speed_trajectory(path, linear_velocity=0.2, max_angular_velocit
     if path.num_poses == 0:
         return None
 
-    # Calculate the time points for the path at constant velocity, also 
+    # Calculate the time points for the path at constant velocity, also
     # accounting for the maximum angular velocity if specified.
     t_pts = np.zeros_like(path.poses, dtype=np.float64)
     for idx in range(path.num_poses - 1):

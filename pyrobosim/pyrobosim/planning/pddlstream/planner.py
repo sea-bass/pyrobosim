@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Task and Motion Planning tools using PDDLStream. """
 
 import os
@@ -7,8 +8,11 @@ from pddlstream.language.constants import And, PDDLProblem
 from pddlstream.utils import read
 
 from .mappings import get_stream_info, get_stream_map
-from .utils import process_goal_specification, world_to_pddlstream_init, \
-    pddlstream_solution_to_plan
+from .utils import (
+    process_goal_specification,
+    world_to_pddlstream_init,
+    pddlstream_solution_to_plan,
+)
 
 
 class PDDLStreamPlanner:
@@ -111,8 +115,10 @@ class PDDLStreamPlanner:
                 )
             else:
                 solution = solve_incremental(
-                    prob, planner=planner,
-                    max_time=max_time, verbose=verbose
+                    prob,
+                    planner=planner,
+                    max_time=max_time,
+                    verbose=verbose,
                 )
 
             # If the solution is valid, no need to try again

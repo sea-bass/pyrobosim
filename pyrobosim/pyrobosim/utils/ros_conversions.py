@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 """
-Utilities to convert between standalone pyrobosim objects and 
+Utilities to convert between standalone pyrobosim objects and
 ROS representations (messages, services, etc.).
 """
 
@@ -16,13 +17,21 @@ def pose_from_ros(msg):
     Converts ROS pose message to a pyrobosim pose.
 
     :param act: ROS message.
-    :type act: :class:`geometry_msgs.msg.Pose` 
+    :type act: :class:`geometry_msgs.msg.Pose`
     :return: Pose object
     :rtype: :class:`pyrobosim.utils.pose.Pose`
     """
     return Pose.from_list(
-        [msg.position.x, msg.position.y, msg.position.z, msg.orientation.w,
-         msg.orientation.x, msg.orientation.y, msg.orientation.z])
+        [
+            msg.position.x,
+            msg.position.y,
+            msg.position.z,
+            msg.orientation.w,
+            msg.orientation.x,
+            msg.orientation.y,
+            msg.orientation.z,
+        ]
+    )
 
 
 def pose_to_ros(pose):
@@ -30,7 +39,7 @@ def pose_to_ros(pose):
     Converts a pyrobosim Pose to a ROS message.
 
     :param act: Pose object.
-    :type act: :class:`pyrobosim.utils.pose.Pose`    
+    :type act: :class:`pyrobosim.utils.pose.Pose`
     :return: ROS message.
     :rtype: :class:`geometry_msgs.msg.Pose`
     """
@@ -51,7 +60,7 @@ def path_from_ros(msg):
     Converts ROS path message to a pyrobosim motion Path.
 
     :param act: ROS message.
-    :type act: :class:`pyrobosim_msgs.msg.Path` 
+    :type act: :class:`pyrobosim_msgs.msg.Path`
     :return: Path object
     :rtype: :class:`pyrobosim.utils.motion.Path`
     """
@@ -63,7 +72,7 @@ def path_to_ros(path):
     Converts a pyrobosim motion Path to a ROS message.
 
     :param act: Path object.
-    :type act: :class:`pyrobosim.utils.motion.Path`    
+    :type act: :class:`pyrobosim.utils.motion.Path`
     :return: ROS message.
     :rtype: :class:`pyrobosim_msgs.msg.Path`
     """
@@ -82,7 +91,7 @@ def get_entity_name(entity):
     :rtype: str
     """
     if entity is None:
-        return ""    
+        return ""
     elif isinstance(entity, str):
         return entity
     else:
@@ -91,9 +100,9 @@ def get_entity_name(entity):
 
 def goal_specification_from_ros(msg, world):
     """
-    Uses a world object to resolve a GoalSpecification message to a 
+    Uses a world object to resolve a GoalSpecification message to a
     list of goal literals for task and motion planning.
-    
+
     :param msg: ROS message.
     :type msg: :class:`pyrobosim_msgs.msg.GoalSpecification`
     :param world: World object to use to resolve literals.
@@ -120,9 +129,9 @@ def goal_specification_from_ros(msg, world):
 
 
 def task_action_from_ros(msg):
-    """ 
+    """
     Converts a TaskAction ROS message to a TaskAction object.
-    
+
     :param msg: ROS message.
     :type msg: :class:`pyrobosim_msgs.msg.TaskAction`
     :return: Task action object.
@@ -131,23 +140,31 @@ def task_action_from_ros(msg):
     if not isinstance(msg, ros_msgs.TaskAction):
         raise Exception("Input is not a TaskAction ROS message")
     pose = pose_from_ros(msg.pose) if msg.has_pose else None
-    return acts.TaskAction(msg.type, robot=msg.robot, object=msg.object, room=msg.room,
-                source_location=msg.source_location, target_location=msg.target_location,
-                pose=pose, path=path_from_ros(msg.path), cost=msg.cost)
+    return acts.TaskAction(
+        msg.type,
+        robot=msg.robot,
+        object=msg.object,
+        room=msg.room,
+        source_location=msg.source_location,
+        target_location=msg.target_location,
+        pose=pose,
+        path=path_from_ros(msg.path),
+        cost=msg.cost,
+    )
 
 
 def task_action_to_ros(act):
-    """ 
+    """
     Converts a TaskAction object to a TaskAction ROS message.
 
     :param act: Task action object.
-    :type act: :class:`pyrobosim.planning.actions.TaskAction`    
+    :type act: :class:`pyrobosim.planning.actions.TaskAction`
     :return: ROS message.
     :rtype: :class:`pyrobosim_msgs.msg.TaskAction`
     """
     if not isinstance(act, acts.TaskAction):
         raise Exception("Input is not a TaskAction object")
-    
+
     act_msg = ros_msgs.TaskAction(type=act.type)
     act_msg.robot = get_entity_name(act.robot)
     act_msg.object = get_entity_name(act.object)
@@ -157,7 +174,7 @@ def task_action_to_ros(act):
     if act.pose:
         act_msg.has_pose = True
         act_msg.pose = pose_to_ros(act.pose)
-    act_msg.path = path_to_ros(act.path)  
+    act_msg.path = path_to_ros(act.path)
     if act.cost:
         act_msg.cost = float(act.cost)
 
@@ -167,7 +184,7 @@ def task_action_to_ros(act):
 def task_plan_from_ros(msg):
     """
     Converts a TaskPlan ROS message to a TaskPlan object.
-    
+
     :param msg: ROS message.
     :type msg: :class:`pyrobosim_msgs.msg.TaskPlan`
     :return: Task plan object.
@@ -182,9 +199,9 @@ def task_plan_from_ros(msg):
 def task_plan_to_ros(plan):
     """
     Converts a TaskPlan object to a TaskPlan ROS message.
-    
+
     :param plan: Task plan object.
-    :type plan: :class:`pyrobosim.planning.actions.TaskPlan`    
+    :type plan: :class:`pyrobosim.planning.actions.TaskPlan`
     :return: ROS message.
     :rtype: :class:`pyrobosim_msgs.msg.TaskPlan`
     """

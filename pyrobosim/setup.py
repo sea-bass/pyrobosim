@@ -1,16 +1,19 @@
+# -*- coding: utf-8 -*-
 import os
 from os.path import join
 from setuptools import setup, find_packages
 
 # This is for standalone (non-ROS) use.
 
+
 def get_files_in_folder(directory):
-    """ Helper function to get all files in a specific directory. """
+    """Helper function to get all files in a specific directory."""
     file_list = []
     for (path, _, fnames) in os.walk(directory):
         for filename in fnames:
             file_list.append(join("..", path, filename))
     return file_list
+
 
 install_requires = [
     "adjustText",
@@ -19,11 +22,12 @@ install_requires = [
     "numpy",
     "pycollada",
     "PyQt5",
-    "PyYAML",   
+    "PyYAML",
     "shapely==1.8",
     "scipy",
     "transforms3d",
-    "trimesh"]
+    "trimesh",
+]
 
 project_name = "pyrobosim"
 setup(
@@ -36,8 +40,6 @@ setup(
     license="BSD",
     install_requires=install_requires,
     packages=find_packages(),
-    package_data={
-        project_name: get_files_in_folder(join(project_name, "data"))
-    },
-    zip_safe=True
+    package_data={project_name: get_files_in_folder(join(project_name, "data"))},
+    zip_safe=True,
 )

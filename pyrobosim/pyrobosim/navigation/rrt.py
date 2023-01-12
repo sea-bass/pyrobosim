@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Rapidly-exploring Random Tree (RRT) implementation. """
 
 import copy
@@ -371,8 +372,9 @@ class RRTPlanner:
         if show_path and self.latest_path.num_poses > 0:
             x = [p.x for p in self.latest_path.poses]
             y = [p.y for p in self.latest_path.poses]
-            (path,) = axes.plot(x, y, linestyle="-", color=path_color,
-                                linewidth=3, alpha=0.5, zorder=1)
+            (path,) = axes.plot(
+                x, y, linestyle="-", color=path_color, linewidth=3, alpha=0.5, zorder=1
+            )
             (start,) = axes.plot(x[0], y[0], "go", zorder=2)
             (goal,) = axes.plot(x[-1], y[-1], "rx", zorder=2)
             artists.extend((path, start, goal))
