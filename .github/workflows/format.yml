@@ -1,5 +1,10 @@
-name: Format
-on: [push, pull_request]
+name: format
+
+on:
+  # Run action on certain pull request events
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
 jobs:
   pre-commit:
     name: pre-commit
