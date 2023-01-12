@@ -18,7 +18,13 @@ from .utils import (
 class PDDLStreamPlanner:
     """Task and Motion Planner using PDDLStream."""
 
-    def __init__(self, world, domain_folder):
+    def __init__(
+        self,
+        world,
+        domain_folder,
+        stream_map_fn=get_default_stream_map_fn(),
+        stream_info_fn=get_default_stream_info_fn(),
+    ):
         """
         Creates a new PDDLStream based planner.
 
@@ -26,15 +32,21 @@ class PDDLStreamPlanner:
         :type world: :class:`pyrobosim.core.world.World`
         :param domain_folder: Path to folder containing PDDL domain and streams
         :type domain_folder: str
+        :param stream_map_fn: Function that accepts a World and Robot object and returns a dictionary of stream mappings.
+        :type stream_map_fn: function
+        :param stream_info_fn: Function that returns a dictionary of stream information.
+        :type stream_info_fn: function
         """
         # Set the world model
         self.world = world
 
-        # Configuration parameters
+        # Planning configuration parameters
         domain_pddl_file = os.path.join(domain_folder, "domain.pddl")
         self.domain_pddl = read(domain_pddl_file)
         stream_pddl_file = os.path.join(domain_folder, "streams.pddl")
         self.stream_pddl = read(stream_pddl_file)
+        self.stream_map_fn = stream_map_fn
+        self.stream_info_fn = stream_info_fn
 
         # Bookkeeping variables
         self.latest_specification = None
@@ -44,8 +56,6 @@ class PDDLStreamPlanner:
         self,
         robot,
         goal_literals,
-        stream_map_fn=get_default_stream_map_fn(),
-        stream_info_fn=get_default_stream_info_fn(),
         max_attempts=1,
         verbose=False,
         **kwargs,
@@ -60,10 +70,6 @@ class PDDLStreamPlanner:
         :type robot: :class:`pyrobosim.core.robot.Robot`
         :param goal_literals: List of literals describing a goal specification.
         :type goal: list[tuple]
-        :param stream_map_fn: Function that accepts a World and Robot object and returns a dictionary of stream mappings.
-        :type stream_map_fn: function
-        :param stream_info_fn: Function that returns a dictionary of stream information.
-        :type stream_info_fn: function
         :param max_attempts: Maximum planning attempts.
         :type max_attempts: int, optional
         :param verbose: If True, prints additional information. Defaults to False.
@@ -87,7 +93,7 @@ class PDDLStreamPlanner:
             self.domain_pddl,
             constant_map,
             external_pddl,
-            stream_map_fn(self.world, robot),
+            self.stream_map_fn(self.world, robot),
             init,
             goal,
         )
@@ -95,7 +101,7 @@ class PDDLStreamPlanner:
         for i in range(max_attempts):
             # Solve the problem using the "adaptive" PDDLStream algorithm.
             solution = solve_adaptive(
-                prob, stream_info=stream_info_fn(), verbose=verbose, **kwargs
+                prob, stream_info=self.stream_info_fn(), verbose=verbose, **kwargs
             )
 
             # If the solution is valid, no need to try again

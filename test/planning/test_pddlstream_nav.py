@@ -80,7 +80,7 @@ def start_planner(world, domain_name="03_nav_stream", interactive=False):
         goal_literals,
         verbose=interactive,
         planner="ff-astar",
-        max_planner_time=60.0,
+        max_planner_time=30.0,
     )
     if interactive:
         robot.execute_plan(plan, blocking=True)

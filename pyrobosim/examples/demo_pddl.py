@@ -88,7 +88,7 @@ def start_planner(world, args):
         verbose=args.verbose,
         search_sample_ratio=args.search_sample_ratio,
         planner="ff-astar",
-        max_planner_time=60.0,
+        max_planner_time=30.0,
     )
     robot.execute_plan(plan, blocking=True)
 
