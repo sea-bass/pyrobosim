@@ -9,5 +9,5 @@ jobs:
       - uses: actions/checkout@v2
       - uses: psf/black@stable
         with:
-          options: "--check --verbose"
+          options: "--check --diff --verbose"
           version: "23.1a1"
