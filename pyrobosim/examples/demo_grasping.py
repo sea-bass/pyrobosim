@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 from pyrobosim.core.objects import Object
 from pyrobosim.manipulation.grasping import GraspGenerator, ParallelGraspProperties

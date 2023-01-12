@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Grasping utilities. """
 
 from ..utils.pose import Pose

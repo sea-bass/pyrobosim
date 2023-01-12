@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ GUI utilities.
 
 This module contains the main pyrobosim UI, which is based on PyQt5,

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Main file containing the core world modeling tools. """
 
 import itertools

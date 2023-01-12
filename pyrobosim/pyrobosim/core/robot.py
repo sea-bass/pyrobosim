@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Defines a robot which operates in a world. """
 
 import time

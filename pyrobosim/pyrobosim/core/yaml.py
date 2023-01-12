@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Utilities to create worlds from YAML files. """
 
 import numpy as np

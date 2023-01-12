@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ General utilities.
 
 This module contains general utilities used throughout pyrobosim,

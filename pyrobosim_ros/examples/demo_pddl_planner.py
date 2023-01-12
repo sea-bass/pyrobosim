@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 Test script showing how to use a PDDLStream planner as a ROS 2 node.
@@ -132,8 +131,9 @@ class PlannerNode(Node):
         plan = self.planner.plan(
             robot,
             self.latest_goal,
-            adaptive=True,
             search_sample_ratio=self.get_parameter("search_sample_ratio").value,
+            planner="ff-astar",
+            max_planner_time=60.0,
         )
         if self.get_parameter("verbose").value == True:
             self.get_logger().info(f"{plan}")

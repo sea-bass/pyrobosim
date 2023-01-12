@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Occupancy grid utilities. """
 
 import os

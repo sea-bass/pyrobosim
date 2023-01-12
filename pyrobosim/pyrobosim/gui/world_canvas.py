@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Utilities for displaying a pyrobosim world in a figure canvas. """
 
 import adjustText

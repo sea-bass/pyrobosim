@@ -14,7 +14,6 @@ repos:
      - id: check-added-large-files
      - id: check-ast
      - id: check-builtin-literals
-     - id: check-byte-order-marker
      - id: check-case-conflict
      - id: check-docstring-first
      - id: check-executables-have-shebangs
@@ -29,7 +28,6 @@ repos:
      - id: detect-private-key
      - id: end-of-file-fixer
      - id: fix-byte-order-marker
-     - id: fix-encoding-pragma
      - id: forbid-new-submodules
      - id: mixed-line-ending
      - id: name-tests-test

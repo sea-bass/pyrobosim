@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Rapidly-exploring Random Tree (RRT) implementation. """
 
 import copy

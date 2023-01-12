@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Task and Motion Planning tools using PDDLStream. """
 
 import os
@@ -7,8 +6,9 @@ from pddlstream.algorithms.incremental import solve_incremental
 from pddlstream.language.constants import And, PDDLProblem
 from pddlstream.utils import read
 
-from .mappings import get_stream_info, get_stream_map
 from .utils import (
+    get_default_stream_info_fn,
+    get_default_stream_map_fn,
     process_goal_specification,
     world_to_pddlstream_init,
     pddlstream_solution_to_plan,
@@ -44,36 +44,31 @@ class PDDLStreamPlanner:
         self,
         robot,
         goal_literals,
-        adaptive=True,
-        planner="ff-astar",
-        max_time=60.0,
-        max_iterations=5,
+        stream_map_fn=get_default_stream_map_fn(),
+        stream_info_fn=get_default_stream_info_fn(),
         max_attempts=1,
-        search_sample_ratio=1.0,
         verbose=False,
+        **kwargs,
     ):
         """
         Searches for a set of actions that completes a goal specification
         given an initial state of the world.
+        This uses the "adaptive" planner in PDDLStream, which demonstrates the best performance
+        for most problems.
 
         :param robot: Robot to use for planning.
         :type robot: :class:`pyrobosim.core.robot.Robot`
         :param goal_literals: List of literals describing a goal specification.
         :type goal: list[tuple]
-        :param adaptive: If True (default), uses the adaptive algorithm; else, uses incremental.
-        :type adaptive: bool, optional
-        :param planner: Planner used by PDDLStream, defaults to ``ff-astar``.
-        :type planner: str, optional
-        :param max_time: Max planning time.
-        :type max_time: float, optional
-        :param max_iterations: Maximum planning iterations.
-        :type max_iterations: int, optional
+        :param stream_map_fn: Function that accepts a World and Robot object and returns a dictionary of stream mappings.
+        :type stream_map_fn: function
+        :param stream_info_fn: Function that returns a dictionary of stream information.
+        :type stream_info_fn: function
         :param max_attempts: Maximum planning attempts.
         :type max_attempts: int, optional
-        :param search_sample_ratio: Search to sample time ratio, used only for the focused algorithm.
-        :type search_sample_ratio: float, optional
         :param verbose: If True, prints additional information. Defaults to False.
         :type verbose: bool, optional
+        :param **kwargs: Additional keyword arguments to pass to the PDDLStream planner.
         :return: A task plan object ready to use with ``pyrobosim``.
         :rtype: :class:`pyrobosim.planning.actions.TaskPlan`
         """
@@ -92,34 +87,16 @@ class PDDLStreamPlanner:
             self.domain_pddl,
             constant_map,
             external_pddl,
-            get_stream_map(self.world, robot),
+            stream_map_fn(self.world, robot),
             init,
             goal,
         )
 
         for i in range(max_attempts):
-
-            # Solve the problem using the specified PDDLStream algorithm.
-            # The ``get_stream_info()`` function comes from the ``mappings.py``
-            # file, so as you add new functionality you should fill it out there.
-            if adaptive:
-                solution = solve_adaptive(
-                    prob,
-                    planner=planner,
-                    stream_info=get_stream_info(),
-                    search_sample_ratio=search_sample_ratio,
-                    max_time=max_time,
-                    max_planner_time=max_time,
-                    max_iterations=max_iterations,
-                    verbose=verbose,
-                )
-            else:
-                solution = solve_incremental(
-                    prob,
-                    planner=planner,
-                    max_time=max_time,
-                    verbose=verbose,
-                )
+            # Solve the problem using the "adaptive" PDDLStream algorithm.
+            solution = solve_adaptive(
+                prob, stream_info=stream_info_fn(), verbose=verbose, **kwargs
+            )
 
             # If the solution is valid, no need to try again
             # TODO: Could later consider an option to execute all the attempts

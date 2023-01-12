@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 Test script showing how to perform task and motion planning with PDDLStream.
@@ -86,9 +85,10 @@ def start_planner(world, args):
     plan = planner.plan(
         robot,
         goal_literals,
-        apative=True,
         verbose=args.verbose,
         search_sample_ratio=args.search_sample_ratio,
+        planner="ff-astar",
+        max_planner_time=60.0,
     )
     robot.execute_plan(plan, blocking=True)
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 Test script for PDDLStream planning with navigation streams.
@@ -76,7 +75,13 @@ def start_planner(world, domain_name="03_nav_stream", interactive=False):
     if interactive:
         input("Press Enter to start planning.")
     robot = world.robots[0]
-    plan = planner.plan(robot, goal_literals, adaptive=True, verbose=interactive)
+    plan = planner.plan(
+        robot,
+        goal_literals,
+        verbose=interactive,
+        planner="ff-astar",
+        max_planner_time=60.0,
+    )
     if interactive:
         robot.execute_plan(plan, blocking=True)
     return plan

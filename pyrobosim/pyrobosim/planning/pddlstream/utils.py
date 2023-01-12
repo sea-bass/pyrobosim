@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Utilities to connect world models with PDDLStream.
 """
@@ -20,6 +19,29 @@ def get_default_domains_folder():
     :rtype: str
     """
     return os.path.join(get_data_folder(), "pddlstream", "domains")
+
+
+def get_default_stream_info_fn():
+    """
+    Gets a function that creates the default PDDLStream stream information dictionary.
+
+    :return: PDDLStream stream information function
+    :rtype: function
+    """
+    from .default_mappings import get_stream_info
+    return get_stream_info
+
+
+def get_default_stream_map_fn():
+    """
+    Gets a function that creates the default PDDLStream stream mappings dictionary
+    given a `pyrobosim.core.world.World` object and a `pyrobosim.core.robot.Robot` object.
+    
+    :return: PDDLStream stream mappings function
+    :rtype: function
+    """
+    from .default_mappings import get_stream_map
+    return get_stream_map
 
 
 def world_to_pddlstream_init(world, robot):

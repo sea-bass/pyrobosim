@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Representations for objects that exist in the world. """
 
 import numpy as np

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ ROS interfaces to world model. """
 
 import os

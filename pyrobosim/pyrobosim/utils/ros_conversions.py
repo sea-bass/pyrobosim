@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Utilities to convert between standalone pyrobosim objects and
 ROS representations (messages, services, etc.).

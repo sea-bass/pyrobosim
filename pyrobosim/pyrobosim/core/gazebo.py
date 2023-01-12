@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Utilities to export worlds to Gazebo. """
 
 import os

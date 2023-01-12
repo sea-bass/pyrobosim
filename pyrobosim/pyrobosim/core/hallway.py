@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Hallway representation for world modeling. """
 
 import warnings

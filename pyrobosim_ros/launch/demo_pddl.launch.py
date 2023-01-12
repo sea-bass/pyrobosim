@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.conditions import IfCondition

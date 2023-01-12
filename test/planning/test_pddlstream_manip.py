@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 Test script for PDDLStream planning with manipulation streams.
@@ -86,10 +85,11 @@ def start_planner(
     plan = planner.plan(
         robot,
         goal_literals,
-        adaptive=True,
         search_sample_ratio=search_sample_ratio,
         max_attempts=max_attempts,
         verbose=interactive,
+        planner="ff-astar",
+        max_planner_time=60.0,
     )
     if interactive:
         robot.execute_plan(plan, blocking=True)

@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
 """
-Mappings for PDDLStream functions, streams, and certificate tests.
+Default mappings for PDDLStream functions, streams, and certificate tests that represent
+Task and Motion Planning for pick-and-place applications with a mobile manipulator.
 """
 
 from pddlstream.language.stream import StreamInfo

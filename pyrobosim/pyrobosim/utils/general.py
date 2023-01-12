@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ General package utilities. """
 
 import os

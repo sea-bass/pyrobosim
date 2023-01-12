@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Main utilities for pyrobosim GUI. """
 
 import numpy as np

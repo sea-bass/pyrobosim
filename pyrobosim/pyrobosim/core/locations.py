@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Representations for locations and their corresponding object spawns. """
 
 import warnings

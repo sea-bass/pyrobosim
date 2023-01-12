@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 Test script showing how to publish a goal specification to a PDDLStream planner node.
