@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 """
 Test script for PDDLStream planning with manipulation streams.
@@ -40,23 +41,26 @@ def create_test_world(add_alt_desk=True):
     w.add_hallway(home, storage, width=0.75, conn_method="auto")
 
     # Add locations and objects
-    table0 = w.add_location("table", "home", Pose(x=0.0, y=0.5, z=0, yaw=np.pi/2))
+    table0 = w.add_location("table", "home", Pose(x=0.0, y=0.5, z=0, yaw=np.pi / 2))
     desk0 = w.add_location("desk", "storage", Pose(x=2.5, y=-1.5, z=0.0, yaw=0.0))
     if add_alt_desk:
         desk1 = w.add_location("desk", "storage", Pose(x=4.5, y=1.5, z=0.0, yaw=0.0))
     w.add_object("banana", table0)
-    w.add_object("water", desk0, pose=Pose(x=2.4, y=-1.4, z=0, yaw=np.pi/4.0))
-    w.add_object("water", desk0, pose=Pose(x=2.575, y=-1.57, z=0, yaw=-np.pi/4.0))
+    w.add_object("water", desk0, pose=Pose(x=2.4, y=-1.4, z=0, yaw=np.pi / 4.0))
+    w.add_object("water", desk0, pose=Pose(x=2.575, y=-1.57, z=0, yaw=-np.pi / 4.0))
 
     # Add a robot
     grasp_props = ParallelGraspProperties(
-        max_width=0.175, depth=0.1, height=0.04,
-        width_clearance=0.01, depth_clearance=0.01
+        max_width=0.175,
+        depth=0.1,
+        height=0.04,
+        width_clearance=0.01,
+        depth_clearance=0.01,
     )
     r = Robot(
-        radius=0.1, 
+        radius=0.1,
         path_executor=ConstantVelocityExecutor(),
-        grasp_generator=GraspGenerator(grasp_props)
+        grasp_generator=GraspGenerator(grasp_props),
     )
     w.add_robot(r, loc="home", pose=Pose(x=0.0, y=-0.5))
 
@@ -77,23 +81,31 @@ def start_planner(world, domain_name, interactive=False, max_attempts=1):
     if interactive:
         input("Press Enter to start planning.")
     robot = world.robots[0]
-    plan = planner.plan(robot, goal_literals, focused=True,
-                        search_sample_ratio=0.5, max_attempts=max_attempts,
-                        verbose=interactive)
+    plan = planner.plan(
+        robot,
+        goal_literals,
+        focused=True,
+        search_sample_ratio=0.5,
+        max_attempts=max_attempts,
+        verbose=interactive,
+    )
     if interactive:
         robot.execute_plan(plan, blocking=True)
     return plan
+
 
 #####################
 # ACTUAL UNIT TESTS #
 #####################
 domains_to_test = ["04_nav_manip_stream", "05_nav_grasp_stream"]
 
+
 @pytest.mark.parametrize("domain_name", domains_to_test)
 def test_manip_single_desk(domain_name):
     w = create_test_world(add_alt_desk=False)
     plan = start_planner(w, domain_name=domain_name, max_attempts=3)
     assert plan is not None
+
 
 @pytest.mark.parametrize("domain_name", domains_to_test)
 def test_manip_double_desk(domain_name):
@@ -111,9 +123,9 @@ if __name__ == "__main__":
 
     # Start task and motion planner in separate thread.
     import threading
+
     t = threading.Thread(
-        target=start_planner,
-        args=(w, domain_name, interactive, max_attempts)
+        target=start_planner, args=(w, domain_name, interactive, max_attempts)
     )
     t.start()
 

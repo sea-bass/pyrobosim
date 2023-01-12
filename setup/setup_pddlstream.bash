@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Set up PDDLStream
 
 # Set up the dependencies folder

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Utilities for displaying a pyrobosim world in a figure canvas. """
 
 import adjustText
@@ -80,9 +81,9 @@ class WorldCanvas(FigureCanvasQTAgg):
             b.remove()
         for l in self.robot_lengths:
             l.remove()
-        self.robot_bodies = n_robots*[None]
-        self.robot_dirs = n_robots*[None]
-        self.robot_lengths = n_robots*[None]
+        self.robot_bodies = n_robots * [None]
+        self.robot_dirs = n_robots * [None]
+        self.robot_lengths = n_robots * [None]
 
         for i, robot in enumerate(self.world.robots):
             p = robot.pose
@@ -92,7 +93,8 @@ class WorldCanvas(FigureCanvasQTAgg):
                 edgecolor=robot.color,
                 fill=False,
                 linewidth=2,
-                zorder=self.robot_zorder)
+                zorder=self.robot_zorder,
+            )
             self.axes.add_patch(self.robot_bodies[i])
 
             robot_length = self.robot_dir_line_factor * robot.radius
@@ -109,9 +111,14 @@ class WorldCanvas(FigureCanvasQTAgg):
             x = p.x
             y = p.y - 2.0 * robot.radius
             robot.viz_text = self.axes.text(
-                x, y, robot.name, clip_on=True, color=robot.color,
-                horizontalalignment="center", verticalalignment="top",
-                fontsize=10
+                x,
+                y,
+                robot.name,
+                clip_on=True,
+                color=robot.color,
+                horizontalalignment="center",
+                verticalalignment="top",
+                fontsize=10,
             )
         self.robot_texts = [r.viz_text for r in (self.world.robots)]
 
@@ -210,31 +217,33 @@ class WorldCanvas(FigureCanvasQTAgg):
             # Check if any robot is currently navigating.
             nav_status = [robot.executing_nav for robot in self.world.robots]
             if any(nav_status):
-                active_robot_indices = [i for i, status in enumerate(nav_status) if status]
-                
+                active_robot_indices = [
+                    i for i, status in enumerate(nav_status) if status
+                ]
+
                 # Update the animation.
                 self.update_robots_plot()
-                for idx in active_robot_indices:    
-                    self.update_object_plot(
-                        self.world.robots[idx].manipulated_object)
+                for idx in active_robot_indices:
+                    self.update_object_plot(self.world.robots[idx].manipulated_object)
                 self.show_world_state(
-                    self.world.robots[active_robot_indices[0]],
-                    navigating=True)
+                    self.world.robots[active_robot_indices[0]], navigating=True
+                )
                 self.draw_and_sleep()
 
                 # Check if GUI buttons should be disabled
                 if self.world.has_gui and self.world.gui.layout_created:
                     cur_robot = self.world.gui.get_current_robot()
-                    is_cur_robot_moving = cur_robot in self.world.robots and \
-                                          cur_robot.executing_nav
+                    is_cur_robot_moving = (
+                        cur_robot in self.world.robots and cur_robot.executing_nav
+                    )
                     self.world.gui.set_buttons_during_action(not is_cur_robot_moving)
-            
+
             else:
                 # If the GUI button states did not toggle correctly, force them
                 # to be active once no robots are moving.
                 if self.world.has_gui and self.world.gui.layout_created:
                     self.world.gui.set_buttons_during_action(True)
-            
+
             time.sleep(sleep_time)
 
     def adjust_text(self, objs):
@@ -259,8 +268,9 @@ class WorldCanvas(FigureCanvasQTAgg):
         x = [p.x for p in path.poses]
         y = [p.y for p in path.poses]
         color = robot.color if robot is not None else "m"
-        (path,) = self.axes.plot(x, y, linestyle="-", color=color,
-                                 linewidth=3, zorder=1)
+        (path,) = self.axes.plot(
+            x, y, linestyle="-", color=color, linewidth=3, zorder=1
+        )
         (start,) = self.axes.plot(x[0], y[0], "go", zorder=2)
         (goal,) = self.axes.plot(x[-1], y[-1], "rx", zorder=2)
         self.path_planner_artists.extend((path, start, goal))
@@ -286,10 +296,12 @@ class WorldCanvas(FigureCanvasQTAgg):
 
         if robot and robot.path_planner:
             self.path_planner_artists = robot.path_planner.plot(
-                self.axes, path_color=color)
+                self.axes, path_color=color
+            )
         elif self.world.path_planner:
             self.path_planner_artists = self.world.path_planner.plot(
-                self.axes, path_color=color)
+                self.axes, path_color=color
+            )
         self.draw_lock = False
 
     def update_robots_plot(self):
@@ -299,8 +311,12 @@ class WorldCanvas(FigureCanvasQTAgg):
         for i, robot in enumerate(self.world.robots):
             p = robot.pose
             self.robot_bodies[i].center = p.x, p.y
-            self.robot_dirs[i].set_xdata(p.x + np.array([0, self.robot_lengths[i] * np.cos(p.get_yaw())]))
-            self.robot_dirs[i].set_ydata(p.y + np.array([0, self.robot_lengths[i] * np.sin(p.get_yaw())]))
+            self.robot_dirs[i].set_xdata(
+                p.x + np.array([0, self.robot_lengths[i] * np.cos(p.get_yaw())])
+            )
+            self.robot_dirs[i].set_ydata(
+                p.y + np.array([0, self.robot_lengths[i] * np.sin(p.get_yaw())])
+            )
             robot.viz_text.set_position((p.x, p.y - 2.0 * robot.radius))
             self.update_object_plot(robot.manipulated_object)
 

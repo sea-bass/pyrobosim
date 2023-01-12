@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Core pyrobosim module.
 
 This module contains all the tools for world representation

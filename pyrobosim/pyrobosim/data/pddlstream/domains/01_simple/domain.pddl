@@ -24,19 +24,19 @@
   )
 
   ; FUNCTIONS : See their descriptions in the stream PDDL file
-  (:functions 
+  (:functions
     (Dist ?l1 ?l2)
     (PickPlaceCost ?l ?o)
   )
 
-  ; ACTIONS 
+  ; ACTIONS
   ; NAVIGATE: Moves the robot from one location to the other
   (:action navigate
     :parameters (?r ?l1 ?l2)
     :precondition (and (Robot ?r)
                        (CanMove ?r)
-                       (Location ?l1) 
-                       (Location ?l2) 
+                       (Location ?l1)
+                       (Location ?l2)
                        (At ?r ?l1))
     :effect (and (not (CanMove ?r))
                  (At ?r ?l2) (not (At ?r ?l1))
@@ -50,11 +50,11 @@
                        (Obj ?o)
                        (Location ?l)
                        (not (Room ?l))
-                       (HandEmpty ?r) 
+                       (HandEmpty ?r)
                        (At ?r ?l)
                        (At ?o ?l))
     :effect (and (Holding ?r ?o) (CanMove ?r)
-                 (not (HandEmpty ?r)) 
+                 (not (HandEmpty ?r))
                  (not (At ?o ?l))
                  (increase (total-cost) (PickPlaceCost ?l ?o)))
   )
@@ -67,7 +67,7 @@
                        (Location ?l)
                        (not (Room ?l))
                        (At ?r ?l)
-                       (not (HandEmpty ?r)) 
+                       (not (HandEmpty ?r))
                        (Holding ?r ?o))
     :effect (and (HandEmpty ?r) (CanMove ?r)
                  (At ?o ?l)

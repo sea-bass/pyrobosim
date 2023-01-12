@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 """
 Test script showing how to build a world and use it with pyrobosim
@@ -21,17 +22,25 @@ data_folder = get_data_folder()
 
 
 def create_world(multirobot=False):
-    """ Create a test world """
+    """Create a test world"""
     w = World()
 
     # Set the location and object metadata
-    w.set_metadata(locations=os.path.join(data_folder, "example_location_data.yaml"),
-                   objects=os.path.join(data_folder, "example_object_data.yaml"))
+    w.set_metadata(
+        locations=os.path.join(data_folder, "example_location_data.yaml"),
+        objects=os.path.join(data_folder, "example_object_data.yaml"),
+    )
 
     # Add rooms
     r1coords = [(-1, -1), (1.5, -1), (1.5, 1.5), (0.5, 1.5)]
-    w.add_room(Room(r1coords, name="kitchen", color=[1, 0, 0],
-               nav_poses=[Pose(x=0.75, y=0.75, z=0.0, yaw=0.0)]))
+    w.add_room(
+        Room(
+            r1coords,
+            name="kitchen",
+            color=[1, 0, 0],
+            nav_poses=[Pose(x=0.75, y=0.75, z=0.0, yaw=0.0)],
+        )
+    )
     r2coords = [(1.75, 2.5), (3.5, 2.5), (3.5, 4), (1.75, 4)]
     w.add_room(Room(r2coords, name="bedroom", color=[0, 0.6, 0]))
     r3coords = [(-1, 1), (-1, 3.5), (-3.0, 3.5), (-2.5, 1)]
@@ -39,22 +48,34 @@ def create_world(multirobot=False):
 
     # Add hallways between the rooms
     w.add_hallway("kitchen", "bathroom", width=0.7)
-    w.add_hallway("bathroom", "bedroom", width=0.5,
-                  conn_method="angle", conn_angle=0, offset=0.8)
-    w.add_hallway("kitchen", "bedroom", width=0.6,
-                  conn_method="points",
-                  conn_points=[(1.0, 0.5), (2.5, 0.5), (2.5, 3.0)])
+    w.add_hallway(
+        "bathroom", "bedroom", width=0.5, conn_method="angle", conn_angle=0, offset=0.8
+    )
+    w.add_hallway(
+        "kitchen",
+        "bedroom",
+        width=0.6,
+        conn_method="points",
+        conn_points=[(1.0, 0.5), (2.5, 0.5), (2.5, 3.0)],
+    )
 
     # Add locations
-    table = w.add_location("table", "kitchen", Pose(
-        x=0.85, y=-0.5, z=0.0, yaw=-np.pi/2))
+    table = w.add_location(
+        "table", "kitchen", Pose(x=0.85, y=-0.5, z=0.0, yaw=-np.pi / 2)
+    )
     desk = w.add_location("desk", "bedroom", Pose(x=3.15, y=3.65, z=0.0, yaw=0.0))
-    counter = w.add_location("counter", "bathroom", Pose(
-        x=-2.45, y=2.5, z=0.0, q=[0.634411, 0.0, 0.0, 0.7729959]))
+    counter = w.add_location(
+        "counter",
+        "bathroom",
+        Pose(x=-2.45, y=2.5, z=0.0, q=[0.634411, 0.0, 0.0, 0.7729959]),
+    )
 
     # Add objects
-    w.add_object("banana", table, 
-        pose=Pose(x=1.0, y=-0.5, z=0.0, q=[0.9238811, 0.0, 0.0, 0.3826797]))
+    w.add_object(
+        "banana",
+        table,
+        pose=Pose(x=1.0, y=-0.5, z=0.0, q=[0.9238811, 0.0, 0.0, 0.3826797]),
+    )
     w.add_object("apple", desk, pose=Pose(x=3.2, y=3.5, z=0.0, yaw=0.0))
     w.add_object("apple", table)
     w.add_object("apple", table)
@@ -64,55 +85,80 @@ def create_world(multirobot=False):
 
     # Add robots
     grasp_props = ParallelGraspProperties(
-        max_width=0.175, depth=0.1, height=0.04,
-        width_clearance=0.01, depth_clearance=0.01
+        max_width=0.175,
+        depth=0.1,
+        height=0.04,
+        width_clearance=0.01,
+        depth_clearance=0.01,
     )
-    r = Robot(name="robot", radius=0.1,
-              path_executor=ConstantVelocityExecutor(),
-              grasp_generator=GraspGenerator(grasp_props))
+    r = Robot(
+        name="robot",
+        radius=0.1,
+        path_executor=ConstantVelocityExecutor(),
+        grasp_generator=GraspGenerator(grasp_props),
+    )
     w.add_robot(r, loc="kitchen")
     if multirobot:
-        robot1 = Robot(name="robot1", radius=0.08, color=(0.8, 0.8, 0),
-                       path_executor=ConstantVelocityExecutor(),
-                       grasp_generator=GraspGenerator(grasp_props))
+        robot1 = Robot(
+            name="robot1",
+            radius=0.08,
+            color=(0.8, 0.8, 0),
+            path_executor=ConstantVelocityExecutor(),
+            grasp_generator=GraspGenerator(grasp_props),
+        )
         w.add_robot(robot1, loc="bathroom")
 
-        robby = Robot(name="robby", radius=0.06, color=(0, 0.8, 0.8),
-                      path_executor=ConstantVelocityExecutor(),
-                      grasp_generator=GraspGenerator(grasp_props))
+        robby = Robot(
+            name="robby",
+            radius=0.06,
+            color=(0, 0.8, 0.8),
+            path_executor=ConstantVelocityExecutor(),
+            grasp_generator=GraspGenerator(grasp_props),
+        )
         w.add_robot(robby, loc="bedroom")
         from pyrobosim.navigation.rrt import RRTPlanner
+
         robby.set_path_planner(
             RRTPlanner(w, bidirectional=True, rrt_connect=False, rrt_star=True)
         )
 
     # Create a search graph
-    w.create_search_graph(max_edge_dist=3.0, collision_check_dist=0.05, create_planner=True)
+    w.create_search_graph(
+        max_edge_dist=3.0, collision_check_dist=0.05, create_planner=True
+    )
     return w
 
 
 def create_world_from_yaml(world_file):
     from pyrobosim.core.yaml import WorldYamlLoader
+
     loader = WorldYamlLoader()
     return loader.from_yaml(os.path.join(data_folder, world_file))
 
 
 def start_gui(world, args):
-    """ Initializes GUI """
+    """Initializes GUI"""
     from pyrobosim.gui.main import PyRoboSimGUI
+
     app = PyRoboSimGUI(world, args)
     sys.exit(app.exec_())
 
 
 def parse_args():
-    """ Parse command-line arguments """
+    """Parse command-line arguments"""
     parser = argparse.ArgumentParser(description="Main pyrobosim demo.")
-    parser.add_argument("--multirobot", action="store_true",
-                        help="If no YAML file is specified, this option will add "
-                             "multiple robots to the world defined in this file.")
-    parser.add_argument("--world-file", default="",
-                        help="YAML file name (should be in the pyrobosim/data folder). " +
-                             "If not specified, a world will be created programmatically.")
+    parser.add_argument(
+        "--multirobot",
+        action="store_true",
+        help="If no YAML file is specified, this option will add "
+        "multiple robots to the world defined in this file.",
+    )
+    parser.add_argument(
+        "--world-file",
+        default="",
+        help="YAML file name (should be in the pyrobosim/data folder). "
+        + "If not specified, a world will be created programmatically.",
+    )
     return parser.parse_args()
 
 
@@ -123,7 +169,7 @@ if __name__ == "__main__":
     if args.world_file == "":
         w = create_world(args.multirobot)
     else:
-        w = create_world_from_yaml(args.world_file)        
+        w = create_world_from_yaml(args.world_file)
 
     # Start the program either as ROS node or standalone.
     start_gui(w, sys.argv)

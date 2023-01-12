@@ -2,8 +2,8 @@
 # Example location metadata #
 #############################
 
-table: 
-  footprint: 
+table:
+  footprint:
     type: box
     dims: [0.9, 1.2]
     height: 0.5
@@ -17,8 +17,8 @@ table:
         padding: 0.1
   color: [0.2, 0, 0]
 
-desk: 
-  footprint: 
+desk:
+  footprint:
     type: polygon
     coords:
       - [-0.3, -0.3]
@@ -36,14 +36,14 @@ desk:
         - [0, 0.5, -1.57]
         - [0.5, 0, 3.14]
 
-counter: 
-  footprint: 
+counter:
+  footprint:
     type: box
     dims: [1.2, 0.6]
     height: 0.75
   locations:
     - name: "left"
-      footprint: 
+      footprint:
         type: polygon
         coords:
           - [-0.25, -0.25]
@@ -55,7 +55,7 @@ counter:
         - [0, 0.5, -1.57]
         - [0, -0.5, 1.57]
     - name: "right"
-      footprint: 
+      footprint:
         type: polygon
         coords:
           - [-0.25, -0.25]
@@ -83,4 +83,3 @@ trash_can:
     - [0.5, 0.0, 3.14]
     - [-0.5, 0.0, 0.0]
   color: [0, 0.35, 0.2]
- 

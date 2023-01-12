@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 """
 Test script showing how to publish actions and plans
@@ -18,12 +19,10 @@ class Commander(Node):
         self.declare_parameter("mode", value="plan")
 
         # Publisher for a single action
-        self.action_pub = self.create_publisher(
-            TaskAction, "commanded_action", 10)
+        self.action_pub = self.create_publisher(TaskAction, "commanded_action", 10)
 
         # Publisher for a task plan
-        self.plan_pub = self.create_publisher(
-            TaskPlan, "commanded_plan", 10)
+        self.plan_pub = self.create_publisher(TaskPlan, "commanded_plan", 10)
 
         # Delay to ensure world is loaded.
         time.sleep(2.0)
@@ -37,8 +36,7 @@ def main():
     mode = cmd.get_parameter("mode").value
     if mode == "action":
         cmd.get_logger().info("Publishing sample task action...")
-        action_msg = TaskAction(robot="robot", type="navigate",
-                                target_location="desk")
+        action_msg = TaskAction(robot="robot", type="navigate", target_location="desk")
         cmd.action_pub.publish(action_msg)
 
     elif mode == "plan":
@@ -48,7 +46,7 @@ def main():
             TaskAction(type="pick", object="water"),
             TaskAction(type="navigate", target_location="counter"),
             TaskAction(type="place"),
-            TaskAction(type="navigate", target_location="kitchen")
+            TaskAction(type="navigate", target_location="kitchen"),
         ]
         plan_msg = TaskPlan(robot="robot", actions=task_actions)
         cmd.plan_pub.publish(plan_msg)
@@ -60,7 +58,7 @@ def main():
             TaskAction(type="pick", object="water"),
             TaskAction(type="navigate", target_location="counter"),
             TaskAction(type="place"),
-            TaskAction(type="navigate", target_location="kitchen")
+            TaskAction(type="navigate", target_location="kitchen"),
         ]
         plan_msg = TaskPlan(robot="robot", actions=task_actions)
         cmd.plan_pub.publish(plan_msg)
@@ -72,7 +70,7 @@ def main():
             TaskAction(type="pick", object="apple"),
             TaskAction(type="navigate", target_location="desk"),
             TaskAction(type="place"),
-            TaskAction(type="navigate", target_location="bedroom")
+            TaskAction(type="navigate", target_location="bedroom"),
         ]
         plan_msg = TaskPlan(robot="robot1", actions=task_actions)
         cmd.plan_pub.publish(plan_msg)
@@ -83,7 +81,7 @@ def main():
             TaskAction(type="navigate", target_location="table"),
             TaskAction(type="pick", object="banana"),
             TaskAction(type="navigate", target_location="counter0_left"),
-            TaskAction(type="place")
+            TaskAction(type="place"),
         ]
         plan_msg = TaskPlan(robot="robby", actions=task_actions)
         cmd.plan_pub.publish(plan_msg)

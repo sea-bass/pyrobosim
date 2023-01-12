@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Motion planning utilities.
 """
@@ -42,9 +43,7 @@ class Path:
         for idx in range(1, self.num_poses - 1):
             cur_pose = self.poses[idx]
             prev_pose = self.poses[idx - 1]
-            yaw = np.arctan2(
-                cur_pose.y - prev_pose.y, cur_pose.x - prev_pose.x
-            )
+            yaw = np.arctan2(cur_pose.y - prev_pose.y, cur_pose.x - prev_pose.x)
             cur_pose.set_euler_angles(yaw=yaw)
 
     def __repr__(self):

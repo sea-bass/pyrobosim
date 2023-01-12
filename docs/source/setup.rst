@@ -20,7 +20,7 @@ To set up your Python virtual environment, configure and run
 
 By default, this will create a Python virtual environment in ``~/python-virtualenvs/pyrobosim``.
 
-If you want to use `PDDLStream <https://github.com/caelan/pddlstream>`_ for 
+If you want to use `PDDLStream <https://github.com/caelan/pddlstream>`_ for
 task and motion planning, you should also run:
 
 ::
@@ -85,5 +85,5 @@ You can also start a new Terminal and go into the same container as follows.
     docker exec -it <pyrobosim-base-1> bash
     # ros2 launch pyrobosim_ros demo.py
 
-The source code on your host machine is mounted as a volume, 
+The source code on your host machine is mounted as a volume,
 so you can make modifications on your host and rebuild the Colcon workspace inside the container.

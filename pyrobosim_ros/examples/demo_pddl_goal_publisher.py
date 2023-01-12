@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 """
 Test script showing how to publish a goal specification to a PDDLStream planner node.
@@ -21,7 +22,8 @@ class GoalPublisher(Node):
 
         # Publisher for a goal specification
         self.goalspec_pub = self.create_publisher(
-            GoalSpecification, "goal_specification", 10)
+            GoalSpecification, "goal_specification", 10
+        )
         self.get_logger().info("Waiting for subscription")
         while self.goalspec_pub.get_subscription_count() < 1:
             time.sleep(2.0)
@@ -34,22 +36,27 @@ class GoalPublisher(Node):
                 GoalPredicate(type="At", args=("robot", "bedroom")),
                 GoalPredicate(type="At", args=("apple0", "table0_tabletop")),
                 GoalPredicate(type="At", args=("banana0", "counter0_left")),
-                GoalPredicate(type="Holding", args=("robot", "water0"))
+                GoalPredicate(type="Holding", args=("robot", "water0")),
             ]
-        elif example in ["02_derived", "03_nav_stream", "04_nav_manip_stream", "05_nav_grasp_stream"]:
+        elif example in [
+            "02_derived",
+            "03_nav_stream",
+            "04_nav_manip_stream",
+            "05_nav_grasp_stream",
+        ]:
             # Goal specification for derived predicate example.
             goal_predicates = [
                 GoalPredicate(type="Has", args=("desk0_desktop", "banana0")),
                 GoalPredicate(type="Has", args=("counter", "apple1")),
                 GoalPredicate(type="HasNone", args=("bathroom", "banana")),
-                GoalPredicate(type="HasAll", args=("table", "water"))
+                GoalPredicate(type="HasAll", args=("table", "water")),
             ]
         else:
             self.get_logger().info(f"Invalid example: {example}")
             return
 
         # Publish and optionally display the goal specification message.
-        goal_msg = GoalSpecification(predicates=goal_predicates)        
+        goal_msg = GoalSpecification(predicates=goal_predicates)
         if self.get_parameter("verbose").value == True:
             msg = "Published goal specification:"
             for pred in goal_msg.predicates:

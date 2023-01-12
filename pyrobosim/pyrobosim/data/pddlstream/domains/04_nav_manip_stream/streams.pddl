@@ -5,7 +5,7 @@
 ; Accompanying planning domain defined in the `domain.pddl` file.
 
 (define (stream stream_nav_stream)
-  
+
   ; PATHLENGTH: Length of a path.
   (:function (PathLength ?pth)
              (and (Path ?pth))
