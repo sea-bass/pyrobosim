@@ -1,12 +1,13 @@
 # Auto formats python code
 repos:
-- repo: https://github.com/psf/black.git
+
+-    repo: https://github.com/psf/black.git
      rev: 23.1a1
      hooks: 
      - id: black
-          name: Black Python code formatting
-          
-- repo: https://github.com/pre-commit/pre-commit-hooks
+
+
+-    repo: https://github.com/pre-commit/pre-commit-hooks
      rev: v4.4.0
      hooks:
      - id: check-added-large-files
