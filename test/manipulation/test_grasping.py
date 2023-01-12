@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 """
 Test script for grasp generation.
 """
 
 from pyrobosim.manipulation.grasping import (
-    GraspDirection, GraspFace, GraspGenerator, ParallelGraspProperties
+    GraspDirection,
+    GraspFace,
+    GraspGenerator,
+    ParallelGraspProperties,
 )
 from pyrobosim.utils.pose import Pose
 
 # Create a grasp generator
 properties = ParallelGraspProperties(
-    max_width=0.15, depth=0.1, height=0.04,
-    width_clearance=0.01, depth_clearance=0.01
+    max_width=0.15, depth=0.1, height=0.04, width_clearance=0.01, depth_clearance=0.01
 )
 gen = GraspGenerator(properties)
 
@@ -23,8 +26,10 @@ def test_cube_no_grasps():
     """
     object_dims = [0.1, 0.1, 0.1]
     grasps = gen.generate(
-        object_dims, front_grasps=False, top_grasps=False, side_grasps=False)
-    assert(len(grasps) == 0)
+        object_dims, front_grasps=False, top_grasps=False, side_grasps=False
+    )
+    assert len(grasps) == 0
+
 
 def test_cube_front_grasps():
     """
@@ -33,11 +38,13 @@ def test_cube_front_grasps():
     """
     object_dims = [0.1, 0.1, 0.1]
     grasps = gen.generate(
-        object_dims, front_grasps=True, top_grasps=False, side_grasps=False)
-    assert(len(grasps) == 2)
+        object_dims, front_grasps=True, top_grasps=False, side_grasps=False
+    )
+    assert len(grasps) == 2
     for grasp in grasps:
-        assert(grasp.face == GraspFace.FRONT)
-        assert(grasp.direction == GraspDirection.X_NEG)
+        assert grasp.face == GraspFace.FRONT
+        assert grasp.direction == GraspDirection.X_NEG
+
 
 def test_cube_top_grasps():
     """
@@ -46,11 +53,13 @@ def test_cube_top_grasps():
     """
     object_dims = [0.1, 0.1, 0.1]
     grasps = gen.generate(
-        object_dims, front_grasps=False, top_grasps=True, side_grasps=False)
-    assert(len(grasps) == 2)
+        object_dims, front_grasps=False, top_grasps=True, side_grasps=False
+    )
+    assert len(grasps) == 2
     for grasp in grasps:
-        assert(grasp.face == GraspFace.TOP)
-        assert(grasp.direction == GraspDirection.Z_POS)
+        assert grasp.face == GraspFace.TOP
+        assert grasp.direction == GraspDirection.Z_POS
+
 
 def test_cube_side_grasps():
     """
@@ -59,16 +68,18 @@ def test_cube_side_grasps():
     """
     object_dims = [0.1, 0.1, 0.1]
     grasps = gen.generate(
-        object_dims, front_grasps=False, top_grasps=False, side_grasps=True)
-    assert(len(grasps) == 4)
-    assert(grasps[0].face == GraspFace.RIGHT)
-    assert(grasps[0].direction == GraspDirection.Y_NEG)
-    assert(grasps[1].face == GraspFace.RIGHT)
-    assert(grasps[1].direction == GraspDirection.Y_NEG)
-    assert(grasps[2].face == GraspFace.LEFT)
-    assert(grasps[2].direction == GraspDirection.Y_POS)
-    assert(grasps[3].face == GraspFace.LEFT)
-    assert(grasps[3].direction == GraspDirection.Y_POS)
+        object_dims, front_grasps=False, top_grasps=False, side_grasps=True
+    )
+    assert len(grasps) == 4
+    assert grasps[0].face == GraspFace.RIGHT
+    assert grasps[0].direction == GraspDirection.Y_NEG
+    assert grasps[1].face == GraspFace.RIGHT
+    assert grasps[1].direction == GraspDirection.Y_NEG
+    assert grasps[2].face == GraspFace.LEFT
+    assert grasps[2].direction == GraspDirection.Y_POS
+    assert grasps[3].face == GraspFace.LEFT
+    assert grasps[3].direction == GraspDirection.Y_POS
+
 
 def test_cube_all_grasps():
     """
@@ -77,24 +88,26 @@ def test_cube_all_grasps():
     """
     object_dims = [0.1, 0.1, 0.1]
     grasps = gen.generate(
-        object_dims, front_grasps=True, top_grasps=True, side_grasps=True)
-    assert(len(grasps) == 8)
-    assert(grasps[0].face == GraspFace.FRONT)
-    assert(grasps[0].direction == GraspDirection.X_NEG)
-    assert(grasps[1].face == GraspFace.FRONT)
-    assert(grasps[1].direction == GraspDirection.X_NEG)
-    assert(grasps[2].face == GraspFace.TOP)
-    assert(grasps[2].direction == GraspDirection.Z_POS)
-    assert(grasps[3].face == GraspFace.TOP)
-    assert(grasps[3].direction == GraspDirection.Z_POS)
-    assert(grasps[4].face == GraspFace.RIGHT)
-    assert(grasps[4].direction == GraspDirection.Y_NEG)
-    assert(grasps[5].face == GraspFace.RIGHT)
-    assert(grasps[5].direction == GraspDirection.Y_NEG)
-    assert(grasps[6].face == GraspFace.LEFT)
-    assert(grasps[6].direction == GraspDirection.Y_POS)
-    assert(grasps[7].face == GraspFace.LEFT)
-    assert(grasps[7].direction == GraspDirection.Y_POS)
+        object_dims, front_grasps=True, top_grasps=True, side_grasps=True
+    )
+    assert len(grasps) == 8
+    assert grasps[0].face == GraspFace.FRONT
+    assert grasps[0].direction == GraspDirection.X_NEG
+    assert grasps[1].face == GraspFace.FRONT
+    assert grasps[1].direction == GraspDirection.X_NEG
+    assert grasps[2].face == GraspFace.TOP
+    assert grasps[2].direction == GraspDirection.Z_POS
+    assert grasps[3].face == GraspFace.TOP
+    assert grasps[3].direction == GraspDirection.Z_POS
+    assert grasps[4].face == GraspFace.RIGHT
+    assert grasps[4].direction == GraspDirection.Y_NEG
+    assert grasps[5].face == GraspFace.RIGHT
+    assert grasps[5].direction == GraspDirection.Y_NEG
+    assert grasps[6].face == GraspFace.LEFT
+    assert grasps[6].direction == GraspDirection.Y_POS
+    assert grasps[7].face == GraspFace.LEFT
+    assert grasps[7].direction == GraspDirection.Y_POS
+
 
 def test_deep_cube_all_grasps():
     """
@@ -103,18 +116,20 @@ def test_deep_cube_all_grasps():
     """
     object_dims = [0.5, 0.1, 0.1]
     grasps = gen.generate(
-        object_dims, front_grasps=True, top_grasps=True, side_grasps=True)
-    assert(len(grasps) == 5)
-    assert(grasps[0].face == GraspFace.FRONT)
-    assert(grasps[0].direction == GraspDirection.X_NEG)
-    assert(grasps[1].face == GraspFace.FRONT)
-    assert(grasps[1].direction == GraspDirection.X_NEG)
-    assert(grasps[2].face == GraspFace.TOP)
-    assert(grasps[2].direction == GraspDirection.Z_POS)
-    assert(grasps[3].face == GraspFace.RIGHT)
-    assert(grasps[3].direction == GraspDirection.Y_NEG)
-    assert(grasps[4].face == GraspFace.LEFT)
-    assert(grasps[4].direction == GraspDirection.Y_POS)
+        object_dims, front_grasps=True, top_grasps=True, side_grasps=True
+    )
+    assert len(grasps) == 5
+    assert grasps[0].face == GraspFace.FRONT
+    assert grasps[0].direction == GraspDirection.X_NEG
+    assert grasps[1].face == GraspFace.FRONT
+    assert grasps[1].direction == GraspDirection.X_NEG
+    assert grasps[2].face == GraspFace.TOP
+    assert grasps[2].direction == GraspDirection.Z_POS
+    assert grasps[3].face == GraspFace.RIGHT
+    assert grasps[3].direction == GraspDirection.Y_NEG
+    assert grasps[4].face == GraspFace.LEFT
+    assert grasps[4].direction == GraspDirection.Y_POS
+
 
 def test_wide_cube_all_grasps():
     """
@@ -123,20 +138,22 @@ def test_wide_cube_all_grasps():
     """
     object_dims = [0.1, 0.5, 0.1]
     grasps = gen.generate(
-        object_dims, front_grasps=True, top_grasps=True, side_grasps=True)
-    assert(len(grasps) == 6)
-    assert(grasps[0].face == GraspFace.FRONT)
-    assert(grasps[0].direction == GraspDirection.X_NEG)
-    assert(grasps[1].face == GraspFace.TOP)
-    assert(grasps[1].direction == GraspDirection.Z_POS)
-    assert(grasps[2].face == GraspFace.RIGHT)
-    assert(grasps[2].direction == GraspDirection.Y_NEG)
-    assert(grasps[3].face == GraspFace.RIGHT)
-    assert(grasps[3].direction == GraspDirection.Y_NEG)
-    assert(grasps[4].face == GraspFace.LEFT)
-    assert(grasps[4].direction == GraspDirection.Y_POS)
-    assert(grasps[5].face == GraspFace.LEFT)
-    assert(grasps[5].direction == GraspDirection.Y_POS)
+        object_dims, front_grasps=True, top_grasps=True, side_grasps=True
+    )
+    assert len(grasps) == 6
+    assert grasps[0].face == GraspFace.FRONT
+    assert grasps[0].direction == GraspDirection.X_NEG
+    assert grasps[1].face == GraspFace.TOP
+    assert grasps[1].direction == GraspDirection.Z_POS
+    assert grasps[2].face == GraspFace.RIGHT
+    assert grasps[2].direction == GraspDirection.Y_NEG
+    assert grasps[3].face == GraspFace.RIGHT
+    assert grasps[3].direction == GraspDirection.Y_NEG
+    assert grasps[4].face == GraspFace.LEFT
+    assert grasps[4].direction == GraspDirection.Y_POS
+    assert grasps[5].face == GraspFace.LEFT
+    assert grasps[5].direction == GraspDirection.Y_POS
+
 
 def test_tall_cube_all_grasps():
     """
@@ -145,18 +162,20 @@ def test_tall_cube_all_grasps():
     """
     object_dims = [0.1, 0.1, 0.5]
     grasps = gen.generate(
-        object_dims, front_grasps=True, top_grasps=True, side_grasps=True)
-    assert(len(grasps) == 5)
-    assert(grasps[0].face == GraspFace.FRONT)
-    assert(grasps[0].direction == GraspDirection.X_NEG)
-    assert(grasps[1].face == GraspFace.TOP)
-    assert(grasps[1].direction == GraspDirection.Z_POS)
-    assert(grasps[2].face == GraspFace.TOP)
-    assert(grasps[2].direction == GraspDirection.Z_POS)
-    assert(grasps[3].face == GraspFace.RIGHT)
-    assert(grasps[3].direction == GraspDirection.Y_NEG)
-    assert(grasps[4].face == GraspFace.LEFT)
-    assert(grasps[4].direction == GraspDirection.Y_POS)
+        object_dims, front_grasps=True, top_grasps=True, side_grasps=True
+    )
+    assert len(grasps) == 5
+    assert grasps[0].face == GraspFace.FRONT
+    assert grasps[0].direction == GraspDirection.X_NEG
+    assert grasps[1].face == GraspFace.TOP
+    assert grasps[1].direction == GraspDirection.Z_POS
+    assert grasps[2].face == GraspFace.TOP
+    assert grasps[2].direction == GraspDirection.Z_POS
+    assert grasps[3].face == GraspFace.RIGHT
+    assert grasps[3].direction == GraspDirection.Y_NEG
+    assert grasps[4].face == GraspFace.LEFT
+    assert grasps[4].direction == GraspDirection.Y_POS
+
 
 def test_large_cube_all_grasps():
     """
@@ -165,8 +184,10 @@ def test_large_cube_all_grasps():
     """
     object_dims = [0.5, 0.5, 0.5]
     grasps = gen.generate(
-        object_dims, front_grasps=True, top_grasps=True, side_grasps=True)
-    assert(len(grasps) == 0)
+        object_dims, front_grasps=True, top_grasps=True, side_grasps=True
+    )
+    assert len(grasps) == 0
+
 
 def test_all_grasps_robot_in_front():
     """
@@ -176,10 +197,15 @@ def test_all_grasps_robot_in_front():
     object_pose = Pose(x=0.0, y=0.0, z=0.0)
     robot_pose = Pose(x=-1.0, y=0.0, z=0.0)
     grasps = gen.generate(
-        object_dims, object_pose, robot_pose,
-        front_grasps=True, top_grasps=True, side_grasps=True)
+        object_dims,
+        object_pose,
+        robot_pose,
+        front_grasps=True,
+        top_grasps=True,
+        side_grasps=True,
+    )
 
-    assert(len(grasps) == 8)
+    assert len(grasps) == 8
     for grasp in grasps:
         if grasp.face == GraspFace.FRONT:
             assert grasp.direction == GraspDirection.X_NEG
@@ -189,6 +215,7 @@ def test_all_grasps_robot_in_front():
             assert grasp.direction == GraspDirection.Y_POS
         elif grasp.face == GraspFace.RIGHT:
             assert grasp.direction == GraspDirection.Y_NEG
+
 
 def test_all_grasps_robot_in_right():
     """
@@ -198,10 +225,15 @@ def test_all_grasps_robot_in_right():
     object_pose = Pose(x=0.0, y=0.0, z=0.0)
     robot_pose = Pose(x=0.0, y=-1.0, z=0.0)
     grasps = gen.generate(
-        object_dims, object_pose, robot_pose,
-        front_grasps=True, top_grasps=True, side_grasps=True)
+        object_dims,
+        object_pose,
+        robot_pose,
+        front_grasps=True,
+        top_grasps=True,
+        side_grasps=True,
+    )
 
-    assert(len(grasps) == 8)
+    assert len(grasps) == 8
     for grasp in grasps:
         if grasp.face == GraspFace.FRONT:
             assert grasp.direction == GraspDirection.Y_NEG
@@ -212,6 +244,7 @@ def test_all_grasps_robot_in_right():
         elif grasp.face == GraspFace.RIGHT:
             assert grasp.direction == GraspDirection.X_POS
 
+
 def test_all_grasps_robot_in_left():
     """
     All grasps enabled and robot facing from the left.
@@ -220,10 +253,15 @@ def test_all_grasps_robot_in_left():
     object_pose = Pose(x=0.0, y=0.0, z=0.0)
     robot_pose = Pose(x=0.0, y=1.0, z=0.0)
     grasps = gen.generate(
-        object_dims, object_pose, robot_pose,
-        front_grasps=True, top_grasps=True, side_grasps=True)
+        object_dims,
+        object_pose,
+        robot_pose,
+        front_grasps=True,
+        top_grasps=True,
+        side_grasps=True,
+    )
 
-    assert(len(grasps) == 8)
+    assert len(grasps) == 8
     for grasp in grasps:
         if grasp.face == GraspFace.FRONT:
             assert grasp.direction == GraspDirection.Y_POS
@@ -234,6 +272,7 @@ def test_all_grasps_robot_in_left():
         elif grasp.face == GraspFace.RIGHT:
             assert grasp.direction == GraspDirection.X_NEG
 
+
 def test_all_grasps_robot_in_back():
     """
     All grasps enabled and robot facing from the back.
@@ -242,10 +281,15 @@ def test_all_grasps_robot_in_back():
     object_pose = Pose(x=0.0, y=0.0, z=0.0)
     robot_pose = Pose(x=1.0, y=0.0, z=0.0)
     grasps = gen.generate(
-        object_dims, object_pose, robot_pose,
-        front_grasps=True, top_grasps=True, side_grasps=True)
+        object_dims,
+        object_pose,
+        robot_pose,
+        front_grasps=True,
+        top_grasps=True,
+        side_grasps=True,
+    )
 
-    assert(len(grasps) == 8)
+    assert len(grasps) == 8
     for grasp in grasps:
         if grasp.face == GraspFace.FRONT:
             assert grasp.direction == GraspDirection.X_POS

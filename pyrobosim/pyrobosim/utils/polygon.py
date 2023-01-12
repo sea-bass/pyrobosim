@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Polygon representation and maniupulation utilities.
 
@@ -108,7 +109,9 @@ def transform_polygon(polygon, pose):
     """
     if pose is not None:
         polygon = translate(polygon, xoff=pose.x, yoff=pose.y)
-        polygon = rotate(polygon, pose.get_yaw(), origin=(pose.x, pose.y), use_radians=True)
+        polygon = rotate(
+            polygon, pose.get_yaw(), origin=(pose.x, pose.y), use_radians=True
+        )
     return polygon
 
 
@@ -240,21 +243,24 @@ def convhull_to_rectangle(points):
     :return: A tuple of rectangle origin pose and XY dimensions
     :rtype: (:class:`pyrobosim.utils.pose.Pose`, list[float])
     """
-    
+
     # calculate edge angles
-    edges = np.zeros((len(points)-1, 2))
+    edges = np.zeros((len(points) - 1, 2))
     edges = points[1:] - points[:-1]
     angles = np.zeros((len(edges)))
     angles = np.arctan2(edges[:, 1], edges[:, 0])
-    angles = np.abs(np.mod(angles, np.pi/2))
+    angles = np.abs(np.mod(angles, np.pi / 2))
     angles = np.unique(angles)
 
     # Calculate rotation matrices
-    rotations = np.vstack([
-        np.cos(angles),
-        np.cos(angles - np.pi/2),
-        np.cos(angles + np.pi/2),
-        np.cos(angles)]).T
+    rotations = np.vstack(
+        [
+            np.cos(angles),
+            np.cos(angles - np.pi / 2),
+            np.cos(angles + np.pi / 2),
+            np.cos(angles),
+        ]
+    ).T
     rotations = rotations.reshape((-1, 2, 2))
 
     # Rotate the convex hull points

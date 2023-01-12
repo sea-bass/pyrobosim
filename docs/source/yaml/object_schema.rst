@@ -17,9 +17,9 @@ Examples
 A simple object with a circle footprint.
 
 .. code-block:: yaml
-    
+
    apple:                   # The category name is "apple"
-     footprint: 
+     footprint:
        type: circle         # Circular footprint
        radius: 0.06         # 6 cm radius
      color: [1, 0, 0]       # Red

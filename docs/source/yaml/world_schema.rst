@@ -20,12 +20,12 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
       wall_height: <value> # Vertical (Z) height of walls, can override with individual entities
 
    # Metadata
-   metadata: 
+   metadata:
       locations: </path/to/location_data_file.yaml>
       objects: </path/to/object_data_file.yaml>
 
    # Robots: Each robot contains basic properties, plus other add-ons such as path planners and grasp generators
-   robots: 
+   robots:
      - name: <name>
        radius: <value> # Robot radius
        location: <loc_name> # Initial location
@@ -84,4 +84,3 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
        type: <obj_category> # From object YAML file
        location: <loc_name>
        pose: [<x>, <y>, <z>, <yaw>] # If not specified, will sample
-

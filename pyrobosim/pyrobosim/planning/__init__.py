@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Task and motion planning utilities.
 
 This module contains tools associated with task and motion planning

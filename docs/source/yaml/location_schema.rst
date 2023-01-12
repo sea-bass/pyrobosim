@@ -31,7 +31,7 @@ Examples
 A simple object with a box footprint and one object spawn that inherits parent geometry.
 
 .. code-block:: yaml
-    
+
    table:                       # Category name is "table"
      footprint:                 # The overall location footprint is this box
        type: box
@@ -58,7 +58,7 @@ A more complex object with a box footprint and two separate object spawns.
        height: 0.75             # 0.75 m off the ground
      locations:                 # List of locations with their own geometries and navigation poses
        - name: "left"           # The location name will be "<loc_name>_left"
-         footprint: 
+         footprint:
            type: polygon
            coords:
              - [-0.25, -0.25]
@@ -70,7 +70,7 @@ A more complex object with a box footprint and two separate object spawns.
            - [0, 0.5, 0.0, -1.57]
            - [0, -0.5, 0.0, 1.57]
        - name: "right"         # The location name will be "<loc_name>_right"
-         footprint: 
+         footprint:
            type: polygon
            coords:
              - [-0.25, -0.25]

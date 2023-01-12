@@ -36,7 +36,7 @@ Within the world, we can spawn a robot that can perform a set of *actions*, such
 
 These actions can be specified individually, or a sequence of actions (or a *plan*).
 Actions or plans can be commanded directly (e.g., "go to the table and pick up an apple")
-or as part of a *task and motion planning* framework that accepts a task specification 
+or as part of a *task and motion planning* framework that accepts a task specification
 (e.g., "all apples should be on the kitchen table") and outputs a plan that, when executed,
 satisfies the specification.
 
@@ -52,7 +52,7 @@ in our simple test world.
 
 Vision Statement
 ----------------
-The vision for pyrobosim is that you will be able to **create worlds** to prototype your 
+The vision for pyrobosim is that you will be able to **create worlds** to prototype your
 robot behavior in a simple environment before moving to a more realistic simulator, or even
 real robot hardware.
 

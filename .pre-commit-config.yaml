@@ -4,7 +4,7 @@ repos:
 # Auto formats Python code.
 -    repo: https://github.com/psf/black.git
      rev: 22.12.0
-     hooks: 
+     hooks:
      - id: black
 
 # Runs pre-commit hooks and other file format checks.

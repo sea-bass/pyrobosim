@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Main utilities for pyrobosim GUI. """
 
 import numpy as np
@@ -167,7 +168,8 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             return None
 
         sampled_pose = self.world.sample_free_robot_pose_uniform(
-            robot, ignore_robots=False)
+            robot, ignore_robots=False
+        )
         if sampled_pose is not None:
             robot.set_pose(sampled_pose)
             if robot.manipulated_object is not None:
@@ -195,8 +197,11 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
 
         query_list = self.goal_textbox.text().split(" ")
         loc = query_to_entity(
-            self.world, query_list, mode="location", robot=robot,
-            resolution_strategy="nearest"
+            self.world,
+            query_list,
+            mode="location",
+            robot=robot,
+            resolution_strategy="nearest",
         )
         if not loc:
             return
@@ -211,8 +216,11 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             loc = robot.location
             query_list = [loc] + self.goal_textbox.text().split(" ")
             obj = query_to_entity(
-                self.world, query_list, mode="object", robot=robot,
-                resolution_strategy="nearest"
+                self.world,
+                query_list,
+                mode="object",
+                robot=robot,
+                resolution_strategy="nearest",
             )
             print(f"[{robot.name}] Picking {obj.name}")
             self.canvas.pick_object(robot, obj)
@@ -225,4 +233,3 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             print(f"[{robot.name}] Placing {robot.manipulated_object.name}")
             self.canvas.place_object(robot)
             self.update_manip_state()
-

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 import os
 
 from pyrobosim.core.yaml import WorldYamlLoader
@@ -13,7 +14,7 @@ w = loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
 
 
 def test_rrt():
-    """ Creates an RRT planner and plans """
+    """Creates an RRT planner and plans"""
     rrt = RRTPlanner(w, bidirectional=True, rrt_connect=False, rrt_star=True)
     start = Pose(x=-0.5, y=-0.5)
     goal = Pose(x=3.0, y=3.0)
@@ -25,11 +26,11 @@ def test_rrt():
     rrt.print_metrics()
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     test_rrt()
 
     import sys
     from pyrobosim.gui.main import PyRoboSimGUI
+
     app = PyRoboSimGUI(w, sys.argv)
     sys.exit(app.exec_())
-    

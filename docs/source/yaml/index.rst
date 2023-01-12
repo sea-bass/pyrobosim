@@ -2,11 +2,11 @@ YAML Schemas
 ============
 pyrobosim relies on YAML files to define entities in the world.
 
-Specifically, each world draws from a set of **locations** and **objects**. 
-Worlds themselves can be created programmatically, or defined using their own 
+Specifically, each world draws from a set of **locations** and **objects**.
+Worlds themselves can be created programmatically, or defined using their own
 YAML files.
 
-For the programmatic approach, 
+For the programmatic approach,
 
 .. code-block:: python
 

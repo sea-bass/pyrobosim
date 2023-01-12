@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Defines a robot which operates in a world. """
 
 import time
@@ -25,7 +26,7 @@ class Robot:
         color=(0.8, 0, 0.8),
         path_planner=None,
         path_executor=None,
-        grasp_generator=None
+        grasp_generator=None,
     ):
         """
         Creates a robot instance.
@@ -217,7 +218,7 @@ class Robot:
                     category=obj_query,
                     location=loc,
                     resolution_strategy="nearest",
-                    robot=self
+                    robot=self,
                 )
             if not obj:
                 warnings.warn(f"Found no object {obj_query} to pick.")
@@ -239,14 +240,20 @@ class Robot:
                 grasp_properties = self.grasp_generator.properties
             else:
                 grasp_properties = None
-            self.last_grasp_selection = Grasp(properties=grasp_properties,
-                                              origin_wrt_object=Pose(),
-                                              origin_wrt_world=grasp_pose)
+            self.last_grasp_selection = Grasp(
+                properties=grasp_properties,
+                origin_wrt_object=Pose(),
+                origin_wrt_world=grasp_pose,
+            )
         elif self.grasp_generator is not None:
             cuboid_pose = obj.get_grasp_cuboid_pose()
             grasps = self.grasp_generator.generate(
-                obj.cuboid_dims, cuboid_pose, self.pose,
-                front_grasps=True, top_grasps=True, side_grasps=False
+                obj.cuboid_dims,
+                cuboid_pose,
+                self.pose,
+                front_grasps=True,
+                top_grasps=True,
+                side_grasps=False,
             )
 
             if len(grasps) == 0:
@@ -367,7 +374,9 @@ class Robot:
 
         elif action.type == "pick":
             if self.world.has_gui:
-                success = self.world.gui.canvas.pick_object(self, action.object, action.pose)
+                success = self.world.gui.canvas.pick_object(
+                    self, action.object, action.pose
+                )
             else:
                 success = self.pick_object(action.object, action.pose)
 

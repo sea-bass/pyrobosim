@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Helper primitives for PDDLStream based planning.
 """
@@ -135,8 +136,15 @@ def sample_motion(planner, p1, p2):
         yield (path,)
 
 
-def sample_grasp_pose(grasp_gen, obj, p_obj, p_robot,
-                      front_grasps=True, top_grasps=True, side_grasps=False):
+def sample_grasp_pose(
+    grasp_gen,
+    obj,
+    p_obj,
+    p_robot,
+    front_grasps=True,
+    top_grasps=True,
+    side_grasps=False,
+):
     """
     Samples feasible grasps for an object given its pose and the relative robot pose.
 
@@ -156,21 +164,24 @@ def sample_grasp_pose(grasp_gen, obj, p_obj, p_robot,
     :type side_grasps: bool, optional
     :return: Generator yielding tuple containing a grasp
     :rtype: generator[tuple[:class:`pyrobosim.manipulation.grasping.Grasp`]]
-        
+
     """
     # Get the object cuboid pose assuming the object is at pose p_obj
     cuboid_pose = Pose.from_transform(
-        np.matmul(obj.cuboid_pose.get_transform_matrix(),
-                  p_obj.get_transform_matrix(),      
+        np.matmul(
+            obj.cuboid_pose.get_transform_matrix(),
+            p_obj.get_transform_matrix(),
         )
     )
 
     # Generate grasps up front and yield them as requested
     grasps = grasp_gen.generate(
-        obj.cuboid_dims, cuboid_pose, p_robot,
+        obj.cuboid_dims,
+        cuboid_pose,
+        p_robot,
         front_grasps=front_grasps,
         top_grasps=top_grasps,
-        side_grasps=side_grasps
+        side_grasps=side_grasps,
     )
     for g in grasps:
         yield (g,)
@@ -201,8 +212,7 @@ def sample_place_pose(loc, obj, padding=0.0, max_tries=100):
                 break  # If we can't sample a pose, we should give up.
             yaw_sample = np.random.uniform(-np.pi, np.pi)
             pose_sample = Pose(
-                x=x_sample, y=y_sample, yaw=yaw_sample,
-                z=loc.height + obj.height / 2.0
+                x=x_sample, y=y_sample, yaw=yaw_sample, z=loc.height + obj.height / 2.0
             )
 
             # Check that the object is inside the polygon.
