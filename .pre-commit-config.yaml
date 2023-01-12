@@ -1,11 +1,37 @@
 # Auto formats python code
 repos:
--    repo: https://github.com/psf/black.git
+- repo: https://github.com/psf/black.git
      rev: 23.1a1
      hooks: 
      - id: black
           name: Black Python code formatting
-          entry: bash -c 'black "$@"; git add -u' --
-          language: python
-          types: [python]
-          args: ["--line-length=120"]
+          
+- repo: https://github.com/pre-commit/pre-commit-hooks
+     rev: v4.4.0
+     hooks:
+     - id: check-added-large-files
+     - id: check-ast
+     - id: check-builtin-literals
+     - id: check-byte-order-marker
+     - id: check-case-conflict
+     - id: check-docstring-first
+     - id: check-executables-have-shebangs
+     - id: check-json
+     - id: check-merge-conflict
+     - id: check-symlinks
+     - id: check-toml
+     - id: check-vcs-permalinks
+     - id: check-yaml
+     - id: debug-statements
+     - id: destroyed-symlinks
+     - id: detect-private-key
+     - id: double-quote-string-fixer
+     - id: end-of-file-fixer
+     - id: fix-byte-order-marker
+     - id: fix-encoding-pragma
+     - id: forbid-new-submodules
+     - id: mixed-line-ending
+     - id: name-tests-test
+     - id: requirements-txt-fixer
+     - id: sort-simple-yaml
+     - id: trailing-whitespace
