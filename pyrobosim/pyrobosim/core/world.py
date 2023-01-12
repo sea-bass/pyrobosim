@@ -175,11 +175,11 @@ class World:
         # Remove hallways associated with the room
         while len(room.hallways) > 0:
             self.remove_hallway(room.hallways[-1])
-        
+
         # Remove locations in the room
         while len(room.locations) > 0:
-            self.remove_location(room.locations[-1]) 
-        
+            self.remove_location(room.locations[-1])
+
         # Remove the room itself
         self.rooms.remove(room)
         self.name_to_entity.pop(room_name)
