@@ -72,7 +72,9 @@ def create_test_world(add_alt_desk=True):
     return w
 
 
-def start_planner(world, domain_name, interactive=False, max_attempts=1, search_sample_ratio=1.0):
+def start_planner(
+    world, domain_name, interactive=False, max_attempts=1, search_sample_ratio=1.0
+):
     domain_folder = os.path.join(get_default_domains_folder(), domain_name)
     planner = PDDLStreamPlanner(world, domain_folder)
 
@@ -103,16 +105,18 @@ domains_to_test = ["04_nav_manip_stream", "05_nav_grasp_stream"]
 @pytest.mark.parametrize("domain_name", domains_to_test)
 def test_manip_single_desk(domain_name):
     w = create_test_world(add_alt_desk=False)
-    plan = start_planner(w, domain_name=domain_name, max_attempts=3,
-                         search_sample_ratio=1.0)
+    plan = start_planner(
+        w, domain_name=domain_name, max_attempts=3, search_sample_ratio=1.0
+    )
     assert plan is not None
 
 
 @pytest.mark.parametrize("domain_name", domains_to_test)
 def test_manip_double_desk(domain_name):
     w = create_test_world(add_alt_desk=True)
-    plan = start_planner(w, domain_name=domain_name, max_attempts=3,
-                         search_sample_ratio=0.2)
+    plan = start_planner(
+        w, domain_name=domain_name, max_attempts=3, search_sample_ratio=0.2
+    )
     assert plan is not None
 
 

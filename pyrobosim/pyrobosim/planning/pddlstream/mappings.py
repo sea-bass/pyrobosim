@@ -55,9 +55,7 @@ def get_stream_map(world, robot):
             )
         ),
         # Streams (no sampling, just testing)
-        "t-collision-free": from_test(
-            primitives.test_collision_free
-        ),
+        "t-collision-free": from_test(primitives.test_collision_free),
     }
 
 
