@@ -4,5 +4,6 @@ docs/
 
 # Metadata that definitely doesn't need to be in the Docker build context.
 .dockerignore
+.git/
 .github/
 .vscode/
