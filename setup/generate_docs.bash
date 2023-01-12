@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Generate Sphinx documentation
 #
 # Note that you may need some additional Python packages:

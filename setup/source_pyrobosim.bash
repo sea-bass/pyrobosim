@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Sets up the pyrobosim environment for development.
 #
 # One recommendation is to make a bash function for this script in
