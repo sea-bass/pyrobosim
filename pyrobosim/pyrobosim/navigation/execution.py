@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Path execution utilities. """
 
 import time

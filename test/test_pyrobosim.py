@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Basic sanity checks for pyrobosim module.
 """

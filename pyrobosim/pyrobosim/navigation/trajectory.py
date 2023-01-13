@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Trajectory generation and interpolation utilities. """
 
 import numpy as np

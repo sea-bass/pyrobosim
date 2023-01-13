@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.conditions import IfCondition
@@ -49,7 +48,7 @@ def generate_launch_description():
     )
     search_sample_ratio_arg = DeclareLaunchArgument(
         "search_sample_ratio",
-        default_value=TextSubstitution(text="2.0"),
+        default_value=TextSubstitution(text="1.0"),
         description="Search to sample ratio for planner",
     )
 

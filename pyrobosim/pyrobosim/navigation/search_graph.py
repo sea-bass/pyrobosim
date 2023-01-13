@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Graph search utilities. """
 
 from astar import AStar

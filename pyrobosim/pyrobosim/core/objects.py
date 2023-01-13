@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Representations for objects that exist in the world. """
 
 import numpy as np
@@ -123,6 +122,7 @@ class Object:
             radius = inflation_radius
         else:
             radius = self.inflation_radius
+        self.raw_collision_polygon = inflate_polygon(self.raw_polygon, radius)
         self.collision_polygon = inflate_polygon(self.polygon, radius)
 
     def update_visualization_polygon(self):

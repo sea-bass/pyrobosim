@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """Unit tests for the RRT planner"""
 
 import os
-import pytest
 
 from pyrobosim.utils.pose import Pose
 from pyrobosim.navigation.rrt import RRTPlanner

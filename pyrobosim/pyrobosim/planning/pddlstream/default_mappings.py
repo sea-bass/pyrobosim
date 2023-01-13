@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
 """
-Mappings for PDDLStream functions, streams, and certificate tests.
+Default mappings for PDDLStream functions, streams, and certificate tests that represent
+Task and Motion Planning for pick-and-place applications with a mobile manipulator.
 """
 
 from pddlstream.language.stream import StreamInfo
@@ -55,11 +55,7 @@ def get_stream_map(world, robot):
             )
         ),
         # Streams (no sampling, just testing)
-        "t-collision-free": from_test(
-            lambda o1, p1, o2, p2: primitives.test_collision_free(
-                o1, p1, o2, p2, padding=world.object_radius
-            )
-        ),
+        "t-collision-free": from_test(primitives.test_collision_free),
     }
 
 

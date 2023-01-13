@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Utilities to reason about entities using world knowledge
 (that is, metadata about locations and objects).

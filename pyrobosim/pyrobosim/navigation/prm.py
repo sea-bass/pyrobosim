@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Probabilistic Roadmap (PRM) implementation. """
 
 import time

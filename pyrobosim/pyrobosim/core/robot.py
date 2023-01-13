@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Defines a robot which operates in a world. """
 
 import time
@@ -291,9 +290,7 @@ class Robot:
 
         # Place the object somewhere in the current location
         is_valid_pose = False
-        poly = inflate_polygon(
-            self.manipulated_object.raw_polygon, self.world.object_radius
-        )
+        poly = self.manipulated_object.raw_collision_polygon
         if pose is None:
             # If no pose was specified, sample one
             for _ in range(self.world.max_object_sample_tries):

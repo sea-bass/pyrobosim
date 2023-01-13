@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 Test script for PDDLStream planning with manipulation streams.
@@ -46,8 +45,8 @@ def create_test_world(add_alt_desk=True):
     if add_alt_desk:
         desk1 = w.add_location("desk", "storage", Pose(x=4.5, y=1.5, z=0.0, yaw=0.0))
     w.add_object("banana", table0)
-    w.add_object("water", desk0, pose=Pose(x=2.4, y=-1.4, z=0, yaw=np.pi / 4.0))
-    w.add_object("water", desk0, pose=Pose(x=2.575, y=-1.57, z=0, yaw=-np.pi / 4.0))
+    w.add_object("water", desk0, pose=Pose(x=2.375, y=-1.375, z=0, yaw=np.pi / 4))
+    w.add_object("water", desk0, pose=Pose(x=2.575, y=-1.6, z=0, yaw=-np.pi / 4))
 
     # Add a robot
     grasp_props = ParallelGraspProperties(
@@ -72,7 +71,9 @@ def create_test_world(add_alt_desk=True):
     return w
 
 
-def start_planner(world, domain_name, interactive=False, max_attempts=1):
+def start_planner(
+    world, domain_name, interactive=False, max_attempts=1, search_sample_ratio=1.0
+):
     domain_folder = os.path.join(get_default_domains_folder(), domain_name)
     planner = PDDLStreamPlanner(world, domain_folder)
 
@@ -84,10 +85,11 @@ def start_planner(world, domain_name, interactive=False, max_attempts=1):
     plan = planner.plan(
         robot,
         goal_literals,
-        focused=True,
-        search_sample_ratio=0.5,
+        search_sample_ratio=search_sample_ratio,
         max_attempts=max_attempts,
         verbose=interactive,
+        planner="ff-astar",
+        max_planner_time=30.0,
     )
     if interactive:
         robot.execute_plan(plan, blocking=True)
@@ -103,21 +105,25 @@ domains_to_test = ["04_nav_manip_stream", "05_nav_grasp_stream"]
 @pytest.mark.parametrize("domain_name", domains_to_test)
 def test_manip_single_desk(domain_name):
     w = create_test_world(add_alt_desk=False)
-    plan = start_planner(w, domain_name=domain_name, max_attempts=3)
+    plan = start_planner(
+        w, domain_name=domain_name, max_attempts=3, search_sample_ratio=1.0
+    )
     assert plan is not None
 
 
 @pytest.mark.parametrize("domain_name", domains_to_test)
 def test_manip_double_desk(domain_name):
     w = create_test_world(add_alt_desk=True)
-    plan = start_planner(w, domain_name=domain_name, max_attempts=3)
+    plan = start_planner(
+        w, domain_name=domain_name, max_attempts=3, search_sample_ratio=0.2
+    )
     assert plan is not None
 
 
 if __name__ == "__main__":
-    w = create_test_world(add_alt_desk=False)
+    w = create_test_world(add_alt_desk=True)
 
-    domain_name = "05_nav_grasp_stream"
+    domain_name = "04_nav_manip_stream"
     interactive = True
     max_attempts = 3
 

@@ -25,7 +25,6 @@ RUN pip3 install lark pytest pytest-dependency pytest-html
 
 # Build the workspace
 WORKDIR /pyrobosim_ws
-COPY . /pyrobosim_ws/src/
 RUN source /opt/ros/${ROS_DISTRO}/setup.bash && \
     colcon build
 

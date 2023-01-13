@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Tools for PDDLStream based task and motion planning.
 
 This module contains tools associated with task and motion planning (TAMP)
