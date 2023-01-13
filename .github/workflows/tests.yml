@@ -57,12 +57,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v3
       - name: Build Docker image
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: ./docker/Dockerfile
-          push: false
-          tags: pyrobosim-${{ matrix.ros_distro }}
+        run: docker compose build
       - name: Run unit tests in Docker container
         run: docker compose run test
       - name: Upload test results
