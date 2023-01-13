@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""Unit tests for the planners"""
+"""Unit tests for the RRT planner"""
 
 import os
 import pytest
