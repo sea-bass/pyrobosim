@@ -69,7 +69,7 @@ class PDDLStreamPlanner:
         :param robot: Robot to use for planning.
         :type robot: :class:`pyrobosim.core.robot.Robot`
         :param goal_literals: List of literals describing a goal specification.
-        :type goal: list[tuple]
+        :type goal_literals: list[tuple]
         :param max_attempts: Maximum planning attempts.
         :type max_attempts: int, optional
         :param verbose: If True, prints additional information. Defaults to False.
