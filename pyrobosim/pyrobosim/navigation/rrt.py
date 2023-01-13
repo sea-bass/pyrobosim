@@ -100,6 +100,15 @@ class RRTPlanner:
 
         t_start = time.time()
         goal_found = False
+
+        # If the goal is within max connection distance of the start, connect them directly
+        if self.graph.connect(n_start, n_goal):
+            path_poses = [n_start.pose, n_goal.pose]
+            self.latest_path = Path(poses=path_poses)
+            self.latest_path.fill_yaws()
+            self.planning_time = time.time() - t_start
+            return self.latest_path
+
         while not goal_found:
             # Sample a node
             q_sample = self.sample_configuration()
@@ -167,6 +176,7 @@ class RRTPlanner:
             n = n_goal_start_tree
         else:
             n = n_goal
+
         path_poses = [n.pose]
         path_built = False
         while not path_built:
