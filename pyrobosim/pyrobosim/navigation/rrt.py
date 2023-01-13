@@ -178,7 +178,7 @@ class RRTPlanner:
             n = n_goal_start_tree
         else:
             n = n_goal
- 
+
         path_poses = [n.pose]
         path_built = False
         while not path_built:
@@ -197,7 +197,7 @@ class RRTPlanner:
                 else:
                     n = n.parent
                     path_poses.append(n.pose)
-            
+
         self.latest_path = Path(poses=path_poses)
         self.latest_path.fill_yaws()
         return self.latest_path
