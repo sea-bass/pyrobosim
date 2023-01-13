@@ -102,7 +102,7 @@ class RRTPlanner:
         t_start = time.time()
         goal_found = False
 
-        # If the goal is within max connection distance, connect them directly
+        # If the goal is within max connection distance of the start, connect them directly
         if self.graph.connect(n_start, n_goal):
             self.graph.add(n_goal)
             goal_found = True
