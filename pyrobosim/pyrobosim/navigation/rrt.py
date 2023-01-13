@@ -101,13 +101,15 @@ class RRTPlanner:
 
         t_start = time.time()
         goal_found = False
-        direct_connect = False
 
-        direct_goal = self.new_node(n_start, n_goal.pose)
-        direct_connect = self.graph.connect(n_start, direct_goal)
-        if direct_connect:
+        # If the goal is within max connection distance, connect them directly
+        if self.graph.connect(n_start, n_goal):
             self.graph.add(n_goal)
             goal_found = True
+            path_poses = [n_start.pose, n_goal.pose]
+            self.latest_path = Path(poses=path_poses)
+            self.latest_path.fill_yaws()
+            return self.latest_path
 
         while not goal_found:
             # Sample a node
@@ -172,12 +174,22 @@ class RRTPlanner:
                 return
 
         # Now back out the path
-        if self.bidirectional and not direct_connect:
+        if self.bidirectional:
             n = n_goal_start_tree
         else:
             n = n_goal
-        if not direct_connect:
-            path_poses = [n.pose]
+ 
+        path_poses = [n.pose]
+        path_built = False
+        while not path_built:
+            if n.parent is None:
+                path_built = True
+            else:
+                n = n.parent
+                path_poses.append(n.pose)
+        path_poses.reverse()
+        if self.bidirectional:
+            n = n_goal_goal_tree
             path_built = False
             while not path_built:
                 if n.parent is None:
@@ -185,19 +197,7 @@ class RRTPlanner:
                 else:
                     n = n.parent
                     path_poses.append(n.pose)
-            path_poses.reverse()
-            if self.bidirectional:
-                n = n_goal_goal_tree
-                path_built = False
-                while not path_built:
-                    if n.parent is None:
-                        path_built = True
-                    else:
-                        n = n.parent
-                        path_poses.append(n.pose)
-        else:
-            path_poses = [n_start.pose, direct_goal.pose]
-
+            
         self.latest_path = Path(poses=path_poses)
         self.latest_path.fill_yaws()
         return self.latest_path
