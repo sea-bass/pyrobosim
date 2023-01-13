@@ -59,7 +59,12 @@ jobs:
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v2
       - name: Build Docker image
-        run: docker compose build
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ./docker/Dockerfile
+          push: false
+          tags: pyrobosim-${{ matrix.ros_distro }}
       - name: Run unit tests in Docker container
         run: docker compose run test
       - name: Upload test results
