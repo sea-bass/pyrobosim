@@ -104,11 +104,10 @@ class RRTPlanner:
 
         # If the goal is within max connection distance of the start, connect them directly
         if self.graph.connect(n_start, n_goal):
-            self.graph.add(n_goal)
-            goal_found = True
             path_poses = [n_start.pose, n_goal.pose]
             self.latest_path = Path(poses=path_poses)
             self.latest_path.fill_yaws()
+            self.planning_time = time.time() - t_start
             return self.latest_path
 
         while not goal_found:
