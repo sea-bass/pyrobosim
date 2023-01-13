@@ -56,10 +56,6 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
-      - name: Build Docker image
-        run: docker compose build
-      - name: Show Docker images
-        run: docker images
       - name: Run unit tests in Docker container
         run: docker compose run test
       - name: Upload test results
