@@ -9,6 +9,11 @@ on:
   schedule:
     - cron: '0 0 * * *'
 
+# Ensures that only one workflow runs at a time for this branch
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # Pure Python testing
   python-test:
