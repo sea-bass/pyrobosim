@@ -16,7 +16,7 @@
 ; Accompanying streams are defined in the `stream.pddl` file.
 
 
-(define (domain domain_nav_manip_stream)
+(define (domain domain_nav_grasp_stream)
   (:requirements :strips :equality)
   (:predicates  ; Static predicates
                 (Robot ?r)              ; Represents the robot
