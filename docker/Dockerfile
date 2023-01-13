@@ -15,8 +15,8 @@ RUN apt-get install -y \
 RUN mkdir -p /pyrobosim_ws/src/pyrobosim
 
 # Install dependencies
-COPY setup /pyrobosim_ws/src/setup
-RUN cd /pyrobosim_ws/src/setup && ./setup_pddlstream.bash
+# COPY setup /pyrobosim_ws/src/setup
+# RUN cd /pyrobosim_ws/src/setup && ./setup_pddlstream.bash
 
 # Install pyrobosim and testing dependencies
 COPY pyrobosim /temp/pyrobosim
@@ -25,7 +25,6 @@ RUN pip3 install lark pytest pytest-dependency pytest-html
 
 # Build the workspace
 WORKDIR /pyrobosim_ws
-COPY . /pyrobosim_ws/src/
 RUN source /opt/ros/${ROS_DISTRO}/setup.bash && \
     colcon build
 
