@@ -24,8 +24,13 @@ class GoalPublisher(Node):
             GoalSpecification, "goal_specification", 10
         )
         self.get_logger().info("Waiting for subscription")
-        while self.goalspec_pub.get_subscription_count() < 1:
+        while rclpy.ok() and self.goalspec_pub.get_subscription_count() < 1:
             time.sleep(2.0)
+        if self.goalspec_pub.get_subscription_count() < 1:
+            self.get_logger().error(
+                "Error while waiting for a goal specification subscriber."
+            )
+            return
 
         # Create goal specifications for different examples
         example = self.get_parameter("example").value

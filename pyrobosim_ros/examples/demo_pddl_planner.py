@@ -51,8 +51,13 @@ class PlannerNode(Node):
             RequestWorldState, "request_world_state"
         )
         self.world_state_future_response = None
-        while not self.world_state_client.wait_for_service(timeout_sec=1.0):
+        while rclpy.ok() and not self.world_state_client.wait_for_service(
+            timeout_sec=1.0
+        ):
             self.get_logger().info("Waiting for world state server...")
+        if not self.world_state_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().error("Error while waiting for the world state server.")
+            return
 
         # Create the world and planner
         self.world = load_world()
@@ -147,6 +152,7 @@ def main():
     rclpy.init()
     planner_node = PlannerNode()
 
+    rate = planner_node.create_rate(10)
     while rclpy.ok():
         if (not planner_node.planning) and planner_node.latest_goal:
             planner_node.request_world_state()
@@ -158,6 +164,7 @@ def main():
             planner_node.do_plan()
 
         rclpy.spin_once(planner_node)
+        rate.sleep()
 
     planner_node.destroy_node()
     rclpy.shutdown()
