@@ -13,7 +13,7 @@ w = loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
 
 
 def test_prm():
-    """ Creates a PRM planner and plans """
+    """Creates a PRM planner and plans"""
     prm = PRMPlanner(w, max_nodes=100, max_connection_dist=1.5)
     start = Pose(x=-0.5, y=-0.5)
     goal = Pose(x=3.0, y=3.0)
@@ -25,11 +25,11 @@ def test_prm():
     prm.print_metrics()
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     test_prm()
 
     import sys
     from pyrobosim.gui.main import PyRoboSimGUI
+
     app = PyRoboSimGUI(w, sys.argv)
     sys.exit(app.exec_())
-    

@@ -1,5 +1,6 @@
 """
-Mappings for PDDLStream functions, streams, and certificate tests.
+Default mappings for PDDLStream functions, streams, and certificate tests that represent
+Task and Motion Planning for pick-and-place applications with a mobile manipulator.
 """
 
 from pddlstream.language.stream import StreamInfo
@@ -20,17 +21,30 @@ def get_stream_map(world, robot):
     :rtype: dict(str, function)
     """
     planner = robot.path_planner
+    grasp_gen = robot.grasp_generator
 
     return {
         # Functions
         "Dist": primitives.get_straight_line_distance,
         "PickPlaceCost": primitives.get_pick_place_cost,
         "PickPlaceAtPoseCost": primitives.get_pick_place_at_pose_cost,
+        "GraspAtPoseCost": primitives.get_grasp_at_pose_cost,
         "PathLength": primitives.get_path_length,
         # Streams (that sample)
         "s-navpose": from_list_fn(primitives.get_nav_poses),
         "s-motion": from_gen_fn(
             lambda p1, p2: primitives.sample_motion(planner, p1, p2)
+        ),
+        "s-grasp": from_gen_fn(
+            lambda obj, p_obj, p_robot: primitives.sample_grasp_pose(
+                grasp_gen,
+                obj,
+                p_obj,
+                p_robot,
+                front_grasps=True,
+                top_grasps=True,
+                side_grasps=False,
+            )
         ),
         "s-place": from_gen_fn(
             lambda loc, obj: primitives.sample_place_pose(
@@ -41,11 +55,7 @@ def get_stream_map(world, robot):
             )
         ),
         # Streams (no sampling, just testing)
-        "t-collision-free": from_test(
-            lambda o1, p1, o2, p2: primitives.test_collision_free(
-                o1, p1, o2, p2, padding=world.object_radius
-            )
-        ),
+        "t-collision-free": from_test(primitives.test_collision_free),
     }
 
 
@@ -59,8 +69,12 @@ def get_stream_info():
     """
     return {
         # Streams (that sample)
-        "s-navpose": StreamInfo(eager=False),
+        # Nav poses can be eagerly sampled since locations don't move.
+        "s-navpose": StreamInfo(eager=True),
+        # Other streams cannot be eagerly sampled as they depend on the
+        # instantaneous pose of entities in the world during planning.
         "s-motion": StreamInfo(eager=False),
+        "s-grasp": StreamInfo(eager=False),
         "s-place": StreamInfo(eager=False),
         # Streams (no sampling, just testing)
         "t-collision-free": StreamInfo(eager=False, negate=True),

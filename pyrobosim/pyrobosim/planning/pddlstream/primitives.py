@@ -4,6 +4,7 @@ Helper primitives for PDDLStream based planning.
 
 import numpy as np
 
+from ...manipulation.grasping import GraspFace
 from ...utils.pose import Pose
 from ...utils.polygon import inflate_polygon, sample_from_polygon, transform_polygon
 
@@ -41,6 +42,32 @@ def get_pick_place_at_pose_cost(loc, obj, p, pr):
     :rtype: float
     """
     return p.get_linear_distance(pr) + get_pick_place_cost(loc, obj)
+
+
+def get_grasp_at_pose_cost(g, pr):
+    """
+    Estimates the cost of grasping a specific object,
+    given the grasp properties and the pose of the robot.
+
+    :param g: Object grasp.
+    :type g: :class:`pyrobosim.manipulation.grasping.Grasp`
+    :param pr: Robot pose.
+    :type pr: :class:`pyrobosim.utils.pose.Pose`
+    :return: Cost of performing action.
+    :rtype: float
+    """
+    # Define cost for distance between robot and grasp pose
+    distance_cost = g.origin_wrt_world.get_linear_distance(pr)
+
+    # Define dummy costs for types of grasps
+    if g.face == GraspFace.TOP:
+        face_cost = 0.0
+    elif g.face == GraspFace.FRONT:
+        face_cost = 0.5
+    else:
+        face_cost = 1.0
+
+    return distance_cost + face_cost
 
 
 def get_straight_line_distance(l1, l2):
@@ -108,6 +135,57 @@ def sample_motion(planner, p1, p2):
         yield (path,)
 
 
+def sample_grasp_pose(
+    grasp_gen,
+    obj,
+    p_obj,
+    p_robot,
+    front_grasps=True,
+    top_grasps=True,
+    side_grasps=False,
+):
+    """
+    Samples feasible grasps for an object given its pose and the relative robot pose.
+
+    :param grasp_gen: Grasp generator object
+    :type grasp_gen: Planner
+    :param obj: Target object
+    :type obj: :class:`pyrobosim.core.objects.Object`
+    :param p_obj: Object pose.
+    :type p_obj: :class:`pyrobosim.utils.pose.Pose`
+    :param p_robot: Robot pose.
+    :type p_robot: :class:`pyrobosim.utils.pose.Pose`
+    :param front_grasps: Enable front grasps
+    :type front_grasps: bool, optional
+    :param top_grasps: Enable top grasps
+    :type top_grasps: bool, optional
+    :param side_grasps: Enable side grasps
+    :type side_grasps: bool, optional
+    :return: Generator yielding tuple containing a grasp
+    :rtype: generator[tuple[:class:`pyrobosim.manipulation.grasping.Grasp`]]
+
+    """
+    # Get the object cuboid pose assuming the object is at pose p_obj
+    cuboid_pose = Pose.from_transform(
+        np.matmul(
+            obj.cuboid_pose.get_transform_matrix(),
+            p_obj.get_transform_matrix(),
+        )
+    )
+
+    # Generate grasps up front and yield them as requested
+    grasps = grasp_gen.generate(
+        obj.cuboid_dims,
+        cuboid_pose,
+        p_robot,
+        front_grasps=front_grasps,
+        top_grasps=top_grasps,
+        side_grasps=side_grasps,
+    )
+    for g in grasps:
+        yield (g,)
+
+
 def sample_place_pose(loc, obj, padding=0.0, max_tries=100):
     """
     Samples a feasible placement pose for an object at a specific location.
@@ -133,8 +211,7 @@ def sample_place_pose(loc, obj, padding=0.0, max_tries=100):
                 break  # If we can't sample a pose, we should give up.
             yaw_sample = np.random.uniform(-np.pi, np.pi)
             pose_sample = Pose(
-                x=x_sample, y=y_sample, yaw=yaw_sample,
-                z=loc.height + obj.height / 2.0
+                x=x_sample, y=y_sample, yaw=yaw_sample, z=loc.height + obj.height / 2.0
             )
 
             # Check that the object is inside the polygon.
@@ -146,9 +223,9 @@ def sample_place_pose(loc, obj, padding=0.0, max_tries=100):
         yield (pose_sample,)
 
 
-def test_collision_free(o1, p1, o2, p2, padding=0.0):
+def test_collision_free(o1, p1, o2, p2):
     """
-    Test for collisions between two objects at specified poses and padding.
+    Test for collisions between two objects at specified poses.
 
     :param o1: First object
     :type o1: :class:`pyrobosim.core.objects.Object`
@@ -158,11 +235,9 @@ def test_collision_free(o1, p1, o2, p2, padding=0.0):
     :type o2: :class:`pyrobosim.core.objects.Object`
     :param p2: Pose of second object
     :type p2: :class:`pyrobosim.utils.pose.Pose`
-    :param padding: Padding for collision checking.
-    :type padding: float, optional
     :return: True if the two objects are collision free.
     :rtype: bool
     """
-    o1_poly = transform_polygon(inflate_polygon(o1.raw_polygon, padding), p1)
-    o2_poly = transform_polygon(o2.raw_polygon, p2)
+    o1_poly = transform_polygon(o1.raw_collision_polygon, p1)
+    o2_poly = transform_polygon(o2.raw_collision_polygon, p2)
     return not o1_poly.intersects(o2_poly)

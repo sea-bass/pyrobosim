@@ -11,8 +11,8 @@ def generate_launch_description():
     world_file_arg = DeclareLaunchArgument(
         "world_file",
         default_value=TextSubstitution(text=""),
-        description="YAML file name (should be in the pyrobosim/data folder). " +
-                    "If not specified, a world will be created programmatically."
+        description="YAML file name (should be in the pyrobosim/data folder). "
+        + "If not specified, a world will be created programmatically.",
     )
 
     # Nodes
@@ -21,9 +21,7 @@ def generate_launch_description():
         executable="demo.py",
         name="demo",
         namespace="pyrobosim",
-        parameters=[{
-            "world_file": LaunchConfiguration("world_file")
-        }]
+        parameters=[{"world_file": LaunchConfiguration("world_file")}],
     )
 
     return LaunchDescription([world_file_arg, demo_node])

@@ -12,9 +12,18 @@ from ..utils.polygon import inflate_polygon, polygon_and_height_from_footprint
 
 
 class Room:
-    """ Representation of a room in a world. """
-    def __init__(self, footprint, name=None, color=[0.4, 0.4, 0.4], wall_width=0.2, nav_poses=None, height=0.0):
-        """ 
+    """Representation of a room in a world."""
+
+    def __init__(
+        self,
+        footprint,
+        name=None,
+        color=[0.4, 0.4, 0.4],
+        wall_width=0.2,
+        nav_poses=None,
+        height=0.0,
+    ):
+        """
         Creates a Room instance.
 
         :param footprint: Point list or Shapely polygon describing the room 2D footprint.
@@ -58,25 +67,26 @@ class Room:
     def update_collision_polygons(self, inflation_radius=0):
         """
         Updates the collision polygons using the specified inflation radius.
-        
+
         :param inflation_radius: Inflation radius, in meters.
         :type inflation_radius: float, optional
         """
         # Internal collision polygon:
         # Deflate the room polygon with the inflation radius and add each location's collision polygon.
         self.internal_collision_polygon = inflate_polygon(
-            self.polygon, -inflation_radius)
+            self.polygon, -inflation_radius
+        )
         for loc in self.locations:
-            self.internal_collision_polygon = self.internal_collision_polygon.difference(
-                loc.collision_polygon)
+            self.internal_collision_polygon = (
+                self.internal_collision_polygon.difference(loc.collision_polygon)
+            )
 
         # External collision polygon:
         # Inflate the room polygon with the wall width
-        self.external_collision_polygon = inflate_polygon(
-            self.polygon, self.wall_width)
+        self.external_collision_polygon = inflate_polygon(self.polygon, self.wall_width)
 
     def update_visualization_polygon(self):
-        """ Updates visualization polygon of the room walls. """
+        """Updates visualization polygon of the room walls."""
         self.buffered_polygon = inflate_polygon(self.polygon, self.wall_width)
         self.viz_polygon = self.buffered_polygon.difference(self.polygon)
         for h in self.hallways:
@@ -105,7 +115,7 @@ class Room:
     def is_collision_free(self, pose):
         """
         Checks whether a pose in the room is collision-free.
-        
+
         :param pose: Pose to test.
         :type pose: :class:`pyrobosim.utils.pose.Pose`/(float, float)
         :return: True if collision-free, else False.
@@ -118,9 +128,9 @@ class Room:
         return self.internal_collision_polygon.intersects(p)
 
     def add_graph_nodes(self):
-        """ Creates graph nodes for searching. """
+        """Creates graph nodes for searching."""
         self.graph_nodes = [Node(p, parent=self) for p in self.nav_poses]
 
     def __repr__(self):
-        """ Returns printable string. """
+        """Returns printable string."""
         return f"Room: {self.name}"

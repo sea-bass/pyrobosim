@@ -2,8 +2,8 @@
 # Example object metadata #
 ###########################
 
-apple: 
-  footprint: 
+apple:
+  footprint:
     type: circle
     radius: 0.06
   color: [1, 0, 0]

@@ -1,7 +1,7 @@
 Task and Motion Planning
 ========================
 We use `PDDLStream <https://github.com/caelan/pddlstream>`_ to perform integrated task and motion planning (TAMP).
-This tool expands task planning with purely discrete parameters using `Planning Domain Definition Language (PDDL) <https://planning.wiki/guide/whatis/pddl>`_ 
+This tool expands task planning with purely discrete parameters using `Planning Domain Definition Language (PDDL) <https://planning.wiki/guide/whatis/pddl>`_
 by adding the concept of *streams* for sampling continuous parameters in actions.
 
 If you did not already install PDDLStream, ensure you do so with this script, then re-source.
@@ -22,8 +22,9 @@ The current example list is:
 
 * ``01_simple`` - Simple domain with purely discrete actions
 * ``02_derived`` - Purely discrete actions, but uses *derived predicates* for more complex goals
-* ``03_nav_stream`` - Samples navigation poses and entire motion plan instances
+* ``03_nav_stream`` - Samples navigation poses and motion plan instances
 * ``04_nav_manip_stream`` - Samples navigation poses, motion plans, and collision-free object placement instances
+* ``05_nav_grasp_stream`` - Samples navigation poses and motion plans, grasp plans, and collision-free object placement instances
 
 These PDDL domain and stream description files can be found in the ``pyrobosim/pyrobosim/data/pddlstream/domains`` folder.
 

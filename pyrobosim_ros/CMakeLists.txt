@@ -21,8 +21,8 @@ install(PROGRAMS
   examples/demo_pddl_world.py
   examples/demo_pddl_planner.py
   examples/demo_pddl_goal_publisher.py
-  ../pyrobosim/examples/test_prm.py
-  ../pyrobosim/examples/test_rrt.py
+  ../pyrobosim/examples/demo_prm.py
+  ../pyrobosim/examples/demo_rrt.py
   ../pyrobosim/examples/demo_pddl.py
   ../pyrobosim/examples/demo_world_save.py
   DESTINATION lib/${PROJECT_NAME}

@@ -1,0 +1,36 @@
+
+repos:
+
+# Auto formats Python code.
+-    repo: https://github.com/psf/black.git
+     rev: 22.12.0
+     hooks:
+     - id: black
+
+# Runs pre-commit hooks and other file format checks.
+-    repo: https://github.com/pre-commit/pre-commit-hooks
+     rev: v4.4.0
+     hooks:
+     - id: check-added-large-files
+     - id: check-ast
+     - id: check-builtin-literals
+     - id: check-case-conflict
+     - id: check-docstring-first
+     - id: check-executables-have-shebangs
+     - id: check-json
+     - id: check-merge-conflict
+     - id: check-symlinks
+     - id: check-toml
+     - id: check-vcs-permalinks
+     - id: check-yaml
+     - id: debug-statements
+     - id: destroyed-symlinks
+     - id: detect-private-key
+     - id: end-of-file-fixer
+     - id: fix-byte-order-marker
+     - id: forbid-new-submodules
+     - id: mixed-line-ending
+     - id: name-tests-test
+     - id: requirements-txt-fixer
+     - id: sort-simple-yaml
+     - id: trailing-whitespace

@@ -75,7 +75,13 @@ def start_planner(world, domain_name="03_nav_stream", interactive=False):
     if interactive:
         input("Press Enter to start planning.")
     robot = world.robots[0]
-    plan = planner.plan(robot, goal_literals, focused=True, verbose=interactive)
+    plan = planner.plan(
+        robot,
+        goal_literals,
+        verbose=interactive,
+        planner="ff-astar",
+        max_planner_time=30.0,
+    )
     if interactive:
         robot.execute_plan(plan, blocking=True)
     return plan

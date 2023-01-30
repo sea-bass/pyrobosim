@@ -5,6 +5,7 @@ Utilities to connect world models with PDDLStream.
 import os
 
 from ..actions import TaskAction, TaskPlan
+from ...manipulation.grasping import Grasp
 from ...utils.general import get_data_folder
 from ...utils.motion import Path
 from ...utils.pose import Pose
@@ -18,6 +19,31 @@ def get_default_domains_folder():
     :rtype: str
     """
     return os.path.join(get_data_folder(), "pddlstream", "domains")
+
+
+def get_default_stream_info_fn():
+    """
+    Gets a function that creates the default PDDLStream stream information dictionary.
+
+    :return: PDDLStream stream information function
+    :rtype: function
+    """
+    from .default_mappings import get_stream_info
+
+    return get_stream_info
+
+
+def get_default_stream_map_fn():
+    """
+    Gets a function that creates the default PDDLStream stream mappings dictionary
+    given a `pyrobosim.core.world.World` object and a `pyrobosim.core.robot.Robot` object.
+
+    :return: PDDLStream stream mappings function
+    :rtype: function
+    """
+    from .default_mappings import get_stream_map
+
+    return get_stream_map
 
 
 def world_to_pddlstream_init(world, robot):
@@ -102,9 +128,9 @@ def process_goal_specification(goal_literals, world):
 def replace_goal_literal_tuple(goal_literals, literal_idx, arg_idx, new_val):
     """
     Utility function to replace the element of a goal literal tuple in place.
-    
+
     :param goal_literals: List of literals describing a goal specification.
-    :type goal_literals: list[tuple]   
+    :type goal_literals: list[tuple]
     :param literal_idx: Index of goal literal in list to replace.
     :type literal_idx: int
     :param arg_idx: Index of argument in goal literal to replace.
@@ -156,6 +182,11 @@ def pddlstream_solution_to_plan(solution, robot):
                 arg = act_pddl.args[3]
                 if isinstance(arg, Pose):
                     act.pose = arg
+            # If a grasp pose is specified for the pick action, use that instead.
+            if act.type == "pick":
+                for arg in act_pddl.args:
+                    if isinstance(arg, Grasp):
+                        act.pose = arg.origin_wrt_world
 
         # Add the action to the task plan
         plan_out.actions.append(act)

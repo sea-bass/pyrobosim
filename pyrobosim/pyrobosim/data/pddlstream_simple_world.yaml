@@ -27,6 +27,13 @@ robots:
       bidirectional: false
       rrt_star: true
       rewire_radius: 1.5
+    grasping:
+      generator: parallel_grasp
+      max_width: 0.15
+      depth: 0.1
+      height: 0.04
+      width_clearance: 0.01
+      depth_clearance: 0.01
 
 
 # PLANNING: Global planner
@@ -78,14 +85,14 @@ hallways:
     to: bathroom
     width: 0.7
     conn_method: auto
-  
+
   - from: bathroom
     to: bedroom
     width: 0.5
     conn_method: angle
     conn_angle: 0.0
     offset: 0.8
-  
+
   - from: kitchen
     to: bedroom
     width: 0.6

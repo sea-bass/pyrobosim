@@ -7,6 +7,7 @@ import warnings
 
 from .locations import ObjectSpawn
 from .objects import Object
+from ..manipulation.grasping import Grasp
 from ..utils.knowledge import resolve_to_object
 from ..utils.polygon import inflate_polygon, sample_from_polygon, transform_polygon
 from ..utils.pose import Pose
@@ -24,6 +25,7 @@ class Robot:
         color=(0.8, 0, 0.8),
         path_planner=None,
         path_executor=None,
+        grasp_generator=None,
     ):
         """
         Creates a robot instance.
@@ -44,6 +46,8 @@ class Robot:
         :param path_executor: Path executor for navigation (see e.g.,
             :class:`pyrobosim.navigation.execution.ConstantVelocityExecutor`).
         :type path_executor: PathExecutor, optional
+        :param grasp_generator: Grasp generator for manipulating objects.
+        :type grasp_generator: :class:`pyrobosim.manipulation.grasping.GraspGenerator`, optional
         """
         # Basic properties
         self.name = name
@@ -58,6 +62,10 @@ class Robot:
         self.current_path = None
         self.current_goal = None
         self.executing_nav = False
+
+        # Manipulation properties
+        self.grasp_generator = grasp_generator
+        self.last_grasp_selection = None
 
         # World interaction properties
         self.world = None
@@ -166,12 +174,28 @@ class Robot:
         self.current_path = None
         return success
 
-    def pick_object(self, obj_query):
+    def _attach_object(self, obj):
+        """
+        Helper function to attach an object in the world to the robot.
+        Be careful calling this function directly as is does not do any validation.
+        When possible, you should be using `pick_object`.
+
+        :param obj: Object to manipulate
+        :type obj: :class:`pyrobosim.core.objects.Object`
+        """
+        self.manipulated_object = obj
+        obj.parent.children.remove(obj)
+        obj.parent = self
+        obj.set_pose(self.pose)
+
+    def pick_object(self, obj_query, grasp_pose=None):
         """
         Picks up an object in the world given an object and/or location query.
 
         :param obj_query: The object query (name, category, etc.).
         :type obj_query: str
+        :param grasp_pose: A pose describing how to manipulate the object.
+        :type grasp_pose: :class:`pyrobosim.utils.pose.Pose`, optional
         :return: True if picking succeeds, else False
         :rtype: bool
         """
@@ -193,7 +217,7 @@ class Robot:
                     category=obj_query,
                     location=loc,
                     resolution_strategy="nearest",
-                    robot=self
+                    robot=self,
                 )
             if not obj:
                 warnings.warn(f"Found no object {obj_query} to pick.")
@@ -207,11 +231,41 @@ class Robot:
             )
             return False
 
+        # If a grasp generator has been specified and no explicit grasp has been provided,
+        # generate grasps here.
+        # TODO: Specify allowed grasp types
+        if grasp_pose is not None:
+            if self.grasp_generator is not None:
+                grasp_properties = self.grasp_generator.properties
+            else:
+                grasp_properties = None
+            self.last_grasp_selection = Grasp(
+                properties=grasp_properties,
+                origin_wrt_object=Pose(),
+                origin_wrt_world=grasp_pose,
+            )
+        elif self.grasp_generator is not None:
+            cuboid_pose = obj.get_grasp_cuboid_pose()
+            grasps = self.grasp_generator.generate(
+                obj.cuboid_dims,
+                cuboid_pose,
+                self.pose,
+                front_grasps=True,
+                top_grasps=True,
+                side_grasps=False,
+            )
+
+            if len(grasps) == 0:
+                warnings.warn(f"Could not generate valid grasps. Cannot pick.")
+                return False
+            else:
+                # TODO: For now, just pick a random grasp.
+                self.last_grasp_selection = np.random.choice(grasps)
+        if self.last_grasp_selection is not None:
+            print(f"Selected {self.last_grasp_selection}")
+
         # Denote the target object as the manipulated object
-        self.manipulated_object = obj
-        obj.parent.children.remove(obj)
-        obj.parent = self
-        obj.pose = self.pose
+        self._attach_object(obj)
         return True
 
     def place_object(self, pose=None):
@@ -236,9 +290,7 @@ class Robot:
 
         # Place the object somewhere in the current location
         is_valid_pose = False
-        poly = inflate_polygon(
-            self.manipulated_object.raw_polygon, self.world.object_radius
-        )
+        poly = self.manipulated_object.raw_collision_polygon
         if pose is None:
             # If no pose was specified, sample one
             for _ in range(self.world.max_object_sample_tries):
@@ -249,7 +301,7 @@ class Robot:
                 is_valid_pose = sample_poly.within(loc.polygon)
                 for other_obj in loc.children:
                     is_valid_pose = is_valid_pose and not sample_poly.intersects(
-                        other_obj.polygon
+                        other_obj.collision_polygon
                     )
                 if is_valid_pose:
                     pose = pose_sample
@@ -262,7 +314,9 @@ class Robot:
             poly = transform_polygon(poly, pose)
             is_valid_pose = poly.within(loc.polygon)
             for other_obj in loc.children:
-                is_valid_pose = is_valid_pose and not poly.intersects(other_obj.polygon)
+                is_valid_pose = is_valid_pose and not poly.intersects(
+                    other_obj.collision_polygon
+                )
             if not is_valid_pose:
                 warnings.warn(f"Pose in collision or not in location {loc.name}.")
                 return False
@@ -317,9 +371,11 @@ class Robot:
 
         elif action.type == "pick":
             if self.world.has_gui:
-                success = self.world.gui.canvas.pick_object(self, action.object)
+                success = self.world.gui.canvas.pick_object(
+                    self, action.object, action.pose
+                )
             else:
-                success = self.pick_object(action.object)
+                success = self.pick_object(action.object, action.pose)
 
         elif action.type == "place":
             if self.world.has_gui:

@@ -5,7 +5,7 @@
 ; Accompanying planning domain defined in the `domain.pddl` file.
 
 (define (stream stream_simple)
-  
+
   ; DIST: Distance between two locations.
   (:function (Dist ?l1 ?l2)
              (and (Location ?l1) (Location ?l2))

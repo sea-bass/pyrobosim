@@ -100,6 +100,15 @@ class RRTPlanner:
 
         t_start = time.time()
         goal_found = False
+
+        # If the goal is within max connection distance of the start, connect them directly
+        if self.graph.connect(n_start, n_goal):
+            path_poses = [n_start.pose, n_goal.pose]
+            self.latest_path = Path(poses=path_poses)
+            self.latest_path.fill_yaws()
+            self.planning_time = time.time() - t_start
+            return self.latest_path
+
         while not goal_found:
             # Sample a node
             q_sample = self.sample_configuration()
@@ -167,6 +176,7 @@ class RRTPlanner:
             n = n_goal_start_tree
         else:
             n = n_goal
+
         path_poses = [n.pose]
         path_built = False
         while not path_built:
@@ -371,8 +381,9 @@ class RRTPlanner:
         if show_path and self.latest_path.num_poses > 0:
             x = [p.x for p in self.latest_path.poses]
             y = [p.y for p in self.latest_path.poses]
-            (path,) = axes.plot(x, y, linestyle="-", color=path_color,
-                                linewidth=3, alpha=0.5, zorder=1)
+            (path,) = axes.plot(
+                x, y, linestyle="-", color=path_color, linewidth=3, alpha=0.5, zorder=1
+            )
             (start,) = axes.plot(x[0], y[0], "go", zorder=2)
             (goal,) = axes.plot(x[-1], y[-1], "rx", zorder=2)
             artists.extend((path, start, goal))

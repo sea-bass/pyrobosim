@@ -1,12 +1,14 @@
+#!/bin/bash
+
 # Sets up the pyrobosim environment for development.
 #
-# One recommendation is to make a bash function for this script in 
+# One recommendation is to make a bash function for this script in
 # your ~/.bashrc file as follows:
 #
 # For non-ROS workflows:
 #
 #  pyrobosim() {
-#    source /path/to/pyrobosim/setup/source_pyrobosim.bash  
+#    source /path/to/pyrobosim/setup/source_pyrobosim.bash
 #  }
 #
 #  So you can then run this from your Terminal:

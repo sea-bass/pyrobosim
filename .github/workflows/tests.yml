@@ -9,6 +9,11 @@ on:
   schedule:
     - cron: '0 0 * * *'
 
+# Ensures that only one workflow runs at a time for this branch
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # Pure Python testing
   python-test:
@@ -23,11 +28,11 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
+          pip3 install lark pytest pytest-dependency pytest-html
           pushd pyrobosim && pip3 install . && popd
           setup/setup_pddlstream.bash
       - name: Run unit tests
         run: |
-          pip3 install lark pytest pytest-dependency pytest-html
           export PYTHONPATH=./dependencies/pddlstream:$PYTHONPATH
           test/run_tests.bash
       - name: Upload test results
@@ -47,18 +52,16 @@ jobs:
       ROS_DISTRO: ${{ matrix.ros_distro }}
 
     name: ros-${{ matrix.ros_distro }}-test
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
-      - name: Set up Docker image
-        run: docker/build_docker.bash
       - name: Run unit tests in Docker container
-        run: docker/run_docker.bash "src/pyrobosim/test/run_tests.bash" ci_mode
+        run: docker compose run test
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:
-          name: test-results-${{ matrix.version }}
+          name: test-results-${{ matrix.ros_distro }}
           path: test/results/
         # Always publish test results even when there are failures.
         if: ${{ always() }}

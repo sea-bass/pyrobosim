@@ -5,9 +5,9 @@ import yaml
 
 
 def get_data_folder():
-    """ 
+    """
     Get a path to the folder containing data.
-    
+
     If running using ``ros2 run``, this looks at the installed data in the
     ``pyrobosim`` colcon package's share directory.
 
@@ -19,22 +19,24 @@ def get_data_folder():
     try:
         # If running as a ROS 2 node, get the data folder from the package share directory.
         from ament_index_python.packages import get_package_share_directory
-        data_folder = os.path.join(
-            get_package_share_directory("pyrobosim"), "data")
+
+        data_folder = os.path.join(get_package_share_directory("pyrobosim"), "data")
     except:
         # Else, assume it's relative to the file's current directory.
-        data_folder = os.path.join(os.path.dirname(
-            os.path.abspath(__file__)), "..", "data")
+        data_folder = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "..", "data"
+        )
 
     return data_folder
 
 
 class EntityMetadata:
-    """ Represents metadata about entities, such as locations or objects. """
+    """Represents metadata about entities, such as locations or objects."""
+
     def __init__(self, filename):
-        """ 
-        Creates metadata from a YAML file. 
-        
+        """
+        Creates metadata from a YAML file.
+
         :param filename: Path to metadata YAML file.
         :type filename: str
         """
@@ -43,9 +45,9 @@ class EntityMetadata:
             self.data = yaml.load(file, Loader=yaml.FullLoader)
 
     def has_category(self, category):
-        """ 
+        """
         Check whether a category name is in the metadata.
-        
+
         :param category: Query category name.
         :type category: str
         :return: True if the category is in the metadata, else False.
@@ -69,10 +71,10 @@ class EntityMetadata:
 
 
 def replace_special_yaml_tokens(in_text, root_dir=None):
-    """ 
+    """
     Replaces special tokens permitted in our YAML specification.
     If you want to add any other special tokens, you should do that here.
-    
+
     :param in_text: Input YAML text.
     :type in_text: str
     :param root_dir: Root directory for basing some tokens, uses the current directory if not specified.
