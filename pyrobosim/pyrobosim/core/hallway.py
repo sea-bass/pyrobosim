@@ -130,26 +130,30 @@ class Hallway:
         self.viz_polygon = self.buffered_polygon.difference(self.polygon)
         self.viz_polygon = self.viz_polygon.difference(self.room_start.buffered_polygon)
         self.viz_polygon = self.viz_polygon.difference(self.room_end.buffered_polygon)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            self.viz_patch = patch_from_polygon(
-                self.viz_polygon,
-                facecolor=self.viz_color, edgecolor=self.viz_color,
-                linewidth=2, alpha=0.75, zorder=2)
+        self.viz_patch = patch_from_polygon(
+            self.viz_polygon,
+            facecolor=self.viz_color,
+            edgecolor=self.viz_color,
+            linewidth=2,
+            alpha=0.75,
+            zorder=2,
+        )
 
     def get_collision_patch(self):
-        """ 
+        """
         Returns a patch of the collision polygon for debug visualization.
-        
+
         :return: Polygon patch of the collision polygon.
         :rtype: :class:`matplotlib.patches.PathPatch`
         """
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            return patch_from_polygon(
-                self.internal_collision_polygon,
-                facecolor=(1, 0, 1), edgecolor=(1, 0, 1),
-                linewidth=2, alpha=0.5, zorder=2)
+        return patch_from_polygon(
+            self.internal_collision_polygon,
+            facecolor=(1, 0, 1),
+            edgecolor=(1, 0, 1),
+            linewidth=2,
+            alpha=0.5,
+            zorder=2,
+        )
 
     def is_collision_free(self, pose):
         """

@@ -126,12 +126,15 @@ class Object:
 
     def update_visualization_polygon(self):
         """Updates the visualization polygon for the object."""
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            self.viz_patch = patch_from_polygon(
-                self.polygon,
-                facecolor=None, edgecolor=self.viz_color,
-                linewidth=2, fill=None, alpha=0.75, zorder=3)
+        self.viz_patch = patch_from_polygon(
+            self.polygon,
+            facecolor=None,
+            edgecolor=self.viz_color,
+            linewidth=2,
+            fill=None,
+            alpha=0.75,
+            zorder=3,
+        )
 
     def get_footprint(self):
         """
