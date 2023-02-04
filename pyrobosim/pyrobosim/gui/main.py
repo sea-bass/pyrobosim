@@ -1,12 +1,28 @@
 """ Main utilities for pyrobosim GUI. """
 
 import numpy as np
+import sys
+
 from PyQt5 import QtWidgets
 from matplotlib.backends.qt_compat import QtCore
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
 
 from .world_canvas import WorldCanvas
 from ..utils.knowledge import query_to_entity
+
+
+def start_gui(world, args):
+    """Initializes GUI"""
+    from pyrobosim.gui.main import PyRoboSimGUI
+    from PyQt5.QtCore import QTimer
+
+    app = PyRoboSimGUI(world, args)
+
+    timer = QTimer()
+    timer.timeout.connect(lambda: None)
+    timer.start(100)
+
+    sys.exit(app.exec_())
 
 
 class PyRoboSimGUI(QtWidgets.QApplication):
