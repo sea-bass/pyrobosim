@@ -2,8 +2,7 @@
 
 import numpy as np
 import warnings
-
-from descartes.patch import PolygonPatch
+from shapely.plotting import patch_from_polygon
 from scipy.spatial import ConvexHull
 
 from ..utils.general import EntityMetadata
@@ -127,11 +126,15 @@ class Object:
 
     def update_visualization_polygon(self):
         """Updates the visualization polygon for the object."""
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            self.viz_patch = PolygonPatch(
-                self.polygon, fill=None, ec=self.viz_color, lw=2, alpha=0.75, zorder=3
-            )
+        self.viz_patch = patch_from_polygon(
+            self.polygon,
+            facecolor=None,
+            edgecolor=self.viz_color,
+            linewidth=2,
+            fill=None,
+            alpha=0.75,
+            zorder=3,
+        )
 
     def get_footprint(self):
         """

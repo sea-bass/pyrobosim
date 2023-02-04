@@ -4,7 +4,7 @@ Room representation for world modeling.
 
 import warnings
 from shapely.geometry import Polygon, Point
-from descartes.patch import PolygonPatch
+from shapely.plotting import patch_from_polygon
 
 from ..navigation.search_graph import Node
 from ..utils.pose import Pose
@@ -91,34 +91,30 @@ class Room:
         self.viz_polygon = self.buffered_polygon.difference(self.polygon)
         for h in self.hallways:
             self.viz_polygon = self.viz_polygon.difference(h.polygon)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            self.viz_patch = PolygonPatch(
-                self.viz_polygon,
-                fc=self.viz_color,
-                ec=self.viz_color,
-                lw=2,
-                alpha=0.75,
-                zorder=2,
-            )
+        self.viz_patch = patch_from_polygon(
+            self.viz_polygon,
+            facecolor=self.viz_color,
+            edgecolor=self.viz_color,
+            linewidth=2,
+            alpha=0.75,
+            zorder=2,
+        )
 
     def get_collision_patch(self):
         """
-        Returns a PolygonPatch of the collision polygon for debug visualization.
+        Returns a patch of the collision polygon for debug visualization.
 
         :return: Polygon patch of the collision polygon.
-        :rtype: :class:`descartes.patch.PolygonPatch`
+        :rtype: :class:`matplotlib.patches.PathPatch`
         """
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            return PolygonPatch(
-                self.internal_collision_polygon,
-                fc=[1, 0, 1],
-                ec=[1, 0, 1],
-                lw=2,
-                alpha=0.5,
-                zorder=2,
-            )
+        return patch_from_polygon(
+            self.internal_collision_polygon,
+            facecolor=(1, 0, 1),
+            edgecolor=(1, 0, 1),
+            linewidth=2,
+            alpha=0.5,
+            zorder=2,
+        )
 
     def is_collision_free(self, pose):
         """

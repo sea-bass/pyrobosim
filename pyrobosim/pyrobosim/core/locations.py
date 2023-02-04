@@ -2,7 +2,7 @@
 
 import warnings
 from shapely.geometry import Point
-from descartes.patch import PolygonPatch
+from shapely.plotting import patch_from_polygon
 
 from ..navigation.search_graph import Node
 from ..utils.general import EntityMetadata
@@ -141,11 +141,15 @@ class Location:
 
     def update_visualization_polygon(self):
         """Updates the visualization polygon for the location."""
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            self.viz_patch = PolygonPatch(
-                self.polygon, fill=None, ec=self.viz_color, lw=2, alpha=0.75, zorder=2
-            )
+        self.viz_patch = patch_from_polygon(
+            self.polygon,
+            facecolor=None,
+            edgecolor=self.viz_color,
+            linewidth=2,
+            fill=None,
+            alpha=0.75,
+            zorder=2,
+        )
 
     def create_spawn_locations(self):
         """Creates the object spawn locations at this location."""
@@ -270,16 +274,15 @@ class ObjectSpawn:
 
     def update_visualization_polygon(self):
         """Updates the visualization polygon for the object spawn."""
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            self.viz_patch = PolygonPatch(
-                self.polygon,
-                fill=None,
-                ec=self.parent.viz_color,
-                lw=1,
-                ls="--",
-                zorder=2,
-            )
+        self.viz_patch = patch_from_polygon(
+            self.polygon,
+            facecolor=None,
+            edgecolor=self.parent.viz_color,
+            linewidth=1,
+            fill=None,
+            ls="--",
+            zorder=2,
+        )
 
     def add_graph_nodes(self):
         """Creates graph nodes for searching."""
