@@ -100,6 +100,16 @@ class PlannerNode(Node):
                 return
             time.sleep(2.0)
 
+        timer_period = 0.01  # seconds
+        self.timer = self.create_timer(timer_period, self.timer_callback)
+
+    def timer_callback(self):
+        if (not self.planning) and self.latest_goal:
+            self.request_world_state()
+
+        if self.world_state_future_response and self.world_state_future_response.done():
+            self.do_plan()
+
     def request_world_state(self):
         """Requests a world state from the world."""
         self.planning = True
@@ -152,19 +162,7 @@ def main():
     rclpy.init()
     planner_node = PlannerNode()
 
-    rate = planner_node.create_rate(10)
-    while rclpy.ok():
-        if (not planner_node.planning) and planner_node.latest_goal:
-            planner_node.request_world_state()
-
-        if (
-            planner_node.world_state_future_response
-            and planner_node.world_state_future_response.done()
-        ):
-            planner_node.do_plan()
-
-        rclpy.spin_once(planner_node)
-        rate.sleep()
+    rclpy.spin(planner_node)
 
     planner_node.destroy_node()
     rclpy.shutdown()
