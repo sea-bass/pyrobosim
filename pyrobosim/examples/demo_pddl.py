@@ -10,6 +10,7 @@ import argparse
 import threading
 
 from pyrobosim.core.yaml import WorldYamlLoader
+from pyrobosim.gui.main import start_gui
 from pyrobosim.planning.pddlstream.planner import PDDLStreamPlanner
 from pyrobosim.planning.pddlstream.utils import get_default_domains_folder
 from pyrobosim.utils.general import get_data_folder
@@ -40,14 +41,6 @@ def load_world():
     data_folder = get_data_folder()
     w = loader.from_yaml(os.path.join(data_folder, world_file))
     return w
-
-
-def start_gui(world, args):
-    """Initializes GUI"""
-    from pyrobosim.gui.main import PyRoboSimGUI
-
-    app = PyRoboSimGUI(world, args)
-    sys.exit(app.exec_())
 
 
 def start_planner(world, args):

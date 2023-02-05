@@ -16,7 +16,8 @@ echo "Created Python virtual environment in $VIRTUALENV_FOLDER"
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 pushd $SCRIPT_DIR/../pyrobosim
 python -m pip install --upgrade pip
-pip install lark pytest pytest-dependency pytest-html wheel
+# TODO: why does `catkin-pkg` help resolve some weird colcon build issues?
+pip install catkin-pkg empy lark pytest pytest-dependency pytest-html wheel
 pip install .
 popd
 echo "Installed Python packages"

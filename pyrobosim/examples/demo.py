@@ -11,6 +11,7 @@ import numpy as np
 from pyrobosim.core.robot import Robot
 from pyrobosim.core.room import Room
 from pyrobosim.core.world import World
+from pyrobosim.gui.main import start_gui
 from pyrobosim.manipulation.grasping import GraspGenerator, ParallelGraspProperties
 from pyrobosim.navigation.execution import ConstantVelocityExecutor
 from pyrobosim.utils.general import get_data_folder
@@ -133,14 +134,6 @@ def create_world_from_yaml(world_file):
 
     loader = WorldYamlLoader()
     return loader.from_yaml(os.path.join(data_folder, world_file))
-
-
-def start_gui(world, args):
-    """Initializes GUI"""
-    from pyrobosim.gui.main import PyRoboSimGUI
-
-    app = PyRoboSimGUI(world, args)
-    sys.exit(app.exec_())
 
 
 def parse_args():
