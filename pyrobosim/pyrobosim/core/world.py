@@ -3,6 +3,7 @@
 import itertools
 import numpy as np
 import warnings
+from typing import Union
 
 from .hallway import Hallway
 from .locations import Location, ObjectSpawn
@@ -145,7 +146,7 @@ class World:
         self.rooms.append(room)
         self.name_to_entity[room.name] = room
         self.num_rooms += 1
-        self.update_bounds()
+        self.update_bounds(entity=room)
 
         # Update the room collision polygon based on the world inflation radius
         room.update_collision_polygons(self.inflation_radius)
@@ -183,7 +184,7 @@ class World:
         self.rooms.remove(room)
         self.name_to_entity.pop(room_name)
         self.num_rooms -= 1
-        self.update_bounds()
+        self.update_bounds(entity=room)
 
         # Update the search graph, if any
         if self.search_graph is not None:
@@ -272,7 +273,7 @@ class World:
         room_end.update_visualization_polygon()
         self.num_hallways += 1
         h.update_collision_polygons(self.inflation_radius)
-        self.update_bounds()
+        self.update_bounds(entity=h)
 
         # Update the search graph, if any
         if self.search_graph is not None:
@@ -624,19 +625,15 @@ class World:
         if restart_numbering:
             self.object_instance_counts = {}
 
-    def update_bounds(self):
+    def update_bounds(self, entity: Union[Room, Hallway]):
         """
         Updates the X and Y bounds of the world.
-
-        TODO: If we're just adding a single room, we only need to check that one
-        and there is probably a more efficient way to do this.
         """
-        for entity in itertools.chain(self.rooms, self.hallways):
-            (xmin, ymin, xmax, ymax) = entity.polygon.bounds
-            self.x_bounds[0] = min(self.x_bounds[0], xmin)
-            self.x_bounds[1] = max(self.x_bounds[1], xmax)
-            self.y_bounds[0] = min(self.y_bounds[0], ymin)
-            self.y_bounds[1] = max(self.y_bounds[1], ymax)
+        (xmin, ymin, xmax, ymax) = entity.polygon.bounds
+        self.x_bounds[0] = min(self.x_bounds[0], xmin)
+        self.x_bounds[1] = max(self.x_bounds[1], xmax)
+        self.y_bounds[0] = min(self.y_bounds[0], ymin)
+        self.y_bounds[1] = max(self.y_bounds[1], ymax)
 
     ######################################
     # Search Graph and Occupancy Methods #
