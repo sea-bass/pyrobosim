@@ -3,6 +3,7 @@ Room representation for world modeling.
 """
 
 import warnings
+from shapely import intersects_xy
 from shapely.geometry import Polygon, Point
 from shapely.plotting import patch_from_polygon
 
@@ -126,10 +127,9 @@ class Room:
         :rtype: bool
         """
         if isinstance(pose, Pose):
-            p = Point(pose.x, pose.y)
+            return intersects_xy(self.internal_collision_polygon, pose.x, pose.y)
         else:
-            p = Point(pose[0], pose[1])
-        return self.internal_collision_polygon.intersects(p)
+            return intersects_xy(self.internal_collision_polygon, pose[0], pose[1])
 
     def add_graph_nodes(self):
         """Creates graph nodes for searching."""
