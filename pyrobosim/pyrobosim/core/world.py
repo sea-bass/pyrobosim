@@ -629,6 +629,11 @@ class World:
     def update_bounds(self, entity, remove=False):
         """
         Updates the X and Y bounds of the world.
+
+        :param entity: The entity that is being added or removed
+        :type entity: :class:`pyrobosim.core.room.Room`/:class:`pyrobosim.core.hallway.Hallway`
+        :param remove: Specifies if the update is due to removal of an entity.
+        :type remove: bool
         """
         if isinstance(entity, (Room, Hallway)):
             (xmin, ymin, xmax, ymax) = entity.polygon.bounds
@@ -639,17 +644,18 @@ class World:
                 self.y_bounds = [ymin, ymax]
                 return
 
-            sets_x_bounds = (self.x_bounds[0] == xmin) or (self.x_bounds[1] == xmax)
-            sets_y_bounds = (self.y_bounds[0] == ymin) or (self.y_bounds[1] == ymin)
-            is_last_room = len(self.rooms) == 0 and isinstance(entity, Room)
-            if remove and (sets_x_bounds or sets_y_bounds):
+            if remove:
+                sets_x_bounds = (self.x_bounds[0] == xmin) or (self.x_bounds[1] == xmax)
+                sets_y_bounds = (self.y_bounds[0] == ymin) or (self.y_bounds[1] == ymin)
+                is_last_room = len(self.rooms) == 0 and isinstance(entity, Room)
                 # Only update if the Room/Hallway being removed affects the bounds
-                for other_entity in itertools.chain(self.rooms, self.hallways):
-                    (xmin, ymin, xmax, ymax) = other_entity.polygon.bounds
-                    self.x_bounds[0] = min(self.x_bounds[0], xmin)
-                    self.x_bounds[1] = max(self.x_bounds[1], xmax)
-                    self.y_bounds[0] = min(self.y_bounds[0], ymin)
-                    self.y_bounds[1] = max(self.y_bounds[1], ymax)
+                if sets_x_bounds or sets_y_bounds:
+                    for other_entity in itertools.chain(self.rooms, self.hallways):
+                        (xmin, ymin, xmax, ymax) = other_entity.polygon.bounds
+                        self.x_bounds[0] = min(self.x_bounds[0], xmin)
+                        self.x_bounds[1] = max(self.x_bounds[1], xmax)
+                        self.y_bounds[0] = min(self.y_bounds[0], ymin)
+                        self.y_bounds[1] = max(self.y_bounds[1], ymax)
                 if is_last_room:
                     # When last room has been deleted
                     self.x_bounds = None
