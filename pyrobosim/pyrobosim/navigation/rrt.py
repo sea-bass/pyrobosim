@@ -50,7 +50,11 @@ class RRTPlanner:
         :type max_time: float
         :param rewire_radius: Radius around a node to rewire the RRT,
             if using the RRT* algorithm.
-        :param rewire_radius: float
+        :type rewire_radius: float
+        :param use_grid: If to use occupancy grid for collision checking.
+        :type use_grid: bool
+        :param grid_resolution: The resolution to use for the occupancy grid.
+        :type grid_resolution: float
         """
         # Algorithm options
         self.bidirectional = bidirectional

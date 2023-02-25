@@ -79,7 +79,7 @@ class World:
         self.object_radius = object_radius
         self.set_inflation_radius(inflation_radius)
 
-        # Occupany grid
+        # Occupancy grid
         self.occupancy_grid = None
 
     ############
