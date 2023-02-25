@@ -97,6 +97,10 @@ class OccupancyGrid:
         with open(yaml_file, "w") as f:
             yaml.dump(yaml_dict, f, sort_keys=False, default_flow_style=None)
 
+    def xy_from_world(self, x, y):
+        # Convert to grid coordinates
+        return x, y
+
 
 def occupancy_grid_from_world(
     world,

@@ -25,6 +25,8 @@ class RRTPlanner:
         max_nodes_sampled=1000,
         max_time=5.0,
         rewire_radius=1.0,
+        use_grid=False,
+        grid_resolution=0.05,
     ):
         """
         Creates an instance of an RRT planner.
@@ -67,6 +69,8 @@ class RRTPlanner:
         self.color_alpha = 0.5
 
         self.world = world
+        if use_grid:
+            self.world.create_occupancy_grid()
         self.reset()
 
     def reset(self):

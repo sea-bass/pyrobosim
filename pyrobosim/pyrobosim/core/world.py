@@ -10,6 +10,7 @@ from .locations import Location, ObjectSpawn
 from .objects import Object
 from .room import Room
 from .robot import Robot
+from ..navigation.occupancy_grid import occupancy_grid_from_world
 from ..navigation.search_graph import Node, SearchGraph, SearchGraphPlanner
 from ..utils.knowledge import resolve_to_location, resolve_to_object
 from ..utils.pose import Pose
@@ -77,6 +78,9 @@ class World:
         # Distances for collision-aware navigation and sampling
         self.object_radius = object_radius
         self.set_inflation_radius(inflation_radius)
+
+        # Occupany grid
+        self.occupancy_grid = None
 
     ############
     # Metadata #
@@ -683,13 +687,18 @@ class World:
         :return: True if the pose is occupied, else False if free.
         :rtype: bool
         """
+        if self.occupancy_grid:
+            x, y = (pose.x, pose.y) if isinstance(pose, Pose) else (pose[0], pose[1])
+            x, y = self.occupancy_grid.xy_from_world(x, y)
+            return self.occupancy_grid.data[x, y] == 1
         # Loop through all the rooms and hallways and check if the pose
         # is deemed collision-free in any of them.
-        for entity in itertools.chain(self.rooms, self.hallways):
-            if entity.is_collision_free(pose):
-                return False
-        # If we made it through, the pose is occupied.
-        return True
+        else:
+            for entity in itertools.chain(self.rooms, self.hallways):
+                if entity.is_collision_free(pose):
+                    return False
+            # If we made it through, the pose is occupied.
+            return True
 
     def collides_with_robots(self, pose, robot=None):
         """
@@ -1297,3 +1306,6 @@ class World:
         else:
             warnings.warn(f"Could not find robot {robot_name} to remove.")
             return False
+
+    def create_occupancy_grid(self):
+        self.occupancy_grid = occupancy_grid_from_world(self)
