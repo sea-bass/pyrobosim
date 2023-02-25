@@ -625,15 +625,20 @@ class World:
         if restart_numbering:
             self.object_instance_counts = {}
 
-    def update_bounds(self, entity: Union[Room, Hallway]):
+    def update_bounds(self, entity):
         """
         Updates the X and Y bounds of the world.
         """
-        (xmin, ymin, xmax, ymax) = entity.polygon.bounds
-        self.x_bounds[0] = min(self.x_bounds[0], xmin)
-        self.x_bounds[1] = max(self.x_bounds[1], xmax)
-        self.y_bounds[0] = min(self.y_bounds[0], ymin)
-        self.y_bounds[1] = max(self.y_bounds[1], ymax)
+        if isinstance(entity, (Room, Hallway)):
+            (xmin, ymin, xmax, ymax) = entity.polygon.bounds
+            self.x_bounds[0] = min(self.x_bounds[0], xmin)
+            self.x_bounds[1] = max(self.x_bounds[1], xmax)
+            self.y_bounds[0] = min(self.y_bounds[0], ymin)
+            self.y_bounds[1] = max(self.y_bounds[1], ymax)
+        else:
+            warnings.warn(
+                f"Updating bounds with unsupported entity type {type(entity)}"
+            )
 
     ######################################
     # Search Graph and Occupancy Methods #
