@@ -641,7 +641,7 @@ class World:
 
             sets_x_bounds = (self.x_bounds[0] == xmin) or (self.x_bounds[1] == xmax)
             sets_y_bounds = (self.y_bounds[0] == ymin) or (self.y_bounds[1] == ymin)
-            is_last_room = len(self.rooms) == 1 and isinstance(entity, Room)
+            is_last_room = len(self.rooms) == 0 and isinstance(entity, Room)
             if remove and (sets_x_bounds or sets_y_bounds):
                 # Only update if the Room/Hallway being removed affects the bounds
                 for other_entity in itertools.chain(self.rooms, self.hallways):
