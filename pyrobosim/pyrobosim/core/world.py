@@ -3,7 +3,6 @@
 import itertools
 import numpy as np
 import warnings
-from typing import Union
 
 from .hallway import Hallway
 from .locations import Location, ObjectSpawn
