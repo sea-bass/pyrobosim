@@ -72,7 +72,8 @@ class RRTPlanner:
     def reset(self):
         """Resets the search trees and planning metrics."""
         self.graph = SearchGraph(world=self.world)
-        self.graph_goal = SearchGraph(world=self.world)
+        if self.bidirectional:
+            self.graph_goal = SearchGraph(world=self.world)
         self.latest_path = Path()
         self.planning_time = 0.0
         self.nodes_sampled = 0
