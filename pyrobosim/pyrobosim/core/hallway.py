@@ -2,6 +2,7 @@
 
 import warnings
 import numpy as np
+from shapely import intersects_xy
 from shapely.geometry import LineString, MultiLineString, Point
 from shapely.plotting import patch_from_polygon
 
@@ -165,10 +166,10 @@ class Hallway:
         :rtype: bool
         """
         if isinstance(pose, Pose):
-            p = Point(pose.x, pose.y)
+            x, y = pose.x, pose.y
         else:
-            p = Point(pose[0], pose[1])
-        return self.internal_collision_polygon.intersects(p)
+            x, y = pose[0], pose[1]
+        return intersects_xy(self.internal_collision_polygon, x, y)
 
     def add_graph_nodes(self):
         """Creates graph nodes for searching."""

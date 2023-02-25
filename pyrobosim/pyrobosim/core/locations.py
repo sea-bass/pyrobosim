@@ -1,6 +1,7 @@
 """ Representations for locations and their corresponding object spawns. """
 
 import warnings
+from shapely import intersects_xy
 from shapely.geometry import Point
 from shapely.plotting import patch_from_polygon
 
@@ -81,10 +82,10 @@ class Location:
         :rtype: bool
         """
         if isinstance(pose, Pose):
-            p = Point(pose.x, pose.y)
+            x, y = pose.x, pose.y
         else:
-            p = Point(pose[0], pose[1])
-        return self.polygon.intersects(p)
+            x, y = pose[0], pose[1]
+        return intersects_xy(self.polygon, x, y)
 
     def set_pose(self, pose):
         """
@@ -267,10 +268,10 @@ class ObjectSpawn:
         :rtype: bool
         """
         if isinstance(pose, Pose):
-            p = Point(pose.x, pose.y)
+            x, y = pose.x, pose.y
         else:
-            p = Point(pose[0], pose[1])
-        return self.polygon.intersects(p)
+            x, y = pose[0], pose[1]
+        return intersects_xy(self.polygon, x, y)
 
     def update_visualization_polygon(self):
         """Updates the visualization polygon for the object spawn."""
