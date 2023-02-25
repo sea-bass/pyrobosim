@@ -1,5 +1,6 @@
 """ Main file containing the core world modeling tools. """
 
+import sys
 import itertools
 import numpy as np
 import warnings
@@ -60,9 +61,9 @@ class World:
         self.location_instance_counts = {}
         self.object_instance_counts = {}
 
-        # World bounds
-        self.x_bounds = [0, 0]
-        self.y_bounds = [0, 0]
+        # World bounds, will be set by update_bounds()
+        self.x_bounds = None
+        self.y_bounds = None
 
         # Search graph for navigation
         self.search_graph = None
@@ -183,7 +184,7 @@ class World:
         self.rooms.remove(room)
         self.name_to_entity.pop(room_name)
         self.num_rooms -= 1
-        self.update_bounds(entity=room)
+        self.update_bounds(entity=room, remove=True)
 
         # Update the search graph, if any
         if self.search_graph is not None:
@@ -303,6 +304,7 @@ class World:
             r.hallways.remove(hallway)
             r.update_collision_polygons()
             r.update_visualization_polygon()
+            self.update_bounds(entity=hallway, remove=True)
         return True
 
     def add_location(self, category, room, pose, name=None):
@@ -624,16 +626,40 @@ class World:
         if restart_numbering:
             self.object_instance_counts = {}
 
-    def update_bounds(self, entity):
+    def update_bounds(self, entity, remove=False):
         """
         Updates the X and Y bounds of the world.
         """
         if isinstance(entity, (Room, Hallway)):
             (xmin, ymin, xmax, ymax) = entity.polygon.bounds
-            self.x_bounds[0] = min(self.x_bounds[0], xmin)
-            self.x_bounds[1] = max(self.x_bounds[1], xmax)
-            self.y_bounds[0] = min(self.y_bounds[0], ymin)
-            self.y_bounds[1] = max(self.y_bounds[1], ymax)
+
+            if not self.x_bounds:
+                # When adding the first room
+                self.x_bounds = [xmin, xmax]
+                self.y_bounds = [ymin, ymax]
+                return
+
+            sets_x_bounds = (self.x_bounds[0] == xmin) or (self.x_bounds[1] == xmax)
+            sets_y_bounds = (self.y_bounds[0] == ymin) or (self.y_bounds[1] == ymin)
+            is_last_room = len(self.rooms) == 1 and isinstance(entity, Room)
+            if remove and (sets_x_bounds or sets_y_bounds):
+                # Only update if the Room/Hallway being removed affects the bounds
+                for other_entity in itertools.chain(self.rooms, self.hallways):
+                    (xmin, ymin, xmax, ymax) = other_entity.polygon.bounds
+                    self.x_bounds[0] = min(self.x_bounds[0], xmin)
+                    self.x_bounds[1] = max(self.x_bounds[1], xmax)
+                    self.y_bounds[0] = min(self.y_bounds[0], ymin)
+                    self.y_bounds[1] = max(self.y_bounds[1], ymax)
+                if is_last_room:
+                    # When last room has been deleted
+                    self.x_bounds = None
+                    self.y_bounds = None
+            else:
+                # Adding a Room/Hallway
+                self.x_bounds[0] = min(self.x_bounds[0], xmin)
+                self.x_bounds[1] = max(self.x_bounds[1], xmax)
+                self.y_bounds[0] = min(self.y_bounds[0], ymin)
+                self.y_bounds[1] = max(self.y_bounds[1], ymax)
         else:
             warnings.warn(
                 f"Updating bounds with unsupported entity type {type(entity)}"
