@@ -1307,5 +1307,7 @@ class World:
             warnings.warn(f"Could not find robot {robot_name} to remove.")
             return False
 
-    def create_occupancy_grid(self):
-        self.occupancy_grid = occupancy_grid_from_world(self)
+    def create_occupancy_grid(self, resolution):
+        self.occupancy_grid = occupancy_grid_from_world(
+            self, resolution=resolution, inflation_radius=self.inflation_radius
+        )

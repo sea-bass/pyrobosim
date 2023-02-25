@@ -70,7 +70,7 @@ class RRTPlanner:
 
         self.world = world
         if use_grid:
-            self.world.create_occupancy_grid()
+            self.world.create_occupancy_grid(resolution=grid_resolution)
         self.reset()
 
     def reset(self):
