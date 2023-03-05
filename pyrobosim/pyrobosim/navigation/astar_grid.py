@@ -109,6 +109,7 @@ class AstarGrid:
 
     def plan(self, start, goal):
         """Plans a path from start to goal"""
+        # TODO : add time based termination
         self._reset()
         start = self.grid.world_to_grid(start.x, start.y)
         goal = self.grid.world_to_grid(goal.x, goal.y)
@@ -118,16 +119,18 @@ class AstarGrid:
 
         path_found = False
         self.candidates.append(start_node)
-        # TODO : add time bases termination
         while not path_found and self.candidates:
             current = self._get_best_candidate()
             if current == goal_node:
                 path_found = True
             self._expand(current)
             self._mark_visited(current)
+
         if path_found:
             self.path = self._generate_path(current)
             return self.path
+        else:
+            return []
 
     def plot(self, axes, path_color="m", show_path=True):
         artists = []
