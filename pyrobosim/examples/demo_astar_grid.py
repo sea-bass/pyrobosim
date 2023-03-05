@@ -18,9 +18,7 @@ def test_astar_grid(resolution=0.05):
     )
     start = Pose(x=-0.5, y=-0.5)
     goal = Pose(x=3.0, y=3.0)
-    astar.plan(start, goal)
     robot = w.robots[0]
-    print(robot.radius)
     robot.set_pose(start)
     robot.set_path_planner(astar)
     robot.current_path = robot.plan_path(start, goal)
