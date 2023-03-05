@@ -2,6 +2,7 @@
 
 import os
 import yaml
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -96,6 +97,19 @@ class OccupancyGrid:
         }
         with open(yaml_file, "w") as f:
             yaml.dump(yaml_dict, f, sort_keys=False, default_flow_style=None)
+
+    def world_to_grid(self, x, y):
+        x_grid = math.floor((x - self.origin[0]) / self.resolution)
+        y_grid = math.floor((y - self.origin[1]) / self.resolution)
+        return (x_grid, y_grid)
+
+    def grid_to_world(self, x, y):
+        x_world = (x * self.resolution) + self.origin[0]
+        y_world = (y * self.resolution) + self.origin[1]
+        return (x_world, y_world)
+
+    def is_occupied(self, x, y):
+        return self.data[x, y] == 1
 
 
 def occupancy_grid_from_world(
