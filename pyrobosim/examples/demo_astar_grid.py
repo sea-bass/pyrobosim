@@ -13,7 +13,9 @@ w = loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
 
 
 def test_astar_grid(resolution=0.05):
-    astar = AstarGrid(w=w, resolution=resolution, inflation_radius=2 * w.robots[0].radius)
+    astar = AstarGrid(
+        w=w, resolution=resolution, inflation_radius=2 * w.robots[0].radius
+    )
     start = Pose(x=-0.5, y=-0.5)
     goal = Pose(x=3.0, y=3.0)
     astar.plan(start, goal)
