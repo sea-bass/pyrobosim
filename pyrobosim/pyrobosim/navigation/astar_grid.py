@@ -17,25 +17,42 @@ class Node:
     def f(self):
         return self.g + self.h
 
-    def __eq__(self, __o):
-        """Equality definition for a Node"""
-        return self.x == __o.x and self.y == __o.y
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
+
+    def __le__(self, other):
+        return self.f <= other.f
+
+    def __ge__(self, other):
+        return self.f >= other.f
+
+    def __lt__(self, other):
+        return self.f < other.f
+
+    def __gt__(self, other):
+        return self.f > other.f
+
+    def __ne__(self, other):
+        return self.x != other.x or self.y != other.y
 
     def __repr__(self) -> str:
-        return f"({self.x}, {self.y}) : {self.f}\n"
+        return f"(Node -> {self.x}, {self.y}), Cost : {self.f}\n"
+
+
+from queue import PriorityQueue
 
 
 class AstarGrid:
     """Occupancy grid based A-star planner"""
 
-    def __init__(self, w, resolution=0.05, inflation_radius=0.0) -> None:
+    def __init__(self, world, resolution=0.05, inflation_radius=0.0) -> None:
         self.grid = occupancy_grid_from_world(
-            w, resolution=resolution, inflation_radius=inflation_radius
+            world, resolution=resolution, inflation_radius=inflation_radius
         )
-        self.world = w
+        self.world = world
         self.resolution = resolution
         self.inflation_radius = inflation_radius
-        self.candidates = []  # Node
+        self.candidates = PriorityQueue()  # Node
         self.visited = set()  # (x, y)
         self.start = None
         self.goal = None
@@ -47,7 +64,7 @@ class AstarGrid:
             resolution=self.resolution,
             inflation_radius=self.inflation_radius,
         )
-        self.candidates.clear()
+        self.candidates = PriorityQueue()
         self.visited.clear()
         self.goal = None
         self.start = None
@@ -73,17 +90,11 @@ class AstarGrid:
             if (_x, _y) not in self.visited and not self.grid.is_occupied(_x, _y):
                 _g = node.g + motion_costs[i]
                 _h = self._heuristic((_x, _y), self.goal)
-                self.candidates.append(Node(_x, _y, _g, _h, parent=node))
-
-    def _rank_candidates(self):
-        """Orders the available candidates by their cost `f`"""
-        # TODO : Can this be optimized to avoid sorting the actual list ?
-        self.candidates = sorted(self.candidates, key=lambda node: node.f, reverse=True)
+                self.candidates.put(Node(_x, _y, _g, _h, parent=node))
 
     def _get_best_candidate(self):
         """Return the candidate with best metric"""
-        self._rank_candidates()
-        return self.candidates.pop()
+        return self.candidates.get()
 
     def _mark_visited(self, node):
         """
@@ -117,7 +128,7 @@ class AstarGrid:
         goal_node = Node(goal[0], goal[1], 0, 0)
 
         path_found = False
-        self.candidates.append(start_node)
+        self.candidates.put(start_node)
 
         t_start = time.time()
         while not path_found and self.candidates:

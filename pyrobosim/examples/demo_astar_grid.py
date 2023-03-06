@@ -9,16 +9,18 @@ from pyrobosim.navigation.astar_grid import AstarGrid
 # Load a test world.
 data_folder = get_data_folder()
 loader = WorldYamlLoader()
-w = loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
+world = loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
 
 
 def test_astar_grid(resolution=0.05):
+    robot = world.robots[0]
+
     astar = AstarGrid(
-        w=w, resolution=resolution, inflation_radius=2 * w.robots[0].radius
+        world=world, resolution=resolution, inflation_radius=2 * robot.radius
     )
     start = Pose(x=-0.5, y=-0.5)
     goal = Pose(x=3.0, y=3.0)
-    robot = w.robots[0]
+
     robot.set_pose(start)
     robot.set_path_planner(astar)
     robot.current_path = robot.plan_path(start, goal)
