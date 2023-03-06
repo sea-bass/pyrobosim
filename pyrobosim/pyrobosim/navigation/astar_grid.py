@@ -78,13 +78,14 @@ class AStarGridPlanner:
         self.start = None
         self.world = world
         self.visited = set()  # (x, y)
-        self.candidates = PriorityQueue()  # Node
+        self.planning_time = 0
         self.max_time = max_time
         self.num_nodes_expanded = 0
         self.resolution = resolution
         self.distance_metric = distance_metric
         self.diagonal_motion = diagonal_motion
         self.inflation_radius = inflation_radius
+        self.candidates = PriorityQueue()  # Node
 
         self._set_actions()
         self._set_heuristic()
