@@ -12,11 +12,11 @@ loader = WorldYamlLoader()
 world = loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
 
 
-def test_astar_grid(resolution=0.025):
+def test_astar_grid(resolution=0.01):
     robot = world.robots[0]
 
     astar = AStarGridPlanner(
-        world=world, resolution=resolution, inflation_radius=2 * robot.radius
+        world=world, resolution=resolution, inflation_radius=1.5 * robot.radius
     )
     start = Pose(x=-0.5, y=-0.5)
     goal = Pose(x=3.0, y=3.0)

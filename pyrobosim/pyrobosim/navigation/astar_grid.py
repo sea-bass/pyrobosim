@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import time
+import math
+import warnings
 from queue import PriorityQueue
 from pyrobosim.utils.pose import Pose
 from pyrobosim.utils.motion import Path
@@ -60,31 +62,49 @@ class AStarGridPlanner:
 
         :param world: World object to use in the planner.
         :type world: :class:`pyrobosim.core.world.World`
-        :param resolution: The resolution to be used in the occupancy grid
+        :param resolution: The resolution to be used in the occupancy grid.
         :type resolution: float
-        :param inflation_radius: The inflation radius to be used for the planner's occupancy grid
+        :param inflation_radius: The inflation radius to be used for the planner's occupancy grid.
         :type inflation_radius: float
-        :param distance_metric: The metric to be used as heuristic
-        :type distance_metric: string 'Manhattan' or 'Euclidian'
-        :param diagonal_motion: If to use expand nodes using diagonal motion
+        :param distance_metric: The metric to be used as heuristic.
+        :type distance_metric: string 'Manhattan' or 'Euclidean'
+        :param diagonal_motion: If to expand nodes using diagonal motion.
         :type diagonal_motion: bool
-        :param max_time: Maximum time allowed for planning
+        :param max_time: Maximum time allowed for planning, in seconds.
         :type max_time: float
         """
-        self.grid = occupancy_grid_from_world(
-            world, resolution=resolution, inflation_radius=inflation_radius
-        )
-        self.max_time = max_time
-        self.world = world
-        self.resolution = resolution
-        self.inflation_radius = inflation_radius
-        self.candidates = PriorityQueue()  # Node
-        self.visited = set()  # (x, y)
-        self.start = None
+
         self.goal = None
+        self.start = None
+        self.world = world
+        self.visited = set()  # (x, y)
+        self.candidates = []  # Node
+        self.max_time = max_time
         self.num_nodes_expanded = 0
+        self.resolution = resolution
         self.distance_metric = distance_metric
         self.diagonal_motion = diagonal_motion
+        self.inflation_radius = inflation_radius
+
+        self._set_actions()
+        self._set_heuristic()
+        self._set_occupancy_grid()
+
+    def _set_occupancy_grid(self):
+        """Generates occupancy grid of specified configuration"""
+        print(
+            f"Generating occupancy grid at resolution {self.resolution} and inflation radius {self.inflation_radius}"
+        )
+        ts = time.time()
+        self.grid = occupancy_grid_from_world(
+            self.world,
+            resolution=self.resolution,
+            inflation_radius=self.inflation_radius,
+        )
+        print(f"Generated in : {time.time() - ts} seconds.")
+
+    def _set_actions(self):
+        """Generates the actions available"""
         self.actions = {
             "left": {"cost": 1, "action": (-1, 0)},
             "right": {"cost": 1, "action": (1, 0)},
@@ -99,22 +119,24 @@ class AStarGridPlanner:
         self.selected_actions = keys if self.diagonal_motion else keys[:4]
         print(f"Selected actions : {self.selected_actions}")
 
-        # Set the heuristic function
-        if self.distance_metric == "Manhattan":
-            self._heuristic = lambda p1, p2: abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
-        elif self.distance_metric == "Euclidian":
-            # Not taking the square root since we dont need the actual distance
-            self._heuristic = lambda p1, p2: (p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2
+    def _set_heuristic(self):
+        """Sets the heuristic"""
+        euclidean = lambda p1, p2: math.sqrt(
+            (p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2
+        )
+        manhattan = lambda p1, p2: abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
+
+        if self.distance_metric == "Euclidean":
+            self._heuristic = euclidean
+        elif self.distance_metric == "Manhattan":
+            if not self.diagonal_motion:
+                warnings.warn("Manhattan over estimates without diagonal motion")
+            self._heuristic = manhattan
         print(f"Selected heuristic: {self.distance_metric}")
 
     def _reset(self):
         """Resets the state of data used by the algorithm"""
-        self.grid = occupancy_grid_from_world(
-            self.world,
-            resolution=self.resolution,
-            inflation_radius=self.inflation_radius,
-        )
-        self.candidates = PriorityQueue()
+        self.candidates = []
         self.visited.clear()
         self.goal = None
         self.start = None
@@ -132,15 +154,19 @@ class AStarGridPlanner:
             action = self.actions[action_name]["action"]
             _x = node.x + action[0]
             _y = node.y + action[1]
-            if (_x, _y) not in self.visited and not self.grid.is_occupied(_x, _y):
+            visited = (_x, _y) in self.visited
+            occupied = self.grid.is_occupied(_x, _y)
+            if not visited and not occupied:
                 _g = node.g + cost
                 _h = self._heuristic((_x, _y), self.goal)
-                self.candidates.put(Node(_x, _y, _g, _h, parent=node), block=False)
+                new_node = Node(_x, _y, _g, _h, parent=node)
+                self.candidates.append(new_node)
                 self.num_nodes_expanded += 1
 
     def _get_best_candidate(self):
         """Return the candidate with best metric"""
-        return self.candidates.get()
+        self.candidates = sorted(self.candidates, key=lambda x: x.f, reverse=True)
+        return self.candidates.pop()
 
     def _mark_visited(self, node):
         """
@@ -165,6 +191,16 @@ class AStarGridPlanner:
         self.latest_path = Path(poses=poses)
         self.latest_path.fill_yaws()
 
+    def _is_valid_start_goal(self):
+        valid = True
+        if self.grid.is_occupied(self.start[0], self.start[1]):
+            warnings.warn(f"Start position {self.start} is occupied")
+            valid = False
+        if self.grid.is_occupied(self.goal[0], self.goal[1]):
+            valid = False
+            warnings.warn(f"Goal position {self.goal} is occupied")
+        return valid
+
     def plan(self, start, goal):
         """
         Plans a path from start to goal
@@ -174,17 +210,23 @@ class AStarGridPlanner:
         :type goal: :class: Pose
         """
         self._reset()
-        start = self.grid.world_to_grid(start.x, start.y)
-        goal = self.grid.world_to_grid(goal.x, goal.y)
-        self.start, self.goal = start, goal
-        start_node = Node(start[0], start[1], g=0, h=self._heuristic(start, goal))
-        goal_node = Node(goal[0], goal[1], 0, 0)
+        self.start = self.grid.world_to_grid(start.x, start.y)
+        self.goal = self.grid.world_to_grid(goal.x, goal.y)
+
+        # If start or goal position is occupied, return empty path with warning.
+        if not self._is_valid_start_goal():
+            return Path()
+
+        start_node = Node(
+            self.start[0], self.start[1], g=0, h=self._heuristic(self.start, self.goal)
+        )
+        goal_node = Node(self.goal[0], self.goal[1], 0, 0)
 
         print("Planning : Started")
         timed_out = False
         path_found = False
         t_start = time.time()
-        self.candidates.put(start_node, block=False)
+        self.candidates.append(start_node)
         while not path_found and self.candidates and not timed_out:
             current = self._get_best_candidate()
             if current == goal_node:
@@ -201,7 +243,6 @@ class AStarGridPlanner:
             return self.latest_path
         else:
             print("Planning : Failed")
-            print(f"Timed Out : {timed_out}")
             return Path()
 
     def print_metrics(self):
@@ -211,9 +252,9 @@ class AStarGridPlanner:
         if self.latest_path.num_poses == 0:
             print("No path.")
         else:
-            print("Latest path from RRT:")
+            print("Latest path from A*:")
             self.latest_path.print_details()
-        print("")
+        print("\n")
         print(f"Time to plan: {self.planning_time} seconds")
         print(f"Number of nodes expanded : {self.num_nodes_expanded}")
 
