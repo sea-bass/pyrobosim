@@ -176,6 +176,25 @@ class AStarGridPlanner:
         """
         self.visited.add((node.x, node.y))
 
+    @staticmethod
+    def _reduce_waypoints(poses):
+        waypoints = []
+        len_poses = len(poses)
+        if len_poses <= 2:
+            return poses
+        slope = lambda p1, p2: ((p2.y - p1.y), (p2.x - p1.x))
+        curr_start = poses[0]
+        curr_dx, curr_dy = slope(poses[0], poses[1])
+        waypoints.append(curr_start)
+        for i in range(2, len_poses):
+            new_dx, new_dy = slope(curr_start, poses[i])
+            if not math.isclose((curr_dy * new_dx), (new_dy * curr_dx)):
+                waypoints.append(poses[i - 1])
+                curr_dx, curr_dy = new_dx, new_dy
+                curr_start = poses[i - 1]
+        waypoints.append(poses[-1])
+        return waypoints
+
     def _generate_path(self, node):
         """
         Backtrack from a node to generate the full path till that node
@@ -188,6 +207,9 @@ class AStarGridPlanner:
             poses.append(Pose(x=x, y=y))
             node = node.parent
         poses.reverse()
+        print(f"Number of waypoints in full path : {len(poses)}")
+        poses = self._reduce_waypoints(poses)
+        print(f"Number of waypoints in reduced path : {len(poses)}")
         self.latest_path = Path(poses=poses)
         self.latest_path.fill_yaws()
 
