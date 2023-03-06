@@ -53,6 +53,7 @@ class AStarGridPlanner:
         inflation_radius=0.0,
         distance_metric="Manhattan",
         diagonal_motion=True,
+        max_time=5.0,
     ) -> None:
         """
         Creates a grid based A* planner
@@ -71,6 +72,7 @@ class AStarGridPlanner:
         self.grid = occupancy_grid_from_world(
             world, resolution=resolution, inflation_radius=inflation_radius
         )
+        self.max_time = max_time
         self.world = world
         self.resolution = resolution
         self.inflation_radius = inflation_radius
@@ -118,7 +120,11 @@ class AStarGridPlanner:
         self.num_nodes_expanded = 0
 
     def _expand(self, node):
-        """Generates and adds free neighbours to exploration candidates"""
+        """
+        Generates and adds free neighbours to exploration candidates
+        :param node: The node to be expanded from
+        :type node: :class: Node
+        """
         for action_name in self.selected_actions:
             cost = self.actions[action_name]["cost"]
             action = self.actions[action_name]["action"]
@@ -166,7 +172,6 @@ class AStarGridPlanner:
         :param goal: The goal postion in world coordinates
         :type goal: :class: Pose
         """
-        # TODO : add time based termination
         self._reset()
         start = self.grid.world_to_grid(start.x, start.y)
         goal = self.grid.world_to_grid(goal.x, goal.y)
@@ -178,12 +183,14 @@ class AStarGridPlanner:
         self.candidates.put(start_node)
 
         t_start = time.time()
-        while not path_found and self.candidates:
+        timed_out = False
+        while not path_found and self.candidates and not timed_out:
             current = self._get_best_candidate()
             if current == goal_node:
                 path_found = True
             self._expand(current)
             self._mark_visited(current)
+            timed_out = time.time() - t_start >= self.max_time
         self.planning_time = time.time() - t_start
 
         if path_found:
