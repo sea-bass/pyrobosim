@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import math
+import time
 from pyrobosim.utils.pose import Pose
 from pyrobosim.utils.motion import Path
 from pyrobosim.navigation.occupancy_grid import occupancy_grid_from_world
@@ -36,7 +36,7 @@ class AstarGrid:
         self.resolution = resolution
         self.inflation_radius = inflation_radius
         self.candidates = []  # Node
-        self.visited = []  # (x, y)
+        self.visited = set()  # (x, y)
         self.start = None
         self.goal = None
 
@@ -51,7 +51,7 @@ class AstarGrid:
         self.visited.clear()
         self.goal = None
         self.start = None
-        self.latest_path = []
+        self.latest_path = Path()
 
     def _heuristic(self, p1, p2):
         """
@@ -91,7 +91,7 @@ class AstarGrid:
         :param node: The node that has been visited
         :type node: :class: Node
         """
-        self.visited.append((node.x, node.y))
+        self.visited.add((node.x, node.y))
 
     def _generate_path(self, node):
         """
@@ -105,7 +105,6 @@ class AstarGrid:
         poses.reverse()
         self.latest_path = Path(poses=poses)
         self.latest_path.fill_yaws()
-        return self.latest_path
 
     def plan(self, start, goal):
         """Plans a path from start to goal"""
@@ -119,18 +118,33 @@ class AstarGrid:
 
         path_found = False
         self.candidates.append(start_node)
+
+        t_start = time.time()
         while not path_found and self.candidates:
             current = self._get_best_candidate()
             if current == goal_node:
                 path_found = True
             self._expand(current)
             self._mark_visited(current)
+        self.planning_time = time.time() - t_start
 
         if path_found:
-            self.path = self._generate_path(current)
-            return self.path
+            self._generate_path(current)
+            return self.latest_path
         else:
-            return []
+            return Path()
+
+    def print_metrics(self):
+        """
+        Print metrics about the latest path computed.
+        """
+        if self.latest_path.num_poses == 0:
+            print("No path.")
+        else:
+            print("Latest path from RRT:")
+            self.latest_path.print_details()
+        print("")
+        print(f"Time to plan: {self.planning_time} seconds")
 
     def plot(self, axes, path_color="m", show_path=True):
         artists = []

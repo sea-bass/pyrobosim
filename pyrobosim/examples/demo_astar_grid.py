@@ -22,6 +22,7 @@ def test_astar_grid(resolution=0.05):
     robot.set_pose(start)
     robot.set_path_planner(astar)
     robot.current_path = robot.plan_path(start, goal)
+    astar.print_metrics()
 
 
 if __name__ == "__main__":
