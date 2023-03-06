@@ -3,6 +3,7 @@
 import os
 import yaml
 import math
+import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -98,6 +99,11 @@ class OccupancyGrid:
         with open(yaml_file, "w") as f:
             yaml.dump(yaml_dict, f, sort_keys=False, default_flow_style=None)
 
+    def is_in_bounds(self, x, y):
+        x_bounds = (x >= 0) and (x <= self.width)
+        y_bounds = (y >= 0) and (y <= self.height)
+        return x_bounds and y_bounds
+
     def world_to_grid(self, x, y):
         x_grid = math.floor((x - self.origin[0]) / self.resolution)
         y_grid = math.floor((y - self.origin[1]) / self.resolution)
@@ -109,7 +115,7 @@ class OccupancyGrid:
         return (x_world, y_world)
 
     def is_occupied(self, x, y):
-        return self.data[x, y] == 1
+        return (not self.is_in_bounds(x, y)) or self.data[x, y] == 1
 
 
 def occupancy_grid_from_world(

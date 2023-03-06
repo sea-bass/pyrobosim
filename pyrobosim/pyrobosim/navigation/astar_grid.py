@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import time
+from queue import PriorityQueue
 from pyrobosim.utils.pose import Pose
 from pyrobosim.utils.motion import Path
 from pyrobosim.navigation.occupancy_grid import occupancy_grid_from_world
@@ -9,12 +10,13 @@ class Node:
     def __init__(self, x, y, g, h, parent=None) -> None:
         self.x = x
         self.y = y
-        self.g = g
-        self.h = h
+        self.g = g  # Cost to reach this node from start
+        self.h = h  # Approximate cost to goal from this node
         self.parent = parent
 
     @property
     def f(self):
+        """Total cost to goal via this node"""
         return self.g + self.h
 
     def __eq__(self, other):
@@ -39,10 +41,7 @@ class Node:
         return f"(Node -> {self.x}, {self.y}), Cost : {self.f}\n"
 
 
-from queue import PriorityQueue
-
-
-class AstarGrid:
+class AStarGridPlanner:
     """Occupancy grid based A-star planner"""
 
     def __init__(self, world, resolution=0.05, inflation_radius=0.0) -> None:
@@ -184,6 +183,6 @@ class AstarGrid:
         f = plt.figure()
         ax = f.add_subplot(111)
         self.plot(ax, show_graph=show_graph, show_path=show_path)
-        plt.title("Astar")
+        plt.title("A*")
         plt.axis("equal")
         plt.show()

@@ -4,7 +4,7 @@ import os
 from pyrobosim.core.yaml import WorldYamlLoader
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
-from pyrobosim.navigation.astar_grid import AstarGrid
+from pyrobosim.navigation.astar_grid import AStarGridPlanner
 
 # Load a test world.
 data_folder = get_data_folder()
@@ -15,7 +15,7 @@ world = loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
 def test_astar_grid(resolution=0.05):
     robot = world.robots[0]
 
-    astar = AstarGrid(
+    astar = AStarGridPlanner(
         world=world, resolution=resolution, inflation_radius=2 * robot.radius
     )
     start = Pose(x=-0.5, y=-0.5)
@@ -33,5 +33,5 @@ if __name__ == "__main__":
     import sys
     from pyrobosim.gui.main import PyRoboSimGUI
 
-    app = PyRoboSimGUI(w, sys.argv)
+    app = PyRoboSimGUI(world, sys.argv)
     sys.exit(app.exec_())
