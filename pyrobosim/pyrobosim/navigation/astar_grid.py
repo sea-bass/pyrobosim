@@ -166,7 +166,6 @@ class AStarGridPlanner:
     def plan(self, start, goal):
         """
         Plans a path from start to goal
-
         :param start: The start postion in world coordinates
         :type start: :class: Pose
         :param goal: The goal postion in world coordinates
@@ -179,16 +178,16 @@ class AStarGridPlanner:
         start_node = Node(start[0], start[1], g=0, h=self._heuristic(start, goal))
         goal_node = Node(goal[0], goal[1], 0, 0)
 
-        path_found = False
-        self.candidates.put(start_node)
-
-        t_start = time.time()
         timed_out = False
+        path_found = False
+        t_start = time.time()
+        self.candidates.put(start_node)
         while not path_found and self.candidates and not timed_out:
             current = self._get_best_candidate()
             if current == goal_node:
                 path_found = True
-            self._expand(current)
+            else:
+                self._expand(current)
             self._mark_visited(current)
             timed_out = time.time() - t_start >= self.max_time
         self.planning_time = time.time() - t_start
