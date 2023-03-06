@@ -78,7 +78,7 @@ class AStarGridPlanner:
         self.start = None
         self.world = world
         self.visited = set()  # (x, y)
-        self.candidates = []  # Node
+        self.candidates = PriorityQueue()  # Node
         self.max_time = max_time
         self.num_nodes_expanded = 0
         self.resolution = resolution
@@ -136,7 +136,7 @@ class AStarGridPlanner:
 
     def _reset(self):
         """Resets the state of data used by the algorithm"""
-        self.candidates = []
+        self.candidates = PriorityQueue()
         self.visited.clear()
         self.goal = None
         self.start = None
@@ -160,13 +160,12 @@ class AStarGridPlanner:
                 _g = node.g + cost
                 _h = self._heuristic((_x, _y), self.goal)
                 new_node = Node(_x, _y, _g, _h, parent=node)
-                self.candidates.append(new_node)
+                self.candidates.put(new_node)
                 self.num_nodes_expanded += 1
 
     def _get_best_candidate(self):
         """Return the candidate with best metric"""
-        self.candidates = sorted(self.candidates, key=lambda x: x.f, reverse=True)
-        return self.candidates.pop()
+        return self.candidates.get()
 
     def _mark_visited(self, node):
         """
@@ -226,7 +225,7 @@ class AStarGridPlanner:
         timed_out = False
         path_found = False
         t_start = time.time()
-        self.candidates.append(start_node)
+        self.candidates.put(start_node)
         while not path_found and self.candidates and not timed_out:
             current = self._get_best_candidate()
             if current == goal_node:
