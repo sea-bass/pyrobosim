@@ -7,6 +7,8 @@ from pyrobosim.navigation.occupancy_grid import occupancy_grid_from_world
 
 
 class Node:
+    """A node in the A* path"""
+
     def __init__(self, x, y, g, h, parent=None) -> None:
         self.x = x
         self.y = y
@@ -42,11 +44,30 @@ class Node:
 
 
 class AStarGridPlanner:
-    """Occupancy grid based A-star planner"""
+    """Occupancy grid based A* planner"""
 
     def __init__(
-        self, world, resolution=0.05, inflation_radius=0.0, diagonal_motion=True
+        self,
+        world,
+        resolution=0.05,
+        inflation_radius=0.0,
+        distance_metric="Manhattan",
+        diagonal_motion=True,
     ) -> None:
+        """
+        Creates a grid based A* planner
+
+        :param world: World object to use in the planner.
+        :type world: :class:`pyrobosim.core.world.World`
+        :param resolution: The resolution to be used in the occupancy grid
+        :type resolution: float
+        :param inflation_radius: The inflation radius to be used for the planner's occupancy grid
+        :type inflation_radius: float
+        :param distance_metric: The metric to be used as heuristic
+        :type distance_metric: string 'Manhattan' or 'Euclidian'
+        :param diagonal_motion: If to use expand nodes using diagonal motion
+        :type diagonal_motion: bool
+        """
         self.grid = occupancy_grid_from_world(
             world, resolution=resolution, inflation_radius=inflation_radius
         )
@@ -57,9 +78,9 @@ class AStarGridPlanner:
         self.visited = set()  # (x, y)
         self.start = None
         self.goal = None
-        # self.motions_straight = [(-1, 0), (1, 0), (0, 1), (0, -1)]
-        # self.motions_diagonal = [(-1, 1), (-1, -1), (1, 1), (1, -1)]
-        # self.motion_costs = [1, 1, 1, 1, 1.414, 1.414, 1.414, 1.414]
+        self.num_nodes_expanded = 0
+        self.distance_metric = distance_metric
+        self.diagonal_motion = diagonal_motion
         self.actions = {
             "left": {"cost": 1, "action": (-1, 0)},
             "right": {"cost": 1, "action": (1, 0)},
@@ -70,6 +91,17 @@ class AStarGridPlanner:
             "right_up": {"cost": 1.414, "action": (1, 1)},
             "right_down": {"cost": 1.414, "action": (1, -1)},
         }
+        keys = list(self.actions.keys())
+        self.selected_actions = keys if self.diagonal_motion else keys[:4]
+        print(f"Selected actions : {self.selected_actions}")
+
+        # Set the heuristic function
+        if self.distance_metric == "Manhattan":
+            self._heuristic = lambda p1, p2: abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
+        elif self.distance_metric == "Euclidian":
+            # Not taking the square root since we dont need the actual distance
+            self._heuristic = lambda p1, p2: (p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2
+        print(f"Selected heuristic: {self.distance_metric}")
 
     def _reset(self):
         """Resets the state of data used by the algorithm"""
@@ -83,21 +115,11 @@ class AStarGridPlanner:
         self.goal = None
         self.start = None
         self.latest_path = Path()
-
-    def _heuristic(self, p1, p2):
-        """
-        Computes a heuristc between 2 points
-        :param p1: Source point
-        :type p1: Tuple (x, y)
-        :param p2: destination point
-        :type p2: Tuple (x, y)
-        """
-        return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
+        self.num_nodes_expanded = 0
 
     def _expand(self, node):
         """Generates and adds free neighbours to exploration candidates"""
-
-        for action_name in self.actions:
+        for action_name in self.selected_actions:
             cost = self.actions[action_name]["cost"]
             action = self.actions[action_name]["action"]
             _x = node.x + action[0]
@@ -106,6 +128,7 @@ class AStarGridPlanner:
                 _g = node.g + cost
                 _h = self._heuristic((_x, _y), self.goal)
                 self.candidates.put(Node(_x, _y, _g, _h, parent=node))
+                self.num_nodes_expanded += 1
 
     def _get_best_candidate(self):
         """Return the candidate with best metric"""
@@ -122,6 +145,8 @@ class AStarGridPlanner:
     def _generate_path(self, node):
         """
         Backtrack from a node to generate the full path till that node
+        :param node: The node from which to retrace the path
+        :type node: :class: Node
         """
         poses = []
         while node is not None:
@@ -133,7 +158,14 @@ class AStarGridPlanner:
         self.latest_path.fill_yaws()
 
     def plan(self, start, goal):
-        """Plans a path from start to goal"""
+        """
+        Plans a path from start to goal
+
+        :param start: The start postion in world coordinates
+        :type start: :class: Pose
+        :param goal: The goal postion in world coordinates
+        :type goal: :class: Pose
+        """
         # TODO : add time based termination
         self._reset()
         start = self.grid.world_to_grid(start.x, start.y)
@@ -171,8 +203,24 @@ class AStarGridPlanner:
             self.latest_path.print_details()
         print("")
         print(f"Time to plan: {self.planning_time} seconds")
+        print(f"Number of nodes expanded : {self.num_nodes_expanded}")
 
     def plot(self, axes, path_color="m", show_path=True):
+        """
+        Plots the planned path on a specified set of axes.
+
+        :param axes: The axes on which to draw.
+        :type axes: :class:`matplotlib.axes.Axes`
+        :param path_color: Color of the path, as an RGB tuple or string.
+        :type path_color: tuple[float] / str, optional
+        :param show_graph: If True, shows the RRTs used for planning.
+        :type show_graph: bool
+        :param show_path: If True, shows the last planned path.
+        :type show_path: bool
+        :return: List of Matplotlib artists containing what was drawn,
+            used for bookkeeping.
+        :rtype: list[:class:`matplotlib.artist.Artist`]
+        """
         artists = []
         x = [p.x for p in self.latest_path.poses]
         y = [p.y for p in self.latest_path.poses]
