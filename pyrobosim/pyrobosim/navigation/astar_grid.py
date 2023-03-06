@@ -68,6 +68,8 @@ class AStarGridPlanner:
         :type distance_metric: string 'Manhattan' or 'Euclidian'
         :param diagonal_motion: If to use expand nodes using diagonal motion
         :type diagonal_motion: bool
+        :param max_time: Maximum time allowed for planning
+        :type max_time: float
         """
         self.grid = occupancy_grid_from_world(
             world, resolution=resolution, inflation_radius=inflation_radius
@@ -133,7 +135,7 @@ class AStarGridPlanner:
             if (_x, _y) not in self.visited and not self.grid.is_occupied(_x, _y):
                 _g = node.g + cost
                 _h = self._heuristic((_x, _y), self.goal)
-                self.candidates.put(Node(_x, _y, _g, _h, parent=node))
+                self.candidates.put(Node(_x, _y, _g, _h, parent=node), block=False)
                 self.num_nodes_expanded += 1
 
     def _get_best_candidate(self):
@@ -178,10 +180,11 @@ class AStarGridPlanner:
         start_node = Node(start[0], start[1], g=0, h=self._heuristic(start, goal))
         goal_node = Node(goal[0], goal[1], 0, 0)
 
+        print("Planning : Started")
         timed_out = False
         path_found = False
         t_start = time.time()
-        self.candidates.put(start_node)
+        self.candidates.put(start_node, block=False)
         while not path_found and self.candidates and not timed_out:
             current = self._get_best_candidate()
             if current == goal_node:
@@ -189,13 +192,16 @@ class AStarGridPlanner:
             else:
                 self._expand(current)
             self._mark_visited(current)
-            timed_out = time.time() - t_start >= self.max_time
-        self.planning_time = time.time() - t_start
+            self.planning_time = time.time() - t_start
+            timed_out = self.planning_time >= self.max_time
 
         if path_found:
+            print("Planning : Success")
             self._generate_path(current)
             return self.latest_path
         else:
+            print("Planning : Failed")
+            print(f"Timed Out : {timed_out}")
             return Path()
 
     def print_metrics(self):

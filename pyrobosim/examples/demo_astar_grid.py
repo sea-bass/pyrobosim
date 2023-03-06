@@ -12,7 +12,7 @@ loader = WorldYamlLoader()
 world = loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
 
 
-def test_astar_grid(resolution=0.05):
+def test_astar_grid(resolution=0.025):
     robot = world.robots[0]
 
     astar = AStarGridPlanner(
