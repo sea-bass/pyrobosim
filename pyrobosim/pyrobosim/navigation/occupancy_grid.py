@@ -100,8 +100,8 @@ class OccupancyGrid:
             yaml.dump(yaml_dict, f, sort_keys=False, default_flow_style=None)
 
     def is_in_bounds(self, x, y):
-        x_bounds = (x >= 0) and (x <= self.width)
-        y_bounds = (y >= 0) and (y <= self.height)
+        x_bounds = (x >= 0) and (x < self.width)
+        y_bounds = (y >= 0) and (y < self.height)
         return x_bounds and y_bounds
 
     def world_to_grid(self, x, y):

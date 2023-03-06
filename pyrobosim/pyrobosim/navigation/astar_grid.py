@@ -44,7 +44,9 @@ class Node:
 class AStarGridPlanner:
     """Occupancy grid based A-star planner"""
 
-    def __init__(self, world, resolution=0.05, inflation_radius=0.0) -> None:
+    def __init__(
+        self, world, resolution=0.05, inflation_radius=0.0, diagonal_motion=True
+    ) -> None:
         self.grid = occupancy_grid_from_world(
             world, resolution=resolution, inflation_radius=inflation_radius
         )
@@ -55,6 +57,19 @@ class AStarGridPlanner:
         self.visited = set()  # (x, y)
         self.start = None
         self.goal = None
+        # self.motions_straight = [(-1, 0), (1, 0), (0, 1), (0, -1)]
+        # self.motions_diagonal = [(-1, 1), (-1, -1), (1, 1), (1, -1)]
+        # self.motion_costs = [1, 1, 1, 1, 1.414, 1.414, 1.414, 1.414]
+        self.actions = {
+            "left": {"cost": 1, "action": (-1, 0)},
+            "right": {"cost": 1, "action": (1, 0)},
+            "up": {"cost": 1, "action": (0, 1)},
+            "down": {"cost": 1, "action": (0, -1)},
+            "left_up": {"cost": 1.414, "action": (-1, 1)},
+            "left_down": {"cost": 1.414, "action": (-1, -1)},
+            "right_up": {"cost": 1.414, "action": (1, 1)},
+            "right_down": {"cost": 1.414, "action": (1, -1)},
+        }
 
     def _reset(self):
         """Resets the state of data used by the algorithm"""
@@ -81,13 +96,14 @@ class AStarGridPlanner:
 
     def _expand(self, node):
         """Generates and adds free neighbours to exploration candidates"""
-        motions = [(-1, 0), (1, 0), (0, 1), (0, -1), (-1, 1), (-1, -1), (1, 1), (1, -1)]
-        motion_costs = [1, 1, 1, 1, 1.414, 1.414, 1.414, 1.414]
-        for i in range(len(motions)):
-            _x = node.x + motions[i][0]
-            _y = node.y + motions[i][1]
+
+        for action_name in self.actions:
+            cost = self.actions[action_name]["cost"]
+            action = self.actions[action_name]["action"]
+            _x = node.x + action[0]
+            _y = node.y + action[1]
             if (_x, _y) not in self.visited and not self.grid.is_occupied(_x, _y):
-                _g = node.g + motion_costs[i]
+                _g = node.g + cost
                 _h = self._heuristic((_x, _y), self.goal)
                 self.candidates.put(Node(_x, _y, _g, _h, parent=node))
 
