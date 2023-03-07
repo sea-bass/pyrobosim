@@ -178,6 +178,7 @@ class WorldYamlLoader:
 
         planner_data = self.data["global_path_planner"]
         planner_type = planner_data["type"]
+        create_planner = False
 
         if planner_type == "search_graph":
             create_planner = True
