@@ -11,9 +11,9 @@ from matplotlib.transforms import Affine2D
 from PyQt5.QtCore import pyqtSignal, QThread
 
 
-class NavMonitor(QThread):
+class NavAnimator(QThread):
     """
-    Helper class that monitors navigation animation in a QThread
+    Helper class that wraps navigation animation in a QThread.
     """
 
     def __init__(self, canvas):
@@ -23,7 +23,7 @@ class NavMonitor(QThread):
         :param canvas: A world canvas object linked to this thread.
         :type canvas: :class:`pyrobosim.gui.world_canvas.WorldCanvas`
         """
-        super(NavMonitor, self).__init__()
+        super(NavAnimator, self).__init__()
         self.canvas = canvas
 
     def run(self):
@@ -87,8 +87,8 @@ class WorldCanvas(FigureCanvasQTAgg):
 
         self.draw_lock = False
 
-        # Start thread for monitoring robot navigation state.
-        self.nav_animator = NavMonitor(self)
+        # Start thread for animating robot navigation state.
+        self.nav_animator = NavAnimator(self)
         self.nav_animator.start()
 
     def show_robots(self):
