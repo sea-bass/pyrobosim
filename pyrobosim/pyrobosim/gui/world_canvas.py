@@ -8,7 +8,27 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.pyplot import Circle
 from matplotlib.transforms import Affine2D
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, QThread
+
+
+class NavMonitor(QThread):
+    """
+    Helper class that monitors navigation animation in a QThread
+    """
+
+    def __init__(self, canvas):
+        """
+        Creates a navigation monitor thread.
+
+        :param canvas: A world canvas object linked to this thread.
+        :type canvas: :class:`pyrobosim.gui.world_canvas.WorldCanvas`
+        """
+        super(NavMonitor, self).__init__()
+        self.canvas = canvas
+
+    def run(self):
+        """Runs the navigation monitor thread."""
+        self.canvas.monitor_nav_animation()
 
 
 class WorldCanvas(FigureCanvasQTAgg):
@@ -68,7 +88,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.draw_lock = False
 
         # Start thread for monitoring robot navigation state.
-        self.nav_animator = threading.Thread(target=self.monitor_nav_animation)
+        self.nav_animator = NavMonitor(self)
         self.nav_animator.start()
 
     def show_robots(self):
