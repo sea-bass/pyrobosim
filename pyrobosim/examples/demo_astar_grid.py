@@ -12,11 +12,15 @@ loader = WorldYamlLoader()
 world = loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
 
 
-def test_astar_grid(resolution=0.01):
+def test_astar_grid():
     robot = world.robots[0]
 
     astar = AStarGridPlanner(
-        world=world, resolution=resolution, inflation_radius=1.5 * robot.radius
+        world=world,
+        resolution=0.05,
+        inflation_radius=robot.radius,
+        distance_metric="manhattan",
+        diagonal_motion=True,
     )
     start = Pose(x=-0.5, y=-0.5)
     goal = Pose(x=3.0, y=3.0)
@@ -31,7 +35,6 @@ if __name__ == "__main__":
     test_astar_grid()
 
     import sys
-    from pyrobosim.gui.main import PyRoboSimGUI
+    from pyrobosim.gui.main import start_gui
 
-    app = PyRoboSimGUI(world, sys.argv)
-    sys.exit(app.exec_())
+    start_gui(world, sys.argv)

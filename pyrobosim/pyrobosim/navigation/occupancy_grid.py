@@ -100,21 +100,61 @@ class OccupancyGrid:
             yaml.dump(yaml_dict, f, sort_keys=False, default_flow_style=None)
 
     def is_in_bounds(self, x, y):
+        """
+        Check if a given (x,y) position is within grid limits
+
+        :param x: X-coordinate to be validated.
+        :type x: int
+        :param y: Y-coordinate to be validated.
+        :type y: int
+        :return: True if the given coordinates are within bounds, else False
+        :rtype: bool
+        """
         x_bounds = (x >= 0) and (x < self.width)
         y_bounds = (y >= 0) and (y < self.height)
         return x_bounds and y_bounds
 
     def world_to_grid(self, x, y):
+        """
+        Convert a given world position in world frame to grid frame.
+
+        :param x: X-coordinate to be transformed.
+        :type x: float
+        :param y: Y-coordinate to be transformed.
+        :type y: float
+        :return: The coordinates in grid frame.
+        :rtype: (int, int)
+        """
         x_grid = math.floor((x - self.origin[0]) / self.resolution)
         y_grid = math.floor((y - self.origin[1]) / self.resolution)
         return (x_grid, y_grid)
 
     def grid_to_world(self, x, y):
+        """
+        Convert a given world position in grid frame to world frame.
+
+        :param x: X-coordinate to be transformed.
+        :type x: int
+        :param y: Y-coordinate to be transformed.
+        :type y: int
+        :return: The coordinates in world frame
+        :rtype: (float, float)
+        """
         x_world = (x * self.resolution) + self.origin[0]
         y_world = (y * self.resolution) + self.origin[1]
         return (x_world, y_world)
 
     def is_occupied(self, x, y):
+        """
+        Check if a given position in the grid is occupied
+
+        :param x: X-coordinate to be transformed.
+        :type x: int
+        :param y: Y-coordinate to be transformed.
+        :type y: int
+        :return: True if the position is occupied, else False
+        :rtype: bool
+        """
         return (not self.is_in_bounds(x, y)) or self.data[x, y] == 1
 
 
