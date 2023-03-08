@@ -40,8 +40,6 @@ if __name__ == "__main__":
     n = create_ros_node()
 
     # Start ROS Node in separate thread
-    import threading
-
     t = threading.Thread(target=n.start)
     t.start()
 

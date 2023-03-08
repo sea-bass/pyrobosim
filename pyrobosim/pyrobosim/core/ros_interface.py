@@ -11,7 +11,6 @@ from pyrobosim_msgs.msg import (
     RobotState,
     LocationState,
     ObjectState,
-    WorldState,
     TaskAction,
     TaskPlan,
 )

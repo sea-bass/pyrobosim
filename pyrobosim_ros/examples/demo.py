@@ -6,6 +6,7 @@ additionally starting up a ROS interface.
 """
 import os
 import sys
+import threading
 import numpy as np
 
 from pyrobosim.core.robot import Robot
@@ -119,8 +120,6 @@ if __name__ == "__main__":
     n = create_ros_node()
 
     # Start ROS node in separate thread
-    import threading
-
     t = threading.Thread(target=n.start)
     t.start()
 
