@@ -39,8 +39,7 @@ def load_world():
     loader = WorldYamlLoader()
     world_file = "pddlstream_simple_world.yaml"
     data_folder = get_data_folder()
-    w = loader.from_yaml(os.path.join(data_folder, world_file))
-    return w
+    return loader.from_yaml(os.path.join(data_folder, world_file))
 
 
 def start_planner(world, args):
@@ -88,11 +87,11 @@ def start_planner(world, args):
 
 if __name__ == "__main__":
     args = parse_args()
-    w = load_world()
+    world = load_world()
 
     # Start task and motion planner in separate thread.
-    t = threading.Thread(target=start_planner, args=(w, args))
-    t.start()
+    planner_thread = threading.Thread(target=start_planner, args=(world, args))
+    planner_thread.start()
 
     # Start GUI in main thread.
-    start_gui(w, sys.argv)
+    start_gui(world, sys.argv)

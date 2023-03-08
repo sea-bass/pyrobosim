@@ -9,16 +9,16 @@ from pyrobosim.utils.pose import Pose
 # Load a test world.
 data_folder = get_data_folder()
 loader = WorldYamlLoader()
-w = loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
+world = loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
 
 
 def test_prm():
     """Creates a PRM planner and plans"""
-    prm = PRMPlanner(w, max_nodes=100, max_connection_dist=1.5)
+    prm = PRMPlanner(world, max_nodes=100, max_connection_dist=1.5)
     start = Pose(x=-0.5, y=-0.5)
     goal = Pose(x=3.0, y=3.0)
 
-    robot = w.robots[0]
+    robot = world.robots[0]
     robot.set_pose(start)
     robot.set_path_planner(prm)
     robot.current_path = robot.plan_path(start, goal)
@@ -31,4 +31,4 @@ if __name__ == "__main__":
     import sys
     from pyrobosim.gui.main import start_gui
 
-    start_gui(w, sys.argv)
+    start_gui(world, sys.argv)

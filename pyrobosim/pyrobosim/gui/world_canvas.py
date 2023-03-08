@@ -402,8 +402,8 @@ class WorldCanvas(FigureCanvasQTAgg):
         """
         if isinstance(robot, str):
             robot = self.world.get_robot_by_name(robot)
-        t = threading.Thread(target=self.navigate, args=(robot, goal))
-        t.start()
+        nav_thread = threading.Thread(target=self.navigate, args=(robot, goal))
+        nav_thread.start()
 
     def navigate(self, robot, goal):
         """

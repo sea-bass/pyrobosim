@@ -5,6 +5,7 @@ Test script for PDDLStream planning with navigation streams.
 """
 import os
 import sys
+import threading
 
 from pyrobosim.core.robot import Robot
 from pyrobosim.core.room import Room
@@ -19,11 +20,11 @@ from pyrobosim.utils.pose import Pose
 
 
 def create_test_world(add_hallway=True):
-    w = World()
+    world = World()
 
     # Set the location and object metadata
     data_folder = get_data_folder()
-    w.set_metadata(
+    world.set_metadata(
         locations=os.path.join(data_folder, "example_location_data.yaml"),
         objects=os.path.join(data_folder, "example_object_data.yaml"),
     )
@@ -31,18 +32,18 @@ def create_test_world(add_hallway=True):
     # Add rooms
     main_room_coords = [(-1, -1), (1, -1), (1, 1), (-1, 1)]
     main_room = Room(main_room_coords, name="main_room", color=[1, 0, 0])
-    w.add_room(main_room)
+    world.add_room(main_room)
     unreachable_coords = [(2, -1), (4, -1), (4, 1), (2, 1)]
     unreachable_room = Room(unreachable_coords, name="unreachable", color=[0, 0, 1])
-    w.add_room(unreachable_room)
+    world.add_room(unreachable_room)
     goal_room_coords = [(2, 2), (4, 2), (4, 4), (2, 4)]
     goal_room = Room(goal_room_coords, name="goal_room", color=[0, 0.6, 0])
-    w.add_room(goal_room)
+    world.add_room(goal_room)
 
     # Add hallway, if enabled.
     if add_hallway:
         hallway_points = [(0.0, 0.0), (0.0, 5.0), (3.0, 5.0), (3.0, 3.0)]
-        w.add_hallway(
+        world.add_hallway(
             "main_room",
             "goal_room",
             width=0.7,
@@ -51,21 +52,21 @@ def create_test_world(add_hallway=True):
         )
 
     # Add locations and objects
-    table0 = w.add_location("table", "unreachable", Pose(x=3.5, y=-0.25, z=0.0))
-    w.add_object("apple", table0)
-    table1 = w.add_location("table", "goal_room", Pose(x=3.5, y=2.75, z=0.0))
-    w.add_object("apple", table1)
+    table0 = world.add_location("table", "unreachable", Pose(x=3.5, y=-0.25, z=0.0))
+    world.add_object("apple", table0)
+    table1 = world.add_location("table", "goal_room", Pose(x=3.5, y=2.75, z=0.0))
+    world.add_object("apple", table1)
 
     # Add a robot
-    r = Robot(radius=0.1, path_executor=ConstantVelocityExecutor())
-    w.add_robot(r, loc="main_room")
+    robot = Robot(radius=0.1, path_executor=ConstantVelocityExecutor())
+    world.add_robot(robot, loc="main_room")
 
     # Create a search graph and motion planner
-    w.create_search_graph(max_edge_dist=3.0, collision_check_dist=0.05)
-    rrt = RRTPlanner(w, bidirectional=True, rrt_star=True)
-    r.set_path_planner(rrt)
+    world.create_search_graph(max_edge_dist=3.0, collision_check_dist=0.05)
+    rrt = RRTPlanner(world, bidirectional=True, rrt_star=True)
+    robot.set_path_planner(rrt)
 
-    return w
+    return world
 
 
 def start_planner(world, domain_name="03_nav_stream", interactive=False):
@@ -92,32 +93,32 @@ def start_planner(world, domain_name="03_nav_stream", interactive=False):
 # ACTUAL UNIT TESTS #
 #####################
 def test_symbolic_plan():
-    w = create_test_world()
-    plan = start_planner(w, domain_name="02_derived")
+    world = create_test_world()
+    plan = start_planner(world, domain_name="02_derived")
     assert plan is not None
 
 
 def test_stream_plan_no_hallway():
-    w = create_test_world(add_hallway=False)
-    plan = start_planner(w, domain_name="03_nav_stream")
+    world = create_test_world(add_hallway=False)
+    plan = start_planner(world, domain_name="03_nav_stream")
     assert plan is None
 
 
 def test_stream_plan_with_hallway():
-    w = create_test_world(add_hallway=True)
-    plan = start_planner(w, domain_name="03_nav_stream")
+    world = create_test_world(add_hallway=True)
+    plan = start_planner(world, domain_name="03_nav_stream")
     assert plan is not None
 
 
 if __name__ == "__main__":
-    w = create_test_world(add_hallway=True)
+    world = create_test_world(add_hallway=True)
 
     # Start task and motion planner in separate thread.
-    import threading
-
     # domain_name = "02_derived" # Will get infeasible plan
     domain_name = "03_nav_stream"  # Will get feasible plan
-    t = threading.Thread(target=start_planner, args=(w, domain_name, True))
-    t.start()
+    planner_thread = threading.Thread(
+        target=start_planner, args=(world, domain_name, True)
+    )
+    planner_thread.start()
 
-    start_gui(w, sys.argv)
+    start_gui(world, sys.argv)
