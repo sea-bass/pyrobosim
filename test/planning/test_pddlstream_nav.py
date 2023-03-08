@@ -9,6 +9,7 @@ import sys
 from pyrobosim.core.robot import Robot
 from pyrobosim.core.room import Room
 from pyrobosim.core.world import World
+from pyrobosim.gui.main import start_gui
 from pyrobosim.navigation.execution import ConstantVelocityExecutor
 from pyrobosim.navigation.rrt import RRTPlanner
 from pyrobosim.planning.pddlstream.planner import PDDLStreamPlanner
@@ -119,7 +120,4 @@ if __name__ == "__main__":
     t = threading.Thread(target=start_planner, args=(w, domain_name, True))
     t.start()
 
-    from pyrobosim.gui.main import PyRoboSimGUI
-
-    app = PyRoboSimGUI(w, sys.argv)
-    sys.exit(app.exec_())
+    start_gui(w, sys.argv)

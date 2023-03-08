@@ -135,7 +135,6 @@ if __name__ == "__main__":
     )
     t.start()
 
-    from pyrobosim.gui.main import PyRoboSimGUI
+    from pyrobosim.gui.main import start_gui
 
-    app = PyRoboSimGUI(w, sys.argv)
-    sys.exit(app.exec_())
+    start_gui(w, sys.argv)
