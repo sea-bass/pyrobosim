@@ -19,8 +19,7 @@ def load_world():
     loader = WorldYamlLoader()
     world_file = "pddlstream_simple_world.yaml"
     data_folder = get_data_folder()
-    w = loader.from_yaml(os.path.join(data_folder, world_file))
-    return w
+    return loader.from_yaml(os.path.join(data_folder, world_file))
 
 
 def create_ros_node():
@@ -31,19 +30,17 @@ def create_ros_node():
 
     from pyrobosim.core.ros_interface import WorldROSWrapper
 
-    w = load_world()
-    node = WorldROSWrapper(world=w, name="pddl_demo", state_pub_rate=0.1)
+    world = load_world()
+    node = WorldROSWrapper(world=world, name="pddl_demo", state_pub_rate=0.1)
     return node
 
 
 if __name__ == "__main__":
-    n = create_ros_node()
+    node = create_ros_node()
 
     # Start ROS Node in separate thread
-    import threading
-
-    t = threading.Thread(target=n.start)
-    t.start()
+    ros_thread = threading.Thread(target=node.start)
+    ros_thread.start()
 
     # Start GUI in main thread
-    start_gui(n.world, sys.argv)
+    start_gui(node.world, sys.argv)

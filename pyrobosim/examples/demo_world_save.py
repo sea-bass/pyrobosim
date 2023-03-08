@@ -54,16 +54,16 @@ def main():
     # Load a test world from YAML file.
     data_folder = get_data_folder()
     loader = WorldYamlLoader()
-    w = loader.from_yaml(os.path.join(data_folder, args.world_file))
+    world = loader.from_yaml(os.path.join(data_folder, args.world_file))
 
     # Export a Gazebo world.
-    exp = WorldGazeboExporter(w)
+    exp = WorldGazeboExporter(world)
     world_folder = exp.export(ignition=args.ignition, out_folder=args.out_folder)
 
     # Save an occupancy grid to the world folder and show it, if enabled.
     if args.save_grid:
         occ_grid = occupancy_grid_from_world(
-            w,
+            world,
             resolution=args.grid_resolution,
             inflation_radius=args.grid_inflation_radius,
         )

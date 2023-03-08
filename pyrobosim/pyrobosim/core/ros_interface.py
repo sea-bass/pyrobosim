@@ -11,7 +11,6 @@ from pyrobosim_msgs.msg import (
     RobotState,
     LocationState,
     ObjectState,
-    WorldState,
     TaskAction,
     TaskPlan,
 )
@@ -176,10 +175,10 @@ class WorldROSWrapper(Node):
                 f"Currently executing action(s). Discarding this one."
             )
             return
-        t = threading.Thread(
+        action_thread = threading.Thread(
             target=robot.execute_action, args=(task_action_from_ros(msg),)
         )
-        t.start()
+        action_thread.start()
 
     def plan_callback(self, msg):
         """
@@ -197,8 +196,10 @@ class WorldROSWrapper(Node):
                 f"Currently executing action(s). Discarding this one."
             )
             return
-        t = threading.Thread(target=robot.execute_plan, args=(task_plan_from_ros(msg),))
-        t.start()
+        plan_thread = threading.Thread(
+            target=robot.execute_plan, args=(task_plan_from_ros(msg),)
+        )
+        plan_thread.start()
 
     def is_robot_busy(self, robot):
         """

@@ -27,8 +27,7 @@ def load_world():
     loader = WorldYamlLoader()
     world_file = "pddlstream_simple_world.yaml"
     data_folder = get_data_folder()
-    w = loader.from_yaml(os.path.join(data_folder, world_file))
-    return w
+    return loader.from_yaml(os.path.join(data_folder, world_file))
 
 
 class PlannerNode(Node):
