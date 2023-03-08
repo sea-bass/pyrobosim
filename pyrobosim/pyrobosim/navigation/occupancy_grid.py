@@ -148,9 +148,9 @@ class OccupancyGrid:
         """
         Check if a given position in the grid is occupied
 
-        :param x: X-coordinate to be transformed.
+        :param x: X-coordinate to be checked.
         :type x: int
-        :param y: Y-coordinate to be transformed.
+        :param y: Y-coordinate to be checked.
         :type y: int
         :return: True if the position is occupied, else False
         :rtype: bool
