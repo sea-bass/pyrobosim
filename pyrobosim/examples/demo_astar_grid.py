@@ -18,9 +18,9 @@ def test_astar_grid():
     astar = AStarGridPlanner(
         world=world,
         resolution=0.05,
-        inflation_radius=robot.radius,
-        distance_metric="manhattan",
-        diagonal_motion=False,
+        inflation_radius=1.5 * robot.radius,
+        distance_metric="euclidean",
+        diagonal_motion=True,
     )
     start = Pose(x=-0.5, y=-0.5)
     goal = Pose(x=3.0, y=3.0)
