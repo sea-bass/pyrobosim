@@ -103,8 +103,8 @@ class OccupancyGrid:
         """
         Check if a given (x,y) position is within grid limits
 
-        :param x: The position to be validated.
-        :type x: (int, int)
+        :param pos: The position to be validated.
+        :type pos: (int, int)
         :return: True if the given coordinates are within bounds, else False
         :rtype: bool
         """
@@ -117,8 +117,8 @@ class OccupancyGrid:
         """
         Convert a given world position in world frame to grid frame.
 
-        :param x: The position to be transformed.
-        :type x: (float, float)
+        :param pos: The position to be transformed.
+        :type pos: (float, float)
         :return: The coordinates in grid frame.
         :rtype: (int, int)
         """
@@ -130,8 +130,8 @@ class OccupancyGrid:
         """
         Convert a given world position in grid frame to world frame.
 
-        :param x: The position to be transformed.
-        :type x: (int, int)
+        :param pos: The position to be transformed.
+        :type pos: (int, int)
         :return: The coordinates in world frame
         :rtype: (float, float)
         """
@@ -143,8 +143,8 @@ class OccupancyGrid:
         """
         Check if a given position in the grid is occupied
 
-        :param x: The position to be checked.
-        :type x: (int, int)
+        :param pos: The position to be checked.
+        :type pos: (int, int)
         :return: True if the position is occupied, else False
         :rtype: bool
         """
@@ -163,9 +163,9 @@ class OccupancyGrid:
                  towards the destination.
                  If pointA and pointB are connectable lastpoint will be pointB.
         """
-     
-        x0,y0 = pointA
-        x1,y1 = pointB
+
+        x0, y0 = pointA
+        x1, y1 = pointB
         dx = x1 - x0
         dy = y1 - y0
         xsign = 1 if dx > 0 else -1
@@ -178,21 +178,23 @@ class OccupancyGrid:
             dx, dy = dy, dx
             xx, xy, yx, yy = 0, ysign, xsign, 0
 
-        D = 2*dy - dx
+        D = 2 * dy - dx
         y = 0
         collision = False
         last_free_point = pointA
+        lastpoint = pointB
         for x in range(dx + 1):
-            position = (x0 + x*xx + y*yx, y0 + x*xy + y*yy)
-            if self.is_obstacle(position):
+            position = (x0 + x * xx + y * yx, y0 + x * xy + y * yy)
+            if self.is_occupied(position):
                 lastpoint = last_free_point
-                break               
+                collision = True
+                break
             if D >= 0:
                 y += 1
-                D -= 2*dx
-            D += 2*dy
-            last_free_point = position   
-        return collision, lastpoint
+                D -= 2 * dx
+            D += 2 * dy
+            last_free_point = position
+        return not collision, lastpoint
 
 
 def occupancy_grid_from_world(
