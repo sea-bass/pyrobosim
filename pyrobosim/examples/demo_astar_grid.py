@@ -20,7 +20,7 @@ def test_astar_grid():
         resolution=0.05,
         inflation_radius=robot.radius,
         distance_metric="manhattan",
-        diagonal_motion=True,
+        diagonal_motion=False,
     )
     start = Pose(x=-0.5, y=-0.5)
     goal = Pose(x=3.0, y=3.0)

@@ -99,17 +99,16 @@ class OccupancyGrid:
         with open(yaml_file, "w") as f:
             yaml.dump(yaml_dict, f, sort_keys=False, default_flow_style=None)
 
-    def is_in_bounds(self, x, y):
+    def is_in_bounds(self, pos):
         """
         Check if a given (x,y) position is within grid limits
 
-        :param x: X-coordinate to be validated.
-        :type x: int
-        :param y: Y-coordinate to be validated.
-        :type y: int
+        :param x: The position to be validated.
+        :type x: (int, int)
         :return: True if the given coordinates are within bounds, else False
         :rtype: bool
         """
+        x, y = pos
         x_bounds = (x >= 0) and (x < self.width)
         y_bounds = (y >= 0) and (y < self.height)
         return x_bounds and y_bounds
@@ -118,10 +117,8 @@ class OccupancyGrid:
         """
         Convert a given world position in world frame to grid frame.
 
-        :param x: X-coordinate to be transformed.
-        :type x: float
-        :param y: Y-coordinate to be transformed.
-        :type y: float
+        :param x: The position to be transformed.
+        :type x: (float, float)
         :return: The coordinates in grid frame.
         :rtype: (int, int)
         """
@@ -133,10 +130,8 @@ class OccupancyGrid:
         """
         Convert a given world position in grid frame to world frame.
 
-        :param x: X-coordinate to be transformed.
-        :type x: int
-        :param y: Y-coordinate to be transformed.
-        :type y: int
+        :param x: The position to be transformed.
+        :type x: (int, int)
         :return: The coordinates in world frame
         :rtype: (float, float)
         """
@@ -148,14 +143,12 @@ class OccupancyGrid:
         """
         Check if a given position in the grid is occupied
 
-        :param x: X-coordinate to be checked.
-        :type x: int
-        :param y: Y-coordinate to be checked.
-        :type y: int
+        :param x: The position to be checked.
+        :type x: (int, int)
         :return: True if the position is occupied, else False
         :rtype: bool
         """
-        return (not self.is_in_bounds(pos[0], pos[1])) or self.data[pos[0], pos[1]] == 1
+        return (not self.is_in_bounds(pos)) or self.data[pos[0], pos[1]] == 1
 
 
 def occupancy_grid_from_world(
