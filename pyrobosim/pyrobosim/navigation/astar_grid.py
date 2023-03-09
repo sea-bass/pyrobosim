@@ -6,7 +6,8 @@ import warnings
 from queue import PriorityQueue
 from pyrobosim.utils.pose import Pose
 from pyrobosim.utils.motion import Path
-from pyrobosim.utils.waypoint_reducer import reduce_waypoints
+from pyrobosim.navigation.search_graph import Node
+from pyrobosim.utils.waypoint_utils import reduce_waypoints
 from pyrobosim.navigation.occupancy_grid import occupancy_grid_from_world
 
 
@@ -33,7 +34,7 @@ class AStarGridPlanner:
         :type resolution: float
         :param inflation_radius: The inflation radius to be used for the planner's occupancy grid, in meters.
         :type inflation_radius: float
-        :param distance_metric: The metric to be used as heuristic ('manhattan' or 'euclidean').
+        :param distance_metric: The metric to be used as heuristic ('manhattan', 'euclidean', 'none').
         :type distance_metric: string
         :param diagonal_motion: If true, expand nodes using diagonal motion.
         :type diagonal_motion: bool
@@ -54,7 +55,11 @@ class AStarGridPlanner:
         self.num_nodes_expanded = 0
         self.candidates = PriorityQueue()
         self.latest_path = Path()
+        # This dictionary keeps track of the parent node for each expanded node
+        # eg : self.parent_of[(10,10)] = (9,10)
         self.parent_of = {}
+        # This dictionary keeps track of the cost till the particular node
+        # eg : self.cost_till((10, 10)) = 20
         self.cost_till = {}
 
         self._set_actions()
@@ -77,17 +82,17 @@ class AStarGridPlanner:
         """
         Generates the actions available
         """
-        D1 = 1
-        D2 = math.sqrt(2)
+        orthogonal_distance = 1
+        diagonal_distance = math.sqrt(2)
         self.actions = {
-            "left": {"cost": D1, "action": (-1, 0)},
-            "right": {"cost": D1, "action": (1, 0)},
-            "up": {"cost": D1, "action": (0, 1)},
-            "down": {"cost": D1, "action": (0, -1)},
-            "left_up": {"cost": D2, "action": (-1, 1)},
-            "left_down": {"cost": D2, "action": (-1, -1)},
-            "right_up": {"cost": D2, "action": (1, 1)},
-            "right_down": {"cost": D2, "action": (1, -1)},
+            "left": {"cost": orthogonal_distance, "action": (-1, 0)},
+            "right": {"cost": orthogonal_distance, "action": (1, 0)},
+            "up": {"cost": orthogonal_distance, "action": (0, 1)},
+            "down": {"cost": orthogonal_distance, "action": (0, -1)},
+            "left_up": {"cost": diagonal_distance, "action": (-1, 1)},
+            "left_down": {"cost": diagonal_distance, "action": (-1, -1)},
+            "right_up": {"cost": diagonal_distance, "action": (1, 1)},
+            "right_down": {"cost": diagonal_distance, "action": (1, -1)},
         }
         keys = list(self.actions.keys())
         self.selected_actions = keys if self.diagonal_motion else keys[:4]
@@ -107,6 +112,8 @@ class AStarGridPlanner:
             if not self.diagonal_motion:
                 warnings.warn("Manhattan over estimates without diagonal motion")
             self._heuristic = manhattan
+        elif self.distance_metric == "none":
+            self._heuristic = lambda p1, p2: 0
 
     def _is_valid_start_goal(self):
         """
@@ -160,6 +167,8 @@ class AStarGridPlanner:
     def _get_best_candidate(self):
         """
         Returns the candidate with best metric
+        :return: The candidate with the best metric (least cost)
+        :rtype: (int, int)
         """
         return self.candidates.get()[1]
 
@@ -173,26 +182,35 @@ class AStarGridPlanner:
 
         waypoints = []
         while current is not None:
-            x, y = self.grid.grid_to_world(current)
-            waypoints.append(Pose(x, y))
+            waypoints.append(current)
             current = self.parent_of[current]
         waypoints.reverse()
-        waypoints = reduce_waypoints(waypoints)
-        self.latest_path = Path(poses=waypoints)
+        waypoints = reduce_waypoints(self.grid, waypoints)
+        poses = []
+        for point in waypoints:
+            world_x, world_y = self.grid.grid_to_world(point)
+            poses.append(Pose(world_x, world_y))
+        self.latest_path = Path(poses=poses)
         self.latest_path.fill_yaws()
 
     def plan(self, start, goal):
         """
         Plans a path from start to goal.
 
-        :param start: The start pose in world coordinates.
-        :type start: :class:`pyrobosim.utils.pose.Pose`
-        :param goal: The goal pose in world coordinates.
-        :type goal: :class:`pyrobosim.utils.pose.Pose`
+        :param start: Start pose or graph node.
+        :type start: :class:`pyrobosim.utils.pose.Pose` /
+            :class:`pyrobosim.navigation.search_graph.Node`
+        :param goal: Goal pose or graph node.
+        :type goal: :class:`pyrobosim.utils.pose.Pose` /
+            :class:`pyrobosim.navigation.search_graph.Node`
         :return: Path from start to goal.
         :rtype: :class:`pyrobosim.utils.motion.Path`
         """
         self._reset()
+        if isinstance(start, Node):
+            start = start.pose
+        if isinstance(goal, Node):
+            goal = goal.pose
         self.start = self.grid.world_to_grid((start.x, start.y))
         self.goal = self.grid.world_to_grid((goal.x, goal.y))
         # If start or goal position is occupied, return empty path with warning.
@@ -255,14 +273,15 @@ class AStarGridPlanner:
         :rtype: list[:class:`matplotlib.artist.Artist`]
         """
         artists = []
-        x = [p.x for p in self.latest_path.poses]
-        y = [p.y for p in self.latest_path.poses]
-        (path,) = axes.plot(
-            x, y, linestyle="-", color=path_color, linewidth=3, alpha=0.5, zorder=1
-        )
-        (start,) = axes.plot(x[0], y[0], "go", zorder=2)
-        (goal,) = axes.plot(x[-1], y[-1], "rx", zorder=2)
-        artists.extend((path, start, goal))
+        if self.latest_path.num_poses > 0:
+            x = [p.x for p in self.latest_path.poses]
+            y = [p.y for p in self.latest_path.poses]
+            (path,) = axes.plot(
+                x, y, linestyle="-", color=path_color, linewidth=3, alpha=0.5, zorder=1
+            )
+            (start,) = axes.plot(x[0], y[0], "go", zorder=2)
+            (goal,) = axes.plot(x[-1], y[-1], "rx", zorder=2)
+            artists.extend((path, start, goal))
 
         return artists
 
