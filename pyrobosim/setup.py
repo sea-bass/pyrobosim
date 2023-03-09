@@ -8,7 +8,7 @@ from setuptools import setup, find_packages
 def get_files_in_folder(directory):
     """Helper function to get all files in a specific directory."""
     file_list = []
-    for (path, _, fnames) in os.walk(directory):
+    for path, _, fnames in os.walk(directory):
         for filename in fnames:
             file_list.append(join("..", path, filename))
     return file_list

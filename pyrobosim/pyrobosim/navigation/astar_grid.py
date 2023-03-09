@@ -53,8 +53,8 @@ class AStarGridPlanner:
         self.num_nodes_expanded = 0
         self.candidates = PriorityQueue()
         self.latest_path = Path()
-        self.parent_of = dict()
-        self.cost_till = dict()
+        self.parent_of = {}
+        self.cost_till = {}
 
         self._set_actions()
         self._set_heuristic()
