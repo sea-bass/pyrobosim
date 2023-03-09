@@ -2,33 +2,33 @@
 # Test world description #
 ##########################
 
-# WORLD PARAMETERS
+# # WORLD PARAMETERS
 params:
   name: test_world
   object_radius: 0.05 # Radius around objects
   wall_height: 2.0 # Wall height for exporting to Gazebo
 
 
-# METADATA: Describes information about locations and objects
+# # METADATA: Describes information about locations and objects
 metadata:
   locations: $DATA/example_location_data.yaml
   objects: $DATA/example_object_data.yaml
 
 
-# ROBOTS
+# # ROBOTS
 robots:
   - name: robot
     radius: 0.1
     location: kitchen
     pose: [0, 0, 0]
-    # Rapidly-expanding Random Tree (RRT) planner
+    # # Rapidly-expanding Random Tree (RRT) planner
     # path_planner:
     #   type: rrt
     #   max_connection_dist: 0.25
     #   bidirectional: true
     #   rrt_star: true
     #   rewire_radius: 1.0
-    # Grasp generation
+    # # Grasp generation
     grasping:
       generator: parallel_grasp
       max_width: 0.175
@@ -37,23 +37,23 @@ robots:
       width_clearance: 0.01
       depth_clearance: 0.01
 
-# PLANNING: Global planner
+# # PLANNING: Global planner
 global_path_planner:
-  # Search graph planner from manually specified nodes
+  # # Search graph planner from manually specified nodes
   type: search_graph
   max_edge_dist: 3.0
   collision_check_dist: 0.05
-  # Probabilistic Roadmap (PRM) planner
+  # # Probabilistic Roadmap (PRM) planner
   # type: prm
   # max_connection_dist: 1.5
   # max_nodes: 100
-  # A* grid planner
+  # # A* grid planner
   # type: astar_grid
   # resolution: 0.05
-  # inflation_radius: 0.1
+  # inflation_radius: 0.15
 
 
-# ROOMS: Polygonal regions that can contain object locations
+# # ROOMS: Polygonal regions that can contain object locations
 rooms:
   - name: kitchen
     footprint:
@@ -88,7 +88,7 @@ rooms:
     color: [0, 0, 0.6]
 
 
-# HALLWAYS: Connect rooms
+# # HALLWAYS: Connect rooms
 hallways:
   - from: kitchen
     to: bathroom
@@ -112,7 +112,7 @@ hallways:
       - [2.5, 3.0]
 
 
-# LOCATIONS: Can contain objects
+# # LOCATIONS: Can contain objects
 locations:
   - name: table0
     type: table
@@ -135,7 +135,7 @@ locations:
     pose: [0.9, 1.1, 0.0, 1.57]
 
 
-# OBJECTS: Can be picked, placed, and move by robot
+# # OBJECTS: Can be picked, placed, and move by robot
 objects:
   - type: banana
     location: table0
