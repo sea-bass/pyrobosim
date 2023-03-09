@@ -114,7 +114,7 @@ class OccupancyGrid:
         y_bounds = (y >= 0) and (y < self.height)
         return x_bounds and y_bounds
 
-    def world_to_grid(self, x, y):
+    def world_to_grid(self, pos):
         """
         Convert a given world position in world frame to grid frame.
 
@@ -125,11 +125,11 @@ class OccupancyGrid:
         :return: The coordinates in grid frame.
         :rtype: (int, int)
         """
-        x_grid = math.floor((x - self.origin[0]) / self.resolution)
-        y_grid = math.floor((y - self.origin[1]) / self.resolution)
+        x_grid = math.floor((pos[0] - self.origin[0]) / self.resolution)
+        y_grid = math.floor((pos[1] - self.origin[1]) / self.resolution)
         return (x_grid, y_grid)
 
-    def grid_to_world(self, x, y):
+    def grid_to_world(self, pos):
         """
         Convert a given world position in grid frame to world frame.
 
@@ -140,11 +140,11 @@ class OccupancyGrid:
         :return: The coordinates in world frame
         :rtype: (float, float)
         """
-        x_world = (x * self.resolution) + self.origin[0]
-        y_world = (y * self.resolution) + self.origin[1]
+        x_world = (pos[0] * self.resolution) + self.origin[0]
+        y_world = (pos[1] * self.resolution) + self.origin[1]
         return (x_world, y_world)
 
-    def is_occupied(self, x, y):
+    def is_occupied(self, pos):
         """
         Check if a given position in the grid is occupied
 
@@ -155,7 +155,7 @@ class OccupancyGrid:
         :return: True if the position is occupied, else False
         :rtype: bool
         """
-        return (not self.is_in_bounds(x, y)) or self.data[x, y] == 1
+        return (not self.is_in_bounds(pos[0], pos[1])) or self.data[pos[0], pos[1]] == 1
 
 
 def occupancy_grid_from_world(
