@@ -196,6 +196,7 @@ class OccupancyGrid:
             last_free_point = position
         return not collision, lastpoint
 
+
 def occupancy_grid_from_world(
     world,
     resolution,
