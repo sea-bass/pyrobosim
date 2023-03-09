@@ -40,18 +40,21 @@ class AStarGridPlanner:
         :type max_time: float
         """
 
-        self.goal = None
-        self.start = None
         self.world = world
-        self.planning_time = 0
         self.max_time = max_time
-        self.num_nodes_expanded = 0
         self.resolution = resolution
         self.distance_metric = distance_metric
         self.diagonal_motion = diagonal_motion
         self.inflation_radius = inflation_radius
+        
+        self.goal = None
+        self.start = None
+        self.planning_time = 0
+        self.num_nodes_expanded = 0
         self.candidates = PriorityQueue()
         self.latest_path = Path()
+        self.parent_of = dict()
+        self.cost_till = dict()
 
         self._set_actions()
         self._set_heuristic()
@@ -104,7 +107,7 @@ class AStarGridPlanner:
                 warnings.warn("Manhattan over estimates without diagonal motion")
             self._heuristic = manhattan
 
-    def _is_valid_start_goal(self, start, goal):
+    def _is_valid_start_goal(self):
         """
         Validate the start and goal locations provided to the planner
 
@@ -112,13 +115,75 @@ class AStarGridPlanner:
         :rtype: bool
         """
         valid = True
-        if self.grid.is_occupied(start):
-            warnings.warn(f"Start position {start} is occupied")
+        if self.grid.is_occupied(self.start):
+            warnings.warn(f"Start position {self.start} is occupied")
             valid = False
-        if self.grid.is_occupied(goal):
+        if self.grid.is_occupied(self.goal):
             valid = False
-            warnings.warn(f"Goal position {goal} is occupied")
+            warnings.warn(f"Goal position {self.goal} is occupied")
         return valid
+
+    def _reset(self):
+        """
+        Resets the data used by the planner
+        """
+        self.num_nodes_expanded = 0
+        self.planning_time = 0
+        self.latest_path = Path()
+        self.candidates = PriorityQueue()
+        self.parent_of.clear()
+        self.cost_till.clear()
+
+    def _expand(self, current):
+        """
+        Expands the given node
+
+        :param current: The node to expand
+        :type current: (int, int)
+        """
+        x, y = current
+        for a in self.selected_actions:
+            action  = self.actions[a]["action"]
+            next  = (x + action[0], y + action[1])
+            cost_new = self.cost_till[current] + self.actions[a]["cost"]
+            update_candidates = (next not in self.cost_till or cost_new < self.cost_till[next])
+            if not self.grid.is_occupied(next) and update_candidates:
+                expected_toal_cost = cost_new + self._heuristic(next, self.goal)
+                self.candidates.put((expected_toal_cost,next))
+                self.parent_of[next] = current
+                self.cost_till[next] = cost_new
+                self.num_nodes_expanded += 1
+
+    def _get_best_candidate(self):
+        """
+        Returns the candidate with best metric
+        """
+        return self.candidates.get()[1]
+
+    def _generate_path(self, path_found):
+        """
+        Generates the full path if a path was found
+
+        :param path_found: True if a path was found, else False
+        :type path_found: bool
+        """
+        if path_found:
+            waypoints = []
+            while current is not None:
+                x, y = self.grid.grid_to_world((current[0], current[1]))
+                waypoints.append(Pose(x, y))
+                current = self.parent_of[current]
+            waypoints.reverse()
+            print(waypoints)
+            self.latest_path = Path(poses=waypoints)
+            self.latest_path.fill_yaws()
+            print("Path found")
+            print(self.latest_path)
+            return self.latest_path
+        
+        else:
+            print("No path found")
+            return self.latest_path
 
     def plan(self, start, goal):
         """
@@ -131,67 +196,32 @@ class AStarGridPlanner:
         :return: Path from start to goal.
         :rtype: :class:`pyrobosim.utils.motion.Path`
         """
-        self.latest_path = Path()
-        self.num_nodes_expanded = 0
-        self.planning_time = 0
-        start = self.grid.world_to_grid((start.x, start.y))
-        goal = self.grid.world_to_grid((goal.x, goal.y))
+        self._reset()
+        self.start = self.grid.world_to_grid((start.x, start.y))
+        self.goal = self.grid.world_to_grid((goal.x, goal.y))
         # If start or goal position is occupied, return empty path with warning.
-        if not self._is_valid_start_goal(start, goal):
+        if not self._is_valid_start_goal():
             return self.latest_path
-
-        candidates = PriorityQueue()
-        parent_of = dict()
-        cost_till = dict()
-
+        
         path_found = False
         timed_out = False
-        start_time = time.time()
-        
-        parent_of[start] = None
-        cost_till[start] = 0.0
-        candidates.put(((cost_till[start] + self._heuristic(start, goal)), start))
-        while not path_found and not candidates.empty() and not timed_out:
-
-            current = candidates.get()[1]
-            if current == goal:
+        start_time = time.time()       
+        self.parent_of[self.start] = None
+        self.cost_till[self.start] = 0.0
+        expected_toal_cost = (self.cost_till[self.start] + self._heuristic(self.start, self.goal))
+        self.candidates.put((expected_toal_cost , self.start))
+        while not path_found and not self.candidates.empty() and not timed_out:
+            current = self._get_best_candidate()
+            if current == self.goal:
                 path_found = True
-                break
-            
+                break           
             # Expand the current node
-            x, y = current
-            for a in self.selected_actions:
-                action  = self.actions[a]["action"]
-                next  = (x + action[0], y + action[1])
-                cost_new = cost_till[current] + self.actions[a]["cost"]
-                if not self.grid.is_occupied(next) and (next not in cost_till or cost_new < cost_till[next]):
-                    expected_toal_cost = cost_new + self._heuristic(next, goal)
-                    candidates.put((expected_toal_cost,next))
-                    parent_of[next] = current
-                    cost_till[next] = cost_new
-                    self.num_nodes_expanded += 1
-
+            self._expand(current)
             self.planning_time = (time.time() - start_time)
-            timed_out = self.planning_time >= self.max_time
-        
+            timed_out = self.planning_time >= self.max_time        
         # Generate the path if a path was found
-        if path_found:
-            waypoints = []
-            while current is not None:
-                x, y = self.grid.grid_to_world((current[0], current[1]))
-                waypoints.append(Pose(x, y))
-                current = parent_of[current]
-            waypoints.reverse()
-            print(waypoints)
-            self.latest_path = Path(poses=waypoints)
-            self.latest_path.fill_yaws()
-            print("Path found")
-            print(self.latest_path)
-            return self.latest_path
-        
-        else:
-            print("No path found")
-            return self.latest_path
+        self._generate_path(path_found)
+
         
     def print_metrics(self):
         """Print metrics about the latest path computed."""
