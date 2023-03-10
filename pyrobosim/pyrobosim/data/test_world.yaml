@@ -40,13 +40,13 @@ robots:
 # PLANNING: Global planner
 global_path_planner:
   # Search graph planner from manually specified nodes
-  # type: search_graph
-  # max_edge_dist: 3.0
-  # collision_check_dist: 0.05
+  type: search_graph
+  max_edge_dist: 3.0
+  collision_check_dist: 0.05
   # Probabilistic Roadmap (PRM) planner
-  type: prm
-  max_connection_dist: 1.5
-  max_nodes: 100
+  # type: prm
+  # max_connection_dist: 1.5
+  # max_nodes: 100
 
 
 # ROOMS: Polygonal regions that can contain object locations
