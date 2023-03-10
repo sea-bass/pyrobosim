@@ -152,7 +152,7 @@ class OccupancyGrid:
 
     def connectable(self, pointA, pointB):
         """
-        Checks if 2 points can be connected in a  straight line.
+        Checks if 2 points can be connected in a straight line.
 
         :param pointA: The source point in the grid
         :type pointA: (int, int)
@@ -162,6 +162,7 @@ class OccupancyGrid:
                  lastpoint is the last point that can be reached from the source in a straight line
                  towards the destination.
                  If pointA and pointB are connectable lastpoint will be pointB.
+        :rtype: (bool, (int, int))
         """
 
         x0, y0 = pointA
@@ -184,7 +185,7 @@ class OccupancyGrid:
         last_free_point = pointA
         lastpoint = pointB
         for x in range(dx + 1):
-            position = (x0 + x * xx + y * yx, y0 + x * xy + y * yy)
+            position = (x0 + (x * xx + y * yx), y0 + (x * xy + y * yy))
             if self.is_occupied(position):
                 lastpoint = last_free_point
                 collision = True

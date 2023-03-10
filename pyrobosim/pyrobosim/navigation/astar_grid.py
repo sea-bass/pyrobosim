@@ -21,7 +21,7 @@ class AStarGridPlanner:
         world,
         resolution=0.05,
         inflation_radius=0.0,
-        distance_metric="euclidean",
+        heuristic="euclidean",
         diagonal_motion=True,
         max_time=5.0,
     ):
@@ -34,8 +34,8 @@ class AStarGridPlanner:
         :type resolution: float
         :param inflation_radius: The inflation radius to be used for the planner's occupancy grid, in meters.
         :type inflation_radius: float
-        :param distance_metric: The metric to be used as heuristic ('manhattan', 'euclidean', 'none').
-        :type distance_metric: string
+        :param heuristic: The metric to be used as heuristic ('manhattan', 'euclidean', 'none').
+        :type heuristic: string
         :param diagonal_motion: If true, expand nodes using diagonal motion.
         :type diagonal_motion: bool
         :param max_time: Maximum time allowed for planning, in seconds.
@@ -45,7 +45,7 @@ class AStarGridPlanner:
         self.world = world
         self.max_time = max_time
         self.resolution = resolution
-        self.distance_metric = distance_metric
+        self.heuristic = heuristic
         self.diagonal_motion = diagonal_motion
         self.inflation_radius = inflation_radius
 
@@ -106,13 +106,17 @@ class AStarGridPlanner:
         )
         manhattan = lambda p1, p2: abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
 
-        if self.distance_metric == "euclidean":
+        if self.heuristic == "euclidean":
             self._heuristic = euclidean
-        elif self.distance_metric == "manhattan":
+        elif self.heuristic == "manhattan":
             if not self.diagonal_motion:
                 warnings.warn("Manhattan over estimates without diagonal motion")
             self._heuristic = manhattan
-        elif self.distance_metric == "none":
+        elif self.heuristic == "none":
+            self._heuristic = lambda p1, p2: 0
+        else:
+            warnings.warn(f"Unknown heuristic : {self.heuristic}")
+            warnings.warn(f"Defaulting to heuristic : 'none' ")
             self._heuristic = lambda p1, p2: 0
 
     def _is_valid_start_goal(self):
@@ -250,13 +254,13 @@ class AStarGridPlanner:
             self.latest_path.print_details()
         print("\n")
         print(f"Selected actions : {self.selected_actions}")
-        print(f"Selected heuristic: {self.distance_metric}")
+        print(f"Selected heuristic: {self.heuristic}")
         print(f"Occupancy grid generated in : {self.grid_generation_time} seconds")
         print(f"Time to plan: {self.planning_time} seconds")
         print(f"Number of nodes expanded : {self.num_nodes_expanded}")
         print(f"Number of waypoints in path : {self.latest_path.num_poses}")
 
-    def plot(self, axes, path_color="m", show_path=True):
+    def plot(self, axes, path_color="m"):
         """
         Plots the planned path on a specified set of axes.
 
@@ -264,10 +268,6 @@ class AStarGridPlanner:
         :type axes: :class:`matplotlib.axes.Axes`
         :param path_color: Color of the path, as an RGB tuple or string.
         :type path_color: tuple[float] / str, optional
-        :param show_graph: If True, shows the RRTs used for planning.
-        :type show_graph: bool
-        :param show_path: If True, shows the last planned path.
-        :type show_path: bool
         :return: List of Matplotlib artists containing what was drawn,
             used for bookkeeping.
         :rtype: list[:class:`matplotlib.artist.Artist`]
@@ -285,12 +285,10 @@ class AStarGridPlanner:
 
         return artists
 
-    def show(self, show_graph=True, show_path=True):
+    def show(self, show_path=True):
         """
-        Shows the RRTs and the planned path in a new figure.
+        Shows the A* the planned path in a new figure.
 
-        :param show_graph: If True, shows the RRTs used for planning.
-        :type show_graph: bool
         :param show_path: If True, shows the last planned path.
         :type show_path: bool
         """
@@ -298,7 +296,7 @@ class AStarGridPlanner:
 
         f = plt.figure()
         ax = f.add_subplot(111)
-        self.plot(ax, show_graph=show_graph, show_path=show_path)
+        self.plot(ax, show_path=show_path)
         plt.title("A*")
         plt.axis("equal")
         plt.show()
