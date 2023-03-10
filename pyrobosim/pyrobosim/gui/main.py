@@ -4,6 +4,7 @@ import numpy as np
 import sys
 
 from PyQt5 import QtWidgets
+from PyQt5.QtCore import QTimer
 from matplotlib.backends.qt_compat import QtCore
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
 
@@ -11,16 +12,18 @@ from .world_canvas import WorldCanvas
 from ..utils.knowledge import query_to_entity
 
 
-def start_gui(world, args):
-    """Initializes GUI"""
-    from pyrobosim.gui.main import PyRoboSimGUI
-    from PyQt5.QtCore import QTimer
+def start_gui(world):
+    """
+    Helper function to start a pyrobosim GUI for a world model.
 
-    app = PyRoboSimGUI(world, args)
+    :param world: World object to attach to the GUI.
+    :type world: :class:`pyrobosim.core.world.World`
+    """
+    app = PyRoboSimGUI(world, sys.argv)
 
-    timer = QTimer()
+    timer = QTimer(parent=app)
     timer.timeout.connect(lambda: None)
-    timer.start(100)
+    timer.start(500)
 
     sys.exit(app.exec_())
 

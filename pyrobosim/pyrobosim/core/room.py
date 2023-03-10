@@ -2,9 +2,8 @@
 Room representation for world modeling.
 """
 
-import warnings
 from shapely import intersects_xy
-from shapely.geometry import Polygon, Point
+from shapely.geometry import Polygon
 from shapely.plotting import patch_from_polygon
 
 from ..navigation.search_graph import Node

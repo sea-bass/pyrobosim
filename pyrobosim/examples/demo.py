@@ -4,13 +4,13 @@
 Test script showing how to build a world and use it with pyrobosim
 """
 import os
-import sys
 import argparse
 import numpy as np
 
 from pyrobosim.core.robot import Robot
 from pyrobosim.core.room import Room
 from pyrobosim.core.world import World
+from pyrobosim.core.yaml import WorldYamlLoader
 from pyrobosim.gui.main import start_gui
 from pyrobosim.manipulation.grasping import GraspGenerator, ParallelGraspProperties
 from pyrobosim.navigation.execution import ConstantVelocityExecutor
@@ -130,8 +130,6 @@ def create_world(multirobot=False):
 
 
 def create_world_from_yaml(world_file):
-    from pyrobosim.core.yaml import WorldYamlLoader
-
     loader = WorldYamlLoader()
     return loader.from_yaml(os.path.join(data_folder, world_file))
 
@@ -164,4 +162,4 @@ if __name__ == "__main__":
         world = create_world_from_yaml(args.world_file)
 
     # Start the program either as ROS node or standalone.
-    start_gui(world, sys.argv)
+    start_gui(world)

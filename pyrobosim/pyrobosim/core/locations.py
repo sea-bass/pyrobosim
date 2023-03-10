@@ -1,8 +1,6 @@
 """ Representations for locations and their corresponding object spawns. """
 
-import warnings
 from shapely import intersects_xy
-from shapely.geometry import Point
 from shapely.plotting import patch_from_polygon
 
 from ..navigation.search_graph import Node

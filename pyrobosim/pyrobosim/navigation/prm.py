@@ -4,6 +4,7 @@ import time
 import warnings
 
 from .search_graph import SearchGraph, Node
+from ..utils.motion import Path
 from ..utils.pose import Pose
 
 
@@ -37,7 +38,7 @@ class PRMPlanner:
     def reset(self):
         """Resamples the PRM and resets planning metrics."""
         self.planning_time = self.sampling_time = 0.0
-        self.latest_path = None
+        self.latest_path = Path()
 
         # Create a search graph and sample nodes.
         self.graph = SearchGraph(
@@ -138,7 +139,7 @@ class PRMPlanner:
                 )
                 artists.append(edge)
 
-        if show_path and self.latest_path.num_poses > 0:
+        if show_path and self.latest_path and self.latest_path.num_poses > 0:
             x = [p.x for p in self.latest_path.poses]
             y = [p.y for p in self.latest_path.poses]
             (path,) = axes.plot(

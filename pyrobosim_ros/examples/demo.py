@@ -5,13 +5,15 @@ Test script showing how to build a world and use it with pyrobosim,
 additionally starting up a ROS interface.
 """
 import os
-import sys
+import rclpy
 import threading
 import numpy as np
 
 from pyrobosim.core.robot import Robot
 from pyrobosim.core.room import Room
+from pyrobosim.core.ros_interface import WorldROSWrapper
 from pyrobosim.core.world import World
+from pyrobosim.core.yaml import WorldYamlLoader
 from pyrobosim.gui.main import start_gui
 from pyrobosim.navigation.execution import ConstantVelocityExecutor
 from pyrobosim.utils.general import get_data_folder
@@ -87,17 +89,12 @@ def create_world():
 
 
 def create_world_from_yaml(world_file):
-    from pyrobosim.core.yaml import WorldYamlLoader
-
     loader = WorldYamlLoader()
     return loader.from_yaml(os.path.join(data_folder, world_file))
 
 
 def create_ros_node():
     """Initializes ROS node"""
-    import rclpy
-    from pyrobosim.core.ros_interface import WorldROSWrapper
-
     rclpy.init()
     node = WorldROSWrapper(state_pub_rate=0.1)
     node.declare_parameter("world_file", value="")
@@ -124,4 +121,4 @@ if __name__ == "__main__":
     ros_thread.start()
 
     # Start GUI in main thread
-    start_gui(node.world, sys.argv)
+    start_gui(node.world)
