@@ -2,6 +2,7 @@
 import os
 
 from pyrobosim.core.yaml import WorldYamlLoader
+from pyrobosim.gui.main import start_gui
 from pyrobosim.navigation.rrt import RRTPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
@@ -27,8 +28,4 @@ def test_rrt():
 
 if __name__ == "__main__":
     test_rrt()
-
-    import sys
-    from pyrobosim.gui.main import start_gui
-
-    start_gui(world, sys.argv)
+    start_gui(world)

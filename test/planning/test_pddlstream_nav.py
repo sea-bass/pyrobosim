@@ -4,7 +4,6 @@
 Test script for PDDLStream planning with navigation streams.
 """
 import os
-import sys
 import threading
 
 from pyrobosim.core.robot import Robot
@@ -121,4 +120,4 @@ if __name__ == "__main__":
     )
     planner_thread.start()
 
-    start_gui(world, sys.argv)
+    start_gui(world)

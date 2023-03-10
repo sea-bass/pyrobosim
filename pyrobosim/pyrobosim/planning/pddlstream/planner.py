@@ -2,7 +2,6 @@
 
 import os
 from pddlstream.algorithms.focused import solve_adaptive
-from pddlstream.algorithms.incremental import solve_incremental
 from pddlstream.language.constants import And, PDDLProblem
 from pddlstream.utils import read
 

@@ -9,7 +9,7 @@ from .locations import ObjectSpawn
 from .objects import Object
 from ..manipulation.grasping import Grasp
 from ..utils.knowledge import resolve_to_object
-from ..utils.polygon import inflate_polygon, sample_from_polygon, transform_polygon
+from ..utils.polygon import sample_from_polygon, transform_polygon
 from ..utils.pose import Pose
 
 

@@ -1,7 +1,6 @@
 """ Representations for objects that exist in the world. """
 
 import numpy as np
-import warnings
 from shapely.plotting import patch_from_polygon
 from scipy.spatial import ConvexHull
 

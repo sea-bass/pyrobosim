@@ -6,12 +6,12 @@ Test script for PDDLStream planning with manipulation streams.
 import numpy as np
 import os
 import pytest
-import sys
 import threading
 
 from pyrobosim.core.robot import Robot
 from pyrobosim.core.room import Room
 from pyrobosim.core.world import World
+from pyrobosim.gui.main import start_gui
 from pyrobosim.manipulation.grasping import GraspGenerator, ParallelGraspProperties
 from pyrobosim.navigation.execution import ConstantVelocityExecutor
 from pyrobosim.navigation.rrt import RRTPlanner
@@ -136,6 +136,4 @@ if __name__ == "__main__":
     )
     planner_thread.start()
 
-    from pyrobosim.gui.main import start_gui
-
-    start_gui(world, sys.argv)
+    start_gui(world)

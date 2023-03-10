@@ -1,6 +1,5 @@
 """ Main file containing the core world modeling tools. """
 
-import sys
 import itertools
 import numpy as np
 import warnings
@@ -13,7 +12,7 @@ from .robot import Robot
 from ..navigation.search_graph import Node, SearchGraph, SearchGraphPlanner
 from ..utils.knowledge import resolve_to_location, resolve_to_object
 from ..utils.pose import Pose
-from ..utils.polygon import inflate_polygon, sample_from_polygon, transform_polygon
+from ..utils.polygon import sample_from_polygon, transform_polygon
 
 
 class World:

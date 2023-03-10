@@ -5,7 +5,6 @@ Test script showing how to perform task and motion planning with PDDLStream.
 """
 
 import os
-import sys
 import argparse
 import threading
 
@@ -94,4 +93,4 @@ if __name__ == "__main__":
     planner_thread.start()
 
     # Start GUI in main thread.
-    start_gui(world, sys.argv)
+    start_gui(world)
