@@ -139,7 +139,7 @@ class PRMPlanner:
                 )
                 artists.append(edge)
 
-        if show_path and self.latest_path and self.latest_path.num_poses > 0:
+        if show_path and self.latest_path.num_poses > 0:
             x = [p.x for p in self.latest_path.poses]
             y = [p.y for p in self.latest_path.poses]
             (path,) = axes.plot(
