@@ -165,37 +165,50 @@ class OccupancyGrid:
         :rtype: (bool, (int, int))
         """
 
+        # Notes:
+        # left shift operator `<<` is used as an optimization for multiplying by 2
+
         x0, y0 = pointA
         x1, y1 = pointB
+
         dx = x1 - x0
         dy = y1 - y0
-        xsign = 1 if dx > 0 else -1
-        ysign = 1 if dy > 0 else -1
+
+        xdir = 1 if dx > 0 else -1
+        ydir = 1 if dy > 0 else -1
+
         dx = abs(dx)
         dy = abs(dy)
-        if dx > dy:
-            xx, xy, yx, yy = xsign, 0, 0, ysign
-        else:
-            dx, dy = dy, dx
-            xx, xy, yx, yy = 0, ysign, xsign, 0
 
-        D = 2 * dy - dx
+        # If we have to take more steps along y axis, switch x-axis with y-axis
+        # This is done for easiness of computing in the loop
+        axis_switched = False
+        if dy > dx:
+            dx, dy = dy, dx
+            axis_switched = True
+
         y = 0
-        collision = False
+        x = 0
+        decision = (dy << 1) - dx
         last_free_point = pointA
         lastpoint = pointB
-        for x in range(dx + 1):
-            position = (x0 + (x * xx + y * yx), y0 + (x * xy + y * yy))
-            if self.is_occupied(position):
-                lastpoint = last_free_point
-                collision = True
-                break
-            if D >= 0:
+        can_connect = True
+        for _ in range(dx + 1):
+            # handles the increment the same way even if axis has been switched
+            x_inc = xdir * (y if axis_switched else x)
+            y_inc = ydir * (x if axis_switched else y)
+            # Compute the next grid cell
+            if self.data[x0 + x_inc, y0 + y_inc] == 1:
+                lastpoint = (x0 + x_inc, y0 + y_inc)
+                can_connect = False
+            x += 1
+            if decision < 0:
+                decision += dy << 1
+            else:
                 y += 1
-                D -= 2 * dx
-            D += 2 * dy
-            last_free_point = position
-        return not collision, lastpoint
+                decision += (dy << 1) - (dx << 1)
+            last_free_point = (x0 + x_inc, y0 + y_inc)
+        return can_connect, lastpoint
 
 
 def occupancy_grid_from_world(
