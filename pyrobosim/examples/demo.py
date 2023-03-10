@@ -14,6 +14,7 @@ from pyrobosim.core.yaml import WorldYamlLoader
 from pyrobosim.gui.main import start_gui
 from pyrobosim.manipulation.grasping import GraspGenerator, ParallelGraspProperties
 from pyrobosim.navigation.execution import ConstantVelocityExecutor
+from pyrobosim.navigation.rrt import RRTPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
@@ -116,8 +117,6 @@ def create_world(multirobot=False):
             grasp_generator=GraspGenerator(grasp_props),
         )
         world.add_robot(robby, loc="bedroom")
-        from pyrobosim.navigation.rrt import RRTPlanner
-
         robby.set_path_planner(
             RRTPlanner(world, bidirectional=True, rrt_connect=False, rrt_star=True)
         )
