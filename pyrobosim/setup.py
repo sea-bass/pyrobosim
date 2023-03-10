@@ -17,6 +17,7 @@ def get_files_in_folder(directory):
 install_requires = [
     "adjustText",
     "astar",
+    "matplotlib",
     "numpy",
     "pycollada",
     "PyQt5",
