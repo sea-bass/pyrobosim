@@ -281,8 +281,8 @@ class WorldCanvas(FigureCanvasQTAgg):
         :param path: The path to display.
         :type path: :class:`pyrobosim.utils.motion.Path`
         """
-        for e in self.path_planner_artists:
-            self.axes.lines.remove(e)
+        for artist in self.path_planner_artists:
+            artist.remove()
         self.path_planner_artists = []
         x = [p.x for p in path.poses]
         y = [p.y for p in path.poses]
@@ -308,8 +308,8 @@ class WorldCanvas(FigureCanvasQTAgg):
         while self.draw_lock:
             time.sleep(0.001)
         self.draw_lock = True
-        for e in self.path_planner_artists:
-            self.axes.lines.remove(e)
+        for artist in self.path_planner_artists:
+            artist.remove()
 
         color = robot.color if robot is not None else "m"
 
