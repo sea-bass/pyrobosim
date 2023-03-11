@@ -23,6 +23,7 @@ class AStarGridPlanner:
         inflation_radius=0.0,
         heuristic="euclidean",
         diagonal_motion=True,
+        compress_path=True,
         max_time=5.0,
     ):
         """
@@ -46,6 +47,7 @@ class AStarGridPlanner:
         self.max_time = max_time
         self.resolution = resolution
         self.heuristic = heuristic
+        self.compress_path = compress_path
         self.diagonal_motion = diagonal_motion
         self.inflation_radius = inflation_radius
 
@@ -154,10 +156,10 @@ class AStarGridPlanner:
         :type current: (int, int)
         """
         x, y = current
-        for a in self.selected_actions:
-            action = self.actions[a]["action"]
-            next = (x + action[0], y + action[1])
-            cost_new = self.cost_till[current] + self.actions[a]["cost"]
+        for action in self.selected_actions:
+            delta = self.actions[action]["action"]
+            next = (x + delta[0], y + delta[1])
+            cost_new = self.cost_till[current] + self.actions[action]["cost"]
             update_candidates = (
                 next not in self.cost_till or cost_new < self.cost_till[next]
             )
@@ -189,7 +191,8 @@ class AStarGridPlanner:
             waypoints.append(current)
             current = self.parent_of[current]
         waypoints.reverse()
-        waypoints = reduce_waypoints(self.grid, waypoints)
+        if self.compress_path:
+            waypoints = reduce_waypoints(self.grid, waypoints)
         poses = []
         for point in waypoints:
             world_x, world_y = self.grid.grid_to_world(point)
