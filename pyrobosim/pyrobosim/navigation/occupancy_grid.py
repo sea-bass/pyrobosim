@@ -2,6 +2,8 @@
 
 import os
 import yaml
+import math
+import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -96,6 +98,117 @@ class OccupancyGrid:
         }
         with open(yaml_file, "w") as f:
             yaml.dump(yaml_dict, f, sort_keys=False, default_flow_style=None)
+
+    def is_in_bounds(self, pos):
+        """
+        Check if a given (x,y) position is within grid limits
+
+        :param pos: The position to be validated.
+        :type pos: (int, int)
+        :return: True if the given coordinates are within bounds, else False
+        :rtype: bool
+        """
+        x, y = pos
+        x_bounds = (x >= 0) and (x < self.width)
+        y_bounds = (y >= 0) and (y < self.height)
+        return x_bounds and y_bounds
+
+    def world_to_grid(self, pos):
+        """
+        Convert a given world position in world frame to grid frame.
+
+        :param pos: The position to be transformed.
+        :type pos: (float, float)
+        :return: The coordinates in grid frame.
+        :rtype: (int, int)
+        """
+        x_grid = math.floor((pos[0] - self.origin[0]) / self.resolution)
+        y_grid = math.floor((pos[1] - self.origin[1]) / self.resolution)
+        return (x_grid, y_grid)
+
+    def grid_to_world(self, pos):
+        """
+        Convert a given world position in grid frame to world frame.
+
+        :param pos: The position to be transformed.
+        :type pos: (int, int)
+        :return: The coordinates in world frame
+        :rtype: (float, float)
+        """
+        x_world = (pos[0] * self.resolution) + self.origin[0]
+        y_world = (pos[1] * self.resolution) + self.origin[1]
+        return (x_world, y_world)
+
+    def is_occupied(self, pos):
+        """
+        Check if a given position in the grid is occupied
+
+        :param pos: The position to be checked.
+        :type pos: (int, int)
+        :return: True if the position is occupied, else False
+        :rtype: bool
+        """
+        return (not self.is_in_bounds(pos)) or self.data[pos[0], pos[1]] == 1
+
+    def connectable(self, pointA, pointB):
+        """
+        Checks if 2 points can be connected in a straight line.
+
+        :param pointA: The source point in the grid
+        :type pointA: (int, int)
+        :param pointB: The destination point in the grid
+        :type pointB: (int, int)
+        :return: (True, lastpoint) if pointA can be connected to pointB, else (False, lastpoint),
+                 lastpoint is the last point that can be reached from the source in a straight line
+                 towards the destination.
+                 If pointA and pointB are connectable lastpoint will be pointB.
+        :rtype: (bool, (int, int))
+        """
+
+        # Notes:
+        # left shift operator `<<` is used as an optimization for multiplying by 2
+
+        x0, y0 = pointA
+        x1, y1 = pointB
+
+        dx = x1 - x0
+        dy = y1 - y0
+
+        xdir = 1 if dx > 0 else -1
+        ydir = 1 if dy > 0 else -1
+
+        dx = abs(dx)
+        dy = abs(dy)
+
+        # If we have to take more steps along y axis, switch x-axis with y-axis
+        # This is done for easiness of computing in the loop
+        axis_switched = False
+        if dy > dx:
+            dx, dy = dy, dx
+            axis_switched = True
+
+        y = 0
+        x = 0
+        decision = (dy << 1) - dx
+        last_free_point = pointA
+        lastpoint = pointB
+        can_connect = True
+        for _ in range(dx + 1):
+            # handles the increment the same way even if axis has been switched
+            x_inc = xdir * (y if axis_switched else x)
+            y_inc = ydir * (x if axis_switched else y)
+            # Compute the next grid cell
+            if self.data[x0 + x_inc, y0 + y_inc] == 1:
+                lastpoint = (x0 + x_inc, y0 + y_inc)
+                can_connect = False
+            x += 1
+            if decision < 0:
+                decision += dy << 1
+            else:
+                y += 1
+                decision += (dy << 1) - (dx << 1)
+            last_free_point = (x0 + x_inc, y0 + y_inc)
+        return can_connect, lastpoint
 
 
 def occupancy_grid_from_world(

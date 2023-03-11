@@ -175,39 +175,55 @@ class WorldYamlLoader:
             or "type" not in self.data["global_path_planner"]
         ):
             return
+
         planner_data = self.data["global_path_planner"]
         planner_type = planner_data["type"]
+        create_planner = False
 
         if planner_type == "search_graph":
-            max_edge_dist = planner_data.get("max_edge_dist", np.inf)
-            collision_check_dist = planner_data.get("collision_check_dist", 0.1)
-            self.world.create_search_graph(
-                max_edge_dist=max_edge_dist,
-                collision_check_dist=collision_check_dist,
-                create_planner=True,
+            create_planner = True
+
+        elif planner_type == "prm":
+            from pyrobosim.navigation.prm import PRMPlanner
+
+            max_nodes = planner_data.get("max_nodes", 100)
+            max_connection_dist = planner_data.get("max_connection_dist", 1.0)
+            self.world.path_planner = PRMPlanner(
+                self.world,
+                max_nodes=max_nodes,
+                max_connection_dist=max_connection_dist,
+            )
+
+        elif planner_type == "astar_grid":
+            from pyrobosim.navigation.astar_grid import AStarGridPlanner
+
+            resolution = planner_data.get("resolution", 0.05)
+            inflation_radius = planner_data.get("inflation_radius", 0.1)
+            heuristic = planner_data.get("heuristic", "euclidean")
+            diagonal_motion = planner_data.get("diagonal_motion", True)
+            max_time = planner_data.get("max_time", 5.0)
+            compress_path = planner_data.get("compress_path", True)
+
+            self.world.path_planner = AStarGridPlanner(
+                self.world,
+                resolution=resolution,
+                inflation_radius=inflation_radius,
+                diagonal_motion=diagonal_motion,
+                heuristic=heuristic,
+                compress_path=compress_path,
+                max_time=max_time,
             )
         else:
-            # Always make a search graph as we use it for other things.
-            max_edge_dist = planner_data.get("max_edge_dist", np.inf)
-            collision_check_dist = planner_data.get("collision_check_dist", 0.1)
-            self.world.create_search_graph(
-                max_edge_dist=max_edge_dist,
-                collision_check_dist=collision_check_dist,
-                create_planner=False,
-            )
+            warnings.warn(f"Invalid global planner type specified: {planner_type}")
 
-            if planner_type == "prm":
-                from pyrobosim.navigation.prm import PRMPlanner
-
-                max_nodes = planner_data.get("max_nodes", 100)
-                max_connection_dist = planner_data.get("max_connection_dist", 1.0)
-                self.world.path_planner = PRMPlanner(
-                    self.world,
-                    max_nodes=max_nodes,
-                    max_connection_dist=max_connection_dist,
-                )
-            else:
-                warnings.warn(f"Invalid global planner type specified: {planner_type}")
+        # Always make a search graph as we use it for other things.
+        max_edge_dist = planner_data.get("max_edge_dist", np.inf)
+        collision_check_dist = planner_data.get("collision_check_dist", 0.1)
+        self.world.create_search_graph(
+            max_edge_dist=max_edge_dist,
+            collision_check_dist=collision_check_dist,
+            create_planner=create_planner,
+        )
 
     def get_local_path_planner(self, robot_data):
         """Gets local planner path planner to a robot."""
