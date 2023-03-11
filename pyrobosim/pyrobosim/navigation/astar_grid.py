@@ -39,6 +39,8 @@ class AStarGridPlanner:
         :type heuristic: string
         :param diagonal_motion: If true, expand nodes using diagonal motion.
         :type diagonal_motion: bool
+        :param compress_path: If true, waypoint reduction will be applied to generated path, else full path is returned.
+        :type compress_path: bool
         :param max_time: Maximum time allowed for planning, in seconds.
         :type max_time: float
         """
