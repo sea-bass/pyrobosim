@@ -199,8 +199,19 @@ class WorldYamlLoader:
 
             resolution = planner_data.get("resolution", 0.05)
             inflation_radius = planner_data.get("inflation_radius", 0.1)
+            heuristic = planner_data.get("heuristic", "euclidean")
+            diagonal_motion = planner_data.get("diagonal_motion", True)
+            max_time = planner_data.get("max_time", 5.0)
+            compress_path = planner_data.get("compress_path", True)
+
             self.world.path_planner = AStarGridPlanner(
-                self.world, resolution=resolution, inflation_radius=inflation_radius
+                self.world,
+                resolution=resolution,
+                inflation_radius=inflation_radius,
+                diagonal_motion=diagonal_motion,
+                heuristic=heuristic,
+                compress_path=compress_path,
+                max_time=max_time,
             )
         else:
             warnings.warn(f"Invalid global planner type specified: {planner_type}")
