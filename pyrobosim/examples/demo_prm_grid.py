@@ -29,4 +29,4 @@ def test_prm():
 
 if __name__ == "__main__":
     test_prm()
-    # start_gui(world)
+    start_gui(world)
