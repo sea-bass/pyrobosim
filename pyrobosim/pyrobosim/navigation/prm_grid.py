@@ -8,6 +8,7 @@ from ..utils.pose import Pose
 from ..utils.motion import Path
 from ..navigation.search_graph import Node
 from ..navigation.search_graph import GraphSolver
+from ..utils.waypoint_utils import reduce_waypoints
 from ..navigation.occupancy_grid import occupancy_grid_from_world
 
 
@@ -187,9 +188,17 @@ class PRMGridPlanner:
             warnings.warn("Did not find a path from start to goal.")
             return Path()
         else:
-            poses = []
+            waypoints = []
             for node in path:
-                world_x, world_y = self.grid.grid_to_world((node.pose.x, node.pose.y))
+                gird_x, gird_y = (node.pose.x, node.pose.y)
+                waypoints.append((gird_x, gird_y))
+
+            if self.compress_path:
+                waypoints = reduce_waypoints(self.grid, waypoints)
+
+            poses = []
+            for waypoint in waypoints:
+                world_x, world_y = self.grid.grid_to_world(waypoint)
                 poses.append(Pose(world_x, world_y))
 
             return Path(poses=poses)
@@ -243,7 +252,7 @@ class PRMGridPlanner:
 
     def show(self, show_path=True):
         """
-        Shows the A* the planned path in a new figure.
+        Shows the planned path in a new figure.
 
         :param show_path: If True, shows the last planned path.
         :type show_path: bool
@@ -262,7 +271,7 @@ class PRMGridPlanner:
         if self.latest_path.num_poses == 0:
             print("No path.")
         else:
-            print("Latest path from A*:")
+            print("Latest path from PRM :")
             self.latest_path.print_details()
         print("\n")
         print(f"Occupancy grid generated in : {self.grid_generation_time} seconds")

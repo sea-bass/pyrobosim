@@ -15,11 +15,18 @@ world = loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
 
 def test_prm():
     """Creates a PRM planner and plans"""
-    prm = PRMGridPlanner(world, max_nodes=100, max_connection_dist=1.5)
+    robot = world.robots[0]
+    prm = PRMGridPlanner(
+        world,
+        resolution=0.05,
+        inflation_radius=1.5 * robot.radius,
+        max_nodes=100,
+        max_connection_dist=1.5,
+        compress_path=True,
+    )
     start = Pose(x=-0.5, y=-0.5)
     goal = Pose(x=3.0, y=3.0)
 
-    robot = world.robots[0]
     robot.set_pose(start)
     robot.set_path_planner(prm)
     robot.current_path = robot.plan_path(start, goal)
