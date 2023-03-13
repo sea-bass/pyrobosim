@@ -204,6 +204,18 @@ class PRMGridPlanner:
             return Path(poses=poses)
 
     def plan(self, start, goal):
+        """
+        Plans a path from start to goal.
+
+        :param start: Start pose or graph node.
+        :type start: :class:`pyrobosim.utils.pose.Pose` /
+            :class:`pyrobosim.navigation.search_graph.Node`
+        :param goal: Goal pose or graph node.
+        :type goal: :class:`pyrobosim.utils.pose.Pose` /
+            :class:`pyrobosim.navigation.search_graph.Node`
+        :return: Path from start to goal.
+        :rtype: :class:`pyrobosim.utils.motion.Path`
+        """
         if isinstance(start, Node):
             start = start.pose
         if isinstance(goal, Node):
