@@ -24,7 +24,7 @@ class PRMGridPlanner:
         max_nodes=100,
         max_connection_dist=2.0,
         compress_path=True,
-        max_time=5.0
+        max_time=5.0,
     ):
         """
         Creates an instance of a PRM planner.
@@ -46,26 +46,33 @@ class PRMGridPlanner:
         """
         self.world = world
         self.max_time = max_time
-        self.max_nodes = max_nodes 
-        self.resolution = resolution      
+        self.max_nodes = max_nodes
+        self.resolution = resolution
         self.compress_path = compress_path
         self.inflation_radius = inflation_radius
         # Since the connection distance is specified in meters, we have to convert it into grid distance
         # eg : 2.0 m --> (2.0 / 0.05) = 40 cells
         self.max_connection_dist = max_connection_dist / self.resolution
 
-        self.grid = occupancy_grid_from_world(
-            world=self.world,
-            resolution=self.resolution,
-            inflation_radius=self.inflation_radius,
-        )
-
         self.nodes = []
         self.planning_time = 0
         self.latest_path = Path()
         self.solver = GraphSolver()
         self.np_nodes = np.empty((self.max_nodes, 2), dtype=np.int64)
+        self._set_occupancy_grid()
         self._generate_graph()
+
+    def _set_occupancy_grid(self):
+        """
+        Generates occupancy grid of specified configuration
+        """
+        ts = time.time()
+        self.grid = occupancy_grid_from_world(
+            self.world,
+            resolution=self.resolution,
+            inflation_radius=self.inflation_radius,
+        )
+        self.grid_generation_time = time.time() - ts
 
     def _generate_graph(self):
         """
@@ -74,7 +81,7 @@ class PRMGridPlanner:
         node_count = 0
         max_dim = max(self.grid.width, self.grid.height) - 1
         while node_count < self.max_nodes:
-            x, y = np.random.randint(0, max_dim, (2, ))
+            x, y = np.random.randint(0, max_dim, (2,))
             if not self.grid.is_occupied((x, y)):
                 self.nodes.append(Node(Pose(x, y)))
                 self.np_nodes[node_count, :] = [x, y]
@@ -83,7 +90,9 @@ class PRMGridPlanner:
         # Find nodes within max_connection_dist
         for i in range(len(self.nodes)):
             distances = np.linalg.norm(self.np_nodes[i] - self.np_nodes, axis=1)
-            potential_neighbors = np.where( (distances < self.max_connection_dist) & (distances > 0) )
+            potential_neighbors = np.where(
+                (distances < self.max_connection_dist) & (distances > 0)
+            )
 
             # If the current node can be connected to any of the potential neighbors, add them as a neighbour
             xa, ya = self.np_nodes[i]
@@ -93,40 +102,57 @@ class PRMGridPlanner:
                     self.nodes[i].neighbors.add(self.nodes[idx])
                     self.nodes[idx].neighbors.add(self.nodes[i])
 
-    def _add_start_goal(self,start, goal):
+    def _add_start_goal(self):
         """
         Add the start and goal to the graph for planning.
-
-        :param start: The start node
-        :type start: :class: `pyrobosim.navigation.search_graph.Node`
-        :param goal: The goal node
-        :type goal: :class: `pyrobosim.navigation.search_graph.Node`        
         """
 
-        self.nodes.append(start)
-        self.nodes.append(goal)
+        self.nodes.append(self.start)
+        self.nodes.append(self.goal)
 
-        # Add neighbors of start 
-        distances = np.linalg.norm([start.pose.x, start.pose.y] - self.np_nodes, axis=1)
-        potential_neighbors = np.where( (distances < self.max_connection_dist) & (distances > 0) )
-        # If the current node can be connected to any of the potential neighbors, add them as a neighbour
-        xa, ya = [start.pose.x, start.pose.y]
+        # Add neighbors of start
+        distances = np.linalg.norm(
+            [self.start.pose.x, self.start.pose.y] - self.np_nodes, axis=1
+        )
+        potential_neighbors = np.where(
+            (distances < self.max_connection_dist) & (distances > 0)
+        )
+        # If the start node can be connected to any of the potential neighbors, add them as a neighbour
+        xa, ya = [self.start.pose.x, self.start.pose.y]
         for idx in potential_neighbors[0]:
             xb, yb = self.np_nodes[idx]
             if self.grid.connectable((xa, ya), (xb, yb))[0]:
                 self.nodes[-2].neighbors.add(self.nodes[idx])
                 self.nodes[idx].neighbors.add(self.nodes[-2])
 
-        # Add neighbors of goal 
-        distances = np.linalg.norm([goal.pose.x, goal.pose.y] - self.np_nodes, axis=1)
-        potential_neighbors = np.where( (distances < self.max_connection_dist) & (distances > 0) )
-        # If the current node can be connected to any of the potential neighbors, add them as a neighbour
-        xa, ya = [goal.pose.x, goal.pose.y]
+        # Add neighbors of goal
+        distances = np.linalg.norm(
+            [self.goal.pose.x, self.goal.pose.y] - self.np_nodes, axis=1
+        )
+        potential_neighbors = np.where(
+            (distances < self.max_connection_dist) & (distances > 0)
+        )
+        # If the goal node can be connected to any of the potential neighbors, add them as a neighbour
+        xa, ya = [self.goal.pose.x, self.goal.pose.y]
         for idx in potential_neighbors[0]:
             xb, yb = self.np_nodes[idx]
             if self.grid.connectable((xa, ya), (xb, yb))[0]:
                 self.nodes[-1].neighbors.add(self.nodes[idx])
                 self.nodes[idx].neighbors.add(self.nodes[-1])
+
+    def _remove_start_goal(self):
+        """
+        Removes start and goal nodes from the PRM graph.
+        """
+        start = self.nodes[-2]
+        goal = self.nodes[-1]
+        for node in self.nodes[-2:]:
+            if start in node.neighbors:
+                node.neighbors.remove(start)
+            if goal in node.neighbors:
+                node.neighbors.remove(goal)
+        self.nodes.remove(start)
+        self.nodes.remove(goal)
 
     def _is_valid_start_goal(self):
         """
@@ -178,15 +204,18 @@ class PRMGridPlanner:
         # If start or goal position is occupied, return empty path with warning.
         if not self._is_valid_start_goal():
             return self.latest_path
-        
-        start = Node(Pose(x = self.start[0], y = self.start[1]))
-        goal = Node(Pose(x = self.goal[0], y = self.goal[1]))
-        # TODO : Add start and goal to graph 
-        self._add_start_goal(start, goal)
-        self.latest_path = self._find_path(start, goal)
+
+        self.start = Node(Pose(x=self.start[0], y=self.start[1]))
+        self.goal = Node(Pose(x=self.goal[0], y=self.goal[1]))
+
+        start_time = time.time()
+        self._add_start_goal()
+        self.latest_path = self._find_path(self.start, self.goal)
         self.latest_path.fill_yaws()
+        self._remove_start_goal()
+        self.planning_time = time.time() - start_time
         return self.latest_path
-    
+
     def plot(self, axes, path_color="m"):
         """
         Plots the planned path on a specified set of axes.
@@ -227,3 +256,15 @@ class PRMGridPlanner:
         plt.title("A*")
         plt.axis("equal")
         plt.show()
+
+    def print_metrics(self):
+        """Print metrics about the latest path computed."""
+        if self.latest_path.num_poses == 0:
+            print("No path.")
+        else:
+            print("Latest path from A*:")
+            self.latest_path.print_details()
+        print("\n")
+        print(f"Occupancy grid generated in : {self.grid_generation_time} seconds")
+        print(f"Time to plan: {self.planning_time} seconds")
+        print(f"Number of waypoints in path : {self.latest_path.num_poses}")
