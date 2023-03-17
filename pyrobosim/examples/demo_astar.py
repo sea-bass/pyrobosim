@@ -13,7 +13,7 @@ loader = WorldYamlLoader()
 world = loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
 
 
-def find_path_grid():
+def demo_astar():
     """Creates an A* planner and plans a path using grid."""
     robot = world.robots[0]
     planner_config = {
@@ -33,5 +33,5 @@ def find_path_grid():
 
 
 if __name__ == "__main__":
-    find_path_grid()
+    demo_astar()
     start_gui(world)
