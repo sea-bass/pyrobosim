@@ -118,10 +118,6 @@ class GridSearch(AStar):
         return self.latest_path
 
 
-class GraphSearch(AStar):
-    pass
-
-
 class AstarPlanner(PathPlannerBase):
     """The A* path planner."""
 
@@ -138,7 +134,8 @@ class AstarPlanner(PathPlannerBase):
         if planner_config["grid"]:
             self.impl = GridSearch(planner_config)
         else:
-            self.impl = GraphSearch(planner_config)
+            # Will be implemented after restructuring of the World class
+            raise NotImplementedError("A* does not support graph based search")
 
     def plan(self, start, goal):
         self.latest_path = self.impl.plan(start, goal)
