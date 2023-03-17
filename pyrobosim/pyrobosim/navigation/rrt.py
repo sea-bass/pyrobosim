@@ -7,25 +7,16 @@ import numpy as np
 from .search_graph import SearchGraph, Node, Edge
 from ..utils.motion import Path
 from ..utils.pose import Pose
+from pyrobosim.navigation.planner_base import PathPlannerBase
 
 
-class RRTPlanner:
+class RRTPlannerPolygon:
     """
     Implementation of the Rapidly-exploring Random Tree (RRT)
     algorithm for motion planning.
     """
 
-    def __init__(
-        self,
-        world,
-        bidirectional=False,
-        rrt_connect=False,
-        rrt_star=False,
-        max_connection_dist=0.25,
-        max_nodes_sampled=1000,
-        max_time=5.0,
-        rewire_radius=1.0,
-    ):
+    def __init__(self, planner_config):
         """
         Creates an instance of an RRT planner.
 
@@ -50,23 +41,29 @@ class RRTPlanner:
             if using the RRT* algorithm.
         :param rewire_radius: float
         """
+
+        self.world = None
+
         # Algorithm options
-        self.bidirectional = bidirectional
-        self.rrt_connect = rrt_connect
-        self.rrt_star = rrt_star
+        self.bidirectional = False
+        self.rrt_connect = False
+        self.rrt_star = False
 
         # Parameters
-        self.max_connection_dist = max_connection_dist
-        self.max_nodes_sampled = max_nodes_sampled
-        self.max_time = max_time
-        self.rewire_radius = rewire_radius
+        self.max_connection_dist = 0.25
+        self.max_nodes_sampled = 1000
+        self.max_time = 5.0
+        self.rewire_radius = 1.0
 
         # Visualization
         self.color_start = [0, 0, 0]
         self.color_goal = [0, 0.4, 0.8]
         self.color_alpha = 0.5
 
-        self.world = world
+        # Override default values with those from the provided config.
+        for param, value in planner_config.items():
+            setattr(self, param, value)
+
         self.reset()
 
     def reset(self):
@@ -321,90 +318,17 @@ class RRTPlanner:
                 # If not using RRT-Connect, we only get one chance to connect.
                 return False, n_curr
 
-    def print_metrics(self):
-        """
-        Print metrics about the latest path computed.
-        """
-        if self.latest_path.num_poses == 0:
-            print("No path.")
+
+class RRTPlanner(PathPlannerBase):
+    def __init__(self, planner_config):
+        super().__init__()
+
+        self.impl = None
+        if planner_config["grid"]:
+            raise NotImplementedError("RRT does not support grid based search. ")
         else:
-            print("Latest path from RRT:")
-            self.latest_path.print_details()
-        print("")
-        print(f"Nodes sampled: {self.nodes_sampled}")
-        print(f"Time to plan: {self.planning_time} seconds")
-        print(f"Number of rewires: {self.n_rewires}")
+            self.impl = RRTPlannerPolygon(planner_config)
 
-    def plot(self, axes, path_color="m", show_graph=True, show_path=True):
-        """
-        Plots the RRTs and the planned path on a specified set of axes.
-
-        :param axes: The axes on which to draw.
-        :type axes: :class:`matplotlib.axes.Axes`
-        :param path_color: Color of the path, as an RGB tuple or string.
-        :type path_color: tuple[float] / str, optional
-        :param show_graph: If True, shows the RRTs used for planning.
-        :type show_graph: bool
-        :param show_path: If True, shows the last planned path.
-        :type show_path: bool
-        :return: List of Matplotlib artists containing what was drawn,
-            used for bookkeeping.
-        :rtype: list[:class:`matplotlib.artist.Artist`]
-        """
-        artists = []
-        if show_graph:
-            for e in self.graph.edges:
-                x = (e.n0.pose.x, e.n1.pose.x)
-                y = (e.n0.pose.y, e.n1.pose.y)
-                (edge,) = axes.plot(
-                    x,
-                    y,
-                    linestyle=":",
-                    linewidth=1,
-                    color=self.color_start,
-                    alpha=self.color_alpha,
-                )
-                artists.append(edge)
-            if self.bidirectional:
-                for e in self.graph_goal.edges:
-                    x = (e.n0.pose.x, e.n1.pose.x)
-                    y = (e.n0.pose.y, e.n1.pose.y)
-                    (edge,) = axes.plot(
-                        x,
-                        y,
-                        linestyle="--",
-                        linewidth=1,
-                        color=self.color_goal,
-                        alpha=self.color_alpha,
-                    )
-                    artists.append(edge)
-
-        if show_path and self.latest_path.num_poses > 0:
-            x = [p.x for p in self.latest_path.poses]
-            y = [p.y for p in self.latest_path.poses]
-            (path,) = axes.plot(
-                x, y, linestyle="-", color=path_color, linewidth=3, alpha=0.5, zorder=1
-            )
-            (start,) = axes.plot(x[0], y[0], "go", zorder=2)
-            (goal,) = axes.plot(x[-1], y[-1], "rx", zorder=2)
-            artists.extend((path, start, goal))
-
-        return artists
-
-    def show(self, show_graph=True, show_path=True):
-        """
-        Shows the RRTs and the planned path in a new figure.
-
-        :param show_graph: If True, shows the RRTs used for planning.
-        :type show_graph: bool
-        :param show_path: If True, shows the last planned path.
-        :type show_path: bool
-        """
-        import matplotlib.pyplot as plt
-
-        f = plt.figure()
-        ax = f.add_subplot(111)
-        self.plot(ax, show_graph=show_graph, show_path=show_path)
-        plt.title("RRT")
-        plt.axis("equal")
-        plt.show()
+    def plan(self, start, goal):
+        self.latest_path = self.impl.plan(start, goal)
+        return self.latest_path

@@ -1,5 +1,5 @@
 """ Implementation of the generic path planner. """
-
+from pyrobosim.navigation.rrt import RRTPlanner
 from pyrobosim.navigation.a_star import AstarPlanner
 
 
@@ -41,7 +41,7 @@ class PathPlanner:
         7. rrt_rewire_radius (float) : The radius within which a node can find a rewire candidate, in meters.
         """
 
-        self.planners = {"astar": AstarPlanner}
+        self.planners = {"astar": AstarPlanner, "rrt": RRTPlanner}
 
         if planner_type not in self.planners:
             raise KeyError(f"{planner_type} is not a supported planner type.")
