@@ -59,30 +59,30 @@ class Path:
         print(print_str)
 
 
-def reduce_waypoints(grid, poses):
+def reduce_waypoints(grid, positions):
     """
     Reduces the number of waypoints in a generated path from a grid-based planner.
 
-    :param grid: The occupancy grid associated with the generated path
+    :param grid: The occupancy grid associated with the generated path.
     :type grid: :class:`pyrobosim.navigation.occupancy_grid.OccupancyGrid`
-    :param poses: The list of of poses that make up the path
+    :param poses: The list of positions that make up the path.
     :type poses: list[(int, int)]
-    :return: The optimized list of waypoints
+    :return: The optimized list of waypoints.
     :rtype: list[(int, int)]
     """
 
     waypoints = []
-    start = poses[0]
+    start = positions[0]
     waypoints.append(start)
-    poses = poses[1:]
-    i = len(poses) - 1
-    while poses and i >= 0:
-        current = poses[i]
+    positions = positions[1:]
+    i = len(positions) - 1
+    while positions and i >= 0:
+        current = positions[i]
         if grid.connectable(start, current)[0]:
             waypoints.append(current)
             start = current
-            poses = poses[i + 1 :]
-            i = len(poses) - 1
+            positions = positions[i + 1 :]
+            i = len(positions) - 1
         else:
             i -= 1
     return waypoints
