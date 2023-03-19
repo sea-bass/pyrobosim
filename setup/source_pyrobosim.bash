@@ -27,7 +27,7 @@
 export VIRTUALENV_FOLDER=~/python-virtualenvs/pyrobosim
 export PYROBOSIM_WS=~/pyrobosim_ws
 
-if [ "$VIRTUAL_ENV" != "" ]
+if [ -n "$VIRTUAL_ENV" ]
 then
     deactivate
 fi

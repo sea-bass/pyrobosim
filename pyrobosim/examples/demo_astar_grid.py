@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 import os
 
-from pyrobosim.core.yaml import WorldYamlLoader
+from pyrobosim.core import WorldYamlLoader
+from pyrobosim.gui import start_gui
+from pyrobosim.navigation import AStarGridPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
-from pyrobosim.navigation.astar_grid import AStarGridPlanner
 
 # Load a test world.
 data_folder = get_data_folder()
@@ -21,6 +22,7 @@ def test_astar_grid():
         inflation_radius=1.5 * robot.radius,
         heuristic="euclidean",
         diagonal_motion=True,
+        compress_path=False,
     )
     start = Pose(x=-0.5, y=-0.5)
     goal = Pose(x=3.0, y=3.0)
@@ -34,7 +36,4 @@ def test_astar_grid():
 if __name__ == "__main__":
     test_astar_grid()
 
-    import sys
-    from pyrobosim.gui.main import start_gui
-
-    start_gui(world, sys.argv)
+    start_gui(world)

@@ -147,14 +147,16 @@ class ParallelGraspProperties:
     """
     Representation of a parallel-jaw gripper.
 
-        SIDE VIEW               TOP VIEW
-                  |            _________
-        _____     v           |              ^
-    ===|_____|  height     ===|          max_width
-                  ^           |_________     v
-                  |
-                              |<-depth->|
-           depth_clearance -->||<--
+    .. code-block::
+
+            SIDE VIEW               TOP VIEW
+                    |            _________
+            _____     v           |              ^
+        ===|_____|  height     ===|          max_width
+                    ^           |_________     v
+                    |
+                                |<-depth->|
+            depth_clearance -->||<--
     """
 
     def __init__(
@@ -210,10 +212,12 @@ class GraspGenerator:
         The nominal orientation is such that the front face of the cuboid is -X, the sides are -Y and +Y,
         and the top is +Z, as shown below:
 
-                                    Z
-                      +----+        ^
-        robot -->     |    |        |
-                      +----+        +--> X
+        .. code-block::
+
+                                      Z
+                        +----+        ^
+            robot -->   |    |        |
+                        +----+        +--> X
 
         If the robot is facing from another direction, for example the left side, then the front face in the
         robot reference frame is the +Y and the side faces are -X and +X.
@@ -287,14 +291,16 @@ class GraspGenerator:
         Given the set of enabled grasp types, and the normal vectors of the cuboid faces, this function
         determines whether grasping along a specific normal vector is permitted.
         For example, if
-          - Only top and front grasps are enabled
-          - The top face normal vector is [0, 0, 1]
-          - The front face normal vector is [-1, 0, 0]
+
+            - Only top and front grasps are enabled
+            - The top face normal vector is [0, 0, 1]
+            - The front face normal vector is [-1, 0, 0]
 
         Then this function will
-          - Allow grasps along the vectors [0, 0, 1] and [-1, 0, 0] because these are the top and front faces
-          - Disallow a grasp along the vectors [0, 1, 0]  and [0, -1, 0] because side grasps are disabled
-          - Disallow a grasp along the vector [1, 0, 0] because this would be a back grasp which is not supported
+
+            - Allow grasps along the vectors [0, 0, 1] and [-1, 0, 0] because these are the top and front faces
+            - Disallow a grasp along the vectors [0, 1, 0]  and [0, -1, 0] because side grasps are disabled
+            - Disallow a grasp along the vector [1, 0, 0] because this would be a back grasp which is not supported
 
         :param faces_enabled: Faces for which grasp generation is enabled, in the form (front, top, side)
         :type faces_enabled: list[bool]

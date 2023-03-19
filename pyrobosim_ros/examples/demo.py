@@ -9,15 +9,12 @@ import rclpy
 import threading
 import numpy as np
 
-from pyrobosim.core.robot import Robot
-from pyrobosim.core.room import Room
-from pyrobosim.core.ros_interface import WorldROSWrapper
-from pyrobosim.core.world import World
-from pyrobosim.core.yaml import WorldYamlLoader
-from pyrobosim.gui.main import start_gui
-from pyrobosim.navigation.execution import ConstantVelocityExecutor
+from pyrobosim.core import Robot, Room, World, WorldYamlLoader
+from pyrobosim.gui import start_gui
+from pyrobosim.navigation import ConstantVelocityExecutor
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
+from pyrobosim_ros.ros_interface import WorldROSWrapper
 
 
 data_folder = get_data_folder()

@@ -6,3 +6,4 @@ API
    :toctree: generated
 
    pyrobosim
+   pyrobosim_ros

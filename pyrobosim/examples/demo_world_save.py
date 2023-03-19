@@ -7,9 +7,8 @@ Tests Gazebo world saving and occupancy grid export capabilities.
 import argparse
 import os
 
-from pyrobosim.core.gazebo import WorldGazeboExporter
-from pyrobosim.core.yaml import WorldYamlLoader
-from pyrobosim.navigation.occupancy_grid import occupancy_grid_from_world
+from pyrobosim.core import WorldGazeboExporter, WorldYamlLoader
+from pyrobosim.navigation import occupancy_grid_from_world
 from pyrobosim.utils.general import get_data_folder
 
 

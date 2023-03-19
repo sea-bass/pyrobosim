@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-from pyrobosim.core.objects import Object
-from pyrobosim.manipulation.grasping import GraspGenerator, ParallelGraspProperties
+from pyrobosim.core import Object
+from pyrobosim.manipulation import GraspGenerator, ParallelGraspProperties
 from pyrobosim.utils.pose import Pose
 
 

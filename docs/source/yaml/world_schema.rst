@@ -4,7 +4,7 @@ Worlds can be specified programmatically or loaded from YAML files as follows:
 
 .. code-block:: python
 
-   from pyrobosim.core.yaml import WorldYamlLoader
+   from pyrobosim.core import WorldYamlLoader
    loader = WorldYamlLoader()
    world = loader.from_yaml("/path/to/world.yaml")
 

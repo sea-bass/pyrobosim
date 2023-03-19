@@ -36,7 +36,7 @@ setup(
     author="Sebastian Castro",
     author_email="sebas.a.castro@gmail.com",
     description="ROS 2 enabled 2D mobile robot simulator for behavior prototyping.",
-    license="BSD",
+    license="MIT",
     install_requires=install_requires,
     packages=find_packages(),
     package_data={project_name: get_files_in_folder(join(project_name, "data"))},

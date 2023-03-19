@@ -5,3 +5,5 @@ This module contains tools associated with task and motion planning
 a plan, as well as infrastructure to come up with such a plan given the
 current and desired state of the world.
 """
+
+from .pddlstream.planner import *
