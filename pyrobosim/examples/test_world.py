@@ -5,7 +5,7 @@ import os
 import pytest
 import numpy as np
 
-from pyrobosim.core.hallway import Hallway, Object, Room, World
+from pyrobosim.core import Hallway, Object, Room, World
 from pyrobosim.utils.pose import Pose
 
 from pyrobosim.utils.general import get_data_folder
