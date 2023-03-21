@@ -1018,3 +1018,86 @@ class World:
         else:
             warnings.warn(f"Could not find robot {robot_name} to remove.")
             return False
+
+    ######################################
+    # Occupancy check #
+    ######################################
+
+    def is_connectable(self, start, goal, ignore_max_dist=False):
+        """
+        Checks connectivity between two poses `start` and `goal` in the world
+        by sampling points spaced by the `self.collision_check_dist` parameter
+        and verifying that every point is in the free configuration space.
+        :param start: Start node
+        :type start: :class:`Pose`
+        :param goal: Goal node
+        :type goal: :class:`Pose`
+        :param ignore_max_dist: If True, ignores maximum connection distance.
+        :type ignore_max_dist: bool, optional
+        :return: True if nodes can be connected, else False.
+        :rtype: bool
+        """
+        # Trivial case where nodes are identical or there is no world.
+        if (self.world is None) or (start == goal):
+            return True
+
+        # Check against the max edge distance.
+        dist = start.get_linear_distance(goal, ignore_z=True)
+        angle = start.get_angular_distance(goal)
+        if (not ignore_max_dist) and (dist > self.max_edge_dist):
+            return False
+
+        # Build up the array of test X and Y coordinates for sampling between
+        # the start and goal points.
+        dist_array = np.arange(0, dist, self.collision_check_dist)
+        # If the nodes are coincident, connect them by default.
+        if dist_array.size == 0:
+            return True
+        if dist_array[-1] != dist:
+            np.append(dist_array, dist)
+        x_pts = start.x + dist_array * np.cos(angle)
+        y_pts = start.y + dist_array * np.sin(angle)
+
+        # Check the occupancy of all the test points.
+        for x_check, y_check in zip(x_pts[1:], y_pts[1:]):
+            if self.world.check_occupancy(Pose(x=x_check, y=y_check)):
+                return False
+
+        # If the loop was traversed for all points without returning, we can
+        # connect the points.
+        return True
+
+    def check_occupancy(self, pose):
+        """
+        Check if a pose in the world is occupied.
+        :param pose: Pose for checking occupancy.
+        :type pose: :class:`pyrobosim.utils.pose.Pose`
+        :return: True if the pose is occupied, else False if free.
+        :rtype: bool
+        """
+        # Loop through all the rooms and hallways and check if the pose
+        # is deemed collision-free in any of them.
+        for entity in itertools.chain(self.rooms, self.hallways):
+            if entity.is_collision_free(pose):
+                return False
+        # If we made it through, the pose is occupied.
+        return True
+
+    def collides_with_robots(self, pose, robot=None):
+        """
+        Checks if a pose collides with robots in the world.
+        Currently assumes that robots are circles, so we can do simple checks.
+        If this changes, should account for polygon collisions.
+        :param pose: Candidate pose to check.
+        :type pose: :class:`pyrobosim.utils.pose.Pose`
+        :param robot: Robot instance, if specified.
+        :type robot: :class:`pyrobosim.core.robot.Robot`, optional
+        :return: True if the pose collides with a robot besides the input.
+        :rtype: bool
+        """
+        radius = self.inflation_radius if robot is None else robot.radius
+        robot_list = [r for r in self.robots if r is not robot]
+        for r in robot_list:
+            if pose.get_linear_distance(r.pose) < (radius + robot.radius):
+                return True
+        return False
