@@ -4,7 +4,7 @@ import copy
 import time
 import numpy as np
 
-from .world_graph import WorldGraph, Node, Edge
+from .world_graph import WorldGraph, Node
 from ..utils.motion import Path
 from ..utils.pose import Pose
 from pyrobosim.navigation.planner_base import PathPlannerBase
@@ -262,9 +262,7 @@ class RRTPlannerPolygon:
             dist = n.pose.get_linear_distance(n_tgt.pose)
             if (n != n_tgt) and (dist <= self.rewire_radius):
                 alt_cost = n.cost + dist
-                if (alt_cost < n_tgt.cost) and graph.check_connectivity(
-                    n, n_tgt, ignore_max_dist=True
-                ):
+                if (alt_cost < n_tgt.cost) and self.is_connectable(n.pose, n_tgt.pose):
                     n_rewire = n
                     n_tgt.cost = alt_cost
 
@@ -277,7 +275,7 @@ class RRTPlannerPolygon:
                     e.n1.neighbors.remove(e.n0)
                     graph.edges.remove(e)
                     break
-            graph.edges.add(Edge(n_tgt, n_tgt.parent))
+            graph.add_edge(n_tgt, n_tgt.parent)
             self.n_rewires += 1
 
     def try_connect_until(self, graph, n_curr, n_tgt):
@@ -303,7 +301,9 @@ class RRTPlannerPolygon:
             dist = n_curr.pose.get_linear_distance(n_tgt.pose)
 
             # First, try directly connecting to the goal
-            if dist < self.max_connection_dist and self.graph.connect(n_curr, n_tgt):
+            if dist < self.max_connection_dist and self.is_connectable(
+                n_curr.pose, n_tgt.pose
+            ):
                 n_tgt.parent = n_curr
                 graph.nodes.add(n_tgt)
                 if self.rrt_star:
@@ -313,8 +313,8 @@ class RRTPlannerPolygon:
             if self.rrt_connect:
                 # If using RRT-Connect, keep trying to connect.
                 n_new = self.extend(n_curr, n_tgt.pose)
-                if graph.connect(n_curr, n_new):
-                    graph.nodes.add(n_new)
+                if self.is_connectable(n_curr.pose, n_new.pose):
+                    graph.add_node(n_new)
                     n_curr = n_new
                 else:
                     return False, n_curr
