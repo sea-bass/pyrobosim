@@ -4,7 +4,7 @@ import copy
 import time
 import numpy as np
 
-from .world_graph import SearchGraph, Node, Edge
+from .world_graph import WorldGraph, Node, Edge
 from ..utils.motion import Path
 from ..utils.pose import Pose
 from pyrobosim.navigation.planner_base import PathPlannerBase
@@ -68,9 +68,9 @@ class RRTPlannerPolygon:
 
     def reset(self):
         """Resets the search trees and planning metrics."""
-        self.graph = SearchGraph(world=self.world)
+        self.graph = WorldGraph()
         if self.bidirectional:
-            self.graph_goal = SearchGraph(world=self.world)
+            self.graph_goal = WorldGraph()
         self.latest_path = Path()
         self.planning_time = 0.0
         self.nodes_sampled = 0
@@ -100,7 +100,7 @@ class RRTPlannerPolygon:
         goal_found = False
 
         # If the goal is within max connection distance of the start, connect them directly
-        if self.graph.connect(n_start, n_goal):
+        if self.is_connectable(n_start.pose, n_goal.pose):
             path_poses = [n_start.pose, n_goal.pose]
             self.latest_path = Path(poses=path_poses)
             self.latest_path.fill_yaws()
@@ -113,20 +113,24 @@ class RRTPlannerPolygon:
             self.nodes_sampled += 1
 
             # Connect a new node to the parent
-            n_near = self.graph.nearest_node(q_sample)
-            n_new = self.new_node(n_near, q_sample)
-            connected_node = self.graph.connect(n_near, n_new)
+            n_near = self.graph.nearest(q_sample)
+            n_new = self.extend(n_near, q_sample)
+            connected_node = self.is_connectable(n_near.pose, n_new.pose)
             if connected_node:
-                self.graph.nodes.add(n_new)
+                self.graph.add_node(n_new)
+                # Add edge ?
 
             # If bidirectional,
             # also connect a new node to the parent of the goal graph.
             if self.bidirectional:
-                n_near_goal = self.graph_goal.nearest_node(q_sample)
-                n_new_goal = self.new_node(n_near_goal, q_sample)
-                connected_node_goal = self.graph_goal.connect(n_near_goal, n_new_goal)
+                n_near_goal = self.graph_goal.nearest(q_sample)
+                n_new_goal = self.extend(n_near_goal, q_sample)
+                connected_node_goal = self.is_connectable(
+                    n_near_goal.pose, n_new_goal.pose
+                )
                 if connected_node_goal:
-                    self.graph_goal.nodes.add(n_new_goal)
+                    self.graph_goal.add_node(n_new_goal)
+                    # Add edge ?
             else:
                 connected_node_goal = False
 
@@ -144,7 +148,7 @@ class RRTPlannerPolygon:
                 if connected_node:
                     # If we added a node to the start tree,
                     # try connect to the goal tree.
-                    n_goal_goal_tree = self.graph_goal.nearest_node(n_new.pose)
+                    n_goal_goal_tree = self.graph_goal.nearest(n_new.pose)
                     goal_found, n_goal_start_tree = self.try_connect_until(
                         self.graph, n_new, n_goal_goal_tree
                     )
@@ -152,7 +156,7 @@ class RRTPlannerPolygon:
                 if connected_node_goal and not goal_found:
                     # If we added a node to the goal tree,
                     # try connect to the start tree.
-                    n_goal_start_tree = self.graph.nearest_node(n_new_goal.pose)
+                    n_goal_start_tree = self.graph.nearest(n_new_goal.pose)
                     goal_found, n_goal_goal_tree = self.try_connect_until(
                         self.graph_goal, n_new_goal, n_goal_start_tree
                     )
@@ -207,7 +211,7 @@ class RRTPlannerPolygon:
         """
         return self.world.sample_free_robot_pose_uniform()
 
-    def new_node(self, n_start, q_target):
+    def extend(self, n_start, q_target):
         """
         Grows the RRT from a specific node towards a sampled pose in the world.
         The maximum distance to grow the tree is dictated by the
@@ -248,7 +252,7 @@ class RRTPlannerPolygon:
         ``rewire_radius`` parameter.
 
         :param graph: The tree to rewire.
-        :type graph: :class:`pyrobosim.navigation.search_graph.SearchGraph`
+        :type graph: :class:`pyrobosim.navigation.search_graph.WorldGraph`
         :param n_tgt: The target tree node to rewire within the tree.
         :type n_tgt: :class:`pyrobosim.navigation.search_graph.Node`
         """
@@ -283,7 +287,7 @@ class RRTPlannerPolygon:
         RRT-Connect is enabled, or else will just try once.
 
         :param graph: The tree object.
-        :type graph: :class:`pyrobosim.navigation.search_graph.SearchGraph`
+        :type graph: :class:`pyrobosim.navigation.search_graph.WorldGraph`
         :param n_curr: The current tree node to try connect to the target node.
         :type n_curr: :class:`pyrobosim.navigation.search_graph.Node`
         :param n_tgt: The target tree node defining the connection goal.
@@ -308,7 +312,7 @@ class RRTPlannerPolygon:
 
             if self.rrt_connect:
                 # If using RRT-Connect, keep trying to connect.
-                n_new = self.new_node(n_curr, n_tgt.pose)
+                n_new = self.extend(n_curr, n_tgt.pose)
                 if graph.connect(n_curr, n_new):
                     graph.nodes.add(n_new)
                     n_curr = n_new
@@ -317,6 +321,9 @@ class RRTPlannerPolygon:
             else:
                 # If not using RRT-Connect, we only get one chance to connect.
                 return False, n_curr
+
+    def is_connectable(self, poseA, poseB):
+        return self.world.is_connectable(poseA, poseB)
 
 
 class RRTPlanner(PathPlannerBase):
