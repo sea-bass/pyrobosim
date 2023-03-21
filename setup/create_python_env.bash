@@ -12,7 +12,7 @@ source $VIRTUALENV_FOLDER/bin/activate
 echo "Created Python virtual environment in $VIRTUALENV_FOLDER"
 
 # Install all the Python packages required
-# Note that these overlay over whatever ROS2 already contains
+# Note that these overlay over whatever ROS 2 already contains
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 pushd $SCRIPT_DIR/..
 python -m pip install --upgrade pip
