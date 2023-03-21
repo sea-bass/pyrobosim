@@ -1038,18 +1038,18 @@ class World:
         :rtype: bool
         """
         # Trivial case where nodes are identical or there is no world.
-        if (self.world is None) or (start == goal):
+        if start == goal:
             return True
 
         # Check against the max edge distance.
         dist = start.get_linear_distance(goal, ignore_z=True)
         angle = start.get_angular_distance(goal)
-        if (not ignore_max_dist) and (dist > self.max_edge_dist):
-            return False
+        # if (not ignore_max_dist) and (dist > self.max_edge_dist):
+        #     return False
 
         # Build up the array of test X and Y coordinates for sampling between
         # the start and goal points.
-        dist_array = np.arange(0, dist, self.collision_check_dist)
+        dist_array = np.arange(0, dist, 0.01)
         # If the nodes are coincident, connect them by default.
         if dist_array.size == 0:
             return True
@@ -1060,7 +1060,7 @@ class World:
 
         # Check the occupancy of all the test points.
         for x_check, y_check in zip(x_pts[1:], y_pts[1:]):
-            if self.world.check_occupancy(Pose(x=x_check, y=y_check)):
+            if self.check_occupancy(Pose(x=x_check, y=y_check)):
                 return False
 
         # If the loop was traversed for all points without returning, we can
@@ -1101,3 +1101,33 @@ class World:
             if pose.get_linear_distance(r.pose) < (radius + robot.radius):
                 return True
         return False
+
+    def sample_free_robot_pose_uniform(self, robot=None, ignore_robots=True):
+        """
+        Sample an unoccupied robot pose in the world.
+        This is done using uniform sampling within the world X-Y bounds and rejecting
+        any samples that are in collision with entities in the world.
+        If no valid samples could be found within the `max_object_sample_tries` instance
+        attribute, this will return ``None``.
+        :param robot: Robot instance, if specified.
+        :type robot: :class:`pyrobosim.core.robot.Robot`, optional
+        :param ignore_robots: If True, ignore collisions with other robots.
+        :type ignore_robots: bool
+        :return: Collision-free pose if found, else ``None``.
+        :rtype: :class:`pyrobosim.utils.pose.Pose`
+        """
+        xmin, xmax = self.x_bounds
+        ymin, ymax = self.y_bounds
+        r = self.inflation_radius if robot is None else robot.radius
+
+        for _ in range(self.max_object_sample_tries):
+            x = (xmax - xmin - 2 * r) * np.random.random() + xmin + r
+            y = (ymax - ymin - 2 * r) * np.random.random() + ymin + r
+            yaw = 2.0 * np.pi * np.random.random()
+            pose = Pose(x=x, y=y, z=0.0, yaw=yaw)
+            if not self.check_occupancy(pose) and (
+                ignore_robots or not self.collides_with_robots(pose, robot)
+            ):
+                return pose
+        warnings.warn("Could not sample pose.")
+        return None
