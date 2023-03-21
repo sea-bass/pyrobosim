@@ -126,10 +126,6 @@ def create_world(multirobot=False):
             RRTPlanner(world, bidirectional=True, rrt_connect=False, rrt_star=True)
         )
 
-    # Create a search graph
-    world.create_search_graph(
-        max_edge_dist=3.0, collision_check_dist=0.05, create_planner=True
-    )
     return world
 
 
