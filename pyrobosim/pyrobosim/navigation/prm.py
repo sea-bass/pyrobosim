@@ -3,7 +3,7 @@
 import time
 import warnings
 
-from .world_graph import SearchGraph, Node
+from .world_graph import WorldGraph, Node
 from ..utils.motion import Path
 from ..utils.pose import Pose
 from pyrobosim.navigation.planner_base import PathPlannerBase
@@ -40,16 +40,14 @@ class PRMPlannerPolygon:
         self.latest_path = Path()
 
         # Create a search graph and sample nodes.
-        self.graph = SearchGraph(
-            world=self.world, max_edge_dist=self.max_connection_dist
-        )
+        self.graph = WorldGraph()
         t_start = time.time()
         for i in range(self.max_nodes):
             n_sample = self.sample_configuration()
             if not n_sample:
                 warnings.warn(f"Could not sample more than {i} nodes")
                 break
-            self.graph.add(Node(n_sample), autoconnect=True)
+            self.graph.add_node(n_sample)
         self.sampling_time = time.time() - t_start
 
     def plan(self, start, goal):
@@ -68,14 +66,14 @@ class PRMPlannerPolygon:
         # Create the start and goal nodes
         if isinstance(start, Pose):
             start = Node(start, parent=None)
-        self.graph.add(start, autoconnect=True)
+        self.graph.add_node(start)
         if isinstance(goal, Pose):
             goal = Node(goal, parent=None)
-        self.graph.add(goal, autoconnect=True)
+        self.graph.add_node(goal)
 
         # Find a path from start to goal nodes
         t_start = time.time()
-        self.latest_path = self.graph.find_path(start, goal)
+        self.latest_path = Path()  # self.graph.find_path(start, goal)
         self.latest_path.fill_yaws()
         self.planning_time = time.time() - t_start
         return self.latest_path
