@@ -6,14 +6,15 @@ import warnings
 from .search_graph import SearchGraph, Node
 from ..utils.motion import Path
 from ..utils.pose import Pose
+from pyrobosim.navigation.planner_base import PathPlannerBase
 
 
-class PRMPlanner:
+class PRMPlannerPolygon:
     """
     Implementation of Probabilistic Roadmaps (PRM) for motion planning.
     """
 
-    def __init__(self, world, max_nodes=100, max_connection_dist=2.0):
+    def __init__(self, planner_config):
         """
         Creates an instance of a PRM planner.
 
@@ -25,14 +26,12 @@ class PRMPlanner:
         :type max_connection_dist: float
         """
         # Parameters
-        self.max_connection_dist = max_connection_dist
-        self.max_nodes = max_nodes
+        self.max_connection_dist = 2.0
+        self.max_nodes = 100
+        self.world = None
 
-        # Visualization
-        self.color = [0, 0.4, 0.8]
-        self.color_alpha = 0.25
-
-        self.world = world
+        for key, value in planner_config.items():
+            setattr(self, key, value)
         self.reset()
 
     def reset(self):
@@ -90,81 +89,20 @@ class PRMPlanner:
         """
         return self.world.sample_free_robot_pose_uniform()
 
-    def print_metrics(self):
-        """
-        Print metrics about the latest path computed.
-        """
-        if self.latest_path is None:
-            print("No path.")
-            return
 
-        print("Latest path from PRM:")
-        self.latest_path.print_details()
-        print("")
-        print(f"Time to sample nodes: {self.sampling_time} seconds")
-        print(f"Time to plan: {self.planning_time} seconds")
+class PRMPlanner(PathPlannerBase):
+    """Factort class for PRM path planner."""
 
-    def plot(self, axes, path_color="m", show_graph=True, show_path=True):
-        """
-        Plots the PRM and the planned path on a specified set of axes.
+    def __init__(self, planner_config):
+        super().__init__()
 
-        :param axes: The axes on which to draw.
-        :type axes: :class:`matplotlib.axes.Axes`
-        :param path_color: Color of the path, as an RGB tuple or string.
-        :type path_color: tuple[float] / str, optional
-        :param show_graph: If True, shows the RRTs used for planning.
-        :type show_graph: bool
-        :param show_path: If True, shows the last planned path.
-        :type show_path: bool
-        :return: List of Matplotlib artists containing what was drawn,
-            used for bookkeeping.
-        :rtype: list[:class:`matplotlib.artist.Artist`]
-        """
-        artists = []
-        if show_graph:
-            for e in self.graph.edges:
-                x = (e.n0.pose.x, e.n1.pose.x)
-                y = (e.n0.pose.y, e.n1.pose.y)
-                (edge,) = axes.plot(
-                    x,
-                    y,
-                    color=self.color,
-                    alpha=self.color_alpha,
-                    linewidth=0.5,
-                    marker="o",
-                    markerfacecolor=self.color,
-                    markeredgecolor=self.color,
-                    markersize=3,
-                    zorder=1,
-                )
-                artists.append(edge)
+        self.impl = None
 
-        if show_path and self.latest_path.num_poses > 0:
-            x = [p.x for p in self.latest_path.poses]
-            y = [p.y for p in self.latest_path.poses]
-            (path,) = axes.plot(
-                x, y, linestyle="-", color=path_color, linewidth=3, alpha=0.5, zorder=1
-            )
-            (start,) = axes.plot(x[0], y[0], "go", zorder=2)
-            (goal,) = axes.plot(x[-1], y[-1], "rx", zorder=2)
-            artists.extend((path, start, goal))
+        if planner_config["grid"]:
+            raise NotImplementedError("Grid based PRM is not supported. ")
+        else:
+            self.impl = PRMPlannerPolygon(planner_config)
 
-        return artists
-
-    def show(self, show_graph=True, show_path=True):
-        """
-        Shows the PRM and the planned path in a new figure.
-
-        :param show_graph: If True, shows the RRTs used for planning.
-        :type show_graph: bool
-        :param show_path: If True, shows the last planned path.
-        :type show_path: bool
-        """
-        import matplotlib.pyplot as plt
-
-        f = plt.figure()
-        ax = f.add_subplot(111)
-        self.plot(ax, show_graph=show_graph, show_path=show_path)
-        plt.title("PRM")
-        plt.axis("equal")
-        plt.show()
+    def plan(self, start, goal):
+        self.latest_path = self.impl.plan(start, goal)
+        return self.latest_path

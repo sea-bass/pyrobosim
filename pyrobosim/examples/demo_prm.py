@@ -15,7 +15,13 @@ world = loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
 
 def test_prm():
     """Creates a PRM planner and plans"""
-    prm = PRMPlanner(world, max_nodes=100, max_connection_dist=1.5)
+    planner_config = {
+        "grid": None,
+        "world": world,
+        "max_nodes": 100,
+        "max_connection_dist": 1.5,
+    }
+    prm = PathPlanner("prm", planner_config)
     start = Pose(x=-0.5, y=-0.5)
     goal = Pose(x=3.0, y=3.0)
 
@@ -23,7 +29,6 @@ def test_prm():
     robot.set_pose(start)
     robot.set_path_planner(prm)
     robot.current_path = robot.plan_path(start, goal)
-    prm.print_metrics()
 
 
 if __name__ == "__main__":

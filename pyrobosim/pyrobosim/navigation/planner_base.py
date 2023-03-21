@@ -7,7 +7,6 @@ class PathPlannerBase:
     """The base class for path planners."""
 
     def __init__(self):
-
         self.goal = None
         self.start = None
         self.planning_time = 0
