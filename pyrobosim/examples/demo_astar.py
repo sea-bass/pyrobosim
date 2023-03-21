@@ -30,6 +30,7 @@ def demo_astar():
     robot.set_pose(start)
     robot.set_path_planner(planner)
     robot.current_path = robot.plan_path(start, goal)
+    planner.info()
 
 
 if __name__ == "__main__":

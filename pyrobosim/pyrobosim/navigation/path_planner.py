@@ -79,3 +79,8 @@ class PathPlanner:
         """Displays the planned path on the GUI."""
 
         self.planner.show()
+
+    def info(self):
+        """Display information about planning process."""
+
+        self.planner.info()

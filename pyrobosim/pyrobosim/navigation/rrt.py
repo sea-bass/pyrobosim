@@ -330,5 +330,7 @@ class RRTPlanner(PathPlannerBase):
             self.impl = RRTPlannerPolygon(planner_config)
 
     def plan(self, start, goal):
+        start_time = time.time()
         self.latest_path = self.impl.plan(start, goal)
+        self.planning_time = time.time() - start_time
         return self.latest_path

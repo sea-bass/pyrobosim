@@ -1,6 +1,7 @@
 """ Implementation of the A* path planner. """
 
 import math
+import time
 import warnings
 from astar import AStar
 from pyrobosim.utils.pose import Pose
@@ -138,5 +139,7 @@ class AstarPlanner(PathPlannerBase):
             raise NotImplementedError("A* does not support graph based search")
 
     def plan(self, start, goal):
+        start_time = time.time()
         self.latest_path = self.impl.plan(start, goal)
+        self.planning_time = time.time() - start_time
         return self.latest_path

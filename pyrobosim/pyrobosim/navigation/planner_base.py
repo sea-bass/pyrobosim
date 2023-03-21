@@ -9,6 +9,7 @@ class PathPlannerBase:
     def __init__(self):
         self.goal = None
         self.start = None
+        self.impl = None
         self.planning_time = 0
         self.latest_path = Path()
 
@@ -19,6 +20,7 @@ class PathPlannerBase:
         """
         self.goal = None
         self.start = None
+        self.planner = None
         self.planning_time = 0
         self.latest_path = Path()
 
@@ -37,6 +39,12 @@ class PathPlannerBase:
         raise NotImplementedError(
             f"Subclasses must implement {self.__class__.__name__}.plan()"
         )
+
+    def info(self):
+        """Prints the information about the planning process"""
+        print(f"Planner : {self.impl.__class__.__name__}")
+        print(f"Planning time : {self.planning_time}")
+        print(f"Number of waypoints : {self.latest_path.num_poses}")
 
     def plot(self, axes, path_color="m"):
         """

@@ -29,6 +29,7 @@ def test_prm():
     robot.set_pose(start)
     robot.set_path_planner(prm)
     robot.current_path = robot.plan_path(start, goal)
+    prm.info()
 
 
 if __name__ == "__main__":

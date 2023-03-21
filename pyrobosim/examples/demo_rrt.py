@@ -30,6 +30,7 @@ def test_rrt():
     robot.set_pose(start)
     robot.set_path_planner(rrt)
     robot.current_path = robot.plan_path(start, goal)
+    rrt.info()
 
 
 if __name__ == "__main__":
