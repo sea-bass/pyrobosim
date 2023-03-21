@@ -18,9 +18,9 @@ def test_rrt():
     planner_config = {
         "grid": None,
         "world": world,
-        "bidirectional": True,
+        "bidirectional": False,
         "rrt_connect": False,
-        "rrt_star": True,
+        "rrt_star": False,
     }
     rrt = PathPlanner("rrt", planner_config)
     start = Pose(x=-0.5, y=-0.5)
