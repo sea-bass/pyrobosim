@@ -1,5 +1,6 @@
 """ Graph search utilities. """
 
+import numpy as np
 from collections import defaultdict
 
 
@@ -86,3 +87,23 @@ class WorldGraph:
 
         for i in range(len(self.nodes)):
             self.nodes[i].neighbors = self.edges[self.nodes[i]]
+
+    def nearest(self, pose):
+        """
+        Get the nearest node in the graph to a specified pose.
+        :param pose: Query pose
+        :type pose: :class:`pyrobosim.utils.pose.Pose`
+        :return: The nearest node to the query pose, or None if the graph is empty
+        :rtype: :class:`Node`
+        """
+        if len(self.nodes) == 0:
+            return None
+
+        # Find the nearest node
+        min_dist = np.inf
+        for n in self.nodes:
+            dist = pose.get_linear_distance(n.pose)
+            if dist < min_dist:
+                min_dist = dist
+                n_nearest = n
+        return n_nearest
