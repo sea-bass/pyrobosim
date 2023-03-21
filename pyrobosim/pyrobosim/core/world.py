@@ -62,10 +62,6 @@ class World:
         self.x_bounds = None
         self.y_bounds = None
 
-        # Search graph for navigation
-        self.search_graph = None
-        self.path_planner = None
-
         # Other parameters
         self.max_object_sample_tries = (
             1000  # Max number of tries to sample object locations
@@ -163,11 +159,6 @@ class World:
         # Update the room collision polygon based on the world inflation radius
         room.update_collision_polygons(self.inflation_radius)
 
-        # Update the search graph, if any
-        if self.search_graph is not None:
-            room.add_graph_nodes()
-            self.search_graph.add(room.graph_nodes, autoconnect=True)
-
         return room
 
     def remove_room(self, room_name):
@@ -198,9 +189,6 @@ class World:
         self.num_rooms -= 1
         self.update_bounds(entity=room, remove=True)
 
-        # Update the search graph, if any
-        if self.search_graph is not None:
-            self.search_graph.remove(room.graph_nodes)
         return True
 
     def add_hallway(self, **hallway_config):
@@ -258,11 +246,6 @@ class World:
         self.num_hallways += 1
         hallway.update_collision_polygons(self.inflation_radius)
         self.update_bounds(entity=hallway)
-
-        # Update the search graph, if any
-        if self.search_graph is not None:
-            hallway.add_graph_nodes()
-            self.search_graph.add(hallway.graph_nodes, autoconnect=True)
 
         # Finally, return the Hallway object
         return hallway
@@ -353,12 +336,6 @@ class World:
         self.name_to_entity[loc.name] = loc
         for spawn in loc.children:
             self.name_to_entity[spawn.name] = spawn
-
-        # Update the search graph, if any
-        if self.search_graph is not None:
-            loc.add_graph_nodes()
-            for spawn in loc.children:
-                self.search_graph.add(spawn.graph_nodes, autoconnect=True)
 
         return loc
 
