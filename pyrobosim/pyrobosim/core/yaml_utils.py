@@ -34,7 +34,7 @@ class WorldYamlLoader:
         self.add_locations()
         self.add_objects()
         self.add_robots()
-        self.add_global_path_planner()
+        # self.add_global_path_planner()
         return self.world
 
     def create_world(self):
