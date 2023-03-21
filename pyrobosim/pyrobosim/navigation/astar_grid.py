@@ -7,7 +7,7 @@ from queue import PriorityQueue
 from pyrobosim.utils.pose import Pose
 from pyrobosim.utils.motion import Path, reduce_waypoints
 from pyrobosim.navigation import occupancy_grid_from_world
-from pyrobosim.navigation.search_graph import Node
+from pyrobosim.navigation.world_graph import Node
 
 
 class AStarGridPlanner:

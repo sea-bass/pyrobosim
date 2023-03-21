@@ -3,7 +3,7 @@
 import time
 import warnings
 
-from .search_graph import SearchGraph, Node
+from .world_graph import SearchGraph, Node
 from ..utils.motion import Path
 from ..utils.pose import Pose
 from pyrobosim.navigation.planner_base import PathPlannerBase

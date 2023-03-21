@@ -4,7 +4,7 @@ import copy
 import time
 import numpy as np
 
-from .search_graph import SearchGraph, Node, Edge
+from .world_graph import SearchGraph, Node, Edge
 from ..utils.motion import Path
 from ..utils.pose import Pose
 from pyrobosim.navigation.planner_base import PathPlannerBase
