@@ -150,13 +150,13 @@ class ParallelGraspProperties:
     .. code-block::
 
             SIDE VIEW               TOP VIEW
-                    |            _________
+                      |            _________
             _____     v           |              ^
         ===|_____|  height     ===|          max_width
-                    ^           |_________     v
-                    |
-                                |<-depth->|
-            depth_clearance -->||<--
+                      ^           |_________     v
+                      |
+                                  |<-depth->|
+               depth_clearance -->||<--
     """
 
     def __init__(

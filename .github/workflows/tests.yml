@@ -29,7 +29,7 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip
           pip3 install lark pytest pytest-dependency pytest-html
-          pushd pyrobosim && pip3 install . && popd
+          pip3 install -e pyrobosim
           setup/setup_pddlstream.bash
       - name: Run unit tests
         run: |
