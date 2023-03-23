@@ -7,11 +7,7 @@ import os
 import pytest
 import numpy as np
 
-from pyrobosim.core.robot import Robot
-from pyrobosim.core.room import Room
-from pyrobosim.core.locations import Location, ObjectSpawn
-from pyrobosim.core.objects import Object
-from pyrobosim.core.world import World
+from pyrobosim.core import Robot, Room, Location, ObjectSpawn, Object, World
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 

@@ -15,7 +15,7 @@ from pyrobosim_msgs.msg import (
     TaskPlan,
 )
 from pyrobosim_msgs.srv import RequestWorldState
-from pyrobosim.utils.ros_conversions import (
+from .ros_conversions import (
     pose_from_ros,
     pose_to_ros,
     task_action_from_ros,

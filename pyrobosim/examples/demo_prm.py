@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import os
 
-from pyrobosim.core.yaml import WorldYamlLoader
-from pyrobosim.gui.main import start_gui
-from pyrobosim.navigation.prm import PRMPlanner
+from pyrobosim.core import WorldYamlLoader
+from pyrobosim.gui import start_gui
+from pyrobosim.navigation import PRMPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 

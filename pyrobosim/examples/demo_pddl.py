@@ -8,9 +8,9 @@ import os
 import argparse
 import threading
 
-from pyrobosim.core.yaml import WorldYamlLoader
-from pyrobosim.gui.main import start_gui
-from pyrobosim.planning.pddlstream.planner import PDDLStreamPlanner
+from pyrobosim.core import WorldYamlLoader
+from pyrobosim.gui import start_gui
+from pyrobosim.planning import PDDLStreamPlanner
 from pyrobosim.planning.pddlstream.utils import get_default_domains_folder
 from pyrobosim.utils.general import get_data_folder
 

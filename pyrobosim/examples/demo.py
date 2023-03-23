@@ -7,14 +7,10 @@ import os
 import argparse
 import numpy as np
 
-from pyrobosim.core.robot import Robot
-from pyrobosim.core.room import Room
-from pyrobosim.core.world import World
-from pyrobosim.core.yaml import WorldYamlLoader
-from pyrobosim.gui.main import start_gui
-from pyrobosim.manipulation.grasping import GraspGenerator, ParallelGraspProperties
-from pyrobosim.navigation.execution import ConstantVelocityExecutor
-from pyrobosim.navigation.rrt import RRTPlanner
+from pyrobosim.core import Robot, Room, World, WorldYamlLoader
+from pyrobosim.gui import start_gui
+from pyrobosim.manipulation import GraspGenerator, ParallelGraspProperties
+from pyrobosim.navigation import ConstantVelocityExecutor, RRTPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 

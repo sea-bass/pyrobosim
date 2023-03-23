@@ -8,14 +8,11 @@ import os
 import pytest
 import threading
 
-from pyrobosim.core.robot import Robot
-from pyrobosim.core.room import Room
-from pyrobosim.core.world import World
-from pyrobosim.gui.main import start_gui
-from pyrobosim.manipulation.grasping import GraspGenerator, ParallelGraspProperties
-from pyrobosim.navigation.execution import ConstantVelocityExecutor
-from pyrobosim.navigation.rrt import RRTPlanner
-from pyrobosim.planning.pddlstream.planner import PDDLStreamPlanner
+from pyrobosim.core import Robot, Room, World
+from pyrobosim.gui import start_gui
+from pyrobosim.manipulation import GraspGenerator, ParallelGraspProperties
+from pyrobosim.navigation import ConstantVelocityExecutor, RRTPlanner
+from pyrobosim.planning import PDDLStreamPlanner
 from pyrobosim.planning.pddlstream.utils import get_default_domains_folder
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose

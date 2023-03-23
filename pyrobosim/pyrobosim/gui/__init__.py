@@ -7,3 +7,6 @@ The GUI allows users to view the state of the robot(s) in the world
 and interact with the world model using actions such as navigating,
 picking, and placing objects.
 """
+
+from .main import *
+from .world_canvas import *

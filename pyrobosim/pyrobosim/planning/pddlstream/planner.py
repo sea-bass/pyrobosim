@@ -73,7 +73,7 @@ class PDDLStreamPlanner:
         :type max_attempts: int, optional
         :param verbose: If True, prints additional information. Defaults to False.
         :type verbose: bool, optional
-        :param **kwargs: Additional keyword arguments to pass to the PDDLStream planner.
+        :param \*\*kwargs: Additional keyword arguments to pass to the PDDLStream planner.
         :return: A task plan object ready to use with ``pyrobosim``.
         :rtype: :class:`pyrobosim.planning.actions.TaskPlan`
         """

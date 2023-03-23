@@ -4,10 +4,10 @@
 
 import os
 
-from pyrobosim.utils.pose import Pose
-from pyrobosim.navigation.rrt import RRTPlanner
-from pyrobosim.core.yaml import WorldYamlLoader
+from pyrobosim.core import WorldYamlLoader
+from pyrobosim.navigation import RRTPlanner
 from pyrobosim.utils.general import get_data_folder
+from pyrobosim.utils.pose import Pose
 
 data_folder = get_data_folder()
 loader = WorldYamlLoader()
