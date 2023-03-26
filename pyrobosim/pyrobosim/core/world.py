@@ -122,6 +122,7 @@ class World:
         it will not be added to the world model.
 
         :param \*\*kwargs: Keyword arguments describing the room.
+
             You can use ``room=Room(...)`` to directly pass in a :class:`pyrobosim.core.room.Room` object,
             or alternatively use the same keyword arguments you would use to create a Room object.
         :return: room object if successfully created, else None.
@@ -210,6 +211,7 @@ class World:
         Adds a hallway from with specified parameters related to the :class:`pyrobosim.core.hallway.Hallway` class.
 
         :param \*\*kwargs: Keyword arguments describing the hallway.
+
             You can use ``hallway=Hallway(...)`` to directly pass in a :class:`pyrobosim.core.room.Room` object,
             or alternatively use the same keyword arguments you would use to create a Room object.
 
