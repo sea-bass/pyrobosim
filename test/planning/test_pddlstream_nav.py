@@ -6,7 +6,7 @@ Test script for PDDLStream planning with navigation streams.
 import os
 import threading
 
-from pyrobosim.core import Robot, Room, World
+from pyrobosim.core import Robot, World
 from pyrobosim.gui import start_gui
 from pyrobosim.navigation import ConstantVelocityExecutor, RRTPlanner
 from pyrobosim.planning import PDDLStreamPlanner
@@ -27,14 +27,11 @@ def create_test_world(add_hallway=True):
 
     # Add rooms
     main_room_coords = [(-1, -1), (1, -1), (1, 1), (-1, 1)]
-    main_room = Room(main_room_coords, name="main_room", color=[1, 0, 0])
-    world.add_room(main_room)
+    world.add_room(name="main_room", footprint=main_room_coords, color=[1, 0, 0])
     unreachable_coords = [(2, -1), (4, -1), (4, 1), (2, 1)]
-    unreachable_room = Room(unreachable_coords, name="unreachable", color=[0, 0, 1])
-    world.add_room(unreachable_room)
+    world.add_room(name="unreachable", footprint=unreachable_coords, color=[0, 0, 1])
     goal_room_coords = [(2, 2), (4, 2), (4, 4), (2, 4)]
-    goal_room = Room(goal_room_coords, name="goal_room", color=[0, 0.6, 0])
-    world.add_room(goal_room)
+    world.add_room(name="goal_room", footprint=goal_room_coords, color=[0, 0.6, 0])
 
     # Add hallway, if enabled.
     if add_hallway:

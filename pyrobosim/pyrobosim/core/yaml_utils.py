@@ -6,7 +6,6 @@ import warnings
 import yaml
 
 from .robot import Robot
-from .room import Room
 from .world import World
 from ..utils.general import replace_special_yaml_tokens
 from ..utils.pose import Pose
@@ -74,22 +73,13 @@ class WorldYamlLoader:
             return
 
         for room_data in self.data["rooms"]:
-            name = room_data.get("name", None)
-            color = room_data.get("color", [0.4, 0.4, 0.4])
-            wall_width = room_data.get("wall_width", 0.2)
+            # TODO: Find a way to parse poses as YAML.
             if "nav_poses" in room_data:
-                nav_poses = [Pose.from_list(p) for p in room_data["nav_poses"]]
-            else:
-                nav_poses = None
+                room_data["nav_poses"] = [
+                    Pose.from_list(p) for p in room_data["nav_poses"]
+                ]
 
-            room = Room(
-                room_data["footprint"],
-                name=name,
-                color=color,
-                wall_width=wall_width,
-                nav_poses=nav_poses,
-            )
-            self.world.add_room(room)
+            self.world.add_room(**room_data)
 
     def add_hallways(self):
         """Add hallways connecting rooms to the world."""

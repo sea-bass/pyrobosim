@@ -27,17 +27,15 @@ class TestGetEntities:
         # Add rooms
         r1coords = [(-1, -1), (1.5, -1), (1.5, 1.5), (0.5, 1.5)]
         world.add_room(
-            Room(
-                r1coords,
-                name="kitchen",
-                color=[1, 0, 0],
-                nav_poses=[Pose(x=0.75, y=0.75, z=0.0, q=[1.0, 0.0, 0.0, 0.0])],
-            )
+            name="kitchen",
+            footprint=r1coords,
+            color=[1, 0, 0],
+            nav_poses=[Pose(x=0.75, y=0.75, z=0.0, q=[1.0, 0.0, 0.0, 0.0])],
         )
         r2coords = [(1.75, 2.5), (3.5, 2.5), (3.5, 4), (1.75, 4)]
-        world.add_room(Room(r2coords, name="bedroom", color=[0, 0.6, 0]))
+        world.add_room(name="bedroom", footprint=r2coords, color=[0, 0.6, 0])
         r3coords = [(-1, 1), (-1, 3.5), (-3.0, 3.5), (-2.5, 1)]
-        world.add_room(Room(r3coords, name="bathroom", color=[0, 0, 0.6]))
+        world.add_room(name="bathroom", footprint=r3coords, color=[0, 0, 0.6])
 
         # Add hallways between the rooms
         world.add_hallway("kitchen", "bathroom", width=0.7)
@@ -99,7 +97,7 @@ class TestGetEntities:
         """Checks adding a room and removing it cleanly."""
         room_name = "test_room"
         coords = [(9, 9), (11, 9), (11, 11), (9, 11)]
-        result = self.world.add_room(Room(coords, name=room_name, color=[0, 0, 0]))
+        result = self.world.add_room(name=room_name, footprint=coords, color=[0, 0, 0])
         assert result == True
         self.world.remove_room(room_name)
         result = self.world.get_room_by_name(room_name)

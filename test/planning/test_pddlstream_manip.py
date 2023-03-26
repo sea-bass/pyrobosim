@@ -8,7 +8,7 @@ import os
 import pytest
 import threading
 
-from pyrobosim.core import Robot, Room, World
+from pyrobosim.core import Robot, World
 from pyrobosim.gui import start_gui
 from pyrobosim.manipulation import GraspGenerator, ParallelGraspProperties
 from pyrobosim.navigation import ConstantVelocityExecutor, RRTPlanner
@@ -30,12 +30,10 @@ def create_test_world(add_alt_desk=True):
 
     # Add rooms
     home_coords = [(-1, -1), (1, -1), (1, 1), (-1, 1)]
-    home = Room(home_coords, name="home", color=[1, 0, 0])
-    world.add_room(home)
+    world.add_room(name="home", footprint=home_coords, color=[1, 0, 0])
     storage_coords = [(2, -2), (5, -2), (5, 2), (2, 2)]
-    storage = Room(storage_coords, name="storage", color=[0, 0, 1])
-    world.add_room(storage)
-    world.add_hallway(home, storage, width=0.75, conn_method="auto")
+    world.add_room(name="storage", footprint=storage_coords, color=[0, 0, 1])
+    world.add_hallway("home", "storage", width=0.75, conn_method="auto")
 
     # Add locations and objects
     table0 = world.add_location("table", "home", Pose(x=0.0, y=0.5, z=0, yaw=np.pi / 2))

@@ -5,7 +5,7 @@ import os
 import pytest
 import numpy as np
 
-from pyrobosim.core import Hallway, Object, Room, World
+from pyrobosim.core import Hallway, Object, World
 from pyrobosim.utils.pose import Pose
 
 from pyrobosim.utils.general import get_data_folder
@@ -33,19 +33,21 @@ class TestWorldModeling:
 
         room1_name = "kitchen"
         room1_coords = [(-1, -1), (1.5, -1), (1.5, 1.5), (0.5, 1.5)]
-        room1 = Room(room1_coords, name=room1_name, color=[1, 0, 0])
-        TestWorldModeling.world.add_room(room1)
+        TestWorldModeling.world.add_room(
+            name=room1_name, footprint=room1_coords, color=[1, 0, 0]
+        )
 
         assert len(TestWorldModeling.world.rooms) == 1
-        assert TestWorldModeling.world.get_room_by_name(room1_name) == room1
+        assert TestWorldModeling.world.get_room_by_name(room1_name) is not None
 
         room2_name = "bedroom"
         room2_coords = [(1.75, 2.5), (3.5, 2.5), (3.5, 4), (1.75, 4)]
-        room2 = Room(room2_coords, name=room2_name, color=[1, 0, 0])
-        TestWorldModeling.world.add_room(room2)
+        TestWorldModeling.world.add_room(
+            name=room2_name, footprint=room2_coords, color=[1, 0, 0]
+        )
 
         assert len(TestWorldModeling.world.rooms) == 2
-        assert TestWorldModeling.world.get_room_by_name(room2_name) == room2
+        assert TestWorldModeling.world.get_room_by_name(room2_name) is not None
 
     @staticmethod
     @pytest.mark.dependency(

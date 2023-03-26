@@ -111,23 +111,38 @@ class World:
     ##########################
     # World Building Methods #
     ##########################
-    def add_room(self, room):
+    def add_room(self, **kwargs):
         """
         Adds a room to the world.
 
         If the room does not have a specified name, it will be given an automatic
-        name of the form ``"room0"``, ``"room1"``, etc.
+        name of the form ``"room_0"``, ``"room_1"``, etc.
 
-        If the room would cause a collision with another entity in the world,
+        If the room has an empty footprint or would cause a collision with another entity in the world,
         it will not be added to the world model.
 
-        :param room: Room object to add to the world.
-        :type room: :class:`pyrobosim.core.room.Room`
+        :param \*\*kwargs: Keyword arguments describing the room.
+            You can use ``room=Room(...)`` to directly pass in a :class:`pyrobosim.core.room.Room` object,
+            or alternatively use the same keyword arguments you would use to create a Room object.
         :return: True if the room was successfully added, else False.
         :rtype: bool
         """
+
+        # If it's a room object, get it from the "room" named argument.
+        # Else, create a room directly from the specified arguments.
+        if "room" in kwargs:
+            room = kwargs["room"]
+        else:
+            room = Room(**kwargs)
+
+        # If the room name is empty, automatically name it.
         if room.name is None:
             room.name = f"room_{self.num_rooms}"
+
+        # If the room geometry is empty, do not allow it
+        if room.polygon.is_empty:
+            warnings.warn(f"Room {room.name} has empty geometry. Cannot add to world.")
+            return False
 
         # Check if the room collides with any other rooms or hallways
         is_valid_pose = True
