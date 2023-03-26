@@ -95,20 +95,20 @@ rooms:
 
 # HALLWAYS: Connect rooms
 hallways:
-  - from: kitchen
-    to: bathroom
+  - room_start: kitchen
+    room_end: bathroom
     width: 0.7
     conn_method: auto
 
-  - from: bathroom
-    to: bedroom
+  - room_start: bathroom
+    room_end: bedroom
     width: 0.5
     conn_method: angle
     conn_angle: 0.0
     offset: 0.8
 
-  - from: kitchen
-    to: bedroom
+  - room_start: kitchen
+    room_end: bedroom
     width: 0.6
     conn_method: points
     conn_points:

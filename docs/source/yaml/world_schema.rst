@@ -61,8 +61,8 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
 
    # Hallways (refer to Hallways API)
    hallways:
-     - from: <room1>
-       to: <room2>
+     - room_start: <room1>
+       room_end: <room2>
        width: <value>
        conn_method: <type>
        <conn_property>: <value>

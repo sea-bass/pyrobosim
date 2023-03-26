@@ -86,25 +86,8 @@ class WorldYamlLoader:
         if "hallways" not in self.data:
             return
 
-        for hall in self.data["hallways"]:
-            conn_method = hall.get("conn_method", "auto")
-            offset = hall.get("offset", 0.0)
-            conn_angle = hall.get("conn_angle", 0.0)
-            conn_points = hall.get("conn_points", [])
-            color = hall.get("color", [0.4, 0.4, 0.4])
-            wall_width = hall.get("wall_width", 0.2)
-
-            self.world.add_hallway(
-                hall["from"],
-                hall["to"],
-                hall["width"],
-                conn_method=conn_method,
-                offset=offset,
-                conn_angle=conn_angle,
-                conn_points=conn_points,
-                color=color,
-                wall_width=wall_width,
-            )
+        for hall_data in self.data["hallways"]:
+            self.world.add_hallway(**hall_data)
 
     def add_locations(self):
         """Add locations for object spawning to the world."""

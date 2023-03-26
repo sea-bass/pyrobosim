@@ -15,9 +15,9 @@ class Hallway:
 
     def __init__(
         self,
-        room_start,
-        room_end,
-        hall_width,
+        room_start=None,
+        room_end=None,
+        width=0.0,
         conn_method="auto",
         offset=0,
         conn_angle=0,
@@ -37,8 +37,8 @@ class Hallway:
         :type room_start: :class:`pyrobosim.core.room.Room`
         :param room_end: Room object for the end of the hallway.
         :type room_end: :class:`pyrobosim.core.room.Room`
-        :param hall_width: Width of the hallway, in meters
-        :type hall_width: float
+        :param width: Width of the hallway, in meters
+        :type width: float
         :param conn_method: Connection method (see above)
         :type conn_method: str, optional
         :param offset: Perpendicular offset from centroid of start point
@@ -54,10 +54,19 @@ class Hallway:
         :param wall_width: Width of hallway walls, in meters.
         :type wall_width: float, optional
         """
+        # Validate input
+        if room_start is None:
+            raise Exception("room_start must be a valid Room object.")
+        if room_end is None:
+            raise Exception("room_end must be a valid Room object.")
+        if width <= 0.0:
+            raise Exception("width must be a positibe value.")
+
+        # Unpack input
         self.room_start = room_start
         self.room_end = room_end
         self.name = f"hall_{room_start.name}_{room_end.name}"
-        self.hall_width = hall_width
+        self.width = width
         self.wall_width = wall_width
         self.offset = offset
         self.viz_color = color
@@ -88,7 +97,7 @@ class Hallway:
 
         # Create the hallway polygon
         self.polygon = LineString(self.points)
-        self.polygon = inflate_polygon(self.polygon, hall_width / 2.0)
+        self.polygon = inflate_polygon(self.polygon, width / 2.0)
 
         # Get the collision and visualization polygons
         self.update_collision_polygons()

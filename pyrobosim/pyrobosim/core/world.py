@@ -124,8 +124,8 @@ class World:
         :param \*\*kwargs: Keyword arguments describing the room.
             You can use ``room=Room(...)`` to directly pass in a :class:`pyrobosim.core.room.Room` object,
             or alternatively use the same keyword arguments you would use to create a Room object.
-        :return: True if the room was successfully added, else False.
-        :rtype: bool
+        :return: room object if successfully created, else None.
+        :rtype: :class:`pyrobosim.core.room.room`
         """
 
         # If it's a room object, get it from the "room" named argument.
@@ -142,7 +142,7 @@ class World:
         # If the room geometry is empty, do not allow it
         if room.polygon.is_empty:
             warnings.warn(f"Room {room.name} has empty geometry. Cannot add to world.")
-            return False
+            return None
 
         # Check if the room collides with any other rooms or hallways
         is_valid_pose = True
@@ -155,7 +155,7 @@ class World:
             )
         if not is_valid_pose:
             warnings.warn(f"Room {room.name} in collision. Cannot add to world.")
-            return False
+            return None
 
         self.rooms.append(room)
         self.name_to_entity[room.name] = room
@@ -170,7 +170,7 @@ class World:
             room.add_graph_nodes()
             self.search_graph.add(room.graph_nodes, autoconnect=True)
 
-        return True
+        return room
 
     def remove_room(self, room_name):
         """
@@ -205,97 +205,65 @@ class World:
             self.search_graph.remove(room.graph_nodes)
         return True
 
-    def add_hallway(
-        self,
-        room_start,
-        room_end,
-        width,
-        conn_method="auto",
-        offset=0,
-        conn_angle=0,
-        conn_points=[],
-        color=[0.4, 0.4, 0.4],
-        wall_width=0.2,
-    ):
+    def add_hallway(self, **kwargs):
         """
-        Adds a hallway from room_start to room_end, with specified parameters
-        related to the :class:`pyrobosim.core.hallway.Hallway` class.
+        Adds a hallway from with specified parameters related to the :class:`pyrobosim.core.hallway.Hallway` class.
 
-        :param room_start: Start room instance or name.
-        :type room_start: :class:`pyrobosim.core.room.Room`/str
-        :param room_end: End room instance or name.
-        :type room_end: :class:`pyrobosim.core.room.Room`/str
-        :param width: Width of the hallway, in meters.
-        :type width: float
-        :param conn_method: Connection method (see :class:`pyrobosim.core.hallway.Hallway` documentation).
-        :type conn_method: str, optional
-        :param offset: Perpendicular offset from centroid of start point
-            (valid if using ``"auto"`` or ``"angle"`` connection methods)
-        :type offset: float, optional
-        :param conn_angle: If using ``"angle"`` connection method, specifies
-            the angle of the hallway in radians (0 points to the right).
-        :type conn_angle: float, optional
-        :param conn_points: If using "points" connection method, specifies the hallway points.
-        :type conn_points: list[(float, float)], optional
-        :param color: Visualization color as an (R, G, B) tuple in the range (0.0, 1.0)
-        :type color: (float, float, float), optional
-        :param wall_width: Width of hallway walls, in meters.
-        :type wall_width: float, optional
+        :param \*\*kwargs: Keyword arguments describing the hallway.
+            You can use ``hallway=Hallway(...)`` to directly pass in a :class:`pyrobosim.core.room.Room` object,
+            or alternatively use the same keyword arguments you would use to create a Room object.
+
+            You can also pass in the room names as the ``room_start`` and ``room_end`` arguments,
+            and they will be resolved to actual room objects, if they exist in the world.
+
         :return: Hallway object if successfully created, else None.
         :rtype: :class:`pyrobosim.core.hallway.Hallway`
         """
-        # Parse inputs
-        if isinstance(room_start, str):
-            room_start = self.get_room_by_name(room_start)
-        if isinstance(room_end, str):
-            room_end = self.get_room_by_name(room_end)
+        # If it's a hallway object, get it from the "hallway" named argument.
+        # Else, create a hallway directly from the specified arguments.
+        if "hallway" in kwargs:
+            hallway = kwargs["hallway"]
+        else:
+            if isinstance(kwargs["room_start"], str):
+                kwargs["room_start"] = self.get_room_by_name(kwargs["room_start"])
+            if isinstance(kwargs["room_end"], str):
+                kwargs["room_end"] = self.get_room_by_name(kwargs["room_end"])
 
-        # Create the hallway
-        h = Hallway(
-            room_start,
-            room_end,
-            width,
-            conn_method=conn_method,
-            offset=offset,
-            conn_angle=conn_angle,
-            conn_points=conn_points,
-            color=color,
-            wall_width=wall_width,
-        )
+            hallway = Hallway(**kwargs)
 
         # Check if the hallway collides with any other rooms or hallways
         is_valid_pose = True
         for other_loc in self.rooms + self.hallways:
-            if (other_loc == room_start) or (other_loc == room_end):
+            if (other_loc == hallway.room_start) or (other_loc == hallway.room_end):
                 continue
             is_valid_pose = (
                 is_valid_pose
-                and not h.external_collision_polygon.intersects(
+                and not hallway.external_collision_polygon.intersects(
                     other_loc.external_collision_polygon
                 )
             )
         if not is_valid_pose:
-            warnings.warn(f"Hallway {h.name} in collision. Cannot add to world.")
+            warnings.warn(f"Hallway {hallway.name} in collision. Cannot add to world.")
             return None
 
         # Do all the necessary bookkeeping
-        self.hallways.append(h)
-        self.name_to_entity[h.name] = h
-        room_start.hallways.append(h)
-        room_start.update_visualization_polygon()
-        room_end.hallways.append(h)
-        room_end.update_visualization_polygon()
+        self.hallways.append(hallway)
+        self.name_to_entity[hallway.name] = hallway
+        hallway.room_start.hallways.append(hallway)
+        hallway.room_start.update_visualization_polygon()
+        hallway.room_end.hallways.append(hallway)
+        hallway.room_end.update_visualization_polygon()
         self.num_hallways += 1
-        h.update_collision_polygons(self.inflation_radius)
-        self.update_bounds(entity=h)
+        hallway.update_collision_polygons(self.inflation_radius)
+        self.update_bounds(entity=hallway)
 
         # Update the search graph, if any
         if self.search_graph is not None:
-            h.add_graph_nodes()
-            self.search_graph.add(h.graph_nodes, autoconnect=True)
+            hallway.add_graph_nodes()
+            self.search_graph.add(hallway.graph_nodes, autoconnect=True)
 
         # Finally, return the Hallway object
-        return h
+        return hallway
 
     def remove_hallway(self, hallway):
         """

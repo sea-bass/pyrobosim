@@ -42,13 +42,18 @@ def create_world(multirobot=False):
     world.add_room(name="bathroom", footprint=r3coords, color=[0, 0, 0.6])
 
     # Add hallways between the rooms
-    world.add_hallway("kitchen", "bathroom", width=0.7)
+    world.add_hallway(room_start="kitchen", room_end="bathroom", width=0.7)
     world.add_hallway(
-        "bathroom", "bedroom", width=0.5, conn_method="angle", conn_angle=0, offset=0.8
+        room_start="bathroom",
+        room_end="bedroom",
+        width=0.5,
+        conn_method="angle",
+        conn_angle=0,
+        offset=0.8,
     )
     world.add_hallway(
-        "kitchen",
-        "bedroom",
+        room_start="kitchen",
+        room_end="bedroom",
         width=0.6,
         conn_method="points",
         conn_points=[(1.0, 0.5), (2.5, 0.5), (2.5, 3.0)],

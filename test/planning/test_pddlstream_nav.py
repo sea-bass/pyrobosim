@@ -37,8 +37,8 @@ def create_test_world(add_hallway=True):
     if add_hallway:
         hallway_points = [(0.0, 0.0), (0.0, 5.0), (3.0, 5.0), (3.0, 3.0)]
         world.add_hallway(
-            "main_room",
-            "goal_room",
+            room_start="main_room",
+            room_end="goal_room",
             width=0.7,
             conn_method="points",
             conn_points=hallway_points,

@@ -60,7 +60,11 @@ class TestWorldModeling:
         """Tests the creation of a hallway between 2 rooms"""
 
         TestWorldModeling.world.add_hallway(
-            "kitchen", "bedroom", offset=0.5, conn_method="auto", width=0.5
+            room_start="kitchen",
+            room_start="bedroom",
+            offset=0.5,
+            conn_method="auto",
+            width=0.5,
         )
         assert len(TestWorldModeling.world.hallways) == 1
 

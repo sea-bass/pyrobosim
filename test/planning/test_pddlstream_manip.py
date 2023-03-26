@@ -33,7 +33,9 @@ def create_test_world(add_alt_desk=True):
     world.add_room(name="home", footprint=home_coords, color=[1, 0, 0])
     storage_coords = [(2, -2), (5, -2), (5, 2), (2, 2)]
     world.add_room(name="storage", footprint=storage_coords, color=[0, 0, 1])
-    world.add_hallway("home", "storage", width=0.75, conn_method="auto")
+    world.add_hallway(
+        room_start="home", room_end="storage", width=0.75, conn_method="auto"
+    )
 
     # Add locations and objects
     table0 = world.add_location("table", "home", Pose(x=0.0, y=0.5, z=0, yaw=np.pi / 2))

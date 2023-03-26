@@ -16,7 +16,7 @@ class TestRoom:
         room = Room(footprint=coords)
         result = world.add_room(room=room)
 
-        assert result == True
+        assert isinstance(result, Room)
         assert world.num_rooms == 1
         assert world.rooms[0].name == "room_0"
 
@@ -28,7 +28,7 @@ class TestRoom:
         color = [1.0, 0.0, 0.1]
         result = world.add_room(name="test_room", footprint=coords, color=color)
 
-        assert result == True
+        assert isinstance(result, Room)
         assert world.num_rooms == 1
         assert world.rooms[0].name == "test_room"
         assert world.rooms[0].viz_color == color
@@ -38,7 +38,7 @@ class TestRoom:
         world = World()
 
         result = world.add_room(name="test_room")
-        assert result == False
+        assert result is None
 
     def test_add_room_to_world_in_collision(self):
         """Test adding a room in collision with another room."""
@@ -47,13 +47,13 @@ class TestRoom:
         # This room should be added correctly.
         orig_coords = [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)]
         result = world.add_room(footprint=orig_coords)
-        assert result == True
+        assert isinstance(result, Room)
         assert world.num_rooms == 1
 
         # This new room should fail to add since it's in the collision with the first room.
         new_coords = [(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0)]
         result = world.add_room(footprint=new_coords)
-        assert result == False
+        assert result is None
         assert world.num_rooms == 1
 
 
