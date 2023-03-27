@@ -442,7 +442,7 @@ class World:
             return True
         return False
 
-    def add_object(self, category, loc, pose=None, name=None):
+    def add_object(self, **kwargs):
         """
         Adds an object to a specific location.
 
@@ -451,50 +451,55 @@ class World:
 
         If the location contains multiple object spawns, one will be selected at random.
 
-        :param category: Object category (e.g., ``"apple"``).
-        :type category: str
-        :param loc: Location or object spawn instance or name.
-        :type loc: :class:`pyrobosim.core.locations.Location`/:class:`pyrobosim.core.locations.ObjectSpawn`/str
-        :param pose: Pose of the location. If none is specified, it will be sampled.
-        :type pose: :class:`pyrobosim.utils.pose.Pose`, optional
-        :param name: Name of the location.
-        :type name: str, optional
+        :param \*\*kwargs: Keyword arguments describing the object.
+
+            You can use ``object=Object(...)`` to directly pass in a :class:`pyrobosim.core.objects.Object`
+            object, or alternatively use the same keyword arguments you would use to create an Object instance.
+
+            You can also pass in the parent entity name as the ``parent`` argument, and it will be resolved to an actual entity, if it exists in the world.
+
         :return: Object instance if successfully created, else None.
         :rtype: :class:`pyrobosim.core.objects.Object`
         """
-        # If no name is specified, create one automatically
+        # If it's on Object instance, get it from the "location" named argument.
+        # Else, create a location directly from the specified arguments.
+        if "object" in kwargs:
+            obj = kwargs["object"]
+        else:
+            parent = kwargs.get("parent", None)
+            if isinstance(parent, str):
+                parent = self.get_entity_by_name(parent)
+
+            # If it's a location object, pick an object spawn at random.
+            # Otherwise, if it's an object spawn, use that entity as is.
+            if isinstance(parent, Location):
+                parent = np.random.choice(parent.children)
+
+            if not isinstance(parent, ObjectSpawn):
+                parent_arg = kwargs.get("parent", None)
+                warnings.warn(
+                    f"Parent location {parent_arg} did not resolve to a valid location for an object."
+                )
+                return None
+
+            kwargs["parent"] = parent
+            kwargs["inflation_radius"] = self.object_radius
+            obj = Object(**kwargs)
+
+        # If the category name is empty, use "object" as the base name.
+        category = obj.category
+        if category is None:
+            category = "object"
+        # If no name is specified, create one automatically.
         if category not in self.object_instance_counts:
             self.object_instance_counts[category] = 0
-        if name is None:
-            name = f"{category}{self.object_instance_counts[category]}"
+        if obj.name is None:
+            obj.name = f"{category}{self.object_instance_counts[category]}"
         self.object_instance_counts[category] += 1
 
-        # If it's a string, get the location name
-        if isinstance(loc, str):
-            loc = self.get_entity_by_name(loc)
-        # If it's a location object, pick an object spawn at random.
-        # Otherwise, if it's an object spawn, use that entity as is.
-        if isinstance(loc, Location):
-            obj_spawn = np.random.choice(loc.children)
-        elif isinstance(loc, ObjectSpawn):
-            obj_spawn = loc
-        else:
-            warnings.warn(
-                f"Location {loc} did not resolve to a valid location for an object."
-            )
-            return None
-
-        # Create the object
-        obj = Object(
-            category=category,
-            name=name,
-            parent=obj_spawn,
-            pose=pose,
-            inflation_radius=self.object_radius,
-        )
-
-        # If no pose is specified, sample a valid one
-        if pose is None:
+        # If no pose is specified, sample a valid one.
+        obj_spawn = obj.parent
+        if obj.pose is None:
             obj_added = False
             for _ in range(self.max_object_sample_tries):
                 x_sample, y_sample = sample_from_polygon(obj_spawn.polygon)

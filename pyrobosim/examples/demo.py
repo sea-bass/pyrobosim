@@ -76,16 +76,18 @@ def create_world(multirobot=False):
 
     # Add objects
     world.add_object(
-        "banana",
-        table,
+        category="banana",
+        parent=table,
         pose=Pose(x=1.0, y=-0.5, z=0.0, q=[0.9238811, 0.0, 0.0, 0.3826797]),
     )
-    world.add_object("apple", desk, pose=Pose(x=3.2, y=3.5, z=0.0, yaw=0.0))
-    world.add_object("apple", table)
-    world.add_object("apple", table)
-    world.add_object("water", counter)
-    world.add_object("banana", counter)
-    world.add_object("water", desk)
+    world.add_object(
+        category="apple", parent=desk, pose=Pose(x=3.2, y=3.5, z=0.0, yaw=0.0)
+    )
+    world.add_object(category="apple", parent=table)
+    world.add_object(category="apple", parent=table)
+    world.add_object(category="water", parent=counter)
+    world.add_object(category="banana", parent=counter)
+    world.add_object(category="water", parent=desk)
 
     # Add robots
     grasp_props = ParallelGraspProperties(

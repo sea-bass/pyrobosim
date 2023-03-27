@@ -5,7 +5,6 @@ Tests for location and object spawn creation in pyrobosim.
 """
 
 import os
-import pytest
 
 from pyrobosim.core import Location, World
 from pyrobosim.utils.general import get_data_folder
@@ -15,7 +14,7 @@ from pyrobosim.utils.pose import Pose
 data_folder = get_data_folder()
 
 
-class TestLocation:
+class TestLocations:
     def test_add_location_to_world_from_object(self):
         """Test adding a location from a Location object."""
         world = World()
@@ -35,7 +34,7 @@ class TestLocation:
         assert world.locations[0].name == "table0"
 
     def test_add_location_to_world_from_args(self):
-        """Test adding a location from a a list of named keyword arguments."""
+        """Test adding a location from a list of named keyword arguments."""
         world = World()
         world.set_metadata(
             locations=os.path.join(data_folder, "example_location_data.yaml"),
@@ -58,7 +57,7 @@ class TestLocation:
 
 
 if __name__ == "__main__":
-    t = TestLocation()
+    t = TestLocations()
     t.test_add_location_to_world_from_object()
     t.test_add_location_to_world_from_args()
     print("Tests passed!")

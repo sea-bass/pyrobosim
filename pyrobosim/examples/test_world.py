@@ -110,8 +110,8 @@ class TestWorldModeling:
     def test_create_object():
         """Tests adding objects to a location"""
 
-        TestWorldModeling.world.add_object("apple", "table0")
-        TestWorldModeling.world.add_object("apple", "study_desk")
+        TestWorldModeling.world.add_object(category="apple", parent="table0")
+        TestWorldModeling.world.add_object(category="apple", parent="study_desk")
         assert len(TestWorldModeling.world.objects) == 2
 
         # second apple
@@ -176,7 +176,7 @@ class TestWorldModeling:
     def test_hierarchical_cleanup():
         """Tests if an entity is automatically deleted on parent deletion"""
 
-        TestWorldModeling.world.add_object("apple", "table0")
+        TestWorldModeling.world.add_object(category="apple", parent="table0")
         loc = TestWorldModeling.world.get_location_by_name("table0")
         assert len(loc.children[0].children) == 2
         assert TestWorldModeling.world.remove_room("kitchen") is True

@@ -70,13 +70,15 @@ def create_world():
     )
 
     # Add objects
-    world.add_object("banana", table, pose=Pose(x=1.0, y=-0.5, yaw=np.pi / 4))
-    world.add_object("apple", desk, pose=Pose(x=3.2, y=3.5, yaw=0))
-    world.add_object("apple", table)
-    world.add_object("apple", table)
-    world.add_object("water", counter)
-    world.add_object("banana", counter)
-    world.add_object("water", desk)
+    world.add_object(
+        category="banana", parent=table, pose=Pose(x=1.0, y=-0.5, yaw=np.pi / 4.0)
+    )
+    world.add_object(category="apple", parent=desk, pose=Pose(x=3.2, y=3.5, yaw=0.0))
+    world.add_object(category="apple", parent=table)
+    world.add_object(category="apple", parent=table)
+    world.add_object(category="water", parent=counter)
+    world.add_object(category="banana", parent=counter)
+    world.add_object(category="water", parent=desk)
 
     # Add a robot
     robot = Robot(name="robot", radius=0.1, path_executor=ConstantVelocityExecutor())

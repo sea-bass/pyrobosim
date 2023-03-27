@@ -81,6 +81,6 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
    # Objects
    objects:
      - name: <obj_name>  # If not specified, will be automatic
-       type: <obj_category>  # From object YAML file
-       location: <loc_name>
+       category: <obj_category>  # From object YAML file
+       parent: <loc_name>
        pose: [<x>, <y>, <z>, <yaw>]  # If not specified, will sample

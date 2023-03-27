@@ -19,7 +19,7 @@ class Object:
 
     # Default class attributes
     height = 0.1
-    """ Vertical height of location. """
+    """ Vertical height of object. """
     viz_color = (0, 0, 1)
     """ Visualization color (RGB tuple). """
 
@@ -34,21 +34,30 @@ class Object:
         cls.metadata = EntityMetadata(filename)
 
     def __init__(
-        self, category=None, name=None, parent=None, pose=None, inflation_radius=0.0
+        self,
+        name=None,
+        category=None,
+        parent=None,
+        pose=None,
+        inflation_radius=0.0,
+        color=None,
     ):
         """
         Creates an object instance.
 
+        :param name: Name of the object.
+        :type name: str, optional
         :param category: Object category (e.g., ``"apple"``).
         :type category: str
-        :param name: Name of the location.
-        :type name: str, optional
-        :param parent: Parent of the location (typically a :class:`pyrobosim.core.room.Room`)
+        :param parent: Parent of the object (typically a :class:`pyrobosim.core.locations.ObjectSpawn`)
         :type parent: Entity
-        :param pose: Pose of the location.
+        :param pose: Pose of the object.
         :type pose: :class:`pyrobosim.utils.pose.Pose`
         :param inflation_radius: Inflation radius for polygon collision checks.
         :type inflation_radius: float, optional
+        :param color: Visualization color as an (R, G, B) tuple in the range (0.0, 1.0).
+            If using a category with a defined color, this parameter overrides the category color.
+        :type color: (float, float, float), optional
         """
         self.category = category
         self.name = name
@@ -60,8 +69,11 @@ class Object:
         self.viz_text = None
 
         self.metadata = Object.metadata.get(self.category)
-        if "color" in self.metadata:
+        if color is not None:
+            self.viz_color = color
+        elif "color" in self.metadata:
             self.viz_color = self.metadata["color"]
+
         self.set_pose(pose)
         self.create_polygons()
         self.create_grasp_cuboid()

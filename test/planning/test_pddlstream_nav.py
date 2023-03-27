@@ -48,11 +48,11 @@ def create_test_world(add_hallway=True):
     table0 = world.add_location(
         category="table", parent="unreachable", pose=Pose(x=3.5, y=-0.25, z=0.0)
     )
-    world.add_object("apple", table0)
+    world.add_object(category="apple", parent=table0)
     table1 = world.add_location(
         category="table", parent="goal_room", pose=Pose(x=3.5, y=2.75, z=0.0)
     )
-    world.add_object("apple", table1)
+    world.add_object(category="apple", parent=table1)
 
     # Add a robot
     robot = Robot(radius=0.1, path_executor=ConstantVelocityExecutor())

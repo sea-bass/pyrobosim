@@ -141,31 +141,31 @@ locations:
 
 # # OBJECTS: Can be picked, placed, and move by robot
 objects:
-  - type: banana
-    location: table0
+  - category: banana
+    parent: table0
     pose: [1.0, -0.5, 0.0, 0.707]
 
-  - type: apple
-    location: my_desk
+  - category: apple
+    parent: my_desk
     pose: [3.2, 3.5, 0.0, 0.0]
 
   - name: gala
-    type: apple
-    location: table0
+    category: apple
+    parent: table0
 
   - name: fuji
-    type: apple
-    location: trash
+    category: apple
+    parent: trash
 
-  - type: water
-    location: counter0
+  - category: water
+    parent: counter0
 
-  - type: banana
-    location: counter0
+  - category: banana
+    parent: counter0
 
-  - type: water
-    location: my_desk
+  - category: water
+    parent: my_desk
 
   - name: soda
-    type: coke
-    location: my_desk
+    category: coke
+    parent: my_desk

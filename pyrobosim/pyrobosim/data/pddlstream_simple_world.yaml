@@ -120,25 +120,25 @@ locations:
 
 # OBJECTS: Can be picked, placed, and move by robot
 objects:
-  - type: banana
-    location: table0
+  - category: banana
+    parent: table0
     pose: [1.0, -0.5, 0.0, 0.707]
 
-  - type: apple
-    location: desk0
+  - category: apple
+    parent: desk0
     pose: [3.2, 3.5, 0.0, 0.0]
 
-  - type: apple
-    location: table0
+  - category: apple
+    parent: table0
 
-  - type: apple
-    location: table0
+  - category: apple
+    parent: table0
 
-  - type: water
-    location: counter0
+  - category: water
+    parent: counter0
 
-  - type: banana
-    location: counter0
+  - category: banana
+    parent: counter0
 
-  - type: water
-    location: desk0
+  - category: water
+    parent: desk0

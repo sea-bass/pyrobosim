@@ -96,15 +96,11 @@ class WorldYamlLoader:
         if "objects" not in self.data:
             return
 
-        for obj in self.data["objects"]:
-            category = obj["type"]
-            loc = obj["location"]
-            if "pose" in obj:
-                pose = Pose.from_list(obj["pose"])
-            else:
-                pose = None
-            name = obj.get("name", None)
-            self.world.add_object(category, loc, pose=pose, name=name)
+        for obj_data in self.data.get("objects", []):
+            # TODO: Find a way to parse poses as YAML.
+            if "pose" in obj_data:
+                obj_data["pose"] = Pose.from_list(obj_data["pose"])
+            self.world.add_object(**obj_data)
 
     def add_robots(self):
         """Add robots to the world."""

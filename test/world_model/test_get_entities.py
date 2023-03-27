@@ -71,15 +71,21 @@ class TestGetEntities:
         )
 
         # Add objects
-        world.add_object("banana", table, pose=Pose(x=1.0, y=-0.5, z=0, yaw=np.pi / 4))
         world.add_object(
-            "apple", desk, pose=Pose(x=3.2, y=3.5, z=0.0, q=[1.0, 0.0, 0.0, 0.0])
+            category="banana",
+            parent=table,
+            pose=Pose(x=1.0, y=-0.5, z=0.0, yaw=np.pi / 4.0),
         )
-        world.add_object("apple", table)
-        world.add_object("apple", table)
-        world.add_object("water", counter)
-        world.add_object("banana", counter)
-        world.add_object("water", desk)
+        world.add_object(
+            category="apple",
+            parent=desk,
+            pose=Pose(x=3.2, y=3.5, z=0.0, q=[1.0, 0.0, 0.0, 0.0]),
+        )
+        world.add_object(category="apple", parent=table)
+        world.add_object(category="apple", parent=table)
+        world.add_object(category="water", parent=counter)
+        world.add_object(category="banana", parent=counter)
+        world.add_object(category="water", parent=desk)
 
         # Add a robot
         robot = Robot(radius=0.1, name="robby")
@@ -175,7 +181,7 @@ class TestGetEntities:
         """Checks adding an object and removing it cleanly."""
         obj_name = "banana13"
         table = self.world.get_location_by_name("table0")
-        new_obj = self.world.add_object("banana", table, name=obj_name)
+        new_obj = self.world.add_object(category="banana", parent=table, name=obj_name)
         assert isinstance(new_obj, Object)
         self.world.remove_object(obj_name)
         result = self.world.get_object_by_name(obj_name)

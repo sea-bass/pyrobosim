@@ -48,9 +48,17 @@ def create_test_world(add_alt_desk=True):
         desk1 = world.add_location(
             category="desk", parent="storage", pose=Pose(x=4.5, y=1.5, z=0.0, yaw=0.0)
         )
-    world.add_object("banana", table0)
-    world.add_object("water", desk0, pose=Pose(x=2.375, y=-1.375, z=0, yaw=np.pi / 4))
-    world.add_object("water", desk0, pose=Pose(x=2.575, y=-1.6, z=0, yaw=-np.pi / 4))
+    world.add_object(category="banana", parent=table0)
+    world.add_object(
+        category="water",
+        parent=desk0,
+        pose=Pose(x=2.375, y=-1.375, z=0, yaw=np.pi / 4.0),
+    )
+    world.add_object(
+        category="water",
+        parent=desk0,
+        pose=Pose(x=2.575, y=-1.6, z=0, yaw=-np.pi / 4.0),
+    )
 
     # Add a robot
     grasp_props = ParallelGraspProperties(
