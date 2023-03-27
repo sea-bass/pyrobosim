@@ -9,8 +9,8 @@ from pyrobosim.utils.motion import Path
 from pyrobosim.navigation.planner_base import PathPlannerBase
 
 
-class GridSearch(AStar):
-    def __init__(self, config) -> None:
+class AStarGrid(AStar):
+    def __init__(self, config):
         super().__init__()
 
         self.grid = config["grid"]
@@ -119,6 +119,63 @@ class GridSearch(AStar):
         return self.latest_path
 
 
+class AStarGraph(AStar):
+    """
+    Implementation of the AStar class from python-astar to solve
+    the A* shortest path algorithm for our graph representation.
+    """
+
+    def __init__(self, config):
+        super().__init__()
+        self.config = config
+
+    def heuristic_cost_estimate(self, n0, n1):
+        """
+        Compute heuristic cost estimate using linear distance.
+        :param n0: First node
+        :type n0: :class:`Node`
+        :param n1: Second node
+        :type n1: :class:`Node`
+        :return: Heuristic cost estimate
+        :rtype: float
+        """
+        return n0.pose.get_linear_distance(n1.pose, ignore_z=True)
+
+    def distance_between(self, n0, n1):
+        """
+        Compute distance between two nodes
+        :param n0: First node
+        :type n0: :class:`Node`
+        :param n1: Second node
+        :type n1: :class:`Node`
+        :return: Heuristic cost estimate
+        :rtype: float
+        """
+        return n0.pose.get_linear_distance(n1.pose, ignore_z=True)
+
+    def neighbors(self, n):
+        """
+        Get neighbors of a graph node.
+        :param n: Node
+        :type n: :class:`Node`
+        :return: List of node neighbors
+        :rtype: list[:class:`Node`]
+        """
+        return list(n.neighbors)
+
+    def plan(self, start, goal):
+        """
+        Plan path from start to goal.
+
+        :param start: Node
+        :type start: :class:`Node`
+        :param goal: Node
+        :type goal: :class:`Node`
+        """
+        self.latest_path = self.astar(start, goal)
+        return self.latest_path
+
+
 class AstarPlanner(PathPlannerBase):
     """The A* path planner."""
 
@@ -133,10 +190,9 @@ class AstarPlanner(PathPlannerBase):
 
         # Depending on if grid is provided, select the implementation.
         if planner_config["grid"]:
-            self.impl = GridSearch(planner_config)
+            self.impl = AStarGrid(planner_config)
         else:
-            # Will be implemented after restructuring of the World class
-            raise NotImplementedError("A* does not support graph based search")
+            self.impl = AStarGraph(planner_config)
 
     def plan(self, start, goal):
         start_time = time.time()
