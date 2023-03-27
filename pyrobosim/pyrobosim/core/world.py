@@ -1168,7 +1168,7 @@ class World:
         else:
             return None
 
-    def add_robot(self, robot, loc=None, pose=None, use_robot_pose=False):
+    def add_robot(self, robot, loc=None, pose=None):
         """
         Adds a robot to the world given either a world entity and/or pose.
 
@@ -1178,8 +1178,6 @@ class World:
         :type loc: Entity, optional
         :param pose: Pose at which to add the robot. If not specified, will be sampled.
         :type pose: :class:`pyrobosim.utils.pose.Pose`
-        :param use_robot_pose: If True, uses the pose already specified in the robot instance.
-        :type use_robot_pose: bool, optional
         """
         # Check that the robot name doesn't already exist.
         if robot.name in self.get_robot_names():
@@ -1194,14 +1192,7 @@ class World:
             self.set_inflation_radius(new_inflation_radius)
 
         valid_pose = True
-        if use_robot_pose:
-            # If using the robot pose, simply add the robot and we're done!
-            robot_pose = robot.pose
-            if self.check_occupancy((pose.x, pose.y)):
-                warnings.warn(f"{pose} is occupied.")
-                valid_pose = False
-
-        elif loc is None:
+        if loc is None:
             if pose is None:
                 # If nothing is specified, sample any valid location in the world
                 robot_pose = self.sample_free_robot_pose_uniform(
@@ -1219,7 +1210,7 @@ class World:
             # If we have a valid pose, extract its location
             loc = self.get_location_from_pose(robot_pose)
 
-        elif loc is not None:
+        else:
             # First, validate that the location is valid for a robot
             if isinstance(loc, str):
                 loc = self.get_entity_by_name(loc)
