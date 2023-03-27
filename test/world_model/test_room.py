@@ -4,6 +4,7 @@
 Tests for room creation in pyrobosim.
 """
 
+import pytest
 from pyrobosim.core import Room, World
 
 
@@ -18,7 +19,7 @@ class TestRoom:
 
         assert isinstance(result, Room)
         assert world.num_rooms == 1
-        assert world.rooms[0].name == "room_0"
+        assert world.rooms[0].name == "room0"
 
     def test_add_room_to_world_from_args(self):
         """Test adding a room from a list of named keyword arguments."""
@@ -34,11 +35,11 @@ class TestRoom:
         assert world.rooms[0].viz_color == color
 
     def test_add_room_to_world_empty_geometry(self):
-        """Test adding a room with an empty footprint. Should fail."""
+        """Test adding a room with an empty footprint. Should raise an exception."""
         world = World()
 
-        result = world.add_room(name="test_room")
-        assert result is None
+        with pytest.raises(Exception):
+            result = world.add_room(name="test_room")
 
     def test_add_room_to_world_in_collision(self):
         """Test adding a room in collision with another room."""

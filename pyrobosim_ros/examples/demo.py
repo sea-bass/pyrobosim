@@ -57,10 +57,16 @@ def create_world():
     )
 
     # Add locations
-    table = world.add_location("table", "kitchen", Pose(x=0.85, y=-0.5, yaw=-np.pi / 2))
-    desk = world.add_location("desk", "bedroom", Pose(x=3.15, y=3.65, yaw=0))
+    table = world.add_location(
+        category="table", parent="kitchen", pose=Pose(x=0.85, y=-0.5, yaw=-np.pi / 2.0)
+    )
+    desk = world.add_location(
+        category="desk", parent="bedroom", pose=Pose(x=3.15, y=3.65, yaw=0.0)
+    )
     counter = world.add_location(
-        "counter", "bathroom", Pose(x=-2.45, y=2.5, yaw=np.pi / 2 + np.pi / 16)
+        category="counter",
+        parent="bathroom",
+        pose=Pose(x=-2.45, y=2.5, yaw=np.pi / 2.0 + np.pi / 16.0),
     )
 
     # Add objects

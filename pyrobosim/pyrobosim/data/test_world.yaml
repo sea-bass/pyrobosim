@@ -119,23 +119,23 @@ hallways:
 # # LOCATIONS: Can contain objects
 locations:
   - name: table0
-    type: table
-    room: kitchen
+    category: table
+    parent: kitchen
     pose: [0.85, -0.5, 0.0, -1.57]
 
   - name: my_desk
-    type: desk
-    room: bedroom
+    category: desk
+    parent: bedroom
     pose: [3.15, 3.65, 0.0, 0.0]
 
   - name: counter0
-    type: counter
-    room: bathroom
+    category: counter
+    parent: bathroom
     pose: [-2.45, 2.5, 0.0, 1.767]
 
   - name: trash
-    type: trash_can
-    room: kitchen
+    category: trash_can
+    parent: kitchen
     pose: [0.9, 1.1, 0.0, 1.57]
 
 

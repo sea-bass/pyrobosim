@@ -105,16 +105,16 @@ hallways:
 
 # LOCATIONS: Can contain objects
 locations:
-  - type: table
-    room: kitchen
+  - category: table
+    parent: kitchen
     pose: [0.85, -0.5, 0.0, -1.57]
 
-  - type: desk
-    room: bedroom
+  - category: desk
+    parent: bedroom
     pose: [3.15, 3.65, 0.0, 0.0]
 
-  - type: counter
-    room: bathroom
+  - category: counter
+    parent: bathroom
     pose: [-2.45, 2.5, 0.0, 1.767]
 
 

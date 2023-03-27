@@ -69,10 +69,7 @@ class WorldYamlLoader:
 
     def add_rooms(self):
         """Add rooms to the world."""
-        if "rooms" not in self.data:
-            return
-
-        for room_data in self.data["rooms"]:
+        for room_data in self.data.get("rooms", []):
             # TODO: Find a way to parse poses as YAML.
             if "nav_poses" in room_data:
                 room_data["nav_poses"] = [
@@ -83,23 +80,16 @@ class WorldYamlLoader:
 
     def add_hallways(self):
         """Add hallways connecting rooms to the world."""
-        if "hallways" not in self.data:
-            return
-
-        for hall_data in self.data["hallways"]:
+        for hall_data in self.data.get("hallways", []):
             self.world.add_hallway(**hall_data)
 
     def add_locations(self):
         """Add locations for object spawning to the world."""
-        if "locations" not in self.data:
-            return
+        for loc_data in self.data.get("locations", []):
+            # TODO: Find a way to parse poses as YAML.
+            loc_data["pose"] = Pose.from_list(loc_data["pose"])
 
-        for loc in self.data["locations"]:
-            category = loc["type"]
-            room = loc["room"]
-            pose = Pose.from_list(loc["pose"])
-            name = loc.get("name", None)
-            self.world.add_location(category, room, pose, name=name)
+            self.world.add_location(**loc_data)
 
     def add_objects(self):
         """Add objects to the world."""

@@ -57,11 +57,17 @@ class TestGetEntities:
 
         # Add locations
         table = world.add_location(
-            "table", "kitchen", Pose(x=0.85, y=-0.5, z=0, yaw=-np.pi / 2)
+            category="table",
+            parent="kitchen",
+            pose=Pose(x=0.85, y=-0.5, z=0.0, yaw=-np.pi / 2.0),
         )
-        desk = world.add_location("desk", "bedroom", Pose(x=3.15, y=3.65, z=0.0))
+        desk = world.add_location(
+            category="desk", parent="bedroom", pose=Pose(x=3.15, y=3.65, z=0.0)
+        )
         counter = world.add_location(
-            "counter", "bathroom", Pose(x=-2.45, y=2.5, z=0, yaw=np.pi / 2 + np.pi / 16)
+            category="counter",
+            parent="bathroom",
+            pose=Pose(x=-2.45, y=2.5, z=0.0, yaw=np.pi / 2.0 + np.pi / 16.0),
         )
 
         # Add objects
@@ -115,6 +121,9 @@ class TestGetEntities:
 
     def test_valid_spawn(self):
         """Checks for existence of valid object spawn."""
+        print(self.world.locations)
+        counter0 = self.world.get_entity_by_name("counter0")
+        print(counter0.children)
         result = self.world.get_entity_by_name("counter0_left")
         assert isinstance(result, ObjectSpawn) and result.name == "counter0_left"
 
@@ -130,7 +139,10 @@ class TestGetEntities:
         """
         loc_name = "desk42"
         new_desk = self.world.add_location(
-            "desk", "kitchen", Pose(x=1.0, y=1.1, yaw=-np.pi / 2), name=loc_name
+            category="desk",
+            parent="kitchen",
+            pose=Pose(x=1.0, y=1.1, yaw=-np.pi / 2.0),
+            name=loc_name,
         )
         assert isinstance(new_desk, Location)
         self.world.remove_location(loc_name)

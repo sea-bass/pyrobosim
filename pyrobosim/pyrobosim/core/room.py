@@ -28,8 +28,8 @@ class Room:
 
         :param name: Room name.
         :type name: str, optional
-        :param footprint: Point list or Shapely polygon describing the room 2D footprint.
-        :type footprint: :class:`shapely.geometry.Polygon`/list[:class:`pyrobosim.utils.pose.Pose`], optional
+        :param footprint: Point list or Shapely polygon describing the room 2D footprint (required).
+        :type footprint: :class:`shapely.geometry.Polygon`/list[:class:`pyrobosim.utils.pose.Pose`]
         :param color: Visualization color as an (R, G, B) tuple in the range (0.0, 1.0)
         :type color: (float, float, float), optional
         :param wall_width: Width of room walls, in meters.
@@ -55,7 +55,8 @@ class Room:
         else:
             self.polygon, _ = polygon_and_height_from_footprint(footprint)
         if self.polygon.is_empty:
-            return
+            raise Exception("Room footprint cannot be empty.")
+
         self.centroid = list(self.polygon.centroid.coords)[0]
         self.update_collision_polygons()
         self.update_visualization_polygon()

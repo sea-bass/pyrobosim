@@ -33,13 +33,13 @@ class Hallway:
             - ``"angle"`` : Directly specifies an angle leaving the centroid of the start room.
             - ``"points"`` : Specify an explicit list of points defining the hallway.
 
-        :param room_start: Room object for the start of the hallway.
+        :param room_start: Room object for the start of the hallway (required).
         :type room_start: :class:`pyrobosim.core.room.Room`
-        :param room_end: Room object for the end of the hallway.
+        :param room_end: Room object for the end of the hallway (required).
         :type room_end: :class:`pyrobosim.core.room.Room`
-        :param width: Width of the hallway, in meters
+        :param width: Width of the hallway, in meters (required).
         :type width: float
-        :param conn_method: Connection method (see above)
+        :param conn_method: Connection method (see description above).
         :type conn_method: str, optional
         :param offset: Perpendicular offset from centroid of start point
             (valid if using ``"auto"`` or ``"angle"`` connection methods)

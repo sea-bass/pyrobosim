@@ -32,26 +32,37 @@ class Location:
         """
         cls.metadata = EntityMetadata(filename)
 
-    def __init__(self, category, pose, name=None, parent=None):
+    def __init__(self, name=None, category=None, pose=None, parent=None, color=None):
         """
         Creates a location instance.
 
-        :param category: Location category (e.g., ``"table"``).
-        :type category: str
-        :param pose: Pose of the location.
-        :type pose: :class:`pyrobosim.utils.pose.Pose`
         :param name: Name of the location.
         :type name: str, optional
+        :param category: Location category (e.g., ``"table"``).
+        :type category: str
+        :param pose: Pose of the location (required).
+        :type pose: :class:`pyrobosim.utils.pose.Pose`
         :param parent: Parent of the location (typically a :class:`pyrobosim.core.room.Room`)
         :type parent: Entity
+        :param color: Visualization color as an (R, G, B) tuple in the range (0.0, 1.0).
+            If using a category with a defined color, this parameter overrides the category color.
+        :type color: (float, float, float), optional
         """
+        # Validate input
+        if parent is None:
+            raise Exception("Location parent must be specified.")
+        if pose is None:
+            raise Exception("Location pose must be specified.")
+
         # Extract the model information from the model list
         self.name = name
         self.category = category
         self.parent = parent
 
         self.metadata = Location.metadata.get(self.category)
-        if "color" in self.metadata:
+        if color is not None:
+            self.viz_color = color
+        elif "color" in self.metadata:
             self.viz_color = self.metadata["color"]
 
         self.set_pose(pose)
@@ -90,7 +101,7 @@ class Location:
         Sets the pose of a location, accounting for its navigation poses and object spawns.
         Use this instead of directly assigning the ``pose`` attribute.
 
-        :param pose: New pose for the object.
+        :param pose: New pose for the location.
         :type pose: :class:`pyrobosim.utils.pose.Pose`
         """
         # Update the actual pose

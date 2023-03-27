@@ -71,16 +71,16 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
 
    # Locations
    locations:
-     - name: <loc_name> # If not specified, will be automatic
-       type: <loc_category> # From location YAML file
-       room: <room_name>
-       pose: [<x>, <y>, <z>, <yaw>] # If not specified, will sample
+     - name: <loc_name>  # If not specified, will be automatic
+       category: <loc_category>  # From location YAML file
+       parent: <room_name>
+       pose: [<x>, <y>, <z>, <yaw>]  # If not specified, will sample
      - ...
      - ...
 
    # Objects
    objects:
-     - name: <obj_name> # If not specified, will be automatic
-       type: <obj_category> # From object YAML file
+     - name: <obj_name>  # If not specified, will be automatic
+       type: <obj_category>  # From object YAML file
        location: <loc_name>
-       pose: [<x>, <y>, <z>, <yaw>] # If not specified, will sample
+       pose: [<x>, <y>, <z>, <yaw>]  # If not specified, will sample

@@ -116,7 +116,7 @@ class World:
         Adds a room to the world.
 
         If the room does not have a specified name, it will be given an automatic
-        name of the form ``"room_0"``, ``"room_1"``, etc.
+        name of the form ``"room0"``, ``"room1"``, etc.
 
         If the room has an empty footprint or would cause a collision with another entity in the world,
         it will not be added to the world model.
@@ -138,7 +138,7 @@ class World:
 
         # If the room name is empty, automatically name it.
         if room.name is None:
-            room.name = f"room_{self.num_rooms}"
+            room.name = f"room{self.num_rooms}"
 
         # If the room geometry is empty, do not allow it
         if room.polygon.is_empty:
@@ -212,8 +212,8 @@ class World:
 
         :param \*\*kwargs: Keyword arguments describing the hallway.
 
-            You can use ``hallway=Hallway(...)`` to directly pass in a :class:`pyrobosim.core.room.Room` object,
-            or alternatively use the same keyword arguments you would use to create a Room object.
+            You can use ``hallway=Hallway(...)`` to directly pass in a :class:`pyrobosim.core.hallway.Hallway`
+            object, or alternatively use the same keyword arguments you would use to create a Hallway object.
 
             You can also pass in the room names as the ``room_start`` and ``room_end`` arguments,
             and they will be resolved to actual room objects, if they exist in the world.
@@ -291,39 +291,48 @@ class World:
             self.update_bounds(entity=hallway, remove=True)
         return True
 
-    def add_location(self, category, room, pose, name=None):
+    def add_location(self, **kwargs):
         """
-        Adds a location at the specified room.
+        Adds a location at the specified parent entity, usually a room.
 
         If the location does not have a specified name, it will be given an
         automatic name using its category, e.g., ``"table0"``.
 
-        :param category: Location category (e.g., ``"table"``).
-        :type category: str
-        :param room: Room instance or name.
-        :type room: :class:`pyrobosim.core.room.Room`/str
-        :param pose: Pose of the location.
-        :type pose: :class:`pyrobosim.utils.pose.Pose`
-        :param name: Name of the location.
-        :type name: str, optional
+        :param \*\*kwargs: Keyword arguments describing the location.
+
+            You can use ``location=Location(...)`` to directly pass in a :class:`pyrobosim.core.location.Location`
+            object, or alternatively use the same keyword arguments you would use to create a Location object.
+
+            You can also pass in the room name as the ``parent`` argument, and it will be resolved to an actual room object, if it exists in the world.
+
         :return: Location object if successfully created, else None.
         :rtype: :class:`pyrobosim.core.locations.Location`
         """
-        # Parse inputs
-        if isinstance(room, str):
-            room = self.get_room_by_name(room)
+        # If it's a location object, get it from the "location" named argument.
+        # Else, create a location directly from the specified arguments.
+        if "location" in kwargs:
+            loc = kwargs["location"]
+        else:
+            if isinstance(kwargs["parent"], str):
+                kwargs["parent"] = self.get_room_by_name(kwargs["parent"])
+
+            loc = Location(**kwargs)
+
+        # If the category name is empty, use "location" as the base name.
+        category = loc.category
+        if category is None:
+            category = "location"
+        # If the location name is empty, automatically name it.
         if category not in self.location_instance_counts:
             self.location_instance_counts[category] = 0
-        if name is None:
-            name = f"{category}{self.location_instance_counts[category]}"
-
-        # Create the location
-        loc = Location(category, parent=room, pose=pose, name=name)
+        if loc.name is None:
+            loc.name = f"{category}{self.location_instance_counts[category]}"
+            loc.create_spawn_locations()
 
         # Check that the location fits within the room and is not in collision with
         # other locations already in the room. Else, warn and do not add it.
-        is_valid_pose = loc.polygon.within(room.polygon)
-        for other_loc in room.locations:
+        is_valid_pose = loc.polygon.within(loc.parent.polygon)
+        for other_loc in loc.parent.locations:
             is_valid_pose = is_valid_pose and not loc.polygon.intersects(
                 other_loc.polygon
             )
@@ -333,10 +342,10 @@ class World:
 
         # Do all the necessary bookkeeping
         loc.update_collision_polygon(self.inflation_radius)
-        room.locations.append(loc)
-        room.update_collision_polygons(self.inflation_radius)
+        loc.parent.locations.append(loc)
+        loc.parent.update_collision_polygons(self.inflation_radius)
         self.locations.append(loc)
-        self.location_instance_counts[category] += 1
+        self.location_instance_counts[loc.category] += 1
         self.num_locations += 1
         self.name_to_entity[loc.name] = loc
         for spawn in loc.children:

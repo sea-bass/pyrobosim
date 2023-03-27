@@ -79,7 +79,9 @@ class TestWorldModeling:
     def test_create_location():
         """Tests the creation of locations"""
         table = TestWorldModeling.world.add_location(
-            "table", "kitchen", Pose(x=0.85, y=-0.5, z=0.0, yaw=-np.pi / 2)
+            category="table",
+            parent="kitchen",
+            pose=Pose(x=0.85, y=-0.5, z=0.0, yaw=-np.pi / 2.0),
         )
 
         assert len(TestWorldModeling.world.locations) == 1
@@ -88,8 +90,8 @@ class TestWorldModeling:
         )  # automatic naming check
 
         desk = TestWorldModeling.world.add_location(
-            "desk",
-            "bedroom",
+            category="desk",
+            parent="bedroom",
             name="study_desk",
             pose=Pose(x=3.15, y=3.65, z=0.0, yaw=0.0),
         )

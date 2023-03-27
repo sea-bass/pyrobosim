@@ -38,11 +38,15 @@ def create_test_world(add_alt_desk=True):
     )
 
     # Add locations and objects
-    table0 = world.add_location("table", "home", Pose(x=0.0, y=0.5, z=0, yaw=np.pi / 2))
-    desk0 = world.add_location("desk", "storage", Pose(x=2.5, y=-1.5, z=0.0, yaw=0.0))
+    table0 = world.add_location(
+        category="table", parent="home", pose=Pose(x=0.0, y=0.5, z=0.0, yaw=np.pi / 2.0)
+    )
+    desk0 = world.add_location(
+        category="desk", parent="storage", pose=Pose(x=2.5, y=-1.5, z=0.0, yaw=0.0)
+    )
     if add_alt_desk:
         desk1 = world.add_location(
-            "desk", "storage", Pose(x=4.5, y=1.5, z=0.0, yaw=0.0)
+            category="desk", parent="storage", pose=Pose(x=4.5, y=1.5, z=0.0, yaw=0.0)
         )
     world.add_object("banana", table0)
     world.add_object("water", desk0, pose=Pose(x=2.375, y=-1.375, z=0, yaw=np.pi / 4))
