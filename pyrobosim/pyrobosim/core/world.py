@@ -284,10 +284,10 @@ class World:
         # Remove the hallways from the world and relevant rooms.
         self.hallways.remove(hallway)
         self.name_to_entity.pop(hallway.name)
-        for r in [hallway.room_start, hallway.room_end]:
-            r.hallways.remove(hallway)
-            r.update_collision_polygons()
-            r.update_visualization_polygon()
+        for room in [hallway.room_start, hallway.room_end]:
+            room.hallways.remove(hallway)
+            room.update_collision_polygons()
+            room.update_visualization_polygon()
             self.update_bounds(entity=hallway, remove=True)
         return True
 

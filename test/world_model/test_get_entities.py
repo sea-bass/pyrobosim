@@ -98,7 +98,7 @@ class TestGetEntities:
         room_name = "test_room"
         coords = [(9, 9), (11, 9), (11, 11), (9, 11)]
         result = self.world.add_room(name=room_name, footprint=coords, color=[0, 0, 0])
-        assert result == True
+        assert result is not None
         self.world.remove_room(room_name)
         result = self.world.get_room_by_name(room_name)
         assert result is None
