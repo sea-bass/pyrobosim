@@ -111,7 +111,7 @@ class World:
     ##########################
     # World Building Methods #
     ##########################
-    def add_room(self, **kwargs):
+    def add_room(self, **room_config):
         """
         Adds a room to the world.
 
@@ -121,7 +121,7 @@ class World:
         If the room has an empty footprint or would cause a collision with another entity in the world,
         it will not be added to the world model.
 
-        :param \*\*kwargs: Keyword arguments describing the room.
+        :param \*\*room_config: Keyword arguments describing the room.
 
             You can use ``room=Room(...)`` to directly pass in a :class:`pyrobosim.core.room.Room` object,
             or alternatively use the same keyword arguments you would use to create a Room object.
@@ -131,10 +131,10 @@ class World:
 
         # If it's a room object, get it from the "room" named argument.
         # Else, create a room directly from the specified arguments.
-        if "room" in kwargs:
-            room = kwargs["room"]
+        if "room" in room_config:
+            room = room_config["room"]
         else:
-            room = Room(**kwargs)
+            room = Room(**room_config)
 
         # If the room name is empty, automatically name it.
         if room.name is None:
@@ -206,11 +206,11 @@ class World:
             self.search_graph.remove(room.graph_nodes)
         return True
 
-    def add_hallway(self, **kwargs):
+    def add_hallway(self, **hallway_config):
         """
         Adds a hallway from with specified parameters related to the :class:`pyrobosim.core.hallway.Hallway` class.
 
-        :param \*\*kwargs: Keyword arguments describing the hallway.
+        :param \*\*hallway_config: Keyword arguments describing the hallway.
 
             You can use ``hallway=Hallway(...)`` to directly pass in a :class:`pyrobosim.core.hallway.Hallway`
             object, or alternatively use the same keyword arguments you would use to create a Hallway object.
@@ -223,15 +223,19 @@ class World:
         """
         # If it's a hallway object, get it from the "hallway" named argument.
         # Else, create a hallway directly from the specified arguments.
-        if "hallway" in kwargs:
-            hallway = kwargs["hallway"]
+        if "hallway" in hallway_config:
+            hallway = hallway_config["hallway"]
         else:
-            if isinstance(kwargs["room_start"], str):
-                kwargs["room_start"] = self.get_room_by_name(kwargs["room_start"])
-            if isinstance(kwargs["room_end"], str):
-                kwargs["room_end"] = self.get_room_by_name(kwargs["room_end"])
+            if isinstance(hallway_config["room_start"], str):
+                hallway_config["room_start"] = self.get_room_by_name(
+                    hallway_config["room_start"]
+                )
+            if isinstance(hallway_config["room_end"], str):
+                hallway_config["room_end"] = self.get_room_by_name(
+                    hallway_config["room_end"]
+                )
 
-            hallway = Hallway(**kwargs)
+            hallway = Hallway(**hallway_config)
 
         # Check if the hallway collides with any other rooms or hallways
         is_valid_pose = True
@@ -291,14 +295,14 @@ class World:
             self.update_bounds(entity=hallway, remove=True)
         return True
 
-    def add_location(self, **kwargs):
+    def add_location(self, **location_config):
         """
         Adds a location at the specified parent entity, usually a room.
 
         If the location does not have a specified name, it will be given an
         automatic name using its category, e.g., ``"table0"``.
 
-        :param \*\*kwargs: Keyword arguments describing the location.
+        :param \*\*location_config: Keyword arguments describing the location.
 
             You can use ``location=Location(...)`` to directly pass in a :class:`pyrobosim.core.location.Location`
             object, or alternatively use the same keyword arguments you would use to create a Location object.
@@ -310,13 +314,15 @@ class World:
         """
         # If it's a location object, get it from the "location" named argument.
         # Else, create a location directly from the specified arguments.
-        if "location" in kwargs:
-            loc = kwargs["location"]
+        if "location" in location_config:
+            loc = location_config["location"]
         else:
-            if isinstance(kwargs["parent"], str):
-                kwargs["parent"] = self.get_room_by_name(kwargs["parent"])
+            if isinstance(location_config["parent"], str):
+                location_config["parent"] = self.get_room_by_name(
+                    location_config["parent"]
+                )
 
-            loc = Location(**kwargs)
+            loc = Location(**location_config)
 
         # If the category name is empty, use "location" as the base name.
         category = loc.category
@@ -442,7 +448,7 @@ class World:
             return True
         return False
 
-    def add_object(self, **kwargs):
+    def add_object(self, **object_config):
         """
         Adds an object to a specific location.
 
@@ -451,7 +457,7 @@ class World:
 
         If the location contains multiple object spawns, one will be selected at random.
 
-        :param \*\*kwargs: Keyword arguments describing the object.
+        :param \*\*object_config: Keyword arguments describing the object.
 
             You can use ``object=Object(...)`` to directly pass in a :class:`pyrobosim.core.objects.Object`
             object, or alternatively use the same keyword arguments you would use to create an Object instance.
@@ -463,10 +469,10 @@ class World:
         """
         # If it's on Object instance, get it from the "location" named argument.
         # Else, create a location directly from the specified arguments.
-        if "object" in kwargs:
-            obj = kwargs["object"]
+        if "object" in object_config:
+            obj = object_config["object"]
         else:
-            parent = kwargs.get("parent", None)
+            parent = object_config.get("parent", None)
             if isinstance(parent, str):
                 parent = self.get_entity_by_name(parent)
 
@@ -476,15 +482,15 @@ class World:
                 parent = np.random.choice(parent.children)
 
             if not isinstance(parent, ObjectSpawn):
-                parent_arg = kwargs.get("parent", None)
+                parent_arg = object_config.get("parent", None)
                 warnings.warn(
                     f"Parent location {parent_arg} did not resolve to a valid location for an object."
                 )
                 return None
 
-            kwargs["parent"] = parent
-            kwargs["inflation_radius"] = self.object_radius
-            obj = Object(**kwargs)
+            object_config["parent"] = parent
+            object_config["inflation_radius"] = self.object_radius
+            obj = Object(**object_config)
 
         # If the category name is empty, use "object" as the base name.
         category = obj.category
