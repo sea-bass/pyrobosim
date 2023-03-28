@@ -61,7 +61,7 @@ class TestWorldModeling:
 
         TestWorldModeling.world.add_hallway(
             room_start="kitchen",
-            room_start="bedroom",
+            room_end="bedroom",
             offset=0.5,
             conn_method="auto",
             width=0.5,
