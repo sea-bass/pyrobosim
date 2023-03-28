@@ -6,6 +6,7 @@ import warnings
 from .world_graph import WorldGraph, Node
 from ..utils.motion import Path
 from ..utils.pose import Pose
+from .a_star import AStarGraph
 from pyrobosim.navigation.planner_base import PathPlannerBase
 
 
@@ -29,7 +30,7 @@ class PRMPlannerPolygon:
         self.max_connection_dist = 2.0
         self.max_nodes = 100
         self.world = None
-
+        self.path_finder = AStarGraph()
         for key, value in planner_config.items():
             setattr(self, key, value)
         self.reset()
@@ -47,8 +48,22 @@ class PRMPlannerPolygon:
             if not n_sample:
                 warnings.warn(f"Could not sample more than {i} nodes")
                 break
-            self.graph.add_node(n_sample)
+            self.graph.add_node(Node(pose=n_sample))
         self.sampling_time = time.time() - t_start
+
+        for node in self.graph.nodes:
+            self.connect_neighbors(node)
+
+    def connect_neighbors(self, node):
+        # Connect each node to all nodes within connection distance.
+        for other in self.graph.nodes:
+            if node == other:
+                continue
+            dist = node.pose.get_linear_distance(other.pose, ignore_z=True)
+            if dist <= self.max_connection_dist and self.is_connectable(
+                node.pose, other.pose
+            ):
+                self.graph.add_edge(node, other)
 
     def plan(self, start, goal):
         """
@@ -71,9 +86,15 @@ class PRMPlannerPolygon:
             goal = Node(goal, parent=None)
         self.graph.add_node(goal)
 
+        self.connect_neighbors(start)
+        self.connect_neighbors(goal)
+
         # Find a path from start to goal nodes
         t_start = time.time()
-        self.latest_path = Path()  # self.graph.find_path(start, goal)
+        waypoints = self.path_finder.astar(
+            start, goal
+        )  # self.graph.find_path(start, goal)
+        self.latest_path = Path(poses=[waypoint.pose for waypoint in waypoints])
         self.latest_path.fill_yaws()
         self.planning_time = time.time() - t_start
         return self.latest_path
@@ -86,6 +107,9 @@ class PRMPlannerPolygon:
         :rtype: :class:`pyrobosim.utils.pose.Pose`
         """
         return self.world.sample_free_robot_pose_uniform()
+
+    def is_connectable(self, poseA, poseB):
+        return self.world.is_connectable(poseA, poseB)
 
 
 class PRMPlanner(PathPlannerBase):
