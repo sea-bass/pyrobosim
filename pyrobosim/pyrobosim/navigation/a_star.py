@@ -125,9 +125,8 @@ class AStarGraph(AStar):
     the A* shortest path algorithm for our graph representation.
     """
 
-    def __init__(self, config):
+    def __init__(self):
         super().__init__()
-        self.config = config
 
     def heuristic_cost_estimate(self, n0, n1):
         """
