@@ -148,12 +148,11 @@ class World:
         # Check if the room collides with any other rooms or hallways
         is_valid_pose = True
         for other_loc in self.rooms + self.hallways:
-            is_valid_pose = (
-                is_valid_pose
-                and not room.external_collision_polygon.intersects(
-                    other_loc.external_collision_polygon
-                )
-            )
+            if room.external_collision_polygon.intersects(
+                other_loc.external_collision_polygon
+            ):
+                is_valid_pose = False
+                break
         if not is_valid_pose:
             warnings.warn(f"Room {room.name} in collision. Cannot add to world.")
             return None
@@ -242,12 +241,11 @@ class World:
         for other_loc in self.rooms + self.hallways:
             if (other_loc == hallway.room_start) or (other_loc == hallway.room_end):
                 continue
-            is_valid_pose = (
-                is_valid_pose
-                and not hallway.external_collision_polygon.intersects(
-                    other_loc.external_collision_polygon
-                )
-            )
+            if hallway.external_collision_polygon.intersects(
+                other_loc.external_collision_polygon
+            ):
+                is_valid_pose = False
+                break
         if not is_valid_pose:
             warnings.warn(f"Hallway {hallway.name} in collision. Cannot add to world.")
             return None
@@ -338,10 +336,11 @@ class World:
         # Check that the location fits within the room and is not in collision with
         # other locations already in the room. Else, warn and do not add it.
         is_valid_pose = loc.polygon.within(loc.parent.polygon)
-        for other_loc in loc.parent.locations:
-            is_valid_pose = is_valid_pose and not loc.polygon.intersects(
-                other_loc.polygon
-            )
+        if is_valid_pose:
+            for other_loc in loc.parent.locations:
+                if loc.polygon.intersects(other_loc.polygon):
+                    is_valid_pose = False
+                    break
         if not is_valid_pose:
             warnings.warn(f"Location {loc.name} in collision. Cannot add to world.")
             return None
