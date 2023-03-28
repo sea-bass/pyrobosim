@@ -85,8 +85,8 @@ class WorldGraph:
     def update_neighbours(self):
         """Updates the neighbours of the nodes. For use after an update to the graph."""
 
-        for i in range(len(self.nodes)):
-            self.nodes[i].neighbors = self.edges[self.nodes[i]]
+        for node in self.nodes:
+            node.neighbors = self.edges[node]
 
     def nearest(self, pose):
         """
