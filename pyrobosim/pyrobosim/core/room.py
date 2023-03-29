@@ -16,8 +16,8 @@ class Room:
 
     def __init__(
         self,
-        footprint,
         name=None,
+        footprint=[],
         color=[0.4, 0.4, 0.4],
         wall_width=0.2,
         nav_poses=None,
@@ -26,10 +26,10 @@ class Room:
         """
         Creates a Room instance.
 
-        :param footprint: Point list or Shapely polygon describing the room 2D footprint.
-        :type footprint: :class:`shapely.geometry.Polygon`/list[:class:`pyrobosim.utils.pose.Pose`]
-        :param name: Room name
+        :param name: Room name.
         :type name: str, optional
+        :param footprint: Point list or Shapely polygon describing the room 2D footprint (required).
+        :type footprint: :class:`shapely.geometry.Polygon`/list[:class:`pyrobosim.utils.pose.Pose`]
         :param color: Visualization color as an (R, G, B) tuple in the range (0.0, 1.0)
         :type color: (float, float, float), optional
         :param wall_width: Width of room walls, in meters.
@@ -49,10 +49,14 @@ class Room:
         self.graph_nodes = []
 
         # Create the room polygon
+        self.height = height
         if isinstance(footprint, list):
             self.polygon = Polygon(footprint)
         else:
             self.polygon, _ = polygon_and_height_from_footprint(footprint)
+        if self.polygon.is_empty:
+            raise Exception("Room footprint cannot be empty.")
+
         self.centroid = list(self.polygon.centroid.coords)[0]
         self.update_collision_polygons()
         self.update_visualization_polygon()
@@ -62,7 +66,6 @@ class Room:
             self.nav_poses = nav_poses
         else:
             self.nav_poses = [Pose.from_list(self.centroid)]
-        self.height = height
 
     def update_collision_polygons(self, inflation_radius=0):
         """

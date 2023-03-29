@@ -81,20 +81,20 @@ rooms:
 
 # HALLWAYS: Connect rooms
 hallways:
-  - from: kitchen
-    to: bathroom
+  - room_start: kitchen
+    room_end: bathroom
     width: 0.7
     conn_method: auto
 
-  - from: bathroom
-    to: bedroom
+  - room_start: bathroom
+    room_end: bedroom
     width: 0.5
     conn_method: angle
     conn_angle: 0.0
     offset: 0.8
 
-  - from: kitchen
-    to: bedroom
+  - room_start: kitchen
+    room_end: bedroom
     width: 0.6
     conn_method: points
     conn_points:
@@ -105,40 +105,40 @@ hallways:
 
 # LOCATIONS: Can contain objects
 locations:
-  - type: table
-    room: kitchen
+  - category: table
+    parent: kitchen
     pose: [0.85, -0.5, 0.0, -1.57]
 
-  - type: desk
-    room: bedroom
+  - category: desk
+    parent: bedroom
     pose: [3.15, 3.65, 0.0, 0.0]
 
-  - type: counter
-    room: bathroom
+  - category: counter
+    parent: bathroom
     pose: [-2.45, 2.5, 0.0, 1.767]
 
 
 # OBJECTS: Can be picked, placed, and move by robot
 objects:
-  - type: banana
-    location: table0
+  - category: banana
+    parent: table0
     pose: [1.0, -0.5, 0.0, 0.707]
 
-  - type: apple
-    location: desk0
+  - category: apple
+    parent: desk0
     pose: [3.2, 3.5, 0.0, 0.0]
 
-  - type: apple
-    location: table0
+  - category: apple
+    parent: table0
 
-  - type: apple
-    location: table0
+  - category: apple
+    parent: table0
 
-  - type: water
-    location: counter0
+  - category: water
+    parent: counter0
 
-  - type: banana
-    location: counter0
+  - category: banana
+    parent: counter0
 
-  - type: water
-    location: desk0
+  - category: water
+    parent: desk0

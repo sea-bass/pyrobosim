@@ -27,31 +27,29 @@ class TestGetEntities:
         # Add rooms
         r1coords = [(-1, -1), (1.5, -1), (1.5, 1.5), (0.5, 1.5)]
         world.add_room(
-            Room(
-                r1coords,
-                name="kitchen",
-                color=[1, 0, 0],
-                nav_poses=[Pose(x=0.75, y=0.75, z=0.0, q=[1.0, 0.0, 0.0, 0.0])],
-            )
+            name="kitchen",
+            footprint=r1coords,
+            color=[1, 0, 0],
+            nav_poses=[Pose(x=0.75, y=0.75, z=0.0, q=[1.0, 0.0, 0.0, 0.0])],
         )
         r2coords = [(1.75, 2.5), (3.5, 2.5), (3.5, 4), (1.75, 4)]
-        world.add_room(Room(r2coords, name="bedroom", color=[0, 0.6, 0]))
+        world.add_room(name="bedroom", footprint=r2coords, color=[0, 0.6, 0])
         r3coords = [(-1, 1), (-1, 3.5), (-3.0, 3.5), (-2.5, 1)]
-        world.add_room(Room(r3coords, name="bathroom", color=[0, 0, 0.6]))
+        world.add_room(name="bathroom", footprint=r3coords, color=[0, 0, 0.6])
 
         # Add hallways between the rooms
-        world.add_hallway("kitchen", "bathroom", width=0.7)
+        world.add_hallway(room_start="kitchen", room_end="bathroom", width=0.7)
         world.add_hallway(
-            "bathroom",
-            "bedroom",
+            room_start="bathroom",
+            room_end="bedroom",
             width=0.5,
             conn_method="angle",
             conn_angle=0,
             offset=0.8,
         )
         world.add_hallway(
-            "kitchen",
-            "bedroom",
+            room_start="kitchen",
+            room_end="bedroom",
             width=0.6,
             conn_method="points",
             conn_points=[(1.0, 0.5), (2.5, 0.5), (2.5, 3.0)],
@@ -59,23 +57,35 @@ class TestGetEntities:
 
         # Add locations
         table = world.add_location(
-            "table", "kitchen", Pose(x=0.85, y=-0.5, z=0, yaw=-np.pi / 2)
+            category="table",
+            parent="kitchen",
+            pose=Pose(x=0.85, y=-0.5, z=0.0, yaw=-np.pi / 2.0),
         )
-        desk = world.add_location("desk", "bedroom", Pose(x=3.15, y=3.65, z=0.0))
+        desk = world.add_location(
+            category="desk", parent="bedroom", pose=Pose(x=3.15, y=3.65, z=0.0)
+        )
         counter = world.add_location(
-            "counter", "bathroom", Pose(x=-2.45, y=2.5, z=0, yaw=np.pi / 2 + np.pi / 16)
+            category="counter",
+            parent="bathroom",
+            pose=Pose(x=-2.45, y=2.5, z=0.0, yaw=np.pi / 2.0 + np.pi / 16.0),
         )
 
         # Add objects
-        world.add_object("banana", table, pose=Pose(x=1.0, y=-0.5, z=0, yaw=np.pi / 4))
         world.add_object(
-            "apple", desk, pose=Pose(x=3.2, y=3.5, z=0.0, q=[1.0, 0.0, 0.0, 0.0])
+            category="banana",
+            parent=table,
+            pose=Pose(x=1.0, y=-0.5, z=0.0, yaw=np.pi / 4.0),
         )
-        world.add_object("apple", table)
-        world.add_object("apple", table)
-        world.add_object("water", counter)
-        world.add_object("banana", counter)
-        world.add_object("water", desk)
+        world.add_object(
+            category="apple",
+            parent=desk,
+            pose=Pose(x=3.2, y=3.5, z=0.0, q=[1.0, 0.0, 0.0, 0.0]),
+        )
+        world.add_object(category="apple", parent=table)
+        world.add_object(category="apple", parent=table)
+        world.add_object(category="water", parent=counter)
+        world.add_object(category="banana", parent=counter)
+        world.add_object(category="water", parent=desk)
 
         # Add a robot
         robot = Robot(radius=0.1, name="robby")
@@ -99,8 +109,8 @@ class TestGetEntities:
         """Checks adding a room and removing it cleanly."""
         room_name = "test_room"
         coords = [(9, 9), (11, 9), (11, 11), (9, 11)]
-        result = self.world.add_room(Room(coords, name=room_name, color=[0, 0, 0]))
-        assert result == True
+        result = self.world.add_room(name=room_name, footprint=coords, color=[0, 0, 0])
+        assert result is not None
         self.world.remove_room(room_name)
         result = self.world.get_room_by_name(room_name)
         assert result is None
@@ -117,6 +127,9 @@ class TestGetEntities:
 
     def test_valid_spawn(self):
         """Checks for existence of valid object spawn."""
+        print(self.world.locations)
+        counter0 = self.world.get_entity_by_name("counter0")
+        print(counter0.children)
         result = self.world.get_entity_by_name("counter0_left")
         assert isinstance(result, ObjectSpawn) and result.name == "counter0_left"
 
@@ -132,7 +145,10 @@ class TestGetEntities:
         """
         loc_name = "desk42"
         new_desk = self.world.add_location(
-            "desk", "kitchen", Pose(x=1.0, y=1.1, yaw=-np.pi / 2), name=loc_name
+            category="desk",
+            parent="kitchen",
+            pose=Pose(x=1.0, y=1.1, yaw=-np.pi / 2.0),
+            name=loc_name,
         )
         assert isinstance(new_desk, Location)
         self.world.remove_location(loc_name)
@@ -165,7 +181,7 @@ class TestGetEntities:
         """Checks adding an object and removing it cleanly."""
         obj_name = "banana13"
         table = self.world.get_location_by_name("table0")
-        new_obj = self.world.add_object("banana", table, name=obj_name)
+        new_obj = self.world.add_object(category="banana", parent=table, name=obj_name)
         assert isinstance(new_obj, Object)
         self.world.remove_object(obj_name)
         result = self.world.get_object_by_name(obj_name)

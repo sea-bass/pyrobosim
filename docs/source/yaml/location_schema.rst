@@ -37,15 +37,15 @@ A simple object with a box footprint and one object spawn that inherits parent g
        type: box
        dims: [0.9, 1.2]
        height: 0.5              # 0.5 m off the ground
-  nav_poses:                    # List of navigation poses around the location origin
-    - [-0.75, 0, 0]             # (the children below will inherit the parent's poses)
-    - [0.75, 0, 0.0, 3.14]
-  locations:                    # List of locations
-    - name: "tabletop"          # The location name will be "<loc_name>_tabletop"
-      footprint:
-        type: parent            # "parent" footprint means we inherit parent's box geometry
-        padding: 0.1            # 10 cm padding relative to the parent geometry
-  color: [0.2, 0, 0]            # Dark red
+     nav_poses:                 # List of navigation poses around the location origin
+       - [-0.75, 0, 0]          # (the children below will inherit the parent's poses)
+       - [0.75, 0, 0.0, 3.14]
+     locations:                 # List of locations
+       - name: "tabletop"       # The location name will be "<loc_name>_tabletop"
+         footprint:
+           type: parent         # "parent" footprint means we inherit parent's box geometry
+           padding: 0.1         # 10 cm padding relative to the parent geometry
+     color: [0.2, 0, 0]         # Dark red
 
 A more complex object with a box footprint and two separate object spawns.
 

@@ -57,7 +57,7 @@ class PDDLStreamPlanner:
         goal_literals,
         max_attempts=1,
         verbose=False,
-        **kwargs,
+        **planner_config,
     ):
         """
         Searches for a set of actions that completes a goal specification
@@ -73,7 +73,7 @@ class PDDLStreamPlanner:
         :type max_attempts: int, optional
         :param verbose: If True, prints additional information. Defaults to False.
         :type verbose: bool, optional
-        :param \*\*kwargs: Additional keyword arguments to pass to the PDDLStream planner.
+        :param \*\*planner_config: Additional keyword arguments to pass to the PDDLStream planner.
         :return: A task plan object ready to use with ``pyrobosim``.
         :rtype: :class:`pyrobosim.planning.actions.TaskPlan`
         """
@@ -100,7 +100,10 @@ class PDDLStreamPlanner:
         for i in range(max_attempts):
             # Solve the problem using the "adaptive" PDDLStream algorithm.
             solution = solve_adaptive(
-                prob, stream_info=self.stream_info_fn(), verbose=verbose, **kwargs
+                prob,
+                stream_info=self.stream_info_fn(),
+                verbose=verbose,
+                **planner_config,
             )
 
             # If the solution is valid, no need to try again

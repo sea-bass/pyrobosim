@@ -64,10 +64,7 @@ class EntityMetadata:
         :return: Category metadata dictionary if it exists, else None.
         :rtype: dict
         """
-        if self.has_category(category):
-            return self.data[category]
-        else:
-            return None
+        return self.data.get(category, None)
 
 
 def replace_special_yaml_tokens(in_text, root_dir=None):

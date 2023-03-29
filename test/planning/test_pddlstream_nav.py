@@ -6,7 +6,7 @@ Test script for PDDLStream planning with navigation streams.
 import os
 import threading
 
-from pyrobosim.core import Robot, Room, World
+from pyrobosim.core import Robot, World
 from pyrobosim.gui import start_gui
 from pyrobosim.navigation import ConstantVelocityExecutor, RRTPlanner
 from pyrobosim.planning import PDDLStreamPlanner
@@ -27,31 +27,32 @@ def create_test_world(add_hallway=True):
 
     # Add rooms
     main_room_coords = [(-1, -1), (1, -1), (1, 1), (-1, 1)]
-    main_room = Room(main_room_coords, name="main_room", color=[1, 0, 0])
-    world.add_room(main_room)
+    world.add_room(name="main_room", footprint=main_room_coords, color=[1, 0, 0])
     unreachable_coords = [(2, -1), (4, -1), (4, 1), (2, 1)]
-    unreachable_room = Room(unreachable_coords, name="unreachable", color=[0, 0, 1])
-    world.add_room(unreachable_room)
+    world.add_room(name="unreachable", footprint=unreachable_coords, color=[0, 0, 1])
     goal_room_coords = [(2, 2), (4, 2), (4, 4), (2, 4)]
-    goal_room = Room(goal_room_coords, name="goal_room", color=[0, 0.6, 0])
-    world.add_room(goal_room)
+    world.add_room(name="goal_room", footprint=goal_room_coords, color=[0, 0.6, 0])
 
     # Add hallway, if enabled.
     if add_hallway:
         hallway_points = [(0.0, 0.0), (0.0, 5.0), (3.0, 5.0), (3.0, 3.0)]
         world.add_hallway(
-            "main_room",
-            "goal_room",
+            room_start="main_room",
+            room_end="goal_room",
             width=0.7,
             conn_method="points",
             conn_points=hallway_points,
         )
 
     # Add locations and objects
-    table0 = world.add_location("table", "unreachable", Pose(x=3.5, y=-0.25, z=0.0))
-    world.add_object("apple", table0)
-    table1 = world.add_location("table", "goal_room", Pose(x=3.5, y=2.75, z=0.0))
-    world.add_object("apple", table1)
+    table0 = world.add_location(
+        category="table", parent="unreachable", pose=Pose(x=3.5, y=-0.25, z=0.0)
+    )
+    world.add_object(category="apple", parent=table0)
+    table1 = world.add_location(
+        category="table", parent="goal_room", pose=Pose(x=3.5, y=2.75, z=0.0)
+    )
+    world.add_object(category="apple", parent=table1)
 
     # Add a robot
     robot = Robot(radius=0.1, path_executor=ConstantVelocityExecutor())

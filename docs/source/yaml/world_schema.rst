@@ -61,8 +61,8 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
 
    # Hallways (refer to Hallways API)
    hallways:
-     - from: <room1>
-       to: <room2>
+     - room_start: <room1>
+       room_end: <room2>
        width: <value>
        conn_method: <type>
        <conn_property>: <value>
@@ -71,16 +71,16 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
 
    # Locations
    locations:
-     - name: <loc_name> # If not specified, will be automatic
-       type: <loc_category> # From location YAML file
-       room: <room_name>
-       pose: [<x>, <y>, <z>, <yaw>] # If not specified, will sample
+     - name: <loc_name>  # If not specified, will be automatic
+       category: <loc_category>  # From location YAML file
+       parent: <room_name>
+       pose: [<x>, <y>, <z>, <yaw>]  # If not specified, will sample
      - ...
      - ...
 
    # Objects
    objects:
-     - name: <obj_name> # If not specified, will be automatic
-       type: <obj_category> # From object YAML file
-       location: <loc_name>
-       pose: [<x>, <y>, <z>, <yaw>] # If not specified, will sample
+     - name: <obj_name>  # If not specified, will be automatic
+       category: <obj_category>  # From object YAML file
+       parent: <loc_name>
+       pose: [<x>, <y>, <z>, <yaw>]  # If not specified, will sample

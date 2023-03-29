@@ -5,7 +5,7 @@ import os
 import pytest
 import numpy as np
 
-from pyrobosim.core import Hallway, Object, Room, World
+from pyrobosim.core import Hallway, Object, World
 from pyrobosim.utils.pose import Pose
 
 from pyrobosim.utils.general import get_data_folder
@@ -33,19 +33,21 @@ class TestWorldModeling:
 
         room1_name = "kitchen"
         room1_coords = [(-1, -1), (1.5, -1), (1.5, 1.5), (0.5, 1.5)]
-        room1 = Room(room1_coords, name=room1_name, color=[1, 0, 0])
-        TestWorldModeling.world.add_room(room1)
+        TestWorldModeling.world.add_room(
+            name=room1_name, footprint=room1_coords, color=[1, 0, 0]
+        )
 
         assert len(TestWorldModeling.world.rooms) == 1
-        assert TestWorldModeling.world.get_room_by_name(room1_name) == room1
+        assert TestWorldModeling.world.get_room_by_name(room1_name) is not None
 
         room2_name = "bedroom"
         room2_coords = [(1.75, 2.5), (3.5, 2.5), (3.5, 4), (1.75, 4)]
-        room2 = Room(room2_coords, name=room2_name, color=[1, 0, 0])
-        TestWorldModeling.world.add_room(room2)
+        TestWorldModeling.world.add_room(
+            name=room2_name, footprint=room2_coords, color=[1, 0, 0]
+        )
 
         assert len(TestWorldModeling.world.rooms) == 2
-        assert TestWorldModeling.world.get_room_by_name(room2_name) == room2
+        assert TestWorldModeling.world.get_room_by_name(room2_name) is not None
 
     @staticmethod
     @pytest.mark.dependency(
@@ -58,7 +60,11 @@ class TestWorldModeling:
         """Tests the creation of a hallway between 2 rooms"""
 
         TestWorldModeling.world.add_hallway(
-            "kitchen", "bedroom", offset=0.5, conn_method="auto", width=0.5
+            room_start="kitchen",
+            room_end="bedroom",
+            offset=0.5,
+            conn_method="auto",
+            width=0.5,
         )
         assert len(TestWorldModeling.world.hallways) == 1
 
@@ -73,7 +79,9 @@ class TestWorldModeling:
     def test_create_location():
         """Tests the creation of locations"""
         table = TestWorldModeling.world.add_location(
-            "table", "kitchen", Pose(x=0.85, y=-0.5, z=0.0, yaw=-np.pi / 2)
+            category="table",
+            parent="kitchen",
+            pose=Pose(x=0.85, y=-0.5, z=0.0, yaw=-np.pi / 2.0),
         )
 
         assert len(TestWorldModeling.world.locations) == 1
@@ -82,8 +90,8 @@ class TestWorldModeling:
         )  # automatic naming check
 
         desk = TestWorldModeling.world.add_location(
-            "desk",
-            "bedroom",
+            category="desk",
+            parent="bedroom",
             name="study_desk",
             pose=Pose(x=3.15, y=3.65, z=0.0, yaw=0.0),
         )
@@ -102,8 +110,8 @@ class TestWorldModeling:
     def test_create_object():
         """Tests adding objects to a location"""
 
-        TestWorldModeling.world.add_object("apple", "table0")
-        TestWorldModeling.world.add_object("apple", "study_desk")
+        TestWorldModeling.world.add_object(category="apple", parent="table0")
+        TestWorldModeling.world.add_object(category="apple", parent="study_desk")
         assert len(TestWorldModeling.world.objects) == 2
 
         # second apple
@@ -168,7 +176,7 @@ class TestWorldModeling:
     def test_hierarchical_cleanup():
         """Tests if an entity is automatically deleted on parent deletion"""
 
-        TestWorldModeling.world.add_object("apple", "table0")
+        TestWorldModeling.world.add_object(category="apple", parent="table0")
         loc = TestWorldModeling.world.get_location_by_name("table0")
         assert len(loc.children[0].children) == 2
         assert TestWorldModeling.world.remove_room("kitchen") is True

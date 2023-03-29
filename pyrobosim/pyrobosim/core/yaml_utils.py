@@ -6,7 +6,6 @@ import warnings
 import yaml
 
 from .robot import Robot
-from .room import Room
 from .world import World
 from ..utils.general import replace_special_yaml_tokens
 from ..utils.pose import Pose
@@ -70,78 +69,38 @@ class WorldYamlLoader:
 
     def add_rooms(self):
         """Add rooms to the world."""
-        if "rooms" not in self.data:
-            return
-
-        for room_data in self.data["rooms"]:
-            name = room_data.get("name", None)
-            color = room_data.get("color", [0.4, 0.4, 0.4])
-            wall_width = room_data.get("wall_width", 0.2)
+        for room_data in self.data.get("rooms", []):
+            # TODO: Find a way to parse poses as YAML.
             if "nav_poses" in room_data:
-                nav_poses = [Pose.from_list(p) for p in room_data["nav_poses"]]
-            else:
-                nav_poses = None
+                room_data["nav_poses"] = [
+                    Pose.from_list(p) for p in room_data["nav_poses"]
+                ]
 
-            room = Room(
-                room_data["footprint"],
-                name=name,
-                color=color,
-                wall_width=wall_width,
-                nav_poses=nav_poses,
-            )
-            self.world.add_room(room)
+            self.world.add_room(**room_data)
 
     def add_hallways(self):
         """Add hallways connecting rooms to the world."""
-        if "hallways" not in self.data:
-            return
-
-        for hall in self.data["hallways"]:
-            conn_method = hall.get("conn_method", "auto")
-            offset = hall.get("offset", 0.0)
-            conn_angle = hall.get("conn_angle", 0.0)
-            conn_points = hall.get("conn_points", [])
-            color = hall.get("color", [0.4, 0.4, 0.4])
-            wall_width = hall.get("wall_width", 0.2)
-
-            self.world.add_hallway(
-                hall["from"],
-                hall["to"],
-                hall["width"],
-                conn_method=conn_method,
-                offset=offset,
-                conn_angle=conn_angle,
-                conn_points=conn_points,
-                color=color,
-                wall_width=wall_width,
-            )
+        for hall_data in self.data.get("hallways", []):
+            self.world.add_hallway(**hall_data)
 
     def add_locations(self):
         """Add locations for object spawning to the world."""
-        if "locations" not in self.data:
-            return
+        for loc_data in self.data.get("locations", []):
+            # TODO: Find a way to parse poses as YAML.
+            loc_data["pose"] = Pose.from_list(loc_data["pose"])
 
-        for loc in self.data["locations"]:
-            category = loc["type"]
-            room = loc["room"]
-            pose = Pose.from_list(loc["pose"])
-            name = loc.get("name", None)
-            self.world.add_location(category, room, pose, name=name)
+            self.world.add_location(**loc_data)
 
     def add_objects(self):
         """Add objects to the world."""
         if "objects" not in self.data:
             return
 
-        for obj in self.data["objects"]:
-            category = obj["type"]
-            loc = obj["location"]
-            if "pose" in obj:
-                pose = Pose.from_list(obj["pose"])
-            else:
-                pose = None
-            name = obj.get("name", None)
-            self.world.add_object(category, loc, pose=pose, name=name)
+        for obj_data in self.data.get("objects", []):
+            # TODO: Find a way to parse poses as YAML.
+            if "pose" in obj_data:
+                obj_data["pose"] = Pose.from_list(obj_data["pose"])
+            self.world.add_object(**obj_data)
 
     def add_robots(self):
         """Add robots to the world."""

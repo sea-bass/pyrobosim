@@ -9,7 +9,7 @@ import rclpy
 import threading
 import numpy as np
 
-from pyrobosim.core import Robot, Room, World, WorldYamlLoader
+from pyrobosim.core import Robot, World, WorldYamlLoader
 from pyrobosim.gui import start_gui
 from pyrobosim.navigation import ConstantVelocityExecutor
 from pyrobosim.utils.general import get_data_folder
@@ -32,47 +32,53 @@ def create_world():
 
     # Add rooms
     r1coords = [(-1, -1), (1.5, -1), (1.5, 1.5), (0.5, 1.5)]
-    world.add_room(
-        Room(
-            r1coords,
-            name="kitchen",
-            color=[1, 0, 0],
-            nav_poses=[Pose(x=0.75, y=0.75, yaw=0)],
-        )
-    )
+    world.add_room(name="kitchen", footprint=r1coords, color=[1, 0, 0])
     r2coords = [(1.75, 2.5), (3.5, 2.5), (3.5, 4), (1.75, 4)]
-    world.add_room(Room(r2coords, name="bedroom", color=[0, 0.6, 0]))
+    world.add_room(name="bedroom", footprint=r2coords, color=[0, 0.6, 0])
     r3coords = [(-1, 1), (-1, 3.5), (-3.0, 3.5), (-2.5, 1)]
-    world.add_room(Room(r3coords, name="bathroom", color=[0, 0, 0.6]))
+    world.add_room(name="bathroom", footprint=r3coords, color=[0, 0, 0.6])
 
     # Add hallways between the rooms
-    world.add_hallway("kitchen", "bathroom", width=0.7)
+    world.add_hallway(room_start="kitchen", room_end="bathroom", width=0.7)
     world.add_hallway(
-        "bathroom", "bedroom", width=0.5, conn_method="angle", conn_angle=0, offset=0.8
+        room_start="bathroom",
+        room_end="bedroom",
+        width=0.5,
+        conn_method="angle",
+        conn_angle=0,
+        offset=0.8,
     )
     world.add_hallway(
-        "kitchen",
-        "bedroom",
+        room_start="kitchen",
+        room_end="bedroom",
         width=0.6,
         conn_method="points",
         conn_points=[(1.0, 0.5), (2.5, 0.5), (2.5, 3.0)],
     )
 
     # Add locations
-    table = world.add_location("table", "kitchen", Pose(x=0.85, y=-0.5, yaw=-np.pi / 2))
-    desk = world.add_location("desk", "bedroom", Pose(x=3.15, y=3.65, yaw=0))
+    table = world.add_location(
+        category="table", parent="kitchen", pose=Pose(x=0.85, y=-0.5, yaw=-np.pi / 2.0)
+    )
+    desk = world.add_location(
+        category="desk", parent="bedroom", pose=Pose(x=3.15, y=3.65, yaw=0.0)
+    )
     counter = world.add_location(
-        "counter", "bathroom", Pose(x=-2.45, y=2.5, yaw=np.pi / 2 + np.pi / 16)
+        category="counter",
+        parent="bathroom",
+        pose=Pose(x=-2.45, y=2.5, yaw=np.pi / 2.0 + np.pi / 16.0),
     )
 
     # Add objects
-    world.add_object("banana", table, pose=Pose(x=1.0, y=-0.5, yaw=np.pi / 4))
-    world.add_object("apple", desk, pose=Pose(x=3.2, y=3.5, yaw=0))
-    world.add_object("apple", table)
-    world.add_object("apple", table)
-    world.add_object("water", counter)
-    world.add_object("banana", counter)
-    world.add_object("water", desk)
+    world.add_object(
+        category="banana", parent=table, pose=Pose(x=1.0, y=-0.5, yaw=np.pi / 4.0)
+    )
+    world.add_object(category="apple", parent=desk, pose=Pose(x=3.2, y=3.5, yaw=0.0))
+    world.add_object(category="apple", parent=table)
+    world.add_object(category="apple", parent=table)
+    world.add_object(category="water", parent=counter)
+    world.add_object(category="banana", parent=counter)
+    world.add_object(category="water", parent=desk)
 
     # Add a robot
     robot = Robot(name="robot", radius=0.1, path_executor=ConstantVelocityExecutor())
