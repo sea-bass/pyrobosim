@@ -5,7 +5,7 @@
 import os
 
 from pyrobosim.core import WorldYamlLoader
-from pyrobosim.navigation import RRTPlanner
+from pyrobosim.navigation import PathPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
@@ -17,7 +17,10 @@ def test_rrt_short_distance_connect():
     """Tests if direct connection works if goal is within max_connection_distance"""
 
     world = loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
-    rrt = RRTPlanner(world, bidirectional=False, rrt_connect=False, rrt_star=False)
+    planner_config = {
+        "grid": None, "world": world, "bidirectional": False, "rrt_connect": False, "rrt_star": False
+    }
+    rrt = PathPlanner("rrt", planner_config)
     start = Pose(x=-1.6, y=2.8)
     goal = Pose(x=-1.6, y=3.0)
 

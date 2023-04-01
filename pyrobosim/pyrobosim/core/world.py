@@ -511,7 +511,7 @@ class World:
                 )
             if not is_valid_pose:
                 warnings.warn(
-                    f"Object {obj.name} in collision or not in location {loc.name}. Cannot add to world."
+                    f"Object {obj.name} in collision or not in location {obj_spawn.name}. Cannot add to world."
                 )
                 return None
 

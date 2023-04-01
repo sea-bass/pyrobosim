@@ -11,7 +11,7 @@ import threading
 from pyrobosim.core import Robot, World
 from pyrobosim.gui import start_gui
 from pyrobosim.manipulation import GraspGenerator, ParallelGraspProperties
-from pyrobosim.navigation import ConstantVelocityExecutor, RRTPlanner
+from pyrobosim.navigation import ConstantVelocityExecutor, PathPlanner
 from pyrobosim.planning import PDDLStreamPlanner
 from pyrobosim.planning.pddlstream.utils import get_default_domains_folder
 from pyrobosim.utils.general import get_data_folder
@@ -76,8 +76,11 @@ def create_test_world(add_alt_desk=True):
     world.add_robot(robot, loc="home", pose=Pose(x=0.0, y=-0.5))
 
     # Create a search graph and motion planner
-    world.create_search_graph(max_edge_dist=3.0, collision_check_dist=0.05)
-    rrt = RRTPlanner(world, bidirectional=True, rrt_star=True)
+    # world.create_search_graph(max_edge_dist=3.0, collision_check_dist=0.05)
+    planner_config = {
+        "grid": None, "world": world, "bidirectional": False, "rrt_connect": False, "rrt_star": False
+    }
+    rrt = PathPlanner("rrt", planner_config)
     robot.set_path_planner(rrt)
 
     return world
