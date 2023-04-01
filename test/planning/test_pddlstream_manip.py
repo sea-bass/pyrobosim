@@ -78,7 +78,11 @@ def create_test_world(add_alt_desk=True):
     # Create a search graph and motion planner
     # world.create_search_graph(max_edge_dist=3.0, collision_check_dist=0.05)
     planner_config = {
-        "grid": None, "world": world, "bidirectional": False, "rrt_connect": False, "rrt_star": False
+        "grid": None,
+        "world": world,
+        "bidirectional": False,
+        "rrt_connect": False,
+        "rrt_star": False,
     }
     rrt = PathPlanner("rrt", planner_config)
     robot.set_path_planner(rrt)
