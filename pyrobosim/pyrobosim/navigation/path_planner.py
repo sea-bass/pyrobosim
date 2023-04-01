@@ -73,7 +73,7 @@ class PathPlanner:
     def plot(self, axes, path_color="m"):
         """Plots the planned path."""
 
-        self.planner.plot(axes, path_color=path_color)
+        return self.planner.plot(axes, path_color)
 
     def show(self):
         """Displays the planned path on the GUI."""

@@ -130,8 +130,9 @@ class WorldYamlLoader:
         """Gets local planner path planner to a robot."""
         if "path_planner" not in robot_data:
             return None
-        
+
         from pyrobosim.navigation import PathPlanner
+
         planner_data = robot_data["path_planner"]
         planner_type = planner_data["type"]
 
@@ -144,7 +145,7 @@ class WorldYamlLoader:
             max_time = planner_data.get("max_time", 5.0)
             rewire_radius = planner_data.get("rewire_radius", 1.0)
             planner_config = {
-                "grid": None, # TODO : How should a grid be added based on yaml config
+                "grid": None,  # TODO : How should a grid be added based on yaml config
                 "world": self.world,
                 "bidirectional": bidirectional,
                 "rrt_connect": rrt_connect,
@@ -152,7 +153,7 @@ class WorldYamlLoader:
                 "max_connection_dist": max_connection_dist,
                 "max_time": max_time,
                 "rewire_radius": rewire_radius,
-                "max_nodes_sampled": max_nodes_sampled
+                "max_nodes_sampled": max_nodes_sampled,
             }
             rrt = PathPlanner("rrt", planner_config)
             return rrt

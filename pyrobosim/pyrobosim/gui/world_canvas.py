@@ -4,6 +4,7 @@ import adjustText
 import numpy as np
 import time
 import threading
+import warnings
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.pyplot import Circle
@@ -196,13 +197,6 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.obj_patches = [o.viz_patch for o in (self.world.objects)]
         self.obj_texts = [o.viz_text for o in (self.world.objects)]
 
-        # Path planner and path
-        if len(self.world.robots) > 0:
-            robot_to_show = self.world.robots[0]
-        else:
-            robot_to_show = None
-        self.show_planner_and_path(robot_to_show)
-
         self.axes.autoscale()
         self.axes.axis("equal")
         self.adjust_text(self.obj_texts)
@@ -281,9 +275,9 @@ class WorldCanvas(FigureCanvasQTAgg):
         :param path: The path to display.
         :type path: :class:`pyrobosim.utils.motion.Path`
         """
-        if self.path_planner_artists:
-            for artist in self.path_planner_artists:
-                artist.remove()
+
+        for artist in self.path_planner_artists:
+            artist.remove()
 
         x = [p.x for p in path.poses]
         y = [p.y for p in path.poses]
@@ -310,9 +304,9 @@ class WorldCanvas(FigureCanvasQTAgg):
             time.sleep(0.001)
         self.draw_lock = True
 
-        if self.path_planner_artists:
-            for artist in self.path_planner_artists:
-                artist.remove()
+        # if self.path_planner_artists:
+        for artist in self.path_planner_artists:
+            artist.remove()
 
         color = robot.color if robot is not None else "m"
 
@@ -320,11 +314,11 @@ class WorldCanvas(FigureCanvasQTAgg):
             self.path_planner_artists = robot.path_planner.plot(
                 self.axes, path_color=color
             )
-        elif self.world.path_planner:
-            # self.path_planner_artists = self.world.path_planner.plot(
-            #     self.axes, path_color=color
-            # )
-            print("Planner or robot not found")
+        else:
+            if not robot:
+                warnings.warn("No robot found")
+            elif not robot.path_planner:
+                warnings.warn("Robot does not have a planner")
         self.draw_lock = False
 
     def update_robots_plot(self):
