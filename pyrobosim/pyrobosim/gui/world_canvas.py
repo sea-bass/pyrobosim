@@ -281,9 +281,10 @@ class WorldCanvas(FigureCanvasQTAgg):
         :param path: The path to display.
         :type path: :class:`pyrobosim.utils.motion.Path`
         """
-        for artist in self.path_planner_artists:
-            artist.remove()
-        self.path_planner_artists = []
+        if self.path_planner_artists:
+            for artist in self.path_planner_artists:
+                artist.remove()
+
         x = [p.x for p in path.poses]
         y = [p.y for p in path.poses]
         color = robot.color if robot is not None else "m"
@@ -308,8 +309,10 @@ class WorldCanvas(FigureCanvasQTAgg):
         while self.draw_lock:
             time.sleep(0.001)
         self.draw_lock = True
-        for artist in self.path_planner_artists:
-            artist.remove()
+
+        if self.path_planner_artists:
+            for artist in self.path_planner_artists:
+                artist.remove()
 
         color = robot.color if robot is not None else "m"
 
@@ -318,9 +321,10 @@ class WorldCanvas(FigureCanvasQTAgg):
                 self.axes, path_color=color
             )
         elif self.world.path_planner:
-            self.path_planner_artists = self.world.path_planner.plot(
-                self.axes, path_color=color
-            )
+            # self.path_planner_artists = self.world.path_planner.plot(
+            #     self.axes, path_color=color
+            # )
+            print("Planner or robot not found")
         self.draw_lock = False
 
     def update_robots_plot(self):
@@ -418,13 +422,15 @@ class WorldCanvas(FigureCanvasQTAgg):
         """
 
         # Find a path, or use an existing one, and start the navigation thread.
-        if not robot.current_path or robot.current_path.num_poses < 1:
-            path = self.world.find_path(goal, robot=robot)
+        if robot and robot.path_planner:
+            if goal.nav_poses:
+                goal_pose = goal.nav_poses[0]
+            elif goal.pose:
+                goal_pose = goal.pose
+            print(f"From {robot.pose} to {goal_pose}")
+            path = robot.plan_path(robot.pose, goal_pose)
+            print(f"path has : {path.num_poses} waypoints")
             self.show_planner_and_path(robot)
-        else:
-            path = robot.current_path
-            robot.current_goal = self.world.get_entity_by_name(goal)
-            self.show_path(path, robot=robot)
         robot.follow_path(
             path,
             target_location=robot.current_goal,

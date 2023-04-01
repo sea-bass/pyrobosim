@@ -22,12 +22,12 @@ robots:
     location: kitchen
     pose: [0, 0, 0]
     # # Rapidly-expanding Random Tree (RRT) planner
-    # path_planner:
-    #   type: rrt
-    #   max_connection_dist: 0.25
-    #   bidirectional: true
-    #   rrt_star: true
-    #   rewire_radius: 1.0
+    path_planner:
+      type: rrt
+      max_connection_dist: 0.25
+      bidirectional: true
+      rrt_star: false
+      rewire_radius: 1.0
     # # Grasp generation
     grasping:
       generator: parallel_grasp
@@ -36,26 +36,6 @@ robots:
       height: 0.04
       width_clearance: 0.01
       depth_clearance: 0.01
-
-# # PLANNING: Global planner
-global_path_planner:
-  # # Search graph planner from manually specified nodes
-  type: search_graph
-  max_edge_dist: 3.0
-  collision_check_dist: 0.05
-  # # Probabilistic Roadmap (PRM) planner
-  # type: prm
-  # max_connection_dist: 1.5
-  # max_nodes: 100
-  # # A* grid planner
-  # type: astar_grid
-  # resolution: 0.05
-  # inflation_radius: 0.15
-  # diagonal_motion: true
-  # heuristic: euclidean
-  # compress_path: true
-  # max_time: 5.0
-
 
 # # ROOMS: Polygonal regions that can contain object locations
 rooms:

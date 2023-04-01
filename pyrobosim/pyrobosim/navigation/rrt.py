@@ -60,6 +60,8 @@ class RRTPlannerPolygon:
         self.color_goal = [0, 0.4, 0.8]
         self.color_alpha = 0.5
 
+        self.latest_path = Path()
+
         # Override default values with those from the provided config.
         for param, value in planner_config.items():
             setattr(self, param, value)
@@ -171,7 +173,7 @@ class RRTPlannerPolygon:
                 or self.nodes_sampled > self.max_nodes_sampled
             ):
                 self.latest_path = Path()
-                return
+                return self.latest_path
 
         # Now back out the path
         if self.bidirectional:
@@ -267,6 +269,7 @@ class RRTPlannerPolygon:
                     n_tgt.cost = alt_cost
 
         # If we found a rewire node, do the rewire
+        # TODO : Fix graph represenation for rewire
         if n_rewire is not None:
             n_tgt.parent = n_rewire
             for e in graph.edges:
