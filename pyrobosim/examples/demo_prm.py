@@ -22,7 +22,7 @@ def test_prm():
         "max_connection_dist": 1.5,
         "compress_path": False,
     }
-    prm = PathPlanner("prm", planner_config)
+    prm = PathPlanner("prm", **planner_config)
     start = Pose(x=-0.5, y=-0.5)
     goal = Pose(x=3.0, y=3.0)
 

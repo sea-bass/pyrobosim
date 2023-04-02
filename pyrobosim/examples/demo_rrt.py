@@ -23,7 +23,7 @@ def test_rrt():
         "rrt_star": True,
         "compress_path": False,
     }
-    rrt = PathPlanner("rrt", planner_config)
+    rrt = PathPlanner("rrt", **planner_config)
     start = Pose(x=-0.5, y=-0.5)
     goal = Pose(x=3.0, y=3.0)
 

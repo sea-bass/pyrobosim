@@ -24,7 +24,7 @@ def test_rrt_short_distance_connect():
         "rrt_connect": False,
         "rrt_star": False,
     }
-    rrt = PathPlanner("rrt", planner_config)
+    rrt = PathPlanner("rrt", **planner_config)
     start = Pose(x=-1.6, y=2.8)
     goal = Pose(x=-1.6, y=3.0)
 

@@ -16,7 +16,9 @@ class PRMPlannerPolygon:
     Implementation of Probabilistic Roadmaps (PRM) for motion planning.
     """
 
-    def __init__(self, planner_config):
+    def __init__(
+        self, max_connection_dist=2.0, max_nodes=50, compress_path=False, world=None
+    ):
         """
         Creates an instance of a PRM planner.
 
@@ -28,13 +30,14 @@ class PRMPlannerPolygon:
         :type max_connection_dist: float
         """
         # Parameters
-        self.max_connection_dist = 2.0
-        self.max_nodes = 100
-        self.world = None
+        self.max_connection_dist = max_connection_dist
+        self.max_nodes = max_nodes
+        self.world = world
+        self.compress_path = compress_path
+
         self.path_finder = AStarGraph()
-        self.compress_path = True
-        for key, value in planner_config.items():
-            setattr(self, key, value)
+        # for key, value in planner_config.items():
+        #     setattr(self, key, value)
         self.reset()
 
     def reset(self):
@@ -127,7 +130,7 @@ class PRMPlannerPolygon:
 class PRMPlanner(PathPlannerBase):
     """Factort class for PRM path planner."""
 
-    def __init__(self, planner_config):
+    def __init__(self, **planner_config):
         super().__init__()
 
         self.impl = None
@@ -135,7 +138,8 @@ class PRMPlanner(PathPlannerBase):
         if planner_config["grid"]:
             raise NotImplementedError("Grid based PRM is not supported. ")
         else:
-            self.impl = PRMPlannerPolygon(planner_config)
+            planner_config.pop("grid")
+            self.impl = PRMPlannerPolygon(**planner_config)
 
     def plan(self, start, goal):
         start_time = time.time()

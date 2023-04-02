@@ -17,7 +17,18 @@ class RRTPlannerPolygon:
     algorithm for motion planning.
     """
 
-    def __init__(self, planner_config):
+    def __init__(
+        self,
+        world,
+        bidirectional=False,
+        rrt_connect=False,
+        rrt_star=False,
+        max_connection_dist=0.25,
+        max_nodes_sampled=1000,
+        max_time=5.0,
+        rewire_radius=1.0,
+        compress_path=False,
+    ):
         """
         Creates an instance of an RRT planner.
 
@@ -43,18 +54,18 @@ class RRTPlannerPolygon:
         :param rewire_radius: float
         """
 
-        self.world = None
+        self.world = world
 
         # Algorithm options
-        self.bidirectional = False
-        self.rrt_connect = False
-        self.rrt_star = False
+        self.bidirectional = bidirectional
+        self.rrt_connect = rrt_connect
+        self.rrt_star = rrt_star
 
         # Parameters
-        self.max_connection_dist = 0.25
-        self.max_nodes_sampled = 1000
-        self.max_time = 5.0
-        self.rewire_radius = 1.0
+        self.max_connection_dist = max_connection_dist
+        self.max_nodes_sampled = max_nodes_sampled
+        self.max_time = max_time
+        self.rewire_radius = rewire_radius
 
         # Visualization
         self.color_start = [0, 0, 0]
@@ -62,11 +73,7 @@ class RRTPlannerPolygon:
         self.color_alpha = 0.5
 
         self.latest_path = Path()
-        self.compress_path = True
-
-        # Override default values with those from the provided config.
-        for param, value in planner_config.items():
-            setattr(self, param, value)
+        self.compress_path = compress_path
 
         self.reset()
 
@@ -343,14 +350,15 @@ class RRTPlannerPolygon:
 
 
 class RRTPlanner(PathPlannerBase):
-    def __init__(self, planner_config):
+    def __init__(self, **planner_config):
         super().__init__()
 
         self.impl = None
         if planner_config["grid"]:
             raise NotImplementedError("RRT does not support grid based search. ")
         else:
-            self.impl = RRTPlannerPolygon(planner_config)
+            planner_config.pop("grid")
+            self.impl = RRTPlannerPolygon(**planner_config)
 
     def plan(self, start, goal):
         start_time = time.time()

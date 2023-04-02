@@ -67,7 +67,7 @@ def create_test_world(add_hallway=True):
         "rrt_connect": False,
         "rrt_star": False,
     }
-    rrt = PathPlanner("rrt", planner_config)
+    rrt = PathPlanner("rrt", **planner_config)
     robot.set_path_planner(rrt)
 
     return world

@@ -10,12 +10,12 @@ from pyrobosim.navigation.planner_base import PathPlannerBase
 
 
 class AStarGrid(AStar):
-    def __init__(self, config):
+    def __init__(self, grid, heuristic="euclidean", diagonal_motion=True):
         super().__init__()
 
-        self.grid = config["grid"]
-        self.heuristic = config["heuristic"]
-        self.diagonal_motion = config["diagonal_motion"]
+        self.grid = grid
+        self.heuristic = heuristic
+        self.diagonal_motion = diagonal_motion
         self._set_actions()
         self._set_heuristic()
 
@@ -178,7 +178,7 @@ class AStarGraph(AStar):
 class AstarPlanner(PathPlannerBase):
     """The A* path planner."""
 
-    def __init__(self, planner_config):
+    def __init__(self, **planner_config):
         """
         Creates an instance of A* planner.
 
@@ -190,9 +190,10 @@ class AstarPlanner(PathPlannerBase):
 
         # Depending on if grid is provided, select the implementation.
         if planner_config["grid"]:
-            self.impl = AStarGrid(planner_config)
+            self.impl = AStarGrid(**planner_config)
         else:
-            self.impl = AStarGraph(planner_config)
+            planner_config.pop("grid")
+            self.impl = AStarGraph(**planner_config)
 
     def plan(self, start, goal):
         start_time = time.time()

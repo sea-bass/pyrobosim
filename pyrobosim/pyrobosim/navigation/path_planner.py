@@ -10,37 +10,14 @@ class PathPlanner:
     Creates a path planner.
     """
 
-    def __init__(self, planner_type, planner_config):
+    def __init__(self, planner_type, **planner_config):
         """
         Creates a PathPlanner instance of given type and configuration
 
-        :param planner_type: The type of planner to be used (AStar, RRT, PRM)
+        :param planner_type: The type of planner to be used (astar, rrt, prm)
         :type planner_type: str
         :param planner_config: The configuration to be used with the specified planner type.
         :type planner_config: dict
-
-        The planner_config can have a many options within it.
-
-        1. grid - None by default, but can be assigned to an OccupancyGrid object.
-                  If set to an OccupancyGrid, the planner will use the grid for planning.
-                  If None, the planner will use the polygon based methods for planning.
-
-        These parameters apply to both RRT and PRM planners.
-
-        2. max_nodes_sampled (int): Specifies the maximum number of nodes to be generated for sampling-
-                  based planners.
-
-        3. max_connection_dist (float) : Specifies the maximum distance allowed between two nodes, in meters.
-
-        These parameters are only applicable to RRT planners
-
-        4. rrt_bidirectional (bool) : If true, will use bidirectional RRT.
-
-        5. rrt_connect (bool) :  If true, will use rrt connect.
-
-        6. rrt_star (bool) : If true, will use use rrt star for optimization.
-
-        7. rrt_rewire_radius (float) : The radius within which a node can find a rewire candidate, in meters.
         """
 
         self.planners = {"astar": AstarPlanner, "rrt": RRTPlanner, "prm": PRMPlanner}
@@ -56,7 +33,7 @@ class PathPlanner:
 
         self.planner_type = planner_type
         self.planner_config = planner_config
-        self.planner = self.planners[self.planner_type](self.planner_config)
+        self.planner = self.planners[self.planner_type](**self.planner_config)
 
     def plan(self, start, goal):
         """

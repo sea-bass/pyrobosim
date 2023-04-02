@@ -137,7 +137,7 @@ class WorldYamlLoader:
 
         planner_data = robot_data["path_planner"]
         planner_type = planner_data["type"]
-
+        planner_data.pop("type")
         occupancy_grid = planner_data.get("occupancy_grid", None)
         if occupancy_grid:
             resolution = occupancy_grid.get("resolution", 0.05)
@@ -148,7 +148,7 @@ class WorldYamlLoader:
 
         planner_data["grid"] = occupancy_grid
         planner_data["world"] = self.world
-        path_planner = PathPlanner(planner_type, planner_data)
+        path_planner = PathPlanner(planner_type, **planner_data)
 
         return path_planner
 

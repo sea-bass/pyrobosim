@@ -24,7 +24,7 @@ def demo_astar():
         "heuristic": "euclidean",
     }
 
-    planner = PathPlanner("astar", planner_config)
+    planner = PathPlanner("astar", **planner_config)
     start = Pose(x=-0.5, y=-0.5)
     goal = Pose(x=3.0, y=3.0)
     robot.set_pose(start)
