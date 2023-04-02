@@ -59,10 +59,7 @@ class PRMPlannerPolygon:
         for other in self.graph.nodes:
             if node == other:
                 continue
-            dist = node.pose.get_linear_distance(other.pose, ignore_z=True)
-            if dist <= self.max_connection_dist and self.is_connectable(
-                node.pose, other.pose
-            ):
+            if self.is_connectable(node.pose, other.pose):
                 self.graph.add_edge(node, other)
 
     def plan(self, start, goal):
@@ -78,6 +75,9 @@ class PRMPlannerPolygon:
         :return: Path from start to goal.
         :rtype: :class:`pyrobosim.utils.motion.Path`
         """
+        # Reset the path and time
+        self.latest_path = Path()
+        self.planning_time = 0.0
         # Create the start and goal nodes
         if isinstance(start, Pose):
             start = Node(start, parent=None)
@@ -91,9 +91,11 @@ class PRMPlannerPolygon:
 
         # Find a path from start to goal nodes
         t_start = time.time()
-        waypoints = self.path_finder.astar(
-            start, goal
-        )  # self.graph.find_path(start, goal)
+        waypoints = self.path_finder.plan(start, goal)
+        # Return empty path if no path was found.
+        if not waypoints:
+            return self.latest_path
+
         self.latest_path = Path(poses=[waypoint.pose for waypoint in waypoints])
         self.latest_path.fill_yaws()
         self.planning_time = time.time() - t_start
@@ -109,7 +111,7 @@ class PRMPlannerPolygon:
         return self.world.sample_free_robot_pose_uniform()
 
     def is_connectable(self, poseA, poseB):
-        return self.world.is_connectable(poseA, poseB)
+        return self.world.is_connectable(poseA, poseB, self.max_connection_dist)
 
 
 class PRMPlanner(PathPlannerBase):

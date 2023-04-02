@@ -1023,7 +1023,7 @@ class World:
     # Occupancy check #
     ######################################
 
-    def is_connectable(self, start, goal, ignore_max_dist=False):
+    def is_connectable(self, start, goal, max_dist=None):
         """
         Checks connectivity between two poses `start` and `goal` in the world
         by sampling points spaced by the `self.collision_check_dist` parameter
@@ -1044,8 +1044,8 @@ class World:
         # Check against the max edge distance.
         dist = start.get_linear_distance(goal, ignore_z=True)
         angle = start.get_angular_distance(goal)
-        # if (not ignore_max_dist) and (dist > self.max_edge_dist):
-        #     return False
+        if max_dist and (dist > max_dist):
+            return False
 
         # Build up the array of test X and Y coordinates for sampling between
         # the start and goal points.
