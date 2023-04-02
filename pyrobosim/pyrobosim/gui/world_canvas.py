@@ -197,6 +197,10 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.obj_patches = [o.viz_patch for o in (self.world.objects)]
         self.obj_texts = [o.viz_text for o in (self.world.objects)]
 
+        # Show paths and planner graphs
+        if len(self.world.robots) > 0:
+            self.show_planner_and_path(self.world.robots[0])
+
         self.axes.autoscale()
         self.axes.axis("equal")
         self.adjust_text(self.obj_texts)
