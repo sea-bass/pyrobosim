@@ -185,6 +185,7 @@ class AstarPlanner(PathPlannerBase):
         :param planner_config: The configuration to be used.
         :type planner_config: dict
         """
+        super().__init__()
         self.impl = None  # Holds the implementation.
 
         # Depending on if grid is provided, select the implementation.

@@ -79,9 +79,9 @@ def create_test_world(add_alt_desk=True):
     planner_config = {
         "grid": None,
         "world": world,
-        "bidirectional": False,
+        "bidirectional": True,
         "rrt_connect": False,
-        "rrt_star": False,
+        "rrt_star": True,
     }
     rrt = PathPlanner("rrt", planner_config)
     robot.set_path_planner(rrt)

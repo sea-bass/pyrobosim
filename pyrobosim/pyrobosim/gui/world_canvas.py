@@ -402,6 +402,7 @@ class WorldCanvas(FigureCanvasQTAgg):
 
         # Find a path, or use an existing one, and start the navigation thread.
         if robot and robot.path_planner:
+            robot.current_goal = self.world.get_entity_by_name(goal)
             goal_pose = self.world.graph_node_from_entity(goal, robot=robot).pose
             path = robot.plan_path(robot.pose, goal_pose)
             print(f"path has : {path.num_poses} waypoints")

@@ -1,11 +1,11 @@
 import os
-from pyrobosim.gui.main import start_gui
-from pyrobosim.utils.pose import Pose
-from pyrobosim.core.yaml import WorldYamlLoader
-from pyrobosim.utils.general import get_data_folder
-from pyrobosim.navigation.path_planner import PathPlanner
-from pyrobosim.navigation.occupancy_grid import occupancy_grid_from_world
 
+from pyrobosim.core import WorldYamlLoader
+from pyrobosim.gui import start_gui
+from pyrobosim.navigation import PathPlanner
+from pyrobosim.utils.general import get_data_folder
+from pyrobosim.utils.pose import Pose
+from pyrobosim.navigation import occupancy_grid_from_world
 
 # Load a test world.
 data_folder = get_data_folder()
