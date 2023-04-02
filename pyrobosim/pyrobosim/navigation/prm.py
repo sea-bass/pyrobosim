@@ -43,7 +43,7 @@ class PRMPlannerPolygon:
         self.latest_path = Path()
 
         # Create a search graph and sample nodes.
-        self.graph = WorldGraph()
+        self.graph = WorldGraph(color=[0, 0.4, 0.8], color_alpha=0.25)
         t_start = time.time()
         for i in range(self.max_nodes):
             n_sample = self.sample_configuration()
