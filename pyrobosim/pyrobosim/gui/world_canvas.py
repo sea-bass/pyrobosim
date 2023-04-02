@@ -402,7 +402,7 @@ class WorldCanvas(FigureCanvasQTAgg):
 
         # Find a path, or use an existing one, and start the navigation thread.
         if robot and robot.path_planner:
-            robot.current_goal = self.world.get_entity_by_name(goal)
+            robot.current_goal = goal
             goal_pose = self.world.graph_node_from_entity(goal, robot=robot).pose
             path = robot.plan_path(robot.pose, goal_pose)
             print(f"path has : {path.num_poses} waypoints")
@@ -411,11 +411,15 @@ class WorldCanvas(FigureCanvasQTAgg):
                 path,
                 target_location=robot.current_goal,
                 realtime_factor=self.realtime_factor,
+                blocking=False,
             )
 
         # Sleep while the robot is executing the action.
         while robot.executing_nav:
             time.sleep(0.1)
+
+        self.show_world_state(robot=robot)
+        self.draw_and_sleep()
         return True
 
     def pick_object(self, robot, obj_name, grasp_pose=None):
