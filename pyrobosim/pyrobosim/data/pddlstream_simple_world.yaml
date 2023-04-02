@@ -22,12 +22,15 @@ robots:
     location: kitchen
     pose: [0, 0, 0]
     path_planner:
-      type: rrt
-      max_connection_dist: 0.25
-      bidirectional: false
-      rrt_star: true
-      rewire_radius: 1.5
-      compress_path: false
+      # type: rrt
+      # max_connection_dist: 0.25
+      # bidirectional: false
+      # rrt_star: true
+      # rewire_radius: 1.5
+      # compress_path: false
+      type: prm
+      max_connection_dist: 1.5
+      max_nodes: 100
     grasping:
       generator: parallel_grasp
       max_width: 0.15

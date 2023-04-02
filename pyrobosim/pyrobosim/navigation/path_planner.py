@@ -1,4 +1,5 @@
 """ Implementation of the generic path planner. """
+import warnings
 from pyrobosim.navigation.rrt import RRTPlanner
 from pyrobosim.navigation.prm import PRMPlanner
 from pyrobosim.navigation.a_star import AstarPlanner
@@ -45,9 +46,13 @@ class PathPlanner:
         self.planners = {"astar": AstarPlanner, "rrt": RRTPlanner, "prm": PRMPlanner}
 
         if planner_type not in self.planners:
-            raise KeyError(f"{planner_type} is not a supported planner type.")
+            warnings.warn(
+                f"{planner_type} is not a supported planner type.", UserWarning
+            )
+            return None
         if not planner_config:
-            raise TypeError(f"No planner configuration provided")
+            warnings.warn(f"No planner configuration provided", UserWarning)
+            return None
 
         self.planner_type = planner_type
         self.planner_config = planner_config

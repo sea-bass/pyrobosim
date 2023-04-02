@@ -137,6 +137,7 @@ class WorldYamlLoader:
 
         planner_data = robot_data["path_planner"]
         planner_type = planner_data["type"]
+
         occupancy_grid = planner_data.get("occupancy_grid", None)
         if occupancy_grid:
             resolution = occupancy_grid.get("resolution", 0.05)
@@ -145,32 +146,11 @@ class WorldYamlLoader:
                 self.world, resolution, inflation_radius
             )
 
-        if planner_type == "rrt":
-            bidirectional = planner_data.get("bidirectional", False)
-            rrt_star = planner_data.get("rrt_star", False)
-            rrt_connect = planner_data.get("rrt_connect", False)
-            max_connection_dist = planner_data.get("max_connection_dist", 0.5)
-            max_nodes_sampled = planner_data.get("max_nodes_sampled", 1000)
-            max_time = planner_data.get("max_time", 5.0)
-            rewire_radius = planner_data.get("rewire_radius", 1.0)
-            compress_path = planner_data.get("compress_path", False)
-            planner_config = {
-                "grid": occupancy_grid,
-                "world": self.world,
-                "bidirectional": bidirectional,
-                "rrt_connect": rrt_connect,
-                "rrt_star": rrt_star,
-                "max_connection_dist": max_connection_dist,
-                "max_time": max_time,
-                "rewire_radius": rewire_radius,
-                "max_nodes_sampled": max_nodes_sampled,
-                "compress_path": compress_path,
-            }
-            rrt = PathPlanner("rrt", planner_config)
-            return rrt
-        else:
-            warnings.warn(f"Invalid planner type specified: {planner_type}")
-            return None
+        planner_data["grid"] = occupancy_grid
+        planner_data["world"] = self.world
+        path_planner = PathPlanner(planner_type, planner_data)
+
+        return path_planner
 
     def get_path_executor(self, robot_data):
         """Gets a path executor to add to a robot."""
