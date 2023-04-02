@@ -89,6 +89,17 @@ def create_world(multirobot=False):
     world.add_object(category="banana", parent=counter)
     world.add_object(category="water", parent=desk)
 
+    # Create path planner
+    planner_config = {
+        "grid": None,
+        "world": world,
+        "bidirectional": True,
+        "rrt_connect": False,
+        "rrt_star": True,
+        "compress_path": False,
+    }
+    path_planner = PathPlanner("rrt", planner_config)
+
     # Add robots
     grasp_props = ParallelGraspProperties(
         max_width=0.175,
@@ -97,13 +108,14 @@ def create_world(multirobot=False):
         width_clearance=0.01,
         depth_clearance=0.01,
     )
-    robot = Robot(
-        name="robot",
+    robot0 = Robot(
+        name="robot0",
         radius=0.1,
         path_executor=ConstantVelocityExecutor(),
         grasp_generator=GraspGenerator(grasp_props),
+        path_planner=path_planner,
     )
-    world.add_robot(robot, loc="kitchen")
+    world.add_robot(robot0, loc="kitchen")
     if multirobot:
         robot1 = Robot(
             name="robot1",
@@ -111,26 +123,19 @@ def create_world(multirobot=False):
             color=(0.8, 0.8, 0),
             path_executor=ConstantVelocityExecutor(),
             grasp_generator=GraspGenerator(grasp_props),
+            path_planner=path_planner,
         )
         world.add_robot(robot1, loc="bathroom")
 
-        robby = Robot(
-            name="robby",
+        robot2 = Robot(
+            name="robot2",
             radius=0.06,
             color=(0, 0.8, 0.8),
             path_executor=ConstantVelocityExecutor(),
             grasp_generator=GraspGenerator(grasp_props),
+            path_planner=path_planner,
         )
-        world.add_robot(robby, loc="bedroom")
-        planner_config = {
-            "grid": None,
-            "world": world,
-            "bidirectional": False,
-            "rrt_connect": False,
-            "rrt_star": False,
-        }
-        rrt = PathPlanner("rrt", planner_config)
-        robby.set_path_planner(rrt)
+        world.add_robot(robot2, loc="bedroom")
 
     return world
 

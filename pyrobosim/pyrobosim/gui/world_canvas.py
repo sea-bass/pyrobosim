@@ -290,21 +290,19 @@ class WorldCanvas(FigureCanvasQTAgg):
         color = robot.color if robot is not None else "m"
         if robot and robot.path_planner:
             path_planner_artists = robot.path_planner.plot(self.axes, path_color=color)
+            if "graph" in path_planner_artists:
+                for artist in self.path_planner_artists["graph"]:
+                    artist.remove()
+                self.path_planner_artists["graph"] = path_planner_artists["graph"]
+            if "path" in path_planner_artists:
+                for artist in self.path_planner_artists["path"]:
+                    artist.remove()
+                self.path_planner_artists["path"] = path_planner_artists["path"]
         else:
             if not robot:
                 warnings.warn("No robot found")
             elif not robot.path_planner:
                 warnings.warn("Robot does not have a planner")
-
-        if "graph" in path_planner_artists:
-            print("Redraw graph..")
-            for artist in self.path_planner_artists["graph"]:
-                artist.remove()
-            self.path_planner_artists["graph"] = path_planner_artists["graph"]
-        if "path" in path_planner_artists:
-            for artist in self.path_planner_artists["path"]:
-                artist.remove()
-            self.path_planner_artists["path"] = path_planner_artists["path"]
 
         self.draw_lock = False
 
@@ -403,17 +401,16 @@ class WorldCanvas(FigureCanvasQTAgg):
         """
 
         # Find a path, or use an existing one, and start the navigation thread.
-        print(f"goal type : {type(goal)}")
         if robot and robot.path_planner:
             goal_pose = self.world.graph_node_from_entity(goal, robot=robot).pose
             path = robot.plan_path(robot.pose, goal_pose)
             print(f"path has : {path.num_poses} waypoints")
             self.show_planner_and_path(robot)
-        robot.follow_path(
-            path,
-            target_location=robot.current_goal,
-            realtime_factor=self.realtime_factor,
-        )
+            robot.follow_path(
+                path,
+                target_location=robot.current_goal,
+                realtime_factor=self.realtime_factor,
+            )
 
         # Sleep while the robot is executing the action.
         while robot.executing_nav:
