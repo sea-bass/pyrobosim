@@ -21,6 +21,7 @@ def test_rrt():
         "bidirectional": True,
         "rrt_connect": True,
         "rrt_star": True,
+        "compress_path": False,
     }
     rrt = PathPlanner("rrt", planner_config)
     start = Pose(x=-0.5, y=-0.5)

@@ -20,6 +20,7 @@ def test_prm():
         "world": world,
         "max_nodes": 100,
         "max_connection_dist": 1.5,
+        "compress_path": False,
     }
     prm = PathPlanner("prm", planner_config)
     start = Pose(x=-0.5, y=-0.5)
