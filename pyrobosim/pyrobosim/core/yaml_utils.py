@@ -151,6 +151,7 @@ class WorldYamlLoader:
             max_nodes_sampled = planner_data.get("max_nodes_sampled", 1000)
             max_time = planner_data.get("max_time", 5.0)
             rewire_radius = planner_data.get("rewire_radius", 1.0)
+            compress_path = planner_data.get("compress_path", False)
             planner_config = {
                 "grid": occupancy_grid,
                 "world": self.world,
@@ -161,6 +162,7 @@ class WorldYamlLoader:
                 "max_time": max_time,
                 "rewire_radius": rewire_radius,
                 "max_nodes_sampled": max_nodes_sampled,
+                "compress_path": compress_path,
             }
             rrt = PathPlanner("rrt", planner_config)
             return rrt
