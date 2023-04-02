@@ -12,7 +12,7 @@ class PathPlannerBase:
         self.start = None
         self.impl = None
         self.planning_time = 0
-        self.graphs = set()
+        self.graphs = []
         self.latest_path = Path()
 
     def reset(self):
