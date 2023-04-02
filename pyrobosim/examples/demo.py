@@ -98,7 +98,7 @@ def create_world(multirobot=False):
         "rrt_star": True,
         "compress_path": False,
     }
-    path_planner = PathPlanner("rrt", planner_config)
+    path_planner = PathPlanner("rrt", **planner_config)
 
     # Add robots
     grasp_props = ParallelGraspProperties(
