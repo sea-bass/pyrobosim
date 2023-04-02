@@ -18,7 +18,7 @@ def test_rrt():
     planner_config = {
         "grid": None,
         "world": world,
-        "bidirectional": False,
+        "bidirectional": True,
         "rrt_connect": False,
         "rrt_star": False,
     }

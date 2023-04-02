@@ -1,7 +1,6 @@
 """ Graph search utilities. """
 
 import numpy as np
-from collections import defaultdict
 
 
 class Node:
@@ -24,15 +23,33 @@ class Node:
         self.neighbors = set()  # used in graph based planners
 
 
+class Edge:
+    """Graph edge representation."""
+
+    def __init__(self, nodeA, nodeB):
+        """
+        Creates a graph edge.
+        :param nodeA: First node
+        :type nodeA: :class:`Node`
+        :param nodeB: Second node
+        :type nodeB: :class:`Node`
+        """
+        self.nodeA = nodeA
+        self.nodeB = nodeB
+        self.cost = nodeA.pose.get_linear_distance(nodeB.pose)
+
+
 class WorldGraph:
 
     """Graph representation of the world."""
 
-    def __init__(self):
+    def __init__(self, color=[0, 0, 0], color_alpha=0.2):
         """Creates an instance of WorldGraph."""
 
         self.nodes = set()
-        self.edges = defaultdict(lambda: set())
+        self.edges = set()
+        self.color = color
+        self.color_alpha = 0.5
 
     def add_node(self, node):
         """
@@ -64,8 +81,7 @@ class WorldGraph:
         :type nodeB: :class:`pyrobosim.navigation.search_graph.Node`
         """
 
-        self.edges[nodeA].add(nodeB)
-        self.edges[nodeB].add(nodeA)
+        self.edges.add(Edge(nodeA, nodeB))
         self.update_neighbors()
 
     def remove_edge(self, nodeA, nodeB):
@@ -78,15 +94,17 @@ class WorldGraph:
         :type nodeB: :class:`pyrobosim.navigation.search_graph.Node`
         """
 
-        self.edges[nodeA].discard(nodeB)
-        self.edges[nodeB].discard(nodeA)
+        for edge in self.edges:
+            if edge.nodeA == nodeA and edge.nodeB == nodeB:
+                self.edges.discard(edge)
         self.update_neighbors()
 
     def update_neighbors(self):
         """Updates the neighbors of the nodes. For use after an update to the graph."""
 
-        for node in self.nodes:
-            node.neighbors = self.edges[node]
+        for edge in self.edges:
+            edge.nodeA.neighbors.add(edge.nodeB)
+            edge.nodeB.neighbors.add(edge.nodeA)
 
     def nearest(self, pose):
         """

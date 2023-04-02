@@ -12,6 +12,7 @@ class PathPlannerBase:
         self.start = None
         self.impl = None
         self.planning_time = 0
+        self.graphs = set()
         self.latest_path = Path()
 
     def reset(self):
@@ -22,7 +23,8 @@ class PathPlannerBase:
         self.goal = None
         self.start = None
         self.planner = None
-        self.planning_time = 0
+        self.planning_time = 0.0
+        self.graphs = []
         self.latest_path = Path()
 
     def plan(self, start, goal):
@@ -47,7 +49,7 @@ class PathPlannerBase:
         print(f"Planning time : {self.planning_time}")
         print(f"Number of waypoints : {self.latest_path.num_poses}")
 
-    def plot(self, axes, path_color="m"):
+    def plot(self, axes, show_graph=True, path_color="m"):
         """
         Plots the planned path on a specified set of axes.
 
@@ -59,7 +61,29 @@ class PathPlannerBase:
             used for bookkeeping.
         :rtype: list[:class:`matplotlib.artist.Artist`]
         """
+
         artists = []
+
+        if show_graph:
+            for graph in self.graphs:
+                for e in graph.edges:
+                    x = (e.nodeA.pose.x, e.nodeB.pose.x)
+                    y = (e.nodeA.pose.y, e.nodeB.pose.y)
+                    (edge,) = axes.plot(
+                        x,
+                        y,
+                        color=graph.color,
+                        alpha=graph.color_alpha,
+                        linewidth=0.5,
+                        linestyle="--",
+                        marker="o",
+                        markerfacecolor=graph.color,
+                        markeredgecolor=graph.color,
+                        markersize=3,
+                        zorder=1,
+                    )
+                    artists.append(edge)
+
         if self.latest_path.num_poses > 0:
             x = [p.x for p in self.latest_path.poses]
             y = [p.y for p in self.latest_path.poses]
