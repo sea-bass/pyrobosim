@@ -66,7 +66,7 @@ class WorldGraph:
 
         self.edges[nodeA].add(nodeB)
         self.edges[nodeB].add(nodeA)
-        self.update_neighbours()
+        self.update_neighbors()
 
     def remove_edge(self, nodeA, nodeB):
         """
@@ -80,10 +80,10 @@ class WorldGraph:
 
         self.edges[nodeA].discard(nodeB)
         self.edges[nodeB].discard(nodeA)
-        self.update_neighbours()
+        self.update_neighbors()
 
-    def update_neighbours(self):
-        """Updates the neighbours of the nodes. For use after an update to the graph."""
+    def update_neighbors(self):
+        """Updates the neighbors of the nodes. For use after an update to the graph."""
 
         for node in self.nodes:
             node.neighbors = self.edges[node]
