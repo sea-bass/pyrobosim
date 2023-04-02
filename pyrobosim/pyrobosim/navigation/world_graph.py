@@ -50,6 +50,7 @@ class WorldGraph:
         self.edges = set()
         self.color = color
         self.color_alpha = 0.5
+        self.was_updated = True
 
     def add_node(self, node):
         """

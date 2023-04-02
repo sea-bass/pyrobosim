@@ -73,8 +73,10 @@ class RRTPlannerPolygon:
     def reset(self):
         """Resets the search trees and planning metrics."""
         self.graph_start = WorldGraph(color=[0, 0, 0])
+        self.graph_start.was_updated = True
         if self.bidirectional:
             self.graph_goal = WorldGraph(color=[0, 0.4, 0.8])
+            self.graph_goal.was_updated = True
         self.latest_path = Path()
         self.planning_time = 0.0
         self.nodes_sampled = 0
@@ -273,7 +275,6 @@ class RRTPlannerPolygon:
                     n_tgt.cost = alt_cost
 
         # If we found a rewire node, do the rewire
-        # TODO : Fix graph represenation for rewire
         if n_rewire is not None:
             n_tgt.parent = n_rewire
             for e in graph.edges:

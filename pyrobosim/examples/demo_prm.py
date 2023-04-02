@@ -19,7 +19,7 @@ def test_prm():
         "grid": None,
         "world": world,
         "max_nodes": 100,
-        "max_connection_dist": 1.5,
+        "max_connection_dist": 1.0,
         "compress_path": False,
     }
     prm = PathPlanner("prm", planner_config)
