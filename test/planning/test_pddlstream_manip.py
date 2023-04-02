@@ -82,6 +82,7 @@ def create_test_world(add_alt_desk=True):
         "bidirectional": True,
         "rrt_connect": False,
         "rrt_star": True,
+        "compress_path": False,
     }
     rrt = PathPlanner("rrt", planner_config)
     robot.set_path_planner(rrt)

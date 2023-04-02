@@ -122,6 +122,8 @@ class WorldYamlLoader:
             )
 
             loc = robot_data["location"] if "location" in robot_data else None
+            if loc:
+                loc = self.world.get_entity_by_name(loc)
             if "pose" in robot_data:
                 pose = Pose.from_list(robot_data["pose"])
             else:
