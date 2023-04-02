@@ -206,7 +206,7 @@ class Robot:
             return False
 
         # Get object
-        loc = self.location
+        loc = self.world.get_entity_by_name(self.location)
         if isinstance(obj_query, Object):
             obj = obj_query
         else:
