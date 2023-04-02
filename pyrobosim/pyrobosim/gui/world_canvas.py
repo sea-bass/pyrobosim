@@ -78,7 +78,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.robot_bodies = []
         self.robot_dirs = []
         self.robot_lengths = []
-        self.path_planner_artists = []
+        self.path_planner_artists = {"graph": [], "path": []}
 
         # Debug displays (TODO: Should be available from GUI).
         self.show_collision_polygons = False
@@ -272,27 +272,6 @@ class WorldCanvas(FigureCanvasQTAgg):
         """
         adjustText.adjust_text(objs, lim=100, add_objects=self.obj_patches)
 
-    def show_path(self, path, robot=None):
-        """
-        Plots a standalone path.
-
-        :param path: The path to display.
-        :type path: :class:`pyrobosim.utils.motion.Path`
-        """
-
-        for artist in self.path_planner_artists:
-            artist.remove()
-
-        x = [p.x for p in path.poses]
-        y = [p.y for p in path.poses]
-        color = robot.color if robot is not None else "m"
-        (path,) = self.axes.plot(
-            x, y, linestyle="-", color=color, linewidth=3, zorder=1
-        )
-        (start,) = self.axes.plot(x[0], y[0], "go", zorder=2)
-        (goal,) = self.axes.plot(x[-1], y[-1], "rx", zorder=2)
-        self.path_planner_artists.extend((path, start, goal))
-
     def show_planner_and_path(self, robot=None):
         """
         Plot the path planner and latest path, if specified.
@@ -308,21 +287,25 @@ class WorldCanvas(FigureCanvasQTAgg):
             time.sleep(0.001)
         self.draw_lock = True
 
-        # if self.path_planner_artists:
-        for artist in self.path_planner_artists:
-            artist.remove()
-
         color = robot.color if robot is not None else "m"
-
         if robot and robot.path_planner:
-            self.path_planner_artists = robot.path_planner.plot(
-                self.axes, path_color=color
-            )
+            path_planner_artists = robot.path_planner.plot(self.axes, path_color=color)
         else:
             if not robot:
                 warnings.warn("No robot found")
             elif not robot.path_planner:
                 warnings.warn("Robot does not have a planner")
+
+        if "graph" in path_planner_artists:
+            print("Redraw graph..")
+            for artist in self.path_planner_artists["graph"]:
+                artist.remove()
+            self.path_planner_artists["graph"] = path_planner_artists["graph"]
+        if "path" in path_planner_artists:
+            for artist in self.path_planner_artists["path"]:
+                artist.remove()
+            self.path_planner_artists["path"] = path_planner_artists["path"]
+
         self.draw_lock = False
 
     def update_robots_plot(self):
@@ -420,12 +403,9 @@ class WorldCanvas(FigureCanvasQTAgg):
         """
 
         # Find a path, or use an existing one, and start the navigation thread.
+        print(f"goal type : {type(goal)}")
         if robot and robot.path_planner:
-            if goal.nav_poses:
-                goal_pose = goal.nav_poses[0]
-            elif goal.pose:
-                goal_pose = goal.pose
-            print(f"From {robot.pose} to {goal_pose}")
+            goal_pose = self.world.graph_node_from_entity(goal, robot=robot).pose
             path = robot.plan_path(robot.pose, goal_pose)
             print(f"path has : {path.num_poses} waypoints")
             self.show_planner_and_path(robot)

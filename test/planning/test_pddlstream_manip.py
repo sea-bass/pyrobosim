@@ -75,8 +75,7 @@ def create_test_world(add_alt_desk=True):
     )
     world.add_robot(robot, loc="home", pose=Pose(x=0.0, y=-0.5))
 
-    # Create a search graph and motion planner
-    # world.create_search_graph(max_edge_dist=3.0, collision_check_dist=0.05)
+    # Create a motion planner
     planner_config = {
         "grid": None,
         "world": world,

@@ -10,6 +10,8 @@ from .objects import Object
 from .room import Room
 from .robot import Robot
 from ..utils.pose import Pose
+from ..navigation import Node
+from ..utils.knowledge import resolve_to_location, resolve_to_object
 from ..utils.polygon import sample_from_polygon, transform_polygon
 
 
@@ -158,6 +160,7 @@ class World:
         # Update the room collision polygon based on the world inflation radius
         room.update_collision_polygons(self.inflation_radius)
 
+        room.add_graph_nodes()
         return room
 
     def remove_room(self, room_name):
@@ -246,6 +249,7 @@ class World:
         hallway.update_collision_polygons(self.inflation_radius)
         self.update_bounds(entity=hallway)
 
+        hallway.add_graph_nodes()
         # Finally, return the Hallway object
         return hallway
 
@@ -336,6 +340,7 @@ class World:
         for spawn in loc.children:
             self.name_to_entity[spawn.name] = spawn
 
+        loc.add_graph_nodes()
         return loc
 
     def update_location(self, loc, pose, room=None):
@@ -1131,3 +1136,68 @@ class World:
                 return pose
         warnings.warn("Could not sample pose.")
         return None
+
+    ######################################
+    # graph utils #
+    ######################################
+
+    def graph_node_from_entity(
+        self, entity_query, resolution_strategy="nearest", robot=None
+    ):
+        """
+        Gets a graph node from an entity query, which could be any combination of
+        room, hallway, location, object spawn, or object in the world, as well as
+        their respective categories.
+        For more information on the inputs, refer to the :func:`pyrobosim.utils.knowledge.query_to_entity` function.
+        :param entity_query: List of entities (e.g., rooms or objects) or names/categories.
+        :type entity_query: list[Entity/str]
+        :param resolution_strategy: Resolution strategy to apply
+        :type resolution_strategy: str
+        :param robot: If set to a Robot instance, uses that robot for resolution strategy.
+        :type robot: :class:`pyrobosim.core.robot.Robot`, optional
+        :return: A graph node for the entity that meets the resolution strategy, or None.
+        :rtype: :class:`pyrobosim.navigation.search_graph.Node`
+        """
+        if isinstance(entity_query, Node):
+            return entity_query
+        elif isinstance(entity_query, str):
+            # Try resolve an entity based on its name. If that fails, we assume it must be a category,
+            # so try resolve it to a location or to an object by category.
+            entity = self.get_entity_by_name(entity_query)
+            if entity is None:
+                entity = resolve_to_location(
+                    self,
+                    category=entity_query,
+                    expand_locations=True,
+                    resolution_strategy=resolution_strategy,
+                    robot=robot,
+                )
+            if entity is None:
+                entity = resolve_to_object(
+                    self,
+                    category=entity_query,
+                    resolution_strategy=resolution_strategy,
+                    robot=robot,
+                    ignore_grasped=True,
+                )
+        else:
+            entity = entity_query
+
+        if (
+            isinstance(entity, ObjectSpawn)
+            or isinstance(entity, Room)
+            or isinstance(entity, Hallway)
+        ):
+            graph_nodes = entity.graph_nodes
+        elif isinstance(entity, Object):
+            graph_nodes = entity.parent.graph_nodes
+        elif isinstance(entity, Location):
+            graph_nodes = entity.children[0].graph_nodes
+            # TODO: Select a child node
+        else:
+            warnings.warn(f"Cannot get graph node from {entity}")
+            return None
+
+        # TODO: Select a graph node
+        graph_node = graph_nodes[0]
+        return graph_node

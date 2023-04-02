@@ -64,10 +64,11 @@ class PathPlannerBase:
         :rtype: list[:class:`matplotlib.artist.Artist`]
         """
 
-        artists = []
+        graph_artists = []
+        path_artists = []
+        artists = {}
 
         if show_graph:
-            print("Plotting graph.. ")
             for graph in self.graphs:
                 if graph.was_updated:
                     for e in graph.edges:
@@ -86,7 +87,7 @@ class PathPlannerBase:
                             markersize=3,
                             zorder=1,
                         )
-                        artists.append(edge)
+                        graph_artists.append(edge)
                 graph.was_updated = False
 
         if self.latest_path.num_poses > 0:
@@ -97,8 +98,12 @@ class PathPlannerBase:
             )
             (start,) = axes.plot(x[0], y[0], "go", zorder=2)
             (goal,) = axes.plot(x[-1], y[-1], "rx", zorder=2)
-            artists.extend((path, start, goal))
+            path_artists.extend((path, start, goal))
 
+        if graph_artists:
+            artists["graph"] = graph_artists
+        if path_artists:
+            artists["path"] = path_artists
         return artists
 
     def show(self):
