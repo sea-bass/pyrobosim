@@ -9,6 +9,8 @@ from .robot import Robot
 from .world import World
 from ..utils.general import replace_special_yaml_tokens
 from ..utils.pose import Pose
+from pyrobosim.navigation import PathPlanner
+from ..navigation import occupancy_grid_from_world
 
 
 class WorldYamlLoader:
@@ -131,10 +133,15 @@ class WorldYamlLoader:
         if "path_planner" not in robot_data:
             return None
 
-        from pyrobosim.navigation import PathPlanner
-
         planner_data = robot_data["path_planner"]
         planner_type = planner_data["type"]
+        occupancy_grid = planner_data.get("occupancy_grid", None)
+        if occupancy_grid:
+            resolution = occupancy_grid.get("resolution", 0.05)
+            inflation_radius = occupancy_grid.get("inflation_radius", 0.15)
+            occupancy_grid = occupancy_grid_from_world(
+                self.world, resolution, inflation_radius
+            )
 
         if planner_type == "rrt":
             bidirectional = planner_data.get("bidirectional", False)
@@ -145,7 +152,7 @@ class WorldYamlLoader:
             max_time = planner_data.get("max_time", 5.0)
             rewire_radius = planner_data.get("rewire_radius", 1.0)
             planner_config = {
-                "grid": None,  # TODO : How should a grid be added based on yaml config
+                "grid": occupancy_grid,
                 "world": self.world,
                 "bidirectional": bidirectional,
                 "rrt_connect": rrt_connect,

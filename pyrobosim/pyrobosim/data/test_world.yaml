@@ -24,6 +24,9 @@ robots:
     # # Rapidly-expanding Random Tree (RRT) planner
     path_planner:
       type: rrt
+      # occupancy_grid:
+      #   resolution: 0.05
+      #   inflation_radius: 0.15
       max_connection_dist: 0.25
       bidirectional: true
       rrt_star: false
