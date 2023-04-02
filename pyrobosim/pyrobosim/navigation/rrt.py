@@ -274,9 +274,9 @@ class RRTPlannerPolygon:
         if n_rewire is not None:
             n_tgt.parent = n_rewire
             for e in graph.edges:
-                if e.n0 == n_tgt or e.n1 == n_tgt:
-                    e.n0.neighbors.remove(e.n1)
-                    e.n1.neighbors.remove(e.n0)
+                if e.nodeA == n_tgt or e.nodeB == n_tgt:
+                    e.nodeA.neighbors.remove(e.nodeB)
+                    e.nodeB.neighbors.remove(e.nodeA)
                     graph.edges.remove(e)
                     break
             graph.add_edge(n_tgt, n_tgt.parent)
