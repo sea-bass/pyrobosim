@@ -1,5 +1,6 @@
 """ Specification of the interface that all planners must implement. """
 
+import matplotlib.pyplot as plt
 from pyrobosim.utils.motion import Path
 
 
@@ -41,7 +42,7 @@ class PathPlannerBase:
         )
 
     def info(self):
-        """Prints the information about the planning process"""
+        """Prints information about the last generated plan."""
         print(f"Planner : {self.impl.__class__.__name__}")
         print(f"Planning time : {self.planning_time}")
         print(f"Number of waypoints : {self.latest_path.num_poses}")
@@ -73,16 +74,15 @@ class PathPlannerBase:
 
     def show(self):
         """
-        Shows the A* the planned path in a new figure.
+        Shows the planned path in a new figure.
 
         :param show_path: If True, shows the last planned path.
         :type show_path: bool
         """
-        import matplotlib.pyplot as plt
 
         f = plt.figure()
         ax = f.add_subplot(111)
         self.plot(ax)
-        plt.title("A*")
+        plt.title(self.impl.__class__.__name__)
         plt.axis("equal")
         plt.show()
