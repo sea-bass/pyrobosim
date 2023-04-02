@@ -7,6 +7,7 @@ import numpy as np
 from .world_graph import WorldGraph, Node
 from ..utils.motion import Path
 from ..utils.pose import Pose
+from ..utils.motion import reduce_waypoints_polygon
 from pyrobosim.navigation.planner_base import PathPlannerBase
 
 
@@ -61,6 +62,7 @@ class RRTPlannerPolygon:
         self.color_alpha = 0.5
 
         self.latest_path = Path()
+        self.compress_path = True
 
         # Override default values with those from the provided config.
         for param, value in planner_config.items():
@@ -200,7 +202,8 @@ class RRTPlannerPolygon:
                 else:
                     n = n.parent
                     path_poses.append(n.pose)
-
+        if self.compress_path:
+            path_poses = reduce_waypoints_polygon(self.world, path_poses)
         self.latest_path = Path(poses=path_poses)
         self.latest_path.fill_yaws()
         return self.latest_path

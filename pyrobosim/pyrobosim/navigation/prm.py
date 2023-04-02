@@ -7,6 +7,7 @@ from .world_graph import WorldGraph, Node
 from ..utils.motion import Path
 from ..utils.pose import Pose
 from .a_star import AStarGraph
+from ..utils.motion import reduce_waypoints_polygon
 from pyrobosim.navigation.planner_base import PathPlannerBase
 
 
@@ -31,6 +32,7 @@ class PRMPlannerPolygon:
         self.max_nodes = 100
         self.world = None
         self.path_finder = AStarGraph()
+        self.compress_path = True
         for key, value in planner_config.items():
             setattr(self, key, value)
         self.reset()
@@ -96,7 +98,10 @@ class PRMPlannerPolygon:
         if not waypoints:
             return self.latest_path
 
-        self.latest_path = Path(poses=[waypoint.pose for waypoint in waypoints])
+        path_poses = [waypoint.pose for waypoint in waypoints]
+        if self.compress_path:
+            path_poses = reduce_waypoints_polygon(self.world, path_poses)
+        self.latest_path = Path(poses=path_poses)
         self.latest_path.fill_yaws()
         self.planning_time = time.time() - t_start
         return self.latest_path
