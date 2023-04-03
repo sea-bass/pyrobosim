@@ -8,6 +8,9 @@ class PathPlannerBase:
     """The base class for path planners."""
 
     def __init__(self):
+        """
+        Creates an instance of PathPlannerBase.
+        """
         self.goal = None
         self.start = None
         self.impl = None
@@ -32,6 +35,7 @@ class PathPlannerBase:
     def plan(self, start, goal):
         """
         Plans a path from start to goal.
+
         :param start: Start pose or graph node.
         :type start: :class:`pyrobosim.utils.pose.Pose` /
             :class:`pyrobosim.navigation.search_graph.Node`
@@ -41,6 +45,7 @@ class PathPlannerBase:
         :return: Path from start to goal.
         :rtype: :class:`pyrobosim.utils.motion.Path`
         """
+
         raise NotImplementedError(
             f"Subclasses must implement {self.__class__.__name__}.plan()"
         )

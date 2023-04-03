@@ -13,7 +13,7 @@ from pyrobosim.navigation.planner_base import PathPlannerBase
 
 class PRMPlannerPolygon:
     """
-    Implementation of Probabilistic Roadmaps (PRM) for motion planning.
+    Polygon representation based implementation of PRM.
     """
 
     def __init__(
@@ -128,9 +128,12 @@ class PRMPlannerPolygon:
 
 
 class PRMPlanner(PathPlannerBase):
-    """Factort class for PRM path planner."""
+    """Factory class for Probabilistic RoadMap path planner."""
 
     def __init__(self, **planner_config):
+        """
+        Creates an instance of PRM planner.
+        """
         super().__init__()
 
         self.impl = None
@@ -142,6 +145,16 @@ class PRMPlanner(PathPlannerBase):
             self.impl = PRMPlannerPolygon(**planner_config)
 
     def plan(self, start, goal):
+        """
+        Plans a path from start to goal.
+
+        :param start: Start pose.
+        :type start: :class:`pyrobosim.utils.pose.Pose`
+        :param goal: Goal pose.
+        :type goal: :class:`pyrobosim.utils.pose.Pose`
+        :return: Path from start to goal.
+        :rtype: :class:`pyrobosim.utils.motion.Path`
+        """
         start_time = time.time()
         self.latest_path = self.impl.plan(start, goal)
         self.planning_time = time.time() - start_time

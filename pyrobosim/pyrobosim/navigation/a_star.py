@@ -10,7 +10,19 @@ from pyrobosim.navigation.planner_base import PathPlannerBase
 
 
 class AStarGrid(AStar):
+    """Occupancy grid based implementation of A*."""
+
     def __init__(self, grid, heuristic="euclidean", diagonal_motion=True):
+        """
+        Creates an instance of grid based A* planner.
+
+        :param heuristic: The metric to be used as heuristic ('manhattan', 'euclidean', 'none').
+        :type heuristic: string
+        :param diagonal_motion: If true, expand nodes using diagonal motion.
+        :type diagonal_motion: bool
+        :param compress_path: If true, waypoint reduction will be applied to generated path, else full path is returned.
+        :type compress_path: bool
+        """
         super().__init__()
 
         self.grid = grid
@@ -121,8 +133,7 @@ class AStarGrid(AStar):
 
 class AStarGraph(AStar):
     """
-    Implementation of the AStar class from python-astar to solve
-    the A* shortest path algorithm for our graph representation.
+    Graph based implementation of A*.
     """
 
     def __init__(self):
@@ -176,7 +187,7 @@ class AStarGraph(AStar):
 
 
 class AstarPlanner(PathPlannerBase):
-    """The A* path planner."""
+    """Factory class for A* path planner."""
 
     def __init__(self, **planner_config):
         """
@@ -196,6 +207,16 @@ class AstarPlanner(PathPlannerBase):
             self.impl = AStarGraph(**planner_config)
 
     def plan(self, start, goal):
+        """
+        Plans a path from start to goal.
+
+        :param start: Start pose.
+        :type start: :class:`pyrobosim.utils.pose.Pose`
+        :param goal: Goal pose.
+        :type goal: :class:`pyrobosim.utils.pose.Pose`
+        :return: Path from start to goal.
+        :rtype: :class:`pyrobosim.utils.motion.Path`
+        """
         start_time = time.time()
         self.latest_path = self.impl.plan(start, goal)
         self.planning_time = time.time() - start_time
