@@ -8,7 +8,7 @@ PathPlanner Interface
 Pyrobosim uses an inteface based approach to using path planners.
 
 ::
-    
+
     from pyrobosim.navigation import PathPlanner
     path_planner = PathPlanner(planner_type, **planner_config)
 
@@ -28,7 +28,7 @@ Available planner types and their available implementations can be found below :
 Adding new planners
 -------------------
 
-The path planners in pyrobosim are delibrately designed to be extensible. 
+The path planners in pyrobosim are delibrately designed to be extensible.
 So that you can add your own implementation for an exisiting planner type or even add a new planner type.
 
 For example:
@@ -37,7 +37,7 @@ To add a new planner type called `NewPlanner`:
 - Create the planner factory class `NewPlanner` which inherits :py:mod:`pyrobosim.navigation.planner_base`
 
 ::
-    
+
     from pyrobosim.navigation import PlannerBase
 
     class NewPlanner(PlannerBase):
@@ -46,25 +46,25 @@ To add a new planner type called `NewPlanner`:
 - Create concrete implementations of your planner similar to :py:class:`pyrobosim.navigation.rrt.RRTPlannerPolygon`
 
 ::
-    
+
     class NewPlannerPolygon:
         pass
 
 
-- Next, you should specify the mechanism to select the concrete implementation of your planner type in the `__init__()`, and and implement the `plan()` method. 
+- Next, you should specify the mechanism to select the concrete implementation of your planner type in the `__init__()`, and and implement the `plan()` method.
   Refer to :py:class:`pyrobosim.navigation.rrt.RRTPlanner` for an example on how to do this.
 
 ::
-    
+
     from pyrobosim.navigation import PlannerBase
 
     class NewPlanner(PlannerBase):
-        
+
         def __init__():
             # do implementation selection here.
 
         def plan():
-            # Call implementations to compute path , do any pre or post processing 
+            # Call implementations to compute path , do any pre or post processing
 
 
 - Add the planner type to the list of supported planners in :py:mod:`pyrobosim.navigation.path_planner`
