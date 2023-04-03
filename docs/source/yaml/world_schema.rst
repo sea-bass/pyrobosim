@@ -31,18 +31,13 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
        location: <loc_name> # Initial location
        pose: [<x>, <y>, <z>, <yaw>] # Initial pose, if not specified will sample
        path_planner: # Local robot path planner -- generally refers to single-query planners
-         type: rrt # Supported types -- rrt
+         type: rrt # Supported types -- rrt, prm, astar
          <property>: <planner_property>
        grasp_generator: # For object grasp generation
          type: parallel_grasp # Supported types -- parallel_grasp
          <property>: <grasp_generator_property>
      - ...
      - ...
-
-   # Global path planner -- generally refers to multi-query planners
-   global_path_planner:
-     type: search_graph # Supported types -- search_graph, prm
-     <property>: <planner_property>
 
    # Rooms
    rooms:
