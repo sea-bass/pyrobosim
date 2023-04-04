@@ -77,7 +77,6 @@ def create_test_world(add_alt_desk=True):
 
     # Create a motion planner
     planner_config = {
-        "grid": None,
         "world": world,
         "bidirectional": True,
         "rrt_connect": False,

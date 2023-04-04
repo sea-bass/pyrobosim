@@ -61,7 +61,6 @@ def create_test_world(add_hallway=True):
     # Create a search graph and motion planner
     # world.create_search_graph(max_edge_dist=3.0, collision_check_dist=0.05)
     planner_config = {
-        "grid": None,
         "world": world,
         "bidirectional": False,
         "rrt_connect": False,

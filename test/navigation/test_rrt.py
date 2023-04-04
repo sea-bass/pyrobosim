@@ -18,7 +18,6 @@ def test_rrt_short_distance_connect():
 
     world = loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
     planner_config = {
-        "grid": None,
         "world": world,
         "bidirectional": False,
         "rrt_connect": False,
