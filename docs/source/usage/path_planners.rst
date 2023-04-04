@@ -25,7 +25,7 @@ Available planner types and their available implementations can be found below :
 - "rrt" : :py:mod:`pyrobosim.navigation.rrt`
 
 
-Adding new planners
+Adding New Planners
 -------------------
 
 The path planners in pyrobosim are delibrately designed to be extensible.
