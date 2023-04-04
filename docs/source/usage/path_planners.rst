@@ -5,7 +5,7 @@ This section explains how to use and optionally extend the path planners in pyro
 PathPlanner Interface
 ---------------------
 
-Pyrobosim uses an inteface based approach to using path planners.
+pyrobosim uses an interface based approach to path planners.
 
 ::
 
