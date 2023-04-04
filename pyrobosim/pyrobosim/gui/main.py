@@ -224,7 +224,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         if not loc:
             return
 
-        print(f"[{robot.name}] Navigating to {loc.name}")
+        print(f"[{robot.name}] Navigating to {loc}")
         self.canvas.navigate_in_thread(robot, loc)
 
     def on_pick_click(self):
