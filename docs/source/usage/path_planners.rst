@@ -13,7 +13,7 @@ pyrobosim uses an interface based approach to path planners.
     path_planner = PathPlanner(planner_type, **planner_config)
 
 
-A specific planner can be selected through the planner interface, by providing the `planner_type` and a configuration given as `**planner_config`
+A specific planner can be selected through the planner interface, by providing the ``planner_type`` and a configuration given as ``**planner_config``.
 
 Each planner can potentially have multiple implementations.
 A specific implementation can be selected by providing the relevant parameters in `**planner_config`.
