@@ -80,5 +80,5 @@ For example, to add a new planner type called ``NewPlanner``:
 
 Note:
 
-- Planner implementations that need to display graphs should provide a `get_graphs` and set the `graphs` attribute of `PlannerBase` like in
-  :py:func:`pyrobosim.navigation.rrt.RRTPlannerPolygon.get_graphs` and :py:func:`pyrobosim.navigation.rrt.RRTPlanner.plan`
+- Planner implementations that need to display graphs should provide a `get_graphs()` method and set the `graphs` attribute of `PlannerBase` like in
+  :py:func:`pyrobosim.navigation.rrt.RRTPlannerPolygon.get_graphs` and :py:func:`pyrobosim.navigation.rrt.RRTPlanner.plan`.
