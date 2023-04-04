@@ -49,7 +49,7 @@ For example, to add a new planner type called ``NewPlanner``:
         pass
 
 
-- Next, you should specify the mechanism to select the concrete implementation of your planner type in the `__init__()`, and and implement the `plan()` method.
+- Next, you should specify the mechanism to select the concrete implementation of your planner type in the `__init__()`, and implement the `plan()` method.
   Refer to :py:class:`pyrobosim.navigation.rrt.RRTPlanner` for an example on how to do this.
 
 ::
