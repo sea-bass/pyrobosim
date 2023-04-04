@@ -30,8 +30,7 @@ Adding New Planners
 
 The path planners in pyrobosim are designed to be extensible, so that you can add your own implementation for an existing planner type or even add a new planner type.
 
-For example:
-To add a new planner type called `NewPlanner`:
+For example, to add a new planner type called ``NewPlanner``:
 
 - Create the planner factory class `NewPlanner` which inherits :py:mod:`pyrobosim.navigation.planner_base`
 
