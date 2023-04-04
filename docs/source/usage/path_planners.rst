@@ -28,8 +28,7 @@ Available planner types and their available implementations can be found below :
 Adding New Planners
 -------------------
 
-The path planners in pyrobosim are delibrately designed to be extensible.
-So that you can add your own implementation for an exisiting planner type or even add a new planner type.
+The path planners in pyrobosim are designed to be extensible, so that you can add your own implementation for an existing planner type or even add a new planner type.
 
 For example:
 To add a new planner type called `NewPlanner`:
