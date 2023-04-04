@@ -1037,8 +1037,8 @@ class World:
         :type start: :class:`Pose`
         :param goal: Goal node
         :type goal: :class:`Pose`
-        :param ignore_max_dist: If True, ignores maximum connection distance.
-        :type ignore_max_dist: bool, optional
+        :param max_dist: The maximum allowed connection distance.
+        :type max_dist: float, optional
         :return: True if nodes can be connected, else False.
         :rtype: bool
         """

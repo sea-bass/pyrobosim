@@ -405,7 +405,6 @@ class WorldCanvas(FigureCanvasQTAgg):
             robot.current_goal = goal
             goal_pose = self.world.graph_node_from_entity(goal, robot=robot).pose
             path = robot.plan_path(robot.pose, goal_pose)
-            print(f"path has : {path.num_poses} waypoints")
             self.show_planner_and_path(robot)
             robot.follow_path(
                 path,
