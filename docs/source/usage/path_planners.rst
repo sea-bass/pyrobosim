@@ -16,7 +16,7 @@ pyrobosim uses an interface based approach to path planners.
 A specific planner can be selected through the planner interface, by providing the ``planner_type`` and a configuration given as ``**planner_config``.
 
 Each planner can potentially have multiple implementations.
-A specific implementation can be selected by providing the relevant parameters in `**planner_config`.
+A specific implementation can be selected by providing the relevant parameters in ``**planner_config``.
 
 Available planner types and their available implementations can be found below :
 
@@ -32,7 +32,7 @@ The path planners in pyrobosim are designed to be extensible, so that you can ad
 
 For example, to add a new planner type called ``NewPlanner``:
 
-- Create the planner factory class `NewPlanner` which inherits :py:mod:`pyrobosim.navigation.planner_base`
+- Create the planner factory class ``NewPlanner`` which inherits :py:mod:`pyrobosim.navigation.planner_base`
 
 ::
 
@@ -49,7 +49,7 @@ For example, to add a new planner type called ``NewPlanner``:
         pass
 
 
-- Next, you should specify the mechanism to select the concrete implementation of your planner type in the `__init__()`, and implement the `plan()` method.
+- Next, you should specify the mechanism to select the concrete implementation of your planner type in the ``__init__()``, and implement the ``plan()`` method.
   Refer to :py:class:`pyrobosim.navigation.rrt.RRTPlanner` for an example on how to do this.
 
 ::
@@ -71,14 +71,14 @@ For example, to add a new planner type called ``NewPlanner``:
 
     self.planners = {"astar": AstarPlanner, "rrt": RRTPlanner, "prm": PRMPlanner, "new_planner": NewPlanner}
 
-- Use the `PathPlanner` interface to use your new planner.
+- Use the ``PathPlanner`` interface to use your new planner.
 
 ::
 
     new_path_planner  = PathPlanner("new_planner", **planner_config)
 
 
-Note:
+.. note::
 
-- Planner implementations that need to display graphs should provide a `get_graphs()` method and set the `graphs` attribute of `PlannerBase` like in
-  :py:func:`pyrobosim.navigation.rrt.RRTPlannerPolygon.get_graphs` and :py:func:`pyrobosim.navigation.rrt.RRTPlanner.plan`.
+    Planner implementations that need to display graphs should provide a `get_graphs()` method and set the `graphs` attribute of `PlannerBase` like in
+    :py:func:`pyrobosim.navigation.rrt.RRTPlannerPolygon.get_graphs` and :py:func:`pyrobosim.navigation.rrt.RRTPlanner.plan`.
