@@ -14,7 +14,7 @@ world = loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
 
 
 def demo_astar():
-    """Creates an A* planner and plans a path using grid."""
+    """Creates an occupancy grid based A* planner and plans a path."""
     robot = world.robots[0]
     planner_config = {
         "grid": occupancy_grid_from_world(
