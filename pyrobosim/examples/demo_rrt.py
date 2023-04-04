@@ -16,7 +16,6 @@ world = loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
 def test_rrt():
     """Creates an RRT planner and plans"""
     planner_config = {
-        "grid": None,
         "world": world,
         "bidirectional": True,
         "rrt_connect": True,

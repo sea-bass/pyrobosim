@@ -138,10 +138,9 @@ class PRMPlanner(PathPlannerBase):
 
         self.impl = None
 
-        if planner_config["grid"]:
+        if planner_config.get("grid", None):
             raise NotImplementedError("Grid based PRM is not supported. ")
         else:
-            planner_config.pop("grid")
             self.impl = PRMPlannerPolygon(**planner_config)
 
     def plan(self, start, goal):

@@ -358,10 +358,9 @@ class RRTPlanner(PathPlannerBase):
         super().__init__()
 
         self.impl = None
-        if planner_config["grid"]:
+        if planner_config.get("grid", None):
             raise NotImplementedError("RRT does not support grid based search. ")
         else:
-            planner_config.pop("grid")
             self.impl = RRTPlannerPolygon(**planner_config)
 
     def plan(self, start, goal):

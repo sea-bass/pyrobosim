@@ -12,7 +12,9 @@ from pyrobosim.navigation.planner_base import PathPlannerBase
 class AStarGrid(AStar):
     """Occupancy grid based implementation of A*."""
 
-    def __init__(self, grid, heuristic="euclidean", diagonal_motion=True):
+    def __init__(
+        self, grid, heuristic="euclidean", diagonal_motion=True, compress_path=False
+    ):
         """
         Creates an instance of grid based A* planner.
 
@@ -28,6 +30,7 @@ class AStarGrid(AStar):
         self.grid = grid
         self.heuristic = heuristic
         self.diagonal_motion = diagonal_motion
+        self.compress_path = compress_path
         self._set_actions()
         self._set_heuristic()
 
@@ -200,10 +203,9 @@ class AstarPlanner(PathPlannerBase):
         self.impl = None  # Holds the implementation.
 
         # Depending on if grid is provided, select the implementation.
-        if planner_config["grid"]:
+        if planner_config.get("grid", None):
             self.impl = AStarGrid(**planner_config)
         else:
-            planner_config.pop("grid")
             self.impl = AStarGraph(**planner_config)
 
     def plan(self, start, goal):

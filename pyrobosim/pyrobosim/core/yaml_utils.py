@@ -145,9 +145,13 @@ class WorldYamlLoader:
             occupancy_grid = occupancy_grid_from_world(
                 self.world, resolution, inflation_radius
             )
+            # Remove the metadata about occupancy grid.
+            planner_data.pop("occupancy_grid")
+            planner_data["grid"] = occupancy_grid
 
-        planner_data["grid"] = occupancy_grid
-        planner_data["world"] = self.world
+        # We only need to include a world object if occupancy grid was not specified.
+        if not occupancy_grid:
+            planner_data["world"] = self.world
         path_planner = PathPlanner(planner_type, **planner_data)
 
         return path_planner

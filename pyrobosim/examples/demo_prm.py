@@ -16,7 +16,6 @@ world = loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
 def test_prm():
     """Creates a PRM planner and plans"""
     planner_config = {
-        "grid": None,
         "world": world,
         "max_nodes": 100,
         "max_connection_dist": 1.5,
