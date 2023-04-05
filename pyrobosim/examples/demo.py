@@ -10,9 +10,12 @@ import numpy as np
 from pyrobosim.core import Robot, World, WorldYamlLoader
 from pyrobosim.gui import start_gui
 from pyrobosim.manipulation import GraspGenerator, ParallelGraspProperties
-from pyrobosim.navigation import ConstantVelocityExecutor, PathPlanner
+from pyrobosim.navigation import (
+    ConstantVelocityExecutor,
+    PathPlanner,
+    occupancy_grid_from_world,
+)
 from pyrobosim.utils.general import get_data_folder
-from pyrobosim.navigation import occupancy_grid_from_world
 from pyrobosim.utils.pose import Pose
 
 
@@ -106,13 +109,14 @@ def create_world(multirobot=False):
         grasp_generator=GraspGenerator(grasp_props),
     )
     planner_config_astar = {
-        "grid": occupancy_grid_from_world(
-            world, resolution=0.05, inflation_radius=1.5 * robot0.radius
-        ),
-        "diagonal_motion": True,
-        "heuristic": "euclidean",
+        "world": world,
+        "max_connection_dist": 0.25,
+        "bidirectional": True,
+        "rrt_star": True,
+        "rewire_radius": 1.0,
+        "compress_path": False,
     }
-    astar_planner = PathPlanner("astar", **planner_config_astar)
+    astar_planner = PathPlanner("rrt", **planner_config_astar)
     robot0.set_path_planner(astar_planner)
     world.add_robot(robot0, loc="kitchen")
 
