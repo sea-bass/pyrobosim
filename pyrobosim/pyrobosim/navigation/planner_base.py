@@ -75,25 +75,25 @@ class PathPlannerBase:
 
         if show_graph:
             for graph in self.graphs:
-                if graph.was_updated:
-                    for e in graph.edges:
-                        x = (e.nodeA.pose.x, e.nodeB.pose.x)
-                        y = (e.nodeA.pose.y, e.nodeB.pose.y)
-                        (edge,) = axes.plot(
-                            x,
-                            y,
-                            color=graph.color,
-                            alpha=graph.color_alpha,
-                            linewidth=0.5,
-                            linestyle="--",
-                            marker="o",
-                            markerfacecolor=graph.color,
-                            markeredgecolor=graph.color,
-                            markersize=3,
-                            zorder=1,
-                        )
-                        graph_artists.append(edge)
-                graph.was_updated = False
+                # if graph.was_updated:
+                for e in graph.edges:
+                    x = (e.nodeA.pose.x, e.nodeB.pose.x)
+                    y = (e.nodeA.pose.y, e.nodeB.pose.y)
+                    (edge,) = axes.plot(
+                        x,
+                        y,
+                        color=graph.color,
+                        alpha=graph.color_alpha,
+                        linewidth=0.5,
+                        linestyle="--",
+                        marker="o",
+                        markerfacecolor=graph.color,
+                        markeredgecolor=graph.color,
+                        markersize=3,
+                        zorder=1,
+                    )
+                    graph_artists.append(edge)
+                # graph.was_updated = False
 
         if self.latest_path.num_poses > 0:
             x = [p.x for p in self.latest_path.poses]

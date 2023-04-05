@@ -290,14 +290,15 @@ class WorldCanvas(FigureCanvasQTAgg):
         color = robot.color if robot is not None else "m"
         if robot and robot.path_planner:
             path_planner_artists = robot.path_planner.plot(self.axes, path_color=color)
-            if "graph" in path_planner_artists:
-                for artist in self.path_planner_artists["graph"]:
-                    artist.remove()
-                self.path_planner_artists["graph"] = path_planner_artists["graph"]
-            if "path" in path_planner_artists:
-                for artist in self.path_planner_artists["path"]:
-                    artist.remove()
-                self.path_planner_artists["path"] = path_planner_artists["path"]
+
+            for artist in self.path_planner_artists["graph"]:
+                artist.remove()
+            self.path_planner_artists["graph"] = path_planner_artists.get("graph", [])
+
+            for artist in self.path_planner_artists["path"]:
+                artist.remove()
+            self.path_planner_artists["path"] = path_planner_artists.get("path", [])
+
         else:
             if not robot:
                 warnings.warn("No robot found")
