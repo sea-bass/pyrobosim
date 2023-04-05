@@ -108,16 +108,15 @@ def create_world(multirobot=False):
         path_executor=ConstantVelocityExecutor(),
         grasp_generator=GraspGenerator(grasp_props),
     )
-    planner_config_astar = {
+    planner_config_rrt = {
         "world": world,
-        "max_connection_dist": 0.25,
         "bidirectional": True,
+        "rrt_connect": False,
         "rrt_star": True,
-        "rewire_radius": 1.0,
         "compress_path": False,
     }
-    astar_planner = PathPlanner("rrt", **planner_config_astar)
-    robot0.set_path_planner(astar_planner)
+    rrt_planner = PathPlanner("rrt", **planner_config_rrt)
+    robot0.set_path_planner(rrt_planner)
     world.add_robot(robot0, loc="kitchen")
 
     if multirobot:
@@ -145,15 +144,15 @@ def create_world(multirobot=False):
             path_executor=ConstantVelocityExecutor(),
             grasp_generator=GraspGenerator(grasp_props),
         )
-        planner_config_rrt = {
-            "world": world,
-            "bidirectional": True,
-            "rrt_connect": False,
-            "rrt_star": True,
-            "compress_path": False,
+        planner_config_astar = {
+            "grid": occupancy_grid_from_world(
+                world, resolution=0.05, inflation_radius=0.15
+            ),
+            "diagonal_motion": True,
+            "heuristic": "euclidean",
         }
-        rrt_planner = PathPlanner("rrt", **planner_config_rrt)
-        robot2.set_path_planner(rrt_planner)
+        astar_planner = PathPlanner("astar", **planner_config_astar)
+        robot2.set_path_planner(astar_planner)
         world.add_robot(robot2, loc="bedroom")
 
     return world
