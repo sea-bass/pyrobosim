@@ -131,6 +131,7 @@ class AStarGrid(AStar):
             world_x, world_y = self.grid.grid_to_world(waypoint)
             world_path.append(Pose(world_x, world_y))
         self.latest_path = Path(poses=world_path)
+        self.latest_path.fill_yaws()
         return self.latest_path
 
 
