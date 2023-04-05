@@ -11,11 +11,10 @@ import numpy as np
 
 from pyrobosim.core import Robot, World, WorldYamlLoader
 from pyrobosim.gui import start_gui
-from pyrobosim.navigation import ConstantVelocityExecutor
+from pyrobosim.navigation import ConstantVelocityExecutor, PathPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 from pyrobosim_ros.ros_interface import WorldROSWrapper
-from pyrobosim.navigation import PathPlanner
 
 
 data_folder = get_data_folder()
