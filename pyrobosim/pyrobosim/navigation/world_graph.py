@@ -57,7 +57,7 @@ class WorldGraph:
         Adds a node to the graph.
 
         :param node: The node to be added into the graph.
-        :type node: :class: `pyrobosim.navigation.search_graph.Node`
+        :type node: :class: `pyrobosim.navigation.world_graph.Node`
         """
 
         self.nodes.add(node)
@@ -67,7 +67,7 @@ class WorldGraph:
         Removes a node from the graph.
 
         :param node: The node to be removed.
-        :type node: :class: `pyrobosim.navigation.search_graph.Node`
+        :type node: :class: `pyrobosim.navigation.world_graph.Node`
         """
 
         self.nodes.discard(node)
@@ -77,9 +77,9 @@ class WorldGraph:
         Adds an edge between 2 node.
 
         :param nodeA: The first node.
-        :type nodeA: :class:`pyrobosim.navigation.search_graph.Node`
+        :type nodeA: :class:`pyrobosim.navigation.world_graph.Node`
         :param nodeB: The second node.
-        :type nodeB: :class:`pyrobosim.navigation.search_graph.Node`
+        :type nodeB: :class:`pyrobosim.navigation.world_graph.Node`
         """
 
         self.edges.add(Edge(nodeA, nodeB))
@@ -90,9 +90,9 @@ class WorldGraph:
         Removes an edge between 2 node.
 
         :param nodeA: The first node.
-        :type nodeA: :class:`pyrobosim.navigation.search_graph.Node`
+        :type nodeA: :class:`pyrobosim.navigation.world_graph.Node`
         :param nodeB: The second node.
-        :type nodeB: :class:`pyrobosim.navigation.search_graph.Node`
+        :type nodeB: :class:`pyrobosim.navigation.world_graph.Node`
         """
 
         for edge in self.edges:
