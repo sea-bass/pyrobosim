@@ -70,7 +70,16 @@ class WorldGraph:
         :type node: :class: `pyrobosim.navigation.world_graph.Node`
         """
 
+        for other in self.nodes:
+            other.neighbors.discard(node)
         self.nodes.discard(node)
+
+        edges_to_remove = []
+        for edge in self.edges:
+            if edge.nodeA == node or edge.nodeB == node:
+                edges_to_remove.append(edge)
+        for edge in edges_to_remove:
+            self.edges.discard(edge)
 
     def add_edge(self, nodeA, nodeB):
         """
@@ -83,29 +92,8 @@ class WorldGraph:
         """
 
         self.edges.add(Edge(nodeA, nodeB))
-        self.update_neighbors()
-
-    def remove_edge(self, nodeA, nodeB):
-        """
-        Removes an edge between 2 node.
-
-        :param nodeA: The first node.
-        :type nodeA: :class:`pyrobosim.navigation.world_graph.Node`
-        :param nodeB: The second node.
-        :type nodeB: :class:`pyrobosim.navigation.world_graph.Node`
-        """
-
-        for edge in self.edges:
-            if edge.nodeA == nodeA and edge.nodeB == nodeB:
-                self.edges.discard(edge)
-        self.update_neighbors()
-
-    def update_neighbors(self):
-        """Updates the neighbors of the nodes. For use after an update to the graph."""
-
-        for edge in self.edges:
-            edge.nodeA.neighbors.add(edge.nodeB)
-            edge.nodeB.neighbors.add(edge.nodeA)
+        nodeA.neighbors.add(nodeB)
+        nodeB.neighbors.add(nodeA)
 
     def nearest(self, pose):
         """
