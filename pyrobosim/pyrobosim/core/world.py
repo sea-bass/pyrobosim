@@ -3,7 +3,6 @@
 import itertools
 import numpy as np
 import warnings
-import random
 
 from .hallway import Hallway
 from .locations import Location, ObjectSpawn
@@ -1193,7 +1192,7 @@ class World:
         elif isinstance(entity, Object):
             graph_nodes = entity.parent.graph_nodes
         elif isinstance(entity, Location):
-            graph_nodes = random.choice(entity.children).graph_nodes
+            graph_nodes = entity.children[0].graph_nodes
         else:
             warnings.warn(f"Cannot get graph node from {entity}")
             return None
