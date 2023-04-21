@@ -108,6 +108,8 @@ class PRMPlannerPolygon:
         self.latest_path = Path(poses=path_poses)
         self.latest_path.fill_yaws()
         self.planning_time = time.time() - t_start
+        self.graph.remove_node(start)
+        self.graph.remove_node(goal)
         return self.latest_path
 
     def sample_configuration(self):
