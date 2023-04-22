@@ -118,19 +118,26 @@ class AStarGrid(AStar):
         """
         Plans a path from start to goal.
 
-        :param start: The start position in grid.
-        :type start: Tuple (int, int)
-        :param goal: The goal position in grid.
-        :type goal: Tuple (int, int)
+        :param start: Start pose.
+        :type start: :class:`pyrobosim.utils.pose.Pose`
+        :param goal: Goal pose.
+        :type goal: :class:`pyrobosim.utils.pose.Pose`
         """
-        start = self.grid.world_to_grid((start.x, start.y))
-        goal = self.grid.world_to_grid((goal.x, goal.y))
-        path = self.astar(start, goal)
+        start_grid = self.grid.world_to_grid((start.x, start.y))
+        goal_grid = self.grid.world_to_grid((goal.x, goal.y))
+        path = self.astar(start_grid, goal_grid)
+
         world_path = []
-        for waypoint in path:
-            world_x, world_y = self.grid.grid_to_world(waypoint)
-            world_path.append(Pose(world_x, world_y))
+        if path is not None:
+            for waypoint in path:
+                world_x, world_y = self.grid.grid_to_world(waypoint)
+                world_path.append(Pose(world_x, world_y))
+            # Ensure the start and end poses have the full poses (with yaw) set.
+            world_path[0] = start
+            world_path[-1] = goal
+
         self.latest_path = Path(poses=world_path)
+        self.latest_path.poses
         self.latest_path.fill_yaws()
         return self.latest_path
 
