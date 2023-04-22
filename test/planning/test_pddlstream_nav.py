@@ -82,6 +82,7 @@ def start_planner(world, domain_name="03_nav_stream", interactive=False):
     plan = planner.plan(
         robot,
         goal_literals,
+        max_attempts=3,
         verbose=interactive,
         planner="ff-astar",
         max_planner_time=30.0,
