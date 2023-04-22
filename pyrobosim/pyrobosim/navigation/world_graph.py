@@ -104,14 +104,13 @@ class WorldGraph:
         """
         nodeA.neighbors.discard(nodeB)
         nodeB.neighbors.discard(nodeA)
-        
+
         edges_to_remove = []
         for edge in self.edges:
             if edge.nodeA == nodeA and edge.nodeB == nodeB:
                 edges_to_remove.append(edge)
         for edge in edges_to_remove:
             self.edges.discard(edge)
-                
 
     def nearest(self, pose):
         """
