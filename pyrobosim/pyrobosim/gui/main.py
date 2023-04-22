@@ -20,6 +20,11 @@ def start_gui(world):
     :type world: :class:`pyrobosim.core.world.World`
     """
     app = PyRoboSimGUI(world, sys.argv)
+
+    timer = QTimer(parent=app)
+    timer.timeout.connect(lambda: None)
+    timer.start(1000)
+
     sys.exit(app.exec_())
 
 

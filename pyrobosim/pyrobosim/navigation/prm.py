@@ -36,8 +36,6 @@ class PRMPlannerPolygon:
         self.compress_path = compress_path
 
         self.path_finder = AStarGraph()
-        # for key, value in planner_config.items():
-        #     setattr(self, key, value)
         self.reset()
 
     def reset(self):

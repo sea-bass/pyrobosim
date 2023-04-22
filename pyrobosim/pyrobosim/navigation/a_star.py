@@ -137,7 +137,6 @@ class AStarGrid(AStar):
             world_path[-1] = goal
 
         self.latest_path = Path(poses=world_path)
-        self.latest_path.poses
         self.latest_path.fill_yaws()
         return self.latest_path
 
