@@ -59,7 +59,7 @@ class Path:
         print(print_str)
 
 
-def reduce_waypoints(grid, positions):
+def reduce_waypoints_grid(grid, positions):
     """
     Reduces the number of waypoints in a generated path from a grid-based planner.
 
@@ -83,6 +83,33 @@ def reduce_waypoints(grid, positions):
             start = current
             positions = positions[i + 1 :]
             i = len(positions) - 1
+        else:
+            i -= 1
+    return waypoints
+
+
+def reduce_waypoints_polygon(world, poses):
+    """
+    Reduces the number of waypoints in a path generated from a polygon based planner.
+
+    :param world: The world object in which the path is generated.
+    :type world: :class:`pyrobosim.core.world.World`
+    :param poses: The list of poses that make up the path.
+    :type poses: list[:class: `pyrobosim.utils.pose.Pose`]
+    """
+    waypoints = []
+
+    start = poses[0]
+    waypoints.append(start)
+    poses = poses[1:]
+    i = len(poses) - 1
+    while poses and i >= 0:
+        current = poses[i]
+        if world.is_connectable(start, current):
+            waypoints.append(current)
+            start = current
+            poses = poses[i + 1 :]
+            i = len(poses) - 1
         else:
             i -= 1
     return waypoints

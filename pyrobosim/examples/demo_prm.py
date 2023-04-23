@@ -3,7 +3,7 @@ import os
 
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.gui import start_gui
-from pyrobosim.navigation import PRMPlanner
+from pyrobosim.navigation import PathPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
@@ -15,7 +15,13 @@ world = loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
 
 def test_prm():
     """Creates a PRM planner and plans"""
-    prm = PRMPlanner(world, max_nodes=100, max_connection_dist=1.5)
+    planner_config = {
+        "world": world,
+        "max_nodes": 100,
+        "max_connection_dist": 1.5,
+        "compress_path": False,
+    }
+    prm = PathPlanner("prm", **planner_config)
     start = Pose(x=-0.5, y=-0.5)
     goal = Pose(x=3.0, y=3.0)
 
@@ -23,7 +29,7 @@ def test_prm():
     robot.set_pose(start)
     robot.set_path_planner(prm)
     robot.current_path = robot.plan_path(start, goal)
-    prm.print_metrics()
+    prm.info()
 
 
 if __name__ == "__main__":

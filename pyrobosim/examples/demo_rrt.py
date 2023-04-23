@@ -3,7 +3,7 @@ import os
 
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.gui import start_gui
-from pyrobosim.navigation import RRTPlanner
+from pyrobosim.navigation import PathPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
@@ -15,7 +15,14 @@ world = loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
 
 def test_rrt():
     """Creates an RRT planner and plans"""
-    rrt = RRTPlanner(world, bidirectional=True, rrt_connect=False, rrt_star=True)
+    planner_config = {
+        "world": world,
+        "bidirectional": True,
+        "rrt_connect": True,
+        "rrt_star": True,
+        "compress_path": False,
+    }
+    rrt = PathPlanner("rrt", **planner_config)
     start = Pose(x=-0.5, y=-0.5)
     goal = Pose(x=3.0, y=3.0)
 
@@ -23,7 +30,7 @@ def test_rrt():
     robot.set_pose(start)
     robot.set_path_planner(rrt)
     robot.current_path = robot.plan_path(start, goal)
-    rrt.print_metrics()
+    rrt.info()
 
 
 if __name__ == "__main__":

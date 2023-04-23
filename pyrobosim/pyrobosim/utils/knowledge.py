@@ -124,7 +124,7 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
                 for spawn in named_location.children:
                     entity_list.extend(spawn.children)
 
-        entity_list = [o for o in entity_list if o.category == obj_category]
+        entity_list = [obj for obj in entity_list if obj.category == obj_category]
         obj_candidate = apply_resolution_strategy(
             world, entity_list, resolution_strategy=resolution_strategy, robot=robot
         )
@@ -253,8 +253,8 @@ def resolve_to_object(
     :type category: str, optional
     :param location: Location category search in (e.g. "table")
     :type location: str, optional
-    :param category: Room name to search in (e.g. "kitchen")
-    :type category: str, optional
+    :param room: Room name to search in (e.g. "kitchen")
+    :type room: str, optional
     :param resolution_strategy: Resolution strategy to apply (see :func:`apply_resolution_strategy`)
     :type resolution_strategy: str
     :param robot: If set to a Robot instance, uses that robot for resolution strategy.
@@ -277,20 +277,22 @@ def resolve_to_object(
         else:
             room_name = room.name
         possible_objects = [
-            o for o in possible_objects if o.parent.parent.parent.name == room_name
+            obj
+            for obj in possible_objects
+            if obj.parent.parent.parent.name == room_name
         ]
 
     if location is not None:
         possible_objects = [
-            o
-            for o in possible_objects
+            obj
+            for obj in possible_objects
             if (
-                o.parent == location
-                or o.parent.name == location
-                or o.parent.parent == location
-                or o.parent.parent.name == location
-                or o.parent.category == location
-                or o.parent.parent.category == location
+                obj.parent == location
+                or obj.parent.name == location
+                or obj.parent.parent == location
+                or obj.parent.parent.name == location
+                or obj.parent.category == location
+                or obj.parent.parent.category == location
             )
         ]
 

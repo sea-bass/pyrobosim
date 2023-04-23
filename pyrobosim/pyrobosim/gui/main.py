@@ -23,7 +23,7 @@ def start_gui(world):
 
     timer = QTimer(parent=app)
     timer.timeout.connect(lambda: None)
-    timer.start(500)
+    timer.start(1000)
 
     sys.exit(app.exec_())
 
@@ -224,7 +224,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         if not loc:
             return
 
-        print(f"[{robot.name}] Navigating to {loc.name}")
+        print(f"[{robot.name}] Navigating to {loc}")
         self.canvas.navigate_in_thread(robot, loc)
 
     def on_pick_click(self):

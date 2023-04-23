@@ -207,6 +207,8 @@ class Robot:
 
         # Get object
         loc = self.location
+        if isinstance(self.location, str):
+            loc = self.world.get_entity_by_name(self.location)
         if isinstance(obj_query, Object):
             obj = obj_query
         else:
@@ -284,8 +286,10 @@ class Robot:
 
         # Validate the robot location
         loc = self.location
+        if isinstance(loc, str):
+            loc = self.world.get_entity_by_name(self.location)
         if not isinstance(loc, ObjectSpawn):
-            warnings.warn("Not an object spawn. Cannot place object.")
+            warnings.warn(f"{loc} is not an object spawn. Cannot place object.")
             return False
 
         # Place the object somewhere in the current location

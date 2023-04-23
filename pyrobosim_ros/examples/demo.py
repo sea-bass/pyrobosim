@@ -11,7 +11,7 @@ import numpy as np
 
 from pyrobosim.core import Robot, World, WorldYamlLoader
 from pyrobosim.gui import start_gui
-from pyrobosim.navigation import ConstantVelocityExecutor
+from pyrobosim.navigation import ConstantVelocityExecutor, PathPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 from pyrobosim_ros.ros_interface import WorldROSWrapper
@@ -81,13 +81,23 @@ def create_world():
     world.add_object(category="water", parent=desk)
 
     # Add a robot
-    robot = Robot(name="robot", radius=0.1, path_executor=ConstantVelocityExecutor())
+    # Create path planner
+    planner_config = {
+        "world": world,
+        "bidirectional": True,
+        "rrt_connect": False,
+        "rrt_star": True,
+        "compress_path": False,
+    }
+    path_planner = PathPlanner("rrt", **planner_config)
+    robot = Robot(
+        name="robot",
+        radius=0.1,
+        path_executor=ConstantVelocityExecutor(),
+        path_planner=path_planner,
+    )
     world.add_robot(robot, loc="kitchen")
 
-    # Create a search graph
-    world.create_search_graph(
-        max_edge_dist=3.0, collision_check_dist=0.05, create_planner=True
-    )
     return world
 
 

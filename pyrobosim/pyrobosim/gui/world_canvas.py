@@ -4,6 +4,7 @@ import adjustText
 import numpy as np
 import time
 import threading
+import warnings
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.pyplot import Circle
@@ -77,7 +78,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.robot_bodies = []
         self.robot_dirs = []
         self.robot_lengths = []
-        self.path_planner_artists = []
+        self.path_planner_artists = {"graph": [], "path": []}
 
         # Debug displays (TODO: Should be available from GUI).
         self.show_collision_polygons = False
@@ -196,12 +197,9 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.obj_patches = [o.viz_patch for o in (self.world.objects)]
         self.obj_texts = [o.viz_text for o in (self.world.objects)]
 
-        # Path planner and path
+        # Show paths and planner graphs
         if len(self.world.robots) > 0:
-            robot_to_show = self.world.robots[0]
-        else:
-            robot_to_show = None
-        self.show_planner_and_path(robot_to_show)
+            self.show_planner_and_path(self.world.robots[0])
 
         self.axes.autoscale()
         self.axes.axis("equal")
@@ -274,26 +272,6 @@ class WorldCanvas(FigureCanvasQTAgg):
         """
         adjustText.adjust_text(objs, lim=100, add_objects=self.obj_patches)
 
-    def show_path(self, path, robot=None):
-        """
-        Plots a standalone path.
-
-        :param path: The path to display.
-        :type path: :class:`pyrobosim.utils.motion.Path`
-        """
-        for artist in self.path_planner_artists:
-            artist.remove()
-        self.path_planner_artists = []
-        x = [p.x for p in path.poses]
-        y = [p.y for p in path.poses]
-        color = robot.color if robot is not None else "m"
-        (path,) = self.axes.plot(
-            x, y, linestyle="-", color=color, linewidth=3, zorder=1
-        )
-        (start,) = self.axes.plot(x[0], y[0], "go", zorder=2)
-        (goal,) = self.axes.plot(x[-1], y[-1], "rx", zorder=2)
-        self.path_planner_artists.extend((path, start, goal))
-
     def show_planner_and_path(self, robot=None):
         """
         Plot the path planner and latest path, if specified.
@@ -308,19 +286,25 @@ class WorldCanvas(FigureCanvasQTAgg):
         while self.draw_lock:
             time.sleep(0.001)
         self.draw_lock = True
-        for artist in self.path_planner_artists:
-            artist.remove()
 
         color = robot.color if robot is not None else "m"
-
         if robot and robot.path_planner:
-            self.path_planner_artists = robot.path_planner.plot(
-                self.axes, path_color=color
-            )
-        elif self.world.path_planner:
-            self.path_planner_artists = self.world.path_planner.plot(
-                self.axes, path_color=color
-            )
+            path_planner_artists = robot.path_planner.plot(self.axes, path_color=color)
+
+            for artist in self.path_planner_artists["graph"]:
+                artist.remove()
+            self.path_planner_artists["graph"] = path_planner_artists.get("graph", [])
+
+            for artist in self.path_planner_artists["path"]:
+                artist.remove()
+            self.path_planner_artists["path"] = path_planner_artists.get("path", [])
+
+        else:
+            if not robot:
+                warnings.warn("No robot found")
+            elif not robot.path_planner:
+                warnings.warn("Robot does not have a planner")
+
         self.draw_lock = False
 
     def update_robots_plot(self):
@@ -418,22 +402,24 @@ class WorldCanvas(FigureCanvasQTAgg):
         """
 
         # Find a path, or use an existing one, and start the navigation thread.
-        if not robot.current_path or robot.current_path.num_poses < 1:
-            path = self.world.find_path(goal, robot=robot)
+        if robot and robot.path_planner:
+            goal_node = self.world.graph_node_from_entity(goal, robot=robot)
+            robot.current_goal = goal_node.parent
+            path = robot.plan_path(robot.pose, goal_node.pose)
             self.show_planner_and_path(robot)
-        else:
-            path = robot.current_path
-            robot.current_goal = self.world.get_entity_by_name(goal)
-            self.show_path(path, robot=robot)
-        robot.follow_path(
-            path,
-            target_location=robot.current_goal,
-            realtime_factor=self.realtime_factor,
-        )
+            robot.follow_path(
+                path,
+                target_location=robot.current_goal,
+                realtime_factor=self.realtime_factor,
+                blocking=False,
+            )
 
         # Sleep while the robot is executing the action.
         while robot.executing_nav:
             time.sleep(0.1)
+
+        self.show_world_state(robot=robot)
+        self.draw_and_sleep()
         return True
 
     def pick_object(self, robot, obj_name, grasp_pose=None):

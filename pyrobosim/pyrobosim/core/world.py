@@ -9,9 +9,9 @@ from .locations import Location, ObjectSpawn
 from .objects import Object
 from .room import Room
 from .robot import Robot
-from ..navigation.search_graph import Node, SearchGraph, SearchGraphPlanner
-from ..utils.knowledge import resolve_to_location, resolve_to_object
 from ..utils.pose import Pose
+from ..navigation import Node
+from ..utils.knowledge import resolve_to_location, resolve_to_object
 from ..utils.polygon import sample_from_polygon, transform_polygon
 
 
@@ -64,10 +64,6 @@ class World:
         self.x_bounds = None
         self.y_bounds = None
 
-        # Search graph for navigation
-        self.search_graph = None
-        self.path_planner = None
-
         # Other parameters
         self.max_object_sample_tries = (
             1000  # Max number of tries to sample object locations
@@ -106,7 +102,6 @@ class World:
             loc.update_collision_polygon(self.inflation_radius)
         for entity in itertools.chain(self.rooms, self.hallways):
             entity.update_collision_polygons(self.inflation_radius)
-        self.update_search_graph()
 
     ##########################
     # World Building Methods #
@@ -165,11 +160,7 @@ class World:
         # Update the room collision polygon based on the world inflation radius
         room.update_collision_polygons(self.inflation_radius)
 
-        # Update the search graph, if any
-        if self.search_graph is not None:
-            room.add_graph_nodes()
-            self.search_graph.add(room.graph_nodes, autoconnect=True)
-
+        room.add_graph_nodes()
         return room
 
     def remove_room(self, room_name):
@@ -200,9 +191,6 @@ class World:
         self.num_rooms -= 1
         self.update_bounds(entity=room, remove=True)
 
-        # Update the search graph, if any
-        if self.search_graph is not None:
-            self.search_graph.remove(room.graph_nodes)
         return True
 
     def add_hallway(self, **hallway_config):
@@ -261,11 +249,7 @@ class World:
         hallway.update_collision_polygons(self.inflation_radius)
         self.update_bounds(entity=hallway)
 
-        # Update the search graph, if any
-        if self.search_graph is not None:
-            hallway.add_graph_nodes()
-            self.search_graph.add(hallway.graph_nodes, autoconnect=True)
-
+        hallway.add_graph_nodes()
         # Finally, return the Hallway object
         return hallway
 
@@ -356,12 +340,7 @@ class World:
         for spawn in loc.children:
             self.name_to_entity[spawn.name] = spawn
 
-        # Update the search graph, if any
-        if self.search_graph is not None:
-            loc.add_graph_nodes()
-            for spawn in loc.children:
-                self.search_graph.add(spawn.graph_nodes, autoconnect=True)
-
+        loc.add_graph_nodes()
         return loc
 
     def update_location(self, loc, pose, room=None):
@@ -537,7 +516,7 @@ class World:
                 )
             if not is_valid_pose:
                 warnings.warn(
-                    f"Object {obj.name} in collision or not in location {loc.name}. Cannot add to world."
+                    f"Object {obj.name} in collision or not in location {obj_spawn.name}. Cannot add to world."
                 )
                 return None
 
@@ -673,253 +652,6 @@ class World:
             warnings.warn(
                 f"Updating bounds with unsupported entity type {type(entity)}"
             )
-
-    ######################################
-    # Search Graph and Occupancy Methods #
-    ######################################
-    def check_occupancy(self, pose):
-        """
-        Check if a pose in the world is occupied.
-
-        :param pose: Pose for checking occupancy.
-        :type pose: :class:`pyrobosim.utils.pose.Pose`
-        :return: True if the pose is occupied, else False if free.
-        :rtype: bool
-        """
-        # Loop through all the rooms and hallways and check if the pose
-        # is deemed collision-free in any of them.
-        for entity in itertools.chain(self.rooms, self.hallways):
-            if entity.is_collision_free(pose):
-                return False
-        # If we made it through, the pose is occupied.
-        return True
-
-    def collides_with_robots(self, pose, robot=None):
-        """
-        Checks if a pose collides with robots in the world.
-        Currently assumes that robots are circles, so we can do simple checks.
-        If this changes, should account for polygon collisions.
-
-        :param pose: Candidate pose to check.
-        :type pose: :class:`pyrobosim.utils.pose.Pose`
-        :param robot: Robot instance, if specified.
-        :type robot: :class:`pyrobosim.core.robot.Robot`, optional
-        :return: True if the pose collides with a robot besides the input.
-        :rtype: bool
-        """
-        radius = self.inflation_radius if robot is None else robot.radius
-        robot_list = [r for r in self.robots if r is not robot]
-        for r in robot_list:
-            if pose.get_linear_distance(r.pose) < (radius + robot.radius):
-                return True
-        return False
-
-    def create_search_graph(
-        self, max_edge_dist=np.inf, collision_check_dist=0.1, create_planner=False
-    ):
-        """
-        Creates a search graph for the world, as a :class:`pyrobosim.navigation.search_graph.SearchGraph` attribute.
-
-        :param max_edge_dist: Maximum distance to automatically connect two edges, defaults to infinity.
-        :type max_edge_dist: float, optional
-        :param collision_check_dist: Distance sampled along an edge to check for collisions, defaults to 0.1.
-        :type collision_check_dist: float, optional
-        :param create_planner: If True, creates a :class:`pyrobosim.navigation.search_graph.SearchGraphPlanner`.
-        :type create_planner: bool
-        """
-        self.search_graph = SearchGraph(
-            world=self,
-            max_edge_dist=max_edge_dist,
-            collision_check_dist=collision_check_dist,
-        )
-
-        # Add nodes to the world
-        for entity in itertools.chain(self.rooms, self.hallways, self.locations):
-            entity.add_graph_nodes()
-            if isinstance(entity, Location):
-                for spawn in entity.children:
-                    self.search_graph.add(spawn.graph_nodes, autoconnect=True)
-            else:
-                self.search_graph.add(entity.graph_nodes, autoconnect=True)
-
-        # Optionally, create a global planner from the search graph
-        if create_planner:
-            self.path_planner = SearchGraphPlanner(self.search_graph)
-
-    def update_search_graph(self):
-        """
-        Updates a search graph with the same properties as the previous one, if there was one.
-        """
-        if self.search_graph is None:
-            return
-        self.create_search_graph(
-            max_edge_dist=self.search_graph.max_edge_dist,
-            collision_check_dist=self.search_graph.collision_check_dist,
-        )
-
-    def find_path(self, goal, start=None, robot=None):
-        """
-        Finds a path from a start to goal location.
-        If no start argument is provided, we assume it is the current robot pose.
-
-        :param goal: Goal pose, search graph node, or world entity.
-        :param start: Optional start pose, search graph node, or world entity.
-        :return: List of graph Node objects describing the path, or None if not found.
-        :rtype: list[:class:`pyrobosim.navigation.search_graph.Node`]
-        """
-        # Prepare by adding start and goal nodes to the graph.
-        if start is None:
-            if robot is None:
-                warnings.warn("Cannot find path if no start pose or robot specified.")
-                return None
-            else:
-                start = robot.pose
-
-        created_start_node = False
-        if isinstance(start, Pose):
-            start_loc = robot.location if robot else None
-            if not start_loc:
-                start_loc = self.get_location_from_pose(start)
-            start_node = Node(start, parent=start_loc)
-            self.search_graph.add(start_node, autoconnect=True)
-            created_start_node = True
-        else:
-            start_node = self.graph_node_from_entity(start, robot=robot)
-            if start_node is None:
-                warnings.warn("Invalid start specified")
-                return None
-
-        created_goal_node = False
-        if isinstance(goal, Pose):
-            goal_node = Node(goal, parent=self.get_location_from_pose(goal))
-            self.search_graph.add(goal_node, autoconnect=True)
-            created_goal_node = True
-        else:
-            goal_node = self.graph_node_from_entity(goal, robot=robot)
-            if goal_node is None:
-                warnings.warn("Invalid goal specified")
-                return None
-
-        # Do the actual planning.
-        current_path = None
-        if robot and robot.path_planner:
-            # Plan with the robot's local planner.
-            goal = goal_node.pose
-            current_path = robot.path_planner.plan(start, goal)
-        elif self.path_planner:
-            # Plan with the robot's global planner.
-            current_path = self.path_planner.plan(start_node, goal_node)
-        else:
-            warnings.warn("No global or local path planners specified.")
-            return None
-
-        # If we created temporary nodes for search, remove them.
-        if created_start_node:
-            self.search_graph.remove(start_node)
-        if created_goal_node:
-            self.search_graph.remove(goal_node)
-
-        # Assign current path and goal to robot, if one specified.
-        if robot:
-            robot.current_path = current_path
-            robot.current_goal = goal_node.parent
-
-        return current_path
-
-    def graph_node_from_entity(
-        self, entity_query, resolution_strategy="nearest", robot=None
-    ):
-        """
-        Gets a graph node from an entity query, which could be any combination of
-        room, hallway, location, object spawn, or object in the world, as well as
-        their respective categories.
-
-        For more information on the inputs, refer to the :func:`pyrobosim.utils.knowledge.query_to_entity` function.
-
-        :param entity_query: List of entities (e.g., rooms or objects) or names/categories.
-        :type entity_query: list[Entity/str]
-        :param resolution_strategy: Resolution strategy to apply
-        :type resolution_strategy: str
-        :param robot: If set to a Robot instance, uses that robot for resolution strategy.
-        :type robot: :class:`pyrobosim.core.robot.Robot`, optional
-        :return: A graph node for the entity that meets the resolution strategy, or None.
-        :rtype: :class:`pyrobosim.navigation.search_graph.Node`
-        """
-        if isinstance(entity_query, Node):
-            return entity_query
-        elif isinstance(entity_query, str):
-            # Try resolve an entity based on its name. If that fails, we assume it must be a category,
-            # so try resolve it to a location or to an object by category.
-            entity = self.get_entity_by_name(entity_query)
-            if entity is None:
-                entity = resolve_to_location(
-                    self,
-                    category=entity_query,
-                    expand_locations=True,
-                    resolution_strategy=resolution_strategy,
-                    robot=robot,
-                )
-            if entity is None:
-                entity = resolve_to_object(
-                    self,
-                    category=entity_query,
-                    resolution_strategy=resolution_strategy,
-                    robot=robot,
-                    ignore_grasped=True,
-                )
-        else:
-            entity = entity_query
-
-        if (
-            isinstance(entity, ObjectSpawn)
-            or isinstance(entity, Room)
-            or isinstance(entity, Hallway)
-        ):
-            graph_nodes = entity.graph_nodes
-        elif isinstance(entity, Object):
-            graph_nodes = entity.parent.graph_nodes
-        elif isinstance(entity, Location):
-            graph_nodes = entity.children[0].graph_nodes
-            # TODO: Select a child node
-        else:
-            warnings.warn(f"Cannot get graph node from {entity}")
-            return None
-
-        # TODO: Select a graph node
-        graph_node = graph_nodes[0]
-        return graph_node
-
-    def sample_free_robot_pose_uniform(self, robot=None, ignore_robots=True):
-        """
-        Sample an unoccupied robot pose in the world.
-
-        This is done using uniform sampling within the world X-Y bounds and rejecting
-        any samples that are in collision with entities in the world.
-        If no valid samples could be found within the `max_object_sample_tries` instance
-        attribute, this will return ``None``.
-
-        :param robot: Robot instance, if specified.
-        :type robot: :class:`pyrobosim.core.robot.Robot`, optional
-        :param ignore_robots: If True, ignore collisions with other robots.
-        :type ignore_robots: bool
-        :return: Collision-free pose if found, else ``None``.
-        :rtype: :class:`pyrobosim.utils.pose.Pose`
-        """
-        xmin, xmax = self.x_bounds
-        ymin, ymax = self.y_bounds
-        r = self.inflation_radius if robot is None else robot.radius
-
-        for _ in range(self.max_object_sample_tries):
-            x = (xmax - xmin - 2 * r) * np.random.random() + xmin + r
-            y = (ymax - ymin - 2 * r) * np.random.random() + ymin + r
-            yaw = 2.0 * np.pi * np.random.random()
-            pose = Pose(x=x, y=y, z=0.0, yaw=yaw)
-            if not self.check_occupancy(pose) and (
-                ignore_robots or not self.collides_with_robots(pose, robot)
-            ):
-                return pose
-        warnings.warn("Could not sample pose.")
-        return None
 
     ################################
     # Lookup Functionality Methods #
@@ -1291,3 +1023,180 @@ class World:
         else:
             warnings.warn(f"Could not find robot {robot_name} to remove.")
             return False
+
+    ######################################
+    # Occupancy check #
+    ######################################
+
+    def is_connectable(self, start, goal, max_dist=None):
+        """
+        Checks connectivity between two poses `start` and `goal` in the world
+        by sampling points spaced by the `self.collision_check_dist` parameter
+        and verifying that every point is in the free configuration space.
+        :param start: Start node
+        :type start: :class:`Pose`
+        :param goal: Goal node
+        :type goal: :class:`Pose`
+        :param max_dist: The maximum allowed connection distance.
+        :type max_dist: float, optional
+        :return: True if nodes can be connected, else False.
+        :rtype: bool
+        """
+        # Trivial case where nodes are identical or there is no world.
+        if start == goal:
+            return True
+
+        # Check against the max edge distance.
+        dist = start.get_linear_distance(goal, ignore_z=True)
+        angle = start.get_angular_distance(goal)
+        if max_dist and (dist > max_dist):
+            return False
+
+        # Build up the array of test X and Y coordinates for sampling between
+        # the start and goal points.
+        dist_array = np.arange(0, dist, 0.01)
+        # If the nodes are coincident, connect them by default.
+        if dist_array.size == 0:
+            return True
+        if dist_array[-1] != dist:
+            np.append(dist_array, dist)
+        x_pts = start.x + dist_array * np.cos(angle)
+        y_pts = start.y + dist_array * np.sin(angle)
+
+        # Check the occupancy of all the test points.
+        for x_check, y_check in zip(x_pts[1:], y_pts[1:]):
+            if self.check_occupancy(Pose(x=x_check, y=y_check)):
+                return False
+
+        # If the loop was traversed for all points without returning, we can
+        # connect the points.
+        return True
+
+    def check_occupancy(self, pose):
+        """
+        Check if a pose in the world is occupied.
+        :param pose: Pose for checking occupancy.
+        :type pose: :class:`pyrobosim.utils.pose.Pose`
+        :return: True if the pose is occupied, else False if free.
+        :rtype: bool
+        """
+        # Loop through all the rooms and hallways and check if the pose
+        # is deemed collision-free in any of them.
+        for entity in itertools.chain(self.rooms, self.hallways):
+            if entity.is_collision_free(pose):
+                return False
+        # If we made it through, the pose is occupied.
+        return True
+
+    def collides_with_robots(self, pose, robot=None):
+        """
+        Checks if a pose collides with robots in the world.
+        Currently assumes that robots are circles, so we can do simple checks.
+        If this changes, should account for polygon collisions.
+        :param pose: Candidate pose to check.
+        :type pose: :class:`pyrobosim.utils.pose.Pose`
+        :param robot: Robot instance, if specified.
+        :type robot: :class:`pyrobosim.core.robot.Robot`, optional
+        :return: True if the pose collides with a robot besides the input.
+        :rtype: bool
+        """
+        radius = self.inflation_radius if robot is None else robot.radius
+        robot_list = [r for r in self.robots if r is not robot]
+        for r in robot_list:
+            if pose.get_linear_distance(r.pose) < (radius + robot.radius):
+                return True
+        return False
+
+    def sample_free_robot_pose_uniform(self, robot=None, ignore_robots=True):
+        """
+        Sample an unoccupied robot pose in the world.
+        This is done using uniform sampling within the world X-Y bounds and rejecting
+        any samples that are in collision with entities in the world.
+        If no valid samples could be found within the `max_object_sample_tries` instance
+        attribute, this will return ``None``.
+        :param robot: Robot instance, if specified.
+        :type robot: :class:`pyrobosim.core.robot.Robot`, optional
+        :param ignore_robots: If True, ignore collisions with other robots.
+        :type ignore_robots: bool
+        :return: Collision-free pose if found, else ``None``.
+        :rtype: :class:`pyrobosim.utils.pose.Pose`
+        """
+        xmin, xmax = self.x_bounds
+        ymin, ymax = self.y_bounds
+        r = self.inflation_radius if robot is None else robot.radius
+
+        for _ in range(self.max_object_sample_tries):
+            x = (xmax - xmin - 2 * r) * np.random.random() + xmin + r
+            y = (ymax - ymin - 2 * r) * np.random.random() + ymin + r
+            yaw = 2.0 * np.pi * np.random.random()
+            pose = Pose(x=x, y=y, z=0.0, yaw=yaw)
+            if not self.check_occupancy(pose) and (
+                ignore_robots or not self.collides_with_robots(pose, robot)
+            ):
+                return pose
+        warnings.warn("Could not sample pose.")
+        return None
+
+    ######################################
+    # graph utils #
+    ######################################
+
+    def graph_node_from_entity(
+        self, entity_query, resolution_strategy="nearest", robot=None
+    ):
+        """
+        Gets a graph node from an entity query, which could be any combination of
+        room, hallway, location, object spawn, or object in the world, as well as
+        their respective categories.
+        For more information on the inputs, refer to the :func:`pyrobosim.utils.knowledge.query_to_entity` function.
+        :param entity_query: List of entities (e.g., rooms or objects) or names/categories.
+        :type entity_query: list[Entity/str]
+        :param resolution_strategy: Resolution strategy to apply
+        :type resolution_strategy: str
+        :param robot: If set to a Robot instance, uses that robot for resolution strategy.
+        :type robot: :class:`pyrobosim.core.robot.Robot`, optional
+        :return: A graph node for the entity that meets the resolution strategy, or None.
+        :rtype: :class:`pyrobosim.navigation.search_graph.Node`
+        """
+        if isinstance(entity_query, Node):
+            return entity_query
+        elif isinstance(entity_query, str):
+            # Try resolve an entity based on its name. If that fails, we assume it must be a category,
+            # so try resolve it to a location or to an object by category.
+            entity = self.get_entity_by_name(entity_query)
+            if entity is None:
+                entity = resolve_to_location(
+                    self,
+                    category=entity_query,
+                    expand_locations=True,
+                    resolution_strategy=resolution_strategy,
+                    robot=robot,
+                )
+            if entity is None:
+                entity = resolve_to_object(
+                    self,
+                    category=entity_query,
+                    resolution_strategy=resolution_strategy,
+                    robot=robot,
+                    ignore_grasped=True,
+                )
+        else:
+            entity = entity_query
+
+        if (
+            isinstance(entity, ObjectSpawn)
+            or isinstance(entity, Room)
+            or isinstance(entity, Hallway)
+        ):
+            graph_nodes = entity.graph_nodes
+        elif isinstance(entity, Object):
+            graph_nodes = entity.parent.graph_nodes
+        elif isinstance(entity, Location):
+            graph_nodes = entity.children[0].graph_nodes
+        else:
+            warnings.warn(f"Cannot get graph node from {entity}")
+            return None
+
+        # TODO: Select a graph node
+        graph_node = graph_nodes[0]
+        return graph_node

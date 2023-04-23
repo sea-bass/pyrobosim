@@ -44,7 +44,10 @@ class ConstantVelocityExecutor:
         """
         if self.robot is None:
             warnings.warn("No robot attached to execute the trajectory.")
-            return
+            return False
+        elif path.num_poses < 2:
+            warnings.warn("Not enough waypoints in path to execute.")
+            return False
         self.robot.executing_nav = True
 
         # Convert the path to an interpolated trajectory

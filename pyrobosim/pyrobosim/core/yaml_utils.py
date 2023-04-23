@@ -9,6 +9,8 @@ from .robot import Robot
 from .world import World
 from ..utils.general import replace_special_yaml_tokens
 from ..utils.pose import Pose
+from pyrobosim.navigation import PathPlanner
+from ..navigation import occupancy_grid_from_world
 
 
 class WorldYamlLoader:
@@ -34,7 +36,6 @@ class WorldYamlLoader:
         self.add_locations()
         self.add_objects()
         self.add_robots()
-        self.add_global_path_planner()
         return self.world
 
     def create_world(self):
@@ -121,99 +122,39 @@ class WorldYamlLoader:
             )
 
             loc = robot_data["location"] if "location" in robot_data else None
+            if loc:
+                loc = self.world.get_entity_by_name(loc)
             if "pose" in robot_data:
                 pose = Pose.from_list(robot_data["pose"])
             else:
                 pose = None
             self.world.add_robot(robot, loc=loc, pose=pose)
 
-    def add_global_path_planner(self):
-        """Adds a global path planner to the world."""
-        if (
-            "global_path_planner" not in self.data
-            or "type" not in self.data["global_path_planner"]
-        ):
-            return
-
-        planner_data = self.data["global_path_planner"]
-        planner_type = planner_data["type"]
-        create_planner = False
-
-        if planner_type == "search_graph":
-            create_planner = True
-
-        elif planner_type == "prm":
-            from pyrobosim.navigation.prm import PRMPlanner
-
-            max_nodes = planner_data.get("max_nodes", 100)
-            max_connection_dist = planner_data.get("max_connection_dist", 1.0)
-            self.world.path_planner = PRMPlanner(
-                self.world,
-                max_nodes=max_nodes,
-                max_connection_dist=max_connection_dist,
-            )
-
-        elif planner_type == "astar_grid":
-            from pyrobosim.navigation.astar_grid import AStarGridPlanner
-
-            resolution = planner_data.get("resolution", 0.05)
-            inflation_radius = planner_data.get("inflation_radius", 0.1)
-            heuristic = planner_data.get("heuristic", "euclidean")
-            diagonal_motion = planner_data.get("diagonal_motion", True)
-            max_time = planner_data.get("max_time", 5.0)
-            compress_path = planner_data.get("compress_path", True)
-
-            self.world.path_planner = AStarGridPlanner(
-                self.world,
-                resolution=resolution,
-                inflation_radius=inflation_radius,
-                diagonal_motion=diagonal_motion,
-                heuristic=heuristic,
-                compress_path=compress_path,
-                max_time=max_time,
-            )
-        else:
-            warnings.warn(f"Invalid global planner type specified: {planner_type}")
-
-        # Always make a search graph as we use it for other things.
-        max_edge_dist = planner_data.get("max_edge_dist", np.inf)
-        collision_check_dist = planner_data.get("collision_check_dist", 0.1)
-        self.world.create_search_graph(
-            max_edge_dist=max_edge_dist,
-            collision_check_dist=collision_check_dist,
-            create_planner=create_planner,
-        )
-
     def get_local_path_planner(self, robot_data):
         """Gets local planner path planner to a robot."""
         if "path_planner" not in robot_data:
             return None
+
         planner_data = robot_data["path_planner"]
         planner_type = planner_data["type"]
-
-        if planner_type == "rrt":
-            from pyrobosim.navigation.rrt import RRTPlanner
-
-            bidirectional = planner_data.get("bidirectional", False)
-            rrt_star = planner_data.get("rrt_star", False)
-            rrt_connect = planner_data.get("rrt_connect", False)
-            max_connection_dist = planner_data.get("max_connection_dist", 0.5)
-            max_nodes_sampled = planner_data.get("max_nodes_sampled", 1000)
-            max_time = planner_data.get("max_time", 5.0)
-            rewire_radius = planner_data.get("rewire_radius", 1.0)
-            return RRTPlanner(
-                self.world,
-                bidirectional=bidirectional,
-                rrt_star=rrt_star,
-                rrt_connect=rrt_connect,
-                max_connection_dist=max_connection_dist,
-                max_nodes_sampled=max_nodes_sampled,
-                max_time=max_time,
-                rewire_radius=rewire_radius,
+        planner_data.pop("type")
+        occupancy_grid = planner_data.get("occupancy_grid", None)
+        if occupancy_grid:
+            resolution = occupancy_grid.get("resolution", 0.05)
+            inflation_radius = occupancy_grid.get("inflation_radius", 0.15)
+            occupancy_grid = occupancy_grid_from_world(
+                self.world, resolution, inflation_radius
             )
-        else:
-            warnings.warn(f"Invalid planner type specified: {planner_type}")
-            return None
+            # Remove the metadata about occupancy grid.
+            planner_data.pop("occupancy_grid")
+            planner_data["grid"] = occupancy_grid
+
+        # We only need to include a world object if occupancy grid was not specified.
+        if not occupancy_grid:
+            planner_data["world"] = self.world
+        path_planner = PathPlanner(planner_type, **planner_data)
+
+        return path_planner
 
     def get_path_executor(self, robot_data):
         """Gets a path executor to add to a robot."""

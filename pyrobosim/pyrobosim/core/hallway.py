@@ -5,7 +5,7 @@ from shapely import intersects_xy
 from shapely.geometry import LineString, MultiLineString
 from shapely.plotting import patch_from_polygon
 
-from ..navigation.search_graph import Node
+from ..navigation.world_graph import Node
 from ..utils.pose import Pose, get_bearing_range
 from ..utils.polygon import inflate_polygon
 
