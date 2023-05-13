@@ -6,9 +6,7 @@ System-level tests for the pyrobosim UI functionality to execute tasks.
 
 import numpy as np
 import os
-import pytest
 import sys
-import threading
 import time
 
 from pyrobosim.core import Robot, World
@@ -122,10 +120,8 @@ class TestSystem:
         robot0.set_path_planner(rrt_planner)
         world.add_robot(robot0, loc="kitchen")
 
-        # Create headless app and start in new thread.
+        # Create headless app.
         self.app = PyRoboSimGUI(world, sys.argv, show=False)
-        app_thread = threading.Thread(target=lambda: sys.exit(self.app.exec_()))
-        app_thread.start()
 
     def nav_helper(self, nav_query):
         """
