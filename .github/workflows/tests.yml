@@ -28,9 +28,8 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          pip3 install lark pytest pytest-dependency pytest-env pytest-html
+          pip3 install lark pytest pytest-dependency pytest-env pytest-html pytest-qt
           pip3 install -e pyrobosim
-          setup/setup_pddlstream.bash
       - name: Run unit tests
         run: |
           export PYTHONPATH=./dependencies/pddlstream:$PYTHONPATH
