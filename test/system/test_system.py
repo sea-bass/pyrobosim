@@ -31,6 +31,7 @@ pick_place_queries = [
     ("counter0_left", "water", "desk"),  # Pick and place in different location
 ]
 
+os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 class TestSystem:
     @pytest.fixture(autouse=True)
