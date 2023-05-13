@@ -31,7 +31,7 @@ def start_gui(world):
 class PyRoboSimGUI(QtWidgets.QApplication):
     """Main pyrobosim GUI class."""
 
-    def __init__(self, world, args):
+    def __init__(self, world, args, show=True):
         """
         Creates an instance of the pyrobosim GUI.
 
@@ -41,7 +41,8 @@ class PyRoboSimGUI(QtWidgets.QApplication):
         super(PyRoboSimGUI, self).__init__(args)
         self.world = world
         self.main_window = PyRoboSimMainWindow(world)
-        self.main_window.show()
+        if show:
+            self.main_window.show()
 
 
 class PyRoboSimMainWindow(QtWidgets.QMainWindow):
