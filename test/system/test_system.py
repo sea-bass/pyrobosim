@@ -122,6 +122,17 @@ class TestSystem:
 
         # Create headless app.
         self.app = PyRoboSimGUI(world, sys.argv, show=False)
+        import threading
+
+        def setup(app):
+            from PyQt5.QtCore import QTimer
+            timer = QTimer(parent=app)
+            timer.timeout.connect(lambda: None)
+            timer.start(1000)
+            self.app.exec()
+
+        t = threading.Thread(target=setup)
+        t.start()
 
     def nav_helper(self, nav_query):
         """

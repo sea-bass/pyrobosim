@@ -16,7 +16,7 @@ RUN mkdir -p /pyrobosim_ws/src/pyrobosim
 
 # Install dependencies
 COPY setup /pyrobosim_ws/src/setup
-RUN cd /pyrobosim_ws/src/setup && ./setup_pddlstream.bash
+# RUN cd /pyrobosim_ws/src/setup && ./setup_pddlstream.bash
 
 # Install pyrobosim and testing dependencies
 WORKDIR /pyrobosim_ws
