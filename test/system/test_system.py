@@ -31,7 +31,9 @@ pick_place_queries = [
     ("counter0_left", "water", "desk"),  # Pick and place in different location
 ]
 
+# Needed for PyQt5 tests to work with CI
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
+
 
 class TestSystem:
     @pytest.fixture(autouse=True)
