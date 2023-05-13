@@ -8,7 +8,6 @@ import numpy as np
 import os
 import pytest
 import sys
-import threading
 import time
 
 from pyrobosim.core import Robot, World
@@ -25,8 +24,6 @@ os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 
 class TestSystem:
-    mutex = threading.Lock()
-
     @pytest.fixture(autouse=True)
     def create_world_and_app(self):
         world = World()
@@ -136,34 +133,31 @@ class TestSystem:
         :param nav_query: Query for navigation goal.
         :type nav_query: str
         """
-        self.mutex.acquire()
-        try:
-            window = self.app.main_window
-            world = self.app.world
-            robot = window.get_current_robot()
-            expected_location = query_to_entity(
-                world,
-                nav_query.split(" "),
-                mode="location",
-                robot=robot,
-                resolution_strategy="nearest",
-            )
+        window = self.app.main_window
+        world = self.app.world
+        robot = window.get_current_robot()
+        expected_location = query_to_entity(
+            world,
+            nav_query.split(" "),
+            mode="location",
+            robot=robot,
+            resolution_strategy="nearest",
+        )
 
-            window.goal_textbox.setText(nav_query)
-            window.on_navigate_click()
+        window.goal_textbox.setText(nav_query)
+        window.on_navigate_click()
 
-            while not robot.executing_nav:
-                time.sleep(0.1)
-            while robot.executing_nav:
-                time.sleep(0.1)
-        finally:
-            self.mutex.release()
+        while not robot.executing_nav:
+            time.sleep(0.1)
+        while robot.executing_nav:
+            time.sleep(0.1)
 
         assert (
             robot.location == expected_location
             or robot.location in expected_location.children
         )
 
+    @pytest.mark.dependency(name="test_nav")
     def test_nav(self):
         """
         Test navigation UI action.
@@ -177,7 +171,7 @@ class TestSystem:
         for nav_query in nav_queries:
             self.nav_helper(nav_query)
 
-    @pytest.mark.dependency(depends=["TestSystem::test_nav"])
+    @pytest.mark.dependency(name="test_pick_place", depends=["test_nav"])
     def test_pick_place(self):
         """
         Test pick and place UI actions.
@@ -203,21 +197,13 @@ class TestSystem:
                 robot=robot,
                 resolution_strategy="nearest",
             )
-            self.mutex.acquire()
-            try:
-                window.goal_textbox.setText(obj_query)
-                window.on_pick_click()
-            finally:
-                self.mutex.release()
+            window.goal_textbox.setText(obj_query)
+            window.on_pick_click()
             assert robot.manipulated_object == expected_object
 
             # Navigate to place location
             self.nav_helper(place_query)
 
             # Place an object
-            self.mutex.acquire()
-            try:
-                window.on_place_click()
-            finally:
-                self.mutex.release()
+            window.on_place_click()
             assert robot.manipulated_object is None
