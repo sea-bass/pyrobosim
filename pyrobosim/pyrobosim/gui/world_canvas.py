@@ -208,9 +208,6 @@ class WorldCanvas(FigureCanvasQTAgg):
 
     def draw_and_sleep(self):
         """Redraws the figure and waits a small amount of time."""
-        if self.draw_lock.locked():
-            return
-
         self.draw_lock.acquire()
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
