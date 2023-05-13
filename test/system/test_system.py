@@ -195,9 +195,6 @@ class TestSystem:
         )
         window.goal_textbox.setText(obj_query)
         window.on_pick_click()
-        print(f"Robot manipulated object: {robot.manipulated_object}")
-        print(f"Expected object: {expected_object}")
-
         assert robot.manipulated_object == expected_object
 
         # Navigate to place location
