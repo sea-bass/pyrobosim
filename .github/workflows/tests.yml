@@ -30,13 +30,12 @@ jobs:
           python3 -m pip install --upgrade pip
           pip3 install lark pytest pytest-dependency pytest-env pytest-html pytest-qt
           pip3 install -e pyrobosim
-      - name: Set up Xvfb
+      - name: Qt5 hack
         run: |
-          sudo apt-get install xvfb
-          Xvfb :100 -ac &
+          sudo mkdir /usr/bin/platforms
+          sudo ln -s /our/local/libqxcb.so /usr/bin/platforms/libqxcb.so
       - name: Run unit tests
         run: |
-          export DISPLAY=:100
           export PYTHONPATH=./dependencies/pddlstream:$PYTHONPATH
           test/run_tests.bash
       - name: Upload test results
