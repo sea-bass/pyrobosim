@@ -6,7 +6,9 @@ System-level tests for the pyrobosim UI functionality to execute tasks.
 
 import numpy as np
 import os
+import pytest
 import sys
+import threading
 import time
 
 from pyrobosim.core import Robot, World
@@ -23,6 +25,9 @@ os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 
 class TestSystem:
+    mutex = threading.Lock()
+
+    @pytest.fixture(autouse=True)
     def create_world_and_app(self):
         world = World()
         data_folder = get_data_folder()
@@ -106,7 +111,7 @@ class TestSystem:
         robot0 = Robot(
             name="robot0",
             radius=0.1,
-            path_executor=ConstantVelocityExecutor(),
+            path_executor=ConstantVelocityExecutor(linear_velocity=3.0),
             grasp_generator=GraspGenerator(grasp_props),
         )
         planner_config_rrt = {
@@ -122,17 +127,7 @@ class TestSystem:
 
         # Create headless app.
         self.app = PyRoboSimGUI(world, sys.argv, show=False)
-        import threading
-
-        def setup(app):
-            from PyQt5.QtCore import QTimer
-            timer = QTimer(parent=app)
-            timer.timeout.connect(lambda: None)
-            timer.start(1000)
-            self.app.exec()
-
-        t = threading.Thread(target=setup)
-        t.start()
+        time.sleep(0.5)
 
     def nav_helper(self, nav_query):
         """
@@ -141,24 +136,28 @@ class TestSystem:
         :param nav_query: Query for navigation goal.
         :type nav_query: str
         """
-        window = self.app.main_window
-        world = self.app.world
-        robot = window.get_current_robot()
-        expected_location = query_to_entity(
-            world,
-            nav_query.split(" "),
-            mode="location",
-            robot=robot,
-            resolution_strategy="nearest",
-        )
+        self.mutex.acquire()
+        try:
+            window = self.app.main_window
+            world = self.app.world
+            robot = window.get_current_robot()
+            expected_location = query_to_entity(
+                world,
+                nav_query.split(" "),
+                mode="location",
+                robot=robot,
+                resolution_strategy="nearest",
+            )
 
-        window.goal_textbox.setText(nav_query)
-        window.on_navigate_click()
+            window.goal_textbox.setText(nav_query)
+            window.on_navigate_click()
 
-        while not robot.executing_nav:
-            time.sleep(0.1)
-        while robot.executing_nav:
-            time.sleep(0.1)
+            while not robot.executing_nav:
+                time.sleep(0.1)
+            while robot.executing_nav:
+                time.sleep(0.1)
+        finally:
+            self.mutex.release()
 
         assert (
             robot.location == expected_location
@@ -175,12 +174,10 @@ class TestSystem:
             "counter0_right",
             "kitchen apple",
         ]
-
-        self.create_world_and_app()
-
         for nav_query in nav_queries:
             self.nav_helper(nav_query)
 
+    @pytest.mark.dependency(depends=["TestSystem::test_nav"])
     def test_pick_place(self):
         """
         Test pick and place UI actions.
@@ -189,8 +186,6 @@ class TestSystem:
             ("table", "apple2", "table"),  # Pick and place in same location
             ("counter0_left", "water", "desk"),  # Pick and place in different location
         ]
-
-        self.create_world_and_app()
 
         window = self.app.main_window
         world = self.app.world
@@ -208,13 +203,21 @@ class TestSystem:
                 robot=robot,
                 resolution_strategy="nearest",
             )
-            window.goal_textbox.setText(obj_query)
-            window.on_pick_click()
+            self.mutex.acquire()
+            try:
+                window.goal_textbox.setText(obj_query)
+                window.on_pick_click()
+            finally:
+                self.mutex.release()
             assert robot.manipulated_object == expected_object
 
             # Navigate to place location
             self.nav_helper(place_query)
 
             # Place an object
-            window.on_place_click()
+            self.mutex.acquire()
+            try:
+                window.on_place_click()
+            finally:
+                self.mutex.release()
             assert robot.manipulated_object is None
