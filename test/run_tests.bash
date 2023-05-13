@@ -3,8 +3,6 @@
 # Runs all unit tests
 echo "Running unit tests..."
 
-export QT_QPA_PLATFORM=offscreen
-
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 TEST_RESULTS_DIR=$SCRIPT_DIR/results
 
