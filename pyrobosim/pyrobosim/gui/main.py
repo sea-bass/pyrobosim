@@ -37,7 +37,7 @@ class PyRoboSimGUI(QtWidgets.QApplication):
 
         :param world: World object to attach to the GUI.
         :type world: :class:`pyrobosim.core.world.World`
-        :param args: System arguments, needed by the QApplication constructor
+        :param args: System arguments, needed by the QApplication constructor.
         :type args: list[str]
         :param show: If true (default), shows the GUI. Otherwise runs headless for testing.
         :type show: bool, optional

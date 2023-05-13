@@ -4,10 +4,11 @@
 System-level tests for the pyrobosim UI functionality to execute tasks.
 """
 
-import os
 import numpy as np
+import os
 import pytest
 import sys
+import threading
 import time
 
 from pyrobosim.core import Robot, World
@@ -19,24 +20,11 @@ from pyrobosim.utils.knowledge import query_to_entity
 from pyrobosim.utils.pose import Pose
 
 
-nav_queries = [
-    "bathroom",
-    "bedroom desk",
-    "counter0_right",
-    "kitchen apple",
-]
-
-pick_place_queries = [
-    ("table", "apple2", "table"),  # Pick and place in same location
-    ("counter0_left", "water", "desk"),  # Pick and place in different location
-]
-
 # Needed for PyQt5 tests to work with CI
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 
 class TestSystem:
-    @pytest.fixture(autouse=True)
     def create_world_and_app(self):
         world = World()
         data_folder = get_data_folder()
@@ -134,12 +122,14 @@ class TestSystem:
         robot0.set_path_planner(rrt_planner)
         world.add_robot(robot0, loc="kitchen")
 
+        # Create headless app and start in new thread.
         self.app = PyRoboSimGUI(world, sys.argv, show=False)
+        app_thread = threading.Thread(target=lambda: sys.exit(self.app.exec_()))
+        app_thread.start()
 
-    @pytest.mark.parametrize("nav_query", nav_queries)
-    def test_nav(self, nav_query):
+    def nav_helper(self, nav_query):
         """
-        Test navigation UI action.
+        Helper function to test navigation UI action.
 
         :param nav_query: Query for navigation goal.
         :type nav_query: str
@@ -147,7 +137,6 @@ class TestSystem:
         window = self.app.main_window
         world = self.app.world
         robot = window.get_current_robot()
-
         expected_location = query_to_entity(
             world,
             nav_query.split(" "),
@@ -169,40 +158,56 @@ class TestSystem:
             or robot.location in expected_location.children
         )
 
-    @pytest.mark.parametrize("pick_query,obj_query,place_query", pick_place_queries)
-    def test_pick_place(self, pick_query, obj_query, place_query):
+    def test_nav(self):
+        """
+        Test navigation UI action.
+        """
+        nav_queries = [
+            "bathroom",
+            "bedroom desk",
+            "counter0_right",
+            "kitchen apple",
+        ]
+
+        self.create_world_and_app()
+
+        for nav_query in nav_queries:
+            self.nav_helper(nav_query)
+
+    def test_pick_place(self):
         """
         Test pick and place UI actions.
-
-        :param pick_query: Query for pick location navigation goal.
-        :type pick_query: str
-        :param obj_query: Query for object to pick.
-        :type obj_query: str
-        :param place_query: Query for place location navigation goal.
-        :type place_query: str
         """
+        pick_place_queries = [
+            ("table", "apple2", "table"),  # Pick and place in same location
+            ("counter0_left", "water", "desk"),  # Pick and place in different location
+        ]
+
+        self.create_world_and_app()
+
         window = self.app.main_window
         world = self.app.world
         robot = window.get_current_robot()
 
-        # Navigate to pick location
-        self.test_nav(pick_query)
+        for pick_query, obj_query, place_query in pick_place_queries:
+            # Navigate to pick location
+            self.nav_helper(pick_query)
 
-        # Pick an object
-        expected_object = query_to_entity(
-            world,
-            obj_query,
-            mode="object",
-            robot=robot,
-            resolution_strategy="nearest",
-        )
-        window.goal_textbox.setText(obj_query)
-        window.on_pick_click()
-        assert robot.manipulated_object == expected_object
+            # Pick an object
+            expected_object = query_to_entity(
+                world,
+                obj_query.split(" "),
+                mode="object",
+                robot=robot,
+                resolution_strategy="nearest",
+            )
+            window.goal_textbox.setText(obj_query)
+            window.on_pick_click()
+            assert robot.manipulated_object == expected_object
 
-        # Navigate to place location
-        self.test_nav(place_query)
+            # Navigate to place location
+            self.nav_helper(place_query)
 
-        # Place an object
-        window.on_place_click()
-        assert robot.manipulated_object is None
+            # Place an object
+            window.on_place_click()
+            assert robot.manipulated_object is None
