@@ -137,7 +137,7 @@ class TestSystem:
     def test_nav(self, nav_query):
         """
         Test navigation UI action.
-        
+
         :param nav_query: Query for navigation goal.
         :type nav_query: str
         """
@@ -170,7 +170,7 @@ class TestSystem:
     def test_pick_place(self, pick_query, obj_query, place_query):
         """
         Test pick and place UI actions.
-        
+
         :param pick_query: Query for pick location navigation goal.
         :type pick_query: str
         :param obj_query: Query for object to pick.
