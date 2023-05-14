@@ -118,18 +118,9 @@ locations:
     parent: bathroom
     pose: [-2.45, 2.5, 0.0, 1.767]
 
-  - name: trash
-    category: trash_can
-    parent: kitchen
-    pose: [0.9, 1.1, 0.0, 1.57]
 
-
-# OBJECTS: Can be picked, placed, and move by robot
+# OBJECTS: Can be picked, placed, and moved by robot
 objects:
-  - category: banana
-    parent: table0
-    pose: [1.0, -0.5, 0.0, 0.707]
-
   - category: apple
     parent: my_desk
     pose: [3.2, 3.5, 0.0, 0.0]
@@ -138,10 +129,6 @@ objects:
     category: apple
     parent: table0
 
-  - name: fuji
-    category: apple
-    parent: trash
-
   - category: water
     parent: counter0_left
 
@@ -149,8 +136,4 @@ objects:
     parent: counter0_right
 
   - category: water
-    parent: my_desk
-
-  - name: soda
-    category: coke
     parent: my_desk

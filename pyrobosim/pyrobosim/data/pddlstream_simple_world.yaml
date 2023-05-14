@@ -116,7 +116,7 @@ locations:
     pose: [-2.45, 2.5, 0.0, 1.767]
 
 
-# OBJECTS: Can be picked, placed, and move by robot
+# OBJECTS: Can be picked, placed, and moved by robot
 objects:
   - category: banana
     parent: table0
