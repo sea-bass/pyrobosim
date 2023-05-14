@@ -8,16 +8,11 @@ import os
 import sys
 import time
 
-import numpy as np
 import pytest
 
-from pyrobosim.core import Robot, World, WorldYamlLoader
+from pyrobosim.core import WorldYamlLoader
 from pyrobosim.gui import PyRoboSimGUI
-from pyrobosim.manipulation import GraspGenerator, ParallelGraspProperties
-from pyrobosim.navigation import ConstantVelocityExecutor, PathPlanner
-from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.knowledge import query_to_entity
-from pyrobosim.utils.pose import Pose
 
 
 # Needed for PyQt5 tests to work with CI
