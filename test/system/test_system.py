@@ -23,6 +23,9 @@ from pyrobosim.utils.pose import Pose
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 10), reason="Test does not work in versions before 3.10."
+)
 class TestSystem:
     @pytest.fixture(autouse=True)
     def create_world_and_app(self):
