@@ -1,6 +1,5 @@
 """ Utilities to create worlds from YAML files. """
 
-import numpy as np
 import os
 import warnings
 import yaml
@@ -9,8 +8,11 @@ from .robot import Robot
 from .world import World
 from ..utils.general import replace_special_yaml_tokens
 from ..utils.pose import Pose
-from pyrobosim.navigation import PathPlanner
-from ..navigation import occupancy_grid_from_world
+from ..navigation import (
+    ConstantVelocityExecutor,
+    occupancy_grid_from_world,
+    PathPlanner,
+)
 
 
 class WorldYamlLoader:
@@ -158,9 +160,20 @@ class WorldYamlLoader:
 
     def get_path_executor(self, robot_data):
         """Gets a path executor to add to a robot."""
-        from pyrobosim.navigation.execution import ConstantVelocityExecutor
+        if "path_executor" not in robot_data:
+            return ConstantVelocityExecutor()
 
-        return ConstantVelocityExecutor()
+        path_executor_data = robot_data["path_executor"]
+        path_executor_type = path_executor_data["type"]
+        if path_executor_type == "constant_velocity":
+            return ConstantVelocityExecutor(
+                linear_velocity=path_executor_data.get("linear_velocity", 1.0),
+                dt=path_executor_data.get("dt", 0.1),
+                max_angular_velocity=path_executor_data.get("max_angular_velocity"),
+            )
+        else:
+            warnings.warn(f"Invalid path executor type specified: {path_executor_type}")
+            return None
 
     def get_grasp_generator(self, robot_data):
         """Gets a grasp generator to add to a robot."""

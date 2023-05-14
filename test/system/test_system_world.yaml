@@ -1,10 +1,10 @@
-##########################
-# Test world description #
-##########################
+#################################
+# System test world description #
+#################################
 
 # WORLD PARAMETERS
 params:
-  name: test_world
+  name: test_system_world
   object_radius: 0.05 # Radius around objects
   wall_height: 2.0 # Wall height for exporting to Gazebo
 
@@ -24,9 +24,6 @@ robots:
     # Rapidly-expanding Random Tree (RRT) planner
     path_planner:
       type: rrt
-      # occupancy_grid:
-      #   resolution: 0.05
-      #   inflation_radius: 0.15
       max_connection_dist: 0.25
       bidirectional: true
       rrt_star: true
@@ -35,9 +32,7 @@ robots:
     # Linear motion path executor
     path_executor:
       type: constant_velocity
-      linear_velocity: 1.0
-      max_angular_velocity: 4.0
-      dt: 0.1
+      linear_velocity: 3.0
     # Grasp generation
     grasping:
       generator: parallel_grasp
@@ -148,10 +143,10 @@ objects:
     parent: trash
 
   - category: water
-    parent: counter0
+    parent: counter0_left
 
   - category: banana
-    parent: counter0
+    parent: counter0_right
 
   - category: water
     parent: my_desk

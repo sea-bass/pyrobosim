@@ -28,6 +28,11 @@ robots:
       bidirectional: true
       rrt_star: true
       rewire_radius: 1.0
+    path_executor:
+      type: constant_velocity
+      linear_velocity: 1.0
+      max_angular_velocity: 4.0
+      dt: 0.1
 
   - radius: 0.08
     color: [0.8, 0.8, 0.0]

@@ -28,6 +28,11 @@ robots:
       rrt_star: true
       rewire_radius: 1.5
       compress_path: false
+    path_executor:
+      type: constant_velocity
+      linear_velocity: 1.0
+      max_angular_velocity: 4.0
+      dt: 0.1
     grasping:
       generator: parallel_grasp
       max_width: 0.15
