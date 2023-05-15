@@ -1,6 +1,8 @@
 # Contributing to pyrobosim
 
-Thank you for contributing to `pyrobosim`!
+Thank you for considering a contribution to `pyrobosim`!
+
+While jumping into someone else's code base can be challenging, here are some tips to help you navigate contributing to this repository.
 
 ## Getting Started
 

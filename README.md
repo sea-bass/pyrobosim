@@ -9,7 +9,7 @@ By Sebastian Castro, 2022-2023
 
 Refer to the [full documentation](https://pyrobosim.readthedocs.io/) for setup, usage, and other concepts.
 
-We would love your contributions!
-Please refer to the [contributor guide](CONTRIBUTING.md) for more information.
+We look forward to your open-source contributions to pyrobosim.
+For more information, refer to the [contributor guide](CONTRIBUTING.md).
 
 ![Example animation of the simulator](docs/source/media/pyrobosim_demo.gif)
