@@ -11,6 +11,9 @@ pyrobosim is a ROS 2 enabled 2D mobile robot simulator for behavior prototyping.
 
 |
 
+We look forward to your open-source contributions to pyrobosim.
+For more information, refer to the `contributor guide on GitHub <https://github.com/sea-bass/pyrobosim/blob/main/CONTRIBUTING.md>`_.
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
