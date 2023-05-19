@@ -105,7 +105,9 @@ def create_world(multirobot=False):
     robot0 = Robot(
         name="robot0",
         radius=0.1,
-        path_executor=ConstantVelocityExecutor(),
+        path_executor=ConstantVelocityExecutor(
+            linear_velocity=1.0, dt=0.1, max_angular_velocity=4.0
+        ),
         grasp_generator=GraspGenerator(grasp_props),
     )
     planner_config_rrt = {
@@ -159,8 +161,7 @@ def create_world(multirobot=False):
 
 
 def create_world_from_yaml(world_file):
-    loader = WorldYamlLoader()
-    return loader.from_yaml(os.path.join(data_folder, world_file))
+    return WorldYamlLoader().from_yaml(os.path.join(data_folder, world_file))
 
 
 def parse_args():

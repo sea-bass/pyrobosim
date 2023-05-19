@@ -17,10 +17,8 @@ from pyrobosim_ros.ros_interface import WorldROSWrapper
 
 def load_world():
     """Load a test world."""
-    loader = WorldYamlLoader()
-    world_file = "pddlstream_simple_world.yaml"
-    data_folder = get_data_folder()
-    return loader.from_yaml(os.path.join(data_folder, world_file))
+    world_file = os.path.join(get_data_folder(), "pddlstream_simple_world.yaml")
+    return WorldYamlLoader().from_yaml(world_file)
 
 
 def create_ros_node():

@@ -51,7 +51,10 @@ class WorldCanvas(FigureCanvasQTAgg):
     """ zorder for robot visualization. """
 
     nav_trigger = pyqtSignal(str, str)
-    """ Signal to trigger navigation method in a thread-safe way. """
+    """ Signal to trigger navigation method in a thread-safe manner. """
+
+    draw_lock = threading.Lock()
+    """ Lock for drawing on the canvas in a thread-safe manner. """
 
     def __init__(self, world, dpi=100):
         """
@@ -85,8 +88,6 @@ class WorldCanvas(FigureCanvasQTAgg):
 
         # Connect triggers for thread-safe execution.
         self.nav_trigger.connect(self.navigate_in_thread)
-
-        self.draw_lock = False
 
         # Start thread for animating robot navigation state.
         self.nav_animator = NavAnimator(self)
@@ -207,14 +208,13 @@ class WorldCanvas(FigureCanvasQTAgg):
 
     def draw_and_sleep(self):
         """Redraws the figure and waits a small amount of time."""
-        if self.draw_lock:
+        if self.draw_lock.locked():
             return
-
-        self.draw_lock = True
+        self.draw_lock.acquire()
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
         time.sleep(0.001)
-        self.draw_lock = False
+        self.draw_lock.release()
 
     def get_animated_artists(self):
         """Returns a list of artists to animate when blitting."""
@@ -283,9 +283,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         """
         # Since removing artists while drawing can cause issues,
         # this function should also lock drawing.
-        while self.draw_lock:
-            time.sleep(0.001)
-        self.draw_lock = True
+        self.draw_lock.acquire()
 
         color = robot.color if robot is not None else "m"
         if robot and robot.path_planner:
@@ -305,7 +303,7 @@ class WorldCanvas(FigureCanvasQTAgg):
             elif not robot.path_planner:
                 warnings.warn("Robot does not have a planner")
 
-        self.draw_lock = False
+        self.draw_lock.release()
 
     def update_robots_plot(self):
         """Updates the robot visualization graphics objects."""

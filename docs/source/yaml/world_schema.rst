@@ -15,9 +15,9 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
    # General parameters
    params:
       name: <world_name>
-      inflation_radius: <value> # Collision padding radius around rooms/hallways/locations
-      object_radius: <value> # Collision padding radius around objects
-      wall_height: <value> # Vertical (Z) height of walls, can override with individual entities
+      inflation_radius: <value>  # Collision padding radius around rooms/hallways/locations
+      object_radius: <value>  # Collision padding radius around objects
+      wall_height: <value>  # Vertical (Z) height of walls, can override with individual entities
 
    # Metadata
    metadata:
@@ -27,21 +27,24 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
    # Robots: Each robot contains basic properties, plus other add-ons such as path planners and grasp generators
    robots:
      - name: <name>
-       radius: <value> # Robot radius
-       location: <loc_name> # Initial location
-       pose: [<x>, <y>, <z>, <yaw>] # Initial pose, if not specified will sample
-       path_planner: # Local robot path planner -- generally refers to single-query planners
-         type: rrt # Supported types -- rrt, prm, astar
+       radius: <value>  # Robot radius
+       location: <loc_name>  # Initial location
+       pose: [<x>, <y>, <z>, <yaw>]  # Initial pose, if not specified will sample
+       path_planner:  # Local robot path planner -- generally refers to single-query planners
+         type: rrt  # Supported types -- rrt, prm, astar
          <property>: <planner_property>
-       grasp_generator: # For object grasp generation
-         type: parallel_grasp # Supported types -- parallel_grasp
+       path_executor:  # For following a path
+         type: constant_velocity  # Supported types -- constant_velocity
+         <property>: <path_executor_property>
+       grasp_generator:  # For object grasp generation
+         type: parallel_grasp  # Supported types -- parallel_grasp
          <property>: <grasp_generator_property>
      - ...
      - ...
 
    # Rooms
    rooms:
-     - name: <room_name> # If not specified, will be automatic
+     - name: <room_name>  # If not specified, will be automatic
        footprint:
          type: <footprint_type>
          <property>: <footprint_property>

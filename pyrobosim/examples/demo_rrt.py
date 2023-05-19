@@ -8,9 +8,8 @@ from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
 # Load a test world.
-data_folder = get_data_folder()
-loader = WorldYamlLoader()
-world = loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
+world_file = os.path.join(get_data_folder(), "test_world.yaml")
+world = WorldYamlLoader().from_yaml(world_file)
 
 
 def test_rrt():

@@ -20,9 +20,11 @@ class TestWorldModeling:
         """Tests the creation of a world"""
 
         TestWorldModeling.world = World()
+
+        data_folder = get_data_folder()
         TestWorldModeling.world.set_metadata(
-            locations=os.path.join(get_data_folder(), "example_location_data.yaml"),
-            objects=os.path.join(get_data_folder(), "example_object_data.yaml"),
+            locations=os.path.join(data_folder, "example_location_data.yaml"),
+            objects=os.path.join(data_folder, "example_object_data.yaml"),
         )
         assert isinstance(TestWorldModeling.world, World)
 

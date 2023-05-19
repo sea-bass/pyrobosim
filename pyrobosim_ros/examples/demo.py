@@ -102,8 +102,7 @@ def create_world():
 
 
 def create_world_from_yaml(world_file):
-    loader = WorldYamlLoader()
-    return loader.from_yaml(os.path.join(data_folder, world_file))
+    return WorldYamlLoader().from_yaml(os.path.join(data_folder, world_file))
 
 
 def create_ros_node():

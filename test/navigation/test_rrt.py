@@ -9,14 +9,12 @@ from pyrobosim.navigation import PathPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
-data_folder = get_data_folder()
-loader = WorldYamlLoader()
-
 
 def test_rrt_short_distance_connect():
     """Tests if direct connection works if goal is within max_connection_distance"""
-
-    world = loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
+    world = WorldYamlLoader().from_yaml(
+        os.path.join(get_data_folder(), "test_world.yaml")
+    )
     planner_config = {
         "world": world,
         "bidirectional": False,

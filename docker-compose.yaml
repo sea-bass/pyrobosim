@@ -36,6 +36,7 @@ services:
     - ./pyrobosim_msgs/:/pyrobosim_ws/src/pyrobosim_msgs/:rw
     - ./pyrobosim_ros/:/pyrobosim_ws/src/pyrobosim_ros/:rw
     - ./test/:/pyrobosim_ws/src/test/:rw
+    - ./pytest.ini:/pyrobosim_ws/src/pytest.ini:rw
     # Allows graphical programs in the container.
     - /tmp/.X11-unix:/tmp/.X11-unix:rw
     - ${XAUTHORITY:-$HOME/.Xauthority}:/root/.Xauthority
@@ -43,7 +44,8 @@ services:
 
   test:
     extends: base
-    command: src/test/run_tests.bash
+    working_dir: /pyrobosim_ws/src
+    command: test/run_tests.bash
 
   ###############
   # Basic demos #

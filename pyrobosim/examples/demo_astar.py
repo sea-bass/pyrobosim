@@ -8,9 +8,8 @@ from pyrobosim.utils.pose import Pose
 from pyrobosim.navigation import occupancy_grid_from_world
 
 # Load a test world.
-data_folder = get_data_folder()
-loader = WorldYamlLoader()
-world = loader.from_yaml(os.path.join(data_folder, "test_world.yaml"))
+world_file = os.path.join(get_data_folder(), "test_world.yaml")
+world = WorldYamlLoader().from_yaml(world_file)
 
 
 def demo_astar():

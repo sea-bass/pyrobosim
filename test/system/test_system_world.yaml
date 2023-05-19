@@ -1,10 +1,10 @@
-#####################################
-# Multirobot test world description #
-#####################################
+#################################
+# System test world description #
+#################################
 
 # WORLD PARAMETERS
 params:
-  name: test_world
+  name: test_system_world
   object_radius: 0.05 # Radius around objects
   wall_height: 2.0 # Wall height for exporting to Gazebo
 
@@ -17,26 +17,23 @@ metadata:
 
 # ROBOTS
 robots:
-  - name: "robot0"
+  - name: robot
     radius: 0.1
-    color: [0.8, 0.0, 0.8]
     location: kitchen
     pose: [0, 0, 0]
+    # Rapidly-expanding Random Tree (RRT) planner
     path_planner:
       type: rrt
       max_connection_dist: 0.25
       bidirectional: true
       rrt_star: true
       rewire_radius: 1.0
+      compress_path: false
+    # Linear motion path executor
     path_executor:
       type: constant_velocity
-      linear_velocity: 1.0
-      max_angular_velocity: 4.0
-      dt: 0.1
-
-  - radius: 0.08
-    color: [0.8, 0.8, 0.0]
-    location: bathroom
+      linear_velocity: 3.0
+    # Grasp generation
     grasping:
       generator: parallel_grasp
       max_width: 0.175
@@ -44,25 +41,6 @@ robots:
       height: 0.04
       width_clearance: 0.01
       depth_clearance: 0.01
-    path_planner:
-      type: prm
-      max_connection_dist: 1.5
-      max_nodes: 100
-      compress_path: false
-
-  - name: "robot2"
-    radius: 0.06
-    color: [0.0, 0.8, 0.8]
-    location: bedroom
-    path_planner:  # Rapidly-expanding Random Tree (RRT) planner
-      type: astar
-      occupancy_grid:
-        resolution: 0.05
-        inflation_radius: 0.15
-      heuristic: euclidean
-      diagonal_motion: true
-      compress_path: false
-
 
 # ROOMS: Polygonal regions that can contain object locations
 rooms:
@@ -140,18 +118,9 @@ locations:
     parent: bathroom
     pose: [-2.45, 2.5, 0.0, 1.767]
 
-  - name: trash
-    category: trash_can
-    parent: kitchen
-    pose: [0.9, 1.1, 0.0, 1.57]
-
 
 # OBJECTS: Can be picked, placed, and moved by robot
 objects:
-  - category: banana
-    parent: table0
-    pose: [1.0, -0.5, 0.0, 0.707]
-
   - category: apple
     parent: my_desk
     pose: [3.2, 3.5, 0.0, 0.0]
@@ -160,10 +129,6 @@ objects:
     category: apple
     parent: table0
 
-  - name: fuji
-    category: apple
-    parent: trash
-
   - category: water
     parent: counter0_left
 
@@ -171,8 +136,4 @@ objects:
     parent: counter0_right
 
   - category: water
-    parent: my_desk
-
-  - name: soda
-    category: coke
     parent: my_desk
