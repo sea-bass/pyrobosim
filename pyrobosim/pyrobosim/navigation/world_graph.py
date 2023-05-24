@@ -1,133 +1,159 @@
-""" Graph search utilities. """
+""" World graph planner implementation. """
 
-import numpy as np
+import time
+import itertools
+
+from .a_star import AStarGraph
+from .planner_base import PathPlannerBase
+from ..core.locations import Location
+from ..utils.motion import Path
+from ..utils.pose import Pose
+from ..utils.motion import reduce_waypoints_polygon
+from ..utils.search_graph import SearchGraph, Node
 
 
-class Node:
-    """Graph node representation."""
+class WorldGraphPlannerPolygon:
+    """
+    Polygon representation based implementation of world graph planner.
+    """
 
-    def __init__(self, pose, parent=None, cost=0.0):
+    def __init__(self, max_connection_dist=None, compress_path=False, world=None):
         """
-        Creates a graph node.
+        Creates an instance of a world graph planner.
 
-        :param pose: Pose of the node.
-        :type pose: :class:`pyrobosim.utils.pose.Pose`
-        :param parent: Parent node, if any.
-        :type parent: :class:`Node`, optional
-        :param cost: Cost of the node, defaults to zero.
-        :type cost: float, optional
+        :param world: World object to use in the planner.
+        :type world: :class:`pyrobosim.core.world.World`
+        :param compress_path: If true, tries to shorten the path with polygon-based collision checks.
+        :type compress_path: bool
+        :param max_connection_dist: Maximum connection distance between nodes.
+        :type max_connection_dist: float
         """
-        self.pose = pose
-        self.parent = parent
-        self.cost = cost
-        self.neighbors = set()  # used in graph based planners
+        # Parameters
+        self.max_connection_dist = max_connection_dist
+        self.world = world
+        self.compress_path = compress_path
 
+        self.path_finder = AStarGraph()
+        self.planning_time = 0.0
+        self.latest_path = Path()
 
-class Edge:
-    """Graph edge representation."""
+        self.reset()
 
-    def __init__(self, nodeA, nodeB):
+    def reset(self):
         """
-        Creates a graph edge.
-        :param nodeA: First node
-        :type nodeA: :class:`Node`
-        :param nodeB: Second node
-        :type nodeB: :class:`Node`
+        Initializes the graph from the entity nodes in the world linked to this planner.
         """
-        self.nodeA = nodeA
-        self.nodeB = nodeB
-        self.cost = nodeA.pose.get_linear_distance(nodeB.pose)
+        # Create a search graph from the nodes in the world.
+        self.graph = SearchGraph(color=[0, 0.4, 0.8], color_alpha=0.5)
+        for entity in itertools.chain(
+            self.world.rooms, self.world.hallways, self.world.locations
+        ):
+            entity.add_graph_nodes()
+            if isinstance(entity, Location):
+                for spawn in entity.children:
+                    for node in spawn.graph_nodes:
+                        self.graph.add_node(node)
+                        self.connect_neighbors(node)
+            else:
+                for node in entity.graph_nodes:
+                    self.graph.add_node(node)
+                    self.connect_neighbors(node)
 
-
-class WorldGraph:
-
-    """Graph representation of the world."""
-
-    def __init__(self, color=[0, 0, 0], color_alpha=0.2):
-        """Creates an instance of WorldGraph."""
-
-        self.nodes = set()
-        self.edges = set()
-        self.color = color
-        self.color_alpha = 0.5
-        self.was_updated = True
-
-    def add_node(self, node):
+    def connect_neighbors(self, node):
         """
-        Adds a node to the graph.
+        Connect a node to all nodes within connection distance.
 
-        :param node: The node to be added into the graph.
-        :type node: :class: `pyrobosim.navigation.world_graph.Node`
+        :param node: Node to try add to the graph.
+        :type node: :class:`pyrobosim.utils.search_graph.Node`
         """
+        for other in self.graph.nodes:
+            if node == other:
+                continue
+            if self.world.is_connectable(
+                node.pose, other.pose, self.max_connection_dist
+            ):
+                self.graph.add_edge(node, other)
 
-        self.nodes.add(node)
-
-    def remove_node(self, node):
+    def plan(self, start, goal):
         """
-        Removes a node from the graph.
+        Plans a path from start to goal.
 
-        :param node: The node to be removed.
-        :type node: :class: `pyrobosim.navigation.world_graph.Node`
+        :param start: Start pose or graph node.
+        :type start: :class:`pyrobosim.utils.pose.Pose` /
+            :class:`pyrobosim.utils.search_graph.Node`
+        :param goal: Goal pose or graph node.
+        :type goal: :class:`pyrobosim.utils.pose.Pose` /
+            :class:`pyrobosim.utils.search_graph.Node`
+        :return: Path from start to goal.
+        :rtype: :class:`pyrobosim.utils.motion.Path`
         """
+        # Reset the path and time
+        self.latest_path = Path()
+        self.planning_time = 0.0
+        # Create the start and goal nodes
+        if isinstance(start, Pose):
+            start = Node(start, parent=None)
+        self.graph.add_node(start)
+        if isinstance(goal, Pose):
+            goal = Node(goal, parent=None)
+        self.graph.add_node(goal)
 
-        for other in self.nodes:
-            other.neighbors.discard(node)
-        self.nodes.discard(node)
+        self.connect_neighbors(start)
+        self.connect_neighbors(goal)
 
-        edges_to_remove = []
-        for edge in self.edges:
-            if edge.nodeA == node or edge.nodeB == node:
-                edges_to_remove.append(edge)
-        for edge in edges_to_remove:
-            self.edges.discard(edge)
+        # Find a path from start to goal nodes
+        t_start = time.time()
+        waypoints = self.path_finder.plan(start, goal)
+        # Return empty path if no path was found.
+        if not waypoints:
+            return self.latest_path
 
-    def add_edge(self, nodeA, nodeB):
+        path_poses = [waypoint.pose for waypoint in waypoints]
+        if self.compress_path:
+            path_poses = reduce_waypoints_polygon(self.world, path_poses)
+        self.latest_path = Path(poses=path_poses)
+        self.latest_path.fill_yaws()
+        self.planning_time = time.time() - t_start
+        self.graph.remove_node(start)
+        self.graph.remove_node(goal)
+        return self.latest_path
+
+    def get_graphs(self):
+        """Returns the graphs generated by the planner if any."""
+        return [self.graph]
+
+
+class WorldGraphPlanner(PathPlannerBase):
+    """Factory class for world graph path planner."""
+
+    def __init__(self, **planner_config):
         """
-        Adds an edge between 2 nodes.
-
-        :param nodeA: The first node.
-        :type nodeA: :class:`pyrobosim.navigation.world_graph.Node`
-        :param nodeB: The second node.
-        :type nodeB: :class:`pyrobosim.navigation.world_graph.Node`
+        Creates an instance of world graph planner.
         """
-        self.edges.add(Edge(nodeA, nodeB))
-        nodeA.neighbors.add(nodeB)
-        nodeB.neighbors.add(nodeA)
+        super().__init__()
 
-    def remove_edge(self, nodeA, nodeB):
-        """
-        Removes an edge between 2 nodes.
-        :param nodeA: The first node.
-        :type nodeA: :class:`pyrobosim.navigation.world_graph.Node`
-        :param nodeB: The second node.
-        :type nodeB: :class:`pyrobosim.navigation.world_graph.Node`
-        """
-        nodeA.neighbors.discard(nodeB)
-        nodeB.neighbors.discard(nodeA)
+        self.impl = None
 
-        edges_to_remove = []
-        for edge in self.edges:
-            if edge.nodeA == nodeA and edge.nodeB == nodeB:
-                edges_to_remove.append(edge)
-        for edge in edges_to_remove:
-            self.edges.discard(edge)
+        if planner_config.get("grid", None):
+            raise NotImplementedError(
+                "Grid based world graph planner is not supported. "
+            )
+        else:
+            self.impl = WorldGraphPlannerPolygon(**planner_config)
 
-    def nearest(self, pose):
+    def plan(self, start, goal):
         """
-        Get the nearest node in the graph to a specified pose.
-        :param pose: Query pose
-        :type pose: :class:`pyrobosim.utils.pose.Pose`
-        :return: The nearest node to the query pose, or None if the graph is empty
-        :rtype: :class:`Node`
-        """
-        if len(self.nodes) == 0:
-            return None
+        Plans a path from start to goal.
 
-        # Find the nearest node
-        min_dist = np.inf
-        for n in self.nodes:
-            dist = pose.get_linear_distance(n.pose)
-            if dist < min_dist:
-                min_dist = dist
-                n_nearest = n
-        return n_nearest
+        :param start: Start pose.
+        :type start: :class:`pyrobosim.utils.pose.Pose`
+        :param goal: Goal pose.
+        :type goal: :class:`pyrobosim.utils.pose.Pose`
+        :return: Path from start to goal.
+        :rtype: :class:`pyrobosim.utils.motion.Path`
+        """
+        start_time = time.time()
+        self.latest_path = self.impl.plan(start, goal)
+        self.planning_time = time.time() - start_time
+        self.graphs = self.impl.get_graphs()
+        return self.latest_path

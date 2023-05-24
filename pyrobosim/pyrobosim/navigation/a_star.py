@@ -192,7 +192,11 @@ class AStarGraph(AStar):
         :param goal: Node
         :type goal: :class:`Node`
         """
-        self.latest_path = self.astar(start, goal)
+        try:
+            self.latest_path = self.astar(start, goal)
+        except IndexError as e:
+            warnings.warn(f"Error calling astar: {e}")
+            self.latest_path = None
         return self.latest_path
 
 

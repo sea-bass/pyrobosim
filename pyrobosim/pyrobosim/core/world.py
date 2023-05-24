@@ -10,9 +10,9 @@ from .objects import Object
 from .room import Room
 from .robot import Robot
 from ..utils.pose import Pose
-from ..navigation import Node
 from ..utils.knowledge import resolve_to_location, resolve_to_object
 from ..utils.polygon import sample_from_polygon, transform_polygon
+from ..utils.search_graph import Node
 
 
 class World:
@@ -1137,9 +1137,9 @@ class World:
         warnings.warn("Could not sample pose.")
         return None
 
-    ######################################
-    # graph utils #
-    ######################################
+    ###################
+    # Graph Utilities #
+    ###################
 
     def graph_node_from_entity(
         self, entity_query, resolution_strategy="nearest", robot=None
@@ -1156,7 +1156,7 @@ class World:
         :param robot: If set to a Robot instance, uses that robot for resolution strategy.
         :type robot: :class:`pyrobosim.core.robot.Robot`, optional
         :return: A graph node for the entity that meets the resolution strategy, or None.
-        :rtype: :class:`pyrobosim.navigation.search_graph.Node`
+        :rtype: :class:`pyrobosim.utils.search_graph.Node`
         """
         if isinstance(entity_query, Node):
             return entity_query
