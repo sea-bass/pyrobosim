@@ -18,7 +18,7 @@ pushd "$SCRIPT_DIR/.." || exit
 python -m pip install --upgrade pip
 # Install catkin-pkg because https://github.com/colcon/colcon-ros/issues/118
 pip install catkin-pkg empy lark pytest pytest-dependency pytest-html wheel
-pip install -e pyrobosim
+pip install ./pyrobosim
 popd || exit
 deactivate
 
