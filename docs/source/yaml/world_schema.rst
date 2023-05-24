@@ -31,7 +31,7 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
        location: <loc_name>  # Initial location
        pose: [<x>, <y>, <z>, <yaw>]  # Initial pose, if not specified will sample
        path_planner:  # Local robot path planner -- generally refers to single-query planners
-         type: rrt  # Supported types -- rrt, prm, astar
+         type: rrt  # Supported types -- astar, rrt, prm, world_graph
          <property>: <planner_property>
        path_executor:  # For following a path
          type: constant_velocity  # Supported types -- constant_velocity

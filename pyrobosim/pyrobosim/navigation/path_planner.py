@@ -1,8 +1,9 @@
 """ Implementation of the generic path planner. """
 import warnings
+from pyrobosim.navigation.a_star import AstarPlanner
 from pyrobosim.navigation.rrt import RRTPlanner
 from pyrobosim.navigation.prm import PRMPlanner
-from pyrobosim.navigation.a_star import AstarPlanner
+from pyrobosim.navigation.world_graph import WorldGraphPlanner
 
 
 class PathPlanner:
@@ -14,13 +15,18 @@ class PathPlanner:
         """
         Creates a PathPlanner instance of given type and configuration
 
-        :param planner_type: The type of planner to be used (astar, rrt, prm)
+        :param planner_type: The type of planner to be used (astar, prm, rrt, world_graph)
         :type planner_type: str
         :param planner_config: The configuration to be used with the specified planner type.
         :type planner_config: dict
         """
 
-        self.planners = {"astar": AstarPlanner, "rrt": RRTPlanner, "prm": PRMPlanner}
+        self.planners = {
+            "astar": AstarPlanner,
+            "rrt": RRTPlanner,
+            "prm": PRMPlanner,
+            "world_graph": WorldGraphPlanner,
+        }
 
         if planner_type not in self.planners:
             warnings.warn(

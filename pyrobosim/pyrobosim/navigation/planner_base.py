@@ -14,7 +14,7 @@ class PathPlannerBase:
         self.goal = None
         self.start = None
         self.impl = None
-        self.planning_time = 0
+        self.planning_time = 0.0
         self.graphs = []
         self.graphs_updated = False
         self.latest_path = Path()
@@ -75,7 +75,6 @@ class PathPlannerBase:
 
         if show_graph:
             for graph in self.graphs:
-                # if graph.was_updated:
                 for e in graph.edges:
                     x = (e.nodeA.pose.x, e.nodeB.pose.x)
                     y = (e.nodeA.pose.y, e.nodeB.pose.y)
@@ -93,7 +92,6 @@ class PathPlannerBase:
                         zorder=1,
                     )
                     graph_artists.append(edge)
-                # graph.was_updated = False
 
         if self.latest_path.num_poses > 0:
             x = [p.x for p in self.latest_path.poses]

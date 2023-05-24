@@ -1137,9 +1137,9 @@ class World:
         warnings.warn("Could not sample pose.")
         return None
 
-    ######################################
-    # graph utils #
-    ######################################
+    ###################
+    # Graph Utilities #
+    ###################
 
     def graph_node_from_entity(
         self, entity_query, resolution_strategy="nearest", robot=None
