@@ -6,9 +6,9 @@ from shapely import intersects_xy
 from shapely.geometry import Polygon
 from shapely.plotting import patch_from_polygon
 
-from ..navigation.search_graph import Node
 from ..utils.pose import Pose
 from ..utils.polygon import inflate_polygon, polygon_and_height_from_footprint
+from ..utils.search_graph import Node
 
 
 class Room:

@@ -5,11 +5,11 @@ import itertools
 
 from .a_star import AStarGraph
 from .planner_base import PathPlannerBase
-from .search_graph import SearchGraph, Node
 from ..core.locations import Location
 from ..utils.motion import Path
 from ..utils.pose import Pose
 from ..utils.motion import reduce_waypoints_polygon
+from ..utils.search_graph import SearchGraph, Node
 
 
 class WorldGraphPlannerPolygon:
@@ -64,7 +64,7 @@ class WorldGraphPlannerPolygon:
         Connect a node to all nodes within connection distance.
 
         :param node: Node to try add to the graph.
-        :type node: :class:`pyrobosim.navigation.search_graph.Node`
+        :type node: :class:`pyrobosim.utils.search_graph.Node`
         """
         for other in self.graph.nodes:
             if node == other:
@@ -80,10 +80,10 @@ class WorldGraphPlannerPolygon:
 
         :param start: Start pose or graph node.
         :type start: :class:`pyrobosim.utils.pose.Pose` /
-            :class:`pyrobosim.navigation.search_graph.Node`
+            :class:`pyrobosim.utils.search_graph.Node`
         :param goal: Goal pose or graph node.
         :type goal: :class:`pyrobosim.utils.pose.Pose` /
-            :class:`pyrobosim.navigation.search_graph.Node`
+            :class:`pyrobosim.utils.search_graph.Node`
         :return: Path from start to goal.
         :rtype: :class:`pyrobosim.utils.motion.Path`
         """

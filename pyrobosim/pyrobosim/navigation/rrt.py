@@ -4,11 +4,11 @@ import copy
 import time
 import numpy as np
 
-from .search_graph import SearchGraph, Node
+from .planner_base import PathPlannerBase
 from ..utils.motion import Path
 from ..utils.pose import Pose
 from ..utils.motion import reduce_waypoints_polygon
-from pyrobosim.navigation.planner_base import PathPlannerBase
+from ..utils.search_graph import SearchGraph, Node
 
 
 class RRTPlannerPolygon:
@@ -236,11 +236,11 @@ class RRTPlannerPolygon:
         at exactly that pose.
 
         :param n_start: Tree node from which to grow the new node.
-        :type n_start: :class:`pyrobosim.navigation.search_graph.Node`
+        :type n_start: :class:`pyrobosim.utils.search_graph.Node`
         :param q_target: Target pose towards which to grow the new node.
         :type q_target: :class:`pyrobosim.utils.pose.Pose`
         :return: A new node grown from the start node towards the target pose.
-        :rtype: :class:`pyrobosim.navigation.search_graph.Node`
+        :rtype: :class:`pyrobosim.utils.search_graph.Node`
         """
         q_start = n_start.pose
         dist = q_start.get_linear_distance(q_target)
@@ -268,9 +268,9 @@ class RRTPlannerPolygon:
         ``rewire_radius`` parameter.
 
         :param graph: The tree to rewire.
-        :type graph: :class:`pyrobosim.navigation.search_graph.SearchGraph`
+        :type graph: :class:`pyrobosim.utils.search_graph.SearchGraph`
         :param n_tgt: The target tree node to rewire within the tree.
-        :type n_tgt: :class:`pyrobosim.navigation.search_graph.Node`
+        :type n_tgt: :class:`pyrobosim.utils.search_graph.Node`
         """
         # First, find the node to rewire, if any
         n_rewire = None
@@ -303,13 +303,13 @@ class RRTPlannerPolygon:
         RRT-Connect is enabled, or else will just try once.
 
         :param graph: The tree object.
-        :type graph: :class:`pyrobosim.navigation.search_graph.SearchGraph`
+        :type graph: :class:`pyrobosim.utils.search_graph.SearchGraph`
         :param n_curr: The current tree node to try connect to the target node.
-        :type n_curr: :class:`pyrobosim.navigation.search_graph.Node`
+        :type n_curr: :class:`pyrobosim.utils.search_graph.Node`
         :param n_tgt: The target tree node defining the connection goal.
-        :type n_tgt: :class:`pyrobosim.navigation.search_graph.Node`
+        :type n_tgt: :class:`pyrobosim.utils.search_graph.Node`
         :return: A tuple containing connection success and final node added.
-        :rtype: (bool, :class:`pyrobosim.navigation.search_graph.Node`)
+        :rtype: (bool, :class:`pyrobosim.utils.search_graph.Node`)
         """
         # Needed for bidirectional RRT so the connection node is in both trees.
         if self.bidirectional:

@@ -3,7 +3,6 @@
 from shapely import intersects_xy
 from shapely.plotting import patch_from_polygon
 
-from ..navigation.search_graph import Node
 from ..utils.general import EntityMetadata
 from ..utils.pose import Pose, rot2d
 from ..utils.polygon import (
@@ -11,6 +10,7 @@ from ..utils.polygon import (
     polygon_and_height_from_footprint,
     transform_polygon,
 )
+from ..utils.search_graph import Node
 
 
 class Location:

@@ -56,7 +56,7 @@ class SearchGraph:
         Adds a node to the graph.
 
         :param node: The node to be added into the graph.
-        :type node: :class: `pyrobosim.navigation.search_graph.Node`
+        :type node: :class: `pyrobosim.utils.search_graph.Node`
         """
 
         self.nodes.add(node)
@@ -66,7 +66,7 @@ class SearchGraph:
         Removes a node from the graph.
 
         :param node: The node to be removed.
-        :type node: :class: `pyrobosim.navigation.search_graph.Node`
+        :type node: :class: `pyrobosim.utils.search_graph.Node`
         """
 
         for other in self.nodes:
@@ -85,9 +85,9 @@ class SearchGraph:
         Adds an edge between 2 nodes.
 
         :param nodeA: The first node.
-        :type nodeA: :class:`pyrobosim.navigation.search_graph.Node`
+        :type nodeA: :class:`pyrobosim.utils.search_graph.Node`
         :param nodeB: The second node.
-        :type nodeB: :class:`pyrobosim.navigation.search_graph.Node`
+        :type nodeB: :class:`pyrobosim.utils.search_graph.Node`
         """
         self.edges.add(Edge(nodeA, nodeB))
         nodeA.neighbors.add(nodeB)
@@ -97,9 +97,9 @@ class SearchGraph:
         """
         Removes an edge between 2 nodes.
         :param nodeA: The first node.
-        :type nodeA: :class:`pyrobosim.navigation.search_graph.Node`
+        :type nodeA: :class:`pyrobosim.utils.search_graph.Node`
         :param nodeB: The second node.
-        :type nodeB: :class:`pyrobosim.navigation.search_graph.Node`
+        :type nodeB: :class:`pyrobosim.utils.search_graph.Node`
         """
         nodeA.neighbors.discard(nodeB)
         nodeB.neighbors.discard(nodeA)
