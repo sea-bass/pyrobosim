@@ -218,7 +218,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         if robot and robot.executing_action:
             return
 
-        query_list = self.goal_textbox.text().split(" ")
+        query_list = [elem for elem in self.goal_textbox.text().split(" ") if elem]
         loc = query_to_entity(
             self.world,
             query_list,
@@ -237,7 +237,9 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         robot = self.get_current_robot()
         if robot:
             loc = robot.location
-            query_list = [loc] + self.goal_textbox.text().split(" ")
+            query_list = [elem for elem in self.goal_textbox.text().split(" ") if elem]
+            if loc:
+                query_list.append(loc.name)
             obj = query_to_entity(
                 self.world,
                 query_list,
@@ -245,9 +247,10 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
                 robot=robot,
                 resolution_strategy="nearest",
             )
-            print(f"[{robot.name}] Picking {obj.name}")
-            self.canvas.pick_object(robot, obj)
-            self.update_manip_state()
+            if obj:
+                print(f"[{robot.name}] Picking {obj.name}")
+                self.canvas.pick_object(robot, obj)
+                self.update_manip_state()
 
     def on_place_click(self):
         """Callback to place an object."""

@@ -82,14 +82,17 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
 
     # Direct name search
     entity_list = []
+    resolved_queries = set()
     for elem in query_list:
         # First, directly search for location/object spawn names
         for loc in world.locations:
             if elem == loc.name:
                 named_location = loc
+                resolved_queries.add(elem)
             for spawn in loc.children:
                 if elem == spawn.name:
                     named_location = spawn
+                    resolved_queries.add(elem)
         # Then, directly search for object names and get the location
         for obj in world.objects:
             if elem == obj.name:
@@ -102,10 +105,20 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
     for elem in query_list:
         if elem in world.get_room_names() and not room:
             room = elem
+            resolved_queries.add(elem)
         if Location.metadata.has_category(elem) and not loc_category:
             loc_category = elem
+            resolved_queries.add(elem)
         if Object.metadata.has_category(elem) and not obj_category:
             obj_category = elem
+            resolved_queries.add(elem)
+
+    # If any query elements are unaccounted for (for example, in the case of a nonexistent object or garbage value),
+    # then entity resolution should fail.
+    for elem in query_list:
+        if elem not in resolved_queries:
+            warnings.warn(f"Did not resolve query element {elem}. Returning None.")
+            return None
 
     # Special case: A room is selected purely by name
     if room and not named_location and not loc_category and not obj_category:
@@ -114,7 +127,7 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
     # If a named location is given, check that have an object category and filter by that.
     # Otherwise, just use the named location itself.
     if named_location is not None:
-        if obj_category is None:
+        if obj_category is None and mode == "location":
             return named_location
         else:
             if isinstance(named_location, ObjectSpawn):
@@ -165,6 +178,8 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
             warnings.warn(f"Could not resolve query {query_list}")
         else:
             return loc_candidate
+
+    return None
 
 
 def resolve_to_location(
