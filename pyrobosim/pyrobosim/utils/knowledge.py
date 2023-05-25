@@ -208,8 +208,6 @@ def resolve_to_location(
     :return: The location or object spawn that meets the category and/or room filters, or None.
     :rtype: :class:`pyrobosim.core.locations.Location`/:class:`pyrobosim.core.locations.ObjectSpawn`
     """
-    print(f"Resolving to location with category: {category}, room: {room}")
-
     if room is None:
         room_name = None
         if category is None:
