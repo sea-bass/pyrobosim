@@ -113,6 +113,8 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
             obj_category = elem
             resolved_queries.add(elem)
 
+    # If any query elements are unaccounted for (for example, in the case of a nonexistent object or garbage value),
+    # then entity resolution should fail.
     for elem in query_list:
         if elem not in resolved_queries:
             warnings.warn(f"Did not resolve query element {elem}. Returning None.")
