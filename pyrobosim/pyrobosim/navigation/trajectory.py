@@ -37,10 +37,10 @@ def get_constant_speed_trajectory(path, linear_velocity=0.2, max_angular_velocit
         if max_angular_velocity is None:
             ang_time = 0
         else:
-            ang_time = (
-                wrap_angle(start_pose.get_angular_distance(end_pose))
-                / max_angular_velocity
+            ang_distance = wrap_angle(
+                start_pose.get_angular_distance(end_pose) - start_pose.get_yaw()
             )
+            ang_time = ang_distance / max_angular_velocity
         t_pts[idx + 1] = t_pts[idx] + max(lin_time, ang_time)
 
     # Package up the trajectory
