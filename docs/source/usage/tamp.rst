@@ -48,7 +48,7 @@ You can try running a sample script as follows
 With ROS 2
 ----------
 
-First, build and setup the ``colcon`` workspace (or use one of our provided Docker containers).
+First, build and setup the colcon workspace (or use one of our provided Docker containers).
 
 ::
 

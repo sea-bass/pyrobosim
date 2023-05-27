@@ -1,6 +1,6 @@
 Basic Usage
 ===========
-To get started with pyrobosim, you can run the following examples.
+To get started with ``pyrobosim``, you can run the following examples.
 
 
 Standalone
@@ -33,10 +33,11 @@ click the **Navigate** button. Once at the destination, click **Pick**.
 With ROS 2
 ----------
 
-First, build and setup the ``colcon`` workspace (or use one of our provided Docker containers).
+First, build and setup the colcon workspace (or use one of our provided Docker containers).
 
 ::
 
+    cd /path/to/colcon/workspace
     colcon build
     . install/local_setup.bash
 
@@ -75,9 +76,10 @@ The first command will start a world as a ROS 2 node, and the second one will pu
 
 Creating Worlds
 ---------------
-Worlds can be created either with the pyrobosim API, or loaded from a YAML file using the :doc:`WorldYamlLoader </generated/pyrobosim.core.yaml_utils.WorldYamlLoader>` utility:
+Worlds can be created either with the ``pyrobosim`` API, or loaded from a YAML file using the :doc:`WorldYamlLoader </generated/pyrobosim.core.yaml_utils.WorldYamlLoader>` utility:
 
-By default, ``demo.py`` creates a world using the API, but you can alternatively try a demo YAML file using the ``--world-file`` argument. For example:
+By default, ``demo.py`` creates a world using the API, but you can alternatively try a demo YAML file using the ``--world-file`` argument.
+For example:
 
 ::
 

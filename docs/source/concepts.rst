@@ -1,13 +1,13 @@
 Concepts
 ========
 
-pyrobosim is primarily a world modeling framework for prototyping robotics applications.
+``pyrobosim`` is primarily a world modeling framework for prototyping robotics applications.
 
 
 Worlds
 ------
 
-Worlds in pyrobosim consist of a hierarchy of polygonal *entities*, including:
+Worlds in ``pyrobosim`` consist of a hierarchy of polygonal *entities*, including:
 
 * **Robots**: A movable entity capable of actions that can change its own state and the state of the world.
 * **Rooms**: Regions that a robot can navigate.
@@ -16,7 +16,9 @@ Worlds in pyrobosim consist of a hierarchy of polygonal *entities*, including:
 * **Object Spawns**: Subregions of locations where objects may exist (e.g., a left vs. right countertop).
 * **Objects**: Discrete entities that can be manipulated around the world.
 
-This is all represented in a 2.5D environment (SE(2) pose with vertical (Z) height). However, full 3D poses are representable as well. For more information, refer to the :doc:`Geometry Conventions </usage/geometry_conventions>` section.
+This is all represented in a 2.5D environment (SE(2) pose with vertical (Z) height).
+However, full 3D poses are representable as well.
+For more information, refer to the :doc:`Geometry Conventions </usage/geometry_conventions>` section.
 
 .. image:: media/world_entities.png
     :align: center
@@ -52,11 +54,11 @@ in our simple test world.
 
 Vision Statement
 ----------------
-The vision for pyrobosim is that you will be able to **create worlds** to prototype your
+The vision for ``pyrobosim`` is that you will be able to **create worlds** to prototype your
 robot behavior in a simple environment before moving to a more realistic simulator, or even
 real robot hardware.
 
-To enable this, a typical user of pyrobosim would:
+To enable this, a typical user of ``pyrobosim`` would:
 
 * **Build complex worlds** using the world modeling framework, both manually and programmatically.
 * **Define custom actions and action executors** (e.g. path planning/following or decision-making algorithms).

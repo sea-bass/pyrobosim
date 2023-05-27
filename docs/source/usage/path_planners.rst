@@ -1,11 +1,11 @@
 Path Planners
 =======================
-This section explains how to use and optionally extend the path planners in pyrobosim.
+This section explains how to use and optionally extend the path planners in ``pyrobosim``.
 
 PathPlanner Interface
 ---------------------
 
-pyrobosim uses an interface based approach to path planners.
+``pyrobosim`` uses an interface based approach to path planners.
 
 ::
 
@@ -28,7 +28,7 @@ Available planner types and their available implementations can be found below :
 Adding New Planners
 -------------------
 
-The path planners in pyrobosim are designed to be extensible, so that you can add your own implementation for an existing planner type or even add a new planner type.
+The path planners in ``pyrobosim`` are designed to be extensible, so that you can add your own implementation for an existing planner type, or even a new planner type.
 
 For example, to add a new planner type called ``NewPlanner``:
 

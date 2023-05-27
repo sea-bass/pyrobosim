@@ -33,7 +33,7 @@ To then source this virtual environment, run
 
     source ./setup/source_pyrobosim.bash
 
-As documented in the above script, I recommend making a bash function in your ``~/.bashrc`` script so you can easily just call `pyrobosim` from your Terminal to get started.
+As documented in the above script, we recommend making a bash function in your ``~/.bashrc`` script so you can easily just call `pyrobosim` from your Terminal to get started.
 
 ::
 
@@ -41,7 +41,20 @@ As documented in the above script, I recommend making a bash function in your ``
        source /path/to/pyrobosim/setup/source_pyrobosim.bash
     }
 
-If you plan to use ROS 2, you can similarly create a bash function like this:
+Additional ROS 2 Setup
+----------------------
+
+After you have installed ``pyrobosim`` and activated your Python virtual environment,
+you must build your colcon workspace to install the ``pyrobosim_msgs`` and ``pyrobosim_ros`` packages.
+For example, if you have cloned this repo to ``~/pyrobosim_ws/src/pyrobosim``, you can do:
+
+::
+
+    cd ~/pyrobosim_ws
+    colcon build
+    . install/local_setup.bash
+
+For ROS 2 workflows, you can also make bash function to get set up like this:
 
 ::
 
@@ -49,6 +62,7 @@ If you plan to use ROS 2, you can similarly create a bash function like this:
        source /path/to/pyrobosim/setup/source_pyrobosim.bash humble
     }
 
+The additional ``humble`` argument will make sure that ROS 2 Humble and your built colcon workspace are sourced in addition to activating the Python virtual environment.
 
 Docker Setup
 ------------
@@ -56,7 +70,8 @@ Docker Setup
 We also provide Docker images compatible with ROS 2 releases.
 
 If you already have sourced ROS 2 in your system (e.g., ``source /opt/ros/humble/setup.bash``),
-then you should have a ``ROS_DISTRO`` environment variable set. Otherwise,
+then you should have a ``ROS_DISTRO`` environment variable set.
+Otherwise,
 
 ::
 

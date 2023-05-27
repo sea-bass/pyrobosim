@@ -1,6 +1,6 @@
 Multirobot Environments
 =======================
-pyrobosim also enables you to run multirobot environments.
+``pyrobosim`` also enables you to run multirobot environments.
 
 
 Standalone
@@ -30,10 +30,11 @@ Or you can use a sample multirobot world file:
 With ROS 2
 ----------
 
-First, build and setup the ``colcon`` workspace (or use one of our provided Docker containers).
+First, build and setup the colcon workspace (or use one of our provided Docker containers).
 
 ::
 
+    cd /path/to/colcon/workspace
     colcon build
     . install/local_setup.bash
 

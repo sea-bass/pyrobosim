@@ -1,10 +1,9 @@
 YAML Schemas
 ============
-pyrobosim relies on YAML files to define entities in the world.
+``pyrobosim`` relies on YAML files to define entities in the world.
 
 Specifically, each world draws from a set of **locations** and **objects**.
-Worlds themselves can be created programmatically, or defined using their own
-YAML files.
+Worlds themselves can be created programmatically, or defined using their own YAML files.
 
 For the programmatic approach,
 
@@ -21,7 +20,7 @@ For the YAML approach, you can define this in the schema,
       locations: </path/to/location_data_file.yaml>
       objects: </path/to/object_data_file.yaml>
 
-Refer to the following sections for more details on the schemas
+Refer to the following sections for more details on the schemas.
 
 .. toctree::
    :maxdepth: 1
