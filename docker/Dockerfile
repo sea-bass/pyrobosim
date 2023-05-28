@@ -15,7 +15,7 @@ RUN apt-get install -y \
 RUN mkdir -p /pyrobosim_ws/src/pyrobosim
 
 # Install dependencies
-COPY setup /pyrobosim_ws/src/setup
+COPY setup/setup_pddlstream.bash /pyrobosim_ws/src/setup/
 WORKDIR /pyrobosim_ws/src/setup
 RUN ./setup_pddlstream.bash
 
@@ -23,8 +23,8 @@ RUN ./setup_pddlstream.bash
 WORKDIR /pyrobosim_ws/src
 COPY . /pyrobosim_ws/src/
 RUN python3 -m pip install --upgrade pip
-RUN pip install ./pyrobosim
-RUN pip3 install lark py!=1.10.0 pytest pytest-dependency pytest-html
+RUN pip3 install ./pyrobosim
+RUN pip3 install -r test/python_test_requirements.txt
 
 # Build the workspace
 WORKDIR /pyrobosim_ws
@@ -38,6 +38,7 @@ RUN chmod -R 0700 /tmp/runtime-root
 ENV NO_AT_BRIDGE 1
 
 # Setup an entrypoint and working folder
+COPY setup /pyrobosim_ws/src/setup
 CMD ["/usr/bin/bash"]
 COPY docker/entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]

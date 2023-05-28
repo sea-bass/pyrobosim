@@ -28,8 +28,8 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          pip3 install lark py!=1.10.0 pytest pytest-dependency pytest-html
           pip3 install -e pyrobosim
+          pip3 install -r test/python_test_requirements.txt
           setup/setup_pddlstream.bash
       - name: Run unit tests
         run: |

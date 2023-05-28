@@ -1,0 +1,5 @@
+lark
+py!=1.10.0
+pytest
+pytest-dependency
+pytest-html
