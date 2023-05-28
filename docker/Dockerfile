@@ -22,8 +22,9 @@ RUN ./setup_pddlstream.bash
 # Install pyrobosim and testing dependencies
 WORKDIR /pyrobosim_ws/src
 COPY . /pyrobosim_ws/src/
+RUN python3 -m pip install --upgrade pip
 RUN pip install ./pyrobosim
-RUN pip3 install lark pytest pytest-dependency pytest-html
+RUN pip3 install lark py!=1.10.0 pytest pytest-dependency pytest-html
 
 # Build the workspace
 WORKDIR /pyrobosim_ws

@@ -17,7 +17,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 pushd "$SCRIPT_DIR/.." || exit
 python -m pip install --upgrade pip
 # Install catkin-pkg because https://github.com/colcon/colcon-ros/issues/118
-pip install catkin-pkg empy lark pytest pytest-dependency pytest-html wheel
+pip install catkin-pkg empy lark py!=1.10.0 pytest pytest-dependency pytest-html wheel
 pip install ./pyrobosim
 popd || exit
 deactivate
