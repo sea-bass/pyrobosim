@@ -1,6 +1,68 @@
 """ Graph search utilities. """
 
+import warnings
+
 import numpy as np
+from astar import AStar
+
+
+class SearchGraphPlanner(AStar):
+    """
+    Graph based implementation of A*.
+    """
+
+    def __init__(self):
+        super().__init__()
+
+    def heuristic_cost_estimate(self, n0, n1):
+        """
+        Compute heuristic cost estimate using linear distance.
+        :param n0: First node
+        :type n0: :class:`Node`
+        :param n1: Second node
+        :type n1: :class:`Node`
+        :return: Heuristic cost estimate
+        :rtype: float
+        """
+        return n0.pose.get_linear_distance(n1.pose, ignore_z=True)
+
+    def distance_between(self, n0, n1):
+        """
+        Compute distance between two nodes
+        :param n0: First node
+        :type n0: :class:`Node`
+        :param n1: Second node
+        :type n1: :class:`Node`
+        :return: Heuristic cost estimate
+        :rtype: float
+        """
+        return n0.pose.get_linear_distance(n1.pose, ignore_z=True)
+
+    def neighbors(self, n):
+        """
+        Get neighbors of a graph node.
+        :param n: Node
+        :type n: :class:`Node`
+        :return: List of node neighbors
+        :rtype: list[:class:`Node`]
+        """
+        return list(n.neighbors)
+
+    def plan(self, start, goal):
+        """
+        Plan path from start to goal.
+
+        :param start: Node
+        :type start: :class:`Node`
+        :param goal: Node
+        :type goal: :class:`Node`
+        """
+        try:
+            self.latest_path = self.astar(start, goal)
+        except IndexError as e:
+            warnings.warn(f"Error calling astar: {e}")
+            self.latest_path = None
+        return self.latest_path
 
 
 class Node:
@@ -50,6 +112,7 @@ class SearchGraph:
         self.edges = set()
         self.color = color
         self.color_alpha = color_alpha
+        self.path_finder = SearchGraphPlanner()
 
     def add_node(self, node):
         """
@@ -116,7 +179,7 @@ class SearchGraph:
         Get the nearest node in the graph to a specified pose.
         :param pose: Query pose
         :type pose: :class:`pyrobosim.utils.pose.Pose`
-        :return: The nearest node to the query pose, or None if the graph is empty
+        :return: The nearest node to the query pose, or None if the graph is empty.
         :rtype: :class:`Node`
         """
         if len(self.nodes) == 0:
@@ -130,3 +193,16 @@ class SearchGraph:
                 min_dist = dist
                 n_nearest = n
         return n_nearest
+
+    def find_path(self, nodeA, nodeB):
+        """
+        Finds a path from nodeA to nodeB.
+
+        :param nodeA: The start node.
+        :type nodeA: :class: `pyrobosim.utils.search_graph.Node`
+        :param nodeB: The end node.
+        :type nodeB: :class: `pyrobosim.utils.search_graph.Node`
+        :return: The path from nodeA to nodeB, if one exists.
+        :rtype: :class: `pyrobosim.utils.motion.Path
+        """
+        return self.path_finder.plan(nodeA, nodeB)

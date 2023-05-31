@@ -5,9 +5,8 @@ import time
 import numpy as np
 
 from .planner_base import PathPlannerBase
-from ..utils.motion import Path
+from ..utils.motion import Path, reduce_waypoints_polygon
 from ..utils.pose import Pose
-from ..utils.motion import reduce_waypoints_polygon
 from ..utils.search_graph import SearchGraph, Node
 
 
