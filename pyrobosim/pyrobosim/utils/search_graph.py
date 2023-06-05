@@ -2,67 +2,10 @@
 
 import warnings
 
-import numpy as np
 from astar import AStar
+import numpy as np
 
-
-class SearchGraphPlanner(AStar):
-    """
-    Graph based implementation of A*.
-    """
-
-    def __init__(self):
-        super().__init__()
-
-    def heuristic_cost_estimate(self, n0, n1):
-        """
-        Compute heuristic cost estimate using linear distance.
-        :param n0: First node
-        :type n0: :class:`Node`
-        :param n1: Second node
-        :type n1: :class:`Node`
-        :return: Heuristic cost estimate
-        :rtype: float
-        """
-        return n0.pose.get_linear_distance(n1.pose, ignore_z=True)
-
-    def distance_between(self, n0, n1):
-        """
-        Compute distance between two nodes
-        :param n0: First node
-        :type n0: :class:`Node`
-        :param n1: Second node
-        :type n1: :class:`Node`
-        :return: Heuristic cost estimate
-        :rtype: float
-        """
-        return n0.pose.get_linear_distance(n1.pose, ignore_z=True)
-
-    def neighbors(self, n):
-        """
-        Get neighbors of a graph node.
-        :param n: Node
-        :type n: :class:`Node`
-        :return: List of node neighbors
-        :rtype: list[:class:`Node`]
-        """
-        return list(n.neighbors)
-
-    def plan(self, start, goal):
-        """
-        Plan path from start to goal.
-
-        :param start: Node
-        :type start: :class:`Node`
-        :param goal: Node
-        :type goal: :class:`Node`
-        """
-        try:
-            self.latest_path = self.astar(start, goal)
-        except IndexError as e:
-            warnings.warn(f"Error calling astar: {e}")
-            self.latest_path = None
-        return self.latest_path
+from .motion import Path
 
 
 class Node:
@@ -105,14 +48,24 @@ class SearchGraph:
 
     """Graph representation class."""
 
-    def __init__(self, color=[0, 0, 0], color_alpha=0.5):
-        """Creates an instance of SearchGraph."""
+    def __init__(self, color=[0, 0, 0], color_alpha=0.5, use_planner=False):
+        """
+        Creates an instance of SearchGraph.
+        :param color: The display color for the graph.
+        :type param: Integer List [R, G, B]
+        :param color_alpha: The intensity of the color.
+        :type color_alpha: float
+        :param use_planner: If true, the graph will create a planner for path finding.
+        :type use_planner: bool
+        """
 
         self.nodes = set()
         self.edges = set()
         self.color = color
         self.color_alpha = color_alpha
-        self.path_finder = SearchGraphPlanner()
+        self.use_planner = use_planner
+        if self.use_planner:
+            self.path_finder = SearchGraphPlanner()
 
     def add_node(self, node):
         """
@@ -205,4 +158,70 @@ class SearchGraph:
         :return: The path from nodeA to nodeB, if one exists.
         :rtype: :class: `pyrobosim.utils.motion.Path
         """
-        return self.path_finder.plan(nodeA, nodeB)
+        path = Path()
+        if not self.use_planner:
+            warnings.warn(
+                "Graph should be created with `use_planner = True` to use planner."
+            )
+        else:
+            path = self.path_finder.plan(nodeA, nodeB)
+        return path
+
+
+class SearchGraphPlanner(AStar):
+    """
+    Graph based implementation of A*.
+    """
+
+    def __init__(self):
+        super().__init__()
+
+    def heuristic_cost_estimate(self, n0, n1):
+        """
+        Compute heuristic cost estimate using linear distance.
+        :param n0: First node
+        :type n0: :class:`Node`
+        :param n1: Second node
+        :type n1: :class:`Node`
+        :return: Heuristic cost estimate
+        :rtype: float
+        """
+        return n0.pose.get_linear_distance(n1.pose, ignore_z=True)
+
+    def distance_between(self, n0, n1):
+        """
+        Compute distance between two nodes
+        :param n0: First node
+        :type n0: :class:`Node`
+        :param n1: Second node
+        :type n1: :class:`Node`
+        :return: Heuristic cost estimate
+        :rtype: float
+        """
+        return n0.pose.get_linear_distance(n1.pose, ignore_z=True)
+
+    def neighbors(self, n):
+        """
+        Get neighbors of a graph node.
+        :param n: Node
+        :type n: :class:`Node`
+        :return: List of node neighbors
+        :rtype: list[:class:`Node`]
+        """
+        return list(n.neighbors)
+
+    def plan(self, start, goal):
+        """
+        Plan path from start to goal.
+
+        :param start: Node
+        :type start: :class:`Node`
+        :param goal: Node
+        :type goal: :class:`Node`
+        """
+        try:
+            self.latest_path = self.astar(start, goal)
+        except IndexError as e:
+            warnings.warn(f"Error calling astar: {e}")
+            self.latest_path = None
+        return self.latest_path
