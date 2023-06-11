@@ -141,65 +141,6 @@ class AStarGrid(AStar):
         return self.latest_path
 
 
-class AStarGraph(AStar):
-    """
-    Graph based implementation of A*.
-    """
-
-    def __init__(self):
-        super().__init__()
-
-    def heuristic_cost_estimate(self, n0, n1):
-        """
-        Compute heuristic cost estimate using linear distance.
-        :param n0: First node
-        :type n0: :class:`Node`
-        :param n1: Second node
-        :type n1: :class:`Node`
-        :return: Heuristic cost estimate
-        :rtype: float
-        """
-        return n0.pose.get_linear_distance(n1.pose, ignore_z=True)
-
-    def distance_between(self, n0, n1):
-        """
-        Compute distance between two nodes
-        :param n0: First node
-        :type n0: :class:`Node`
-        :param n1: Second node
-        :type n1: :class:`Node`
-        :return: Heuristic cost estimate
-        :rtype: float
-        """
-        return n0.pose.get_linear_distance(n1.pose, ignore_z=True)
-
-    def neighbors(self, n):
-        """
-        Get neighbors of a graph node.
-        :param n: Node
-        :type n: :class:`Node`
-        :return: List of node neighbors
-        :rtype: list[:class:`Node`]
-        """
-        return list(n.neighbors)
-
-    def plan(self, start, goal):
-        """
-        Plan path from start to goal.
-
-        :param start: Node
-        :type start: :class:`Node`
-        :param goal: Node
-        :type goal: :class:`Node`
-        """
-        try:
-            self.latest_path = self.astar(start, goal)
-        except IndexError as e:
-            warnings.warn(f"Error calling astar: {e}")
-            self.latest_path = None
-        return self.latest_path
-
-
 class AstarPlanner(PathPlannerBase):
     """Factory class for A* path planner."""
 
@@ -217,7 +158,9 @@ class AstarPlanner(PathPlannerBase):
         if planner_config.get("grid", None):
             self.impl = AStarGrid(**planner_config)
         else:
-            self.impl = AStarGraph(**planner_config)
+            raise NotImplementedError(
+                "A-star does not have a standalone graph based implementation."
+            )
 
     def plan(self, start, goal):
         """

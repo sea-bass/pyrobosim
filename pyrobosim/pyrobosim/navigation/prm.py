@@ -3,11 +3,9 @@
 import time
 import warnings
 
-from .a_star import AStarGraph
 from .planner_base import PathPlannerBase
-from ..utils.motion import Path
+from ..utils.motion import Path, reduce_waypoints_polygon
 from ..utils.pose import Pose
-from ..utils.motion import reduce_waypoints_polygon
 from ..utils.search_graph import SearchGraph, Node
 
 
@@ -37,7 +35,6 @@ class PRMPlannerPolygon:
         self.world = world
         self.compress_path = compress_path
 
-        self.path_finder = AStarGraph()
         self.reset()
 
     def reset(self):
@@ -46,7 +43,9 @@ class PRMPlannerPolygon:
         self.latest_path = Path()
 
         # Create a search graph and sample nodes.
-        self.graph = SearchGraph(color=[0, 0.4, 0.8], color_alpha=0.25)
+        self.graph = SearchGraph(
+            color=[0, 0.4, 0.8], color_alpha=0.25, use_planner=True
+        )
         t_start = time.time()
         for i in range(self.max_nodes):
             n_sample = self.sample_configuration()
@@ -103,7 +102,7 @@ class PRMPlannerPolygon:
 
         # Find a path from start to goal nodes
         t_start = time.time()
-        waypoints = self.path_finder.plan(start, goal)
+        waypoints = self.graph.find_path(start, goal)
         # Return empty path if no path was found.
         if not waypoints:
             return self.latest_path
