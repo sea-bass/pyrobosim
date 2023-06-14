@@ -87,6 +87,8 @@ def create_world():
         "bidirectional": True,
         "rrt_connect": False,
         "rrt_star": True,
+        "max_connection_dist": 0.5,
+        "rewire_radius": 1.5,
         "compress_path": False,
     }
     path_planner = PathPlanner("rrt", **planner_config)

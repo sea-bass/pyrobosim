@@ -5,8 +5,8 @@
 # WORLD PARAMETERS
 params:
   name: test_world
-  object_radius: 0.05 # Radius around objects
-  wall_height: 2.0 # Wall height for exporting to Gazebo
+  object_radius: 0.0375  # Radius around objects
+  wall_height: 2.0  # Wall height for exporting to Gazebo
 
 
 # METADATA: Describes information about locations and objects
@@ -27,10 +27,10 @@ robots:
       # occupancy_grid:
       #   resolution: 0.05
       #   inflation_radius: 0.15
-      max_connection_dist: 0.25
+      max_connection_dist: 0.5
       bidirectional: true
       rrt_star: true
-      rewire_radius: 1.0
+      rewire_radius: 1.5
       compress_path: false
     # Linear motion path executor
     path_executor:

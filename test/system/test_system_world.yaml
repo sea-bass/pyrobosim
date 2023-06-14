@@ -5,8 +5,8 @@
 # WORLD PARAMETERS
 params:
   name: test_system_world
-  object_radius: 0.05 # Radius around objects
-  wall_height: 2.0 # Wall height for exporting to Gazebo
+  object_radius: 0.0375  # Radius around objects
+  wall_height: 2.0  # Wall height for exporting to Gazebo
 
 
 # METADATA: Describes information about locations and objects

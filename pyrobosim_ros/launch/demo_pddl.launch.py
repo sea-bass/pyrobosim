@@ -48,7 +48,7 @@ def generate_launch_description():
     )
     search_sample_ratio_arg = DeclareLaunchArgument(
         "search_sample_ratio",
-        default_value=TextSubstitution(text="1.0"),
+        default_value=TextSubstitution(text="0.5"),
         description="Search to sample ratio for planner",
     )
 

@@ -5,8 +5,8 @@
 # WORLD PARAMETERS
 params:
   name: pddlstream_simple_world
-  object_radius: 0.05 # Radius around objects
-  wall_height: 2.0 # Wall height for exporting to Gazebo
+  object_radius: 0.0375  # Radius around objects
+  wall_height: 2.0  # Wall height for exporting to Gazebo
 
 
 # METADATA: Describes information about locations and objects
@@ -23,7 +23,7 @@ robots:
     pose: [0, 0, 0]
     path_planner:
       type: rrt
-      max_connection_dist: 0.25
+      max_connection_dist: 0.5
       bidirectional: false
       rrt_star: true
       rewire_radius: 1.5

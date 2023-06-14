@@ -50,7 +50,6 @@ def get_stream_map(world, robot):
             lambda loc, obj: primitives.sample_place_pose(
                 loc,
                 obj,
-                padding=world.object_radius,
                 max_tries=world.max_object_sample_tries,
             )
         ),
