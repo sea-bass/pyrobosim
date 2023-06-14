@@ -3,8 +3,8 @@ Setup
 
 This package is being tested with:
 
-* Python 3.8 in Ubuntu 20.04, optionally with ROS 2 Foxy
-* Python 3.10 in Ubuntu 22.04, optionally with ROS 2 Humble
+* Python 3.10 in Ubuntu 22.04
+* Optionally with ROS 2 Humble and Iron
 
 Local Setup
 -----------

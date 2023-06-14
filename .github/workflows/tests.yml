@@ -47,7 +47,7 @@ jobs:
   ros2-test:
     strategy:
       matrix:
-        ros_distro: [foxy, humble]
+        ros_distro: [humble, iron]
     env:
       ROS_DISTRO: ${{ matrix.ros_distro }}
 
