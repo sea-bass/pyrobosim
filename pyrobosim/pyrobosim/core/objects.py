@@ -149,7 +149,7 @@ class Object:
 
     def get_footprint(self):
         """
-        Returns the object footprint cooridnates.
+        Returns the object footprint coordinates.
 
         :return: N-by-2 array of object footprint XY coordinates
         :rtype: :class:`numpy.ndarray`

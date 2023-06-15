@@ -22,7 +22,7 @@ class PathPlannerBase:
     def reset(self):
         """
         Resets the state of the planner.
-        Sub-classes should add their own relevant mechanims
+        Sub-classes should add their own relevant mechanisms
         """
         self.goal = None
         self.start = None
