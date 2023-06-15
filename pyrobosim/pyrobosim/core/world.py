@@ -19,7 +19,7 @@ class World:
     """Core world modeling class."""
 
     def __init__(
-        self, name="world", inflation_radius=0.0, object_radius=0.05, wall_height=2.0
+        self, name="world", inflation_radius=0.0, object_radius=0.0375, wall_height=2.0
     ):
         """
         Creates a new world model instance.
@@ -489,7 +489,7 @@ class World:
                 x_sample, y_sample = sample_from_polygon(obj_spawn.polygon)
                 yaw_sample = np.random.uniform(-np.pi, np.pi)
                 pose_sample = Pose(x=x_sample, y=y_sample, z=0.0, yaw=yaw_sample)
-                poly = transform_polygon(obj.collision_polygon, pose_sample)
+                poly = transform_polygon(obj.raw_collision_polygon, pose_sample)
 
                 is_valid_pose = poly.within(obj_spawn.polygon)
                 for other_obj in obj_spawn.children:

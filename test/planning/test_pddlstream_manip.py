@@ -19,7 +19,7 @@ from pyrobosim.utils.pose import Pose
 
 
 def create_test_world(add_alt_desk=True):
-    world = World(object_radius=0.05)
+    world = World(object_radius=0.0375)
 
     # Set the location and object metadata
     data_folder = get_data_folder()
@@ -90,7 +90,7 @@ def create_test_world(add_alt_desk=True):
 
 
 def start_planner(
-    world, domain_name, interactive=False, max_attempts=1, search_sample_ratio=1.0
+    world, domain_name, interactive=False, max_attempts=1, search_sample_ratio=0.5
 ):
     domain_folder = os.path.join(get_default_domains_folder(), domain_name)
     planner = PDDLStreamPlanner(world, domain_folder)
@@ -124,7 +124,7 @@ domains_to_test = ["04_nav_manip_stream", "05_nav_grasp_stream"]
 def test_manip_single_desk(domain_name):
     world = create_test_world(add_alt_desk=False)
     plan = start_planner(
-        world, domain_name=domain_name, max_attempts=3, search_sample_ratio=1.0
+        world, domain_name=domain_name, max_attempts=3, search_sample_ratio=0.5
     )
     assert plan is not None
 

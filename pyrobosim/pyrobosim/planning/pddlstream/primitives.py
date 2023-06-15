@@ -186,7 +186,7 @@ def sample_grasp_pose(
         yield (g,)
 
 
-def sample_place_pose(loc, obj, padding=0.0, max_tries=100):
+def sample_place_pose(loc, obj, max_tries=100):
     """
     Samples a feasible placement pose for an object at a specific location.
 
@@ -194,14 +194,11 @@ def sample_place_pose(loc, obj, padding=0.0, max_tries=100):
     :type loc: Location
     :param obj: Object to place.
     :type obj: Object
-    :param padding: Padding around edge of location polygon for collision checking.
-    :type padding: float, optional
     :param max_tries: Maximum samples to try before giving up.
     :type max_tries: int, optional
     :return: Generator yielding tuple containing a placement pose
     :rtype: generator[tuple[:class:`pyrobosim.utils.pose.Pose`]]
     """
-    obj_poly = inflate_polygon(obj.raw_polygon, padding)
     while True:
         is_valid_pose = False
         while not is_valid_pose:
@@ -215,7 +212,7 @@ def sample_place_pose(loc, obj, padding=0.0, max_tries=100):
             )
 
             # Check that the object is inside the polygon.
-            poly_sample = transform_polygon(obj_poly, pose_sample)
+            poly_sample = transform_polygon(obj.raw_collision_polygon, pose_sample)
             is_valid_pose = poly_sample.within(loc.polygon)
             if not is_valid_pose:
                 continue  # If our sample is in collision, simply retry.

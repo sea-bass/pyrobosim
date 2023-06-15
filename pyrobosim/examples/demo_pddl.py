@@ -27,7 +27,7 @@ def parse_args():
     parser.add_argument(
         "--search-sample-ratio",
         type=float,
-        default=2.0,
+        default=0.5,
         help="Search to sample ratio for planner",
     )
     return parser.parse_args()
@@ -75,9 +75,11 @@ def start_planner(world, args):
         robot,
         goal_literals,
         verbose=args.verbose,
+        max_attempts=3,
         search_sample_ratio=args.search_sample_ratio,
         planner="ff-astar",
-        max_planner_time=30.0,
+        max_planner_time=10.0,
+        max_time=60.0,
     )
     robot.execute_plan(plan, blocking=True)
 

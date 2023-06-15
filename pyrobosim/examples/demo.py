@@ -115,6 +115,8 @@ def create_world(multirobot=False):
         "bidirectional": True,
         "rrt_connect": False,
         "rrt_star": True,
+        "max_connection_dist": 0.5,
+        "rewire_radius": 1.5,
         "compress_path": False,
     }
     rrt_planner = PathPlanner("rrt", **planner_config_rrt)
