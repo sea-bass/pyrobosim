@@ -28,7 +28,6 @@ def launch_planner_node(context, *args, **kwargs):
 
 
 def generate_launch_description():
-
     # Arguments
     example_arg = DeclareLaunchArgument(
         "example",

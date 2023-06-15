@@ -1,36 +1,63 @@
-
 repos:
 
-# Auto formats Python code.
--    repo: https://github.com/psf/black.git
-     rev: 22.12.0
-     hooks:
-     - id: black
+  # Runs pre-commit hooks and other file format checks.
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-ast
+      - id: check-builtin-literals
+      - id: check-case-conflict
+      - id: check-docstring-first
+      - id: check-executables-have-shebangs
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-toml
+      - id: check-vcs-permalinks
+      - id: check-yaml
+      - id: debug-statements
+      - id: destroyed-symlinks
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: fix-byte-order-marker
+      - id: forbid-new-submodules
+      - id: mixed-line-ending
+      - id: name-tests-test
+      - id: requirements-txt-fixer
+      - id: sort-simple-yaml
+      - id: trailing-whitespace
 
-# Runs pre-commit hooks and other file format checks.
--    repo: https://github.com/pre-commit/pre-commit-hooks
-     rev: v4.4.0
-     hooks:
-     - id: check-added-large-files
-     - id: check-ast
-     - id: check-builtin-literals
-     - id: check-case-conflict
-     - id: check-docstring-first
-     - id: check-executables-have-shebangs
-     - id: check-json
-     - id: check-merge-conflict
-     - id: check-symlinks
-     - id: check-toml
-     - id: check-vcs-permalinks
-     - id: check-yaml
-     - id: debug-statements
-     - id: destroyed-symlinks
-     - id: detect-private-key
-     - id: end-of-file-fixer
-     - id: fix-byte-order-marker
-     - id: forbid-new-submodules
-     - id: mixed-line-ending
-     - id: name-tests-test
-     - id: requirements-txt-fixer
-     - id: sort-simple-yaml
-     - id: trailing-whitespace
+# Auto formats Python code.
+  - repo: https://github.com/psf/black.git
+    rev: 23.3.0
+    hooks:
+      - id: black
+
+# Finds spelling issues in code.
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.2.5
+    hooks:
+      - id: codespell
+        args: ["--write-changes", "-L", "atleast,inout,ether"] # Provide a comma-separated list of misspelled words that codespell should ignore (for example: '-L', 'word1,word2,word3').
+        exclude: \.(svg|pyc|stl|dae|lock)$
+
+# Finds issues in YAML files.
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.32.0
+    hooks:
+      - id: yamllint
+        args:
+          [
+            "--no-warnings",
+            "--config-data",
+            "{extends: default, rules: {line-length: disable, braces: {max-spaces-inside: 1}}}",
+          ]
+        types: [text]
+        files: \.(yml|yaml)$
+
+# Checks links in markdown files.
+  - repo: https://github.com/tcort/markdown-link-check
+    rev: v3.11.2
+    hooks:
+      - id: markdown-link-check
