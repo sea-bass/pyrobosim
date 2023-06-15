@@ -82,7 +82,7 @@ def main():
             TaskAction(type="navigate", target_location="counter0_left"),
             TaskAction(type="place"),
         ]
-        plan_msg = TaskPlan(robot="robby", actions=task_actions)
+        plan_msg = TaskPlan(robot="robot2", actions=task_actions)
         cmd.plan_pub.publish(plan_msg)
 
     else:
