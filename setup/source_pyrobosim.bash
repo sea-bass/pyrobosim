@@ -14,7 +14,7 @@
 #  So you can then run this from your Terminal:
 #    pyrobosim
 #
-# For ROS workflows, enter the ROS distro (foxy/humble) as an argument:
+# For ROS workflows, enter the ROS distro (humble/iron) as an argument:
 #
 #   pyrobosim_ros() {
 #     source /path/to/pyrobosim/setup/source_pyrobosim.bash humble
