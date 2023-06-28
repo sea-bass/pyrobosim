@@ -154,8 +154,10 @@ class PlannerNode(Node):
         )
         if self.get_parameter("verbose").value == True:
             self.get_logger().info(f"{plan}")
-        plan_msg = task_plan_to_ros(plan)
-        self.plan_pub.publish(plan_msg)
+
+        if plan:
+            plan_msg = task_plan_to_ros(plan)
+            self.plan_pub.publish(plan_msg)
         self.latest_goal = None
         self.planning = False
 
