@@ -31,6 +31,9 @@ def main():
     rclpy.init()
     cmd = Commander()
 
+    # Wait for GUI to come up
+    time.sleep(2.0)
+
     # Choose between action or plan command, based on input parameter.
     mode = cmd.get_parameter("mode").value
     if mode == "action":

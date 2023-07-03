@@ -364,10 +364,14 @@ class Robot:
                     time.sleep(0.5)  # Delay to wait for navigation
                 success = True  # TODO Need to keep track of nav status
             else:
-                path = self.world.find_path(action.target_location, robot=self)
+                tgt_loc = self.world.graph_node_from_entity(
+                    action.target_location, robot=self
+                )
+                self.current_goal = tgt_loc.parent
+                path = self.plan_path(self.pose, tgt_loc.pose)
                 success = self.follow_path(
                     path,
-                    target_location=action.target_location,
+                    target_location=self.current_goal,
                     realtime_factor=1.0,
                     blocking=blocking,
                 )
