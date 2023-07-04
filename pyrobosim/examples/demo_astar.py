@@ -28,7 +28,7 @@ def demo_astar():
     goal = Pose(x=3.0, y=3.0)
     robot.set_pose(start)
     robot.set_path_planner(planner)
-    robot.current_path = robot.plan_path(start, goal)
+    result = robot.plan_path(start, goal)
     planner.info()
 
 

@@ -402,12 +402,11 @@ class WorldCanvas(FigureCanvasQTAgg):
         # Find a path, or use an existing one, and start the navigation thread.
         if robot and robot.path_planner:
             goal_node = self.world.graph_node_from_entity(goal, robot=robot)
-            robot.current_goal = goal_node.parent
             path = robot.plan_path(robot.pose, goal_node.pose)
             self.show_planner_and_path(robot)
             robot.follow_path(
                 path,
-                target_location=robot.current_goal,
+                target_location=goal_node.parent,
                 realtime_factor=self.realtime_factor,
                 blocking=False,
             )
