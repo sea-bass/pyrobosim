@@ -31,6 +31,9 @@ def main():
     rclpy.init()
     cmd = Commander()
 
+    # Wait for GUI to come up
+    time.sleep(2.0)
+
     # Choose between action or plan command, based on input parameter.
     mode = cmd.get_parameter("mode").value
     if mode == "action":
@@ -59,7 +62,7 @@ def main():
             TaskAction(type="place"),
             TaskAction(type="navigate", target_location="kitchen"),
         ]
-        plan_msg = TaskPlan(robot="robot", actions=task_actions)
+        plan_msg = TaskPlan(robot="robot0", actions=task_actions)
         cmd.plan_pub.publish(plan_msg)
 
         time.sleep(2.0)

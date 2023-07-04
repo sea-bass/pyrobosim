@@ -28,7 +28,7 @@ def test_rrt():
     robot = world.robots[0]
     robot.set_pose(start)
     robot.set_path_planner(rrt)
-    robot.current_path = robot.plan_path(start, goal)
+    result = robot.plan_path(start, goal)
     rrt.info()
 
 

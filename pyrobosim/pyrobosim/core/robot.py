@@ -59,8 +59,6 @@ class Robot:
         # Navigation properties
         self.set_path_planner(path_planner)
         self.set_path_executor(path_executor)
-        self.current_path = None
-        self.current_goal = None
         self.executing_nav = False
 
         # Manipulation properties
@@ -171,7 +169,6 @@ class Robot:
         # Update the robot state if successful.
         if success and target_location is not None:
             self.location = target_location
-        self.current_path = None
         return success
 
     def _attach_object(self, obj):
@@ -351,7 +348,6 @@ class Robot:
             self.world.gui.set_buttons_during_action(False)
 
         if action.type == "navigate":
-            self.current_path = action.path
             if self.world.has_gui:
                 self.executing_nav = True
                 if isinstance(action.target_location, str):
@@ -364,14 +360,16 @@ class Robot:
                     time.sleep(0.5)  # Delay to wait for navigation
                 success = True  # TODO Need to keep track of nav status
             else:
-                path = self.world.find_path(action.target_location, robot=self)
+                goal_node = self.world.graph_node_from_entity(
+                    action.target_location, robot=self
+                )
+                path = self.plan_path(self.pose, tgt_loc.pose)
                 success = self.follow_path(
                     path,
-                    target_location=action.target_location,
+                    target_location=goal_node.parent,
                     realtime_factor=1.0,
                     blocking=blocking,
                 )
-            self.current_path = None
 
         elif action.type == "pick":
             if self.world.has_gui:
