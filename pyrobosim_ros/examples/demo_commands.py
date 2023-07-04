@@ -62,7 +62,7 @@ def main():
             TaskAction(type="place"),
             TaskAction(type="navigate", target_location="kitchen"),
         ]
-        plan_msg = TaskPlan(robot="robot", actions=task_actions)
+        plan_msg = TaskPlan(robot="robot0", actions=task_actions)
         cmd.plan_pub.publish(plan_msg)
 
         time.sleep(2.0)
