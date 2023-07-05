@@ -94,11 +94,10 @@ class PathPlannerBase:
                 graph_artists.append(markers)
 
                 # Plot the edges as a LineCollection
-                if len(graph.edges) == 0:
-                    continue
-                edge_xs = [[e.nodeA.pose.x, e.nodeB.pose.x] for e in graph.edges]
-                edge_ys = [[e.nodeA.pose.y, e.nodeB.pose.y] for e in graph.edges]
-                edge_coords = np.array(list(zip(edge_xs, edge_ys))).swapaxes(1, 2)
+                edge_coords = [
+                    [[e.nodeA.pose.x, e.nodeA.pose.y], [e.nodeB.pose.x, e.nodeB.pose.y]]
+                    for e in graph.edges
+                ]
                 line_segments = LineCollection(
                     edge_coords,
                     color=graph.color,
