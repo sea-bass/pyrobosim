@@ -21,6 +21,7 @@ def demo_astar():
         ),
         "diagonal_motion": True,
         "heuristic": "euclidean",
+        "compress_path": False,
     }
 
     planner = PathPlanner("astar", **planner_config)

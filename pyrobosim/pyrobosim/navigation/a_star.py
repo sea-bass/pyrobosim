@@ -5,7 +5,7 @@ import time
 import warnings
 from astar import AStar
 from pyrobosim.utils.pose import Pose
-from pyrobosim.utils.motion import Path
+from pyrobosim.utils.motion import Path, reduce_waypoints_grid
 from pyrobosim.navigation.planner_base import PathPlannerBase
 
 
@@ -126,6 +126,10 @@ class AStarGrid(AStar):
         start_grid = self.grid.world_to_grid((start.x, start.y))
         goal_grid = self.grid.world_to_grid((goal.x, goal.y))
         path = self.astar(start_grid, goal_grid)
+
+        # Apply waypoint reduction if enabled.
+        if self.compress_path:
+            path = reduce_waypoints_grid(self.grid, list(path))
 
         world_path = []
         if path is not None:
