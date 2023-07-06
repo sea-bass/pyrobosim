@@ -363,7 +363,7 @@ class Robot:
                 goal_node = self.world.graph_node_from_entity(
                     action.target_location, robot=self
                 )
-                path = self.plan_path(self.pose, tgt_loc.pose)
+                path = self.plan_path(self.pose, goal_node.pose)
                 success = self.follow_path(
                     path,
                     target_location=goal_node.parent,
