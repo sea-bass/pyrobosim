@@ -183,7 +183,7 @@ class WorldROSWrapper(Node):
             return
         if self.is_robot_busy(robot):
             self.get_logger().info(
-                f"Currently executing action(s). Discarding this one."
+                "Currently executing action(s). Discarding this one."
             )
             return
         action_thread = threading.Thread(
