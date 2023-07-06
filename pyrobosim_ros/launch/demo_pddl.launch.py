@@ -12,7 +12,6 @@ def launch_planner_node(context, *args, **kwargs):
         package="pyrobosim_ros",
         executable="demo_pddl_planner.py",
         name="pddl_demo_planner",
-        namespace="pyrobosim",
         parameters=[
             {
                 "example": LaunchConfiguration("example"),
@@ -56,14 +55,12 @@ def generate_launch_description():
         package="pyrobosim_ros",
         executable="demo_pddl_world.py",
         name="pddl_demo",
-        namespace="pyrobosim",
     )
     planner_node = OpaqueFunction(function=launch_planner_node)
     goalspec_node = Node(
         package="pyrobosim_ros",
         executable="demo_pddl_goal_publisher.py",
         name="pddl_demo_goal_publisher",
-        namespace="pyrobosim",
         parameters=[
             {
                 "example": LaunchConfiguration("example"),

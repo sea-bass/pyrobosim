@@ -24,14 +24,12 @@ def generate_launch_description():
         package="pyrobosim_ros",
         executable="demo.py",
         name="demo_world",
-        namespace="pyrobosim",
         parameters=[{"world_file": LaunchConfiguration("world_file")}],
     )
     command_node = Node(
         package="pyrobosim_ros",
         executable="demo_commands.py",
         name="demo_commands",
-        namespace="pyrobosim",
         parameters=[{"mode": LaunchConfiguration("mode")}],
     )
 
