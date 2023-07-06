@@ -9,6 +9,7 @@ from rclpy.node import Node
 import time
 
 from pyrobosim_msgs.msg import TaskAction, TaskPlan
+from pyrobosim_msgs.srv import RequestWorldState
 
 
 class Commander(Node):
@@ -23,16 +24,21 @@ class Commander(Node):
         # Publisher for a task plan
         self.plan_pub = self.create_publisher(TaskPlan, "commanded_plan", 10)
 
-        # Delay to ensure world is loaded.
-        time.sleep(2.0)
+        # Call world state service to ensure node is running
+        self.world_state_client = self.create_client(
+            RequestWorldState, "request_world_state"
+        )
+        while rclpy.ok() and not self.world_state_client.wait_for_service(
+            timeout_sec=1.0
+        ):
+            self.get_logger().info("Waiting for world state server...")
+        future = self.world_state_client.call_async(RequestWorldState.Request())
+        rclpy.spin_until_future_complete(self, future)
 
 
 def main():
     rclpy.init()
     cmd = Commander()
-
-    # Wait for GUI to come up
-    time.sleep(2.0)
 
     # Choose between action or plan command, based on input parameter.
     mode = cmd.get_parameter("mode").value

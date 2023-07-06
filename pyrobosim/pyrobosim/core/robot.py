@@ -174,7 +174,7 @@ class Robot:
     def _attach_object(self, obj):
         """
         Helper function to attach an object in the world to the robot.
-        Be careful calling this function directly as is does not do any validation.
+        Be careful calling this function directly as it does not do any validation.
         When possible, you should be using `pick_object`.
 
         :param obj: Object to manipulate

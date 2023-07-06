@@ -6,6 +6,7 @@ from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 import threading
+import time
 
 from pyrobosim_msgs.msg import (
     RobotState,
@@ -36,14 +37,15 @@ class WorldROSWrapper(Node):
         """
         Creates a ROS 2 world wrapper node.
 
-        Given a node name (default is ``"pyrobosim"``), this node will:
-            * Subscribe to single actions on the ``pyrobosim/commanded_action`` topic.
-            * Subscribe to task plans on the ``pyrobosim/commanded_plan`` topic
-            * Publish robot state on the ``pyrobosim/robot_state`` topic
+        This node will:
+            * Subscribe to single actions on the ``commanded_action`` topic.
+            * Subscribe to task plans on the ``commanded_plan`` topic.
+            * Publish robot states on the ``robot_name/robot_state`` topic.
+            * Serve a ``request_world_state` service to retrieve the world state for planning.
 
         :param world: World model instance.
         :type world: :class:`pyrobosim.core.world.World`, optional
-        :param name: Node name prefix and namespace, defaults to ``"pyrobosim"``.
+        :param name: Node name, defaults to ``"pyrobosim"``.
         :type name: str, optional
         :param num_threads: Number of threads in the multi-threaded executor.
         :type num_threads: int, optional
@@ -110,8 +112,13 @@ class WorldROSWrapper(Node):
         self.world.ros_node = self
         self.world.has_ros_node = True
 
-    def start(self):
-        """Starts the node."""
+    def start(self, wait_for_gui=False):
+        """
+        Starts the node.
+
+        :param wait_for_gui: If true, waits for the GUI to come up before spinning.
+        :type wait_for_gui: bool, optional
+        """
         executor = MultiThreadedExecutor(num_threads=self.num_threads)
         executor.add_node(self)
 
@@ -120,6 +127,10 @@ class WorldROSWrapper(Node):
 
         for robot in self.world.robots:
             self.add_robot_state_publisher(robot)
+
+        while wait_for_gui and not self.world.has_gui:
+            self.get_logger().info("Waiting for GUI...")
+            time.sleep(1.0)
 
         try:
             executor.spin()
@@ -172,7 +183,7 @@ class WorldROSWrapper(Node):
             return
         if self.is_robot_busy(robot):
             self.get_logger().info(
-                f"Currently executing action(s). Discarding this one."
+                "Currently executing action(s). Discarding this one."
             )
             return
         action_thread = threading.Thread(

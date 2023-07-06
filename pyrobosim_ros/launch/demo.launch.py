@@ -19,7 +19,6 @@ def generate_launch_description():
         package="pyrobosim_ros",
         executable="demo.py",
         name="demo",
-        namespace="pyrobosim",
         parameters=[{"world_file": LaunchConfiguration("world_file")}],
     )
 

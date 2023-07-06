@@ -240,8 +240,6 @@ class WorldCanvas(FigureCanvasQTAgg):
 
                 # Update the animation.
                 self.update_robots_plot()
-                for idx in active_robot_indices:
-                    self.update_object_plot(self.world.robots[idx].manipulated_object)
                 self.show_world_state(
                     self.world.robots[active_robot_indices[0]], navigating=True
                 )
@@ -411,13 +409,15 @@ class WorldCanvas(FigureCanvasQTAgg):
                 blocking=False,
             )
 
-        # Sleep while the robot is executing the action.
-        while robot.executing_nav:
-            time.sleep(0.1)
+            # Sleep while the robot is executing the action.
+            while robot.executing_nav:
+                time.sleep(0.1)
 
-        self.show_world_state(robot=robot)
-        self.draw_and_sleep()
-        return True
+            self.show_world_state(robot=robot)
+            self.draw_and_sleep()
+            return True
+
+        return False
 
     def pick_object(self, robot, obj_name, grasp_pose=None):
         """

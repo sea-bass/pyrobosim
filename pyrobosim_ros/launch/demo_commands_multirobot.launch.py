@@ -8,7 +8,6 @@ def generate_launch_description():
         package="pyrobosim_ros",
         executable="demo.py",
         name="demo_world",
-        namespace="pyrobosim",
         parameters=[
             {
                 # Use multirobot file option.
@@ -22,7 +21,6 @@ def generate_launch_description():
         package="pyrobosim_ros",
         executable="demo_commands.py",
         name="demo_commands",
-        namespace="pyrobosim",
         parameters=[
             {
                 # Use multirobot plan mode option.

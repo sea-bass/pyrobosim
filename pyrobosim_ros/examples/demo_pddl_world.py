@@ -33,7 +33,7 @@ if __name__ == "__main__":
     node = create_ros_node()
 
     # Start ROS Node in separate thread
-    ros_thread = threading.Thread(target=node.start)
+    ros_thread = threading.Thread(target=lambda: node.start(wait_for_gui=True))
     ros_thread.start()
 
     # Start GUI in main thread
