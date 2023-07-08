@@ -11,7 +11,9 @@ from ..core.locations import Location, ObjectSpawn
 from ..core.objects import Object
 
 
-def apply_resolution_strategy(world, entity_list, resolution_strategy, robot=None):
+def apply_resolution_strategy(
+    world, entity_list: list, resolution_strategy: str, robot=None
+):
     """
     Accepts a list of entities in the world (e.g. rooms, objects, etc.) and
     applies a resolution strategy to get a single entity from that list that best
