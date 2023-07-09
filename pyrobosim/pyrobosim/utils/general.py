@@ -40,9 +40,16 @@ class EntityMetadata:
         :param filename: Path to metadata YAML file.
         :type filename: str
         """
-        self.filename = filename
-        with open(self.filename) as file:
-            self.data = yaml.load(file, Loader=yaml.FullLoader)
+        if filename:
+            if not os.path.isfile(filename):
+                raise FileNotFoundError(f"Metadata filename not found: {filename}")
+
+            self.filename = filename
+            with open(self.filename) as file:
+                self.data = yaml.load(file, Loader=yaml.FullLoader)
+        else:
+            self.filename = None
+            self.data = {}
 
     def has_category(self, category):
         """
