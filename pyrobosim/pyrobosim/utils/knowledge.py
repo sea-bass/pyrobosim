@@ -7,9 +7,6 @@ import sys
 import warnings
 import numpy as np
 
-from ..core.locations import Location, ObjectSpawn
-from ..core.objects import Object
-
 
 def apply_resolution_strategy(world, entity_list, resolution_strategy, robot=None):
     """
@@ -75,6 +72,9 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
     :return: The entity that meets the mode and resolution strategy, or None.
     :rtype: Entity
     """
+    from ..core.locations import Location, ObjectSpawn
+    from ..core.objects import Object
+
     room = None
     named_location = None
     loc_category = None
