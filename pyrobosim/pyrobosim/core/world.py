@@ -51,6 +51,7 @@ class World:
         self.hallways = []
         self.locations = []
         self.objects = []
+        self.set_metadata()
 
         # Counters
         self.num_rooms = 0
