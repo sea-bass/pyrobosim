@@ -44,7 +44,7 @@ services:
 
   test:
     extends: base
-    command: test/run_tests.bash
+    command: test/run_tests.bash ${ROS_DISTRO:-humble}
 
   ###############
   # Basic demos #
