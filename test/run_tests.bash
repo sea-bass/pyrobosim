@@ -13,13 +13,13 @@ TEST_RESULTS_DIR=$SCRIPT_DIR/results
 
 # Run regular pytest tests
 echo "Running Python package unit tests..."
-python3 -m pytest "$SCRIPT_DIR/utils" \
+python3 -m pytest "$SCRIPT_DIR" \
  --junitxml="$TEST_RESULTS_DIR/test_results.xml" \
  --html="$TEST_RESULTS_DIR/test_results.html" --self-contained-html
 
 # Run colcon tests, if using a ROS distro
 ROS_DISTRO=$1
-if [ "$ROS_DISTRO" == "" ]
+if [ -n "$ROS_DISTRO" ]
 then
     echo "Running ROS package unit tests..."
     pushd "${SCRIPT_DIR}/../../.." || exit
