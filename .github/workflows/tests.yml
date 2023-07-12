@@ -56,6 +56,10 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
+      - name: Set up Docker image
+        run: |
+          export ROS_DISTRO=${{ matrix.ros_distro }}
+          docker compose build
       - name: Run unit tests in Docker container
         run: docker compose run test
       - name: Upload test results
