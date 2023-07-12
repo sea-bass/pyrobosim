@@ -39,7 +39,7 @@ You can run all unit tests locally before you push to your branch and wait for C
 To do this:
 
 * Go to the root folder of this repository.
-* Run `test/run_tests.bash`
+* Run `test/run_tests.bash` (or `test/run_tests.bash $ROS_DISTRO` if using ROS)
 
 The above script runs [`pytest`](https://docs.pytest.org/) with the settings configured for this test.
 You can also look at, and modify, the `pytest.ini` file at the root of this repository.
