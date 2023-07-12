@@ -45,4 +45,9 @@ install(DIRECTORY
   DESTINATION share/${PROJECT_NAME}
 )
 
+# Build tests if enabled
+if(BUILD_TESTING)
+  add_subdirectory(test)
+endif()
+
 ament_package()

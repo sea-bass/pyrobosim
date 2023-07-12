@@ -20,6 +20,7 @@
   <exec_depend>pyrobosim_msgs</exec_depend>
 
   <!-- Test dependencies -->
+  <test_depend>ament_cmake_pytest</test_depend>
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
