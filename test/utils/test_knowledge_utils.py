@@ -115,7 +115,74 @@ def test_query_to_entity():
 
 
 def test_resolve_to_location():
-    pass
+    test_world = load_world()
+    loc = resolve_to_location(test_world)
+    assert loc.name == "table0"
+
+    for category in ["table", "desk", "counter", "trash_can"]:
+        # we should be able to find each category
+        loc = resolve_to_location(test_world, category=category)
+        assert loc.category == category
+
+    for room in ["kitchen", "bedroom", "bathroom"]:
+        # all of these rooms have objects
+        loc = resolve_to_location(test_world, room=room)
+        assert loc.parent.name == room
+
+    # put ourselves on a table and make sure it is the nearest one
+    # then, search for a different category and make sure we find something that isn't the same table we're on
+    robot = Robot("test_robot")
+    robot.pose = Pose.from_list([0.85, -0.5, 0.0, -1.57])
+    nearest_loc = resolve_to_location(
+        test_world, resolution_strategy="nearest", robot=robot
+    )
+    assert nearest_loc.name == "table0"
+    loc = resolve_to_location(
+        test_world, category="desk", resolution_strategy="nearest", robot=robot
+    )
+    assert loc != nearest_loc
+
+    # test expanding locations
+    loc = resolve_to_location(
+        test_world,
+        category="desk",
+        resolution_strategy="nearest",
+        robot=robot,
+        expand_locations=True,
+    )
+    assert loc.parent.category == "desk"
+
+    # things that should warn
+    import warnings
+
+    warnings.filterwarnings("error")
+
+    # fake location category
+    try:
+        loc = resolve_to_location(test_world, category="fake")
+    except UserWarning:
+        # test passed, this should warn
+        pass
+    else:
+        assert False, "resolve_to_location didn't warn when not finding an object"
+
+    # fake location category
+    try:
+        loc = resolve_to_location(test_world, room="fake")
+    except UserWarning:
+        # test passed, this should warn
+        pass
+    else:
+        assert False, "resolve_to_location didn't warn when not finding an object"
+
+    # combination that doesn't exist
+    try:
+        loc = resolve_to_location(test_world, room="bedroom", category="trash_can")
+    except UserWarning:
+        # test passed, this should warn
+        pass
+    else:
+        assert False, "resolve_to_location didn't warn when not finding an object"
 
 
 def test_resolve_to_object():
@@ -166,7 +233,55 @@ def test_resolve_to_object():
     )
     assert not (obj.category == "apple" and obj.parent.parent.name == "my_desk")
 
+    # things that should warn
+    import warnings
+
+    warnings.filterwarnings("error")
+
+    # fake object category
+    try:
+        obj = resolve_to_object(test_world, category="fake")
+    except UserWarning:
+        # test passed, this should warn
+        pass
+    else:
+        assert False, "resolve_to_object didn't warn when not finding an object"
+
+    # fake location
+    try:
+        obj = resolve_to_object(test_world, location="fake")
+    except UserWarning:
+        # test passed, this should warn
+        pass
+    else:
+        assert False, "resolve_to_object didn't warn when not finding an object"
+
+    # fake room
+    try:
+        obj = resolve_to_object(test_world, robot=robot, room="fake")
+    except UserWarning:
+        # test passed, this should warn
+        pass
+    else:
+        assert False, "resolve_to_object didn't warn when not finding an object"
+
+    # combination that doesn't exist
+    try:
+        obj = resolve_to_object(
+            test_world,
+            robot=robot,
+            room="kitchen",
+            category="banana",
+            location="trash_can",
+        )
+    except UserWarning:
+        # test passed, this should warn
+        pass
+    else:
+        assert False, "resolve_to_object didn't warn when not finding an object"
+
     # if we pick up the nearest object we should find it when not ignoring grasped, but not when ignoring grasped
+    # test this last because it changes the state of the world
     obj_nearest = resolve_to_object(
         test_world, resolution_strategy="nearest", robot=robot
     )
