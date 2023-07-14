@@ -138,15 +138,14 @@ def task_action_from_ros(msg):
     """
     if not isinstance(msg, ros_msgs.TaskAction):
         raise Exception("Input is not a TaskAction ROS message")
-    pose = pose_from_ros(msg.pose) if msg.has_pose else None
     return acts.TaskAction(
         msg.type,
-        robot=msg.robot,
-        object=msg.object,
-        room=msg.room,
-        source_location=msg.source_location,
-        target_location=msg.target_location,
-        pose=pose,
+        robot=msg.robot if msg.robot else None,
+        object=msg.object if msg.object else None,
+        room=msg.room if msg.room else None,
+        source_location=msg.source_location if msg.source_location else None,
+        target_location=msg.target_location if msg.target_location else None,
+        pose=pose_from_ros(msg.pose) if msg.has_pose else None,
         path=path_from_ros(msg.path),
         cost=msg.cost,
     )

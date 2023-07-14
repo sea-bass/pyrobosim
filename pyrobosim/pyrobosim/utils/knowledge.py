@@ -7,9 +7,6 @@ import sys
 import warnings
 import numpy as np
 
-from ..core.locations import Location, ObjectSpawn
-from ..core.objects import Object
-
 
 def apply_resolution_strategy(
     world, entity_list: list, resolution_strategy: str, robot=None
@@ -77,6 +74,9 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
     :return: The entity that meets the mode and resolution strategy, or None.
     :rtype: Entity
     """
+    from ..core.locations import Location, ObjectSpawn
+    from ..core.objects import Object
+
     room = None
     named_location = None
     loc_category = None
@@ -210,6 +210,8 @@ def resolve_to_location(
     :return: The location or object spawn that meets the category and/or room filters, or None.
     :rtype: :class:`pyrobosim.core.locations.Location`/:class:`pyrobosim.core.locations.ObjectSpawn`
     """
+    from ..core.locations import Location
+
     if room is None:
         room_name = None
         if category is None:
