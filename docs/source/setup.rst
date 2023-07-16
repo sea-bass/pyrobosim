@@ -6,6 +6,16 @@ This package is being tested with:
 * Python 3.10 in Ubuntu 22.04
 * Optionally with ROS 2 Humble and Iron
 
+pip install (Limited)
+---------------------
+
+You can quickly install ``pyrobosim`` through PyPi.
+However, note that this will not include any of the ROS 2 or Task and Motion Planning functionality.
+
+::
+
+  pip install pyrobosim
+
 Local Setup
 -----------
 
