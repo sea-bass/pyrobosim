@@ -1,11 +1,12 @@
 from setuptools import setup, find_packages
 
 
+project_name = "pyrobosim_ros"
+
 install_requires = [
     "pyrobosim",
 ]
 
-project_name = "pyrobosim_ros"
 setup(
     name=project_name,
     version="1.0.0",
