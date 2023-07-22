@@ -4,7 +4,6 @@
 Test script for world knowledge utilities
 """
 
-import pytest
 import os
 import numpy as np
 
@@ -111,7 +110,62 @@ def test_apply_resolution_strategy():
 
 
 def test_query_to_entity():
-    pass
+    test_world = load_world()
+    query = "kitchen table apple"
+    entity = query_to_entity(test_world, query.split(), "location")
+    assert entity.name == "table0_tabletop"
+    entity = query_to_entity(test_world, query.split(), "object")
+    assert entity.name == "gala"
+
+    query = "kitchen table"
+    entity = query_to_entity(test_world, query.split(), "location")
+    assert entity.name == "table0"
+
+    # if we query to a random object on the kitchen table, its parent category should be table
+    entity = query_to_entity(test_world, query.split(), "object", "random")
+    assert entity.parent.category == "table"
+
+    # nearest object on the kitchen table should be the banana
+    robot = Robot("test_robot")
+    robot.pose = Pose.from_list([1.0, -0.5])
+    query = "kitchen table"
+    entity = query_to_entity(test_world, query.split(), "object", "nearest", robot)
+    assert (
+        entity.category == "banana"
+        and entity.parent.category == "table"
+        and entity.parent.parent.parent.name == "kitchen"
+    )
+
+    # we want the nearest apple on the kitchen table, should no longer return the banana even though it is the nearest object
+    query = "kitchen table apple"
+    new_entity = query_to_entity(test_world, query.split(), "object", "nearest", robot)
+    assert new_entity != entity
+
+    # things that should warn
+    import warnings
+
+    warnings.filterwarnings("error")
+    query = "kitchen table fake"
+    # search for nonexistent object in real location
+    for mode in ["object", "location"]:
+        try:
+            entity = query_to_entity(test_world, query.split(), mode)
+        except UserWarning:
+            # test passed, this should warn
+            pass
+        else:
+            assert False, "resolve_to_location didn't warn when not finding an object"
+
+    # search for absolute garbage
+    query = "fake fake fake"
+    for mode in ["object", "location"]:
+        try:
+            entity = query_to_entity(test_world, query.split(), mode)
+        except UserWarning:
+            # test passed, this should warn
+            pass
+        else:
+            assert False, "resolve_to_location didn't warn when not finding an object"
 
 
 def test_resolve_to_location():
