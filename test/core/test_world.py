@@ -143,7 +143,6 @@ class TestWorldModeling:
         with pytest.warns(UserWarning):
             assert TestWorldModeling.world.get_location_by_name("study_desk") is None
 
-
     @staticmethod
     @pytest.mark.dependency(depends=["TestWorldModeling::test_create_hallway"])
     def test_remove_hallway():
