@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Test script for entity getting with world models.
+Unit tests for entity getting with world models.
 """
 import os
 import pytest
@@ -102,8 +102,9 @@ class TestGetEntities:
 
     def test_invalid_room(self):
         """Checks for existence of invalid room."""
-        result = self.world.get_room_by_name("living room")
-        assert result is None
+        with pytest.warns(UserWarning):
+            result = self.world.get_room_by_name("living room")
+            assert result is None
 
     def test_add_remove_room(self):
         """Checks adding a room and removing it cleanly."""
@@ -111,9 +112,11 @@ class TestGetEntities:
         coords = [(9, 9), (11, 9), (11, 11), (9, 11)]
         result = self.world.add_room(name=room_name, footprint=coords, color=[0, 0, 0])
         assert result is not None
-        self.world.remove_room(room_name)
-        result = self.world.get_room_by_name(room_name)
-        assert result is None
+
+        with pytest.warns(UserWarning):
+            self.world.remove_room(room_name)
+            result = self.world.get_room_by_name(room_name)
+            assert result is None
 
     def test_valid_location(self):
         """Checks for existence of valid location."""
@@ -122,8 +125,9 @@ class TestGetEntities:
 
     def test_invalid_location(self):
         """Checks for existence of invalid location."""
-        result = self.world.get_location_by_name("table42")
-        assert result is None
+        with pytest.warns(UserWarning):
+            result = self.world.get_location_by_name("table42")
+            assert result is None
 
     def test_valid_spawn(self):
         """Checks for existence of valid object spawn."""
@@ -152,10 +156,12 @@ class TestGetEntities:
         )
         assert isinstance(new_desk, Location)
         self.world.remove_location(loc_name)
-        result = self.world.get_location_by_name(loc_name)
-        assert result is None
-        result = self.world.get_entity_by_name(loc_name + "_desktop")
-        assert result is None
+
+        with pytest.warns(UserWarning):
+            result = self.world.get_location_by_name(loc_name)
+            assert result is None
+            result = self.world.get_entity_by_name(loc_name + "_desktop")
+            assert result is None
 
     def test_valid_object(self):
         """Checks for existence of valid object."""
@@ -172,8 +178,10 @@ class TestGetEntities:
         Checks for existence of invalid object, but whose name is a valid name
         for another entity type.
         """
-        result = self.world.get_object_by_name("counter0")
-        assert result is None
+        with pytest.warns(UserWarning):
+            result = self.world.get_object_by_name("counter0")
+            assert result is None
+
         result = self.world.get_entity_by_name("counter0")
         assert isinstance(result, Location) and result.name == "counter0"
 

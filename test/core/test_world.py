@@ -140,9 +140,9 @@ class TestWorldModeling:
 
         assert TestWorldModeling.world.remove_location("study_desk") is True
         assert len(TestWorldModeling.world.locations) == 1
-        assert (
-            TestWorldModeling.world.get_location_by_name("study_desk") is None
-        )  # Raises a warning
+        with pytest.warns(UserWarning):
+            assert TestWorldModeling.world.get_location_by_name("study_desk") is None
+
 
     @staticmethod
     @pytest.mark.dependency(depends=["TestWorldModeling::test_create_hallway"])

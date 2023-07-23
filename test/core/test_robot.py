@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Test script for robot model.
+Unit tests for robot class.
 """
 import os
 import numpy as np
