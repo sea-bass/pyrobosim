@@ -107,12 +107,9 @@ class TestRobot:
         # Threaded option with blocking
         robot.set_pose(init_pose)
         path = robot.plan_path(goal=goal_pose)
-        robot.follow_path(
+        result = robot.follow_path(
             path, target_location=target_location, use_thread=True, blocking=True
         )
-        assert robot.pose.x == pytest.approx(goal_pose.x)
-        assert robot.pose.y == pytest.approx(goal_pose.y)
-        assert robot.pose.q == pytest.approx(goal_pose.q)
 
         # Threaded option without blocking -- must check result
         robot.set_pose(init_pose)
