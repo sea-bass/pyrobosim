@@ -72,4 +72,6 @@ class ConstantVelocityExecutor:
         # Finalize path execution
         time.sleep(0.1)  # To ensure background threads get the end of the path.
         self.robot.executing_nav = False
+        self.robot.executing_action = False
+        self.robot.current_action = None
         return True

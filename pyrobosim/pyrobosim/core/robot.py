@@ -22,7 +22,7 @@ class Robot:
         pose=Pose(),
         radius=0.0,
         height=0.0,
-        color=(0.8, 0, 0.8),
+        color=(0.8, 0.0, 0.8),
         path_planner=None,
         path_executor=None,
         grasp_generator=None,
@@ -160,7 +160,19 @@ class Robot:
             )
             self.nav_thread.start()
             if blocking:
-                success = self.nav_thread.join()
+                self.nav_thread.join()
+
+                # Validate that the robot made it to its goal pose
+                if path.num_poses == 0:
+                    success = True
+                else:
+                    # TODO: Implement pose equality check
+                    goal_pose = path.poses[-1]
+                    success = (
+                        self.pose.x == goal_pose.x
+                        and self.pose.y == goal_pose.y
+                        and self.pose.get_yaw() == goal_pose.get_yaw()
+                    )
             else:
                 success = True
         else:
@@ -392,8 +404,9 @@ class Robot:
         if self.world.has_gui:
             self.world.gui.set_buttons_during_action(True)
         print(f"[{self.name}] Action completed with success: {success}")
-        self.current_action = None
-        self.executing_action = False
+        if blocking:
+            self.current_action = None
+            self.executing_action = False
         return success
 
     def execute_plan(self, plan, blocking=False, delay=0.5):
@@ -414,8 +427,10 @@ class Robot:
             print(f"[{self.name}] Plan is None. Returning.")
             return False
 
-        self.executing_plan = True
-        self.current_plan = plan
+        if blocking:
+            self.executing_plan = True
+            self.current_plan = plan
+
         print(f"[{self.name}] Executing task plan...")
         if self.world.has_gui:
             self.world.gui.set_buttons_during_action(False)
@@ -433,8 +448,9 @@ class Robot:
         if self.world.has_gui:
             self.world.gui.set_buttons_during_action(True)
         print(f"[{self.name}] Task plan completed with success: {success}")
-        self.current_plan = None
-        self.executing_plan = False
+        if blocking:
+            self.executing_plan = False
+            self.current_plan = None
         return success
 
     def __repr__(self):

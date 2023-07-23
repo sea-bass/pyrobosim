@@ -34,8 +34,7 @@ class PathPlanner:
             )
             return None
         if not planner_config:
-            warnings.warn(f"No planner configuration provided", UserWarning)
-            return None
+            planner_config = {}
 
         self.planner_type = planner_type
         self.planner_config = planner_config
