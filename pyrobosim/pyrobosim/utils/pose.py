@@ -225,11 +225,8 @@ class Pose:
         if not (isinstance(other, Pose)):
             raise TypeError("Expected a Pose")
 
-        self_translation = self.get_translation()
-        other_translation = other.get_translation()
-
         return np.allclose(
-            self_translation, other_translation, rel_tol, abs_tol
+            self.get_translation, other.get_translation, rel_tol, abs_tol
         ) and nearly_equivalent(self.q, other.q, rel_tol, abs_tol)
 
     def __eq__(self, other):
@@ -245,10 +242,7 @@ class Pose:
         if not (isinstance(other, Pose)):
             raise TypeError("Expected a Pose")
 
-        self_translation = self.get_translation()
-        other_translation = other.get_translation()
-
-        return np.all(self_translation == other_translation) and np.all(
+        return np.all(self.get_translation == other.get_translation) and np.all(
             self.q == other.q
         )
 
