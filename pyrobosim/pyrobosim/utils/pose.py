@@ -4,7 +4,7 @@ Pose representation utilities.
 
 import numpy as np
 from transforms3d.euler import euler2quat, quat2euler
-from transforms3d.quaternions import mat2quat, qnorm, quat2mat
+from transforms3d.quaternions import mat2quat, qnorm, quat2mat, nearly_equivalent
 
 
 class Pose:
@@ -198,25 +198,34 @@ class Pose:
             + f"qy={self.q[2]:.3f}, qz={self.q[3]:.3f}"
         )
         return f"Pose: [{pos_str}, {quat_str}]"
-    
+
     def pose_equality(self, other, rel_tol=1e-09, abs_tol=0.0):
-        if not(isinstance(other, Pose)):
+        if not (isinstance(other, Pose)):
             raise TypeError("Expected a Pose")
-        
+
         a = np.array([self.x, self.y, self.z])
         b = np.array([other.x, other.y, other.z])
-        
+
+        # rel_tol = 1e-09 # setting rel_tol here makes it a float
+
         # Just for debugging - rel_tol is a Pose for some reason?
-        print(isinstance(a[0], float), isinstance(a[1], float), isinstance(a[2], float), 
-              isinstance(b[0], float), isinstance(b[1], float), isinstance(b[2], float),
-              isinstance(rel_tol, float), isinstance(abs_tol, float))
-        
-        return (np.allclose(a, b, rel_tol, abs_tol) and
-                nearly_equivalent(self.q, other.q)) #default rtol=1e-05, atol=1e-08 for quaternion
-    
+        print(
+            isinstance(a[0], float),
+            isinstance(a[1], float),
+            isinstance(a[2], float),
+            isinstance(b[0], float),
+            isinstance(b[1], float),
+            isinstance(b[2], float),
+            isinstance(rel_tol, float),
+            isinstance(abs_tol, float),
+        )
+
+        return np.allclose(a, b, rel_tol, abs_tol) and nearly_equivalent(
+            self.q, other.q
+        )  # default rtol=1e-05, atol=1e-08 for quaternion
+
     def __eq__(self, other):
         return self.pose_equality(self, other)
-    
 
 
 def get_angle(p1, p2):
