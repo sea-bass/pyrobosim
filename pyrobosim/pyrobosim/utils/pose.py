@@ -199,7 +199,7 @@ class Pose:
         )
         return f"Pose: [{pos_str}, {quat_str}]"
 
-    def pose_equality(self, other, rel_tol=1e-09, abs_tol=0.0):
+    def is_approx(self, other, rel_tol=1e-09, abs_tol=0.0):
         if not (isinstance(other, Pose)):
             raise TypeError("Expected a Pose")
 
@@ -225,7 +225,7 @@ class Pose:
         )  # default rtol=1e-05, atol=1e-08 for quaternion
 
     def __eq__(self, other):
-        return self.pose_equality(self, other)
+        return self.is_approx(self, other)
 
 
 def get_angle(p1, p2):
