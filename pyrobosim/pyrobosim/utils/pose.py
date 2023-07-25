@@ -207,7 +207,7 @@ class Pose:
         b = np.array([other.x, other.y, other.z])
 
         return np.allclose(a, b, rel_tol, abs_tol) and nearly_equivalent(
-            self.q, other.q
+            self.q, other.q, rel_tol, abs_tol
         )  # default rtol=1e-05, atol=1e-08 for quaternion
 
     def __eq__(self, other):
