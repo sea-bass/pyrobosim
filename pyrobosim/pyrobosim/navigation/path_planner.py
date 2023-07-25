@@ -34,7 +34,11 @@ class PathPlanner:
             )
             return None
         if not planner_config:
-            planner_config = {}
+            warnings.warn(
+                f"No planner configuration provided. Must provide either a World or OccupancyGrid object.",
+                UserWarning,
+            )
+            return None
 
         self.planner_type = planner_type
         self.planner_config = planner_config
