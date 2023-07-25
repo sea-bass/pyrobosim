@@ -218,7 +218,7 @@ class Pose:
             self.x == other.x
             and self.y == other.y
             and self.z == other.z
-            and not False in (self.q == other.q)
+            and not (False in (self.q == other.q))
         )
 
 
