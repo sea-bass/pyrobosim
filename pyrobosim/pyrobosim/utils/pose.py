@@ -236,7 +236,7 @@ class Pose:
         """
         Check if two poses are equal
 
-        :param other: Pose of which to check equality with.
+        :param other: Pose with which to check equality.
         :type other: :class:`pyrobosim.utils.pose.Pose`
 
         :return: True if the poses are equal, else False
