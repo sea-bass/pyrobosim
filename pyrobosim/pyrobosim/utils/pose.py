@@ -212,7 +212,7 @@ class Pose:
         """
         Check if two poses are approximately equal with a tolerance.
 
-        :param other: Pose of which to check approximate equality with.
+        :param other: Pose with which to check approximate equality.
         :type other: :class:`pyrobosim.utils.pose.Pose`
         :param rel_tol: Relative tolerance
         :type rel_tol: float
@@ -233,7 +233,7 @@ class Pose:
         """
         Check if two poses are equal
 
-        :param other: Pose of which to check equality with.
+        :param other: Pose with which to check equality.
         :type other: :class:`pyrobosim.utils.pose.Pose`
 
         :return: True if the poses are equal, else False
