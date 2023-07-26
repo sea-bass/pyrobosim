@@ -35,10 +35,7 @@ def test_pose_conversion():
 
     # Convert back to a pyrobosim Pose
     new_pose = pose_from_ros(ros_pose)
-    assert new_pose.x == pytest.approx(orig_pose.x)
-    assert new_pose.y == pytest.approx(orig_pose.y)
-    assert new_pose.z == pytest.approx(orig_pose.z)
-    assert new_pose.q == pytest.approx(orig_pose.q)
+    assert new_pose.is_approx(orig_pose)
 
 
 def test_path_conversion():
@@ -68,10 +65,7 @@ def test_path_conversion():
     new_path = path_from_ros(ros_path)
     assert new_path.num_poses == orig_path.num_poses
     for orig_pose, new_pose in zip(orig_path.poses, new_path.poses):
-        assert orig_pose.x == pytest.approx(new_pose.x)
-        assert orig_pose.y == pytest.approx(new_pose.y)
-        assert orig_pose.z == pytest.approx(new_pose.z)
-        assert orig_pose.q == pytest.approx(new_pose.q)
+        assert orig_pose.is_approx(new_pose)
 
 
 def test_task_action_conversion():

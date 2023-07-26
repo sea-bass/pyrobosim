@@ -166,13 +166,7 @@ class Robot:
                 if path.num_poses == 0:
                     success = True
                 else:
-                    # TODO: Implement pose equality check
-                    goal_pose = path.poses[-1]
-                    success = (
-                        self.pose.x == goal_pose.x
-                        and self.pose.y == goal_pose.y
-                        and self.pose.get_yaw() == goal_pose.get_yaw()
-                    )
+                    success = self.pose.is_approx(path.poses[-1])
             else:
                 success = True
         else:
