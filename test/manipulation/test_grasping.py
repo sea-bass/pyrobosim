@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Test script for grasp generation.
+Unit tests for grasp generation.
 """
 
 from pyrobosim.manipulation.grasping import (

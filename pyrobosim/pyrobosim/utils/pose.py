@@ -194,6 +194,42 @@ class Pose:
         """
         return np.array([self.x, self.y, self.z])
 
+    def is_approx(self, other, rel_tol=1e-06, abs_tol=1e-06):
+        """
+        Check if two poses are approximately equal with a tolerance.
+
+        :param other: Pose with which to check approximate equality.
+        :type other: :class:`pyrobosim.utils.pose.Pose`
+        :param rel_tol: Relative tolerance
+        :type rel_tol: float
+        :param abs_tol: Absolute tolerance
+        :type abs_tol: float
+        :return: True if the Poses are approximately equal, else False
+        :rtype: bool
+        """
+        if not (isinstance(other, Pose)):
+            raise TypeError("Expected a Pose")
+
+        return np.allclose(
+            self.get_translation(), other.get_translation(), rel_tol, abs_tol
+        ) and nearly_equivalent(self.q, other.q, rel_tol, abs_tol)
+
+    def __eq__(self, other):
+        """
+        Check if two poses are exactly equal.
+
+        :param other: Pose with which to check equality.
+        :type other: :class:`pyrobosim.utils.pose.Pose`
+        :return: True if the poses are equal, else False
+        :rtype: bool
+        """
+        if not (isinstance(other, Pose)):
+            raise TypeError("Expected a Pose")
+
+        return np.all(self.get_translation() == other.get_translation()) and np.all(
+            self.q == other.q
+        )
+
     def __repr__(self):
         """
         Representation for printing a Pose object.
@@ -207,44 +243,6 @@ class Pose:
             + f"qy={self.q[2]:.3f}, qz={self.q[3]:.3f}"
         )
         return f"Pose: [{pos_str}, {quat_str}]"
-
-    def is_approx(self, other, rel_tol=1e-09, abs_tol=0.0):
-        """
-        Check if two poses are approximately equal with a tolerance.
-
-        :param other: Pose with which to check approximate equality.
-        :type other: :class:`pyrobosim.utils.pose.Pose`
-        :param rel_tol: Relative tolerance
-        :type rel_tol: float
-        :param abs_tol: Absolute tolerance
-        :type abs_tol: float
-
-        :return: True if the Poses are approximately equal, else False
-        :rtype: bool
-        """
-        if not (isinstance(other, Pose)):
-            raise TypeError("Expected a Pose")
-
-        return np.allclose(
-            self.get_translation, other.get_translation, rel_tol, abs_tol
-        ) and nearly_equivalent(self.q, other.q, rel_tol, abs_tol)
-
-    def __eq__(self, other):
-        """
-        Check if two poses are equal
-
-        :param other: Pose with which to check equality.
-        :type other: :class:`pyrobosim.utils.pose.Pose`
-
-        :return: True if the poses are equal, else False
-        :rtype: bool
-        """
-        if not (isinstance(other, Pose)):
-            raise TypeError("Expected a Pose")
-
-        return np.all(self.get_translation == other.get_translation) and np.all(
-            self.q == other.q
-        )
 
 
 def get_angle(p1, p2):

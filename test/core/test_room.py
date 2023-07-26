@@ -53,9 +53,10 @@ class TestRoom:
 
         # This new room should fail to add since it's in the collision with the first room.
         new_coords = [(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0)]
-        result = world.add_room(footprint=new_coords)
-        assert result is None
-        assert world.num_rooms == 1
+        with pytest.warns(UserWarning):
+            result = world.add_room(footprint=new_coords)
+            assert result is None
+            assert world.num_rooms == 1
 
 
 if __name__ == "__main__":

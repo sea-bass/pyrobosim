@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Test script for polygon utilities
+Unit tests for polygon utilities.
 """
 
 import pytest
