@@ -212,6 +212,9 @@ def test_resolve_to_object():
         obj = resolve_to_object(test_world, room=room)
         assert obj.parent.parent.parent.name == room
 
+
+def test_specific_resolve_to_object():
+    test_world = load_world()
     # now test specific objects
 
     # set our position to be the same as a banana on the desk and make sure we find that
@@ -238,6 +241,10 @@ def test_resolve_to_object():
     )
     assert not (obj.category == "apple" and obj.parent.parent.name == "my_desk")
 
+
+def test_resolve_to_object_warnings():
+    test_world = load_world()
+    robot = Robot("test_robot")
     # things that should warn
     # fake object category
     with pytest.warns(UserWarning):
@@ -260,6 +267,12 @@ def test_resolve_to_object():
             category="banana",
             location="trash_can",
         )
+
+
+def test_resolve_to_object_grasp():
+    test_world = load_world()
+    robot = Robot("test_robot")
+    robot.pose = Pose(x=3.2, y=3.5)
 
     # if we pick up the nearest object we should find it when not ignoring grasped, but not when ignoring grasped
     # test this last because it changes the state of the world
@@ -284,3 +297,6 @@ if __name__ == "__main__":
     test_query_to_entity()
     test_resolve_to_location()
     test_resolve_to_object()
+    test_specific_resolve_to_object()
+    test_resolve_to_object_warnings()
+    test_resolve_to_object_grasp()
