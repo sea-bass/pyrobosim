@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Test script for PDDLStream planning with manipulation streams.
+Tests for PDDLStream planning with manipulation streams.
 """
 import numpy as np
 import os

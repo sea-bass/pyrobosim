@@ -108,7 +108,7 @@ class World:
     # World Building Methods #
     ##########################
     def add_room(self, **room_config):
-        """
+        r"""
         Adds a room to the world.
 
         If the room does not have a specified name, it will be given an automatic
@@ -195,7 +195,7 @@ class World:
         return True
 
     def add_hallway(self, **hallway_config):
-        """
+        r"""
         Adds a hallway from with specified parameters related to the :class:`pyrobosim.core.hallway.Hallway` class.
 
         :param \*\*hallway_config: Keyword arguments describing the hallway.
@@ -279,7 +279,7 @@ class World:
         return True
 
     def add_location(self, **location_config):
-        """
+        r"""
         Adds a location at the specified parent entity, usually a room.
 
         If the location does not have a specified name, it will be given an
@@ -428,7 +428,7 @@ class World:
         return False
 
     def add_object(self, **object_config):
-        """
+        r"""
         Adds an object to a specific location.
 
         If the object does not have a specified name, it will be given an

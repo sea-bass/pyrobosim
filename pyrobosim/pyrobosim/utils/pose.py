@@ -4,7 +4,7 @@ Pose representation utilities.
 
 import numpy as np
 from transforms3d.euler import euler2quat, quat2euler
-from transforms3d.quaternions import mat2quat, qnorm, quat2mat
+from transforms3d.quaternions import mat2quat, nearly_equivalent, qnorm, quat2mat
 
 
 class Pose:
@@ -184,6 +184,51 @@ class Pose:
         tf_mat = self.get_translation_matrix()
         tf_mat[:3, :3] = self.get_rotation_matrix()
         return tf_mat
+
+    def get_translation(self):
+        """
+        Gets the pose x y and z of the pose as an array.
+
+        :return: Pose x y and z as an array
+        :rtype: :class: numpy.ndarray
+        """
+        return np.array([self.x, self.y, self.z])
+
+    def is_approx(self, other, rel_tol=1e-06, abs_tol=1e-06):
+        """
+        Check if two poses are approximately equal with a tolerance.
+
+        :param other: Pose with which to check approximate equality.
+        :type other: :class:`pyrobosim.utils.pose.Pose`
+        :param rel_tol: Relative tolerance
+        :type rel_tol: float
+        :param abs_tol: Absolute tolerance
+        :type abs_tol: float
+        :return: True if the Poses are approximately equal, else False
+        :rtype: bool
+        """
+        if not (isinstance(other, Pose)):
+            raise TypeError("Expected a Pose")
+
+        return np.allclose(
+            self.get_translation(), other.get_translation(), rel_tol, abs_tol
+        ) and nearly_equivalent(self.q, other.q, rel_tol, abs_tol)
+
+    def __eq__(self, other):
+        """
+        Check if two poses are exactly equal.
+
+        :param other: Pose with which to check equality.
+        :type other: :class:`pyrobosim.utils.pose.Pose`
+        :return: True if the poses are equal, else False
+        :rtype: bool
+        """
+        if not (isinstance(other, Pose)):
+            raise TypeError("Expected a Pose")
+
+        return np.all(self.get_translation() == other.get_translation()) and np.all(
+            self.q == other.q
+        )
 
     def __repr__(self):
         """

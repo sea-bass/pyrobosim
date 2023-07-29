@@ -59,7 +59,7 @@ class PDDLStreamPlanner:
         verbose=False,
         **planner_config,
     ):
-        """
+        r"""
         Searches for a set of actions that completes a goal specification
         given an initial state of the world.
         This uses the "adaptive" planner in PDDLStream, which demonstrates the best performance

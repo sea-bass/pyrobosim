@@ -85,7 +85,7 @@ class TestSystem:
         Test pick and place UI actions.
         """
         pick_place_queries = [
-            ("table", "apple2", "table"),  # Pick and place in same location
+            ("table", "gala", "table"),  # Pick and place in same location
             ("counter0_left", "water", "desk"),  # Pick and place in different location
         ]
 
