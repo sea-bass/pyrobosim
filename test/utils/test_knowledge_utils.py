@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Test script for world knowledge utilities
+Unit tests for world knowledge utilities.
 """
 
 import os
