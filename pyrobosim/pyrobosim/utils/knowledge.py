@@ -8,7 +8,7 @@ import warnings
 import numpy as np
 
 
-def apply_resolution_strategy(world, entity_list, resolution_strategy, robot=None):
+def apply_resolution_strategy(entity_list, resolution_strategy, robot=None):
     """
     Accepts a list of entities in the world (e.g. rooms, objects, etc.) and
     applies a resolution strategy to get a single entity from that list that best
@@ -139,7 +139,7 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
 
         entity_list = [obj for obj in entity_list if obj.category == obj_category]
         obj_candidate = apply_resolution_strategy(
-            world, entity_list, resolution_strategy=resolution_strategy, robot=robot
+            entity_list, resolution_strategy=resolution_strategy, robot=robot
         )
         if not obj_candidate:
             warnings.warn(f"Could not resolve query {query_list}")
@@ -242,7 +242,7 @@ def resolve_to_location(
         expanded_locations = possible_locations
 
     loc = apply_resolution_strategy(
-        world, expanded_locations, resolution_strategy, robot=robot
+        expanded_locations, resolution_strategy, robot=robot
     )
     if not loc:
         warnings.warn(
@@ -320,9 +320,7 @@ def resolve_to_object(
     ):
         possible_objects.remove(robot.manipulated_object)
 
-    obj = apply_resolution_strategy(
-        world, possible_objects, resolution_strategy, robot=robot
-    )
+    obj = apply_resolution_strategy(possible_objects, resolution_strategy, robot=robot)
     if not obj:
         warnings.warn(
             f"Could not resolve object query with category: {category}, location: {location}, room: {room}."
