@@ -1,6 +1,8 @@
 # CMakeLists.txt for pyrobosim_ros tests
-
 find_package(ament_cmake_pytest REQUIRED)
+
+set(AMENT_CMAKE_PYTEST_WITH_COVERAGE ON)
+
 set(_pytest_tests
     test_ros_conversions.py
 )
