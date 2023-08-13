@@ -141,7 +141,7 @@ class Pose:
         :type yaw: float
         """
         self.eul = [roll, pitch, yaw]
-        self.q = euler2quat(roll, pitch, yaw)
+        self.q = euler2quat(roll, pitch, yaw, "rxyz")
 
     def set_quaternion(self, q):
         """
@@ -152,7 +152,7 @@ class Pose:
         :type q: list[float]
         """
         self.q = q / qnorm(q)
-        self.eul = quat2euler(self.q)
+        self.eul = quat2euler(self.q, "rxyz")
 
     def get_translation_matrix(self):
         """
@@ -161,8 +161,8 @@ class Pose:
         :return: 4-by-4 translation matrix
         :rtype: :class:`numpy.ndarray`
         """
-        trans_mat = np.zeros((4, 4))
-        trans_mat[:, 3] = [self.x, self.y, self.z, 1]
+        trans_mat = np.eye(4)
+        trans_mat[:3, 3] = [self.x, self.y, self.z]
         return trans_mat
 
     def get_rotation_matrix(self):
@@ -318,11 +318,12 @@ def wrap_angle(ang):
     :return: Wrapped angle.
     :rtype: float
     """
-    if ang is None:
+    if ang is None or (ang >= -np.pi and ang <= np.pi):
+        # If the angle is none or within range, return it as is.
         return ang
-
-    while ang < -np.pi:
-        ang += 2 * np.pi
-    while ang > np.pi:
-        ang -= 2 * np.pi
-    return ang
+    else:
+        # Otherwise, add pi, wrap it in the range [0..2pi], and then subtract pi.
+        divided_ang = (ang + np.pi) / (2 * np.pi)
+        remainder = divided_ang - np.floor(divided_ang)
+        wrapped_ang = remainder * (2 * np.pi) - np.pi
+        return wrapped_ang
