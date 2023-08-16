@@ -361,7 +361,7 @@ class Robot:
                 else:
                     tgt_loc = action.target_location.name
 
-                self.world.gui.canvas.nav_trigger.emit(self.name, tgt_loc)
+                self.world.gui.canvas.nav_trigger.emit(self.name, tgt_loc, action.path)
                 while self.executing_nav:
                     time.sleep(0.5)  # Delay to wait for navigation
                 success = True  # TODO Need to keep track of nav status

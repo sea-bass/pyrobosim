@@ -64,6 +64,7 @@ def create_test_world(add_hallway=True):
         "bidirectional": False,
         "rrt_connect": False,
         "rrt_star": False,
+        "max_connection_dist": 1.0,
     }
     rrt = PathPlanner("rrt", **planner_config)
     robot.set_path_planner(rrt)

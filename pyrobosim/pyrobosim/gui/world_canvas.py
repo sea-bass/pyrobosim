@@ -11,6 +11,8 @@ from matplotlib.pyplot import Circle
 from matplotlib.transforms import Affine2D
 from PyQt5.QtCore import pyqtSignal, QThread
 
+from pyrobosim.utils.motion import Path
+
 
 class NavAnimator(QThread):
     """
@@ -50,7 +52,7 @@ class WorldCanvas(FigureCanvasQTAgg):
     robot_zorder = 3
     """ zorder for robot visualization. """
 
-    nav_trigger = pyqtSignal(str, str)
+    nav_trigger = pyqtSignal(str, str, Path)
     """ Signal to trigger navigation method in a thread-safe manner. """
 
     draw_lock = threading.Lock()
@@ -369,7 +371,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         y = obj.pose.y + 1.0 * (ymax - ymin)
         obj.viz_text.set_position((x, y))
 
-    def navigate_in_thread(self, robot, goal):
+    def navigate_in_thread(self, robot, goal, path):
         """
         Starts a thread to navigate a robot to a goal.
 
@@ -377,15 +379,17 @@ class WorldCanvas(FigureCanvasQTAgg):
         :type robot: :class:`pyrobosim.core.robot.Robot` or str
         :param goal: Name of goal location (resolved by the world model).
         :type goal: str
+        :param path: Path to goal location (can be None).
+        :type path: :class:`pyrobosim.utils.motion.Path`
         :return: True if navigation succeeds, else False
         :rtype: bool
         """
         if isinstance(robot, str):
             robot = self.world.get_robot_by_name(robot)
-        nav_thread = threading.Thread(target=self.navigate, args=(robot, goal))
+        nav_thread = threading.Thread(target=self.navigate, args=(robot, goal, path))
         nav_thread.start()
 
-    def navigate(self, robot, goal):
+    def navigate(self, robot, goal, path):
         """
         Animates a path to a goal location using a robot's path executor.
 
@@ -393,6 +397,8 @@ class WorldCanvas(FigureCanvasQTAgg):
         :type robot: :class:`pyrobosim.core.robot.Robot`
         :param goal: Name of goal location (resolved by the world model).
         :type goal: str
+        :param path: Path to goal location (can be None).
+        :type path: :class:`pyrobosim.utils.motion.Path`
         :return: True if navigation succeeds, else False
         :rtype: bool
         """
@@ -400,7 +406,8 @@ class WorldCanvas(FigureCanvasQTAgg):
         # Find a path, or use an existing one, and start the navigation thread.
         if robot and robot.path_planner:
             goal_node = self.world.graph_node_from_entity(goal, robot=robot)
-            path = robot.plan_path(robot.pose, goal_node.pose)
+            if not path or path.num_poses < 2:
+                path = robot.plan_path(robot.pose, goal_node.pose)
             self.show_planner_and_path(robot)
             robot.follow_path(
                 path,
