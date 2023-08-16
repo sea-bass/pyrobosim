@@ -371,7 +371,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         y = obj.pose.y + 1.0 * (ymax - ymin)
         obj.viz_text.set_position((x, y))
 
-    def navigate_in_thread(self, robot, goal, path):
+    def navigate_in_thread(self, robot, goal, path=None):
         """
         Starts a thread to navigate a robot to a goal.
 
@@ -379,7 +379,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         :type robot: :class:`pyrobosim.core.robot.Robot` or str
         :param goal: Name of goal location (resolved by the world model).
         :type goal: str
-        :param path: Path to goal location (can be None).
+        :param path: Path to goal location, defaults to None.
         :type path: :class:`pyrobosim.utils.motion.Path`
         :return: True if navigation succeeds, else False
         :rtype: bool
@@ -389,7 +389,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         nav_thread = threading.Thread(target=self.navigate, args=(robot, goal, path))
         nav_thread.start()
 
-    def navigate(self, robot, goal, path):
+    def navigate(self, robot, goal, path=None):
         """
         Animates a path to a goal location using a robot's path executor.
 
@@ -397,7 +397,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         :type robot: :class:`pyrobosim.core.robot.Robot`
         :param goal: Name of goal location (resolved by the world model).
         :type goal: str
-        :param path: Path to goal location (can be None).
+        :param path: Path to goal location, defaults to None.
         :type path: :class:`pyrobosim.utils.motion.Path`
         :return: True if navigation succeeds, else False
         :rtype: bool
