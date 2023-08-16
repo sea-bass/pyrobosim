@@ -5,22 +5,23 @@
 ; All actions are symbolic, meaning there are no different types of grasps
 ; or feasibility checks, under the assumption that a downstream planner exists.
 ;
-; Accompanying streams are defined in the `stream_simple.pddl` file.
+; Accompanying streams are defined in the `streams.pddl` file.
 
 
 (define (domain domain_simple)
   (:requirements :strips :equality)
-  (:predicates  ; Static predicates
-                (Robot ?r)          ; Represents the robot
-                (HandEmpty ?r)      ; Whether the robot's gripper is empty
-                (Obj ?o)            ; Object representation
-                (Room ?r)           ; Room representation
-                (Location ?l)       ; Location representation
+  (:predicates
+    ; Static predicates
+    (Robot ?r)          ; Represents the robot
+    (Obj ?o)            ; Object representation
+    (Room ?r)           ; Room representation
+    (Location ?l)       ; Location representation
 
-                ; Fluent predicates
-                (CanMove ?r)        ; Whether the robot can move (prevents duplicate moves)
-                (Holding ?r ?o)     ; Object the robot is holding
-                (At ?o ?l)          ; Robot/Object's location, or location's Room
+    ; Fluent predicates
+    (HandEmpty ?r)      ; Whether the robot's gripper is empty
+    (CanMove ?r)        ; Whether the robot can move (prevents duplicate moves)
+    (Holding ?r ?o)     ; Object the robot is holding
+    (At ?o ?l)          ; Robot/Object's location, or location's Room
   )
 
   ; FUNCTIONS : See their descriptions in the stream PDDL file

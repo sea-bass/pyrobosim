@@ -11,38 +11,39 @@
 ; The `place` action uses streams to sample a collision-free pose, taking into
 ; account the extents of the location itself as well as other objects at that location.
 ;
-; Accompanying streams are defined in the `stream.pddl` file.
+; Accompanying streams are defined in the `streams.pddl` file.
 
 
 (define (domain domain_nav_manip_stream)
   (:requirements :strips :equality)
-  (:predicates  ; Static predicates
-                (Robot ?r)              ; Represents the robot
-                (HandEmpty ?r)          ; Whether the robot's gripper is empty
-                (Obj ?o)                ; Object representation
-                (Room ?r)               ; Room representation
-                (Location ?l)           ; Location representation
-                (Type ?t)               ; Type of location or object
-                (Is ?o ?t)              ; Type correspondence of location or object
-                (Pose ?p)               ; Pose of an entity
-                (Path ?pth)             ; Path to navigate from one pose to another
+  (:predicates
+    ; Static predicates
+    (Robot ?r)              ; Represents the robot
+    (Obj ?o)                ; Object representation
+    (Room ?r)               ; Room representation
+    (Location ?l)           ; Location representation
+    (Type ?t)               ; Type of location or object
+    (Is ?o ?t)              ; Type correspondence of location or object
+    (Pose ?p)               ; Pose of an entity
+    (Path ?pth)             ; Path to navigate from one pose to another
 
-                ; Fluent predicates
-                (CanMove ?r)                    ; Whether the robot can move (prevents duplicate moves)
-                (Holding ?r ?o)                 ; Object the robot is holding
-                (At ?o ?l)                      ; Robot/Object's location
-                (AtPose ?e ?p)                  ; Robot/Object's pose
-                (AtRoom ?l ?r)                  ; Location's corresponding room
-                (Has ?loc ?entity)              ; Check existence of entities (object instances or types) in locations
-                (HasNone ?loc ?entity)          ; Check nonexistence of entities (object instances or types) in locations
-                (HasAll ?loc ?entity)           ; Check exclusivity of entities (object instances or types) in locations
-                (IsCollisionFree ?l ?o ?p)      ; Checks collisions when placing an object
+    ; Fluent predicates
+    (HandEmpty ?r)                  ; Whether the robot's gripper is empty
+    (CanMove ?r)                    ; Whether the robot can move (prevents duplicate moves)
+    (Holding ?r ?o)                 ; Object the robot is holding
+    (At ?o ?l)                      ; Robot/Object's location
+    (AtPose ?e ?p)                  ; Robot/Object's pose
+    (AtRoom ?l ?r)                  ; Location's corresponding room
+    (Has ?loc ?entity)              ; Check existence of entities (object instances or types) in locations
+    (HasNone ?loc ?entity)          ; Check nonexistence of entities (object instances or types) in locations
+    (HasAll ?loc ?entity)           ; Check exclusivity of entities (object instances or types) in locations
+    (IsCollisionFree ?l ?o ?p)      ; Checks collisions when placing an object
 
-                ; Stream verified predicates
-                (NavPose ?l ?p)                 ; Navigation pose for a location
-                (Motion ?p1 ?p2 ?pth)           ; Valid motion from one pose to another
-                (Placeable ?l ?o ?p)            ; Object placeability at a specific location
-                (CollisionFree ?o1 ?p1 ?o2 ?p2) ; Checks collisions between two objects at specific poses
+    ; Stream verified predicates
+    (NavPose ?l ?p)                 ; Navigation pose for a location
+    (Motion ?p1 ?p2 ?pth)           ; Valid motion from one pose to another
+    (Placeable ?l ?o ?p)            ; Object placeability at a specific location
+    (CollisionFree ?o1 ?p1 ?o2 ?p2) ; Checks collisions between two objects at specific poses
   )
 
   ; FUNCTIONS : See their descriptions in the stream PDDL file

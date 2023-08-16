@@ -8,28 +8,29 @@
 ; This domain introduces the derived predicates `Has`, `HasNone`, and `HasAll`,
 ; which allow for more complex goal specifications.
 ;
-; Accompanying streams are defined in the `stream.pddl` file.
+; Accompanying streams are defined in the `streams.pddl` file.
 
 
 (define (domain domain_derived)
   (:requirements :strips :equality)
-  (:predicates  ; Static predicates
-                (Robot ?r)              ; Represents the robot
-                (HandEmpty ?r)          ; Whether the robot's gripper is empty
-                (Obj ?o)                ; Object representation
-                (Room ?r)               ; Room representation
-                (Location ?l)           ; Location representation
-                (Type ?t)               ; Type of location or object
-                (Is ?o ?t)              ; Type correspondence of location or object
+  (:predicates
+    ; Static predicates
+    (Robot ?r)              ; Represents the robot
+    (Obj ?o)                ; Object representation
+    (Room ?r)               ; Room representation
+    (Location ?l)           ; Location representation
+    (Type ?t)               ; Type of location or object
+    (Is ?o ?t)              ; Type correspondence of location or object
 
-                ; Fluent predicates
-                (CanMove ?r)            ; Whether the robot can move (prevents duplicate moves)
-                (Holding ?r ?o)         ; Object the robot is holding
-                (At ?o ?l)              ; Robot/Object's location
-                (AtRoom ?l ?r)          ; Location's corresponding room
-                (Has ?loc ?entity)      ; Check existence of entities (object instances or types) in locations
-                (HasNone ?loc ?entity)  ; Check nonexistence of entities (object instances or types) in locations
-                (HasAll ?loc ?entity)   ; Check exclusivity of entities (object instances or types) in locations
+    ; Fluent predicates
+    (HandEmpty ?r)          ; Whether the robot's gripper is empty
+    (CanMove ?r)            ; Whether the robot can move (prevents duplicate moves)
+    (Holding ?r ?o)         ; Object the robot is holding
+    (At ?o ?l)              ; Robot/Object's location
+    (AtRoom ?l ?r)          ; Location's corresponding room
+    (Has ?loc ?entity)      ; Check existence of entities (object instances or types) in locations
+    (HasNone ?loc ?entity)  ; Check nonexistence of entities (object instances or types) in locations
+    (HasAll ?loc ?entity)   ; Check exclusivity of entities (object instances or types) in locations
   )
 
   ; FUNCTIONS : See their descriptions in the stream PDDL file
