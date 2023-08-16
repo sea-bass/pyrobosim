@@ -59,12 +59,14 @@ class PathPlannerBase:
         print(f"Planning time : {self.planning_time}")
         print(f"Number of waypoints : {self.latest_path.num_poses}")
 
-    def plot(self, axes, show_graph=True, path_color="m"):
+    def plot(self, axes, show_graph=True, path=None, path_color="m"):
         """
         Plots the planned path on a specified set of axes.
 
         :param axes: The axes on which to draw.
         :type axes: :class:`matplotlib.axes.Axes`
+        :param path: Path to display, defaults to None. If none, uses the `latest_path` attribute.
+        :type path: :class:`pyrobosim.utils.motion.Path`, optional
         :param path_color: Color of the path, as an RGB tuple or string.
         :type path_color: tuple[float] / str, optional
         :return: List of Matplotlib artists containing what was drawn,
@@ -75,6 +77,9 @@ class PathPlannerBase:
         graph_artists = []
         path_artists = []
         artists = {}
+
+        if not path:
+            path = self.latest_path
 
         if show_graph:
             for graph in self.graphs:
@@ -109,9 +114,9 @@ class PathPlannerBase:
                 axes.add_collection(line_segments)
                 graph_artists.append(line_segments)
 
-        if self.latest_path.num_poses > 0:
-            x = [p.x for p in self.latest_path.poses]
-            y = [p.y for p in self.latest_path.poses]
+        if path and path.num_poses > 0:
+            x = [p.x for p in path.poses]
+            y = [p.y for p in path.poses]
             (path,) = axes.plot(
                 x, y, linestyle="-", color=path_color, linewidth=3, alpha=0.5, zorder=1
             )

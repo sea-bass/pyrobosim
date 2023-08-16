@@ -61,12 +61,14 @@ class PathPlanner:
         self.latest_path = self.planner.plan(start, goal)
         return self.latest_path
 
-    def plot(self, axes, path_color="m"):
+    def plot(self, axes, path=None, path_color="m"):
         """
         Plots the planned path on a specified set of axes.
 
         :param axes: The axes on which to draw.
         :type axes: :class:`matplotlib.axes.Axes`
+        :param path: Path to display, defaults to None.
+        :type path: :class:`pyrobosim.utils.motion.Path`, optional
         :param path_color: Color of the path, as an RGB tuple or string.
         :type path_color: tuple[float] / str, optional
         :return: List of Matplotlib artists containing what was drawn,
@@ -74,7 +76,7 @@ class PathPlanner:
         :rtype: list[:class:`matplotlib.artist.Artist`]
         """
 
-        return self.planner.plot(axes, path_color)
+        return self.planner.plot(axes, path=path, path_color=path_color)
 
     def show(self):
         """Displays the planned path on the GUI."""

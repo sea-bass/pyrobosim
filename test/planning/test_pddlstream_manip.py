@@ -82,6 +82,7 @@ def create_test_world(add_alt_desk=True):
         "rrt_connect": False,
         "rrt_star": True,
         "compress_path": False,
+        "max_connection_dist": 1.0,
     }
     rrt = PathPlanner("rrt", **planner_config)
     robot.set_path_planner(rrt)
@@ -139,13 +140,13 @@ def test_manip_double_desk(domain_name):
 
 
 if __name__ == "__main__":
-    world = create_test_world(add_alt_desk=True)
-
     domain_name = "04_nav_manip_stream"
+    add_alt_desk = False
     interactive = True
     max_attempts = 3
 
     # Start task and motion planner in separate thread.
+    world = create_test_world(add_alt_desk)
     planner_thread = threading.Thread(
         target=start_planner, args=(world, domain_name, interactive, max_attempts)
     )
