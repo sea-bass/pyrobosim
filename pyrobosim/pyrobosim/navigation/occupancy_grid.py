@@ -3,7 +3,6 @@
 import os
 import yaml
 import math
-import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -12,7 +11,7 @@ class OccupancyGrid:
     """Lightweight wrapper containing occupancy grid information."""
 
     def __init__(
-        self, data, resolution, origin=(0, 0), occ_thresh=0.65, free_thresh=0.2
+        self, data, resolution, origin=(0.0, 0.0), occ_thresh=0.65, free_thresh=0.2
     ):
         """
         Creates an occupancy grid.
@@ -150,7 +149,7 @@ class OccupancyGrid:
         """
         return (not self.is_in_bounds(pos)) or self.data[pos[0], pos[1]] == 1
 
-    def connectable(self, pointA, pointB):
+    def has_straight_line_connection(self, pointA, pointB):
         """
         Checks if 2 points can be connected in a straight line.
 
@@ -158,15 +157,14 @@ class OccupancyGrid:
         :type pointA: (int, int)
         :param pointB: The destination point in the grid
         :type pointB: (int, int)
-        :return: (True, lastpoint) if pointA can be connected to pointB, else (False, lastpoint),
-                 lastpoint is the last point that can be reached from the source in a straight line
+        :return: (True, last_point) if pointA can be connected to pointB, else (False, last_point),
+                 last_point is the last point that can be reached from the source in a straight line
                  towards the destination.
-                 If pointA and pointB are connectable lastpoint will be pointB.
+                 If pointA and pointB are connectable last_point will be pointB.
         :rtype: (bool, (int, int))
         """
 
-        # Notes:
-        # left shift operator `<<` is used as an optimization for multiplying by 2
+        # Note: Left shift operator `<<` is used as an optimization for multiplying by 2.
 
         x0, y0 = pointA
         x1, y1 = pointB
@@ -190,16 +188,15 @@ class OccupancyGrid:
         y = 0
         x = 0
         decision = (dy << 1) - dx
-        last_free_point = pointA
-        lastpoint = pointB
+        last_point = pointB
         can_connect = True
         for _ in range(dx + 1):
             # handles the increment the same way even if axis has been switched
             x_inc = xdir * (y if axis_switched else x)
             y_inc = ydir * (x if axis_switched else y)
             # Compute the next grid cell
-            if self.data[x0 + x_inc, y0 + y_inc] == 1:
-                lastpoint = (x0 + x_inc, y0 + y_inc)
+            if self.is_occupied((x0 + x_inc, y0 + y_inc)):
+                last_point = (x0 + x_inc, y0 + y_inc)
                 can_connect = False
             x += 1
             if decision < 0:
@@ -207,8 +204,7 @@ class OccupancyGrid:
             else:
                 y += 1
                 decision += (dy << 1) - (dx << 1)
-            last_free_point = (x0 + x_inc, y0 + y_inc)
-        return can_connect, lastpoint
+        return can_connect, last_point
 
 
 def occupancy_grid_from_world(
