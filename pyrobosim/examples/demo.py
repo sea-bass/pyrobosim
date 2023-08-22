@@ -10,11 +10,7 @@ import numpy as np
 from pyrobosim.core import Robot, World, WorldYamlLoader
 from pyrobosim.gui import start_gui
 from pyrobosim.manipulation import GraspGenerator, ParallelGraspProperties
-from pyrobosim.navigation import (
-    ConstantVelocityExecutor,
-    PathPlanner,
-    occupancy_grid_from_world,
-)
+from pyrobosim.navigation import ConstantVelocityExecutor, OccupancyGrid, PathPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
@@ -149,7 +145,7 @@ def create_world(multirobot=False):
             grasp_generator=GraspGenerator(grasp_props),
         )
         planner_config_astar = {
-            "grid": occupancy_grid_from_world(
+            "grid": OccupancyGrid.from_world(
                 world, resolution=0.05, inflation_radius=0.15
             ),
             "diagonal_motion": True,

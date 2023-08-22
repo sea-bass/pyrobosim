@@ -4,7 +4,6 @@ import time
 import itertools
 
 from .planner_base import PathPlannerBase
-from ..core.locations import Location
 from ..utils.motion import Path, reduce_waypoints_polygon
 from ..utils.pose import Pose
 from ..utils.search_graph import SearchGraph, Node
@@ -40,6 +39,8 @@ class WorldGraphPlannerPolygon:
         """
         Initializes the graph from the entity nodes in the world linked to this planner.
         """
+        from ..core.locations import Location
+
         # Create a search graph from the nodes in the world.
         self.graph = SearchGraph(color=[0, 0.4, 0.8], color_alpha=0.5, use_planner=True)
         for entity in itertools.chain(

@@ -78,7 +78,7 @@ def reduce_waypoints_grid(grid, positions):
     i = len(positions) - 1
     while positions and i >= 0:
         current = positions[i]
-        if grid.connectable(start, current)[0]:
+        if grid.has_straight_line_connection(start, current)[0]:
             waypoints.append(current)
             start = current
             positions = positions[i + 1 :]
