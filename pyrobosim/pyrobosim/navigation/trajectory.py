@@ -2,6 +2,7 @@
 
 import numpy as np
 from scipy.spatial.transform import Slerp, Rotation
+import warnings
 
 from ..utils.pose import wrap_angle
 
@@ -24,7 +25,8 @@ def get_constant_speed_trajectory(path, linear_velocity=0.2, max_angular_velocit
     :return: Trajectory type of the form (t_pts, x_pts, y_pts, theta_pts).
     :rtype: tuple(:class:`numpy.array`)
     """
-    if path.num_poses == 0:
+    if path.num_poses < 2:
+        warnings.warn("Insufficient points to generate trajectory.")
         return None
 
     # Calculate the time points for the path at constant velocity, also
@@ -37,9 +39,7 @@ def get_constant_speed_trajectory(path, linear_velocity=0.2, max_angular_velocit
         if max_angular_velocity is None:
             ang_time = 0
         else:
-            ang_distance = wrap_angle(
-                start_pose.get_angular_distance(end_pose) - start_pose.get_yaw()
-            )
+            ang_distance = wrap_angle(end_pose.get_yaw() - start_pose.get_yaw())
             ang_time = ang_distance / max_angular_velocity
         t_pts[idx + 1] = t_pts[idx] + max(lin_time, ang_time)
 
@@ -66,14 +66,16 @@ def interpolate_trajectory(traj, dt):
     """
     # Unpack the trajectory
     (t_pts, x_pts, y_pts, yaw_pts) = traj
-    t_final = t_pts[-1]
+    if len(t_pts) < 2:
+        warnings.warn("Insufficient trajectory points for interpolation.")
+        return None
 
     # De-duplicate time points ensure that Slerp doesn't throw an error.
     # Right now, we're just keeping the later point.
     i = 0
     while i < len(t_pts):
         if (i > 0) and (t_pts[i] <= t_pts[i - 1]):
-            print("Warning: De-duplicated trajectory points at the same time.")
+            warnings.warn("De-duplicated trajectory points at the same time.")
             t_pts = np.delete(t_pts, i - 1)
             x_pts = np.delete(x_pts, i - 1)
             y_pts = np.delete(y_pts, i - 1)
@@ -82,6 +84,7 @@ def interpolate_trajectory(traj, dt):
             i += 1
 
     # Set up Slerp interpolation for the angle.
+    t_final = t_pts[-1]
     if t_final > 0:
         euler_angs = [[0, 0, th] for th in yaw_pts]
         slerp = Slerp(t_pts, Rotation.from_euler("xyz", euler_angs))
