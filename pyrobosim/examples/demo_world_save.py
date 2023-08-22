@@ -8,7 +8,7 @@ import argparse
 import os
 
 from pyrobosim.core import WorldGazeboExporter, WorldYamlLoader
-from pyrobosim.navigation import occupancy_grid_from_world
+from pyrobosim.navigation import OccupancyGrid
 from pyrobosim.utils.general import get_data_folder
 
 
@@ -61,7 +61,7 @@ def main():
 
     # Save an occupancy grid to the world folder and show it, if enabled.
     if args.save_grid:
-        occ_grid = occupancy_grid_from_world(
+        occ_grid = OccupancyGrid.from_world(
             world,
             resolution=args.grid_resolution,
             inflation_radius=args.grid_inflation_radius,

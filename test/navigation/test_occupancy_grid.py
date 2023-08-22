@@ -9,7 +9,7 @@ import pytest
 import tempfile
 import yaml
 
-from pyrobosim.navigation.occupancy_grid import OccupancyGrid, occupancy_grid_from_world
+from pyrobosim.navigation.occupancy_grid import OccupancyGrid
 
 
 # Create test occupancy grid
@@ -121,7 +121,7 @@ def test_connectable():
     is_connectable, last_point = grid.has_straight_line_connection((1, 2), (2, 4))
 
 
-def test_save_to_file():
+def test_save_load_to_file():
     grid = OccupancyGrid(
         TEST_DATA, 0.25, origin=(-1.0, 2.0), occ_thresh=0.8, free_thresh=0.12
     )
@@ -152,6 +152,15 @@ def test_save_to_file():
     assert image.getpixel((0, 0)) == 0
     assert image.getpixel((1, 1)) == 254
 
+    # Now load back the occupancy grid
+    loaded_grid = OccupancyGrid.from_file(output_folder)
+    assert isinstance(loaded_grid, OccupancyGrid)
+    assert np.all(loaded_grid.data == grid.data)
+    assert loaded_grid.resolution == grid.resolution
+    assert loaded_grid.origin == grid.origin
+    assert loaded_grid.occ_thresh == grid.occ_thresh
+    assert loaded_grid.free_thresh == grid.free_thresh
+
 
 def test_occupancy_grid_from_world():
     from pyrobosim.core import World
@@ -161,7 +170,7 @@ def test_occupancy_grid_from_world():
     world.add_room(name="room2", footprint=[(2, 0), (3, 0), (3, 1), (2, 1)])
     world.add_hallway(room_start="room1", room_end="room2", width=0.25)
 
-    grid = occupancy_grid_from_world(world, 0.1, 0.0)
+    grid = OccupancyGrid.from_world(world, 0.1, 0.0)
 
     # Check some known unoccupied points
     assert not grid.is_occupied(grid.world_to_grid((0.5, 0.5)))

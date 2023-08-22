@@ -5,7 +5,7 @@ from pyrobosim.gui import start_gui
 from pyrobosim.navigation import PathPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
-from pyrobosim.navigation import occupancy_grid_from_world
+from pyrobosim.navigation import OccupancyGrid
 
 # Load a test world.
 world_file = os.path.join(get_data_folder(), "test_world.yaml")
@@ -16,7 +16,7 @@ def demo_astar():
     """Creates an occupancy grid based A* planner and plans a path."""
     robot = world.robots[0]
     planner_config = {
-        "grid": occupancy_grid_from_world(
+        "grid": OccupancyGrid.from_world(
             world, resolution=0.05, inflation_radius=1.5 * robot.radius
         ),
         "diagonal_motion": True,

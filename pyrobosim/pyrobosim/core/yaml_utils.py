@@ -10,7 +10,7 @@ from ..utils.general import replace_special_yaml_tokens
 from ..utils.pose import Pose
 from ..navigation import (
     ConstantVelocityExecutor,
-    occupancy_grid_from_world,
+    OccupancyGrid,
     PathPlanner,
 )
 
@@ -144,7 +144,7 @@ class WorldYamlLoader:
         if occupancy_grid:
             resolution = occupancy_grid.get("resolution", 0.05)
             inflation_radius = occupancy_grid.get("inflation_radius", 0.15)
-            occupancy_grid = occupancy_grid_from_world(
+            occupancy_grid = OccupancyGrid.from_world(
                 self.world, resolution, inflation_radius
             )
             # Remove the metadata about occupancy grid.

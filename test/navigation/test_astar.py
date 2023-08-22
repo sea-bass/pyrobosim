@@ -5,7 +5,7 @@
 import os
 
 from pyrobosim.core import WorldYamlLoader
-from pyrobosim.navigation import PathPlanner, occupancy_grid_from_world
+from pyrobosim.navigation import OccupancyGrid, PathPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
@@ -22,7 +22,7 @@ def test_astar():
 
     robot = world.robots[0]
     planner_config = {
-        "grid": occupancy_grid_from_world(
+        "grid": OccupancyGrid.from_world(
             world, resolution=0.05, inflation_radius=1.5 * robot.radius
         ),
         "diagonal_motion": True,
@@ -39,7 +39,7 @@ def test_astar():
 
     # Plan for same start and goal with path compression enabled
     planner_config = {
-        "grid": occupancy_grid_from_world(
+        "grid": OccupancyGrid.from_world(
             world, resolution=0.05, inflation_radius=1.5 * robot.radius
         ),
         "diagonal_motion": True,
