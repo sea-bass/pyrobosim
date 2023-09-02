@@ -10,7 +10,11 @@ from .objects import Object
 from .room import Room
 from .robot import Robot
 from ..utils.pose import Pose
-from ..utils.knowledge import resolve_to_location, resolve_to_object
+from ..utils.knowledge import (
+    apply_resolution_strategy,
+    resolve_to_location,
+    resolve_to_object,
+)
 from ..utils.polygon import sample_from_polygon, transform_polygon
 from ..utils.search_graph import Node
 
@@ -1198,6 +1202,8 @@ class World:
             warnings.warn(f"Cannot get graph node from {entity}")
             return None
 
-        # TODO: Select a graph node
-        graph_node = graph_nodes[0]
+        # Select a graph node using the same resolution strategy.
+        graph_node = apply_resolution_strategy(
+            graph_nodes, resolution_strategy, robot=robot
+        )
         return graph_node
