@@ -24,6 +24,7 @@ robots:
     # Rapidly-expanding Random Tree (RRT) planner
     path_planner:
       type: rrt
+      collision_check_step_dist: 0.025
       max_connection_dist: 0.25
       bidirectional: true
       rrt_star: true

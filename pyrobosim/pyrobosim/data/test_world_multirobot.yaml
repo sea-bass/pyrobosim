@@ -24,6 +24,7 @@ robots:
     pose: [0, 0, 0]
     path_planner:
       type: rrt
+      collision_check_step_dist: 0.025
       max_connection_dist: 0.5
       bidirectional: true
       rrt_star: true
@@ -46,6 +47,7 @@ robots:
       depth_clearance: 0.01
     path_planner:
       type: prm
+      collision_check_step_dist: 0.025
       max_connection_dist: 1.5
       max_nodes: 100
       compress_path: false

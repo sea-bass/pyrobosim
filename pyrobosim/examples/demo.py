@@ -111,6 +111,7 @@ def create_world(multirobot=False):
         "bidirectional": True,
         "rrt_connect": False,
         "rrt_star": True,
+        "collision_check_step_dist": 0.025,
         "max_connection_dist": 0.5,
         "rewire_radius": 1.5,
         "compress_path": False,
@@ -129,6 +130,7 @@ def create_world(multirobot=False):
         )
         planner_config_prm = {
             "world": world,
+            "collision_check_step_dist": 0.025,
             "max_connection_dist": 1.5,
             "max_nodes": 100,
             "compress_path": False,

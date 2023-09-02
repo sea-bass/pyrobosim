@@ -21,6 +21,7 @@ class RRTPlannerPolygon:
         bidirectional=False,
         rrt_connect=False,
         rrt_star=False,
+        collision_check_step_dist=0.025,
         max_connection_dist=0.25,
         max_nodes_sampled=1000,
         max_time=5.0,
@@ -41,6 +42,8 @@ class RRTPlannerPolygon:
         :param rrt_star: If True, uses RRT* to rewire trees to smooth and
             shorten paths.
         :type rrt_star: bool
+        :param collision_check_step_dist: Step size for discretizing collision checking.
+        :type collision_check_step_dist: float
         :param max_connection_dist: Maximum connection distance between nodes.
         :type max_connection_dist: float
         :param max_nodes_sampled: Maximum nodes sampled before planning stops.
@@ -60,6 +63,7 @@ class RRTPlannerPolygon:
         self.rrt_star = rrt_star
 
         # Parameters
+        self.collision_check_step_dist = collision_check_step_dist
         self.max_connection_dist = max_connection_dist
         self.max_nodes_sampled = max_nodes_sampled
         self.max_time = max_time
@@ -110,7 +114,10 @@ class RRTPlannerPolygon:
 
         # If the goal is within max connection distance of the start, connect them directly
         if self.world.is_connectable(
-            n_start.pose, n_goal.pose, self.max_connection_dist
+            n_start.pose,
+            n_goal.pose,
+            self.collision_check_step_dist,
+            self.max_connection_dist,
         ):
             path_poses = [n_start.pose, n_goal.pose]
             self.latest_path = Path(poses=path_poses)
@@ -127,7 +134,10 @@ class RRTPlannerPolygon:
             n_near = self.graph_start.nearest(q_sample)
             n_new = self.extend(n_near, q_sample)
             connected_node = self.world.is_connectable(
-                n_near.pose, n_new.pose, self.max_connection_dist
+                n_near.pose,
+                n_new.pose,
+                self.collision_check_step_dist,
+                self.max_connection_dist,
             )
             if connected_node:
                 self.graph_start.add_node(n_new)
@@ -139,7 +149,10 @@ class RRTPlannerPolygon:
                 n_near_goal = self.graph_goal.nearest(q_sample)
                 n_new_goal = self.extend(n_near_goal, q_sample)
                 connected_node_goal = self.world.is_connectable(
-                    n_near_goal.pose, n_new_goal.pose, self.max_connection_dist
+                    n_near_goal.pose,
+                    n_new_goal.pose,
+                    self.collision_check_step_dist,
+                    self.max_connection_dist,
                 )
                 if connected_node_goal:
                     self.graph_goal.add_node(n_new_goal)
@@ -212,7 +225,9 @@ class RRTPlannerPolygon:
                     n = n.parent
                     path_poses.append(n.pose)
         if self.compress_path:
-            path_poses = reduce_waypoints_polygon(self.world, path_poses)
+            path_poses = reduce_waypoints_polygon(
+                self.world, path_poses, self.collision_check_step_dist
+            )
         self.latest_path = Path(poses=path_poses)
         self.latest_path.fill_yaws()
         return self.latest_path
@@ -278,7 +293,10 @@ class RRTPlannerPolygon:
             if (n != n_tgt) and (dist <= self.rewire_radius):
                 alt_cost = n.cost + dist
                 if (alt_cost < n_tgt.cost) and self.world.is_connectable(
-                    n.pose, n_tgt.pose, self.max_connection_dist
+                    n.pose,
+                    n_tgt.pose,
+                    self.collision_check_step_dist,
+                    self.max_connection_dist,
                 ):
                     n_rewire = n
                     n_tgt.cost = alt_cost
@@ -319,7 +337,10 @@ class RRTPlannerPolygon:
 
             # First, try directly connecting to the goal
             if dist < self.max_connection_dist and self.world.is_connectable(
-                n_curr.pose, n_tgt.pose, self.max_connection_dist
+                n_curr.pose,
+                n_tgt.pose,
+                self.collision_check_step_dist,
+                self.max_connection_dist,
             ):
                 n_tgt.parent = n_curr
                 graph.nodes.add(n_tgt)
@@ -331,7 +352,10 @@ class RRTPlannerPolygon:
                 # If using RRT-Connect, keep trying to connect.
                 n_new = self.extend(n_curr, n_tgt.pose)
                 if self.world.is_connectable(
-                    n_curr.pose, n_new.pose, self.max_connection_dist
+                    n_curr.pose,
+                    n_new.pose,
+                    self.collision_check_step_dist,
+                    self.max_connection_dist,
                 ):
                     graph.add_node(n_new)
                     n_curr = n_new

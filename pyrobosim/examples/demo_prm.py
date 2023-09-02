@@ -17,6 +17,7 @@ def test_prm():
     planner_config = {
         "world": world,
         "max_nodes": 100,
+        "collision_check_step_dist": 0.025,
         "max_connection_dist": 1.5,
         "compress_path": False,
     }

@@ -15,13 +15,20 @@ class PRMPlannerPolygon:
     """
 
     def __init__(
-        self, compress_path=False, max_connection_dist=2.0, max_nodes=50, world=None
+        self,
+        compress_path=False,
+        collision_check_step_dist=0.025,
+        max_connection_dist=2.0,
+        max_nodes=50,
+        world=None,
     ):
         """
         Creates an instance of a PRM planner.
 
         :param compress_path: If true, tries to shorten the path with polygon-based collision checks.
         :type compress_path: bool
+        :param collision_check_step_dist: Step size for discretizing collision checking.
+        :type collision_check_step_dist: float
         :param max_connection_dist: Maximum connection distance between nodes.
         :type max_connection_dist: float
         :param max_nodes: Maximum nodes sampled to build the PRM.
@@ -30,6 +37,7 @@ class PRMPlannerPolygon:
         :type world: :class:`pyrobosim.core.world.World`
         """
         # Parameters
+        self.collision_check_step_dist = collision_check_step_dist
         self.max_connection_dist = max_connection_dist
         self.max_nodes = max_nodes
         self.world = world
@@ -69,7 +77,10 @@ class PRMPlannerPolygon:
             if node == other:
                 continue
             if self.world.is_connectable(
-                node.pose, other.pose, self.max_connection_dist
+                node.pose,
+                other.pose,
+                self.collision_check_step_dist,
+                self.max_connection_dist,
             ):
                 self.graph.add_edge(node, other)
 
@@ -109,7 +120,9 @@ class PRMPlannerPolygon:
 
         path_poses = [waypoint.pose for waypoint in waypoints]
         if self.compress_path:
-            path_poses = reduce_waypoints_polygon(self.world, path_poses)
+            path_poses = reduce_waypoints_polygon(
+                self.world, path_poses, self.collision_check_step_dist
+            )
         self.latest_path = Path(poses=path_poses)
         self.latest_path.fill_yaws()
         self.planning_time = time.time() - t_start

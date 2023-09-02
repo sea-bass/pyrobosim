@@ -131,9 +131,6 @@ class TestGetEntities:
 
     def test_valid_spawn(self):
         """Checks for existence of valid object spawn."""
-        print(self.world.locations)
-        counter0 = self.world.get_entity_by_name("counter0")
-        print(counter0.children)
         result = self.world.get_entity_by_name("counter0_left")
         assert isinstance(result, ObjectSpawn) and result.name == "counter0_left"
 

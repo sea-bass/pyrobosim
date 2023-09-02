@@ -88,7 +88,7 @@ def reduce_waypoints_grid(grid, positions):
     return waypoints
 
 
-def reduce_waypoints_polygon(world, poses):
+def reduce_waypoints_polygon(world, poses, step_dist=0.01):
     """
     Reduces the number of waypoints in a path generated from a polygon based planner.
 
@@ -96,6 +96,10 @@ def reduce_waypoints_polygon(world, poses):
     :type world: :class:`pyrobosim.core.world.World`
     :param poses: The list of poses that make up the path.
     :type poses: list[:class: `pyrobosim.utils.pose.Pose`]
+    :param step_dist: The step size for discretizing a straight line to check collisions.
+    :type step_dist: float
+    :param max_dist: The maximum allowed connection distance.
+    :type max_dist: float, optional
     """
     waypoints = []
 
@@ -105,7 +109,7 @@ def reduce_waypoints_polygon(world, poses):
     i = len(poses) - 1
     while poses and i >= 0:
         current = poses[i]
-        if world.is_connectable(start, current):
+        if world.is_connectable(start, current, step_dist):
             waypoints.append(current)
             start = current
             poses = poses[i + 1 :]

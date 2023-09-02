@@ -35,6 +35,7 @@ def test_world_graph_short_connection_distance():
     )
     planner_config = {
         "world": world,
+        "collision_check_step_dist": 0.025,
         "max_connection_dist": 1.0,
     }
     planner = PathPlanner("world_graph", **planner_config)

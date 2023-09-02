@@ -1033,7 +1033,7 @@ class World:
     # Occupancy check #
     ######################################
 
-    def is_connectable(self, start, goal, max_dist=None):
+    def is_connectable(self, start, goal, step_dist=0.01, max_dist=None):
         """
         Checks connectivity between two poses `start` and `goal` in the world
         by sampling points spaced by the `self.collision_check_dist` parameter
@@ -1042,12 +1042,14 @@ class World:
         :type start: :class:`Pose`
         :param goal: Goal node
         :type goal: :class:`Pose`
+        :param step_dist: The step size for discretizing a straight line to check collisions.
+        :type step_dist: float
         :param max_dist: The maximum allowed connection distance.
         :type max_dist: float, optional
         :return: True if nodes can be connected, else False.
         :rtype: bool
         """
-        # Trivial case where nodes are identical or there is no world.
+        # Trivial case where nodes are identical.
         if start == goal:
             return True
 
@@ -1059,7 +1061,7 @@ class World:
 
         # Build up the array of test X and Y coordinates for sampling between
         # the start and goal points.
-        dist_array = np.arange(0, dist, 0.01)
+        dist_array = np.arange(0, dist, step_dist)
         # If the nodes are coincident, connect them by default.
         if dist_array.size == 0:
             return True

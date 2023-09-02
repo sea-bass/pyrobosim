@@ -23,6 +23,7 @@ robots:
     pose: [0, 0, 0]
     path_planner:
       type: rrt
+      collision_check_step_dist: 0.025
       max_connection_dist: 1.0
       bidirectional: false
       rrt_star: true

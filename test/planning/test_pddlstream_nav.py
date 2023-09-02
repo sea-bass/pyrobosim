@@ -64,6 +64,7 @@ def create_test_world(add_hallway=True):
         "bidirectional": False,
         "rrt_connect": False,
         "rrt_star": False,
+        "collision_check_step_dist": 0.025,
         "max_connection_dist": 1.0,
     }
     rrt = PathPlanner("rrt", **planner_config)
