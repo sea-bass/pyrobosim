@@ -41,7 +41,7 @@ class Edge:
         """
         self.nodeA = nodeA
         self.nodeB = nodeB
-        self.cost = nodeA.pose.get_linear_distance(nodeB.pose)
+        self.cost = nodeA.pose.get_linear_distance(nodeB.pose, ignore_z=True)
 
 
 class SearchGraph:
@@ -72,7 +72,7 @@ class SearchGraph:
         Adds a node to the graph.
 
         :param node: The node to be added into the graph.
-        :type node: :class: `pyrobosim.utils.search_graph.Node`
+        :type node: :class:`pyrobosim.utils.search_graph.Node`
         """
 
         self.nodes.add(node)
@@ -82,7 +82,7 @@ class SearchGraph:
         Removes a node from the graph.
 
         :param node: The node to be removed.
-        :type node: :class: `pyrobosim.utils.search_graph.Node`
+        :type node: :class:`pyrobosim.utils.search_graph.Node`
         """
 
         for other in self.nodes:
@@ -104,10 +104,14 @@ class SearchGraph:
         :type nodeA: :class:`pyrobosim.utils.search_graph.Node`
         :param nodeB: The second node.
         :type nodeB: :class:`pyrobosim.utils.search_graph.Node`
+        :return: The edge that was created.
+        :rtype: :class:`pyrobosim.utils.search_graph.Edge`
         """
-        self.edges.add(Edge(nodeA, nodeB))
+        edge = Edge(nodeA, nodeB)
+        self.edges.add(edge)
         nodeA.neighbors.add(nodeB)
         nodeB.neighbors.add(nodeA)
+        return edge
 
     def remove_edge(self, nodeA, nodeB):
         """
@@ -133,7 +137,7 @@ class SearchGraph:
         :param pose: Query pose
         :type pose: :class:`pyrobosim.utils.pose.Pose`
         :return: The nearest node to the query pose, or None if the graph is empty.
-        :rtype: :class:`Node`
+        :rtype: :class:`pyrobosim.utils.search_graph.Node`
         """
         if len(self.nodes) == 0:
             return None
@@ -141,7 +145,7 @@ class SearchGraph:
         # Find the nearest node
         min_dist = np.inf
         for n in self.nodes:
-            dist = pose.get_linear_distance(n.pose)
+            dist = pose.get_linear_distance(n.pose, ignore_z=True)
             if dist < min_dist:
                 min_dist = dist
                 n_nearest = n
@@ -156,15 +160,28 @@ class SearchGraph:
         :param nodeB: The end node.
         :type nodeB: :class: `pyrobosim.utils.search_graph.Node`
         :return: The path from nodeA to nodeB, if one exists.
-        :rtype: :class: `pyrobosim.utils.motion.Path
+        :rtype: :class: `pyrobosim.utils.motion.Path`
         """
         path = Path()
+
         if not self.use_planner:
             warnings.warn(
                 "Graph should be created with `use_planner = True` to use planner."
             )
+        elif nodeA not in self.nodes:
+            warnings.warn("Node `nodeA` is not in the search graph.")
+        elif nodeB not in self.nodes:
+            warnings.warn("Node `nodeB` is not in the search graph.")
         else:
-            path = self.path_finder.plan(nodeA, nodeB)
+            path_nodes = self.path_finder.plan(nodeA, nodeB)
+            if path_nodes is None:
+                warnings.warn("Could not find a path from start to goal.")
+                return path
+
+            path_poses = [node.pose for node in path_nodes]
+            if len(path_poses) > 1:
+                path.set_poses(path_poses)
+
         return path
 
 
@@ -180,9 +197,9 @@ class SearchGraphPlanner(AStar):
         """
         Compute heuristic cost estimate using linear distance.
         :param n0: First node
-        :type n0: :class:`Node`
+        :type n0: :class:`pyrobosim.utils.search_graph.Node`
         :param n1: Second node
-        :type n1: :class:`Node`
+        :type n1: :class:`pyrobosim.utils.search_graph.Node`
         :return: Heuristic cost estimate
         :rtype: float
         """
@@ -190,11 +207,11 @@ class SearchGraphPlanner(AStar):
 
     def distance_between(self, n0, n1):
         """
-        Compute distance between two nodes
+        Compute distance between two nodes.
         :param n0: First node
-        :type n0: :class:`Node`
+        :type n0: :class:`pyrobosim.utils.search_graph.Node`
         :param n1: Second node
-        :type n1: :class:`Node`
+        :type n1: :class:`pyrobosim.utils.search_graph.Node`
         :return: Heuristic cost estimate
         :rtype: float
         """
@@ -204,9 +221,9 @@ class SearchGraphPlanner(AStar):
         """
         Get neighbors of a graph node.
         :param n: Node
-        :type n: :class:`Node`
+        :type n: :class:`pyrobosim.utils.search_graph.Node`
         :return: List of node neighbors
-        :rtype: list[:class:`Node`]
+        :rtype: list[:class:`pyrobosim.utils.search_graph.Node`]
         """
         return list(n.neighbors)
 
@@ -215,9 +232,9 @@ class SearchGraphPlanner(AStar):
         Plan path from start to goal.
 
         :param start: Node
-        :type start: :class:`Node`
+        :type start: :class:`pyrobosim.utils.search_graph.Node`
         :param goal: Node
-        :type goal: :class:`Node`
+        :type goal: :class:`pyrobosim.utils.search_graph.Node`
         """
         try:
             self.latest_path = self.astar(start, goal)
