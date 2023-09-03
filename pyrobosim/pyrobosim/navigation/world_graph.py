@@ -113,17 +113,12 @@ class WorldGraphPlannerPolygon:
 
         # Find a path from start to goal nodes
         t_start = time.time()
-        waypoints = self.graph.find_path(start, goal)
-        # Return empty path if no path was found.
-        if not waypoints:
-            return self.latest_path
-
-        path_poses = [waypoint.pose for waypoint in waypoints]
+        self.latest_path = self.graph.find_path(start, goal)
         if self.compress_path:
-            path_poses = reduce_waypoints_polygon(
-                self.world, path_poses, self.collision_check_step_dist
+            compressed_poses = reduce_waypoints_polygon(
+                self.world, self.latest_path.poses, self.collision_check_step_dist
             )
-        self.latest_path = Path(poses=path_poses)
+            self.latest_path.set_poses(compressed_poses)
         self.latest_path.fill_yaws()
         self.planning_time = time.time() - t_start
         self.graph.remove_node(start)
