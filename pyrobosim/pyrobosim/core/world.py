@@ -1102,9 +1102,13 @@ class World:
         :rtype: bool
         """
         radius = self.inflation_radius if robot is None else robot.radius
-        robot_list = [r for r in self.robots if r is not robot]
-        for r in robot_list:
-            if pose.get_linear_distance(r.pose) < (radius + robot.radius):
+        robot_list = [
+            other_robot for other_robot in self.robots if other_robot is not robot
+        ]
+        for other_robot in robot_list:
+            if pose.get_linear_distance(other_robot.pose) < (
+                radius + other_robot.radius
+            ):
                 return True
         return False
 
