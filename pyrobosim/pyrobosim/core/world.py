@@ -632,7 +632,9 @@ class World:
         # If the new robot has a bigger inflation radius than previously,
         # use this new one. Otherwise, we can leave it as is.
         old_inflation_radius = self.inflation_radius
-        new_inflation_radius = max([r.radius for r in self.robots] + [robot.radius])
+        new_inflation_radius = max(
+            [other_robot.radius for other_robot in self.robots] + [robot.radius]
+        )
         if new_inflation_radius > old_inflation_radius:
             self.set_inflation_radius(new_inflation_radius)
 
@@ -724,7 +726,9 @@ class World:
                 self.ros_node.remove_robot_state_publisher(robot)
 
             # Find the new max inflation radius and revert it.
-            new_inflation_radius = max([r.radius for r in self.robots] + [robot.radius])
+            new_inflation_radius = max(
+                [other_robot.radius for other_robot in self.robots] + [robot.radius]
+            )
             if new_inflation_radius != self.inflation_radius:
                 self.set_inflation_radius(new_inflation_radius)
             return True
@@ -787,7 +791,7 @@ class World:
         :return: List of all room names.
         :rtype: list[str]
         """
-        return [r.name for r in self.rooms]
+        return [room.name for room in self.rooms]
 
     def get_room_by_name(self, name):
         """
@@ -995,7 +999,7 @@ class World:
         :return: List of robot names.
         :rtype: list[str]
         """
-        return [r.name for r in self.robots]
+        return [robot.name for robot in self.robots]
 
     def get_robot_by_name(self, name):
         """
