@@ -185,6 +185,7 @@ def test_equality():
     # Completely different values
     pose3 = Pose(x=0.0, y=0.0, z=0.0)
 
+    assert pose1 == pose1
     assert pose1 == pose2
     assert not pose1 == pose3
 

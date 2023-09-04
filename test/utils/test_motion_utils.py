@@ -55,6 +55,23 @@ def test_path_fill_yaws():
         assert pose.get_yaw() == pytest.approx(expected_yaw)
 
 
+def test_path_equality():
+    """Tests for equality of Path objects."""
+    test_poses = [
+        Pose(x=0.0, y=0.0),
+        Pose(x=1.0, y=0.0, yaw=np.pi / 2.0),
+        Pose(x=1.0, y=3.0, q=[0.707, 0.0, 0.707, 0.0]),
+    ]
+
+    path1 = Path(poses=test_poses)
+    path2 = Path(poses=test_poses)  # Same poses, but different object
+    path3 = Path(poses=list(reversed(test_poses)))  # Different poses
+
+    assert path1 == path1
+    assert path1 == path2
+    assert not path1 == path3
+
+
 ##########################################
 # Tests for waypoint reduction utilities #
 ##########################################

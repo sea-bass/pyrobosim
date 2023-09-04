@@ -25,13 +25,11 @@ def test_task_action_default_args():
 
 
 def test_task_action_nondefault_args():
-    test_path = Path(
-        poses=[
-            Pose(x=0.0, y=0.0, yaw=0.0),
-            Pose(x=0.5, y=1.0, yaw=1.5),
-            Pose(x=1.0, y=2.0, yaw=3.0),
-        ]
-    )
+    test_poses = [
+        Pose(x=0.0, y=0.0, yaw=0.0),
+        Pose(x=0.5, y=1.0, yaw=1.5),
+        Pose(x=1.0, y=2.0, yaw=3.0),
+    ]
 
     action = TaskAction(
         "Pick",
@@ -40,8 +38,8 @@ def test_task_action_nondefault_args():
         room="kitchen",
         source_location="table0_tabletop",
         target_location="counter0_right",
-        pose=test_path.poses[-1],
-        path=test_path,
+        pose=test_poses[-1],
+        path=Path(poses=test_poses),
         cost=42.0,
     )
 
@@ -52,8 +50,8 @@ def test_task_action_nondefault_args():
     assert action.room == "kitchen"
     assert action.source_location == "table0_tabletop"
     assert action.target_location == "counter0_right"
-    assert action.pose == test_path.poses[-1]
-    assert action.path == test_path
+    assert action.pose == test_poses[-1]
+    assert action.path == Path(poses=test_poses)
 
 
 def test_task_plan_default_args():
@@ -67,7 +65,7 @@ def test_task_plan_default_args():
 
 def test_task_plan_nondefault_args():
     nav_path = Path(
-        [
+        poses=[
             Pose(x=0.0, y=0.0, z=0.0, q=[1.0, 0.0, 0.0, 0.0]),
             Pose(x=1.0, y=0.0, z=0.0, q=[0.707, 0.0, 0.0, 0.707]),
             Pose(x=1.0, y=1.0, z=0.0, q=[0.0, 0.0, 0.0, 1.0]),
