@@ -2,8 +2,6 @@
 Motion planning utilities.
 """
 
-import numpy as np
-
 
 class Path:
     """Representation of a path for motion planning."""

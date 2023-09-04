@@ -6,7 +6,7 @@ import numpy as np
 
 from ...manipulation.grasping import GraspFace
 from ...utils.pose import Pose
-from ...utils.polygon import inflate_polygon, sample_from_polygon, transform_polygon
+from ...utils.polygon import sample_from_polygon, transform_polygon
 
 
 def get_pick_place_cost(loc, obj):

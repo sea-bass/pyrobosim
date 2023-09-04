@@ -2,8 +2,6 @@
 Basic checks for external dependencies.
 """
 
-import pytest
-
 
 def test_import_pddlstream():
     import pddlstream
