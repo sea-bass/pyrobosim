@@ -82,6 +82,7 @@ def create_test_world(add_alt_desk=True):
         "rrt_connect": False,
         "rrt_star": True,
         "compress_path": False,
+        "collision_check_step_dist": 0.025,
         "max_connection_dist": 1.0,
     }
     rrt = PathPlanner("rrt", **planner_config)

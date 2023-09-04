@@ -14,18 +14,27 @@ class WorldGraphPlannerPolygon:
     Polygon representation based implementation of world graph planner.
     """
 
-    def __init__(self, max_connection_dist=None, compress_path=False, world=None):
+    def __init__(
+        self,
+        world=None,
+        collision_check_step_dist=0.025,
+        max_connection_dist=None,
+        compress_path=False,
+    ):
         """
         Creates an instance of a world graph planner.
 
         :param world: World object to use in the planner.
         :type world: :class:`pyrobosim.core.world.World`
-        :param compress_path: If true, tries to shorten the path with polygon-based collision checks.
-        :type compress_path: bool
+        :param collision_check_step_dist: Step size for discretizing collision checking.
+        :type collision_check_step_dist: float
         :param max_connection_dist: Maximum connection distance between nodes.
         :type max_connection_dist: float
+        :param compress_path: If true, tries to shorten the path with polygon-based collision checks.
+        :type compress_path: bool
         """
         # Parameters
+        self.collision_check_step_dist = collision_check_step_dist
         self.max_connection_dist = max_connection_dist
         self.world = world
         self.compress_path = compress_path
@@ -68,7 +77,10 @@ class WorldGraphPlannerPolygon:
             if node == other:
                 continue
             if self.world.is_connectable(
-                node.pose, other.pose, self.max_connection_dist
+                node.pose,
+                other.pose,
+                self.collision_check_step_dist,
+                self.max_connection_dist,
             ):
                 self.graph.add_edge(node, other)
 
@@ -104,7 +116,7 @@ class WorldGraphPlannerPolygon:
         self.latest_path = self.graph.find_path(start, goal)
         if self.compress_path:
             compressed_poses = reduce_waypoints_polygon(
-                self.world, self.latest_path.poses
+                self.world, self.latest_path.poses, self.collision_check_step_dist
             )
             self.latest_path.set_poses(compressed_poses)
         self.latest_path.fill_yaws()

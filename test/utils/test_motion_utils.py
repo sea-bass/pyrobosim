@@ -101,6 +101,6 @@ def test_reduce_waypoints_polygon():
         Pose(x=2.3, y=0.1),  # Not optimized out since it's the goal point
     ]
 
-    reduced_poses = reduce_waypoints_polygon(world, poses)
+    reduced_poses = reduce_waypoints_polygon(world, poses, step_dist=0.01)
     assert len(reduced_poses) == 4
     assert reduced_poses == [poses[0], poses[3], poses[5], poses[6]]

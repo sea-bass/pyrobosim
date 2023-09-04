@@ -87,6 +87,7 @@ def create_world():
         "bidirectional": True,
         "rrt_connect": False,
         "rrt_star": True,
+        "collision_check_step_dist": 0.025,
         "max_connection_dist": 0.5,
         "rewire_radius": 1.5,
         "compress_path": False,

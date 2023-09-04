@@ -131,9 +131,6 @@ class TestGetEntities:
 
     def test_valid_spawn(self):
         """Checks for existence of valid object spawn."""
-        print(self.world.locations)
-        counter0 = self.world.get_entity_by_name("counter0")
-        print(counter0.children)
         result = self.world.get_entity_by_name("counter0_left")
         assert isinstance(result, ObjectSpawn) and result.name == "counter0_left"
 
@@ -204,3 +201,40 @@ class TestGetEntities:
         """Checks for existence of an invalid robot."""
         result = self.world.get_robot_by_name("robot0")
         assert result is None
+
+    def test_get_graph_node_from_entity(self):
+        """Checks whether graph nodes can be found from various entities."""
+        robot = self.world.robots[0]
+
+        # Querying directly for a graph node returns the node itself
+        tabletop = self.world.get_entity_by_name("table0_tabletop")
+        tabletop_node = tabletop.graph_nodes[0]
+        assert self.world.graph_node_from_entity(tabletop_node) == tabletop_node
+
+        # Querying for an object spawn, room, or hallway returns itself
+        entity_names = [
+            "table0_tabletop",  # Object spawn
+            "kitchen",  # Room
+            "hall_kitchen_bedroom",  # Hallway
+        ]
+        for entity_name in entity_names:
+            entity = self.world.get_entity_by_name(entity_name)
+            graph_node = self.world.graph_node_from_entity(entity_name, robot=robot)
+            assert graph_node in entity.graph_nodes
+
+        # Querying for an object will give a graph node from its parent
+        desktop = self.world.get_entity_by_name("desk0_desktop")
+        assert (
+            self.world.graph_node_from_entity("apple0", robot=robot)
+            in desktop.graph_nodes
+        )
+
+        # Querying for a location will give a graph node from its child location
+        assert (
+            self.world.graph_node_from_entity("desk", robot=robot)
+            in desktop.graph_nodes
+        )
+
+        # Querying for a type of entity that does not have graph nodes will fail
+        with pytest.warns(UserWarning):
+            assert not self.world.graph_node_from_entity("robot0", robot=robot)

@@ -10,7 +10,11 @@ from .objects import Object
 from .room import Room
 from .robot import Robot
 from ..utils.pose import Pose
-from ..utils.knowledge import resolve_to_location, resolve_to_object
+from ..utils.knowledge import (
+    apply_resolution_strategy,
+    resolve_to_location,
+    resolve_to_object,
+)
 from ..utils.polygon import sample_from_polygon, transform_polygon
 from ..utils.search_graph import Node
 
@@ -609,6 +613,129 @@ class World:
         if restart_numbering:
             self.object_instance_counts = {}
 
+    def add_robot(self, robot, loc=None, pose=None):
+        """
+        Adds a robot to the world given either a world entity and/or pose.
+
+        :param robot: Robot instance to add to the world.
+        :type robot: :class:`pyrobosim.core.robot.Robot`
+        :param loc: World entity instance or name to place the robot.
+        :type loc: Entity, optional
+        :param pose: Pose at which to add the robot. If not specified, will be sampled.
+        :type pose: :class:`pyrobosim.utils.pose.Pose`
+        """
+        # Check that the robot name doesn't already exist.
+        if robot.name in self.get_robot_names():
+            warnings.warn(f"Robot name {robot.name} already exists in world.")
+            return
+
+        # If the new robot has a bigger inflation radius than previously,
+        # use this new one. Otherwise, we can leave it as is.
+        old_inflation_radius = self.inflation_radius
+        new_inflation_radius = max(
+            [other_robot.radius for other_robot in self.robots] + [robot.radius]
+        )
+        if new_inflation_radius > old_inflation_radius:
+            self.set_inflation_radius(new_inflation_radius)
+
+        valid_pose = True
+        if loc is None:
+            if pose is None:
+                # If nothing is specified, sample any valid location in the world
+                robot_pose = self.sample_free_robot_pose_uniform(
+                    robot, ignore_robots=False
+                )
+                if robot_pose is None:
+                    warnings.warn("Unable to sample free pose.")
+                    valid_pose = False
+            else:
+                # Validate that the pose is unoccupied
+                if self.check_occupancy((pose.x, pose.y)):
+                    warnings.warn(f"{pose} is occupied.")
+                    valid_pose = False
+                robot_pose = pose
+            # If we have a valid pose, extract its location
+            loc = self.get_location_from_pose(robot_pose)
+
+        else:
+            # First, validate that the location is valid for a robot
+            if isinstance(loc, str):
+                loc = self.get_entity_by_name(loc)
+
+            if isinstance(loc, Room) or isinstance(loc, Hallway):
+                if pose is None:
+                    # Sample a pose in the location
+                    x_sample, y_sample = sample_from_polygon(
+                        loc.internal_collision_polygon,
+                        max_tries=self.max_object_sample_tries,
+                    )
+                    if x_sample is None:
+                        warnings.warn(f"Could not sample pose in {loc.name}.")
+                        valid_pose = False
+                    yaw_sample = np.random.uniform(-np.pi, np.pi)
+                    robot_pose = Pose(x=x_sample, y=y_sample, z=0.0, yaw=yaw_sample)
+                else:
+                    # Validate that the pose is unoccupied and in the right location
+                    if not loc.is_collision_free(pose):
+                        warnings.warn(f"{pose} is occupied")
+                        valid_pose = False
+                    robot_pose = pose
+            elif isinstance(loc, Location) or isinstance(loc, ObjectSpawn):
+                if isinstance(loc, Location):
+                    # NOTE: If you don't want a random object spawn, use the object spawn as the input location.
+                    loc = np.random.choice(loc.children)
+
+                if pose in loc.nav_poses:  # Slim chance of this happening lol
+                    robot_pose = pose
+                else:
+                    robot_pose = np.random.choice(loc.nav_poses)
+            else:
+                warnings.warn("Invalid location specified.")
+                valid_pose = False
+
+        # If we got a valid location / pose combination, add the robot
+        if valid_pose:
+            robot.location = loc
+            robot.set_pose(robot_pose)
+            robot.world = self
+            self.robots.append(robot)
+            self.name_to_entity[robot.name] = robot
+        else:
+            warnings.warn("Could not add robot.")
+            self.set_inflation_radius(old_inflation_radius)
+
+        if self.has_gui:
+            self.gui.canvas.show_robots()
+        if self.has_ros_node:
+            self.ros_node.add_robot_state_publishers()
+
+    def remove_robot(self, robot_name):
+        """
+        Removes a robot from the world.
+
+        :return: True if the robot was successfully removed, else False.
+        :rtype: bool
+        """
+        robot = self.get_robot_by_name(robot_name)
+        if robot:
+            self.robots.remove(robot)
+            self.name_to_entity.pop(robot_name)
+            if self.has_gui:
+                self.gui.canvas.show_robots()
+            if self.has_ros_node:
+                self.ros_node.remove_robot_state_publisher(robot)
+
+            # Find the new max inflation radius and revert it.
+            new_inflation_radius = max(
+                [other_robot.radius for other_robot in self.robots] + [robot.radius]
+            )
+            if new_inflation_radius != self.inflation_radius:
+                self.set_inflation_radius(new_inflation_radius)
+            return True
+        else:
+            warnings.warn(f"Could not find robot {robot_name} to remove.")
+            return False
+
     def update_bounds(self, entity, remove=False):
         """
         Updates the X and Y bounds of the world.
@@ -664,7 +791,7 @@ class World:
         :return: List of all room names.
         :rtype: list[str]
         """
-        return [r.name for r in self.rooms]
+        return [room.name for room in self.rooms]
 
     def get_room_by_name(self, name):
         """
@@ -872,7 +999,7 @@ class World:
         :return: List of robot names.
         :rtype: list[str]
         """
-        return [r.name for r in self.robots]
+        return [robot.name for robot in self.robots]
 
     def get_robot_by_name(self, name):
         """
@@ -906,130 +1033,11 @@ class World:
         else:
             return None
 
-    def add_robot(self, robot, loc=None, pose=None):
-        """
-        Adds a robot to the world given either a world entity and/or pose.
+    #######################
+    # Occupancy utilities #
+    #######################
 
-        :param robot: Robot instance to add to the world.
-        :type robot: :class:`pyrobosim.core.robot.Robot`
-        :param loc: World entity instance or name to place the robot.
-        :type loc: Entity, optional
-        :param pose: Pose at which to add the robot. If not specified, will be sampled.
-        :type pose: :class:`pyrobosim.utils.pose.Pose`
-        """
-        # Check that the robot name doesn't already exist.
-        if robot.name in self.get_robot_names():
-            warnings.warn(f"Robot name {robot.name} already exists in world.")
-            return
-
-        # If the new robot has a bigger inflation radius than previously,
-        # use this new one. Otherwise, we can leave it as is.
-        old_inflation_radius = self.inflation_radius
-        new_inflation_radius = max([r.radius for r in self.robots] + [robot.radius])
-        if new_inflation_radius > old_inflation_radius:
-            self.set_inflation_radius(new_inflation_radius)
-
-        valid_pose = True
-        if loc is None:
-            if pose is None:
-                # If nothing is specified, sample any valid location in the world
-                robot_pose = self.sample_free_robot_pose_uniform(
-                    robot, ignore_robots=False
-                )
-                if robot_pose is None:
-                    warnings.warn("Unable to sample free pose.")
-                    valid_pose = False
-            else:
-                # Validate that the pose is unoccupied
-                if self.check_occupancy((pose.x, pose.y)):
-                    warnings.warn(f"{pose} is occupied.")
-                    valid_pose = False
-                robot_pose = pose
-            # If we have a valid pose, extract its location
-            loc = self.get_location_from_pose(robot_pose)
-
-        else:
-            # First, validate that the location is valid for a robot
-            if isinstance(loc, str):
-                loc = self.get_entity_by_name(loc)
-
-            if isinstance(loc, Room) or isinstance(loc, Hallway):
-                if pose is None:
-                    # Sample a pose in the location
-                    x_sample, y_sample = sample_from_polygon(
-                        loc.internal_collision_polygon,
-                        max_tries=self.max_object_sample_tries,
-                    )
-                    if x_sample is None:
-                        warnings.warn(f"Could not sample pose in {loc.name}.")
-                        valid_pose = False
-                    yaw_sample = np.random.uniform(-np.pi, np.pi)
-                    robot_pose = Pose(x=x_sample, y=y_sample, z=0.0, yaw=yaw_sample)
-                else:
-                    # Validate that the pose is unoccupied and in the right location
-                    if not loc.is_collision_free(pose):
-                        warnings.warn(f"{pose} is occupied")
-                        valid_pose = False
-                    robot_pose = pose
-            elif isinstance(loc, Location) or isinstance(loc, ObjectSpawn):
-                if isinstance(loc, Location):
-                    # NOTE: If you don't want a random object spawn, use the object spawn as the input location.
-                    loc = np.random.choice(loc.children)
-
-                if pose in loc.nav_poses:  # Slim chance of this happening lol
-                    robot_pose = pose
-                else:
-                    robot_pose = np.random.choice(loc.nav_poses)
-            else:
-                warnings.warn("Invalid location specified.")
-                valid_pose = False
-
-        # If we got a valid location / pose combination, add the robot
-        if valid_pose:
-            robot.location = loc
-            robot.set_pose(robot_pose)
-            robot.world = self
-            self.robots.append(robot)
-            self.name_to_entity[robot.name] = robot
-        else:
-            warnings.warn("Could not add robot.")
-            self.set_inflation_radius(old_inflation_radius)
-
-        if self.has_gui:
-            self.gui.canvas.show_robots()
-        if self.has_ros_node:
-            self.ros_node.add_robot_state_publishers()
-
-    def remove_robot(self, robot_name):
-        """
-        Removes a robot from the world.
-
-        :return: True if the robot was successfully removed, else False.
-        :rtype: bool
-        """
-        robot = self.get_robot_by_name(robot_name)
-        if robot:
-            self.robots.remove(robot)
-            self.name_to_entity.pop(robot_name)
-            if self.has_gui:
-                self.gui.canvas.show_robots()
-            if self.has_ros_node:
-                self.ros_node.remove_robot_state_publisher(robot)
-
-            # Find the new max inflation radius and revert it.
-            new_inflation_radius = max([r.radius for r in self.robots] + [robot.radius])
-            if new_inflation_radius != self.inflation_radius:
-                self.set_inflation_radius(new_inflation_radius)
-            return True
-        else:
-            warnings.warn(f"Could not find robot {robot_name} to remove.")
-            return False
-
-    ######################################
-    # Occupancy check #
-    ######################################
-
-    def is_connectable(self, start, goal, max_dist=None):
+    def is_connectable(self, start, goal, step_dist=0.01, max_dist=None):
         """
         Checks connectivity between two poses `start` and `goal` in the world
         by sampling points spaced by the `self.collision_check_dist` parameter
@@ -1038,12 +1046,14 @@ class World:
         :type start: :class:`Pose`
         :param goal: Goal node
         :type goal: :class:`Pose`
+        :param step_dist: The step size for discretizing a straight line to check collisions.
+        :type step_dist: float
         :param max_dist: The maximum allowed connection distance.
         :type max_dist: float, optional
         :return: True if nodes can be connected, else False.
         :rtype: bool
         """
-        # Trivial case where nodes are identical or there is no world.
+        # Trivial case where nodes are identical.
         if start == goal:
             return True
 
@@ -1055,7 +1065,7 @@ class World:
 
         # Build up the array of test X and Y coordinates for sampling between
         # the start and goal points.
-        dist_array = np.arange(0, dist, 0.01)
+        dist_array = np.arange(0, dist, step_dist)
         # If the nodes are coincident, connect them by default.
         if dist_array.size == 0:
             return True
@@ -1106,9 +1116,8 @@ class World:
             other_robot for other_robot in self.robots if other_robot is not robot
         ]
         for other_robot in robot_list:
-            if pose.get_linear_distance(other_robot.pose) < (
-                radius + other_robot.radius
-            ):
+            min_distance = radius + other_robot.radius
+            if pose.get_linear_distance(other_robot.pose) < min_distance:
                 return True
         return False
 
@@ -1202,6 +1211,8 @@ class World:
             warnings.warn(f"Cannot get graph node from {entity}")
             return None
 
-        # TODO: Select a graph node
-        graph_node = graph_nodes[0]
+        # Select a graph node using the same resolution strategy.
+        graph_node = apply_resolution_strategy(
+            graph_nodes, resolution_strategy, robot=robot
+        )
         return graph_node
