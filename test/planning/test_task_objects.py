@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Unit tests for task action and plan objects"""
+"""Unit tests for task action and plan objects."""
 
 import pytest
 
@@ -10,6 +10,7 @@ from pyrobosim.utils.pose import Pose
 
 
 def test_task_action_default_args():
+    """Create TaskAction object with default arguments and validate results."""
     action = TaskAction("pick")
 
     assert action.type == "pick"
@@ -25,6 +26,7 @@ def test_task_action_default_args():
 
 
 def test_task_action_nondefault_args():
+    """Create TaskAction object with nondefault arguments and validate results."""
     test_poses = [
         Pose(x=0.0, y=0.0, yaw=0.0),
         Pose(x=0.5, y=1.0, yaw=1.5),
@@ -55,6 +57,7 @@ def test_task_action_nondefault_args():
 
 
 def test_task_plan_default_args():
+    """Create TaskPlan object with default arguments and validate results."""
     plan = TaskPlan()
 
     assert plan.robot is None
@@ -64,6 +67,7 @@ def test_task_plan_default_args():
 
 
 def test_task_plan_nondefault_args():
+    """Create TaskAction object with nondefault arguments and validate results."""
     nav_path = Path(
         poses=[
             Pose(x=0.0, y=0.0, z=0.0, q=[1.0, 0.0, 0.0, 0.0]),
