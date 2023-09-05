@@ -2,7 +2,6 @@
 
 import pytest
 
-import pyrobosim_msgs.msg as ros_msgs
 import pyrobosim.planning.actions as acts
 from pyrobosim.utils.motion import Path
 from pyrobosim.utils.pose import Pose

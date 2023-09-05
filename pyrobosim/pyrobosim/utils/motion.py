@@ -2,8 +2,6 @@
 Motion planning utilities.
 """
 
-import numpy as np
-
 
 class Path:
     """Representation of a path for motion planning."""
@@ -44,6 +42,20 @@ class Path:
             prev_pose = self.poses[idx - 1]
             yaw = prev_pose.get_angular_distance(cur_pose)
             cur_pose.set_euler_angles(yaw=yaw)
+
+    def __eq__(self, other):
+        """
+        Check if two paths are exactly equal.
+
+        :param other: Path with which to check equality.
+        :type other: :class:`pyrobosim.utils.motion.Path`
+        :return: True if the paths are equal, else False
+        :rtype: bool
+        """
+        if not (isinstance(other, Path)):
+            raise TypeError("Expected a Path object")
+
+        return self.poses == other.poses
 
     def __repr__(self):
         """Return brief description of the path."""

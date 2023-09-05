@@ -5,12 +5,10 @@ Unit tests for world knowledge utilities.
 """
 
 import os
-import numpy as np
 import pytest
 
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.core import Robot
-from pyrobosim.core import World
 
 # import functions to test
 from pyrobosim.utils.knowledge import (
@@ -19,7 +17,6 @@ from pyrobosim.utils.knowledge import (
     resolve_to_location,
     resolve_to_object,
 )
-
 from pyrobosim.utils.pose import Pose
 from pyrobosim.utils.general import get_data_folder
 

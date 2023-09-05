@@ -2,7 +2,6 @@
 
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
-import numpy as np
 
 from pyrobosim.utils.motion import Path
 
