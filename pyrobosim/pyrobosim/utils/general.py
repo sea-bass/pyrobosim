@@ -74,6 +74,12 @@ class EntityMetadata:
         return self.data.get(category, None)
 
 
+class InvalidEntityCategoryException(Exception):
+    """Raised when an invalid entity metadata category is used."""
+
+    pass
+
+
 def replace_special_yaml_tokens(in_text, root_dir=None):
     """
     Replaces special tokens permitted in our YAML specification.

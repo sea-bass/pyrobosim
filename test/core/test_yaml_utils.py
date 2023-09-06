@@ -22,8 +22,10 @@ class TestWorldYamlLoading:
         TestWorldYamlLoading.yaml_loader = WorldYamlLoader()
 
         # Clean up metadata for test reproducibility
-        delattr(Location, "metadata")
-        delattr(Object, "metadata")
+        if hasattr(Location, "metadata"):
+            delattr(Location, "metadata")
+        if hasattr(Object, "metadata"):
+            delattr(Object, "metadata")
 
     @staticmethod
     @pytest.mark.dependency(
@@ -177,6 +179,33 @@ class TestWorldYamlLoading:
         loader.add_locations()
         assert len(loader.world.locations) == 0
 
+        # No parent means the location is not added.
+        loader.data = {
+            "locations": [
+                {
+                    "category": "table",
+                    "pose": [0.85, -0.5, 0.0, -1.57],
+                }
+            ]
+        }
+        with pytest.warns(UserWarning):
+            loader.add_locations()
+            assert len(loader.world.locations) == 0
+
+        # Invalid location category means the object is not added.
+        loader.data = {
+            "locations": [
+                {
+                    "category": "does_not_exist",
+                    "parent": "kitchen",
+                    "pose": [0.85, -0.5, 0.0, -1.57],
+                }
+            ]
+        }
+        with pytest.warns(UserWarning):
+            loader.add_locations()
+            assert len(loader.world.locations) == 0
+
         # Load locations from a YAML specified dictionary.
         locations_dict = {
             "locations": [
@@ -221,6 +250,33 @@ class TestWorldYamlLoading:
         loader.data = {}
         loader.add_objects()
         assert len(loader.world.objects) == 0
+
+        # No parent means the object is not added.
+        loader.data = {
+            "objects": [
+                {
+                    "category": "banana",
+                    "pose": [3.2, 3.5, 0.0, 0.707],
+                }
+            ]
+        }
+        with pytest.warns(UserWarning):
+            loader.add_objects()
+            assert len(loader.world.objects) == 0
+
+        # Invalid object category means the object is not added.
+        loader.data = {
+            "objects": [
+                {
+                    "category": "does_not_exist",
+                    "parent": "table0",
+                    "pose": [3.2, 3.5, 0.0, 0.707],
+                }
+            ]
+        }
+        with pytest.warns(UserWarning):
+            loader.add_objects()
+            assert len(loader.world.objects) == 0
 
         # Load objects from a YAML specified dictionary.
         objects_dict = {

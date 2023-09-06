@@ -3,7 +3,7 @@
 from shapely import intersects_xy
 from shapely.plotting import patch_from_polygon
 
-from ..utils.general import EntityMetadata
+from ..utils.general import EntityMetadata, InvalidEntityCategoryException
 from ..utils.pose import Pose, rot2d
 from ..utils.polygon import (
     inflate_polygon,
@@ -60,6 +60,11 @@ class Location:
         self.parent = parent
 
         self.metadata = Location.metadata.get(self.category)
+        if not self.metadata:
+            raise InvalidEntityCategoryException(
+                f"Invalid location category: {self.category}"
+            )
+
         if color is not None:
             self.viz_color = color
         elif "color" in self.metadata:

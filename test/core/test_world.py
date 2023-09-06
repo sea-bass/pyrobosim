@@ -8,7 +8,7 @@ import numpy as np
 from pyrobosim.core import Hallway, Object, World
 from pyrobosim.utils.pose import Pose
 
-from pyrobosim.utils.general import get_data_folder
+from pyrobosim.utils.general import get_data_folder, InvalidEntityCategoryException
 
 
 class TestWorldModeling:
@@ -104,6 +104,23 @@ class TestWorldModeling:
         assert len(TestWorldModeling.world.locations) == 2
         assert TestWorldModeling.world.get_location_by_name("study_desk") == desk
 
+        # Test missing parent
+        with pytest.warns(UserWarning):
+            result = TestWorldModeling.world.add_location(
+                category="desk",
+                pose=Pose(),
+            )
+            assert result is None
+
+        # Test invalid category
+        with pytest.warns(UserWarning):
+            result = TestWorldModeling.world.add_location(
+                category="does_not_exist",
+                parent="bedroom",
+                pose=Pose(),
+            )
+            assert result is None
+
     @staticmethod
     @pytest.mark.dependency(
         depends=[
@@ -126,6 +143,23 @@ class TestWorldModeling:
         assert (
             TestWorldModeling.world.get_object_by_name("apple1") == test_obj
         )  # Automatic naming
+
+        # Test missing parent
+        with pytest.warns(UserWarning):
+            result = TestWorldModeling.world.add_object(
+                category="apple",
+                pose=Pose(),
+            )
+            assert result is None
+
+        # Test invalid category
+        with pytest.warns(UserWarning):
+            result = TestWorldModeling.world.add_object(
+                category="does_not_exist",
+                parent="study_desk",
+                pose=Pose(),
+            )
+            assert result is None
 
     @staticmethod
     @pytest.mark.dependency(
