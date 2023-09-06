@@ -44,31 +44,28 @@ class WorldYamlLoader:
         """Creates an initial world with the specified global parameters."""
         if "params" in self.data:
             params = self.data["params"]
-            name = params.get("name", "world")
-            inf_radius = params.get("inflation_radius", 0.0)
-            obj_radius = params.get("object_radius", 0.0)
-            wall_height = params.get("wall_height", 2.0)
             self.world = World(
-                name=name,
-                inflation_radius=inf_radius,
-                object_radius=obj_radius,
-                wall_height=wall_height,
+                name=params.get("name", "world"),
+                inflation_radius=params.get("inflation_radius", 0.0),
+                object_radius=params.get("object_radius", 0.0),
+                wall_height=params.get("wall_height", 2.0),
             )
         else:
             self.world = World()
 
         # Set the location/object metadata
         (world_dir, _) = os.path.split(self.filename)
-        metadata = self.data["metadata"]
-        if "locations" in metadata:
-            loc_data = replace_special_yaml_tokens(metadata["locations"], world_dir)
-        else:
-            loc_data = None
-        if "objects" in metadata:
-            obj_data = replace_special_yaml_tokens(metadata["objects"], world_dir)
-        else:
-            obj_data = None
-        self.world.set_metadata(locations=loc_data, objects=obj_data)
+        metadata = self.data.get("metadata")
+        if metadata:
+            if "locations" in metadata:
+                loc_data = replace_special_yaml_tokens(metadata["locations"], world_dir)
+            else:
+                loc_data = None
+            if "objects" in metadata:
+                obj_data = replace_special_yaml_tokens(metadata["objects"], world_dir)
+            else:
+                obj_data = None
+            self.world.set_metadata(locations=loc_data, objects=obj_data)
 
     def add_rooms(self):
         """Add rooms to the world."""
