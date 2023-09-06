@@ -9,6 +9,7 @@ from .locations import Location, ObjectSpawn
 from .objects import Object
 from .room import Room
 from .robot import Robot
+from ..utils.general import InvalidEntityCategoryException
 from ..utils.pose import Pose
 from ..utils.knowledge import (
     apply_resolution_strategy,
@@ -303,13 +304,20 @@ class World:
         # Else, create a location directly from the specified arguments.
         if "location" in location_config:
             loc = location_config["location"]
-        else:
+        elif "parent" in location_config:
             if isinstance(location_config["parent"], str):
                 location_config["parent"] = self.get_room_by_name(
                     location_config["parent"]
                 )
 
-            loc = Location(**location_config)
+            try:
+                loc = Location(**location_config)
+            except InvalidEntityCategoryException as exception:
+                warnings.warn(exception)
+                return None
+        else:
+            warnings.warn("Location instance or parent must be specified.")
+            return None
 
         # If the category name is empty, use "location" as the base name.
         category = loc.category
@@ -450,11 +458,11 @@ class World:
         :return: Object instance if successfully created, else None.
         :rtype: :class:`pyrobosim.core.objects.Object`
         """
-        # If it's on Object instance, get it from the "location" named argument.
-        # Else, create a location directly from the specified arguments.
+        # If it's an Object instance, get it from the "object" named argument.
+        # Else, create an object directly from the specified arguments.
         if "object" in object_config:
             obj = object_config["object"]
-        else:
+        elif "parent" in object_config:
             parent = object_config.get("parent", None)
             if isinstance(parent, str):
                 parent = self.get_entity_by_name(parent)
@@ -473,7 +481,14 @@ class World:
 
             object_config["parent"] = parent
             object_config["inflation_radius"] = self.object_radius
-            obj = Object(**object_config)
+            try:
+                obj = Object(**object_config)
+            except InvalidEntityCategoryException as exception:
+                warnings.warn(exception)
+                return None
+        else:
+            warnings.warn("Object instance or parent must be specified.")
+            return None
 
         # If the category name is empty, use "object" as the base name.
         category = obj.category

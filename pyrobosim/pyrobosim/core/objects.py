@@ -4,7 +4,7 @@ import numpy as np
 from shapely.plotting import patch_from_polygon
 from scipy.spatial import ConvexHull
 
-from ..utils.general import EntityMetadata
+from ..utils.general import EntityMetadata, InvalidEntityCategoryException
 from ..utils.pose import Pose
 from ..utils.polygon import (
     convhull_to_rectangle,
@@ -69,6 +69,11 @@ class Object:
         self.viz_text = None
 
         self.metadata = Object.metadata.get(self.category)
+        if not self.metadata:
+            raise InvalidEntityCategoryException(
+                f"Invalid object category: {self.category}"
+            )
+
         if color is not None:
             self.viz_color = color
         elif "color" in self.metadata:
