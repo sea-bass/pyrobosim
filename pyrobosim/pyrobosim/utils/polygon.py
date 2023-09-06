@@ -6,12 +6,14 @@ These tools rely heavily on the Shapely package.
 
 import os
 import collada
+import numpy as np
 import trimesh
 import warnings
-import numpy as np
+
 from scipy.spatial import ConvexHull
 from shapely.affinity import rotate, translate
 from shapely.geometry import Point, Polygon, CAP_STYLE, JOIN_STYLE
+from shapely.geometry.polygon import orient
 
 from .general import replace_special_yaml_tokens
 from .pose import Pose, rot2d
@@ -90,7 +92,10 @@ def inflate_polygon(poly, radius):
     :return: The inflated Shapely polygon.
     :rtype: :class:`shapely.geometry.Polygon`
     """
-    return poly.buffer(radius, cap_style=CAP_STYLE.flat, join_style=JOIN_STYLE.mitre)
+    inflated_poly = poly.buffer(
+        radius, cap_style=CAP_STYLE.flat, join_style=JOIN_STYLE.mitre
+    )
+    return orient(inflated_poly)
 
 
 def transform_polygon(polygon, pose):
