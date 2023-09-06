@@ -34,14 +34,14 @@ class TestWorldYamlLoading:
         loader = TestWorldYamlLoading.yaml_loader
         loader.filename = "test_world.yaml"
 
-        # No parameters should load a default world
+        # If no parameters are provided, loader should load a default world
         loader.data = {}
         loader.create_world()
         assert isinstance(loader.world, World)
         assert not hasattr(Location, "metadata")
         assert not hasattr(Object, "metadata")
 
-        # Parameters should load a world using the specified parameters
+        # If parameters are provided, the loader should load a world using the specified parameters
         params_dict = {
             "name": "test_world",
             "inflation_radius": 0.125,
@@ -217,7 +217,7 @@ class TestWorldYamlLoading:
         """Tests adding objects to a world from YAML data."""
         loader = TestWorldYamlLoading.yaml_loader
 
-        # No location data means no locations should be added.
+        # No object data means no objects should be added.
         loader.data = {}
         loader.add_objects()
         assert len(loader.world.objects) == 0
