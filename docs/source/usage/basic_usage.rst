@@ -110,17 +110,17 @@ You can then follow the steps to see the generated world.
 .. image:: ../media/gazebo_demo_world.png
     :align: center
     :width: 600px
-    :alt: Example world exported to Gazebo classic.
+    :alt: Example world exported to Gazebo.
 
-If you add the ``--ignition`` flag to this demo, you can similarly export to Ignition Gazebo!
+If you add the ``--classic`` flag to this demo, you can similarly export to Gazebo Classic.
 
 ::
 
-    ros2 run pyrobosim_ros demo_world_save.py --ignition
+    ros2 run pyrobosim_ros demo_world_save.py --classic
 
-.. image:: ../media/ignition_demo_world.png
+.. image:: ../media/gazebo_classic_demo_world.png
     :align: center
     :width: 600px
-    :alt: Example world exported to Ignition Gazebo.
+    :alt: Example world exported to Gazebo Classic.
 
 |
