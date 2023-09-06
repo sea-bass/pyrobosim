@@ -9,6 +9,11 @@ from shapely.ops import split
 from ..utils.general import get_data_folder, replace_special_yaml_tokens
 
 
+FOUR_SPACES = " " * 4
+EIGHT_SPACES = " " * 8
+TWELVE_SPACES = " " * 8
+
+
 class WorldGazeboExporter:
     """Exports world models to Gazebo."""
 
@@ -30,7 +35,7 @@ class WorldGazeboExporter:
         )
         self.link_template_text = self.read_template_file("link_template_polyline.sdf")
 
-    def export(self, ignition=False, out_folder=None):
+    def export(self, classic=False, out_folder=None):
         """
         Exports the world to an SDF file to use with Gazebo, including
         all other necessary models for locations and/or objects.
@@ -38,10 +43,10 @@ class WorldGazeboExporter:
         Instructions to add to the Gazebo model path and spawn the world
         are printed to the Terminal.
 
-        :param ignition: If True, exports to Ignition Gazebo, else to Gazebo classic.
-        :type ignition: bool, optional
+        :param classic: If True, exports to Gazebo Classic, else to Gazebo.
+        :type classic: bool, optional
         :param out_folder: The output folder. If not specified, defaults to the pyrobosim `data/worlds` folder.
-        :type ignition: bool, optional
+        :type out_folder: bool, optional
         :return: Path to output folder with generated world.
         :rtype: str
         """
@@ -50,7 +55,7 @@ class WorldGazeboExporter:
             world_name = "gen_world"
 
         # Set up text to export
-        suffix = "ignition" if ignition else "gazebo"
+        suffix = "gazebo_classic" if classic else "gazebo"
         world_text = self.read_template_file(f"world_template_{suffix}.sdf")
         self.model_include_text = ""
 
@@ -76,9 +81,9 @@ class WorldGazeboExporter:
 
         # Print commands for the user to start the world.
         # TODO: We could generate a script to do this instead?
-        if ignition:
-            model_path_env = "IGN_GAZEBO_RESOURCE_PATH"
-            command = "ign gazebo"
+        if not classic:
+            model_path_env = "GZ_SIM_RESOURCE_PATH"
+            command = "gz sim"
         else:
             model_path_env = "GAZEBO_MODEL_PATH"
             command = "gazebo"
@@ -127,9 +132,9 @@ class WorldGazeboExporter:
             f.write(config_text)
 
         # Now include the walls model in the world file.
-        self.model_include_text += " " * 4 + "<include>\n"
-        self.model_include_text += " " * 8 + f"<uri>model://{walls_name}</uri>\n"
-        self.model_include_text += " " * 4 + "</include>\n"
+        self.model_include_text += FOUR_SPACES + "<include>\n"
+        self.model_include_text += EIGHT_SPACES + f"<uri>model://{walls_name}</uri>\n"
+        self.model_include_text += FOUR_SPACES + "</include>\n"
 
     def create_locations_and_objects_for_export(self):
         """
@@ -188,15 +193,17 @@ class WorldGazeboExporter:
                 model_name = entity.category
 
             # Regardless of the type of entity, add the object instance to the world.
-            self.model_include_text += " " * 4 + "<include>\n"
-            self.model_include_text += " " * 8 + f"<uri>model://{model_name}</uri>\n"
-            self.model_include_text += " " * 8 + f"<name>{entity.name}</name>\n"
+            self.model_include_text += FOUR_SPACES + "<include>\n"
+            self.model_include_text += (
+                EIGHT_SPACES + f"<uri>model://{model_name}</uri>\n"
+            )
+            self.model_include_text += EIGHT_SPACES + f"<name>{entity.name}</name>\n"
             pose_str = (
                 f"{entity.pose.x} {entity.pose.y} {entity.pose.z} "
                 + f"{entity.pose.eul[0]} {entity.pose.eul[1]} {entity.pose.eul[2]}"
             )
-            self.model_include_text += " " * 8 + f"<pose>{pose_str}</pose>\n"
-            self.model_include_text += " " * 4 + "</include>\n"
+            self.model_include_text += EIGHT_SPACES + f"<pose>{pose_str}</pose>\n"
+            self.model_include_text += FOUR_SPACES + "</include>\n"
 
     def create_sdf_link_text(self, template_text, entity, entity_type):
         """
@@ -254,7 +261,7 @@ class WorldGazeboExporter:
             # Write all the polygon coordinates to SDF
             wall_points = ""
             for p in poly.exterior.coords:
-                wall_points += " " * 12 + f"<point>{p[0]:.3} {p[1]:.3}</point>\n"
+                wall_points += TWELVE_SPACES + f"<point>{p[0]:.3} {p[1]:.3}</point>\n"
             link_text = link_text.replace("$POINTS", wall_points)
 
             # Set the wall color
