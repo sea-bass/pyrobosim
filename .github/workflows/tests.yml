@@ -43,21 +43,28 @@ jobs:
         # Always publish test results even when there are failures.
         if: ${{ always() }}
 
-  # Testing with ROS 2
-  ros2-test:
+  # Build and test with ROS 2
+  ros2-tests:
     strategy:
       matrix:
         ros_distro: [humble, iron, rolling]
-    env:
-      ROS_DISTRO: ${{ matrix.ros_distro }}
-
     name: ros-${{ matrix.ros_distro }}-test
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
-      - name: Run unit tests in Docker container
-        run: docker compose run test
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          file: docker/Dockerfile
+          context: .
+          tags: pyrobosim:${{ matrix.ros_distro }}
+      - name: Run tests
+        run: docker run --volume ./test/:/pyrobosim_ws/test/:rw --volume ./pytest.ini:/pyrobosim_ws/pytest.ini:rw pyrobosim:${{ matrix.ros_distro }} /bin/bash -c './test/run_tests.bash'
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:
