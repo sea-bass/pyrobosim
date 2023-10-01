@@ -44,7 +44,7 @@ jobs:
         if: ${{ always() }}
 
   # Build and test with ROS 2
-  ros2-tests:
+  ros2-test:
     strategy:
       matrix:
         ros_distro: [humble, iron, rolling]
@@ -64,7 +64,12 @@ jobs:
           context: .
           tags: pyrobosim:${{ matrix.ros_distro }}
       - name: Run tests
-        run: docker run --volume ./test/:/pyrobosim_ws/test/:rw --volume ./pytest.ini:/pyrobosim_ws/pytest.ini:rw pyrobosim:${{ matrix.ros_distro }} /bin/bash -c './test/run_tests.bash'
+        run: |
+          docker run \
+            --volume ./test/:/pyrobosim_ws/test/:rw \
+            --volume ./pytest.ini:/pyrobosim_ws/pytest.ini:rw \
+            pyrobosim:${{ matrix.ros_distro }} \
+            /bin/bash -c './test/run_tests.bash'
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:
