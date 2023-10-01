@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from setuptools import setup, find_packages
 
 # This is for standalone (non-ROS) use.
@@ -37,6 +38,8 @@ setup(
     author="Sebastian Castro",
     author_email="sebas.a.castro@gmail.com",
     description="ROS 2 enabled 2D mobile robot simulator for behavior prototyping.",
+    long_description=(Path(__file__).parent / "README.md").read_text(),
+    long_description_content_type="text/markdown",
     license="MIT",
     install_requires=install_requires,
     packages=find_packages(),
