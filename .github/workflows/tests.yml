@@ -48,6 +48,7 @@ jobs:
     strategy:
       matrix:
         ros_distro: [humble, iron, rolling]
+
     name: ros-${{ matrix.ros_distro }}-test
     runs-on: ubuntu-latest
     steps:
@@ -62,6 +63,8 @@ jobs:
         with:
           file: docker/Dockerfile
           context: .
+          build-args: |
+            ROS_DISTRO=${{ matrix.ros_distro }}
           tags: pyrobosim:${{ matrix.ros_distro }}
       - name: Run tests
         run: |
