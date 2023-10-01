@@ -13,7 +13,7 @@
 
 services:
   base:
-    image: pyrobosim-${ROS_DISTRO:-humble}
+    image: pyrobosim:${ROS_DISTRO:-humble}
     build:
       context: .
       dockerfile: docker/Dockerfile
