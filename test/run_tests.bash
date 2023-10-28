@@ -20,8 +20,8 @@ python3 -m pytest "$SCRIPT_DIR" \
  --cov-report xml:"$TEST_RESULTS_DIR/test_results_coverage.xml" \
  --junitxml="$TEST_RESULTS_DIR/test_results.xml" \
  --html="$TEST_RESULTS_DIR/test_results.html" \
- --self-contained-html
-
+ --self-contained-html \
+ | tee "$TEST_RESULTS_DIR"/pytest-coverage.txt
 echo ""
 
 # Run colcon tests, if using a ROS distro
