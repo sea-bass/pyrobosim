@@ -9,6 +9,7 @@ build:
 
 python:
   install:
+    - requirements: docs/python_docs_requirements.txt
     - method: pip
       path: pyrobosim
     - method: pip

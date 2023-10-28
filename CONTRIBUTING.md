@@ -70,5 +70,5 @@ The docs are built using [Sphinx](https://www.sphinx-doc.org/en/master/) and [Re
 As such, you may need to install additional Python packages for the build to succeed.
 
 ```
-pip3 install sphinx sphinx-rtd-theme
+pip3 install -r docs/python_docs_requirements.txt
 ```
