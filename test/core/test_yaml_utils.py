@@ -385,7 +385,7 @@ class TestWorldYamlLoading:
         assert loader.world.robots[1].name == "test_robot"
         assert loader.world.robots[1].radius == 0.09
         assert loader.world.robots[1].location.name == "bedroom"
-        assert loader.world.robots[1].pose == Pose.from_list([2.5, 3.0, 1.57])
+        assert loader.world.robots[1].get_pose() == Pose.from_list([2.5, 3.0, 1.57])
 
         path_planner = loader.world.robots[1].path_planner
         assert isinstance(path_planner, PathPlanner)

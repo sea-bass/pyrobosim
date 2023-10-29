@@ -8,6 +8,7 @@ import warnings
 from .locations import ObjectSpawn
 from .objects import Object
 from ..manipulation.grasping import Grasp
+from ..utils.dynamics import RobotDynamics2D
 from ..utils.knowledge import resolve_to_object
 from ..utils.polygon import sample_from_polygon, transform_polygon
 from ..utils.pose import Pose
@@ -51,10 +52,12 @@ class Robot:
         """
         # Basic properties
         self.name = name
-        self.set_pose(pose)
         self.radius = radius
         self.height = height
         self.color = color
+
+        # Dynamics properties
+        self.dynamics = RobotDynamics2D(self, pose)
 
         # Navigation properties
         self.set_path_planner(path_planner)
@@ -74,6 +77,15 @@ class Robot:
         self.location = None
         self.manipulated_object = None
 
+    def get_pose(self):
+        """
+        Gets the robot pose.
+
+        :return: The robot pose.
+        :rtype: :class:`pyrobosim.utils.pose.Pose`
+        """
+        return self.dynamics.pose
+
     def set_pose(self, pose):
         """
         Sets the robot pose.
@@ -81,7 +93,7 @@ class Robot:
         :param pose: New robot pose
         :type pose: :class:`pyrobosim.utils.pose.Pose`
         """
-        self.pose = pose
+        self.dynamics.pose = pose
 
     def set_path_planner(self, path_planner):
         """
@@ -104,7 +116,7 @@ class Robot:
         :type goal: :class:`pyrobosim.utils.pose.Pose`, optional
         """
         if start is None:
-            start = self.pose
+            start = self.get_pose()
         if goal is None:
             warnings.warn("Did not specify a goal. Returning None.")
             return None
@@ -122,6 +134,18 @@ class Robot:
         if path_executor is None:
             return
         path_executor.robot = self
+
+    def is_moving(self):
+        """
+        TODO
+        """
+        return self.executing_nav or np.count_nonzero(self.dynamics.velocity) > 0
+
+    def is_in_collision(self):
+        """
+        TODO
+        """
+        return self.dynamics.collision
 
     def follow_path(
         self,
@@ -166,7 +190,7 @@ class Robot:
                 if path.num_poses == 0:
                     success = True
                 else:
-                    success = self.pose.is_approx(path.poses[-1])
+                    success = self.get_pose().is_approx(path.poses[-1])
             else:
                 success = True
         else:
@@ -189,7 +213,7 @@ class Robot:
         self.manipulated_object = obj
         obj.parent.children.remove(obj)
         obj.parent = self
-        obj.set_pose(self.pose)
+        obj.set_pose(self.get_pose())
 
     def pick_object(self, obj_query, grasp_pose=None):
         """
@@ -254,7 +278,7 @@ class Robot:
             grasps = self.grasp_generator.generate(
                 obj.cuboid_dims,
                 cuboid_pose,
-                self.pose,
+                self.get_pose(),
                 front_grasps=True,
                 top_grasps=True,
                 side_grasps=False,
@@ -369,7 +393,7 @@ class Robot:
                 goal_node = self.world.graph_node_from_entity(
                     action.target_location, robot=self
                 )
-                path = self.plan_path(self.pose, goal_node.pose)
+                path = self.plan_path(self.get_pose(), goal_node.pose)
                 success = self.follow_path(
                     path,
                     target_location=goal_node.parent,
@@ -453,4 +477,4 @@ class Robot:
 
     def print_details(self):
         """Prints string with details."""
-        print(f"Robot: {self.name}, ID={self.id}\n\t{self.pose}")
+        print(f"Robot: {self.name}, ID={self.id}\n\t{self.get_pose()}")

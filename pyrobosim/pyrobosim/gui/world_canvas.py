@@ -31,6 +31,8 @@ class NavAnimator(QThread):
 
     def run(self):
         """Runs the navigation monitor thread."""
+        while not self.canvas.main_window.isVisible():
+            time.sleep(0.5)
         self.canvas.monitor_nav_animation()
 
 
@@ -40,17 +42,13 @@ class WorldCanvas(FigureCanvasQTAgg):
     application.
     """
 
-    # Animation constants
-    animation_dt = 0.1
-    """ Time step for animations (seconds). """
-    realtime_factor = 1.0
-    """ Real-time multiplier for animations. """
-
     # Visualization constants
     object_zorder = 3
     """ zorder for object visualization. """
     robot_zorder = 3
     """ zorder for robot visualization. """
+    robot_dir_line_factor = 3.0
+    """ Multiplier of robot radius for plotting robot orientation lines. """
 
     nav_trigger = pyqtSignal(str, str, Path)
     """ Signal to trigger navigation method in a thread-safe manner. """
@@ -58,27 +56,37 @@ class WorldCanvas(FigureCanvasQTAgg):
     draw_lock = threading.Lock()
     """ Lock for drawing on the canvas in a thread-safe manner. """
 
-    def __init__(self, world, dpi=100):
+    def __init__(
+        self, main_window, world, dpi=100, animation_dt=0.1, realtime_factor=1.0
+    ):
         """
         Creates an instance of a pyrobosim figure canvas.
 
+        :param main_window: TODO
+        :type main_window: TODO
         :param world: World object to attach.
         :type world: :class:`pyrobosim.core.world.World`
         :param dpi: DPI for the figure.
         :type dpi: int
+        :param animation_dt: Time step for animations (seconds)
+        :type animation_dt: float
+        :param realtime_factor: Real-time multiplication factor for animation (1.0 is real-time).
+        :type realtime_factor: float
         """
         self.fig = Figure(dpi=dpi, tight_layout=True)
         self.axes = self.fig.add_subplot(111)
         super(WorldCanvas, self).__init__(self.fig)
 
+        self.main_window = main_window
         self.world = world
 
         self.displayed_path = None
         self.displayed_path_start = None
         self.displayed_path_goal = None
 
-        # Multiplier of robot radius for plotting robot orientation lines.
-        self.robot_dir_line_factor = 3.0
+        # Display/animation properties
+        self.animation_dt = animation_dt
+        self.realtime_factor = realtime_factor
 
         self.robot_bodies = []
         self.robot_dirs = []
@@ -101,7 +109,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         for b in self.robot_bodies:
             b.remove()
         for d in self.robot_dirs:
-            b.remove()
+            d.remove()
         for l in self.robot_lengths:
             l.remove()
         self.robot_bodies = n_robots * [None]
@@ -109,7 +117,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.robot_lengths = n_robots * [None]
 
         for i, robot in enumerate(self.world.robots):
-            p = robot.pose
+            p = robot.get_pose()
             self.robot_bodies[i] = Circle(
                 (p.x, p.y),
                 radius=robot.radius,
@@ -234,7 +242,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         sleep_time = self.animation_dt / self.realtime_factor
         while True:
             # Check if any robot is currently navigating.
-            nav_status = [robot.executing_nav for robot in self.world.robots]
+            nav_status = [robot.is_moving() for robot in self.world.robots]
             if any(nav_status):
                 active_robot_indices = [
                     i for i, status in enumerate(nav_status) if status
@@ -251,7 +259,7 @@ class WorldCanvas(FigureCanvasQTAgg):
                 if self.world.has_gui and self.world.gui.layout_created:
                     cur_robot = self.world.gui.get_current_robot()
                     is_cur_robot_moving = (
-                        cur_robot in self.world.robots and cur_robot.executing_nav
+                        cur_robot in self.world.robots and cur_robot.is_moving()
                     )
                     self.world.gui.set_buttons_during_action(not is_cur_robot_moving)
 
@@ -287,25 +295,24 @@ class WorldCanvas(FigureCanvasQTAgg):
         # this function should also lock drawing.
         self.draw_lock.acquire()
 
-        color = robot.color if robot is not None else "m"
-        if robot and robot.path_planner:
-            path_planner_artists = robot.path_planner.plot(
-                self.axes, path=path, path_color=color
-            )
-
-            for artist in self.path_planner_artists["graph"]:
-                artist.remove()
-            self.path_planner_artists["graph"] = path_planner_artists.get("graph", [])
-
-            for artist in self.path_planner_artists["path"]:
-                artist.remove()
-            self.path_planner_artists["path"] = path_planner_artists.get("path", [])
-
+        if not robot:
+            warnings.warn("No robot found")
         else:
-            if not robot:
-                warnings.warn("No robot found")
-            elif not robot.path_planner:
-                warnings.warn("Robot does not have a planner")
+            color = robot.color if robot is not None else "m"
+            if robot.path_planner:
+                path_planner_artists = robot.path_planner.plot(
+                    self.axes, path=path, path_color=color
+                )
+
+                for artist in self.path_planner_artists["graph"]:
+                    artist.remove()
+                self.path_planner_artists["graph"] = path_planner_artists.get(
+                    "graph", []
+                )
+
+                for artist in self.path_planner_artists["path"]:
+                    artist.remove()
+                self.path_planner_artists["path"] = path_planner_artists.get("path", [])
 
         self.draw_lock.release()
 
@@ -314,7 +321,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         if len(self.world.robots) != len(self.robot_bodies):
             self.show_robots()
         for i, robot in enumerate(self.world.robots):
-            p = robot.pose
+            p = robot.get_pose()
             self.robot_bodies[i].center = p.x, p.y
             self.robot_dirs[i].set_xdata(
                 p.x + np.array([0, self.robot_lengths[i] * np.cos(p.get_yaw())])
@@ -338,7 +345,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         if robot is not None:
             title_bits = []
             if navigating:
-                robot_loc = self.world.get_location_from_pose(robot.pose)
+                robot_loc = self.world.get_location_from_pose(robot.get_pose())
                 if robot_loc is not None:
                     title_bits.append(f"Location: {robot_loc.name}")
             elif robot.location is not None:
@@ -411,7 +418,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         if robot and robot.path_planner:
             goal_node = self.world.graph_node_from_entity(goal, robot=robot)
             if not path or path.num_poses < 2:
-                path = robot.plan_path(robot.pose, goal_node.pose)
+                path = robot.plan_path(robot.get_pose(), goal_node.pose)
             self.show_planner_and_path(robot=robot, path=path)
             robot.follow_path(
                 path,

@@ -27,10 +27,11 @@ class TestRobot:
         robot = Robot()
 
         assert robot.name == "robot"
-        assert robot.pose.x == pytest.approx(0.0)
-        assert robot.pose.y == pytest.approx(0.0)
-        assert robot.pose.z == pytest.approx(0.0)
-        assert robot.pose.eul == pytest.approx([0.0, 0.0, 0.0])
+        pose = robot.get_pose()
+        assert pose.x == pytest.approx(0.0)
+        assert pose.y == pytest.approx(0.0)
+        assert pose.z == pytest.approx(0.0)
+        assert pose.eul == pytest.approx([0.0, 0.0, 0.0])
         assert robot.radius == pytest.approx(0.0)
         assert robot.height == pytest.approx(0.0)
         assert robot.color == pytest.approx((0.8, 0.0, 0.8))
@@ -50,10 +51,11 @@ class TestRobot:
         )
 
         assert robot.name == "test_robot"
-        assert robot.pose.x == pytest.approx(1.0)
-        assert robot.pose.y == pytest.approx(2.0)
-        assert robot.pose.z == pytest.approx(0.0)
-        assert robot.pose.eul == pytest.approx([0.0, 0.0, np.pi / 2.0])
+        pose = robot.get_pose()
+        assert pose.x == pytest.approx(1.0)
+        assert pose.y == pytest.approx(2.0)
+        assert pose.z == pytest.approx(0.0)
+        assert pose.eul == pytest.approx([0.0, 0.0, np.pi / 2.0])
         assert robot.radius == pytest.approx(0.1)
         assert robot.height == pytest.approx(0.15)
         assert robot.color == pytest.approx((0.5, 0.5, 0.5))
@@ -121,9 +123,10 @@ class TestRobot:
         while robot.executing_nav:
             time.sleep(0.1)
         assert not robot.executing_nav
-        assert robot.pose.x == pytest.approx(goal_pose.x)
-        assert robot.pose.y == pytest.approx(goal_pose.y)
-        assert robot.pose.q == pytest.approx(goal_pose.q)
+        pose = robot.get_pose()
+        assert pose.x == pytest.approx(goal_pose.x)
+        assert pose.y == pytest.approx(goal_pose.y)
+        assert pose.q == pytest.approx(goal_pose.q)
 
     def test_robot_manipulation(self):
         """Check that the robot can manipulate objects."""
