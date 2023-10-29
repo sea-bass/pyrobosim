@@ -24,6 +24,10 @@ class Robot:
         radius=0.0,
         height=0.0,
         color=(0.8, 0.0, 0.8),
+        max_linear_velocity=np.inf,
+        max_angular_velocity=np.inf,
+        max_linear_acceleration=np.inf,
+        max_angular_acceleration=np.inf,
         path_planner=None,
         path_executor=None,
         grasp_generator=None,
@@ -41,6 +45,14 @@ class Robot:
         :type height: float, optional
         :param color: Robot color, as an RGB tuple or string.
         :type color: tuple[float] / str, optional
+        :param max_linear_velocity: The maximum linear velocity magnitude, in m/s.
+        :type max_linear_velocity: float
+        :param max_angular_velocity: The maximum angular velocity magnitude, in rad/s.
+        :type max_angular_velocity: float
+        :param max_linear_acceleration: The maximum linear acceleration magnitude, in m/s^2.
+        :type max_linear_acceleration: float
+        :param max_angular_acceleration: The maximum angular acceleration magnitude, in rad/s^2.
+        :type max_linear_acceleration: float
         :param path_planner: Path planner for navigation
             (see e.g., :class:`pyrobosim.navigation.rrt.RRTPlanner`).
         :type path_planner: PathPlanner, optional
@@ -57,7 +69,16 @@ class Robot:
         self.color = color
 
         # Dynamics properties
-        self.dynamics = RobotDynamics2D(self, pose)
+        self.dynamics = RobotDynamics2D(
+            robot=self,
+            init_pose=pose,
+            max_linear_velocity=max_linear_velocity,
+            max_angular_velocity=max_angular_velocity,
+            max_linear_acceleration=max_linear_acceleration,
+            max_angular_acceleration=max_angular_acceleration,
+        )
+        self.dynamics.robot = self
+        self.dynamics.pose = pose
 
         # Navigation properties
         self.set_path_planner(path_planner)
@@ -137,13 +158,19 @@ class Robot:
 
     def is_moving(self):
         """
-        TODO
+        Checks whether the robot is moving, either due to a navigation action or velocity commands.
+
+        :return: True if the robot is moving, False otherwise.
+        :rtype: bool
         """
         return self.executing_nav or np.count_nonzero(self.dynamics.velocity) > 0
 
     def is_in_collision(self):
         """
-        TODO
+        Checks whether the last step of dynamics put the robot in collision.
+
+        :return: True if the robot is in collision, False otherwise.
+        :rtype: bool
         """
         return self.dynamics.collision
 

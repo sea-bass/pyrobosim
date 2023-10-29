@@ -73,29 +73,23 @@ def create_world():
         pose=Pose(x=-2.45, y=2.5, z=0.0, q=[0.634411, 0.0, 0.0, 0.7729959]),
     )
 
-    # Add objects
-    world.add_object(
-        category="banana",
-        parent=table,
-        pose=Pose(x=1.0, y=-0.5, z=0.0, q=[0.9238811, 0.0, 0.0, 0.3826797]),
-    )
-    world.add_object(
-        category="apple", parent=desk, pose=Pose(x=3.2, y=3.5, z=0.0, yaw=0.0)
-    )
-    world.add_object(category="apple", parent=table)
-    world.add_object(category="apple", parent=table)
-    world.add_object(category="water", parent=counter)
-    world.add_object(category="banana", parent=counter)
-    world.add_object(category="water", parent=desk)
-
     # Add robots
-    robot0 = Robot(name="robot0", radius=0.1)
+    robot0 = Robot(
+        name="robot0",
+        radius=0.1,
+        max_linear_acceleration=1.0,
+        max_angular_acceleration=1.0,
+    )
     world.add_robot(robot0, loc="kitchen")
 
-    robot1 = Robot(name="robot1", radius=0.08, color=(0.8, 0.8, 0))
+    robot1 = Robot(
+        name="robot1", radius=0.08, color=(0.8, 0.8, 0), max_angular_acceleration=0.05
+    )
     world.add_robot(robot1, loc="bathroom")
 
-    robot2 = Robot(name="robot2", radius=0.06, color=(0, 0.8, 0.8))
+    robot2 = Robot(
+        name="robot2", radius=0.06, color=(0, 0.8, 0.8), max_linear_acceleration=5.0
+    )
     world.add_robot(robot2, loc="bedroom")
 
     return world
@@ -109,7 +103,7 @@ def command_robots(world):
         np.array([0.0, 0.0, -1.0]),  # robot1
         np.array([0.2, 0.0, 0.0]),  # robot2
     ]
-    backup_vel = np.array([-0.5, 0.0, 0.0])
+    backup_vel = np.array([-1.0, 0.0, 0.0])
 
     while True:
         t_start = time.time()

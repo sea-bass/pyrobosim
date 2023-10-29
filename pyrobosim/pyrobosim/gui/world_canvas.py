@@ -62,13 +62,13 @@ class WorldCanvas(FigureCanvasQTAgg):
         """
         Creates an instance of a pyrobosim figure canvas.
 
-        :param main_window: TODO
-        :type main_window: TODO
+        :param main_window: The main window object, needed for bookkeeping.
+        :type main_window: :class:`pyrobosim.gui.main.PyRoboSimMainWindow`
         :param world: World object to attach.
         :type world: :class:`pyrobosim.core.world.World`
         :param dpi: DPI for the figure.
         :type dpi: int
-        :param animation_dt: Time step for animations (seconds)
+        :param animation_dt: Time step for animations (seconds).
         :type animation_dt: float
         :param realtime_factor: Real-time multiplication factor for animation (1.0 is real-time).
         :type realtime_factor: float
@@ -214,7 +214,8 @@ class WorldCanvas(FigureCanvasQTAgg):
 
         self.axes.autoscale()
         self.axes.axis("equal")
-        self.adjust_text(self.obj_texts)
+        if self.obj_texts:
+            self.adjust_text(self.obj_texts)
 
     def draw_and_sleep(self):
         """Redraws the figure and waits a small amount of time."""
@@ -413,29 +414,32 @@ class WorldCanvas(FigureCanvasQTAgg):
         :return: True if navigation succeeds, else False
         :rtype: bool
         """
+        if robot is None:
+            warnings.warn("No robot found.")
+            return False
+        if robot.path_planner is None:
+            warnings.warn(f"No path planner attached to robot {robot.name}.")
+            return False
 
         # Find a path, or use an existing one, and start the navigation thread.
-        if robot and robot.path_planner:
-            goal_node = self.world.graph_node_from_entity(goal, robot=robot)
-            if not path or path.num_poses < 2:
-                path = robot.plan_path(robot.get_pose(), goal_node.pose)
-            self.show_planner_and_path(robot=robot, path=path)
-            robot.follow_path(
-                path,
-                target_location=goal_node.parent,
-                realtime_factor=self.realtime_factor,
-                blocking=False,
-            )
+        goal_node = self.world.graph_node_from_entity(goal, robot=robot)
+        if not path or path.num_poses < 2:
+            path = robot.plan_path(robot.get_pose(), goal_node.pose)
+        self.show_planner_and_path(robot=robot, path=path)
+        robot.follow_path(
+            path,
+            target_location=goal_node.parent,
+            realtime_factor=self.realtime_factor,
+            blocking=False,
+        )
 
-            # Sleep while the robot is executing the action.
-            while robot.executing_nav:
-                time.sleep(0.1)
+        # Sleep while the robot is executing the action.
+        while robot.executing_nav:
+            time.sleep(0.1)
 
-            self.show_world_state(robot=robot)
-            self.draw_and_sleep()
-            return True
-
-        return False
+        self.show_world_state(robot=robot)
+        self.draw_and_sleep()
+        return True
 
     def pick_object(self, robot, obj_name, grasp_pose=None):
         """

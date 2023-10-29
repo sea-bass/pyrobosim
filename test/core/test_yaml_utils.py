@@ -2,6 +2,7 @@
 
 """Unit tests for world YAML loading utilities."""
 
+import numpy as np
 import pytest
 
 from pyrobosim.core.locations import Location
@@ -341,9 +342,14 @@ class TestWorldYamlLoading:
                     # Full specification
                     "name": "test_robot",
                     "radius": 0.09,
+                    "height": 0.05,
                     "color": [0.0, 0.8, 0.8],
                     "location": "bedroom",
                     "pose": [2.5, 3.0, 1.57],
+                    "max_linear_velocity": 1.0,
+                    "max_angular_velocity": 3.0,
+                    "max_linear_acceleration": 2.0,
+                    "max_angular_acceleration": 6.0,
                     "path_planner": {
                         "type": "rrt",
                         "collision_check_step_dist": 0.025,
@@ -384,8 +390,15 @@ class TestWorldYamlLoading:
 
         assert loader.world.robots[1].name == "test_robot"
         assert loader.world.robots[1].radius == 0.09
+        assert loader.world.robots[1].height == 0.05
         assert loader.world.robots[1].location.name == "bedroom"
         assert loader.world.robots[1].get_pose() == Pose.from_list([2.5, 3.0, 1.57])
+        assert np.all(
+            loader.world.robots[1].dynamics.vel_limits == np.array([1.0, 1.0, 3.0])
+        )
+        assert np.all(
+            loader.world.robots[1].dynamics.accel_limits == np.array([2.0, 2.0, 6.0])
+        )
 
         path_planner = loader.world.robots[1].path_planner
         assert isinstance(path_planner, PathPlanner)

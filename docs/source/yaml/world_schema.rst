@@ -28,8 +28,15 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
    robots:
      - name: <name>
        radius: <value>  # Robot radius
+       height: <value>  # Robot height
        location: <loc_name>  # Initial location
        pose: [<x>, <y>, <z>, <yaw>]  # Initial pose, if not specified will sample
+       # Dynamics limits
+       max_linear_velocity: <value>
+       max_angular_velocity: <value>
+       max_linear_acceleration: <value>
+       max_angular_acceleration: <value>
+       # Specialized capabilities
        path_planner:  # Local robot path planner -- generally refers to single-query planners
          type: rrt  # Supported types -- astar, rrt, prm, world_graph
          <property>: <planner_property>

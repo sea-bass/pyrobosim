@@ -21,6 +21,10 @@ robots:
     radius: 0.1
     location: kitchen
     pose: [0, 0, 0]
+    max_linear_velocity: 1.0
+    max_angular_velocity: 4.0
+    max_linear_acceleration: 2.5
+    max_angular_acceleration: 10.0
     # Rapidly-expanding Random Tree (RRT) planner
     path_planner:
       type: rrt

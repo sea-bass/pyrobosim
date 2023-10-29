@@ -1,5 +1,6 @@
 """ Utilities to create worlds from YAML files. """
 
+import numpy as np
 import os
 import warnings
 import yaml
@@ -113,8 +114,17 @@ class WorldYamlLoader:
             robot_color = robot_data.get("color", (0.8, 0.0, 0.8))
             robot = Robot(
                 name=robot_name,
-                radius=robot_data["radius"],
+                radius=robot_data.get("radius", 0.0),
+                height=robot_data.get("height", 0.0),
                 color=robot_color,
+                max_linear_velocity=robot_data.get("max_linear_velocity", np.inf),
+                max_angular_velocity=robot_data.get("max_angular_velocity", np.inf),
+                max_linear_acceleration=robot_data.get(
+                    "max_linear_acceleration", np.inf
+                ),
+                max_angular_acceleration=robot_data.get(
+                    "max_angular_acceleration", np.inf
+                ),
                 path_planner=self.get_local_path_planner(robot_data),
                 path_executor=self.get_path_executor(robot_data),
                 grasp_generator=self.get_grasp_generator(robot_data),
