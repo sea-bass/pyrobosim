@@ -9,6 +9,7 @@ Refer to the following pages for different types of usage guides.
 
    basic_usage
    multirobot
+   robot_dynamics
    path_planners
    tamp
    geometry_conventions
