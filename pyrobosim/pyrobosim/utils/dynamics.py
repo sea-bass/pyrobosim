@@ -12,18 +12,30 @@ from .pose import Pose
 class RobotDynamics2D:
     """Simple 2D dynamics for robots."""
 
-    def __init__(self, robot, pose=Pose()):
-        # State
+    def __init__(
+        self,
+        robot,
+        init_pose=Pose(),
+        init_vel=np.array([0.0, 0.0, 0.0]),
+        max_linear_velocity=0.5,
+        max_angular_velocity=1.0,
+        max_linear_acceleration=1.0,
+        max_angular_acceleration=3.0,
+    ):
         self.robot = robot
-        self.pose = pose
-        self.velocity = np.array([0.0, 0.0, 0.0])
+
+        # Initial state
+        self.pose = init_pose
+        self.velocity = init_vel
         self.collision = False
 
-        # Limits
-        self.max_linear_velocity = 0.5
-        self.max_angular_velocity = 1.0
-        self.max_linear_acceleration = 1.0
-        self.max_angular_acceleration = 3.0
+        # Velocity and acceleration limits
+        self.vel_limits = np.array(
+            [max_linear_velocity, max_linear_velocity, max_angular_velocity]
+        )
+        self.accel_limits = np.array(
+            [max_linear_acceleration, max_linear_acceleration, max_angular_acceleration]
+        )
 
     def step(self, cmd_vel, dt, world=None, check_collisions=False):
         """
@@ -34,14 +46,17 @@ class RobotDynamics2D:
         :param dt: Time step, in seconds.
         :type dt: float
         """
-        # TODO: Saturate to accel and velocity limits
-        self.velocity = self.saturate_velocity_command(cmd_vel)
+        # Trivial case of zero or None command velocities.
+        if np.count_nonzero(cmd_vel) == 0 or cmd_vel is None:
+            return
+
+        self.velocity = self.saturate_velocity_command(cmd_vel, dt)
 
         # Dynamics
         roll, pitch, yaw = self.pose.eul
-
         sin_yaw = np.sin(yaw)
         cos_yaw = np.cos(yaw)
+
         vx = self.velocity[0] * cos_yaw - self.velocity[1] * sin_yaw
         vy = self.velocity[0] * sin_yaw + self.velocity[1] * cos_yaw
 
@@ -66,15 +81,23 @@ class RobotDynamics2D:
         self.collision = False
         self.pose = target_pose
 
-    def saturate_velocity_command(self, cmd_vel):
+    def saturate_velocity_command(self, cmd_vel, dt):
         """Saturate a velocity command given limits"""
-        # First saturate to max velocity
+        # First saturate to velocity limits
+        cmd_vel = np.clip(cmd_vel, -self.vel_limits, self.vel_limits)
 
-        # Then saturate to acceleration (uses self.velocity)
+        # Then saturate to acceleration limits
+        cmd_vel = np.clip(
+            cmd_vel,
+            self.velocity - self.accel_limits * dt,
+            self.velocity + self.accel_limits * dt,
+        )
 
         return cmd_vel
 
-    def reset(self):
+    def reset(self, pose=None):
         """Reset all the dynamics of the robot."""
+        if pose is not None:
+            self.pose = pose
         self.commanded_velocity = 0.0
         self.velocity = 0.0
