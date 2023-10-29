@@ -2,7 +2,7 @@ Robot Dynamics
 ==============
 While the main focus of ``pyrobosim`` is to command robots with high-level actions, it is also possible to directly send velocity commands to your robots for other applications.
 
-When you instantiate a :py:class:`pyrobosim.core.robot.Robot` object, it also gets created with a :py:class:`pyrobosim.utils.dynamics.RobotDynamics2D` object.
+When you instantiate a :py:class:`pyrobosim.core.robot.Robot` object, it also gets created with a :py:class:`pyrobosim.core.dynamics.RobotDynamics2D` object.
 
 The linear and angular velocity limits can be specified here as well.
 For example:
