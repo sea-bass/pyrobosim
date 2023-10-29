@@ -5,10 +5,10 @@ import threading
 import numpy as np
 import warnings
 
+from .dynamics import RobotDynamics2D
 from .locations import ObjectSpawn
 from .objects import Object
 from ..manipulation.grasping import Grasp
-from ..utils.dynamics import RobotDynamics2D
 from ..utils.knowledge import resolve_to_object
 from ..utils.polygon import sample_from_polygon, transform_polygon
 from ..utils.pose import Pose

@@ -6,7 +6,7 @@ import copy
 import numpy as np
 import warnings
 
-from .pose import Pose
+from ..utils.pose import Pose
 
 
 class RobotDynamics2D:
@@ -85,13 +85,14 @@ class RobotDynamics2D:
 
         # Check collisions
         if check_collisions:
-            if not world:
+            if world is None:
                 warnings.warn("Cannot check collisions without a world.")
                 return
 
             if world.collides_with_robots(
                 target_pose, robot=self.robot
             ) or world.check_occupancy(target_pose):
+                self.velocity = np.array([0.0, 0.0, 0.0])
                 self.collision = True
                 return
 
