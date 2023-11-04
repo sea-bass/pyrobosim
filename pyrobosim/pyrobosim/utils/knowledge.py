@@ -42,7 +42,7 @@ def apply_resolution_strategy(entity_list, resolution_strategy, robot=None):
             return None
         nearest_dist = sys.float_info.max
         nearest_entity = None
-        robot_pose = robot.pose
+        robot_pose = robot.get_pose()
         for entity in entity_list:
             dist = robot_pose.get_linear_distance(entity.pose)
             if dist < nearest_dist:

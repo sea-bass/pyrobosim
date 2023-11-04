@@ -61,15 +61,16 @@ def world_to_pddlstream_init(world, robot):
 
     # Start with the robot initial conditions
     init_loc = robot.location
+    robot_pose = robot.get_pose()
     if not init_loc:
-        init_loc = world.get_location_from_pose(robot.pose)
+        init_loc = world.get_location_from_pose(robot_pose)
     init = [
         ("Robot", robot),
         ("CanMove", robot),
         ("HandEmpty", robot),
         ("At", robot, init_loc),
-        ("Pose", robot.pose),
-        ("AtPose", robot, robot.pose),
+        ("Pose", robot_pose),
+        ("AtPose", robot, robot_pose),
     ]
 
     # Loop through all the locations and their relationships.

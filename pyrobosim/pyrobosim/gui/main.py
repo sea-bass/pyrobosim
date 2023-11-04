@@ -69,7 +69,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.world.has_gui = True
 
         self.layout_created = False
-        self.canvas = WorldCanvas(world)
+        self.canvas = WorldCanvas(self, world)
         self.create_layout()
         self.update_manip_state()
         self.canvas.show()

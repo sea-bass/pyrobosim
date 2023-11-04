@@ -198,7 +198,7 @@ class TestWorldModeling:
         assert world_robots[1].location == TestWorldModeling.world.get_entity_by_name(
             "bedroom"
         )
-        assert world_robots[1].pose == target_pose
+        assert world_robots[1].get_pose() == target_pose
 
         # Add a robot with the same name as an existing robot, which should fail gracefully
         robot = Robot(name="test_robot", radius=0.05, path_planner=path_planner)
@@ -244,17 +244,21 @@ class TestWorldModeling:
         assert not TestWorldModeling.world.collides_with_robots(free_hallway_pose)
 
         # Both robot poses should return collision if no robot is specified.
-        assert TestWorldModeling.world.collides_with_robots(robot_0.pose)
-        assert TestWorldModeling.world.collides_with_robots(robot_1.pose)
+        assert TestWorldModeling.world.collides_with_robots(robot_0.get_pose())
+        assert TestWorldModeling.world.collides_with_robots(robot_1.get_pose())
 
         # Robots should collide with each other
         assert not TestWorldModeling.world.collides_with_robots(
-            robot_0.pose, robot=robot_0
+            robot_0.get_pose(), robot=robot_0
         )
-        assert TestWorldModeling.world.collides_with_robots(robot_1.pose, robot=robot_0)
-        assert TestWorldModeling.world.collides_with_robots(robot_0.pose, robot=robot_1)
+        assert TestWorldModeling.world.collides_with_robots(
+            robot_1.get_pose(), robot=robot_0
+        )
+        assert TestWorldModeling.world.collides_with_robots(
+            robot_0.get_pose(), robot=robot_1
+        )
         assert not TestWorldModeling.world.collides_with_robots(
-            robot_1.pose, robot=robot_1
+            robot_1.get_pose(), robot=robot_1
         )
 
     @staticmethod

@@ -1132,7 +1132,7 @@ class World:
         ]
         for other_robot in robot_list:
             min_distance = radius + other_robot.radius
-            if pose.get_linear_distance(other_robot.pose) < min_distance:
+            if pose.get_linear_distance(other_robot.get_pose()) < min_distance:
                 return True
         return False
 
