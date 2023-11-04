@@ -38,7 +38,7 @@ class WorldROSWrapper(Node):
         dynamics_dt=0.01,
         dynamics_latch_time=0.5,
         dynamics_ramp_down_time=0.5,
-        dynamics_enable_collisionros=True,
+        dynamics_enable_collisions=True,
     ):
         """
         Creates a ROS 2 world wrapper node.
@@ -117,7 +117,7 @@ class WorldROSWrapper(Node):
         self.dynamics_latch_and_ramp_down_time = (
             self.dynamics_latch_time + self.dynamics_ramp_down_time
         )
-        self.dynamics_enable_collisions = dynamics_enable_collisionros
+        self.dynamics_enable_collisions = dynamics_enable_collisions
 
         self.get_logger().info("World node started.")
 
