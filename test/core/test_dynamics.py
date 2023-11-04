@@ -45,7 +45,7 @@ def test_create_robot_dynamics_2d_nondefault():
     assert np.all(dynamics.accel_limits == np.array([2.0, 2.0, 6.0]))
 
 
-def test_saturate_velocity_commands():
+def test_enforce_dynamics_limits():
     """Tests functionality to saturate velocity commands given velocity and acceleration limits."""
     dynamics = RobotDynamics2D(
         max_linear_velocity=1.0,
@@ -57,19 +57,19 @@ def test_saturate_velocity_commands():
 
     # Should not saturate
     cmd_vel = np.array([0.1, 0.0, -0.1])
-    sat_cmd_vel = dynamics.saturate_velocity_command(cmd_vel, dt)
+    sat_cmd_vel = dynamics.enforce_dynamics_limits(cmd_vel, dt)
     assert np.all(sat_cmd_vel == cmd_vel)
 
     # Should saturate due to velocity limits
     dynamics.velocity = np.array([0.95, 0.0, -2.95])
     cmd_vel = np.array([1.25, 0.0, -3.25])
-    sat_cmd_vel = dynamics.saturate_velocity_command(cmd_vel, dt)
+    sat_cmd_vel = dynamics.enforce_dynamics_limits(cmd_vel, dt)
     assert np.allclose(sat_cmd_vel, np.array([1.0, 0.0, -3.0]))
 
     # Should saturate due to acceleration limits
     dynamics.velocity = np.array([0.0, 0.0, 0.0])
     cmd_vel = np.array([0.5, 0.0, -2.5])
-    sat_cmd_vel = dynamics.saturate_velocity_command(cmd_vel, dt)
+    sat_cmd_vel = dynamics.enforce_dynamics_limits(cmd_vel, dt)
     assert np.allclose(sat_cmd_vel, np.array([0.2, 0.0, -0.6]))
 
 

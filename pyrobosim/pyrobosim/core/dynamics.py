@@ -68,7 +68,7 @@ class RobotDynamics2D:
         if np.count_nonzero(cmd_vel) == 0 or cmd_vel is None:
             return
 
-        self.velocity = self.saturate_velocity_command(cmd_vel, dt)
+        self.velocity = self.enforce_dynamics_limits(cmd_vel, dt)
 
         # Dynamics
         roll, pitch, yaw = self.pose.eul
@@ -100,9 +100,9 @@ class RobotDynamics2D:
         self.collision = False
         self.pose = target_pose
 
-    def saturate_velocity_command(self, cmd_vel, dt):
+    def enforce_dynamics_limits(self, cmd_vel, dt):
         """
-        Saturate a velocity command given the dynamics limits.
+        Enforces velocity and acceleration limits by saturating a velocity command.
 
         :param cmd_vel: Velocity command array, in the form [vx, vy, vtheta].
         :type cmd_vel: :class:`numpy.array`

@@ -77,8 +77,6 @@ class Robot:
             max_linear_acceleration=max_linear_acceleration,
             max_angular_acceleration=max_angular_acceleration,
         )
-        self.dynamics.robot = self
-        self.dynamics.pose = pose
 
         # Navigation properties
         self.set_path_planner(path_planner)
