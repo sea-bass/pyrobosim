@@ -1,6 +1,7 @@
 """ ROS interfaces to world model. """
 
 import os
+import numpy as np
 import rclpy
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
@@ -8,6 +9,7 @@ from rclpy.node import Node
 import threading
 import time
 
+from geometry_msgs.msg import Twist
 from pyrobosim_msgs.msg import (
     RobotState,
     LocationState,
@@ -33,6 +35,10 @@ class WorldROSWrapper(Node):
         name="pyrobosim",
         num_threads=os.cpu_count(),
         state_pub_rate=0.1,
+        dynamics_dt=0.01,
+        dynamics_latch_time=0.5,
+        dynamics_ramp_down_time=0.5,
+        dynamics_enable_collisionros=True,
     ):
         """
         Creates a ROS 2 world wrapper node.
@@ -40,6 +46,7 @@ class WorldROSWrapper(Node):
         This node will:
             * Subscribe to single actions on the ``commanded_action`` topic.
             * Subscribe to task plans on the ``commanded_plan`` topic.
+            * Subscribe to robot velocity commands on the ``robot_name/cmd_vel`` topic.
             * Publish robot states on the ``robot_name/robot_state`` topic.
             * Serve a ``request_world_state` service to retrieve the world state for planning.
 
@@ -51,6 +58,7 @@ class WorldROSWrapper(Node):
         :type num_threads: int, optional
         :param state_pub_rate: Rate, in seconds, to publish robot state.
         :type state_pub_rate: float, optional
+        TODO other params
         """
         self.name = name
         self.num_threads = num_threads
@@ -95,9 +103,21 @@ class WorldROSWrapper(Node):
             callback_group=self.query_cb_group,
         )
 
-        # Initialize robot state publisher and thread list
+        # Initialize robot specific interface lists
+        self.robot_command_subs = []
         self.robot_state_pubs = []
         self.robot_state_pub_threads = []
+        self.latest_robot_cmds = {}
+        self.robot_dynamics_timers = []
+
+        # Start a dynamics timer
+        self.dynamics_dt = dynamics_dt
+        self.dynamics_latch_time = dynamics_latch_time
+        self.dynamics_ramp_down_time = dynamics_ramp_down_time
+        self.dynamics_latch_and_ramp_down_time = (
+            self.dynamics_latch_time + self.dynamics_ramp_down_time
+        )
+        self.dynamics_enable_collisions = dynamics_enable_collisionros
 
         self.get_logger().info("World node started.")
 
@@ -126,7 +146,7 @@ class WorldROSWrapper(Node):
             self.get_logger().error("Must set a world before starting node.")
 
         for robot in self.world.robots:
-            self.add_robot_state_publisher(robot)
+            self.add_robot_ros_interfaces(robot)
 
         while wait_for_gui and not self.world.has_gui:
             self.get_logger().info("Waiting for GUI...")
@@ -139,13 +159,24 @@ class WorldROSWrapper(Node):
             self.destroy_node()
             rclpy.shutdown()
 
-    def add_robot_state_publisher(self, robot):
+    def add_robot_ros_interfaces(self, robot):
         """
-        Adds a state publisher for a specific robot.
+        Adds a velocity command subscriber and state publisher for a specific robot.
 
         :param robot: Robot instance.
         :type robot: :class:`pyrobosim.core.robot.Robot`
         """
+        # Create subscriber
+        sub = self.create_subscription(
+            Twist,
+            f"{robot.name}/cmd_vel",
+            lambda msg: self.velocity_command_callback(msg, robot),
+            10,
+            callback_group=MutuallyExclusiveCallbackGroup(),
+        )
+        self.robot_command_subs.append(sub)
+
+        # Create robot state publisher thread
         pub = self.create_publisher(RobotState, f"{robot.name}/robot_state", 10)
         self.robot_state_pubs.append(pub)
 
@@ -156,19 +187,74 @@ class WorldROSWrapper(Node):
         self.robot_state_pub_threads.append(pub_thread)
         pub_thread.start()
 
-    def remove_robot_state_publisher(self, robot):
+        # Create dynamics timer
+        self.latest_robot_cmds[robot.name] = None
+        dynamics_timer = self.create_timer(self.dynamics_dt, self.dynamics_callback)
+        self.robot_dynamics_timers.append(dynamics_timer)
+
+    def remove_robot_ros_interfaces(self, robot):
         """
-        Removes a state publisher for a specific robot.
+        Removes ROS interfaces for a specific robot.
 
         :param robot: Robot instance.
         :type robot: :class:`pyrobosim.core.robot.Robot`
         """
         for i, r in self.world.robots:
             if r == robot:
+                sub = self.robot_command_subs.pop(i)
+                self.destroy_subscription(sub)
+                del sub
                 pub = self.robot_state_pubs.pop(i)
+                self.destroy_publisher(pub)
                 del pub
                 pub_thread = self.robot_state_pub_threads.pop(i)
                 del pub_thread
+                dynamics_timer = self.robot_dynamics_timers.pop(i)
+                dynamics_timer.destroy()
+                del dynamics_timer
+
+    def dynamics_callback(self):
+        """
+        TODO
+        """
+        cur_time = time.time()
+
+        for robot in self.world.robots:
+            cmd = self.latest_robot_cmds.get(robot.name)
+            if cmd is not None:
+                cmd_time, cmd_vel = cmd
+
+                # Latch
+                elapsed_time = cur_time - cmd_time
+                if elapsed_time > self.dynamics_latch_and_ramp_down_time:
+                    continue  # Complete timeout, no more dynamics
+                elif elapsed_time > self.dynamics_latch_time:
+                    # Ramping down
+                    scaling_factor = (
+                        elapsed_time - self.dynamics_latch_time
+                    ) / self.dynamics_latch_and_ramp_down_time
+                    cmd_vel *= scaling_factor
+                # The "else" case is implicit and means the latest velocity command is used as is.
+
+                # Step the dynamics
+                robot.dynamics.step(
+                    cmd_vel,
+                    self.dynamics_dt,
+                    self.world,
+                    check_collisions=self.dynamics_enable_collisions,
+                )
+
+    def velocity_command_callback(self, msg, robot):
+        """
+        Handle single velocity command callback.
+
+        :param msg: TODO
+        :param robot: TODO
+        """
+        self.latest_robot_cmds[robot.name] = (
+            time.time(),
+            np.array([msg.linear.x, msg.linear.y, msg.angular.z]),
+        )
 
     def action_callback(self, msg):
         """

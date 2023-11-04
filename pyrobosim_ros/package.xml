@@ -10,10 +10,9 @@
   <!-- Build dependencies -->
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_python</buildtool_depend>
-  <build_depend>rclcpp</build_depend>
-  <build_depend>pyrobosim_msgs</build_depend>
 
   <!-- Execution dependencies -->
+  <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>rclcpp</exec_depend>
   <exec_depend>rclpy</exec_depend>
   <exec_depend>ros2launch</exec_depend>
