@@ -1,6 +1,7 @@
 # Tests for pyrobosim ROS conversions functionality
 
 import pytest
+from rclpy import Duration
 
 import pyrobosim.planning.actions as acts
 from pyrobosim.utils.motion import Path
@@ -10,6 +11,7 @@ from pyrobosim_ros.ros_conversions import (
     path_to_ros,
     pose_from_ros,
     pose_to_ros,
+    ros_duration_to_float,
     task_action_from_ros,
     task_action_to_ros,
     task_plan_from_ros,
@@ -161,3 +163,10 @@ def test_task_plan_conversion():
     for orig_action, new_action in zip(orig_plan.actions, new_plan.actions):
         assert orig_action.type == new_action.type
     assert new_plan.total_cost == pytest.approx(orig_plan.total_cost)
+
+
+def test_ros_duration_to_float():
+    """Tests conversion of rclpy Duration objects to floating-point time."""
+    ros_duration = Duration(seconds=1.0, nanoseconds=500000000)
+    float_duration = ros_duration_to_float(ros_duration)
+    assert float_duration == pytest.approx(1.5)

@@ -111,7 +111,7 @@ def create_world_from_yaml(world_file):
 def create_ros_node():
     """Initializes ROS node"""
     rclpy.init()
-    node = WorldROSWrapper(state_pub_rate=0.1, dynamics_dt=0.01)
+    node = WorldROSWrapper(state_pub_rate=0.1, dynamics_rate=0.01)
     node.declare_parameter("world_file", value="")
 
     # Set the world

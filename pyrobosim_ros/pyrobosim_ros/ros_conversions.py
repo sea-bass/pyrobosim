@@ -207,3 +207,15 @@ def task_plan_to_ros(plan):
         raise Exception("Input is not a TaskPlan object")
     act_msgs = [task_action_to_ros(act) for act in plan.actions]
     return ros_msgs.TaskPlan(robot=plan.robot, actions=act_msgs, cost=plan.total_cost)
+
+
+def ros_duration_to_float(ros_duration):
+    """
+    Converts an rclpy Duration object to a floating-point time value, in seconds.
+
+    :param ros_time: rclpy Duration object.
+    :type ros_time: :class:`rclpy.duration.Duration`
+    :return: The duration time, in seconds.
+    :type: float
+    """
+    return 1.0e-9 * ros_duration.nanoseconds

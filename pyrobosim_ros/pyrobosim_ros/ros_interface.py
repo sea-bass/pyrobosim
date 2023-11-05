@@ -3,7 +3,7 @@
 import os
 import numpy as np
 import rclpy
-from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 import threading
@@ -21,6 +21,7 @@ from pyrobosim_msgs.srv import RequestWorldState
 from .ros_conversions import (
     pose_from_ros,
     pose_to_ros,
+    ros_duration_to_float,
     task_action_from_ros,
     task_plan_from_ros,
 )
@@ -35,7 +36,7 @@ class WorldROSWrapper(Node):
         name="pyrobosim",
         num_threads=os.cpu_count(),
         state_pub_rate=0.1,
-        dynamics_dt=0.01,
+        dynamics_rate=0.01,
         dynamics_latch_time=0.5,
         dynamics_ramp_down_time=0.5,
         dynamics_enable_collisions=True,
@@ -51,14 +52,21 @@ class WorldROSWrapper(Node):
             * Serve a ``request_world_state` service to retrieve the world state for planning.
 
         :param world: World model instance.
-        :type world: :class:`pyrobosim.core.world.World`, optional
+        :type world: :class:`pyrobosim.core.world.World`
         :param name: Node name, defaults to ``"pyrobosim"``.
-        :type name: str, optional
-        :param num_threads: Number of threads in the multi-threaded executor.
-        :type num_threads: int, optional
+        :type name: str
+        :param num_threads: Number of threads in the multi-threaded executor. Defaults to number of CPUs on the host OS.
+        :type num_threads: int
         :param state_pub_rate: Rate, in seconds, to publish robot state.
-        :type state_pub_rate: float, optional
-        TODO other params
+        :type state_pub_rate: float
+        :param dynamics_rate: Rate, in seconds, to update dynamics.
+        :type dynamics_rate: float
+        :param dynamics_latch_time: Time, in seconds, to latch the latest published velocity commands for a robot.
+        :type dynamics_latch_time: float
+        :param dynamics_ramp_down_time: Time, in seconds, to ramp down the velocity command to zero. This is applied after the latch time expires.
+        :type dynamics_ramp_down_time: float
+        :param dynamics_enable_collisions: If true (default), enables collision checking when updating robot dynamics.
+        :type dynamics_enable_collisions: bool
         """
         self.name = name
         self.num_threads = num_threads
@@ -111,7 +119,7 @@ class WorldROSWrapper(Node):
         self.robot_dynamics_timers = []
 
         # Start a dynamics timer
-        self.dynamics_dt = dynamics_dt
+        self.dynamics_rate = dynamics_rate
         self.dynamics_latch_time = dynamics_latch_time
         self.dynamics_ramp_down_time = dynamics_ramp_down_time
         self.dynamics_latch_and_ramp_down_time = (
@@ -172,24 +180,27 @@ class WorldROSWrapper(Node):
             f"{robot.name}/cmd_vel",
             lambda msg: self.velocity_command_callback(msg, robot),
             10,
-            callback_group=MutuallyExclusiveCallbackGroup(),
+            callback_group=ReentrantCallbackGroup(),
         )
         self.robot_command_subs.append(sub)
 
-        # Create robot state publisher thread
-        pub = self.create_publisher(RobotState, f"{robot.name}/robot_state", 10)
+        # Create robot state publisher timer
+        pub = self.create_publisher(
+            RobotState,
+            f"{robot.name}/robot_state",
+            10,
+            callback_group=ReentrantCallbackGroup(),
+        )
+        pub_timer = self.create_timer(
+            self.state_pub_rate, lambda: pub.publish(self.package_robot_state(robot))
+        )
         self.robot_state_pubs.append(pub)
 
-        pub_fn = lambda: pub.publish(self.package_robot_state(robot))
-        pub_thread = threading.Thread(
-            target=self.create_timer, args=(self.state_pub_rate, pub_fn)
-        )
-        self.robot_state_pub_threads.append(pub_thread)
-        pub_thread.start()
+        self.robot_state_pub_threads.append(pub_timer)
 
         # Create dynamics timer
         self.latest_robot_cmds[robot.name] = None
-        dynamics_timer = self.create_timer(self.dynamics_dt, self.dynamics_callback)
+        dynamics_timer = self.create_timer(self.dynamics_rate, self.dynamics_callback)
         self.robot_dynamics_timers.append(dynamics_timer)
 
     def remove_robot_ros_interfaces(self, robot):
@@ -207,7 +218,8 @@ class WorldROSWrapper(Node):
                 pub = self.robot_state_pubs.pop(i)
                 self.destroy_publisher(pub)
                 del pub
-                pub_thread = self.robot_state_pub_threads.pop(i)
+                pub_timer = self.robot_state_pub_threads.pop(i)
+                pub_timer.destroy()
                 del pub_thread
                 dynamics_timer = self.robot_dynamics_timers.pop(i)
                 dynamics_timer.destroy()
@@ -215,21 +227,22 @@ class WorldROSWrapper(Node):
 
     def dynamics_callback(self):
         """
-        TODO
+        Updates the dynamics of all spawned robots based on the latest received velocity commands.
         """
-        cur_time = time.time()
+        cur_time = self.get_clock().now()
 
         for robot in self.world.robots:
             cmd = self.latest_robot_cmds.get(robot.name)
             if cmd is not None:
                 cmd_time, cmd_vel = cmd
 
-                # Latch
-                elapsed_time = cur_time - cmd_time
+                # Process the velocity commands based on their time.
+                elapsed_time = ros_duration_to_float(cur_time - cmd_time)
                 if elapsed_time > self.dynamics_latch_and_ramp_down_time:
-                    continue  # Complete timeout, no more dynamics
+                    # Complete command timeout, velocity is zero.
+                    cmd_vel = np.array([0.0, 0.0, 0.0])
                 elif elapsed_time > self.dynamics_latch_time:
-                    # Ramping down
+                    # Ramping down velocity to zero
                     scaling_factor = (
                         elapsed_time - self.dynamics_latch_time
                     ) / self.dynamics_latch_and_ramp_down_time
@@ -239,7 +252,7 @@ class WorldROSWrapper(Node):
                 # Step the dynamics
                 robot.dynamics.step(
                     cmd_vel,
-                    self.dynamics_dt,
+                    self.dynamics_rate,
                     self.world,
                     check_collisions=self.dynamics_enable_collisions,
                 )
@@ -248,11 +261,13 @@ class WorldROSWrapper(Node):
         """
         Handle single velocity command callback.
 
-        :param msg: TODO
-        :param robot: TODO
+        :param msg: The incoming velocity message.
+        :type msg: :class:`geometry_msgs.msg.Twist`
+        :param robot: The robot instance corresponding to this message.
+        :type robot: :class:`pyrobosim.core.robot.Robot`
         """
         self.latest_robot_cmds[robot.name] = (
-            time.time(),
+            self.get_clock().now(),
             np.array([msg.linear.x, msg.linear.y, msg.angular.z]),
         )
 
