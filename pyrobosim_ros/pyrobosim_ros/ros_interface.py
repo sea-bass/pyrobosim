@@ -49,7 +49,7 @@ class WorldROSWrapper(Node):
             * Subscribe to task plans on the ``commanded_plan`` topic.
             * Subscribe to robot velocity commands on the ``robot_name/cmd_vel`` topic.
             * Publish robot states on the ``robot_name/robot_state`` topic.
-            * Serve a ``request_world_state` service to retrieve the world state for planning.
+            * Serve a ``request_world_state`` service to retrieve the world state for planning.
 
         :param world: World model instance.
         :type world: :class:`pyrobosim.core.world.World`
