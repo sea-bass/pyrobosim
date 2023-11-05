@@ -70,3 +70,55 @@ The full example is available here for you to run and modify.
 ::
 
     python3 examples/demo_dynamics.py
+
+ROS 2 Interface Usage
+---------------------
+
+If you launch ``pyrobosim`` with the ROS 2 interface, you can command each robot using ROS topics.
+
+For example, a robot named ``my_robot`` will have a topic ``my_robot/cmd_vel`` of type ``geometry_msgs/Twist``.
+To command this robot from an existing ROS 2 node in Python, you can do something like this:
+
+.. code-block:: python
+
+    from geometry_msgs.msg import Twist
+
+    vel_pub = node.create_publisher(
+        Twist, f"{robot_name}/cmd_vel", 10
+    )
+
+    vel_cmd = Twist()
+    vel_cmd.linear.x = 0.25
+    vel_cmd.angular.z = 1.0
+
+    vel_pub.publish(vel_cmd)
+
+To handle the nondeterminism of publishing velocity commands using ROS topics, the :doc:`WorldROSWrapper </generated/pyrobosim_ros.ros_interface.WorldROSWrapper>` class provides arguments to latch velocity commands and then ramp them down to zero velocity.
+While you can look at the documentation for a full list of arguments, the important ones to know are:
+
+.. code-block:: python
+
+    from pyrobosim_ros.ros_interface import WorldROSWrapper
+
+    node = WorldROSWrapper(
+        dynamics_rate=0.01,           # Dynamics update rate
+        dynamics_latch_time=0.5,      # Velocity command latch time
+        dynamics_ramp_down_time=0.5,  # Velocity command ramp down time
+    )
+
+You can try this out using the following example.
+
+::
+
+    # Launch pyrobosim
+    ros2 launch pyrobosim_ros demo.launch.py
+
+    # Launch a simple velocity publisher node
+    ros2 run pyrobosim_ros demo_velocity_publisher.py
+
+    # (Optional launch with parameters)
+    ros2 run pyrobosim_ros demo_velocity_publisher.py --ros-args -p robot_name:=robot -p lin_vel:=-0.1 -p ang_vel:=0.5
+
+    # (Optional) Modify the velocities at runtime
+    ros2 param set demo_velocity_publisher lin_vel -0.1
+    ros2 param set demo_velocity_publisher ang_vel 0.25

@@ -21,6 +21,7 @@ install(PROGRAMS
   examples/demo_pddl_world.py
   examples/demo_pddl_planner.py
   examples/demo_pddl_goal_publisher.py
+  examples/demo_velocity_publisher.py
   ../pyrobosim/examples/demo_prm.py
   ../pyrobosim/examples/demo_rrt.py
   ../pyrobosim/examples/demo_pddl.py
