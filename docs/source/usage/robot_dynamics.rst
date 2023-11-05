@@ -83,9 +83,7 @@ To command this robot from an existing ROS 2 node in Python, you can do somethin
 
     from geometry_msgs.msg import Twist
 
-    vel_pub = node.create_publisher(
-        Twist, f"{robot_name}/cmd_vel", 10
-    )
+    vel_pub = node.create_publisher(Twist, "my_robot/cmd_vel", 10)
 
     vel_cmd = Twist()
     vel_cmd.linear.x = 0.25
