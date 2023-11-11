@@ -722,7 +722,7 @@ class World:
         if self.has_gui:
             self.gui.canvas.show_robots()
         if self.has_ros_node:
-            self.ros_node.add_robot_state_publishers()
+            self.ros_node.add_robot_ros_interfaces()
 
     def remove_robot(self, robot_name):
         """
@@ -738,7 +738,7 @@ class World:
             if self.has_gui:
                 self.gui.canvas.show_robots()
             if self.has_ros_node:
-                self.ros_node.remove_robot_state_publisher(robot)
+                self.ros_node.remove_robot_ros_interfaces(robot)
 
             # Find the new max inflation radius and revert it.
             new_inflation_radius = max(
