@@ -149,11 +149,9 @@ def create_world(multirobot=False):
         planner_config_astar = {
             "grid": OccupancyGrid.from_world(
                 world, resolution=0.05, inflation_radius=0.15
-            ),
-            "diagonal_motion": True,
-            "heuristic": "euclidean",
+            )
         }
-        astar_planner = PathPlanner("astar", **planner_config_astar)
+        astar_planner = PathPlanner("new_astar", **planner_config_astar)
         robot2.set_path_planner(astar_planner)
         world.add_robot(robot2, loc="bedroom")
 
