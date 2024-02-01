@@ -36,9 +36,9 @@ For example, to add a new planner type called ``NewPlanner``:
 
 ::
 
-    from pyrobosim.navigation import PlannerBase
+    from pyrobosim.navigation import PathPlannerBase
 
-    class NewPlanner(PlannerBase):
+    class NewPlanner(PathPlannerBase):
         pass
 
 - Create concrete implementations of your planner similar to :py:class:`pyrobosim.navigation.rrt.RRTPlannerPolygon`
@@ -54,9 +54,9 @@ For example, to add a new planner type called ``NewPlanner``:
 
 ::
 
-    from pyrobosim.navigation import PlannerBase
+    from pyrobosim.navigation import PathPlannerBase
 
-    class NewPlanner(PlannerBase):
+    class NewPlanner(PathPlannerBase):
 
         def __init__():
             # do implementation selection here.
@@ -80,5 +80,5 @@ For example, to add a new planner type called ``NewPlanner``:
 
 .. note::
 
-    Planner implementations that need to display graphs should provide a `get_graphs()` method and set the `graphs` attribute of `PlannerBase` like in
+    Planner implementations that need to display graphs should provide a `get_graphs()` method and set the `graphs` attribute of `PathPlannerBase` like in
     :py:func:`pyrobosim.navigation.rrt.RRTPlannerPolygon.get_graphs` and :py:func:`pyrobosim.navigation.rrt.RRTPlanner.plan`.
