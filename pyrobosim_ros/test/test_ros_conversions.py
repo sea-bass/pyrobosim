@@ -1,7 +1,7 @@
 # Tests for pyrobosim ROS conversions functionality
 
 import pytest
-from rclpy import Duration
+from rclpy.duration import Duration
 
 import pyrobosim.planning.actions as acts
 from pyrobosim.utils.motion import Path
