@@ -10,6 +10,7 @@
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 TEST_RESULTS_DIR="${SCRIPT_DIR}/results"
+mkdir -p "$TEST_RESULTS_DIR"
 
 # Ensure we run everything for coverage purposes, but ensure failures are returned by the script
 SUCCESS=0
