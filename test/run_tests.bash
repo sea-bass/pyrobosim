@@ -11,6 +11,9 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 TEST_RESULTS_DIR="${SCRIPT_DIR}/results"
 
+# Make sure test failures are piped through
+set -o pipefail
+
 # Run regular pytest tests
 echo "Running Python package unit tests..."
 python3 -m pytest "$SCRIPT_DIR" \
