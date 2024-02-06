@@ -19,6 +19,9 @@ services:
       dockerfile: docker/Dockerfile
       args:
         ROS_DISTRO: ${ROS_DISTRO:-humble}
+    # Ensures signals are actually passed and reaped in the container for shutdowns.
+    # https://docs.docker.com/compose/compose-file/compose-file-v3/#init
+    init: true
     # Interactive shell
     stdin_open: true
     tty: true
@@ -40,7 +43,7 @@ services:
       # Allows graphical programs in the container.
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - ${XAUTHORITY:-$HOME/.Xauthority}:/root/.Xauthority
-    command: /bin/bash
+    command: sleep infinity
 
   test:
     extends: base
