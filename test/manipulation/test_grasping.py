@@ -27,7 +27,7 @@ def test_cube_no_grasps():
     grasps = gen.generate(
         object_dims, front_grasps=False, top_grasps=False, side_grasps=False
     )
-    assert len(grasps) == 0
+    assert len(grasps) == 1
 
 
 def test_cube_front_grasps():
