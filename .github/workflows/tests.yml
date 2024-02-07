@@ -15,30 +15,50 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Pure Python testing
-  python-test:
+  # Build the base, non-ros image
+  build-pyrobosim:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v3
+      - name: Login to DockerHub Registry
+        uses: docker/login-action@v3
         with:
-          python-version: '3.10'
-      - name: Install dependencies
-        run: |
-          python3 -m pip install --upgrade pip
-          pip3 install -e pyrobosim
-          pip3 install -r test/python_test_requirements.txt
-          setup/setup_pddlstream.bash
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PAT }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          file: docker/Dockerfile
+          target: pyrobosim
+          context: .
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:base
+          push: true
+          cache-from: |
+            type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:buildcache-base
+          cache-to: |
+            type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:buildcache-base,mode=max
+
+  # Run python tests
+  python-test:
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:base
+    steps:
       - name: Run unit tests
         run: |
           export PYTHONPATH=./dependencies/pddlstream:$PYTHONPATH
           test/run_tests.bash
+        working-directory: /opt/pyrobosim
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@main
+        working-directory: /opt/pyrobosim
         with:
           pytest-coverage-path: ./test/results/pytest-coverage.txt
           junitxml-path: ./test/results/test_results.xml
@@ -48,6 +68,7 @@ jobs:
         if: ${{ !github.event.pull_request.head.repo.fork }}
       - name: Upload test results
         uses: actions/upload-artifact@v3
+        working-directory: /opt/pyrobosim
         with:
           name: test-results
           path: test/results/
@@ -78,6 +99,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           file: docker/Dockerfile
+          target: pyrobosim_ros
           context: .
           build-args: |
             ROS_DISTRO=${{ matrix.ros_distro }}
