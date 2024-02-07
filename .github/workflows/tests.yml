@@ -46,34 +46,30 @@ jobs:
             type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:buildcache-base,mode=max
 
   # Run python tests
-  # python-test:
-  #   runs-on: ubuntu-latest
-  #   container:
-  #     image: ${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:base
-  #   steps:
-  #     - name: Run unit tests
-  #       run: |
-  #         export PYTHONPATH=./dependencies/pddlstream:$PYTHONPATH
-  #         test/run_tests.bash
-  #       working-directory: /opt/pyrobosim
-  #     - name: Pytest coverage comment
-  #       uses: MishaKav/pytest-coverage-comment@main
-  #       working-directory: /opt/pyrobosim
-  #       with:
-  #         pytest-coverage-path: ./test/results/pytest-coverage.txt
-  #         junitxml-path: ./test/results/test_results.xml
-  #         pytest-xml-coverage-path: ./test/results/test_results_coverage.xml
-  #         coverage-path-prefix: pyrobosim/pyrobosim/
-  #       # This will break on PRs from forks
-  #       if: ${{ !github.event.pull_request.head.repo.fork }}
-  #     - name: Upload test results
-  #       uses: actions/upload-artifact@v3
-  #       working-directory: /opt/pyrobosim
-  #       with:
-  #         name: test-results
-  #         path: test/results/
-  #       # Always publish test results even when there are failures.
-  #       if: ${{ always() }}
+  python-test:
+    runs-on: ubuntu-latest
+    container: ${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:base
+    steps:
+      - name: Run unit tests
+        run: |
+          export PYTHONPATH=./dependencies/pddlstream:$PYTHONPATH
+          test/run_tests.bash
+      - name: Pytest coverage comment
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          pytest-coverage-path: ./test/results/pytest-coverage.txt
+          junitxml-path: ./test/results/test_results.xml
+          pytest-xml-coverage-path: ./test/results/test_results_coverage.xml
+          coverage-path-prefix: pyrobosim/pyrobosim/
+        # This will break on PRs from forks
+        if: ${{ !github.event.pull_request.head.repo.fork }}
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: test/results/
+        # Always publish test results even when there are failures.
+        if: ${{ always() }}
 
   # Build and test with ROS 2
   ros2-test:
