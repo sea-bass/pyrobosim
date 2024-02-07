@@ -48,9 +48,10 @@ jobs:
   # Run python tests
   python-test:
     runs-on: ubuntu-latest
-    container: iridiumxi/pyrobosim:base
+    container: "${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:base"
     steps:
       - name: Run unit tests
+        working-directory: /opt/pyrobosim
         run: |
           export PYTHONPATH=./dependencies/pddlstream:$PYTHONPATH
           test/run_tests.bash
