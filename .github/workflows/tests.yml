@@ -48,9 +48,7 @@ jobs:
   # Run python tests
   python-test:
     runs-on: ubuntu-latest
-    # TODO: Uncomment when this is green...
-    # needs:
-    #   - build-pyrobosim
+    needs: build-pyrobosim
     container: iridiumxi/pyrobosim:base
     steps:
       - name: Run unit tests
@@ -60,7 +58,6 @@ jobs:
           test/run_tests.bash
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@main
-        working-directory: /opt/pyrobosim
         with:
           pytest-coverage-path: ./test/results/pytest-coverage.txt
           junitxml-path: ./test/results/test_results.xml
@@ -70,7 +67,6 @@ jobs:
         if: ${{ !github.event.pull_request.head.repo.fork }}
       - name: Upload test results
         uses: actions/upload-artifact@v3
-        working-directory: /opt/pyrobosim
         with:
           name: test-results
           path: test/results/
