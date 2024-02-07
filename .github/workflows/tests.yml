@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   # Build the base, non-ros image
-  build-pyrobosim:
+  python-test:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -44,25 +44,19 @@ jobs:
             type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:buildcache-base
           cache-to: |
             type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:buildcache-base,mode=max
-
-  # Run python tests
-  python-test:
-    runs-on: ubuntu-latest
-    needs: build-pyrobosim
-    # TODO: Can we not use secrets here?!?
-    container: iridiumxi/pyrobosim:base
-    steps:
-      - name: Run unit tests
-        working-directory: /opt/pyrobosim
+      - name: Run tests
         run: |
-          export PYTHONPATH=./dependencies/pddlstream:$PYTHONPATH
-          test/run_tests.bash
+          docker run \
+            -w /opt/pyrobosim \
+            --volume ./test/results:/opt/pyrobosim/test/results:rw \
+            ${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:base \
+            /bin/bash -c 'PYTHONPATH=./dependencies/pddlstream:$PYTHONPATH ./test/run_tests.bash'
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@main
         with:
-          pytest-coverage-path: /opt/pyrobosim/test/results/pytest-coverage.txt
-          junitxml-path: /opt/pyrobosim/test/results/test_results.xml
-          pytest-xml-coverage-path: /opt/pyrobosim/test/results/test_results_coverage.xml
+          pytest-coverage-path: ./test/results/pytest-coverage.txt
+          junitxml-path: ./test/results/test_results.xml
+          pytest-xml-coverage-path: ./test/results/test_results_coverage.xml
           coverage-path-prefix: pyrobosim/pyrobosim/
         # This will break on PRs from forks
         if: ${{ !github.event.pull_request.head.repo.fork }}
@@ -70,7 +64,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: test-results
-          path: /opt/pyrobosim/test/results/
+          path: test/results/
         # Always publish test results even when there are failures.
         if: ${{ always() }}
 
