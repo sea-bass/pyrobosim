@@ -81,18 +81,18 @@ jobs:
           context: .
           build-args: |
             ROS_DISTRO=${{ matrix.ros_distro }}
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/cache-testing:${{ matrix.ros_distro }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:${{ matrix.ros_distro }}
           push: true
           cache-from: |
-            type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/cache-testing:buildcache-${{ matrix.ros_distro }}
+            type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:buildcache-${{ matrix.ros_distro }}
           cache-to: |
-            type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/cache-testing:buildcache-${{ matrix.ros_distro }},mode=max
+            type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:buildcache-${{ matrix.ros_distro }},mode=max
       - name: Run tests
         run: |
           docker run \
             --volume ./test/:/pyrobosim_ws/test/:rw \
             --volume ./pytest.ini:/pyrobosim_ws/pytest.ini:rw \
-            pyrobosim:${{ matrix.ros_distro }} \
+            ${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:${{ matrix.ros_distro }} \
             /bin/bash -c './test/run_tests.bash'
       - name: Upload test results
         uses: actions/upload-artifact@v3
