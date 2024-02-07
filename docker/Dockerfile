@@ -1,7 +1,49 @@
+# Dockerfile for pyrobosim builds with and without ROS
 ARG ROS_DISTRO=humble
 
-# pyrobosim Dockerfile for Ubuntu / ROS
-FROM osrf/ros:${ROS_DISTRO}-desktop
+##################################
+#
+# base pyrobosim build for Ubuntu
+#
+##################################
+from ubuntu:latest as pyrobosim
+
+# Install dependencies
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get upgrade -y
+RUN apt-get install -y \
+    apt-utils \
+    python3 \
+    python3-pip \
+    python3-tk \
+    git \
+    cmake
+
+RUN mkdir -p /opt/pyrobosim/test
+RUN mkdir -p /opt/pyrobosim/setup
+WORKDIR /opt/pyrobosim/
+
+# Install baseline pip dependencies
+COPY test/python_test_requirements.txt test/
+RUN pip3 install -r test/python_test_requirements.txt
+
+# Install PDDL
+COPY setup/setup_pddlstream.bash setup/
+RUN setup/setup_pddlstream.bash
+
+# Copy the rest of the source directory
+COPY . /opt/pyrobosim/
+RUN pip3 install -e pyrobosim
+
+# Start it up
+CMD /bin/bash
+
+##################################
+#
+# pyrobosim build for Ubuntu / ROS
+#
+##################################
+FROM osrf/ros:${ROS_DISTRO}-desktop as pyrobosim_ros
 ENV ROS_DISTRO=${ROS_DISTRO}
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
