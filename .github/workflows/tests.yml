@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Build the base, non-ros image
+  # Build and test the base, non-ros image
   python-test:
     runs-on: ubuntu-latest
     permissions:
