@@ -10,7 +10,7 @@ from ubuntu:latest as pyrobosim
 
 # Install dependencies
 ARG DEBIAN_FRONTEND=noninteractive
-RUN apt-get update \
+RUN apt-get update &&\
     apt-get install -y \
         apt-utils \
         python3 \
