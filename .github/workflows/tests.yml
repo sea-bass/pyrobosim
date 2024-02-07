@@ -48,7 +48,7 @@ jobs:
   # Run python tests
   python-test:
     runs-on: ubuntu-latest
-    container: ${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:base
+    container: iridiumxi/pyrobosim:base
     steps:
       - name: Run unit tests
         run: |
