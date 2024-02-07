@@ -10,6 +10,13 @@
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 TEST_RESULTS_DIR="${SCRIPT_DIR}/results"
+mkdir -p "$TEST_RESULTS_DIR"
+
+# Ensure we run everything for coverage purposes, but ensure failures are returned by the script
+SUCCESS=0
+
+# Do not swallow errors with tee
+set -o pipefail
 
 # Run regular pytest tests
 echo "Running Python package unit tests..."
@@ -21,7 +28,7 @@ python3 -m pytest "$SCRIPT_DIR" \
  --junitxml="$TEST_RESULTS_DIR/test_results.xml" \
  --html="$TEST_RESULTS_DIR/test_results.html" \
  --self-contained-html \
- | tee "$TEST_RESULTS_DIR"/pytest-coverage.txt
+ | tee "$TEST_RESULTS_DIR"/pytest-coverage.txt || SUCCESS=$?
 echo ""
 
 # Run colcon tests, if using a ROS distro
@@ -33,7 +40,10 @@ then
     pushd "${WORKSPACE_DIR}" > /dev/null || exit
     colcon test \
         --event-handlers console_cohesion+ \
-        --pytest-with-coverage --pytest-args " --cov-report term"
+        --pytest-with-coverage --pytest-args " --cov-report term" || SUCCESS=$?
+echo ""
     colcon test-result --verbose
     popd > /dev/null || exit
 fi
+
+exit $SUCCESS
