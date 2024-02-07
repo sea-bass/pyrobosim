@@ -10,14 +10,17 @@ from ubuntu:latest as pyrobosim
 
 # Install dependencies
 ARG DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get upgrade -y
-RUN apt-get install -y \
-    apt-utils \
-    python3 \
-    python3-pip \
-    python3-tk \
-    git \
-    cmake
+RUN apt-get update \
+    apt-get install -y \
+        apt-utils \
+        python3 \
+        python3-pip \
+        python3-tk \
+        git \
+        cmake \
+        ffmpeg \
+        libsm6 \
+        libxext6
 
 RUN mkdir -p /opt/pyrobosim/test
 RUN mkdir -p /opt/pyrobosim/setup
