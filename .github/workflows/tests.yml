@@ -73,7 +73,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          driver: docker
+          driver: docker-container
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
