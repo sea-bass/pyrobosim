@@ -81,7 +81,6 @@ jobs:
           context: .
           build-args: |
             ROS_DISTRO=${{ matrix.ros_distro }}
-          # TODO: Change this to @sea-bass's dockerhub info
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/cache-testing:${{ matrix.ros_distro }}
           push: true
           cache-from: |
