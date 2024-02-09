@@ -30,7 +30,7 @@ WORKDIR /opt/pyrobosim/
 COPY test/python_test_requirements.txt test/
 RUN pip3 install -r test/python_test_requirements.txt
 
-# Install PDDL
+# Install PDDLStream
 COPY setup/setup_pddlstream.bash setup/
 RUN setup/setup_pddlstream.bash
 
@@ -38,7 +38,7 @@ RUN setup/setup_pddlstream.bash
 COPY . /opt/pyrobosim/
 RUN pip3 install -e pyrobosim
 
-# Start it up
+# Set the default startup command
 CMD /bin/bash
 
 ##################################
@@ -84,7 +84,7 @@ ENV NO_AT_BRIDGE 1
 
 # Setup an entrypoint and working folder
 COPY setup /pyrobosim_ws/src/setup
-CMD ["/usr/bin/bash"]
+CMD /bin/bash
 COPY docker/entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
 RUN echo "source /entrypoint.sh" >> ~/.bashrc
