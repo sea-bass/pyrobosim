@@ -13,10 +13,11 @@
 
 services:
   base:
-    image: pyrobosim:${ROS_DISTRO:-humble}
+    image: pyrobosim_ros:${ROS_DISTRO:-humble}
     build:
       context: .
       dockerfile: docker/Dockerfile
+      target: pyrobosim_ros
       args:
         ROS_DISTRO: ${ROS_DISTRO:-humble}
     # Ensures signals are actually passed and reaped in the container for shutdowns.
