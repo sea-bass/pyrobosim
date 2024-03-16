@@ -313,7 +313,7 @@ class World:
             try:
                 loc = Location(**location_config)
             except InvalidEntityCategoryException as exception:
-                warnings.warn(exception)
+                warnings.warn(str(exception))
                 return None
         else:
             warnings.warn("Location instance or parent must be specified.")
@@ -484,7 +484,7 @@ class World:
             try:
                 obj = Object(**object_config)
             except InvalidEntityCategoryException as exception:
-                warnings.warn(exception)
+                warnings.warn(str(exception))
                 return None
         else:
             warnings.warn("Object instance or parent must be specified.")
