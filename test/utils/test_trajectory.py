@@ -7,10 +7,38 @@ import pytest
 
 from pyrobosim.core import Pose
 from pyrobosim.utils.motion import Path
-from pyrobosim.navigation.trajectory import (
+from pyrobosim.utils.trajectory import (
+    Trajectory,
     get_constant_speed_trajectory,
     interpolate_trajectory,
 )
+
+
+def test_create_empty_trajectory():
+    traj = Trajectory()
+    assert traj.num_points() == 0
+    assert traj.is_empty()
+
+
+def test_create_trajectory():
+    traj = Trajectory(
+        np.array([0.0, 1.0, 2.0]),  # Time points
+        np.array([0.1, 0.2, 0.3]),  # X points
+        np.array([1.1, 1.2, 1.3]),  # Y points
+        np.array([0.0, np.pi / 4, np.pi / 2]),  # Yaw points
+    )
+    assert traj.num_points() == 3
+    assert not traj.is_empty()
+
+
+def test_create_invalid_trajectory():
+    with pytest.raises(ValueError):
+        Trajectory(
+            np.array([0.0, 1.0]),  # Time points
+            np.array([0.1, 0.2, 0.3]),  # X points
+            np.array([1.1, 1.2, 1.3, 1.4]),  # Y points
+            np.array([0.0, np.pi / 4, np.pi / 2]),  # Yaw points
+        )
 
 
 def test_get_constant_speed_trajectory_empty_path():
@@ -36,16 +64,11 @@ def test_get_constant_speed_trajectory_unlimited_ang_vel():
     )
     traj = get_constant_speed_trajectory(path, linear_velocity=0.5)
 
-    assert isinstance(traj, tuple)
-    t_pts, x_pts, y_pts, yaw_pts = traj
-    assert len(t_pts) == 4
-    assert len(x_pts) == 4
-    assert len(y_pts) == 4
-    assert len(yaw_pts) == 4
-    assert t_pts == pytest.approx([0.0, 2.0, 4.0, 6.0], rel=1e-4)
-    assert x_pts == pytest.approx([0.0, 1.0, 1.0, 0.0])
-    assert y_pts == pytest.approx([0.0, 0.0, 1.0, 1.0])
-    assert yaw_pts == pytest.approx([0.0, 0.0, np.pi / 2.0, -3.0 * np.pi / 4.0])
+    assert traj.num_points() == 4
+    assert traj.t_pts == pytest.approx([0.0, 2.0, 4.0, 6.0], rel=1e-4)
+    assert traj.x_pts == pytest.approx([0.0, 1.0, 1.0, 0.0])
+    assert traj.y_pts == pytest.approx([0.0, 0.0, 1.0, 1.0])
+    assert traj.yaw_pts == pytest.approx([0.0, 0.0, np.pi / 2.0, -3.0 * np.pi / 4.0])
 
 
 def test_get_constant_speed_trajectory_limited_ang_vel():
@@ -61,16 +84,11 @@ def test_get_constant_speed_trajectory_limited_ang_vel():
         path, linear_velocity=0.5, max_angular_velocity=np.pi / 8
     )
 
-    assert isinstance(traj, tuple)
-    t_pts, x_pts, y_pts, yaw_pts = traj
-    assert len(t_pts) == 4
-    assert len(x_pts) == 4
-    assert len(y_pts) == 4
-    assert len(yaw_pts) == 4
-    assert t_pts == pytest.approx([0.0, 2.0, 6.0, 12.0], rel=1e-4)
-    assert x_pts == pytest.approx([0.0, 1.0, 1.0, 0.0])
-    assert y_pts == pytest.approx([0.0, 0.0, 1.0, 1.0])
-    assert yaw_pts == pytest.approx([0.0, 0.0, np.pi / 2.0, -3.0 * np.pi / 4.0])
+    assert traj.num_points() == 4
+    assert traj.t_pts == pytest.approx([0.0, 2.0, 6.0, 12.0], rel=1e-4)
+    assert traj.x_pts == pytest.approx([0.0, 1.0, 1.0, 0.0])
+    assert traj.y_pts == pytest.approx([0.0, 0.0, 1.0, 1.0])
+    assert traj.yaw_pts == pytest.approx([0.0, 0.0, np.pi / 2.0, -3.0 * np.pi / 4.0])
 
 
 def test_interpolate_trajectory():
@@ -85,12 +103,7 @@ def test_interpolate_trajectory():
     traj = get_constant_speed_trajectory(path, linear_velocity=1.0)
     interpolated_traj = interpolate_trajectory(traj, dt=0.1)
 
-    assert isinstance(interpolated_traj, tuple)
-    t_pts, x_pts, y_pts, yaw_pts = interpolated_traj
-    assert len(t_pts) == 31
-    assert len(x_pts) == 31
-    assert len(y_pts) == 31
-    assert len(yaw_pts) == 31
+    assert interpolated_traj.num_points() == 31
 
 
 def test_interpolate_trajectory_duplicate_points():
@@ -109,16 +122,11 @@ def test_interpolate_trajectory_duplicate_points():
     with pytest.warns(UserWarning):
         interpolated_traj = interpolate_trajectory(traj, dt=0.1)
 
-    assert isinstance(interpolated_traj, tuple)
-    t_pts, x_pts, y_pts, yaw_pts = interpolated_traj
-    assert len(t_pts) == 31
-    assert len(x_pts) == 31
-    assert len(y_pts) == 31
-    assert len(yaw_pts) == 31
+    assert interpolated_traj.num_points() == 31
 
 
 def test_interpolate_trajectory_insufficient_points():
-    traj = (
+    traj = Trajectory(
         (1.0,),  # Time
         (1.0,),  # x points
         (1.0,),  # y points

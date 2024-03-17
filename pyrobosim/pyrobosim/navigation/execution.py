@@ -4,7 +4,7 @@ import time
 import warnings
 
 from ..utils.pose import Pose
-from .trajectory import get_constant_speed_trajectory, interpolate_trajectory
+from ..utils.trajectory import get_constant_speed_trajectory, interpolate_trajectory
 
 
 class ConstantVelocityExecutor:
