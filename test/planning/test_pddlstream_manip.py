@@ -3,7 +3,6 @@
 """
 Tests for PDDLStream planning with manipulation streams.
 """
-
 import importlib
 import numpy as np
 import os
@@ -17,8 +16,7 @@ from pyrobosim.core import Robot, World
 from pyrobosim.gui import start_gui
 from pyrobosim.manipulation import GraspGenerator, ParallelGraspProperties
 from pyrobosim.navigation import ConstantVelocityExecutor, PathPlanner
-from pyrobosim.planning import PDDLStreamPlanner
-from pyrobosim.planning.pddlstream.utils import get_default_domains_folder
+from pyrobosim.planning.pddlstream import PDDLStreamPlanner, get_default_domains_folder
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
