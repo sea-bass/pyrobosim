@@ -34,10 +34,10 @@ class Trajectory:
         if len(x_pts) != num_pts or len(y_pts) != num_pts or len(yaw_pts) != num_pts:
             raise ValueError("All point arrays must have the same number of elements.")
 
-        self.t_pts = t_pts
-        self.x_pts = x_pts
-        self.y_pts = y_pts
-        self.yaw_pts = yaw_pts
+        self.t_pts = np.array(t_pts)
+        self.x_pts = np.array(x_pts)
+        self.y_pts = np.array(y_pts)
+        self.yaw_pts = np.array(yaw_pts)
 
     def num_points(self):
         """
