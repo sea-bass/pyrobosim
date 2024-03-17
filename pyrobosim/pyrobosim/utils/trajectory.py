@@ -5,7 +5,7 @@ import numpy as np
 from scipy.spatial.transform import Slerp, Rotation
 import warnings
 
-from .pose import wrap_angle
+from .pose import Pose, wrap_angle
 
 
 class Trajectory:
@@ -56,6 +56,24 @@ class Trajectory:
         :rtype: bool
         """
         return self.num_points() == 0
+
+    def pose_at(self, idx):
+        """
+        Retrieves the trajectory point at the specified index as a pose.
+
+        :return: A Pose object corresponding to the trajectory point at that index.
+        :rtype: `pyrobosim.utils.pose.Pose`
+        """
+        if len(self.t_pts) == 0:
+            warnings.warn("Trajectory is empty. Cannot delete point.")
+            return
+        elif idx < 0 or idx >= self.num_points():
+            warnings.warn(
+                f"Invalid index {idx} for trajectory length {self.num_points()}"
+            )
+            return
+        else:
+            return Pose(x=self.x_pts[idx], y=self.y_pts[idx], yaw=self.yaw_pts[idx])
 
     def delete(self, idx):
         """

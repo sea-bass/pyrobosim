@@ -30,6 +30,18 @@ def test_create_trajectory():
     assert traj.num_points() == 3
     assert not traj.is_empty()
 
+    assert traj.pose_at(0).x == 0.1
+    assert traj.pose_at(0).y == 1.1
+    assert traj.pose_at(0).get_yaw() == 0.0
+
+    assert traj.pose_at(1).x == 0.2
+    assert traj.pose_at(1).y == 1.2
+    assert traj.pose_at(1).get_yaw() == np.pi / 4
+
+    assert traj.pose_at(2).x == 0.3
+    assert traj.pose_at(2).y == 1.3
+    assert traj.pose_at(2).get_yaw() == np.pi / 2
+
 
 def test_create_invalid_trajectory():
     with pytest.raises(ValueError):
