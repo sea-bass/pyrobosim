@@ -10,8 +10,7 @@ import threading
 
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.gui import start_gui
-from pyrobosim.planning import PDDLStreamPlanner
-from pyrobosim.planning.pddlstream.utils import get_default_domains_folder
+from pyrobosim.planning.pddlstream import PDDLStreamPlanner, get_default_domains_folder
 from pyrobosim.utils.general import get_data_folder
 
 
