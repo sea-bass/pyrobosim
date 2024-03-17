@@ -64,14 +64,14 @@ class Trajectory:
         :return: A Pose object corresponding to the trajectory point at that index.
         :rtype: `pyrobosim.utils.pose.Pose`
         """
-        if len(self.t_pts) == 0:
+        if self.is_empty():
             warnings.warn("Trajectory is empty. Cannot delete point.")
-            return
+            return None
         elif idx < 0 or idx >= self.num_points():
             warnings.warn(
                 f"Invalid index {idx} for trajectory length {self.num_points()}"
             )
-            return
+            return None
         else:
             return Pose(x=self.x_pts[idx], y=self.y_pts[idx], yaw=self.yaw_pts[idx])
 
@@ -82,7 +82,7 @@ class Trajectory:
         :param idx: The index
         :type idx: int
         """
-        if len(self.t_pts) == 0:
+        if self.is_empty():
             warnings.warn("Trajectory is empty. Cannot delete point.")
             return
         elif idx < 0 or idx >= self.num_points():
