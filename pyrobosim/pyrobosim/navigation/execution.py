@@ -61,7 +61,7 @@ class ConstantVelocityExecutor:
         # Execute the trajectory
         sleep_time = self.dt / realtime_factor
         is_holding_object = self.robot.manipulated_object is not None
-        for i in range(len(traj_interp.t_pts)):
+        for i in range(traj_interp.num_points()):
             start_time = time.time()
             cur_pose = traj_interp.pose_at(i)
             self.robot.set_pose(cur_pose)
