@@ -3,8 +3,13 @@
 """
 Tests for PDDLStream planning with navigation streams.
 """
+import importlib
 import os
+import pytest
 import threading
+
+if importlib.util.find_spec("pddlstream") is None:
+    pytest.skip(allow_module_level=True, reason="PDDLStream not available")
 
 from pyrobosim.core import Robot, World
 from pyrobosim.gui import start_gui

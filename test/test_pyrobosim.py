@@ -2,14 +2,12 @@
 Basic sanity checks for pyrobosim module.
 """
 
-import sys
+import importlib
 from importlib.metadata import version
 
 
 def test_import():
-    import pyrobosim
-
-    assert "pyrobosim" in sys.modules
+    assert importlib.util.find_spec("pyrobosim")
 
 
 def test_version():
