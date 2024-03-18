@@ -57,6 +57,7 @@ class Trajectory:
         :param idx: The index
         :type idx: int
         :return: True if the point was successfully deleted, otherwise False.
+        :rtype: bool
         """
         if self.is_empty():
             warnings.warn("Trajectory is empty. Cannot delete point.")
