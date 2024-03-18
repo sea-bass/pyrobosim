@@ -162,7 +162,8 @@ def interpolate_trajectory(traj: Trajectory, dt: float):
         eul_interp = [modified_traj.poses[-1].eul]
 
     # Package up the interpolated trajectory
-    poses_interp = []
-    for x, y, z, eul in zip(x_interp, y_interp, z_interp, eul_interp):
-        poses_interp.append(Pose(x=x, y=y, z=z, roll=eul[0], pitch=eul[1], yaw=eul[2]))
+    poses_interp = [
+        Pose(x=x, y=y, z=z, roll=eul[0], pitch=eul[1], yaw=eul[2])
+        for x, y, z, eul in zip(x_interp, y_interp, z_interp, eul_interp)
+    ]
     return Trajectory(t_interp, poses_interp)
