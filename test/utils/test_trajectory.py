@@ -7,10 +7,91 @@ import pytest
 
 from pyrobosim.core import Pose
 from pyrobosim.utils.motion import Path
-from pyrobosim.navigation.trajectory import (
+from pyrobosim.utils.trajectory import (
+    Trajectory,
     get_constant_speed_trajectory,
     interpolate_trajectory,
 )
+
+
+def test_create_empty_trajectory():
+    traj = Trajectory()
+    assert traj.num_points() == 0
+    assert traj.is_empty()
+
+
+def test_create_trajectory():
+    poses = [
+        Pose(x=0.1, y=1.1, yaw=0.0),
+        Pose(x=0.2, y=1.2, yaw=np.pi / 4),
+        Pose(x=0.3, y=1.3, yaw=np.pi / 2),
+    ]
+    traj = Trajectory([0.0, 1.0, 2.0], poses)
+    assert traj.num_points() == 3
+    assert not traj.is_empty()
+
+    assert traj.poses[0].x == 0.1
+    assert traj.poses[0].y == 1.1
+    assert traj.poses[0].get_yaw() == 0.0
+
+    assert traj.poses[1].x == 0.2
+    assert traj.poses[1].y == 1.2
+    assert traj.poses[1].get_yaw() == np.pi / 4
+
+    assert traj.poses[2].x == 0.3
+    assert traj.poses[2].y == 1.3
+    assert traj.poses[2].get_yaw() == np.pi / 2
+
+
+def test_delete_empty_trajectory():
+    traj = Trajectory()
+    with pytest.warns(UserWarning):
+        assert not traj.delete(0)
+
+
+def test_delete_at_invalid_indices():
+    poses = [
+        Pose(x=0.1, y=1.1, yaw=0.0),
+        Pose(x=0.2, y=1.2, yaw=np.pi / 4),
+        Pose(x=0.3, y=1.3, yaw=np.pi / 2),
+    ]
+    traj = Trajectory([0.0, 1.0, 2.0], poses)
+
+    with pytest.warns(UserWarning):
+        assert not traj.delete(-1)
+        assert not traj.delete(5)
+
+    assert traj.num_points() == 3
+
+
+def test_delete():
+    poses = [
+        Pose(x=0.1, y=1.1, yaw=0.0),
+        Pose(x=0.2, y=1.2, yaw=np.pi / 4),
+        Pose(x=0.3, y=1.3, yaw=np.pi / 2),
+    ]
+    traj = Trajectory([0.0, 1.0, 2.0], poses)
+
+    traj.delete(1)
+    assert traj.num_points() == 2
+
+    assert traj.poses[0].x == 0.1
+    assert traj.poses[0].y == 1.1
+    assert traj.poses[0].get_yaw() == 0.0
+
+    assert traj.poses[1].x == 0.3
+    assert traj.poses[1].y == 1.3
+    assert traj.poses[1].get_yaw() == np.pi / 2
+
+
+def test_create_invalid_trajectory():
+    with pytest.raises(ValueError):
+        poses = [
+            Pose(x=0.1, y=1.1, yaw=0.0),
+            Pose(x=0.2, y=1.2, yaw=np.pi / 4),
+            Pose(x=0.3, y=1.3, yaw=np.pi / 2),
+        ]
+        Trajectory([0.0, 10.0], poses)
 
 
 def test_get_constant_speed_trajectory_empty_path():
@@ -36,16 +117,9 @@ def test_get_constant_speed_trajectory_unlimited_ang_vel():
     )
     traj = get_constant_speed_trajectory(path, linear_velocity=0.5)
 
-    assert isinstance(traj, tuple)
-    t_pts, x_pts, y_pts, yaw_pts = traj
-    assert len(t_pts) == 4
-    assert len(x_pts) == 4
-    assert len(y_pts) == 4
-    assert len(yaw_pts) == 4
-    assert t_pts == pytest.approx([0.0, 2.0, 4.0, 6.0], rel=1e-4)
-    assert x_pts == pytest.approx([0.0, 1.0, 1.0, 0.0])
-    assert y_pts == pytest.approx([0.0, 0.0, 1.0, 1.0])
-    assert yaw_pts == pytest.approx([0.0, 0.0, np.pi / 2.0, -3.0 * np.pi / 4.0])
+    assert traj.num_points() == 4
+    assert traj.t_pts == pytest.approx([0.0, 2.0, 4.0, 6.0], rel=1e-4)
+    assert np.all(traj.poses == path.poses)
 
 
 def test_get_constant_speed_trajectory_limited_ang_vel():
@@ -61,16 +135,9 @@ def test_get_constant_speed_trajectory_limited_ang_vel():
         path, linear_velocity=0.5, max_angular_velocity=np.pi / 8
     )
 
-    assert isinstance(traj, tuple)
-    t_pts, x_pts, y_pts, yaw_pts = traj
-    assert len(t_pts) == 4
-    assert len(x_pts) == 4
-    assert len(y_pts) == 4
-    assert len(yaw_pts) == 4
-    assert t_pts == pytest.approx([0.0, 2.0, 6.0, 12.0], rel=1e-4)
-    assert x_pts == pytest.approx([0.0, 1.0, 1.0, 0.0])
-    assert y_pts == pytest.approx([0.0, 0.0, 1.0, 1.0])
-    assert yaw_pts == pytest.approx([0.0, 0.0, np.pi / 2.0, -3.0 * np.pi / 4.0])
+    assert traj.num_points() == 4
+    assert traj.t_pts == pytest.approx([0.0, 2.0, 6.0, 12.0], rel=1e-4)
+    assert np.all(traj.poses == path.poses)
 
 
 def test_interpolate_trajectory():
@@ -85,12 +152,7 @@ def test_interpolate_trajectory():
     traj = get_constant_speed_trajectory(path, linear_velocity=1.0)
     interpolated_traj = interpolate_trajectory(traj, dt=0.1)
 
-    assert isinstance(interpolated_traj, tuple)
-    t_pts, x_pts, y_pts, yaw_pts = interpolated_traj
-    assert len(t_pts) == 31
-    assert len(x_pts) == 31
-    assert len(y_pts) == 31
-    assert len(yaw_pts) == 31
+    assert interpolated_traj.num_points() == 31
 
 
 def test_interpolate_trajectory_duplicate_points():
@@ -109,21 +171,11 @@ def test_interpolate_trajectory_duplicate_points():
     with pytest.warns(UserWarning):
         interpolated_traj = interpolate_trajectory(traj, dt=0.1)
 
-    assert isinstance(interpolated_traj, tuple)
-    t_pts, x_pts, y_pts, yaw_pts = interpolated_traj
-    assert len(t_pts) == 31
-    assert len(x_pts) == 31
-    assert len(y_pts) == 31
-    assert len(yaw_pts) == 31
+    assert interpolated_traj.num_points() == 31
 
 
 def test_interpolate_trajectory_insufficient_points():
-    traj = (
-        (1.0,),  # Time
-        (1.0,),  # x points
-        (1.0,),  # y points
-        (np.pi,),  # yaw points
-    )
+    traj = Trajectory([1.0], [Pose()])
     with pytest.warns(UserWarning):
         interpolated_traj = interpolate_trajectory(traj, dt=0.1)
     assert interpolated_traj is None

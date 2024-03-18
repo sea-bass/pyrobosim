@@ -3,6 +3,7 @@
 """Unit tests for the World Graph planner"""
 
 import os
+import pytest
 
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.navigation import PathPlanner
@@ -42,5 +43,6 @@ def test_world_graph_short_connection_distance():
     start = Pose(x=-1.6, y=2.8)
     goal = Pose(x=2.5, y=3.0)
 
-    path = planner.plan(start, goal)
-    assert len(path.poses) == 0
+    with pytest.warns(UserWarning):
+        path = planner.plan(start, goal)
+        assert len(path.poses) == 0

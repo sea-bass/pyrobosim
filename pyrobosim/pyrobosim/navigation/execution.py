@@ -4,7 +4,7 @@ import time
 import warnings
 
 from ..utils.pose import Pose
-from .trajectory import get_constant_speed_trajectory, interpolate_trajectory
+from ..utils.trajectory import get_constant_speed_trajectory, interpolate_trajectory
 
 
 class ConstantVelocityExecutor:
@@ -56,14 +56,14 @@ class ConstantVelocityExecutor:
             linear_velocity=self.linear_velocity,
             max_angular_velocity=self.max_angular_velocity,
         )
-        (traj_t, traj_x, traj_y, traj_yaw) = interpolate_trajectory(traj, self.dt)
+        traj_interp = interpolate_trajectory(traj, self.dt)
 
         # Execute the trajectory
         sleep_time = self.dt / realtime_factor
         is_holding_object = self.robot.manipulated_object is not None
-        for i in range(len(traj_t)):
+        for i in range(traj_interp.num_points()):
             start_time = time.time()
-            cur_pose = Pose(x=traj_x[i], y=traj_y[i], z=0.0, yaw=traj_yaw[i])
+            cur_pose = traj_interp.poses[i]
             self.robot.set_pose(cur_pose)
             if is_holding_object:
                 self.robot.manipulated_object.set_pose(cur_pose)
