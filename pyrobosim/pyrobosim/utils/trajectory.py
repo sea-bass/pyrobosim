@@ -13,31 +13,24 @@ class Trajectory:
 
     def __init__(
         self,
-        t_pts=np.array([]),
-        x_pts=np.array([]),
-        y_pts=np.array([]),
-        yaw_pts=np.array([]),
+        t_pts=[],
+        poses=[],
     ):
         """
-        Creates a Trajectory object instance
+        Creates a Trajectory object instance.
 
-        :param t_pts: Array of time trajectory points, in seconds.
-        :type t_pts: :class:`numpy.array`
-        :param x_pts: Array of X translation trajectory points, in meters.
-        :type x_pts: :class:`numpy.array`
-        :param y_pts: Array of Y translation trajectory points, in meters.
-        :type y_pts: :class:`numpy.array`
-        :param yaw_pts: Array of yaw trajectory points, in radians.
-        :type yaw_pts: :class:`numpy.array`
+        :param t_pts: List of time trajectory points, in seconds.
+        :type t_pts: list[float]
+        :param poses: List of poses that make up the trajectory.
+        :type poses: list[:class:`pyrobosim.utils.pose.Pose`]
         """
-        num_pts = len(t_pts)
-        if len(x_pts) != num_pts or len(y_pts) != num_pts or len(yaw_pts) != num_pts:
-            raise ValueError("All point arrays must have the same number of elements.")
+        if len(t_pts) != len(poses):
+            raise ValueError(
+                "Time points and poses must have the same number of elements."
+            )
 
         self.t_pts = np.array(t_pts)
-        self.x_pts = np.array(x_pts)
-        self.y_pts = np.array(y_pts)
-        self.yaw_pts = np.array(yaw_pts)
+        self.poses = np.array(poses)
 
     def num_points(self):
         """
@@ -57,53 +50,32 @@ class Trajectory:
         """
         return self.num_points() == 0
 
-    def pose_at(self, idx):
-        """
-        Retrieves the trajectory point at the specified index as a pose.
-
-        :return: A Pose object corresponding to the trajectory point at that index.
-        :rtype: `pyrobosim.utils.pose.Pose`
-        """
-        if self.is_empty():
-            warnings.warn("Trajectory is empty. Cannot delete point.")
-            return None
-        elif idx < 0 or idx >= self.num_points():
-            warnings.warn(
-                f"Invalid index {idx} for trajectory length {self.num_points()}"
-            )
-            return None
-        else:
-            return Pose(x=self.x_pts[idx], y=self.y_pts[idx], yaw=self.yaw_pts[idx])
-
     def delete(self, idx):
         """
         Deletes a trajectory point at the specified index.
 
         :param idx: The index
         :type idx: int
+        :return: True if the point was successfully deleted, otherwise False.
         """
         if self.is_empty():
             warnings.warn("Trajectory is empty. Cannot delete point.")
-            return
+            return False
         elif idx < 0 or idx >= self.num_points():
             warnings.warn(
                 f"Invalid index {idx} for trajectory length {self.num_points()}"
             )
-            return
+            return False
         else:
             self.t_pts = np.delete(self.t_pts, idx)
-            self.x_pts = np.delete(self.x_pts, idx)
-            self.y_pts = np.delete(self.y_pts, idx)
-            self.yaw_pts = np.delete(self.yaw_pts, idx)
+            self.poses = np.delete(self.poses, idx)
+            return True
 
 
 def get_constant_speed_trajectory(path, linear_velocity=0.2, max_angular_velocity=None):
     """
     Gets a trajectory from a path (list of Pose objects) by calculating
     time points based on constant velocity and maximum angular velocity.
-
-    The trajectory is returned as a tuple of numpy arrays
-    (t_pts, x_pts, y_pts, theta_pts).
 
     :param path: Path object from which to compute a trajectory.
     :type path: :class:`pyrobosim.utils.motion.Path`
@@ -113,7 +85,7 @@ def get_constant_speed_trajectory(path, linear_velocity=0.2, max_angular_velocit
         defaults to None.
     :type max_angular_velocity: float, optional
     :return: Constant speed trajectory.
-    :rtype: tuple(:class:`pyrobosim.utils.trajectory.Trajectory`)
+    :rtype: :class:`pyrobosim.utils.trajectory.Trajectory`
     """
     if path.num_poses < 2:
         warnings.warn("Insufficient points to generate trajectory.")
@@ -133,11 +105,7 @@ def get_constant_speed_trajectory(path, linear_velocity=0.2, max_angular_velocit
             ang_time = ang_distance / max_angular_velocity
         t_pts[idx + 1] = t_pts[idx] + max(lin_time, ang_time)
 
-    # Package up the trajectory
-    x_pts = np.array([p.x for p in path.poses])
-    y_pts = np.array([p.y for p in path.poses])
-    yaw_pts = np.array([p.get_yaw() for p in path.poses])
-    return Trajectory(t_pts, x_pts, y_pts, yaw_pts)
+    return Trajectory(t_pts, path.poses)
 
 
 def interpolate_trajectory(traj: Trajectory, dt: float):
@@ -159,32 +127,41 @@ def interpolate_trajectory(traj: Trajectory, dt: float):
 
     # De-duplicate time points ensure that Slerp doesn't throw an error.
     # Right now, we're just keeping the later point.
-    i = 0
+    i = 1
     modified_traj = copy.deepcopy(traj)
     while i < modified_traj.num_points():
-        if (i > 0) and (modified_traj.t_pts[i] <= modified_traj.t_pts[i - 1]):
+        if modified_traj.t_pts[i] <= modified_traj.t_pts[i - 1]:
             warnings.warn("De-duplicated trajectory points at the same time.")
             modified_traj.delete(i - 1)
         else:
             i += 1
 
-    # Set up Slerp interpolation for the angle.
     t_final = modified_traj.t_pts[-1]
-    if t_final > 0:
-        euler_angs = [[0, 0, th] for th in modified_traj.yaw_pts]
-        slerp = Slerp(modified_traj.t_pts, Rotation.from_euler("xyz", euler_angs))
-
-    # Package up the interpolated trajectory
     t_interp = np.arange(0, t_final, dt)
+
+    # Interpolate the translation elements linearly
     if t_final not in t_interp:
         t_interp = np.append(t_interp, t_final)
-    x_interp = np.interp(t_interp, modified_traj.t_pts, modified_traj.x_pts)
-    y_interp = np.interp(t_interp, modified_traj.t_pts, modified_traj.y_pts)
-    if t_final > 0:
-        yaw_interp = np.array(
-            [slerp(t).as_euler("xyz", degrees=False)[2] for t in t_interp]
-        )
-    else:
-        yaw_interp = np.array([modified_traj.yaw_pts[-1]])
+    x_interp = np.interp(
+        t_interp, modified_traj.t_pts, [pose.x for pose in modified_traj.poses]
+    )
+    y_interp = np.interp(
+        t_interp, modified_traj.t_pts, [pose.y for pose in modified_traj.poses]
+    )
+    z_interp = np.interp(
+        t_interp, modified_traj.t_pts, [pose.z for pose in modified_traj.poses]
+    )
 
-    return Trajectory(t_interp, x_interp, y_interp, yaw_interp)
+    # Set up Slerp interpolation for the angle.
+    if t_final > 0:
+        euler_angs = [pose.eul for pose in modified_traj.poses]
+        slerp = Slerp(modified_traj.t_pts, Rotation.from_euler("xyz", euler_angs))
+        eul_interp = [slerp(t).as_euler("xyz", degrees=False) for t in t_interp]
+    else:
+        eul_interp = [modified_traj.poses[-1].eul]
+
+    # Package up the interpolated trajectory
+    poses_interp = []
+    for x, y, z, eul in zip(x_interp, y_interp, z_interp, eul_interp):
+        poses_interp.append(Pose(x=x, y=y, z=z, roll=eul[0], pitch=eul[1], yaw=eul[2]))
+    return Trajectory(t_interp, poses_interp)

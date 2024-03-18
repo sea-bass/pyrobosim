@@ -63,7 +63,7 @@ class ConstantVelocityExecutor:
         is_holding_object = self.robot.manipulated_object is not None
         for i in range(traj_interp.num_points()):
             start_time = time.time()
-            cur_pose = traj_interp.pose_at(i)
+            cur_pose = traj_interp.poses[i]
             self.robot.set_pose(cur_pose)
             if is_holding_object:
                 self.robot.manipulated_object.set_pose(cur_pose)

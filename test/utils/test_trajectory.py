@@ -21,107 +21,77 @@ def test_create_empty_trajectory():
 
 
 def test_create_trajectory():
-    traj = Trajectory(
-        np.array([0.0, 1.0, 2.0]),  # Time points
-        np.array([0.1, 0.2, 0.3]),  # X points
-        np.array([1.1, 1.2, 1.3]),  # Y points
-        np.array([0.0, np.pi / 4, np.pi / 2]),  # Yaw points
-    )
+    poses = [
+        Pose(x=0.1, y=1.1, yaw=0.0),
+        Pose(x=0.2, y=1.2, yaw=np.pi / 4),
+        Pose(x=0.3, y=1.3, yaw=np.pi / 2),
+    ]
+    traj = Trajectory([0.0, 1.0, 2.0], poses)
     assert traj.num_points() == 3
     assert not traj.is_empty()
 
-    assert traj.pose_at(0).x == 0.1
-    assert traj.pose_at(0).y == 1.1
-    assert traj.pose_at(0).get_yaw() == 0.0
+    assert traj.poses[0].x == 0.1
+    assert traj.poses[0].y == 1.1
+    assert traj.poses[0].get_yaw() == 0.0
 
-    assert traj.pose_at(1).x == 0.2
-    assert traj.pose_at(1).y == 1.2
-    assert traj.pose_at(1).get_yaw() == np.pi / 4
+    assert traj.poses[1].x == 0.2
+    assert traj.poses[1].y == 1.2
+    assert traj.poses[1].get_yaw() == np.pi / 4
 
-    assert traj.pose_at(2).x == 0.3
-    assert traj.pose_at(2).y == 1.3
-    assert traj.pose_at(2).get_yaw() == np.pi / 2
-
-
-def test_pose_at_empty_trajectory():
-    traj = Trajectory()
-    with pytest.warns(UserWarning):
-        assert traj.pose_at(0) is None
-
-
-def test_pose_at_invalid_indices():
-    traj = Trajectory(
-        np.array(
-            [
-                0.0,
-                1.0,
-            ]
-        ),  # Time points
-        np.array([0.1, 0.2]),  # X points
-        np.array([1.1, 1.2]),  # Y points
-        np.array([0.0, np.pi / 4]),  # Yaw points
-    )
-
-    with pytest.warns(UserWarning):
-        assert traj.pose_at(-1) is None
-        assert traj.pose_at(5) is None
+    assert traj.poses[2].x == 0.3
+    assert traj.poses[2].y == 1.3
+    assert traj.poses[2].get_yaw() == np.pi / 2
 
 
 def test_delete_empty_trajectory():
     traj = Trajectory()
     with pytest.warns(UserWarning):
-        traj.delete(0)
+        assert not traj.delete(0)
 
 
 def test_delete_at_invalid_indices():
-    traj = Trajectory(
-        np.array(
-            [
-                0.0,
-                1.0,
-            ]
-        ),  # Time points
-        np.array([0.1, 0.2]),  # X points
-        np.array([1.1, 1.2]),  # Y points
-        np.array([0.0, np.pi / 4]),  # Yaw points
-    )
+    poses = [
+        Pose(x=0.1, y=1.1, yaw=0.0),
+        Pose(x=0.2, y=1.2, yaw=np.pi / 4),
+        Pose(x=0.3, y=1.3, yaw=np.pi / 2),
+    ]
+    traj = Trajectory([0.0, 1.0, 2.0], poses)
 
     with pytest.warns(UserWarning):
-        traj.delete(-1)
-        traj.delete(5)
+        assert not traj.delete(-1)
+        assert not traj.delete(5)
 
-    assert traj.num_points() == 2
+    assert traj.num_points() == 3
 
 
 def test_delete():
-    traj = Trajectory(
-        np.array([0.0, 1.0, 2.0]),  # Time points
-        np.array([0.1, 0.2, 0.3]),  # X points
-        np.array([1.1, 1.2, 1.3]),  # Y points
-        np.array([0.0, np.pi / 4, np.pi / 2]),  # Yaw points
-    )
+    poses = [
+        Pose(x=0.1, y=1.1, yaw=0.0),
+        Pose(x=0.2, y=1.2, yaw=np.pi / 4),
+        Pose(x=0.3, y=1.3, yaw=np.pi / 2),
+    ]
+    traj = Trajectory([0.0, 1.0, 2.0], poses)
 
     traj.delete(1)
-
     assert traj.num_points() == 2
 
-    assert traj.pose_at(0).x == 0.1
-    assert traj.pose_at(0).y == 1.1
-    assert traj.pose_at(0).get_yaw() == 0.0
+    assert traj.poses[0].x == 0.1
+    assert traj.poses[0].y == 1.1
+    assert traj.poses[0].get_yaw() == 0.0
 
-    assert traj.pose_at(1).x == 0.3
-    assert traj.pose_at(1).y == 1.3
-    assert traj.pose_at(1).get_yaw() == np.pi / 2
+    assert traj.poses[1].x == 0.3
+    assert traj.poses[1].y == 1.3
+    assert traj.poses[1].get_yaw() == np.pi / 2
 
 
 def test_create_invalid_trajectory():
     with pytest.raises(ValueError):
-        Trajectory(
-            np.array([0.0, 1.0]),  # Time points
-            np.array([0.1, 0.2, 0.3]),  # X points
-            np.array([1.1, 1.2, 1.3, 1.4]),  # Y points
-            np.array([0.0, np.pi / 4, np.pi / 2]),  # Yaw points
-        )
+        poses = [
+            Pose(x=0.1, y=1.1, yaw=0.0),
+            Pose(x=0.2, y=1.2, yaw=np.pi / 4),
+            Pose(x=0.3, y=1.3, yaw=np.pi / 2),
+        ]
+        Trajectory([0.0, 10.0], poses)
 
 
 def test_get_constant_speed_trajectory_empty_path():
@@ -149,9 +119,7 @@ def test_get_constant_speed_trajectory_unlimited_ang_vel():
 
     assert traj.num_points() == 4
     assert traj.t_pts == pytest.approx([0.0, 2.0, 4.0, 6.0], rel=1e-4)
-    assert traj.x_pts == pytest.approx([0.0, 1.0, 1.0, 0.0])
-    assert traj.y_pts == pytest.approx([0.0, 0.0, 1.0, 1.0])
-    assert traj.yaw_pts == pytest.approx([0.0, 0.0, np.pi / 2.0, -3.0 * np.pi / 4.0])
+    assert np.all(traj.poses == path.poses)
 
 
 def test_get_constant_speed_trajectory_limited_ang_vel():
@@ -169,9 +137,7 @@ def test_get_constant_speed_trajectory_limited_ang_vel():
 
     assert traj.num_points() == 4
     assert traj.t_pts == pytest.approx([0.0, 2.0, 6.0, 12.0], rel=1e-4)
-    assert traj.x_pts == pytest.approx([0.0, 1.0, 1.0, 0.0])
-    assert traj.y_pts == pytest.approx([0.0, 0.0, 1.0, 1.0])
-    assert traj.yaw_pts == pytest.approx([0.0, 0.0, np.pi / 2.0, -3.0 * np.pi / 4.0])
+    assert np.all(traj.poses == path.poses)
 
 
 def test_interpolate_trajectory():
@@ -209,12 +175,7 @@ def test_interpolate_trajectory_duplicate_points():
 
 
 def test_interpolate_trajectory_insufficient_points():
-    traj = Trajectory(
-        (1.0,),  # Time
-        (1.0,),  # x points
-        (1.0,),  # y points
-        (np.pi,),  # yaw points
-    )
+    traj = Trajectory([1.0], [Pose()])
     with pytest.warns(UserWarning):
         interpolated_traj = interpolate_trajectory(traj, dt=0.1)
     assert interpolated_traj is None
