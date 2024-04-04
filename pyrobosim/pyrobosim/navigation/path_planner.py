@@ -1,4 +1,5 @@
 """ Implementation of the generic path planner. """
+
 import warnings
 from pyrobosim.navigation.a_star import AstarPlanner
 from pyrobosim.navigation.rrt import RRTPlanner

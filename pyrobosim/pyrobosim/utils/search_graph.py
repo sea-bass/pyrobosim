@@ -45,7 +45,6 @@ class Edge:
 
 
 class SearchGraph:
-
     """Graph representation class."""
 
     def __init__(self, color=[0, 0, 0], color_alpha=0.5, use_planner=False):
