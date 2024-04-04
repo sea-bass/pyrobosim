@@ -2,7 +2,7 @@ repos:
 
   # Runs pre-commit hooks and other file format checks.
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
       - id: check-added-large-files
       - id: check-ast
@@ -28,23 +28,21 @@ repos:
       - id: sort-simple-yaml
       - id: trailing-whitespace
 
-# Auto formats Python code.
+  # Autoformats Python code.
   - repo: https://github.com/psf/black.git
-    rev: 23.3.0
+    rev: 24.3.0
     hooks:
       - id: black
 
-# Finds spelling issues in code.
+  # Finds spelling issues in code.
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.5
+    rev: v2.2.6
     hooks:
       - id: codespell
-        args: ["--write-changes", "-L", "atleast,inout,ether"] # Provide a comma-separated list of misspelled words that codespell should ignore (for example: '-L', 'word1,word2,word3').
-        exclude: \.(svg|pyc|stl|dae|lock)$
 
-# Finds issues in YAML files.
+  # Finds issues in YAML files.
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.32.0
+    rev: v1.35.1
     hooks:
       - id: yamllint
         args:
@@ -56,8 +54,8 @@ repos:
         types: [text]
         files: \.(yml|yaml)$
 
-# Checks links in markdown files.
+  # Checks links in markdown files.
   - repo: https://github.com/tcort/markdown-link-check
-    rev: v3.11.2
+    rev: v3.12.1
     hooks:
       - id: markdown-link-check
