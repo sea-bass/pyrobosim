@@ -86,7 +86,7 @@ jobs:
   ros2-test:
     strategy:
       matrix:
-        ros_distro: [humble, iron, rolling]
+        ros_distro: [humble, iron, jazzy, rolling]
 
     name: ros-${{ matrix.ros_distro }}-test
     runs-on: ubuntu-latest

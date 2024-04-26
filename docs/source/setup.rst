@@ -4,7 +4,7 @@ Setup
 This package is being tested with:
 
 * Python 3.10 in Ubuntu 22.04
-* Optionally with ROS 2 Humble and Iron
+* Optionally with ROS 2 Humble, Iron, Jazzy, or Rolling
 
 pip install (Limited)
 ---------------------

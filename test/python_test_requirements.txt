@@ -1,6 +1,6 @@
 lark
-py!=1.10.0
-pytest<8.1.0
+py
+pytest
 pytest-cov
 pytest-dependency
 pytest-html
