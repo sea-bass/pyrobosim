@@ -30,11 +30,11 @@ WORKDIR /opt/pyrobosim/
 COPY setup/setup_pddlstream.bash setup/
 RUN setup/setup_pddlstream.bash
 
-# Install baseline pip dependencies
+# Install pip dependencies for testing
 COPY test/python_test_requirements.txt test/
 RUN pip3 install --break-system-packages -r test/python_test_requirements.txt
 
-# Copy the rest of the source directory
+# Copy the rest of the source directory and install pyrobosim
 COPY . /opt/pyrobosim/
 RUN pip3 install --break-system-packages -e pyrobosim
 
