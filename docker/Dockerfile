@@ -26,17 +26,17 @@ RUN mkdir -p /opt/pyrobosim/test
 RUN mkdir -p /opt/pyrobosim/setup
 WORKDIR /opt/pyrobosim/
 
-# Install baseline pip dependencies
-COPY test/python_test_requirements.txt test/
-RUN pip3 install -r test/python_test_requirements.txt
-
 # Install PDDLStream
 COPY setup/setup_pddlstream.bash setup/
 RUN setup/setup_pddlstream.bash
 
-# Copy the rest of the source directory
+# Install pip dependencies for testing
+COPY test/python_test_requirements.txt test/
+RUN pip3 install --break-system-packages -r test/python_test_requirements.txt
+
+# Copy the rest of the source directory and install pyrobosim
 COPY . /opt/pyrobosim/
-RUN pip3 install -e pyrobosim
+RUN pip3 install --break-system-packages -e pyrobosim
 
 # Set the default startup command
 CMD /bin/bash
