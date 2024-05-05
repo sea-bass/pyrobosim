@@ -17,6 +17,7 @@ RUN apt-get update &&\
         python3 \
         python3-pip \
         python3-tk \
+        python3-venv \
         git \
         cmake \
         ffmpeg \
