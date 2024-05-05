@@ -1,8 +1,11 @@
-# Folders that don't need to be in the Docker build context.
+# Files and folders that don't need to be in the Docker build context.
 dependencies/
+docker/Dockerfile
 docs/
+test/results/
 
-# Metadata that definitely doesn't need to be in the Docker build context.
+# Metadata that doesn't need to be in the Docker build context.
+*/__pycache__
 .dockerignore
 .git/
 .github/

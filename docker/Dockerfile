@@ -1,5 +1,6 @@
 # Dockerfile for pyrobosim builds with and without ROS
 ARG ROS_DISTRO=humble
+ARG VIRTUAL_ENV=/python-virtualenvs/pyrobosim
 
 ##################################
 #
@@ -31,12 +32,15 @@ COPY setup/setup_pddlstream.bash setup/
 RUN setup/setup_pddlstream.bash
 
 # Install pip dependencies for testing
+ARG VIRTUAL_ENV
+RUN python3 -m venv ${VIRTUAL_ENV}
+ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"
 COPY test/python_test_requirements.txt test/
-RUN pip3 install --break-system-packages -r test/python_test_requirements.txt
+RUN pip3 install -r test/python_test_requirements.txt
 
 # Copy the rest of the source directory and install pyrobosim
 COPY . /opt/pyrobosim/
-RUN pip3 install --break-system-packages -e pyrobosim
+RUN pip3 install -e pyrobosim
 
 # Set the default startup command
 CMD /bin/bash
@@ -66,16 +70,23 @@ COPY setup/setup_pddlstream.bash /pyrobosim_ws/src/setup/
 WORKDIR /pyrobosim_ws/src/setup
 RUN ./setup_pddlstream.bash
 
-# Install pyrobosim and testing dependencies
-WORKDIR /pyrobosim_ws/src
 COPY . /pyrobosim_ws/src/
-RUN pip3 install --break-system-packages -e ./pyrobosim
-RUN pip3 install --break-system-packages -r test/python_test_requirements.txt
 
-# Build the workspace
+# Build the ROS workspace
+# TODO: Figure out why this has to be done first or otherwise there is an 'em' import error
 WORKDIR /pyrobosim_ws
 RUN . /opt/ros/${ROS_DISTRO}/setup.bash && \
     colcon build
+
+# Install pyrobosim and testing dependencies
+ARG VIRTUAL_ENV
+ENV VIRTUAL_ENV=${VIRTUAL_ENV}
+WORKDIR /pyrobosim_ws/src
+RUN python3 -m venv ${VIRTUAL_ENV}
+RUN . ${VIRTUAL_ENV}/bin/activate && \
+    pip3 install --upgrade pip && \
+    pip3 install -e ./pyrobosim && \
+    pip3 install -r test/python_test_requirements.txt
 
 # Remove display warnings
 RUN mkdir /tmp/runtime-root
@@ -84,6 +95,7 @@ RUN chmod -R 0700 /tmp/runtime-root
 ENV NO_AT_BRIDGE 1
 
 # Setup an entrypoint and working folder
+WORKDIR /pyrobosim_ws
 COPY setup /pyrobosim_ws/src/setup
 CMD /bin/bash
 COPY docker/entrypoint.sh /entrypoint.sh
