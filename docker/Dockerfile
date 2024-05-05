@@ -59,7 +59,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get upgrade -y
 RUN apt-get install -y \
-    apt-utils python3-full python3-pip python3-tk \
+    apt-utils python3-full python3-pip python3-tk ros-dev-tools \
     libgl1-mesa-dev libglu1-mesa-dev '^libxcb.*-dev' libx11-xcb-dev \
     libxi-dev libxkbcommon-dev libxkbcommon-x11-dev libxrender-dev
 
@@ -74,7 +74,7 @@ RUN ./setup_pddlstream.bash
 COPY . /pyrobosim_ws/src/
 
 # Build the ROS workspace
-# TODO: Figure out why this has to be done first or otherwise there is an 'em' import error
+# TODO: Figure out why there is an import error with 'em' if this is done after the virtual env is created.
 WORKDIR /pyrobosim_ws
 RUN . /opt/ros/${ROS_DISTRO}/setup.bash && \
     colcon build
@@ -82,8 +82,8 @@ RUN . /opt/ros/${ROS_DISTRO}/setup.bash && \
 # Install pyrobosim and testing dependencies
 ARG VIRTUAL_ENV
 ENV VIRTUAL_ENV=${VIRTUAL_ENV}
-WORKDIR /pyrobosim_ws/src
 RUN python3 -m venv ${VIRTUAL_ENV}
+WORKDIR /pyrobosim_ws/src
 RUN . ${VIRTUAL_ENV}/bin/activate && \
     pip3 install --upgrade pip && \
     pip3 install -e ./pyrobosim && \
