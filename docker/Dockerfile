@@ -69,7 +69,6 @@ RUN ./setup_pddlstream.bash
 # Install pyrobosim and testing dependencies
 WORKDIR /pyrobosim_ws/src
 COPY . /pyrobosim_ws/src/
-RUN pip3 install --break-system-packages --upgrade pip
 RUN pip3 install --break-system-packages -e ./pyrobosim
 RUN pip3 install --break-system-packages -r test/python_test_requirements.txt
 
