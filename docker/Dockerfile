@@ -54,7 +54,9 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get upgrade -y
 RUN apt-get install -y \
-    apt-utils python3-pip python3-tk
+    apt-utils python3-full python3-pip python3-tk \
+    libgl1-mesa-dev libglu1-mesa-dev '^libxcb.*-dev' libx11-xcb-dev \
+    libxi-dev libxkbcommon-dev libxkbcommon-x11-dev libxrender-dev
 
 # Create a colcon workspace
 RUN mkdir -p /pyrobosim_ws/src/pyrobosim
@@ -67,9 +69,9 @@ RUN ./setup_pddlstream.bash
 # Install pyrobosim and testing dependencies
 WORKDIR /pyrobosim_ws/src
 COPY . /pyrobosim_ws/src/
-RUN python3 -m pip install --upgrade pip
-RUN pip3 install ./pyrobosim
-RUN pip3 install -r test/python_test_requirements.txt
+RUN pip3 install --break-system-packages --upgrade pip
+RUN pip3 install --break-system-packages -e ./pyrobosim
+RUN pip3 install --break-system-packages -r test/python_test_requirements.txt
 
 # Build the workspace
 WORKDIR /pyrobosim_ws
