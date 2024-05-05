@@ -46,7 +46,7 @@ CMD /bin/bash
 # pyrobosim build for Ubuntu / ROS
 #
 ##################################
-FROM osrf/ros:${ROS_DISTRO}-desktop as pyrobosim_ros
+FROM ros:${ROS_DISTRO}-ros-base as pyrobosim_ros
 ENV ROS_DISTRO=${ROS_DISTRO}
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 

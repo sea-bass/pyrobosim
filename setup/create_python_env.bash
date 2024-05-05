@@ -15,9 +15,9 @@ echo "Created Python virtual environment in $VIRTUALENV_FOLDER"
 source "${VIRTUALENV_FOLDER}/bin/activate"
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 pushd "$SCRIPT_DIR/.." || exit
-python -m pip install --upgrade pip
+python3 -m pip install --upgrade pip
 # Install catkin-pkg because https://github.com/colcon/colcon-ros/issues/118
-pip install ./pyrobosim
+pip3 install ./pyrobosim
 pip3 install -r test/python_test_requirements.txt
 popd || exit
 deactivate
