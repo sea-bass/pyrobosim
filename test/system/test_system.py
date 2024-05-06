@@ -6,9 +6,8 @@ System-level tests for the pyrobosim UI functionality to execute tasks.
 
 import os
 import sys
-import time
-
 import pytest
+import time
 
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.gui import PyRoboSimGUI
