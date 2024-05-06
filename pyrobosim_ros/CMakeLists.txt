@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.22)
 project(pyrobosim_ros)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -13,8 +13,8 @@ find_package(rclpy REQUIRED)
 
 # Install pyrobosim Python package
 ament_python_install_package(
-    pyrobosim
-    PACKAGE_DIR ../pyrobosim/pyrobosim)
+  pyrobosim
+  PACKAGE_DIR ../pyrobosim/pyrobosim)
 install(PROGRAMS
   examples/demo.py
   examples/demo_commands.py
@@ -31,8 +31,8 @@ install(PROGRAMS
 
 # Install pyrobosim_ros Python package
 ament_python_install_package(
-    pyrobosim_ros
-    PACKAGE_DIR pyrobosim_ros)
+  pyrobosim_ros
+  PACKAGE_DIR pyrobosim_ros)
 
 # Install data files
 install(DIRECTORY

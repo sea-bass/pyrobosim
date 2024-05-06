@@ -3,8 +3,8 @@ Setup
 
 This package is being tested with:
 
-* Python 3.10 in Ubuntu 22.04
-* Optionally with ROS 2 Humble and Iron
+* Python 3.10 / Ubuntu 22.04 (optionally with ROS 2 Humble or Iron)
+* Python 3.12 / Ubuntu 24.04 (optionally with ROS 2 Jazzy or Rolling)
 
 pip install (Limited)
 ---------------------

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Source ROS and the Colcon workspace
+# Source ROS and the pyrobosim workspace
 source /opt/ros/${ROS_DISTRO}/setup.bash
 if [ ! -f /pyrobosim_ws/install/setup.bash ]
 then
