@@ -36,13 +36,15 @@ ROS_DISTRO=$1
 if [[ -n "${ROS_DISTRO}" && -n "${COLCON_PREFIX_PATH}" ]]
 then
     WORKSPACE_DIR="${COLCON_PREFIX_PATH}/../"
-    ROS_PKG_DIR="${WORKSPACE_DIR}/src/pyrobosim_ros"
-    echo "Running ROS package unit tests from ${ROS_PKG_DIR} ..."
-    python3 -m pytest "${ROS_PKG_DIR}" \
-     --junitxml="${TEST_RESULTS_DIR}/test_results_ros.xml" \
-     --html="${TEST_RESULTS_DIR}/test_results_ros.html" \
-     --self-contained-html || SUCCESS=$?
+    echo "Running ROS package unit tests from ${WORKSPACE_DIR}..."
+    pushd "${WORKSPACE_DIR}" > /dev/null || exit
+    colcon test \
+        --event-handlers console_cohesion+ \
+        --pytest-with-coverage --pytest-args " --cov-report term" || SUCCESS=$?
     echo ""
+    colcon test-result --verbose \
+     | tee "${TEST_RESULTS_DIR}/test_results_ros.xml"
+    popd > /dev/null || exit
 fi
 
 exit ${SUCCESS}

@@ -8,9 +8,6 @@ then
 fi
 source /pyrobosim_ws/install/setup.bash
 
-# Activate virtual environment
-source ${VIRTUAL_ENV}/bin/activate
-
 # Add dependencies to path
 PDDLSTREAM_PATH=/pyrobosim_ws/src/dependencies/pddlstream
 if [ -d "$PDDLSTREAM_PATH" ]
