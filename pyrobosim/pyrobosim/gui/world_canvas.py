@@ -57,7 +57,13 @@ class WorldCanvas(FigureCanvasQTAgg):
     """ Lock for drawing on the canvas in a thread-safe manner. """
 
     def __init__(
-        self, main_window, world, dpi=100, animation_dt=0.1, realtime_factor=1.0
+        self,
+        main_window,
+        world,
+        show=True,
+        dpi=100,
+        animation_dt=0.1,
+        realtime_factor=1.0,
     ):
         """
         Creates an instance of a pyrobosim figure canvas.
@@ -66,6 +72,8 @@ class WorldCanvas(FigureCanvasQTAgg):
         :type main_window: :class:`pyrobosim.gui.main.PyRoboSimMainWindow`
         :param world: World object to attach.
         :type world: :class:`pyrobosim.core.world.World`
+        :param show: If true (default), shows the GUI. Otherwise runs headless for testing.
+        :type show: bool, optional
         :param dpi: DPI for the figure.
         :type dpi: int
         :param animation_dt: Time step for animations (seconds).
@@ -100,18 +108,19 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.nav_trigger.connect(self.navigate_in_thread)
 
         # Start thread for animating robot navigation state.
-        self.nav_animator = NavAnimator(self)
-        self.nav_animator.start()
+        if show:
+            self.nav_animator = NavAnimator(self)
+            self.nav_animator.start()
 
     def show_robots(self):
         """Draws robots as circles with heading lines for visualization."""
         n_robots = len(self.world.robots)
-        for b in self.robot_bodies:
-            b.remove()
-        for d in self.robot_dirs:
-            d.remove()
-        for l in self.robot_lengths:
-            l.remove()
+        for body in self.robot_bodies:
+            body.remove()
+        for dir in self.robot_dirs:
+            dir.remove()
+        for length in self.robot_lengths:
+            length.remove()
         self.robot_bodies = n_robots * [None]
         self.robot_dirs = n_robots * [None]
         self.robot_lengths = n_robots * [None]

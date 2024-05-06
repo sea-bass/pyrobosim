@@ -45,7 +45,7 @@ class PyRoboSimGUI(QtWidgets.QApplication):
         """
         super(PyRoboSimGUI, self).__init__(args)
         self.world = world
-        self.main_window = PyRoboSimMainWindow(world)
+        self.main_window = PyRoboSimMainWindow(world, show)
         if show:
             self.main_window.show()
 
@@ -53,12 +53,14 @@ class PyRoboSimGUI(QtWidgets.QApplication):
 class PyRoboSimMainWindow(QtWidgets.QMainWindow):
     """Main application window for the pyrobosim GUI."""
 
-    def __init__(self, world, *args, **kwargs):
+    def __init__(self, world, show=True, *args, **kwargs):
         """
         Creates an instance of the pyrobosim application main window.
 
         :param world: World object to attach.
         :type world: :class:`pyrobosim.core.world.World`
+        :param show: If true (default), shows the GUI. Otherwise runs headless for testing.
+        :type show: bool, optional
         """
         super(PyRoboSimMainWindow, self).__init__(*args, **kwargs)
         self.setWindowTitle("pyrobosim")
@@ -70,7 +72,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.world.has_gui = True
 
         self.layout_created = False
-        self.canvas = WorldCanvas(self, world)
+        self.canvas = WorldCanvas(self, world, show)
         self.create_layout()
         self.update_manip_state()
         self.canvas.show()
