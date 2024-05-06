@@ -9,7 +9,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.pyplot import Circle
 from matplotlib.transforms import Affine2D
-from PyQt5.QtCore import pyqtSignal, QThread
+from PySide6.QtCore import Signal, QThread
 
 from pyrobosim.utils.motion import Path
 
@@ -28,12 +28,17 @@ class NavAnimator(QThread):
         """
         super(NavAnimator, self).__init__()
         self.canvas = canvas
+        self.running = True
 
     def run(self):
         """Runs the navigation monitor thread."""
         while not self.canvas.main_window.isVisible():
             time.sleep(0.5)
         self.canvas.monitor_nav_animation()
+
+    def stop(self):
+        """Stops the thread."""
+        self.running = False
 
 
 class WorldCanvas(FigureCanvasQTAgg):
@@ -50,14 +55,20 @@ class WorldCanvas(FigureCanvasQTAgg):
     robot_dir_line_factor = 3.0
     """ Multiplier of robot radius for plotting robot orientation lines. """
 
-    nav_trigger = pyqtSignal(str, str, Path)
+    nav_trigger = Signal(str, str, Path)
     """ Signal to trigger navigation method in a thread-safe manner. """
 
     draw_lock = threading.Lock()
     """ Lock for drawing on the canvas in a thread-safe manner. """
 
     def __init__(
-        self, main_window, world, dpi=100, animation_dt=0.1, realtime_factor=1.0
+        self,
+        main_window,
+        world,
+        show=True,
+        dpi=100,
+        animation_dt=0.1,
+        realtime_factor=1.0,
     ):
         """
         Creates an instance of a pyrobosim figure canvas.
@@ -66,6 +77,8 @@ class WorldCanvas(FigureCanvasQTAgg):
         :type main_window: :class:`pyrobosim.gui.main.PyRoboSimMainWindow`
         :param world: World object to attach.
         :type world: :class:`pyrobosim.core.world.World`
+        :param show: If true (default), shows the GUI. Otherwise runs headless for testing.
+        :type show: bool, optional
         :param dpi: DPI for the figure.
         :type dpi: int
         :param animation_dt: Time step for animations (seconds).
@@ -100,18 +113,19 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.nav_trigger.connect(self.navigate_in_thread)
 
         # Start thread for animating robot navigation state.
-        self.nav_animator = NavAnimator(self)
-        self.nav_animator.start()
+        if show:
+            self.nav_animator = NavAnimator(self)
+            self.nav_animator.start()
 
     def show_robots(self):
         """Draws robots as circles with heading lines for visualization."""
         n_robots = len(self.world.robots)
-        for b in self.robot_bodies:
-            b.remove()
-        for d in self.robot_dirs:
-            d.remove()
-        for l in self.robot_lengths:
-            l.remove()
+        for body in self.robot_bodies:
+            body.remove()
+        for dir in self.robot_dirs:
+            dir.remove()
+        for length in self.robot_lengths:
+            length.remove()
         self.robot_bodies = n_robots * [None]
         self.robot_dirs = n_robots * [None]
         self.robot_lengths = n_robots * [None]
@@ -241,7 +255,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         Monitors the navigation animation (to be started in a separate thread).
         """
         sleep_time = self.animation_dt / self.realtime_factor
-        while True:
+        while self.nav_animator.running:
             # Check if any robot is currently navigating.
             nav_status = [robot.is_moving() for robot in self.world.robots]
             if any(nav_status):

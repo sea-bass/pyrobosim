@@ -1,10 +1,12 @@
 """ Main utilities for pyrobosim GUI. """
 
 import numpy as np
+import signal
 import sys
 
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import QTimer
+from PySide6 import QtWidgets
+from PySide6.QtCore import QTimer
+from PySide6.QtGui import QScreen
 from matplotlib.backends.qt_compat import QtCore
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
 
@@ -20,6 +22,8 @@ def start_gui(world):
     :type world: :class:`pyrobosim.core.world.World`
     """
     app = PyRoboSimGUI(world, sys.argv)
+
+    signal.signal(signal.SIGINT, lambda *args: app.quit())
 
     timer = QTimer(parent=app)
     timer.timeout.connect(lambda: None)
@@ -44,7 +48,7 @@ class PyRoboSimGUI(QtWidgets.QApplication):
         """
         super(PyRoboSimGUI, self).__init__(args)
         self.world = world
-        self.main_window = PyRoboSimMainWindow(world)
+        self.main_window = PyRoboSimMainWindow(world, show)
         if show:
             self.main_window.show()
 
@@ -52,12 +56,14 @@ class PyRoboSimGUI(QtWidgets.QApplication):
 class PyRoboSimMainWindow(QtWidgets.QMainWindow):
     """Main application window for the pyrobosim GUI."""
 
-    def __init__(self, world, *args, **kwargs):
+    def __init__(self, world, show=True, *args, **kwargs):
         """
         Creates an instance of the pyrobosim application main window.
 
         :param world: World object to attach.
         :type world: :class:`pyrobosim.core.world.World`
+        :param show: If true (default), shows the GUI. Otherwise runs headless for testing.
+        :type show: bool, optional
         """
         super(PyRoboSimMainWindow, self).__init__(*args, **kwargs)
         self.setWindowTitle("pyrobosim")
@@ -69,10 +75,15 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.world.has_gui = True
 
         self.layout_created = False
-        self.canvas = WorldCanvas(self, world)
+        self.canvas = WorldCanvas(self, world, show)
         self.create_layout()
         self.update_manip_state()
         self.canvas.show()
+
+    def closeEvent(self, _):
+        """Cleans up running threads on closing the window."""
+        self.canvas.nav_animator.stop()
+        self.canvas.nav_animator.wait()
 
     def set_window_dims(self, screen_fraction=0.8):
         """
@@ -81,7 +92,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         :param screen_fraction: Fraction of screen (0.0 to 1.0) used by window.
         :type screen_fraction: float
         """
-        screen = QtWidgets.QDesktopWidget().availableGeometry()
+        screen = QScreen.availableGeometry(QtWidgets.QApplication.primaryScreen())
         window_width = int(screen.width() * screen_fraction)
         window_height = int(screen.height() * screen_fraction)
         window_x = int(screen.left() + 0.5 * (screen.width() - window_width))
