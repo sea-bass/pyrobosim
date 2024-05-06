@@ -19,14 +19,18 @@ os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 
 class TestSystem:
-    # Load world from file.
-    cur_path = os.path.dirname(os.path.realpath(__file__))
-    world_file_path = os.path.join(cur_path, "test_system_world.yaml")
-    world = WorldYamlLoader().from_yaml(world_file_path)
+    @pytest.fixture(autouse=True)
+    def setup_and_teardown(self):
+        # Load world from file.
+        cur_path = os.path.dirname(os.path.realpath(__file__))
+        world_file_path = os.path.join(cur_path, "test_system_world.yaml")
+        world = WorldYamlLoader().from_yaml(world_file_path)
 
-    # Create headless app.
-    app = PyRoboSimGUI(world, sys.argv, show=False)
-    time.sleep(0.5)
+        # Create headless app.
+        self.app = PyRoboSimGUI.instance()
+        if self.app is None:
+            self.app = PyRoboSimGUI(world, sys.argv, show=False)
+            time.sleep(0.5)
 
     def nav_helper(self, nav_query):
         """
