@@ -1,6 +1,7 @@
 """ Main utilities for pyrobosim GUI. """
 
 import numpy as np
+import signal
 import sys
 
 from PySide6 import QtWidgets
@@ -21,6 +22,8 @@ def start_gui(world):
     :type world: :class:`pyrobosim.core.world.World`
     """
     app = PyRoboSimGUI(world, sys.argv)
+
+    signal.signal(signal.SIGINT, lambda *args: app.quit())
 
     timer = QTimer(parent=app)
     timer.timeout.connect(lambda: None)
@@ -76,6 +79,11 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.create_layout()
         self.update_manip_state()
         self.canvas.show()
+
+    def closeEvent(self, _):
+        """Cleans up running threads on closing the window."""
+        self.canvas.nav_animator.stop()
+        self.canvas.nav_animator.wait()
 
     def set_window_dims(self, screen_fraction=0.8):
         """

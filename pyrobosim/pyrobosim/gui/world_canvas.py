@@ -28,12 +28,17 @@ class NavAnimator(QThread):
         """
         super(NavAnimator, self).__init__()
         self.canvas = canvas
+        self.running = True
 
     def run(self):
         """Runs the navigation monitor thread."""
         while not self.canvas.main_window.isVisible():
             time.sleep(0.5)
         self.canvas.monitor_nav_animation()
+
+    def stop(self):
+        """Stops the thread."""
+        self.running = False
 
 
 class WorldCanvas(FigureCanvasQTAgg):
@@ -250,7 +255,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         Monitors the navigation animation (to be started in a separate thread).
         """
         sleep_time = self.animation_dt / self.realtime_factor
-        while True:
+        while self.nav_animator.running:
             # Check if any robot is currently navigating.
             nav_status = [robot.is_moving() for robot in self.world.robots]
             if any(nav_status):
