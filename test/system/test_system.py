@@ -18,21 +18,20 @@ from pyrobosim.utils.knowledge import query_to_entity
 # Needed for PyQt5 tests to work with CI
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
+from PySide6 import QtWidgets
 
 @pytest.mark.skipif(
     sys.version_info < (3, 10), reason="Test does not work in versions before 3.10."
 )
 class TestSystem:
-    @pytest.fixture(autouse=True)
-    def create_world_and_app(self):
-        # Load world from file.
-        cur_path = os.path.dirname(os.path.realpath(__file__))
-        world_file_path = os.path.join(cur_path, "test_system_world.yaml")
-        world = WorldYamlLoader().from_yaml(world_file_path)
+    # Load world from file.
+    cur_path = os.path.dirname(os.path.realpath(__file__))
+    world_file_path = os.path.join(cur_path, "test_system_world.yaml")
+    world = WorldYamlLoader().from_yaml(world_file_path)
 
-        # Create headless app.
-        self.app = PyRoboSimGUI(world, sys.argv, show=False)
-        time.sleep(0.5)
+    # Create headless app.
+    app = PyRoboSimGUI(world, sys.argv, show=False)
+    time.sleep(0.5)
 
     def nav_helper(self, nav_query):
         """
