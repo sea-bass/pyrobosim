@@ -18,11 +18,7 @@ from pyrobosim.utils.knowledge import query_to_entity
 # Needed for PyQt5 tests to work with CI
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
-from PySide6 import QtWidgets
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 10), reason="Test does not work in versions before 3.10."
-)
 class TestSystem:
     # Load world from file.
     cur_path = os.path.dirname(os.path.realpath(__file__))
