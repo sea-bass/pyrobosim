@@ -9,7 +9,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.pyplot import Circle
 from matplotlib.transforms import Affine2D
-from PyQt5.QtCore import pyqtSignal, QThread
+from PySide6.QtCore import Signal, QThread
 
 from pyrobosim.utils.motion import Path
 
@@ -50,7 +50,7 @@ class WorldCanvas(FigureCanvasQTAgg):
     robot_dir_line_factor = 3.0
     """ Multiplier of robot radius for plotting robot orientation lines. """
 
-    nav_trigger = pyqtSignal(str, str, Path)
+    nav_trigger = Signal(str, str, Path)
     """ Signal to trigger navigation method in a thread-safe manner. """
 
     draw_lock = threading.Lock()

@@ -23,7 +23,7 @@ install_requires = [
     "matplotlib",
     "numpy",
     "pycollada",
-    "PyQt5",
+    "PySide6",
     "PyYAML",
     "shapely>=2.0.1",
     "scipy",

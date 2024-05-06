@@ -3,8 +3,9 @@
 import numpy as np
 import sys
 
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import QTimer
+from PySide6 import QtWidgets
+from PySide6.QtCore import QTimer
+from PySide6.QtGui import QScreen
 from matplotlib.backends.qt_compat import QtCore
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
 
@@ -81,7 +82,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         :param screen_fraction: Fraction of screen (0.0 to 1.0) used by window.
         :type screen_fraction: float
         """
-        screen = QtWidgets.QDesktopWidget().availableGeometry()
+        screen = QScreen.availableGeometry(QtWidgets.QApplication.primaryScreen())
         window_width = int(screen.width() * screen_fraction)
         window_height = int(screen.height() * screen_fraction)
         window_x = int(screen.left() + 0.5 * (screen.width() - window_width))
