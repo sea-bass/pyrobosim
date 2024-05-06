@@ -13,6 +13,8 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update &&\
     apt-get install -y \
         apt-utils \
+        libegl1 \
+        libgl1-mesa-dev \
         python3 \
         python3-pip \
         python3-tk \
