@@ -31,8 +31,8 @@ install(PROGRAMS
 
 # Install pyrobosim_ros Python package
 ament_python_install_package(
-    pyrobosim_ros
-    PACKAGE_DIR pyrobosim_ros)
+  pyrobosim_ros
+  PACKAGE_DIR pyrobosim_ros)
 
 # Install data files
 install(DIRECTORY
