@@ -5,7 +5,8 @@ docs/
 test/results/
 
 # Metadata that doesn't need to be in the Docker build context.
-*/__pycache__
+*/__pycache__/
+*.egg-info
 .dockerignore
 .git/
 .github/
