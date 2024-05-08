@@ -40,11 +40,11 @@ class WorldROSWrapper(Node):
         Creates a ROS 2 world wrapper node.
 
         This node will:
-            * Subscribe to single actions on the ``commanded_action`` topic.
-            * Subscribe to task plans on the ``commanded_plan`` topic.
-            * Subscribe to robot velocity commands on the ``robot_name/cmd_vel`` topic.
             * Publish robot states on the ``robot_name/robot_state`` topic.
+            * Subscribe to robot velocity commands on the ``robot_name/cmd_vel`` topic.
             * Serve a ``request_world_state`` service to retrieve the world state for planning.
+            * Serve a ``execute_action`` action server to run single actions on a robot.
+            * Serve a ``execute_task_plan`` action server to run entire task plans on a robot.
 
         :param world: World model instance.
         :type world: :class:`pyrobosim.core.world.World`
