@@ -49,7 +49,7 @@ You can run a ROS 2 enabled demo and interact with the GUI:
     ros2 run pyrobosim_ros demo.py
 
 
-In a separate Terminal, you can send an aaction goal with a task plan or a single action:
+In a separate Terminal, you can send an action goal with a task plan or a single action:
 
 ::
 
