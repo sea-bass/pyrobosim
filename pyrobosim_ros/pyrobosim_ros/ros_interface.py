@@ -276,11 +276,13 @@ class WorldROSWrapper(Node):
             self.get_logger().info(
                 f"Invalid robot name: {goal_handle.request.action.robot}"
             )
+            goal_handle.abort()
             return
         if self.is_robot_busy(robot):
             self.get_logger().info(
                 "Currently executing action(s). Discarding this one."
             )
+            goal_handle.abort()
             return
 
         # Execute the action
@@ -306,11 +308,13 @@ class WorldROSWrapper(Node):
             self.get_logger().info(
                 f"Invalid robot name: {goal_handle.request.plan.robot}"
             )
+            goal_handle.abort()
             return
         if self.is_robot_busy(robot):
             self.get_logger().info(
                 f"Currently executing action(s). Discarding this one."
             )
+            goal_handle.abort()
             return
 
         # Execute the plan
