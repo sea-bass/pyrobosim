@@ -38,19 +38,21 @@ if [ "${ROS_DISTRO}" == "" ]
 then
     echo "Setting up pyrobosim with no ROS distro."
 else
-    echo "Setting up pyrobosim with ROS ${ROS_DISTRO}"
+    echo "Setting up pyrobosim with ROS ${ROS_DISTRO}."
     source /opt/ros/${ROS_DISTRO}/setup.bash
     pushd "${PYROBOSIM_WS}" > /dev/null || exit
     if [ ! -d "build" ]
     then
-        echo "Building colcon workspace..."
+        echo "Building ROS workspace at ${PYROBOSIM_WS}..."
         colcon build
     fi
-    . install/local_setup.bash
+    echo "Sourcing ROS workspace at ${PYROBOSIM_WS}."
+    source install/local_setup.bash
     popd > /dev/null || exit
 fi
 
 # Activate the Python virtual environment
+echo "Activated virtual environment at ${VIRTUALENV_FOLDER}."
 source ${VIRTUALENV_FOLDER}/bin/activate
 
 # Add dependencies to path
@@ -58,5 +60,6 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 PDDLSTREAM_PATH=${SCRIPT_DIR}/../dependencies/pddlstream
 if [ -d "${PDDLSTREAM_PATH}" ]
 then
+    echo "Added PDDLStream to Python path."
     export PYTHONPATH=${PDDLSTREAM_PATH}:$PYTHONPATH
 fi
