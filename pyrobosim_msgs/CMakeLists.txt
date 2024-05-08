@@ -12,8 +12,8 @@ find_package(rclpy REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
-# Generate custom messages
-rosidl_generate_interfaces(${PROJECT_NAME}
+# Generate custom interfaces
+set(msg_files
   "msg/GoalPredicate.msg"
   "msg/GoalSpecification.msg"
   "msg/LocationState.msg"
@@ -23,7 +23,21 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/TaskAction.msg"
   "msg/TaskPlan.msg"
   "msg/WorldState.msg"
+)
+
+set(srv_files
   "srv/RequestWorldState.srv"
+)
+
+set(action_files
+  "action/ExecuteTaskAction.action"
+  "action/ExecuteTaskPlan.action"
+)
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  ${msg_files}
+  ${srv_files}
+  ${action_files}
   DEPENDENCIES geometry_msgs
 )
 

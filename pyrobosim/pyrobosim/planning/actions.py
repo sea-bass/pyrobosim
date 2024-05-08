@@ -133,7 +133,7 @@ class TaskPlan:
         :type actions: list[:class:`pyrobosim.planning.actions.TaskAction`]
         """
         self.actions = actions
-        self.total_cost = sum([a.cost for a in self.actions])
+        self.total_cost = sum([a.cost for a in self.actions if a.cost is not None])
 
     def size(self):
         """

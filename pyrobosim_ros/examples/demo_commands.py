@@ -1,28 +1,30 @@
 #!/usr/bin/env python3
 
 """
-Test script showing how to publish actions and plans
+Example showing how to request task actions and plans.
 """
 
 import rclpy
+from rclpy.action import ActionClient
 from rclpy.node import Node
 import time
 
+from pyrobosim_msgs.action import ExecuteTaskAction, ExecuteTaskPlan
 from pyrobosim_msgs.msg import TaskAction, TaskPlan
 from pyrobosim_msgs.srv import RequestWorldState
 
 
 class Commander(Node):
     def __init__(self):
-        super().__init__("demo_command_publisher")
+        super().__init__("demo_commander")
 
         self.declare_parameter("mode", value="plan")
 
-        # Publisher for a single action
-        self.action_pub = self.create_publisher(TaskAction, "commanded_action", 10)
+        # Action client for a single action
+        self.action_client = ActionClient(self, ExecuteTaskAction, "execute_action")
 
-        # Publisher for a task plan
-        self.plan_pub = self.create_publisher(TaskPlan, "commanded_plan", 10)
+        # Action client for a task plan
+        self.plan_client = ActionClient(self, ExecuteTaskPlan, "execute_task_plan")
 
         # Call world state service to ensure node is running
         self.world_state_client = self.create_client(
@@ -35,6 +37,14 @@ class Commander(Node):
         future = self.world_state_client.call_async(RequestWorldState.Request())
         rclpy.spin_until_future_complete(self, future)
 
+    def send_action_goal(self, goal):
+        self.action_client.wait_for_server()
+        return self.action_client.send_goal_async(goal)
+
+    def send_plan_goal(self, goal):
+        self.plan_client.wait_for_server()
+        return self.plan_client.send_goal_async(goal)
+
 
 def main():
     rclpy.init()
@@ -43,12 +53,13 @@ def main():
     # Choose between action or plan command, based on input parameter.
     mode = cmd.get_parameter("mode").value
     if mode == "action":
-        cmd.get_logger().info("Publishing sample task action...")
-        action_msg = TaskAction(robot="robot", type="navigate", target_location="desk")
-        cmd.action_pub.publish(action_msg)
+        cmd.get_logger().info("Executing task action...")
+        goal = ExecuteTaskAction.Goal()
+        goal.action = TaskAction(robot="robot", type="navigate", target_location="desk")
+        cmd.send_action_goal(goal)
 
     elif mode == "plan":
-        cmd.get_logger().info("Publishing sample task plan...")
+        cmd.get_logger().info("Executing task plan...")
         task_actions = [
             TaskAction(type="navigate", target_location="desk"),
             TaskAction(type="pick", object="water"),
@@ -56,11 +67,12 @@ def main():
             TaskAction(type="place"),
             TaskAction(type="navigate", target_location="kitchen"),
         ]
-        plan_msg = TaskPlan(robot="robot", actions=task_actions)
-        cmd.plan_pub.publish(plan_msg)
+        goal = ExecuteTaskPlan.Goal()
+        goal.plan = TaskPlan(robot="robot", actions=task_actions)
+        cmd.send_plan_goal(goal)
 
     elif mode == "multirobot-plan":
-        cmd.get_logger().info("Publishing sample multirobot task plan...")
+        cmd.get_logger().info("Executing multirobot task plan...")
         task_actions = [
             TaskAction(type="navigate", target_location="desk"),
             TaskAction(type="pick", object="water"),
@@ -68,8 +80,9 @@ def main():
             TaskAction(type="place"),
             TaskAction(type="navigate", target_location="kitchen"),
         ]
-        plan_msg = TaskPlan(robot="robot0", actions=task_actions)
-        cmd.plan_pub.publish(plan_msg)
+        goal = ExecuteTaskPlan.Goal()
+        goal.plan = TaskPlan(robot="robot0", actions=task_actions)
+        cmd.send_plan_goal(goal)
 
         time.sleep(2.0)
 
@@ -80,8 +93,9 @@ def main():
             TaskAction(type="place"),
             TaskAction(type="navigate", target_location="bedroom"),
         ]
-        plan_msg = TaskPlan(robot="robot1", actions=task_actions)
-        cmd.plan_pub.publish(plan_msg)
+        goal = ExecuteTaskPlan.Goal()
+        goal.plan = TaskPlan(robot="robot1", actions=task_actions)
+        cmd.send_plan_goal(goal)
 
         time.sleep(2.0)
 
@@ -91,8 +105,9 @@ def main():
             TaskAction(type="navigate", target_location="counter0_left"),
             TaskAction(type="place"),
         ]
-        plan_msg = TaskPlan(robot="robot2", actions=task_actions)
-        cmd.plan_pub.publish(plan_msg)
+        goal = ExecuteTaskPlan.Goal()
+        goal.plan = TaskPlan(robot="robot2", actions=task_actions)
+        cmd.send_plan_goal(goal)
 
     else:
         cmd.get_logger().error(f"Invalid mode specified: {mode}")

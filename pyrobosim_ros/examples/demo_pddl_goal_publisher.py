@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Test script showing how to publish a goal specification to a PDDLStream planner node.
+Example showing how to publish a goal specification to a PDDLStream planner node.
 """
 
 import rclpy

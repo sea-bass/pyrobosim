@@ -3,7 +3,7 @@
 <package format="3">
   <name>pyrobosim_msgs</name>
   <version>1.2.0</version>
-  <description>Message definitions for pyrobosim package.</description>
+  <description>ROS interface definitions for pyrobosim.</description>
   <maintainer email="sebas.a.castro@gmail.com">Sebastian Castro</maintainer>
   <license>MIT</license>
 

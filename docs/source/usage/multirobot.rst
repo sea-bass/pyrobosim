@@ -46,7 +46,7 @@ You can run a ROS 2 enabled multirobot demo and interact with the GUI:
     ros2 run pyrobosim_ros demo.py --ros-args -p world_file:=test_world_multirobot.yaml
 
 
-In a separate Terminal, you can publish a multirobot plan:
+In a separate Terminal, you can send an action goal with a multirobot plan:
 
 ::
 

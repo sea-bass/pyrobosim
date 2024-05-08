@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Test script showing how to publish velocity commands to a pyrobosim robot.
+Example showing how to publish velocity commands to a pyrobosim robot.
 """
 
 import rclpy

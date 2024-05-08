@@ -208,16 +208,9 @@ class TestRobot:
             TaskAction("pick", object="apple"),
             TaskAction("place", "object", "apple"),
         ]
-        plan = TaskPlan(actions)
+        plan = TaskPlan(actions=actions)
 
-        # Blocking plan
-        result = robot.execute_plan(plan, blocking=True)
-        assert result
+        result, num_completed = robot.execute_plan(plan)
 
-        # Non-blocking plan
-        robot.set_pose(init_pose)
-        result = robot.execute_plan(plan, blocking=False)
         assert result
-        while robot.executing_action:
-            time.sleep(0.1)
-        assert not robot.executing_action
+        assert num_completed == 3
