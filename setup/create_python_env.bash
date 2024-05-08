@@ -16,7 +16,6 @@ source "${VIRTUALENV_FOLDER}/bin/activate"
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 pushd "${SCRIPT_DIR}/.." > /dev/null || exit
 python3 -m pip install --upgrade pip
-# Install catkin-pkg because https://github.com/colcon/colcon-ros/issues/118
 pip3 install ./pyrobosim
 pip3 install -r test/python_test_requirements.txt
 popd > /dev/null || exit
