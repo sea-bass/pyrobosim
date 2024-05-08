@@ -208,7 +208,7 @@ class TestRobot:
             TaskAction("pick", object="apple"),
             TaskAction("place", "object", "apple"),
         ]
-        plan = TaskPlan(actions)
+        plan = TaskPlan(actions=actions)
 
         # Blocking plan
         result, num_completed = robot.execute_plan(plan, blocking=True)
