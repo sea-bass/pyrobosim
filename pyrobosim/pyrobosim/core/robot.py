@@ -463,8 +463,8 @@ class Robot:
         :type blocking: bool, optional
         :param delay: Artificial delay between actions for visualization.
         :type delay: float, optional
-        :return: True if the plan succeeds, or False otherwise.
-        :rtype: bool
+        :return: A tuple containing a boolean for whether the plan succeeded, and the number of completed actions.
+        :rtype: tuple(bool, int)
         """
         if plan is None:
             print(f"[{self.name}] Plan is None. Returning.")
@@ -479,13 +479,17 @@ class Robot:
             self.world.gui.set_buttons_during_action(False)
 
         success = True
+        num_completed = 0
         num_acts = len(plan.actions)
         for n, act_msg in enumerate(plan.actions):
             print(f"[{self.name}] Executing action {act_msg.type} [{n+1}/{num_acts}]")
             success = self.execute_action(act_msg, blocking=blocking)
             if not success:
-                print(f"[{self.name}] Task plan failed to execute on action {n+1}")
+                print(
+                    f"[{self.name}] Task plan failed to execute on action {n+1}/{num_acts}"
+                )
                 break
+            num_completed += 1
             time.sleep(delay)  # Artificial delay between actions
 
         if self.world.has_gui:
@@ -494,7 +498,7 @@ class Robot:
         if blocking:
             self.executing_plan = False
             self.current_plan = None
-        return success
+        return success, num_completed
 
     def __repr__(self):
         """Returns printable string."""

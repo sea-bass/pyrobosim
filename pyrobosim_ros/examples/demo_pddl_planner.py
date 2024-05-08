@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
 """
-Test script showing how to use a PDDLStream planner as a ROS 2 node.
+Example showing how to use a PDDLStream planner as a ROS 2 node.
 """
 
 import os
 import time
 import rclpy
+from rclpy.action import ActionClient
 from rclpy.node import Node
 
 from pyrobosim.core import WorldYamlLoader
@@ -18,6 +19,7 @@ from pyrobosim_ros.ros_conversions import (
     goal_specification_from_ros,
     task_plan_to_ros,
 )
+from pyrobosim_msgs.action import ExecuteTaskPlan
 from pyrobosim_msgs.msg import GoalSpecification, TaskPlan
 from pyrobosim_msgs.srv import RequestWorldState
 
@@ -42,8 +44,8 @@ class PlannerNode(Node):
         self.declare_parameter("verbose", value=True)
         self.declare_parameter("search_sample_ratio", value=0.5)
 
-        # Publisher for a task plan
-        self.plan_pub = self.create_publisher(TaskPlan, "commanded_plan", 10)
+        # Action client for a task plan
+        self.plan_client = ActionClient(self, ExecuteTaskPlan, "execute_task_plan")
 
         # Service client for world state
         self.world_state_client = self.create_client(
@@ -103,6 +105,10 @@ class PlannerNode(Node):
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
     def timer_callback(self):
+        """
+        Timer callback to wait for a goal specification and send a goal.
+        TODO: This should probably be refactored to fully use services/actions.
+        """
         if (not self.planning) and self.latest_goal:
             self.request_world_state()
 
@@ -154,9 +160,12 @@ class PlannerNode(Node):
         if self.get_parameter("verbose").value == True:
             self.get_logger().info(f"{plan}")
 
+        # Send an action goal to execute a task plan, if the plan is valid.
         if plan:
-            plan_msg = task_plan_to_ros(plan)
-            self.plan_pub.publish(plan_msg)
+            goal = ExecuteTaskPlan.Goal()
+            goal.plan = task_plan_to_ros(plan)
+            self.plan_client.wait_for_server()
+            self.plan_client.send_goal_async(goal)
         self.latest_goal = None
         self.planning = False
 

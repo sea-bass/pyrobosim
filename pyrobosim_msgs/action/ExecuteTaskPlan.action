@@ -1,0 +1,15 @@
+# Execute Task Action -- ROS Action Definition
+
+# Goal
+pyrobosim_msgs/TaskPlan plan
+
+---
+
+# Result
+bool success
+int64 num_completed
+int64 num_total
+
+---
+
+# No Feedback

@@ -211,12 +211,13 @@ class TestRobot:
         plan = TaskPlan(actions)
 
         # Blocking plan
-        result = robot.execute_plan(plan, blocking=True)
+        result, num_completed = robot.execute_plan(plan, blocking=True)
         assert result
+        assert num_completed == 3
 
         # Non-blocking plan
         robot.set_pose(init_pose)
-        result = robot.execute_plan(plan, blocking=False)
+        result, num_completed = robot.execute_plan(plan, blocking=False)
         assert result
         while robot.executing_action:
             time.sleep(0.1)

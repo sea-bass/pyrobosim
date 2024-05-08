@@ -3,20 +3,15 @@
 import os
 import numpy as np
 import rclpy
+from rclpy.action import ActionServer
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
-import threading
 import time
 
 from geometry_msgs.msg import Twist
-from pyrobosim_msgs.msg import (
-    RobotState,
-    LocationState,
-    ObjectState,
-    TaskAction,
-    TaskPlan,
-)
+from pyrobosim_msgs.action import ExecuteTaskAction, ExecuteTaskPlan
+from pyrobosim_msgs.msg import RobotState, LocationState, ObjectState
 from pyrobosim_msgs.srv import RequestWorldState
 from .ros_conversions import (
     pose_from_ros,
@@ -85,22 +80,20 @@ class WorldROSWrapper(Node):
         self.action_cb_group = MutuallyExclusiveCallbackGroup()
         self.query_cb_group = MutuallyExclusiveCallbackGroup()
 
-        # Subscriber to single action
-        self.action_sub = self.create_subscription(
-            TaskAction,
-            "commanded_action",
+        # Server for executing single action
+        self.action_server = ActionServer(
+            self,
+            ExecuteTaskAction,
+            "execute_action",
             self.action_callback,
-            10,
-            callback_group=self.action_cb_group,
         )
 
-        # Subscriber to task plan
-        self.plan_sub = self.create_subscription(
-            TaskPlan,
-            "commanded_plan",
+        # Server for executing task plan
+        self.plan_server = ActionServer(
+            self,
+            ExecuteTaskPlan,
+            "execute_task_plan",
             self.plan_callback,
-            10,
-            callback_group=self.action_cb_group,
         )
 
         # World state service server
@@ -271,47 +264,67 @@ class WorldROSWrapper(Node):
             np.array([msg.linear.x, msg.linear.y, msg.angular.z]),
         )
 
-    def action_callback(self, msg):
+    def action_callback(self, goal_handle):
         """
         Handle single action callback.
 
-        :param msg: Task action message to process.
-        :type msg: :class:`pyrobosim_msgs.msg.TaskAction`
+        :param goal_handle: Task action goal handle to process.
+        :type goal_handle: :class:`pyrobosim_msgs.action.TaskAction.Goal`
         """
-        robot = self.world.get_robot_by_name(msg.robot)
+        robot = self.world.get_robot_by_name(goal_handle.request.action.robot)
         if not robot:
-            self.get_logger().info(f"Invalid robot name: {msg.robot}")
+            self.get_logger().info(
+                f"Invalid robot name: {goal_handle.request.action.robot}"
+            )
             return
         if self.is_robot_busy(robot):
             self.get_logger().info(
                 "Currently executing action(s). Discarding this one."
             )
             return
-        action_thread = threading.Thread(
-            target=robot.execute_action, args=(task_action_from_ros(msg),)
-        )
-        action_thread.start()
 
-    def plan_callback(self, msg):
-        """
-        Handle task plan callback.
+        # Execute the action
+        robot_action = task_action_from_ros(goal_handle.request.action)
+        self.get_logger().info(f"Executing action with robot {robot.name}...")
+        success = robot.execute_action(robot_action)
 
-        :param msg: Task plan message to process.
-        :type msg: :class:`pyrobosim_msgs.msg.TaskPlan`
+        # Package up the result
+        goal_handle.succeed()
+        result = ExecuteTaskAction.Result()
+        result.success = success
+        return result
+
+    def plan_callback(self, goal_handle):
         """
-        robot = self.world.get_robot_by_name(msg.robot)
+        Handle task plan action callback.
+
+        :param goal_handle: Task plan action goal handle to process.
+        :type goal_handle: :class:`pyrobosim_msgs.action.TaskPlan.Goal`
+        """
+        robot = self.world.get_robot_by_name(goal_handle.request.plan.robot)
         if not robot:
-            self.get_logger().info(f"Invalid robot name: {msg.robot}")
+            self.get_logger().info(
+                f"Invalid robot name: {goal_handle.request.plan.robot}"
+            )
             return
         if self.is_robot_busy(robot):
             self.get_logger().info(
                 f"Currently executing action(s). Discarding this one."
             )
             return
-        plan_thread = threading.Thread(
-            target=robot.execute_plan, args=(task_plan_from_ros(msg),)
-        )
-        plan_thread.start()
+
+        # Execute the plan
+        self.get_logger().info(f"Executing task plan with robot {robot.name}...")
+        robot_plan = task_plan_from_ros(goal_handle.request.plan)
+        success, num_completed = robot.execute_plan(robot_plan)
+
+        # Package up the result
+        goal_handle.succeed()
+        result = ExecuteTaskPlan.Result()
+        result.success = success
+        result.num_completed = num_completed
+        result.num_total = robot_plan.size()
+        return result
 
     def is_robot_busy(self, robot):
         """
