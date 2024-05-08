@@ -49,7 +49,7 @@ You can run a ROS 2 enabled demo and interact with the GUI:
     ros2 run pyrobosim_ros demo.py
 
 
-In a separate Terminal, you can publish a plan or a single action:
+In a separate Terminal, you can send an aaction goal with a task plan or a single action:
 
 ::
 
@@ -65,7 +65,7 @@ Or, you can run both of these nodes together using a provided launch file:
     ros2 launch pyrobosim_ros demo_commands.launch.py mode:=action
 
 
-The first command will start a world as a ROS 2 node, and the second one will publish a plan (or set of actions) to the node.
+The first command will start a world as a ROS 2 node, and the second one will execute a plan (or set of actions) to the node.
 
 .. image:: ../media/pyrobosim_demo_ros.png
     :align: center

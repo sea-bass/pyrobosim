@@ -20,7 +20,7 @@ from pyrobosim_ros.ros_conversions import (
     task_plan_to_ros,
 )
 from pyrobosim_msgs.action import ExecuteTaskPlan
-from pyrobosim_msgs.msg import GoalSpecification, TaskPlan
+from pyrobosim_msgs.msg import GoalSpecification
 from pyrobosim_msgs.srv import RequestWorldState
 
 
@@ -134,7 +134,7 @@ class PlannerNode(Node):
         self.latest_goal = goal_specification_from_ros(msg, self.world)
 
     def do_plan(self):
-        """Search for a plan and publish it."""
+        """Search for a plan and send it to the appropriate robot(s)."""
         if not self.latest_goal:
             return
 
