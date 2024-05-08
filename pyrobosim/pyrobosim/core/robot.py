@@ -452,15 +452,13 @@ class Robot:
             self.executing_action = False
         return success
 
-    def execute_plan(self, plan, blocking=False, delay=0.5):
+    def execute_plan(self, plan, delay=0.5):
         """
         Executes a task plan, specified as a
         :class:`pyrobosim.planning.actions.TaskPlan` object.
 
         :param plan: Task plan to execute.
         :type plan: :class:`pyrobosim.planning.actions.TaskPlan`
-        :param blocking: True to block execution until the action is complete.
-        :type blocking: bool, optional
         :param delay: Artificial delay between actions for visualization.
         :type delay: float, optional
         :return: A tuple containing a boolean for whether the plan succeeded, and the number of completed actions.
@@ -470,9 +468,8 @@ class Robot:
             print(f"[{self.name}] Plan is None. Returning.")
             return False
 
-        if blocking:
-            self.executing_plan = True
-            self.current_plan = plan
+        self.executing_plan = True
+        self.current_plan = plan
 
         print(f"[{self.name}] Executing task plan...")
         if self.world.has_gui:
@@ -483,7 +480,7 @@ class Robot:
         num_acts = len(plan.actions)
         for n, act_msg in enumerate(plan.actions):
             print(f"[{self.name}] Executing action {act_msg.type} [{n+1}/{num_acts}]")
-            success = self.execute_action(act_msg, blocking=blocking)
+            success = self.execute_action(act_msg, blocking=True)
             if not success:
                 print(
                     f"[{self.name}] Task plan failed to execute on action {n+1}/{num_acts}"
@@ -494,10 +491,10 @@ class Robot:
 
         if self.world.has_gui:
             self.world.gui.set_buttons_during_action(True)
+
         print(f"[{self.name}] Task plan completed with success: {success}")
-        if blocking:
-            self.executing_plan = False
-            self.current_plan = None
+        self.executing_plan = False
+        self.current_plan = None
         return success, num_completed
 
     def __repr__(self):

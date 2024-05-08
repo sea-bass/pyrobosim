@@ -95,7 +95,7 @@ def start_planner(world, domain_name="03_nav_stream", interactive=False):
         max_planner_time=30.0,
     )
     if interactive:
-        robot.execute_plan(plan, blocking=True)
+        robot.execute_plan(plan)
     return plan
 
 

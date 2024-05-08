@@ -80,7 +80,7 @@ def start_planner(world, args):
         max_planner_time=10.0,
         max_time=60.0,
     )
-    robot.execute_plan(plan, blocking=True)
+    robot.execute_plan(plan)
 
 
 if __name__ == "__main__":
