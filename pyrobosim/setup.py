@@ -21,7 +21,7 @@ install_requires = [
     "adjustText",
     "astar",
     "matplotlib",
-    "numpy",
+    "numpy<2.0.0",
     "pycollada",
     "PySide6",
     "PyYAML",
