@@ -74,8 +74,7 @@ COPY . /pyrobosim_ws/src/
 # Install pyrobosim and testing dependencies
 ENV PIP_BREAK_SYSTEM_PACKAGES=1
 WORKDIR /pyrobosim_ws/src
-RUN pip3 install --upgrade pip && \
-    pip3 install -e ./pyrobosim && \
+RUN pip3 install -e ./pyrobosim && \
     pip3 install -r test/python_test_requirements.txt
 
 # Build the ROS workspace
