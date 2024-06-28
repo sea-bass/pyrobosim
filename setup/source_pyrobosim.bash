@@ -25,12 +25,16 @@
 
 # User variables -- change this to meet your needs
 export VIRTUALENV_FOLDER=~/python-virtualenvs/pyrobosim
-export PYROBOSIM_WS=~/pyrobosim_ws
+export PYROBOSIM_WS=~/workspace/pyrobosim_ws
 
 if [ -n "${VIRTUAL_ENV}" ]
 then
     deactivate
 fi
+
+# Activate the Python virtual environment
+echo "Activated virtual environment at ${VIRTUALENV_FOLDER}."
+source ${VIRTUALENV_FOLDER}/bin/activate
 
 # Parse ROS distro argument
 ROS_DISTRO=$1
@@ -50,10 +54,6 @@ else
     source install/local_setup.bash
     popd > /dev/null || exit
 fi
-
-# Activate the Python virtual environment
-echo "Activated virtual environment at ${VIRTUALENV_FOLDER}."
-source ${VIRTUALENV_FOLDER}/bin/activate
 
 # Add dependencies to path
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )

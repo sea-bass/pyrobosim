@@ -20,6 +20,14 @@ pip3 install -r test/python_test_requirements.txt
 popd > /dev/null || exit
 deactivate
 
+# If setting up with ROS, install extra packages
+ROS_ARG=$1
+if [ "${ROS_ARG}" == "ros"]
+then
+  echo "Installing additional packages for ROS setup"
+  pip3 install colcon_common_extensions
+fi
+
 # Print confirmation and instructions at the end
 echo -e "
 
