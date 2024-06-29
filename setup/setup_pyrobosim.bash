@@ -5,7 +5,7 @@
 # User variables
 # Please modify these for your environment
 VIRTUALENV_FOLDER=~/python-virtualenvs/pyrobosim
-ROS_WORKSPACE=~/workspace/pyrobosim_ws
+ROS_WORKSPACE=~/pyrobosim_ws
 
 # Create a Python virtual environment
 [ ! -d "${VIRTUALENV_FOLDER}" ] && mkdir -p ${VIRTUALENV_FOLDER}
@@ -38,7 +38,7 @@ then
   echo ""
   echo "Installing additional packages for ROS ${ROS_DISTRO,,} setup"
   echo "PYROBOSIM_ROS_WORKSPACE=${ROS_WORKSPACE}" >> ${ENV_FILE}
-  echo "PYROBOSIM_ROS_DISTRO=${ROS_DISTRO}" >> ${ENV_FILE}
+  echo "PYROBOSIM_ROS_DISTRO=${ROS_DISTRO,,}" >> ${ENV_FILE}
   pip3 install colcon_common_extensions
 fi
 
