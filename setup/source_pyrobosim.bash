@@ -14,18 +14,21 @@
 #  So you can then run this from your Terminal:
 #    pyrobosim
 #
-# For ROS workflows, enter the ROS distro (humble/iron) as an argument:
-#
-#   pyrobosim_ros() {
-#     source /path/to/pyrobosim/setup/source_pyrobosim.bash humble
-#   }
-#
-#   So you can then call run from your Terminal:
-#     pyrobosim_ros
 
-# User variables -- change this to meet your needs
-export VIRTUALENV_FOLDER=~/python-virtualenvs/pyrobosim
-export PYROBOSIM_WS=~/workspace/pyrobosim_ws
+# Set up the environment
+ENV_FILE="pyrobosim.env"
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+pushd "${SCRIPT_DIR}/.." > /dev/null
+if [ ! -f "${ENV_FILE}" ]
+then
+    popd > /dev/null
+    echo "Did not find a file named ${ENV_FILE} in the root pyrobosim folder."
+    echo "Please rerun the setup_pyrobosim.bash script."
+    return 1
+fi
+unset PYROBOSIM_VENV PYROBOSIM_ROS_WORKSPACE PYROBOSIM_ROS_DISTRO
+source "${ENV_FILE}"
+popd > /dev/null
 
 if [ -n "${VIRTUAL_ENV}" ]
 then
@@ -33,30 +36,28 @@ then
 fi
 
 # Activate the Python virtual environment
-echo "Activated virtual environment at ${VIRTUALENV_FOLDER}."
-source ${VIRTUALENV_FOLDER}/bin/activate
+echo "Activated virtual environment at ${PYROBOSIM_VENV}."
+source ${PYROBOSIM_VENV}/bin/activate
 
 # Parse ROS distro argument
-ROS_DISTRO=$1
-if [ "${ROS_DISTRO}" == "" ]
+if [ -z "${PYROBOSIM_ROS_WORKSPACE}" ]
 then
     echo "Setting up pyrobosim with no ROS distro."
 else
-    echo "Setting up pyrobosim with ROS ${ROS_DISTRO}."
-    source /opt/ros/${ROS_DISTRO}/setup.bash
-    pushd "${PYROBOSIM_WS}" > /dev/null || exit
-    if [ ! -d "build" ]
+    echo "Setting up pyrobosim with ROS ${PYROBOSIM_ROS_DISTRO}."
+    source /opt/ros/${PYROBOSIM_ROS_DISTRO}/setup.bash
+    pushd "${PYROBOSIM_ROS_WORKSPACE}" > /dev/null
+    if [ ! -f "install/setup.bash" ]
     then
-        echo "Building ROS workspace at ${PYROBOSIM_WS}..."
+        echo "Building ROS workspace at ${PYROBOSIM_ROS_WORKSPACE}..."
         colcon build
     fi
-    echo "Sourcing ROS workspace at ${PYROBOSIM_WS}."
-    source install/local_setup.bash
-    popd > /dev/null || exit
+    echo "Sourcing ROS workspace at ${PYROBOSIM_ROS_WORKSPACE}."
+    source install/setup.bash
+    popd > /dev/null
 fi
 
 # Add dependencies to path
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 PDDLSTREAM_PATH=${SCRIPT_DIR}/../dependencies/pddlstream
 if [ -d "${PDDLSTREAM_PATH}" ]
 then
