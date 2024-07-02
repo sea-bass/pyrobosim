@@ -10,7 +10,7 @@ ROS_WORKSPACE=~/pyrobosim_ws
 # Create a Python virtual environment
 [ ! -d "${VIRTUALENV_FOLDER}" ] && mkdir -p ${VIRTUALENV_FOLDER}
 python3 -m venv ${VIRTUALENV_FOLDER}
-echo "Created Python virtual environment in ${VIRTUALENV_FOLDER}"
+echo -e "Created Python virtual environment in ${VIRTUALENV_FOLDER}\n"
 
 # Install all the Python packages required
 # Note that these overlay over whatever ROS 2 already contains
@@ -34,6 +34,14 @@ echo -e ""
 read -p "Do you want to set up ROS? (y/n) : " USE_ROS
 if [ "${USE_ROS,,}" == "y" ]
 then
+  # Validate that the ROS workspace specified exists.
+  if [ ! -d "${ROS_WORKSPACE}" ]
+  then
+      echo -e "\nFolder '${ROS_WORKSPACE}' does not exist."
+      echo "Please configure it to the ROS workspace that contains the 'pyrobosim' repository."
+      return 1
+  fi
+
   read -p "What ROS distro are you using? (humble, iron, jazzy, rolling) : " ROS_DISTRO
   echo ""
   echo "Installing additional packages for ROS ${ROS_DISTRO,,} setup"

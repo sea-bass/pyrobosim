@@ -22,8 +22,8 @@ pushd "${SCRIPT_DIR}/.." > /dev/null
 if [ ! -f "${ENV_FILE}" ]
 then
     popd > /dev/null
-    echo "Did not find a file named ${ENV_FILE} in the root pyrobosim folder."
-    echo "Please rerun the setup_pyrobosim.bash script."
+    echo "Did not find a file named '${ENV_FILE}' in the root pyrobosim folder."
+    echo "Please rerun the 'setup_pyrobosim.bash' script to set up your environment."
     return 1
 fi
 unset PYROBOSIM_VENV PYROBOSIM_ROS_WORKSPACE PYROBOSIM_ROS_DISTRO
@@ -35,17 +35,25 @@ then
     deactivate
 fi
 
-# Activate the Python virtual environment
+# Activate the Python virtual environment.
 echo "Activated virtual environment at ${PYROBOSIM_VENV}."
 source ${PYROBOSIM_VENV}/bin/activate
 
-# Parse ROS distro argument
+# Parse ROS workspace and distro arguments.
 if [ -z "${PYROBOSIM_ROS_WORKSPACE}" ]
 then
     echo "Setting up pyrobosim with no ROS distro."
 else
     echo "Setting up pyrobosim with ROS ${PYROBOSIM_ROS_DISTRO}."
     source /opt/ros/${PYROBOSIM_ROS_DISTRO}/setup.bash
+
+    if [ ! -d "${PYROBOSIM_ROS_WORKSPACE}/src" ]
+    then
+        echo -e "\nFolder '${PYROBOSIM_ROS_WORKSPACE}/src' does not exist."
+        echo "Please rerun the 'setup_pyrobosim.bash' script to set up your environment."
+        return 1
+    fi
+
     pushd "${PYROBOSIM_ROS_WORKSPACE}" > /dev/null
     if [ ! -f "install/setup.bash" ]
     then
