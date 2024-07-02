@@ -1,3 +1,6 @@
+# Environment file written by setup scripts
+pyrobosim.env
+
 # Dependencies folder
 dependencies/
 
