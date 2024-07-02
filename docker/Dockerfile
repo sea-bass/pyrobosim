@@ -29,8 +29,8 @@ RUN mkdir -p /opt/pyrobosim/setup
 WORKDIR /opt/pyrobosim/
 
 # Install PDDLStream
-COPY setup/setup_pddlstream.bash setup/
-RUN setup/setup_pddlstream.bash
+COPY setup/configure_pddlstream.bash setup/
+RUN setup/configure_pddlstream.bash
 
 # Install pip dependencies for testing
 ENV PIP_BREAK_SYSTEM_PACKAGES=1
@@ -65,9 +65,9 @@ RUN apt-get install -y \
 RUN mkdir -p /pyrobosim_ws/src/pyrobosim
 
 # Install dependencies
-COPY setup/setup_pddlstream.bash /pyrobosim_ws/src/setup/
+COPY setup/configure_pddlstream.bash /pyrobosim_ws/src/setup/
 WORKDIR /pyrobosim_ws/src/setup
-RUN ./setup_pddlstream.bash
+RUN ./configure_pddlstream.bash
 
 COPY . /pyrobosim_ws/src/
 

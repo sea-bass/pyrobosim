@@ -26,18 +26,13 @@ To set up your Python virtual environment, configure and run
 
 ::
 
-  ./setup/create_python_env.bash
+  ./setup/setup_pyrobosim.bash
 
 By default, this will create a Python virtual environment in ``~/python-virtualenvs/pyrobosim``.
 
-If you want to use `PDDLStream <https://github.com/caelan/pddlstream>`_ for
-task and motion planning, you should also run:
+You will also get prompts for setting up ROS 2 and PDDLStream for task and motion planning.
 
-::
-
-   ./setup/setup_pddlstream.bash
-
-To then source this virtual environment, run
+To then setup the environment, run
 
 ::
 
@@ -51,28 +46,6 @@ As documented in the above script, we recommend making a bash function in your `
        source /path/to/pyrobosim/setup/source_pyrobosim.bash
     }
 
-Additional ROS 2 Setup
-----------------------
-
-After you have installed ``pyrobosim`` and activated your Python virtual environment,
-you must build your colcon workspace to install the ``pyrobosim_msgs`` and ``pyrobosim_ros`` packages.
-For example, if you have cloned this repo to ``~/pyrobosim_ws/src/pyrobosim``, you can do:
-
-::
-
-    cd ~/pyrobosim_ws
-    colcon build
-    . install/local_setup.bash
-
-For ROS 2 workflows, you can also make bash function to get set up like this:
-
-::
-
-    pyrobosim_ros() {
-       source /path/to/pyrobosim/setup/source_pyrobosim.bash humble
-    }
-
-The additional ``humble`` argument will make sure that ROS 2 Humble and your built colcon workspace are sourced in addition to activating the Python virtual environment.
 
 Docker Setup
 ------------
