@@ -39,7 +39,7 @@ then
   then
       echo -e "\nFolder '${ROS_WORKSPACE}' does not exist."
       echo "Please configure it to the ROS workspace that contains the 'pyrobosim' repository."
-      return 1
+      exit 1
   fi
 
   read -p "What ROS distro are you using? (humble, iron, jazzy, rolling) : " ROS_DISTRO
