@@ -31,6 +31,7 @@ class Robot:
         path_planner=None,
         path_executor=None,
         grasp_generator=None,
+        partial_observability=False,
     ):
         """
         Creates a robot instance.
@@ -61,6 +62,9 @@ class Robot:
         :type path_executor: PathExecutor, optional
         :param grasp_generator: Grasp generator for manipulating objects.
         :type grasp_generator: :class:`pyrobosim.manipulation.grasping.GraspGenerator`, optional
+        :param partial_observability: If False, the robot can access all objects in the world.
+            If True, it must detect new objects at specific locations.
+        :type partial_observability: bool, optional
         """
         # Basic properties
         self.name = name
@@ -95,6 +99,8 @@ class Robot:
         self.executing_plan = False
         self.location = None
         self.manipulated_object = None
+        self.partial_observability = partial_observability
+        self.known_objects = set()
 
     def get_pose(self):
         """
@@ -171,6 +177,21 @@ class Robot:
         :rtype: bool
         """
         return self.dynamics.collision
+
+    def get_known_objects(self):
+        """
+        Returns a list of objects known by the robot.
+
+        :return: The list of known objects.
+        :rtype: list[Object]
+        """
+        if self.world is None:
+            return []
+
+        if self.partial_observability:
+            return list(self.known_objects)
+
+        return self.world.objects
 
     def follow_path(
         self,
@@ -385,6 +406,20 @@ class Robot:
             self.manipulated_object = None
             return True
 
+    def detect_objects(self):
+        """
+        Detects all objects at the robot's current location.
+
+        :return: True if detection succeeds, else False
+        :rtype: bool
+        """
+        if not isinstance(self.location, ObjectSpawn):
+            warnings.warn(f"Robot is not at an object spawn. Cannot detect objects.")
+            return False
+
+        for obj in self.location.children:
+            self.known_objects.add(obj)
+
     def execute_action(self, action, blocking=False):
         """
         Executes an action, specified as a
@@ -439,6 +474,10 @@ class Robot:
                 success = self.world.gui.canvas.place_object(self, action.pose)
             else:
                 success = self.place_object(action.pose)
+
+        elif action.type == "detect":
+            # TODO: Implement gui variant
+            success = self.detect_objects(action.target_location)
 
         else:
             print(f"[{self.name}] Invalid action type: {action.type}")
@@ -503,4 +542,8 @@ class Robot:
 
     def print_details(self):
         """Prints string with details."""
-        print(f"Robot: {self.name}, ID={self.id}\n\t{self.get_pose()}")
+        details_str = f"Robot: {self.name}, ID={self.id}"
+        details_str += f"\n\t{self.get_pose()}"
+        if self.partial_observability:
+            details_str += "\n\tPartial observability on"
+        print(details_str)

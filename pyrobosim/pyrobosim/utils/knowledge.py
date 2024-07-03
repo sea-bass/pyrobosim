@@ -80,6 +80,11 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
     loc_category = None
     obj_category = None
 
+    if robot is None:
+        possible_objects = world.get_objects()
+    else:
+        possible_objects = robot.get_known_objects()
+
     # Direct name search
     entity_list = []
     resolved_queries = set()
@@ -94,7 +99,7 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
                     named_location = spawn
                     resolved_queries.add(elem)
         # Then, directly search for object names and get the location
-        for obj in world.objects:
+        for obj in possible_objects:
             if elem == obj.name:
                 if mode == "location":
                     return obj.parent
@@ -262,7 +267,7 @@ def resolve_to_object(
     ignore_grasped=True,
 ):
     """
-    Resolves a category/location/room query to an object
+    Resolves a category/location/room query to an object.
 
     :param world: World model.
     :type world: :class:`pyrobosim.core.world.World`
@@ -281,11 +286,19 @@ def resolve_to_object(
     :return: The object that meets the category, location, and/or room filters, or None.
     :rtype: :class:`pyrobosim.core.objects.Object`
     """
-    # Filter by category
-    if category is None:
+    # If a robot is not specified, start with the full list of objects.
+    # Otherwise, remove any objects manipulated or unobserved by the robot.
+    if robot is None:
         possible_objects = world.get_objects()
     else:
-        possible_objects = world.get_objects(category_list=[category])
+        possible_objects = robot.get_known_objects()
+
+        if ignore_grasped and robot.manipulated_object in possible_objects:
+            possible_objects.remove(robot.manipulated_object)
+
+    # Filter by category
+    if category is not None:
+        possible_objects = [obj for obj in possible_objects if obj.category in category]
 
     # Filter by room and/or location
     if room is not None:
@@ -312,13 +325,6 @@ def resolve_to_object(
                 or obj.parent.parent.category == location
             )
         ]
-
-    if (
-        ignore_grasped
-        and robot is not None
-        and robot.manipulated_object in possible_objects
-    ):
-        possible_objects.remove(robot.manipulated_object)
 
     obj = apply_resolution_strategy(possible_objects, resolution_strategy, robot=robot)
     if not obj:
