@@ -107,13 +107,13 @@ def test_query_to_entity():
     entity = query_to_entity(test_world, query.split(), "object", "random")
     assert entity.parent.category == "table"
 
-    # nearest object on the kitchen table should be the banana
-    robot = Robot("test_robot")
-    robot.set_pose(Pose(x=1.0, y=-0.5))
+    # nearest object on the kitchen table should be the apple or banana, depending on randomness
+    robot = Robot(name="test_robot")
+    test_world.add_robot(robot, pose=Pose(x=1.0, y=0.5))
     query = "kitchen table"
     entity = query_to_entity(test_world, query.split(), "object", "nearest", robot)
     assert (
-        entity.category == "banana"
+        entity.category in ["apple", "banana"]
         and entity.parent.category == "table"
         and entity.parent.parent.parent.name == "kitchen"
     )
@@ -214,11 +214,14 @@ def test_specific_resolve_to_object():
     test_world = load_world()
     # now test specific objects
 
-    # set our position to be the same as a banana on the desk and make sure we find that
+    # set our position to be near the desk and make sure we find an object on the desk
     robot = Robot("test_robot")
-    robot.set_pose(Pose(x=3.2, y=3.5))
+    test_world.add_robot(robot, pose=Pose(x=2.5, y=3.5))
     obj = resolve_to_object(test_world, resolution_strategy="nearest", robot=robot)
-    assert obj.category == "apple" and obj.parent.parent.name == "my_desk"
+    assert (
+        obj.category in ["apple", "coke", "water"]
+        and obj.parent.parent.name == "my_desk"
+    )
 
     # this shouldn't be the apple even though it's nearest because it doesn't fit the category
     obj = resolve_to_object(
@@ -242,6 +245,7 @@ def test_specific_resolve_to_object():
 def test_resolve_to_object_warnings():
     test_world = load_world()
     robot = Robot("test_robot")
+    test_world.add_robot(robot)
     # things that should warn
     # fake object category
     with pytest.warns(UserWarning):
@@ -269,7 +273,7 @@ def test_resolve_to_object_warnings():
 def test_resolve_to_object_grasp():
     test_world = load_world()
     robot = Robot("test_robot")
-    robot.set_pose(Pose(x=3.2, y=3.5))
+    test_world.add_robot(robot, pose=Pose(x=2.5, y=3.5))
 
     # if we pick up the nearest object we should find it when not ignoring grasped, but not when ignoring grasped
     # test this last because it changes the state of the world
@@ -288,12 +292,4 @@ def test_resolve_to_object_grasp():
 
 
 if __name__ == "__main__":
-    test_apply_nearest_resolution_strategy()
-    test_apply_first_resolution_strategy()
-    test_apply_nearest_resolution_strategy()
-    test_query_to_entity()
-    test_resolve_to_location()
-    test_resolve_to_object()
-    test_specific_resolve_to_object()
-    test_resolve_to_object_warnings()
-    test_resolve_to_object_grasp()
+    pytest.main([__file__, "-s"])

@@ -101,6 +101,7 @@ class Robot:
         self.manipulated_object = None
         self.partial_observability = partial_observability
         self.known_objects = set()
+        self.last_detected_objects = []
 
     def get_pose(self):
         """
@@ -406,19 +407,37 @@ class Robot:
             self.manipulated_object = None
             return True
 
-    def detect_objects(self):
+    def detect_objects(self, target_object=None):
         """
         Detects all objects at the robot's current location.
 
+        :param target_object: The name of a target object or category.
+            If None, the action succeeds regardless of which object is found.
+            Otherwise, the action succeeds only if the target object is found.
         :return: True if detection succeeds, else False
         :rtype: bool
         """
+        self.last_detected_objects = []
+
         if not isinstance(self.location, ObjectSpawn):
             warnings.warn(f"Robot is not at an object spawn. Cannot detect objects.")
             return False
 
+        # Add all the objects at the current robot's location.
         for obj in self.location.children:
             self.known_objects.add(obj)
+
+        # If a target object was specified, look for a matching instance.
+        # We should only return True if one such instance was found.
+        if target_object is None:
+            return True
+        else:
+            self.last_detected_objects = [
+                obj
+                for obj in self.location.children
+                if obj.name == target_object or obj.category == target_object
+            ]
+            return len(self.last_detected_objects) > 0
 
     def execute_action(self, action, blocking=False):
         """
@@ -477,7 +496,7 @@ class Robot:
 
         elif action.type == "detect":
             # TODO: Implement gui variant
-            success = self.detect_objects(action.target_location)
+            success = self.detect_objects(action.target_object)
 
         else:
             print(f"[{self.name}] Invalid action type: {action.type}")
