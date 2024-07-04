@@ -119,7 +119,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.robot_layout = QtWidgets.QGridLayout()
         self.robot_layout.addWidget(QtWidgets.QLabel("Robot name:"), 0, 1)
         self.robot_textbox = QtWidgets.QComboBox()
-        robot_names = [r.name for r in self.world.robots]
+        robot_names = [r.name for r in self.world.robots] + ["world"]
         self.robot_textbox.addItems(robot_names)
         self.robot_textbox.setEditable(True)
         self.robot_textbox.currentTextChanged.connect(self.update_manip_state)
@@ -142,6 +142,9 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.place_button = QtWidgets.QPushButton("Place")
         self.place_button.clicked.connect(self.on_place_click)
         self.action_layout.addWidget(self.place_button)
+        self.detect_button = QtWidgets.QPushButton("Detect")
+        self.detect_button.clicked.connect(self.on_detect_click)
+        self.action_layout.addWidget(self.detect_button)
 
         # World layout (Matplotlib affordances)
         self.world_layout = QtWidgets.QVBoxLayout()
@@ -171,12 +174,13 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
     def update_manip_state(self):
         """Update the manipulation state to enable/disable buttons."""
         robot = self.get_current_robot()
+        self.canvas.show_objects()
         if robot:
             can_pick = robot.manipulated_object is None
             self.pick_button.setEnabled(can_pick)
             self.place_button.setEnabled(not can_pick)
             self.canvas.show_world_state(robot, navigating=False)
-            self.canvas.draw_and_sleep()
+        self.canvas.draw_and_sleep()
 
     def set_buttons_during_action(self, state):
         """
@@ -189,6 +193,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.nav_button.setEnabled(state)
         self.pick_button.setEnabled(state)
         self.place_button.setEnabled(state)
+        self.detect_button.setEnabled(state)
         self.rand_pose_button.setEnabled(state)
 
     ####################
@@ -270,3 +275,11 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             print(f"[{robot.name}] Placing {robot.manipulated_object.name}")
             self.canvas.place_object(robot)
             self.update_manip_state()
+
+    def on_detect_click(self):
+        """Callback to detect objects."""
+        robot = self.get_current_robot()
+        if robot:
+            print(f"[{robot.name}] Detecting objects")
+            obj_query = self.goal_textbox.text() or None
+            self.canvas.detect_objects(robot, obj_query)

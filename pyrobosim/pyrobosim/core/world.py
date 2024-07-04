@@ -545,6 +545,8 @@ class World:
         self.objects.append(obj)
         self.name_to_entity[obj.name] = obj
         self.num_objects += 1
+        if self.has_gui:
+            self.gui.canvas.show_objects()
         return obj
 
     def update_object(self, obj, loc=None, pose=None):
@@ -606,13 +608,17 @@ class World:
         """
         if isinstance(obj, str):
             obj = self.get_object_by_name(obj)
-        if obj in self.objects:
-            self.objects.remove(obj)
-            self.name_to_entity.pop(obj.name)
-            self.num_objects -= 1
-            obj.parent.children.remove(obj)
-            return True
-        return False
+
+        if obj not in self.objects:
+            return False
+
+        self.objects.remove(obj)
+        self.name_to_entity.pop(obj.name)
+        self.num_objects -= 1
+        obj.parent.children.remove(obj)
+        if self.has_gui:
+            self.gui.canvas.show_objects()
+        return True
 
     def remove_all_objects(self, restart_numbering=True):
         """

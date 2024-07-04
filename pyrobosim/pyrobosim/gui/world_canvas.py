@@ -104,6 +104,8 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.robot_bodies = []
         self.robot_dirs = []
         self.robot_lengths = []
+        self.obj_patches = []
+        self.obj_texts = []
         self.path_planner_artists = {"graph": [], "path": []}
 
         # Debug displays (TODO: Should be available from GUI).
@@ -115,17 +117,17 @@ class WorldCanvas(FigureCanvasQTAgg):
         # Start thread for animating robot navigation state.
         if show:
             self.nav_animator = NavAnimator(self)
+            self.nav_animator.finished.connect(self.nav_animator.deleteLater)
             self.nav_animator.start()
 
     def show_robots(self):
         """Draws robots as circles with heading lines for visualization."""
+        self.draw_lock.acquire()
         n_robots = len(self.world.robots)
         for body in self.robot_bodies:
             body.remove()
         for dir in self.robot_dirs:
             dir.remove()
-        for length in self.robot_lengths:
-            length.remove()
         self.robot_bodies = n_robots * [None]
         self.robot_dirs = n_robots * [None]
         self.robot_lengths = n_robots * [None]
@@ -166,14 +168,46 @@ class WorldCanvas(FigureCanvasQTAgg):
                 fontsize=10,
             )
         self.robot_texts = [r.viz_text for r in (self.world.robots)]
+        self.draw_lock.release()
+
+    def show_objects(self):
+        """Draws objects and their associated texts."""
+        self.draw_lock.acquire()
+        for obj_patch in self.obj_patches:
+            obj_patch.remove()
+        for obj_text in self.obj_texts:
+            obj_text.remove()
+        self.obj_patches = []
+        self.obj_texts = []
+
+        robot = self.main_window.get_current_robot()
+        if robot:
+            known_objects = robot.get_known_objects()
+        else:
+            known_objects = self.world.objects
+
+        for obj in known_objects:
+            self.axes.add_patch(obj.viz_patch)
+            xmin, ymin, xmax, ymax = obj.polygon.bounds
+            x = obj.pose.x + 1.0 * (xmax - xmin)
+            y = obj.pose.y + 1.0 * (ymax - ymin)
+            obj.viz_text = self.axes.text(
+                x, y, obj.name, clip_on=True, color=obj.viz_color, fontsize=8
+            )
+        self.obj_patches = [o.viz_patch for o in known_objects]
+        self.obj_texts = [o.viz_text for o in known_objects]
+
+        # Adjust the text to try avoid collisions
+        adjustText.adjust_text(
+            self.obj_texts, iter_lim=100, objects=self.obj_patches, ax=self.axes
+        )
+
+        self.draw_lock.release()
 
     def show(self):
         """
         Displays all entities in the world (robots, rooms, objects, etc.).
         """
-        # Robots
-        self.show_robots()
-
         # Rooms and hallways
         for r in self.world.rooms:
             self.axes.add_patch(r.viz_patch)
@@ -211,25 +245,15 @@ class WorldCanvas(FigureCanvasQTAgg):
                 self.axes.add_patch(spawn.viz_patch)
 
         # Objects
-        for obj in self.world.objects:
-            self.axes.add_patch(obj.viz_patch)
-            xmin, ymin, xmax, ymax = obj.polygon.bounds
-            x = obj.pose.x + 1.0 * (xmax - xmin)
-            y = obj.pose.y + 1.0 * (ymax - ymin)
-            obj.viz_text = self.axes.text(
-                x, y, obj.name, clip_on=True, color=obj.viz_color, fontsize=8
-            )
-        self.obj_patches = [o.viz_patch for o in (self.world.objects)]
-        self.obj_texts = [o.viz_text for o in (self.world.objects)]
+        self.show_objects()
 
-        # Show paths and planner graphs
+        # Robots, along with their paths and planner graphs
+        self.show_robots()
         if len(self.world.robots) > 0:
             self.show_planner_and_path(robot=self.world.robots[0])
 
         self.axes.autoscale()
         self.axes.axis("equal")
-        if self.obj_texts:
-            self.adjust_text(self.obj_texts)
 
     def draw_and_sleep(self):
         """Redraws the figure and waits a small amount of time."""
@@ -285,15 +309,6 @@ class WorldCanvas(FigureCanvasQTAgg):
                     self.world.gui.set_buttons_during_action(True)
 
             time.sleep(sleep_time)
-
-    def adjust_text(self, objs):
-        """
-        Adjust text in a figure.
-
-        :param objs: List of objects to consider for text adjustment
-        :type objs: list
-        """
-        adjustText.adjust_text(objs, lim=100, add_objects=self.obj_patches)
 
     def show_planner_and_path(self, robot=None, path=None):
         """
@@ -468,14 +483,15 @@ class WorldCanvas(FigureCanvasQTAgg):
         :return: True if picking succeeds, else False
         :rtype: bool
         """
-        if robot is not None:
-            success = robot.pick_object(obj_name, grasp_pose)
-            if success:
-                self.update_object_plot(robot.manipulated_object)
-                self.show_world_state(robot)
-                self.draw_and_sleep()
-            return success
-        return False
+        if robot is None:
+            return False
+
+        success = robot.pick_object(obj_name, grasp_pose)
+        if success:
+            self.update_object_plot(robot.manipulated_object)
+            self.show_world_state(robot)
+            self.draw_and_sleep()
+        return success
 
     def place_object(self, robot, pose=None):
         """
@@ -488,14 +504,34 @@ class WorldCanvas(FigureCanvasQTAgg):
         :return: True if placing succeeds, else False
         :rtype: bool
         """
-        if robot is not None:
-            obj = robot.manipulated_object
-            if obj is None:
-                return
-            obj.viz_patch.remove()
-            success = robot.place_object(pose=pose)
-            self.axes.add_patch(obj.viz_patch)
-            self.show_world_state(robot)
-            self.draw_and_sleep()
-            return success
-        return False
+        if robot is None:
+            return False
+
+        obj = robot.manipulated_object
+        if obj is None:
+            return
+        obj.viz_patch.remove()
+        success = robot.place_object(pose=pose)
+        self.axes.add_patch(obj.viz_patch)
+        self.show_world_state(robot)
+        self.draw_and_sleep()
+        return success
+
+    def detect_objects(self, robot, query=None):
+        """
+        Detects objects at the robot's current location.
+
+        :param robot: Robot instance to execute action.
+        :type robot: :class:`pyrobosim.core.robot.Robot`
+        :param query: Query for object detection.
+        :type query: str, optional
+        :return: True if object detection succeeds, else False
+        :rtype: bool
+        """
+        if robot is None:
+            return False
+
+        success = robot.detect_objects(query)
+        self.show_objects()
+        self.draw_and_sleep()
+        return success

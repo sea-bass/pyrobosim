@@ -72,6 +72,9 @@ class Robot:
         self.height = height
         self.color = color
 
+        if name == "world":
+            raise ValueError("Robots cannot be named 'world'")
+
         # Dynamics properties
         self.dynamics = RobotDynamics2D(
             robot=self,
@@ -495,8 +498,12 @@ class Robot:
                 success = self.place_object(action.pose)
 
         elif action.type == "detect":
-            # TODO: Implement gui variant
-            success = self.detect_objects(action.target_object)
+            if self.world.has_gui:
+                success = self.world.gui.canvas.detect_objects(
+                    self, action.target_object
+                )
+            else:
+                success = self.detect_objects(action.target_object)
 
         else:
             print(f"[{self.name}] Invalid action type: {action.type}")
@@ -564,5 +571,5 @@ class Robot:
         details_str = f"Robot: {self.name}, ID={self.id}"
         details_str += f"\n\t{self.get_pose()}"
         if self.partial_observability:
-            details_str += "\n\tPartial observability on"
+            details_str += "\n\tPartial observability enabled"
         print(details_str)

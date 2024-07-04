@@ -105,6 +105,7 @@ def create_world(multirobot=False):
             linear_velocity=1.0, dt=0.1, max_angular_velocity=4.0
         ),
         grasp_generator=GraspGenerator(grasp_props),
+        partial_observability=args.partial_observability,
     )
     planner_config_rrt = {
         "world": world,
@@ -127,6 +128,7 @@ def create_world(multirobot=False):
             color=(0.8, 0.8, 0),
             path_executor=ConstantVelocityExecutor(),
             grasp_generator=GraspGenerator(grasp_props),
+            partial_observability=args.partial_observability,
         )
         planner_config_prm = {
             "world": world,
@@ -145,6 +147,7 @@ def create_world(multirobot=False):
             color=(0, 0.8, 0.8),
             path_executor=ConstantVelocityExecutor(),
             grasp_generator=GraspGenerator(grasp_props),
+            partial_observability=args.partial_observability,
         )
         planner_config_astar = {
             "grid": OccupancyGrid.from_world(
@@ -178,6 +181,11 @@ def parse_args():
         default="",
         help="YAML file name (should be in the pyrobosim/data folder). "
         + "If not specified, a world will be created programmatically.",
+    )
+    parser.add_argument(
+        "--partial-observability",
+        action="store_true",
+        help="If True, robots have partial observability and must detect objects.",
     )
     return parser.parse_args()
 
