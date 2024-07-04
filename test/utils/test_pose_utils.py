@@ -97,6 +97,11 @@ def test_pose_from_lists():
     assert pose.eul == pytest.approx([np.pi / 2, 0.0, -np.pi / 2])
     assert pose.q == pytest.approx([0.5, 0.5, 0.5, -0.5])
 
+    # Invalid list lengths should raise an exception.
+    with pytest.raises(ValueError) as exc_info:
+        Pose.from_list([1.0, 2.0, 3.0, 4.0, 5.0])
+    assert exc_info.value.args[0] == "List must contain 2, 3, 4, 6, or 7 elements."
+
 
 def test_pose_from_transform():
     """Test creating a pose using a transform."""

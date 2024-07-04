@@ -372,6 +372,7 @@ class TestWorldYamlLoading:
                         "width_clearance": 0.01,
                         "depth_clearance": 0.01,
                     },
+                    "partial_observability": True,
                 },
             ],
         }
@@ -399,6 +400,7 @@ class TestWorldYamlLoading:
         assert np.all(
             loader.world.robots[1].dynamics.accel_limits == np.array([2.0, 2.0, 6.0])
         )
+        assert loader.world.robots[1].partial_observability == True
 
         path_planner = loader.world.robots[1].path_planner
         assert isinstance(path_planner, PathPlanner)

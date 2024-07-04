@@ -95,6 +95,11 @@ class TaskAction:
                 act_str += f" at {self.target_location}"
             if self.pose is not None:
                 act_str += f"\nAt {self.pose}"
+        # DETECT
+        elif self.type == "detect":
+            act_str += "Detect"
+            if self.object is not None:
+                act_str += f" {self.object}"
         else:
             print(f"Invalid action type {self.action_type}")
             return None

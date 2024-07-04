@@ -76,7 +76,7 @@ class Pose:
         elif num_elems == 7:
             return cls(x=plist[0], y=plist[1], z=plist[2], q=plist[3:])
         else:
-            raise Exception("List must contain 2, 3, 4, 6, or 7 elements.")
+            raise ValueError("List must contain 2, 3, 4, 6, or 7 elements.")
 
     @classmethod
     def from_transform(cls, tform):

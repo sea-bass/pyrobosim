@@ -128,6 +128,7 @@ class WorldYamlLoader:
                 path_planner=self.get_local_path_planner(robot_data),
                 path_executor=self.get_path_executor(robot_data),
                 grasp_generator=self.get_grasp_generator(robot_data),
+                partial_observability=robot_data.get("partial_observability", False),
             )
 
             loc = robot_data["location"] if "location" in robot_data else None

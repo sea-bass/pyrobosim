@@ -60,7 +60,7 @@ class Hallway:
         if room_end is None:
             raise Exception("room_end must be a valid Room object.")
         if width <= 0.0:
-            raise Exception("width must be a positibe value.")
+            raise Exception("width must be a positive value.")
 
         # Unpack input
         self.room_start = room_start

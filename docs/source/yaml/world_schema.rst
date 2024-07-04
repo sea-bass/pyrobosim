@@ -46,6 +46,7 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
        grasp_generator:  # For object grasp generation
          type: parallel_grasp  # Supported types -- parallel_grasp
          <property>: <grasp_generator_property>
+       partial_observability: False  # If True, robot starts with no detected objects
      - ...
      - ...
 
