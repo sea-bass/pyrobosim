@@ -129,6 +129,7 @@ class TestRobot:
         while robot.executing_nav:
             time.sleep(0.1)
         assert not robot.executing_nav
+        assert robot.last_nav_successful
         pose = robot.get_pose()
         assert pose.x == pytest.approx(goal_pose.x)
         assert pose.y == pytest.approx(goal_pose.y)

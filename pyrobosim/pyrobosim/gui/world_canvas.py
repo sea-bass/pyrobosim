@@ -454,6 +454,12 @@ class WorldCanvas(FigureCanvasQTAgg):
         goal_node = self.world.graph_node_from_entity(goal, robot=robot)
         if not path or path.num_poses < 2:
             path = robot.plan_path(robot.get_pose(), goal_node.pose)
+        if path.num_poses == 0:
+            warnings.warn(f"Failed to plan a path.")
+            robot.executing_nav = False
+            robot.last_nav_successful = False
+            return False
+
         self.show_planner_and_path(robot=robot, path=path)
         robot.follow_path(
             path,
@@ -468,7 +474,7 @@ class WorldCanvas(FigureCanvasQTAgg):
 
         self.show_world_state(robot=robot)
         self.draw_and_sleep()
-        return True
+        return robot.last_nav_successful
 
     def pick_object(self, robot, obj_name, grasp_pose=None):
         """

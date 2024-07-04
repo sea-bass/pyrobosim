@@ -86,9 +86,10 @@ class Robot:
         )
 
         # Navigation properties
+        self.executing_nav = False
+        self.last_nav_successful = False
         self.set_path_planner(path_planner)
         self.set_path_executor(path_executor)
-        self.executing_nav = False
 
         # Manipulation properties
         self.grasp_generator = grasp_generator
@@ -470,8 +471,9 @@ class Robot:
             self.world.gui.set_buttons_during_action(False)
 
         if action.type == "navigate":
+            self.executing_nav = True
+            self.last_nav_successful = False
             if self.world.has_gui:
-                self.executing_nav = True
                 if isinstance(action.target_location, str):
                     tgt_loc = action.target_location
                 else:
@@ -480,18 +482,23 @@ class Robot:
                 self.world.gui.canvas.nav_trigger.emit(self.name, tgt_loc, action.path)
                 while self.executing_nav:
                     time.sleep(0.5)  # Delay to wait for navigation
-                success = True  # TODO Need to keep track of nav status
+                success = self.last_nav_successful
             else:
                 goal_node = self.world.graph_node_from_entity(
                     action.target_location, robot=self
                 )
                 path = self.plan_path(self.get_pose(), goal_node.pose)
-                success = self.follow_path(
-                    path,
-                    target_location=goal_node.parent,
-                    realtime_factor=1.0,
-                    blocking=blocking,
-                )
+
+                if path.num_poses == 0:
+                    warnings.warn("Failed to plan a path.")
+                    success = False
+                else:
+                    success = self.follow_path(
+                        path,
+                        target_location=goal_node.parent,
+                        realtime_factor=1.0,
+                        blocking=blocking,
+                    )
 
         elif action.type == "pick":
             if self.world.has_gui:
