@@ -425,8 +425,6 @@ class WorldCanvas(FigureCanvasQTAgg):
         :return: True if navigation succeeds, else False
         :rtype: bool
         """
-        if isinstance(robot, str):
-            robot = self.world.get_robot_by_name(robot)
         nav_thread = threading.Thread(target=self.navigate, args=(robot, goal, path))
         nav_thread.start()
 
@@ -435,7 +433,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         Animates a path to a goal location using a robot's path executor.
 
         :param robot: Robot instance to execute action.
-        :type robot: :class:`pyrobosim.core.robot.Robot`
+        :type robot: :class:`pyrobosim.core.robot.Robot` or str
         :param goal: Name of goal location (resolved by the world model).
         :type goal: str
         :param path: Path to goal location, defaults to None.
@@ -443,6 +441,8 @@ class WorldCanvas(FigureCanvasQTAgg):
         :return: True if navigation succeeds, else False
         :rtype: bool
         """
+        if isinstance(robot, str):
+            robot = self.world.get_robot_by_name(robot)
         if robot is None:
             warnings.warn("No robot found.")
             return False
