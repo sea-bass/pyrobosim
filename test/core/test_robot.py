@@ -249,6 +249,18 @@ class TestRobot:
         assert result
         assert num_completed == 4
 
+    def test_at_object_spawn(self):
+        """Tests check for robot being at an object spawn."""
+        robot = Robot()
+        robot.world = self.test_world
+        assert not robot.at_object_spawn()
+
+        robot.location = self.test_world.get_entity_by_name("kitchen")
+        assert not robot.at_object_spawn()
+
+        robot.location = self.test_world.get_entity_by_name("table0_tabletop")
+        assert robot.at_object_spawn()
+
     def test_partial_observability(self):
         """Tests partial observability capabilities."""
         robot = Robot(partial_observability=True)

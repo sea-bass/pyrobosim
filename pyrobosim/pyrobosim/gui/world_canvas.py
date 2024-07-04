@@ -306,7 +306,7 @@ class WorldCanvas(FigureCanvasQTAgg):
                 # If the GUI button states did not toggle correctly, force them
                 # to be active once no robots are moving.
                 if self.world.has_gui and self.world.gui.layout_created:
-                    self.world.gui.set_buttons_during_action(True)
+                    self.world.gui.update_button_state()
 
             time.sleep(sleep_time)
 

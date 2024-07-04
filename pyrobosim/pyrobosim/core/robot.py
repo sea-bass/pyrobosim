@@ -182,6 +182,15 @@ class Robot:
         """
         return self.dynamics.collision
 
+    def at_object_spawn(self):
+        """
+        Checks whether a robot is at an object spawn.
+
+        :return: True if the robot is at an object spawn, False otherwise.
+        :rtype: bool
+        """
+        return isinstance(self.location, ObjectSpawn)
+
     def get_known_objects(self):
         """
         Returns a list of objects known by the robot.
@@ -422,7 +431,7 @@ class Robot:
         """
         self.last_detected_objects = []
 
-        if not isinstance(self.location, ObjectSpawn):
+        if not self.at_object_spawn():
             warnings.warn(f"Robot is not at an object spawn. Cannot detect objects.")
             return False
 

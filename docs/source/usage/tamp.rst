@@ -1,3 +1,5 @@
+.. _task_and_motion_planning:
+
 Task and Motion Planning
 ========================
 We use `PDDLStream <https://github.com/caelan/pddlstream>`_ to perform integrated task and motion planning (TAMP).

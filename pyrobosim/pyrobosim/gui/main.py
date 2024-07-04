@@ -6,7 +6,7 @@ import sys
 
 from PySide6 import QtWidgets
 from PySide6.QtCore import QTimer
-from PySide6.QtGui import QScreen
+from PySide6.QtGui import QFont, QScreen
 from matplotlib.backends.qt_compat import QtCore
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
 
@@ -77,7 +77,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.layout_created = False
         self.canvas = WorldCanvas(self, world, show)
         self.create_layout()
-        self.update_manip_state()
+        self.update_button_state()
         self.canvas.show()
 
     def closeEvent(self, _):
@@ -103,6 +103,9 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         """Creates the main GUI layout."""
         self.main_widget = QtWidgets.QWidget()
 
+        bold_font = QFont()
+        bold_font.setBold(True)
+
         # Push buttons
         self.buttons_layout = QtWidgets.QHBoxLayout()
         self.rand_pose_button = QtWidgets.QPushButton("Randomize robot pose")
@@ -115,36 +118,47 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.rand_obj_button.clicked.connect(self.rand_obj_cb)
         self.buttons_layout.addWidget(self.rand_obj_button)
 
-        # Robot edit box
-        self.robot_layout = QtWidgets.QGridLayout()
-        self.robot_layout.addWidget(QtWidgets.QLabel("Robot name:"), 0, 1)
+        # Robot and goal query edit boxes
+        self.queries_layout = QtWidgets.QHBoxLayout()
+
+        robot_name_label = QtWidgets.QLabel("Robot name:")
+        robot_name_label.setFont(bold_font)
+        self.queries_layout.addWidget(robot_name_label)
         self.robot_textbox = QtWidgets.QComboBox()
         robot_names = [r.name for r in self.world.robots] + ["world"]
         self.robot_textbox.addItems(robot_names)
         self.robot_textbox.setEditable(True)
-        self.robot_textbox.currentTextChanged.connect(self.update_manip_state)
-        self.robot_layout.addWidget(self.robot_textbox, 0, 2, 0, 8)
+        self.robot_textbox.currentTextChanged.connect(self.update_button_state)
+        self.queries_layout.addWidget(self.robot_textbox, 3)
 
-        # Goal query edit box
-        self.goal_layout = QtWidgets.QGridLayout()
-        self.goal_layout.addWidget(QtWidgets.QLabel("Goal query:"), 0, 1)
+        self.queries_layout.addWidget(QtWidgets.QWidget(), 1)  # Adds spacing
+
+        goal_query_label = QtWidgets.QLabel("Goal query:")
+        goal_query_label.setFont(bold_font)
+        self.queries_layout.addWidget(goal_query_label)
         self.goal_textbox = QtWidgets.QLineEdit()
-        self.goal_layout.addWidget(self.goal_textbox, 0, 2, 0, 8)
+        self.queries_layout.addWidget(self.goal_textbox, 6)
 
         # Action buttons
-        self.action_layout = QtWidgets.QHBoxLayout()
+        self.action_layout = QtWidgets.QGridLayout()
         self.nav_button = QtWidgets.QPushButton("Navigate")
         self.nav_button.clicked.connect(self.on_navigate_click)
-        self.action_layout.addWidget(self.nav_button)
+        self.action_layout.addWidget(self.nav_button, 0, 0)
         self.pick_button = QtWidgets.QPushButton("Pick")
         self.pick_button.clicked.connect(self.on_pick_click)
-        self.action_layout.addWidget(self.pick_button)
+        self.action_layout.addWidget(self.pick_button, 0, 1)
         self.place_button = QtWidgets.QPushButton("Place")
         self.place_button.clicked.connect(self.on_place_click)
-        self.action_layout.addWidget(self.place_button)
+        self.action_layout.addWidget(self.place_button, 0, 2)
         self.detect_button = QtWidgets.QPushButton("Detect")
         self.detect_button.clicked.connect(self.on_detect_click)
-        self.action_layout.addWidget(self.detect_button)
+        self.action_layout.addWidget(self.detect_button, 1, 0)
+        self.open_button = QtWidgets.QPushButton("Open")
+        self.open_button.setEnabled(False)  # TODO: Add functionality
+        self.action_layout.addWidget(self.open_button, 1, 1)
+        self.close_button = QtWidgets.QPushButton("Close")
+        self.close_button.setEnabled(False)  # TODO: Add functionality
+        self.action_layout.addWidget(self.close_button, 1, 2)
 
         # World layout (Matplotlib affordances)
         self.world_layout = QtWidgets.QVBoxLayout()
@@ -155,8 +169,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         # Main layout
         self.main_layout = QtWidgets.QVBoxLayout(self.main_widget)
         self.main_layout.addLayout(self.buttons_layout)
-        self.main_layout.addLayout(self.robot_layout)
-        self.main_layout.addLayout(self.goal_layout)
+        self.main_layout.addLayout(self.queries_layout)
         self.main_layout.addLayout(self.action_layout)
         self.main_layout.addLayout(self.world_layout)
 
@@ -171,14 +184,19 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
     ####################
     # State Management #
     ####################
-    def update_manip_state(self):
-        """Update the manipulation state to enable/disable buttons."""
+    def update_button_state(self):
+        """Update the state of buttons based on the state of the robot."""
         robot = self.get_current_robot()
         self.canvas.show_objects()
         if robot:
+            at_object_spawn = robot.at_object_spawn()
             can_pick = robot.manipulated_object is None
-            self.pick_button.setEnabled(can_pick)
-            self.place_button.setEnabled(not can_pick)
+
+            self.nav_button.setEnabled(not robot.is_moving())
+            self.pick_button.setEnabled(can_pick and at_object_spawn)
+            self.place_button.setEnabled((not can_pick) and at_object_spawn)
+            self.detect_button.setEnabled(at_object_spawn)
+
             self.canvas.show_world_state(robot, navigating=False)
         self.canvas.draw_and_sleep()
 
@@ -266,7 +284,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             if obj:
                 print(f"[{robot.name}] Picking {obj.name}")
                 self.canvas.pick_object(robot, obj)
-                self.update_manip_state()
+                self.update_button_state()
 
     def on_place_click(self):
         """Callback to place an object."""
@@ -274,7 +292,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         if robot and robot.manipulated_object is not None:
             print(f"[{robot.name}] Placing {robot.manipulated_object.name}")
             self.canvas.place_object(robot)
-            self.update_manip_state()
+            self.update_button_state()
 
     def on_detect_click(self):
         """Callback to detect objects."""
