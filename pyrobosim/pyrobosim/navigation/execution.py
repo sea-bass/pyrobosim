@@ -3,7 +3,6 @@
 import time
 import warnings
 
-from ..utils.pose import Pose
 from ..utils.trajectory import get_constant_speed_trajectory, interpolate_trajectory
 
 
@@ -72,6 +71,7 @@ class ConstantVelocityExecutor:
         # Finalize path execution
         time.sleep(0.1)  # To ensure background threads get the end of the path.
         self.robot.executing_nav = False
+        self.robot.last_nav_successful = True
         self.robot.executing_action = False
         self.robot.current_action = None
-        return True
+        return self.robot.last_nav_successful

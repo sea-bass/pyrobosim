@@ -17,7 +17,7 @@ echo -e "Created Python virtual environment in ${VIRTUALENV_FOLDER}\n"
 source "${VIRTUALENV_FOLDER}/bin/activate"
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 pushd "${SCRIPT_DIR}/.." > /dev/null
-pip3 install ./pyrobosim
+pip3 install -e ./pyrobosim
 pip3 install -r test/python_test_requirements.txt
 
 # Write key variables to file
