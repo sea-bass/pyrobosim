@@ -290,7 +290,7 @@ class Robot:
             obj = obj_query
         else:
             obj = self.world.get_object_by_name(obj_query)
-            if not obj:
+            if not obj and isinstance(obj_query, str):
                 obj = resolve_to_object(
                     self.world,
                     category=obj_query,

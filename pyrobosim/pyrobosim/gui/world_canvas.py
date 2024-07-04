@@ -510,9 +510,11 @@ class WorldCanvas(FigureCanvasQTAgg):
         obj = robot.manipulated_object
         if obj is None:
             return
+        self.obj_patches.remove(obj.viz_patch)
         obj.viz_patch.remove()
         success = robot.place_object(pose=pose)
         self.axes.add_patch(obj.viz_patch)
+        self.obj_patches.append(obj.viz_patch)
         self.show_world_state(robot)
         self.draw_and_sleep()
         return success
