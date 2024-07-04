@@ -78,6 +78,7 @@ def test_task_plan_nondefault_args():
     place_pose = Pose(x=0.8, y=1.0, z=0.5, q=[1.0, 0.0, 0.0, 0.0])
 
     actions = [
+        TaskAction("detect", object="apple", cost=0.125),
         TaskAction("pick", object="apple", source_location="table0", cost=0.5),
         TaskAction(
             "navigate",
@@ -93,9 +94,10 @@ def test_task_plan_nondefault_args():
     plan = TaskPlan(robot="robot0", actions=actions)
 
     assert plan.robot == "robot0"
-    assert len(plan.actions) == 3
-    assert plan.size() == 3
-    assert plan.actions[0].type == "pick"
-    assert plan.actions[1].type == "navigate"
-    assert plan.actions[2].type == "place"
-    assert plan.total_cost == pytest.approx(1.75)
+    assert len(plan.actions) == 4
+    assert plan.size() == 4
+    assert plan.actions[0].type == "detect"
+    assert plan.actions[1].type == "pick"
+    assert plan.actions[2].type == "navigate"
+    assert plan.actions[3].type == "place"
+    assert plan.total_cost == pytest.approx(1.875)

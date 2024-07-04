@@ -60,6 +60,12 @@ class TestRobot:
         assert robot.height == pytest.approx(0.15)
         assert robot.color == pytest.approx((0.5, 0.5, 0.5))
 
+    def test_robot_bad_name(self):
+        """Check that a robot with an invalid name raises an exception."""
+        with pytest.raises(ValueError) as exc_info:
+            Robot(name="world")
+        assert exc_info.value.args[0] == "Robots cannot be named 'world'."
+
     def test_robot_path_planner(self):
         """Check that path planners can be used from a robot."""
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
@@ -157,6 +163,33 @@ class TestRobot:
             result = robot.place_object()
             assert not result
 
+    def test_robot_object_detection(self):
+        """Check that the robot can detect objects."""
+        # Spawn the robot near the kitchen table
+        robot = Robot(
+            pose=Pose(x=1.0, y=0.5, yaw=0.0),
+        )
+        robot.world = self.test_world
+
+        # Detecting objects this way will fail because the robot is not at an object spawn.
+        with pytest.warns(UserWarning) as warn_info:
+            assert not robot.detect_objects()
+        assert (
+            warn_info[0].message.args[0]
+            == "Robot is not at an object spawn. Cannot detect objects."
+        )
+
+        # Moving the robot to a valid location should work.
+        robot.location = self.test_world.get_entity_by_name("table0_tabletop")
+        assert robot.detect_objects()
+        assert len(robot.last_detected_objects) == 2
+
+        # Filtering by category should also affect results.
+        assert robot.detect_objects("apple")
+        assert len(robot.last_detected_objects) == 1
+        assert not robot.detect_objects("water")
+        assert len(robot.last_detected_objects) == 0
+
     def test_execute_action(self):
         """Tests execution of a single action."""
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
@@ -205,6 +238,7 @@ class TestRobot:
                 source_location="kitchen",
                 target_location="my_desk",
             ),
+            TaskAction("detect", object="apple"),
             TaskAction("pick", object="apple"),
             TaskAction("place", "object", "apple"),
         ]
@@ -213,4 +247,21 @@ class TestRobot:
         result, num_completed = robot.execute_plan(plan)
 
         assert result
-        assert num_completed == 3
+        assert num_completed == 4
+
+    def test_partial_observability(self):
+        """Tests partial observability capabilities."""
+        robot = Robot(partial_observability=True)
+
+        # If no world is assigned, there should be no known objects
+        assert len(robot.get_known_objects()) == 0
+
+        # Even after assigning a world, nothing is yet detected
+        robot.world = self.test_world
+        assert len(robot.get_known_objects()) == 0
+
+        # If the robot is at a location, and we run the detect action,
+        # there should now be detected objects.
+        robot.location = self.test_world.get_entity_by_name("table0_tabletop")
+        robot.detect_objects()
+        assert len(robot.get_known_objects()) == 2

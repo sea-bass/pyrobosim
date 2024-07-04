@@ -73,7 +73,7 @@ class Robot:
         self.color = color
 
         if name == "world":
-            raise ValueError("Robots cannot be named 'world'")
+            raise ValueError("Robots cannot be named 'world'.")
 
         # Dynamics properties
         self.dynamics = RobotDynamics2D(
@@ -433,6 +433,7 @@ class Robot:
         # If a target object was specified, look for a matching instance.
         # We should only return True if one such instance was found.
         if target_object is None:
+            self.last_detected_objects = self.location.children
             return True
         else:
             self.last_detected_objects = [
@@ -499,11 +500,9 @@ class Robot:
 
         elif action.type == "detect":
             if self.world.has_gui:
-                success = self.world.gui.canvas.detect_objects(
-                    self, action.target_object
-                )
+                success = self.world.gui.canvas.detect_objects(self, action.object)
             else:
-                success = self.detect_objects(action.target_object)
+                success = self.detect_objects(action.object)
 
         else:
             print(f"[{self.name}] Invalid action type: {action.type}")

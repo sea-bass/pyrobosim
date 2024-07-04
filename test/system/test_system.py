@@ -77,10 +77,10 @@ class TestSystem:
         for nav_query in nav_queries:
             self.nav_helper(nav_query)
 
-    @pytest.mark.dependency(name="test_pick_place", depends=["test_nav"])
-    def test_pick_place(self):
+    @pytest.mark.dependency(name="test_pick_detect_place", depends=["test_nav"])
+    def test_pick_detect_place(self):
         """
-        Test pick and place UI actions.
+        Test pick, detect, and place UI actions.
         """
         pick_place_queries = [
             ("table", "gala", "table"),  # Pick and place in same location
@@ -94,6 +94,9 @@ class TestSystem:
         for pick_query, obj_query, place_query in pick_place_queries:
             # Navigate to pick location
             self.nav_helper(pick_query)
+
+            # Detect objects
+            window.on_detect_click()
 
             # Pick an object
             expected_object = query_to_entity(
