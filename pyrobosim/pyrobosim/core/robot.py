@@ -491,6 +491,8 @@ class Robot:
 
                 if path.num_poses == 0:
                     warnings.warn("Failed to plan a path.")
+                    self.executing_nav = False
+                    self.last_nav_successful = False
                     success = False
                 else:
                     success = self.follow_path(
