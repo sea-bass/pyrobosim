@@ -52,7 +52,6 @@ class NavAnimator(QRunnable):
                 self.canvas.draw_and_sleep()
 
                 # Check if GUI buttons should be disabled
-                # if world.has_gui and world.gui.layout_created:
                 cur_robot = world.gui.get_current_robot()
                 is_cur_robot_moving = (
                     cur_robot in world.robots and cur_robot.is_moving()
@@ -62,7 +61,6 @@ class NavAnimator(QRunnable):
             else:
                 # If the GUI button states did not toggle correctly, force them
                 # to be active once no robots are moving.
-                # if self.world.has_gui and self.world.gui.layout_created:
                 world.gui.update_button_state()
 
             time.sleep(sleep_time)
