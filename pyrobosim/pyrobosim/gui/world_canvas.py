@@ -40,27 +40,18 @@ class NavAnimator(QRunnable):
             # Check if any robot is currently navigating.
             nav_status = [robot.is_moving() for robot in world.robots]
             if any(nav_status):
-                active_robot_indices = [
-                    i for i, status in enumerate(nav_status) if status
-                ]
-
-                # Update the animation.
                 self.canvas.update_robots_plot()
-                self.canvas.show_world_state(
-                    world.robots[active_robot_indices[0]], navigating=True
-                )
-                self.canvas.draw_and_sleep()
 
-                # Check if GUI buttons should be disabled
+                # Show the state of the currently selected robot
                 cur_robot = world.gui.get_current_robot()
-                is_cur_robot_moving = (
-                    cur_robot in world.robots and cur_robot.is_moving()
-                )
-                world.gui.set_buttons_during_action(not is_cur_robot_moving)
+                if cur_robot is not None and cur_robot.is_moving():
+                    self.canvas.show_world_state(cur_robot, navigating=True)
+                    world.gui.set_buttons_during_action(False)
 
+                self.canvas.draw_and_sleep()
             else:
-                # If the GUI button states did not toggle correctly, force them
-                # to be active once no robots are moving.
+                # If the GUI button states did not toggle correctly,
+                # force them to be active once no robots are moving.
                 world.gui.update_button_state()
 
             time.sleep(sleep_time)
@@ -301,7 +292,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         # Rooms and hallways
         for r in self.world.rooms:
             self.axes.add_patch(r.viz_patch)
-            t = self.axes.text(
+            self.axes.text(
                 r.centroid[0],
                 r.centroid[1],
                 r.name,
@@ -321,7 +312,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         # Locations
         for loc in self.world.locations:
             self.axes.add_patch(loc.viz_patch)
-            t = self.axes.text(
+            self.axes.text(
                 loc.pose.x,
                 loc.pose.y,
                 loc.name,
