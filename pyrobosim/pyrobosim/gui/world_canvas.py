@@ -6,15 +6,13 @@ import time
 import threading
 import warnings
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.pyplot import Circle
 from matplotlib.transforms import Affine2D
-from PySide6.QtCore import Signal, QThread
-
-from pyrobosim.utils.motion import Path
+from PySide6.QtCore import QRunnable, QThreadPool
 
 
-class NavAnimator(QThread):
+class NavAnimator(QRunnable):
     """
     Helper class that wraps navigation animation in a QThread.
     """
@@ -28,17 +26,116 @@ class NavAnimator(QThread):
         """
         super(NavAnimator, self).__init__()
         self.canvas = canvas
-        self.running = True
 
     def run(self):
         """Runs the navigation monitor thread."""
+        self.running = True
+        world = self.canvas.world
+
         while not self.canvas.main_window.isVisible():
             time.sleep(0.5)
-        self.canvas.monitor_nav_animation()
+
+        sleep_time = self.canvas.animation_dt / self.canvas.realtime_factor
+        while self.running:
+            # Check if any robot is currently navigating.
+            nav_status = [robot.is_moving() for robot in world.robots]
+            if any(nav_status):
+                active_robot_indices = [
+                    i for i, status in enumerate(nav_status) if status
+                ]
+
+                # Update the animation.
+                self.canvas.update_robots_plot()
+                self.canvas.show_world_state(
+                    world.robots[active_robot_indices[0]], navigating=True
+                )
+                self.canvas.draw_and_sleep()
+
+                # Check if GUI buttons should be disabled
+                # if world.has_gui and world.gui.layout_created:
+                cur_robot = world.gui.get_current_robot()
+                is_cur_robot_moving = (
+                    cur_robot in world.robots and cur_robot.is_moving()
+                )
+                world.gui.set_buttons_during_action(not is_cur_robot_moving)
+
+            else:
+                # If the GUI button states did not toggle correctly, force them
+                # to be active once no robots are moving.
+                # if self.world.has_gui and self.world.gui.layout_created:
+                world.gui.update_button_state()
+
+            time.sleep(sleep_time)
 
     def stop(self):
         """Stops the thread."""
         self.running = False
+
+
+class NavRunner(QRunnable):
+    """
+    Helper class that wraps navigation execution in a QThread.
+    """
+
+    def __init__(self, canvas, robot, goal, path):
+        """
+        Creates a navigation execution thread.
+
+        :param canvas: A world canvas object linked to this thread.
+        :type canvas: :class:`pyrobosim.gui.world_canvas.WorldCanvas`
+        :param robot: Robot instance or name to execute action.
+        :type robot: :class:`pyrobosim.core.robot.Robot` or str
+        :param goal: Name of goal location (resolved by the world model).
+        :type goal: str
+        :param path: Path to goal location, defaults to None.
+        :type path: :class:`pyrobosim.utils.motion.Path`, optional
+        """
+        super(NavRunner, self).__init__()
+        self.canvas = canvas
+        self.robot = robot
+        self.goal = goal
+        self.path = path
+
+    def run(self):
+        """Runs the navigation execution thread."""
+        robot = self.robot
+        world = self.canvas.world
+        path = self.path
+
+        if isinstance(robot, str):
+            robot = world.get_robot_by_name(robot)
+        if robot is None:
+            warnings.warn("No robot found.")
+            return False
+        if robot.path_planner is None:
+            warnings.warn(f"No path planner attached to robot {robot.name}.")
+            return False
+
+        # Find a path, or use an existing one, and start the navigation thread.
+        goal_node = world.graph_node_from_entity(self.goal, robot=robot)
+        if not path or path.num_poses < 2:
+            path = robot.plan_path(robot.get_pose(), goal_node.pose)
+        if path.num_poses == 0:
+            warnings.warn(f"Failed to plan a path.")
+            robot.executing_nav = False
+            robot.last_nav_successful = False
+            return False
+
+        self.canvas.show_planner_and_path(robot=robot, path=path)
+        robot.follow_path(
+            path,
+            target_location=goal_node.parent,
+            realtime_factor=self.canvas.realtime_factor,
+            blocking=False,
+        )
+
+        # Sleep while the robot is executing the action.
+        while robot.executing_nav:
+            time.sleep(0.1)
+
+        self.canvas.show_world_state(robot=robot)
+        self.canvas.draw_and_sleep()
+        return robot.last_nav_successful
 
 
 class WorldCanvas(FigureCanvasQTAgg):
@@ -54,9 +151,6 @@ class WorldCanvas(FigureCanvasQTAgg):
     """ zorder for robot visualization. """
     robot_dir_line_factor = 3.0
     """ Multiplier of robot radius for plotting robot orientation lines. """
-
-    nav_trigger = Signal(str, str, Path)
-    """ Signal to trigger navigation method in a thread-safe manner. """
 
     draw_lock = threading.Lock()
     """ Lock for drawing on the canvas in a thread-safe manner. """
@@ -111,14 +205,13 @@ class WorldCanvas(FigureCanvasQTAgg):
         # Debug displays (TODO: Should be available from GUI).
         self.show_collision_polygons = False
 
-        # Connect triggers for thread-safe execution.
-        self.nav_trigger.connect(self.navigate_in_thread)
+        # Thread pool for managing all long-running tasks in separate threads.
+        self.thread_pool = QThreadPool()
 
         # Start thread for animating robot navigation state.
         if show:
             self.nav_animator = NavAnimator(self)
-            self.nav_animator.finished.connect(self.nav_animator.deleteLater)
-            self.nav_animator.start()
+            self.thread_pool.start(self.nav_animator)
 
     def show_robots(self):
         """Draws robots as circles with heading lines for visualization."""
@@ -265,15 +358,6 @@ class WorldCanvas(FigureCanvasQTAgg):
         time.sleep(0.001)
         self.draw_lock.release()
 
-    def get_animated_artists(self):
-        """Returns a list of artists to animate when blitting."""
-        animated_artists = self.robot_bodies + self.robot_dirs + [self.axes.title]
-        for robot in self.world.robots:
-            held_object = robot.manipulated_object
-            if held_object is not None:
-                animated_artists.extend([held_object.viz_patch, held_object.viz_text])
-        return animated_artists
-
     def monitor_nav_animation(self):
         """
         Monitors the navigation animation (to be started in a separate thread).
@@ -412,7 +496,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         y = obj.pose.y + 1.0 * (ymax - ymin)
         obj.viz_text.set_position((x, y))
 
-    def navigate_in_thread(self, robot, goal, path=None):
+    def navigate(self, robot, goal, path=None):
         """
         Starts a thread to navigate a robot to a goal.
 
@@ -425,56 +509,8 @@ class WorldCanvas(FigureCanvasQTAgg):
         :return: True if navigation succeeds, else False
         :rtype: bool
         """
-        nav_thread = threading.Thread(target=self.navigate, args=(robot, goal, path))
-        nav_thread.start()
-
-    def navigate(self, robot, goal, path=None):
-        """
-        Animates a path to a goal location using a robot's path executor.
-
-        :param robot: Robot instance to execute action.
-        :type robot: :class:`pyrobosim.core.robot.Robot` or str
-        :param goal: Name of goal location (resolved by the world model).
-        :type goal: str
-        :param path: Path to goal location, defaults to None.
-        :type path: :class:`pyrobosim.utils.motion.Path`, optional
-        :return: True if navigation succeeds, else False
-        :rtype: bool
-        """
-        if isinstance(robot, str):
-            robot = self.world.get_robot_by_name(robot)
-        if robot is None:
-            warnings.warn("No robot found.")
-            return False
-        if robot.path_planner is None:
-            warnings.warn(f"No path planner attached to robot {robot.name}.")
-            return False
-
-        # Find a path, or use an existing one, and start the navigation thread.
-        goal_node = self.world.graph_node_from_entity(goal, robot=robot)
-        if not path or path.num_poses < 2:
-            path = robot.plan_path(robot.get_pose(), goal_node.pose)
-        if path.num_poses == 0:
-            warnings.warn(f"Failed to plan a path.")
-            robot.executing_nav = False
-            robot.last_nav_successful = False
-            return False
-
-        self.show_planner_and_path(robot=robot, path=path)
-        robot.follow_path(
-            path,
-            target_location=goal_node.parent,
-            realtime_factor=self.realtime_factor,
-            blocking=False,
-        )
-
-        # Sleep while the robot is executing the action.
-        while robot.executing_nav:
-            time.sleep(0.1)
-
-        self.show_world_state(robot=robot)
-        self.draw_and_sleep()
-        return robot.last_nav_successful
+        nav_thread = NavRunner(self, robot, goal, path)
+        self.thread_pool.start(nav_thread)
 
     def pick_object(self, robot, obj_name, grasp_pose=None):
         """

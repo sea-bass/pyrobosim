@@ -479,7 +479,7 @@ class Robot:
                 else:
                     tgt_loc = action.target_location.name
 
-                self.world.gui.canvas.nav_trigger.emit(self.name, tgt_loc, action.path)
+                self.world.gui.canvas.navigate(self, tgt_loc, action.path)
                 while self.executing_nav:
                     time.sleep(0.5)  # Delay to wait for navigation
                 success = self.last_nav_successful
