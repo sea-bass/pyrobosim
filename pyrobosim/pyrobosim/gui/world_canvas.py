@@ -104,10 +104,10 @@ class NavRunner(QRunnable):
             robot = world.get_robot_by_name(robot)
         if robot is None:
             warnings.warn("No robot found.")
-            return False
+            return
         if robot.path_planner is None:
             warnings.warn(f"No path planner attached to robot {robot.name}.")
-            return False
+            return
 
         # Find a path, or use an existing one, and start the navigation thread.
         goal_node = world.graph_node_from_entity(self.goal, robot=robot)
@@ -117,7 +117,7 @@ class NavRunner(QRunnable):
             warnings.warn(f"Failed to plan a path.")
             robot.executing_nav = False
             robot.last_nav_successful = False
-            return False
+            return
 
         self.canvas.show_planner_and_path(robot=robot, path=path)
         robot.follow_path(
@@ -133,7 +133,6 @@ class NavRunner(QRunnable):
 
         self.canvas.show_world_state(robot=robot)
         self.canvas.draw_and_sleep()
-        return robot.last_nav_successful
 
 
 class WorldCanvas(FigureCanvasQTAgg):
@@ -468,8 +467,6 @@ class WorldCanvas(FigureCanvasQTAgg):
         :type goal: str
         :param path: Path to goal location, defaults to None.
         :type path: :class:`pyrobosim.utils.motion.Path`, optional
-        :return: True if navigation succeeds, else False
-        :rtype: bool
         """
         nav_thread = NavRunner(self, robot, goal, path)
         self.thread_pool.start(nav_thread)
