@@ -9,56 +9,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.pyplot import Circle
 from matplotlib.transforms import Affine2D
-from PySide6.QtCore import QRunnable, QThreadPool
-
-
-class NavAnimator(QRunnable):
-    """
-    Helper class that wraps navigation animation in a QThread.
-    """
-
-    def __init__(self, canvas):
-        """
-        Creates a navigation monitor thread.
-
-        :param canvas: A world canvas object linked to this thread.
-        :type canvas: :class:`pyrobosim.gui.world_canvas.WorldCanvas`
-        """
-        super(NavAnimator, self).__init__()
-        self.canvas = canvas
-
-    def run(self):
-        """Runs the navigation monitor thread."""
-        self.running = True
-        world = self.canvas.world
-
-        while not self.canvas.main_window.isVisible():
-            time.sleep(0.5)
-
-        sleep_time = self.canvas.animation_dt / self.canvas.realtime_factor
-        while self.running:
-            # Check if any robot is currently navigating.
-            nav_status = [robot.is_moving() for robot in world.robots]
-            if any(nav_status):
-                self.canvas.update_robots_plot()
-
-                # Show the state of the currently selected robot
-                cur_robot = world.gui.get_current_robot()
-                if cur_robot is not None and cur_robot.is_moving():
-                    self.canvas.show_world_state(cur_robot, navigating=True)
-                    world.gui.set_buttons_during_action(False)
-
-                self.canvas.draw_and_sleep()
-            else:
-                # If the GUI button states did not toggle correctly,
-                # force them to be active once no robots are moving.
-                world.gui.update_button_state()
-
-            time.sleep(sleep_time)
-
-    def stop(self):
-        """Stops the thread."""
-        self.running = False
+from PySide6.QtCore import QRunnable, QThreadPool, QTimer
 
 
 class NavRunner(QRunnable):
@@ -123,6 +74,7 @@ class NavRunner(QRunnable):
             time.sleep(0.1)
 
         self.canvas.show_world_state(robot=robot)
+        world.gui.update_button_state()
         self.canvas.draw_and_sleep()
 
 
@@ -193,13 +145,15 @@ class WorldCanvas(FigureCanvasQTAgg):
         # Debug displays (TODO: Should be available from GUI).
         self.show_collision_polygons = False
 
-        # Thread pool for managing all long-running tasks in separate threads.
+        # Thread pool for managing long-running tasks in separate threads.
         self.thread_pool = QThreadPool()
 
         # Start thread for animating robot navigation state.
         if show:
-            self.nav_animator = NavAnimator(self)
-            self.thread_pool.start(self.nav_animator)
+            sleep_time_msec = int(1000.0 * self.animation_dt / self.realtime_factor)
+            self.nav_animator = QTimer()
+            self.nav_animator.timeout.connect(self.nav_animation_callback)
+            self.nav_animator.start(sleep_time_msec)
 
     def show_robots(self):
         """Draws robots as circles with heading lines for visualization."""
@@ -381,6 +335,25 @@ class WorldCanvas(FigureCanvasQTAgg):
                 self.path_planner_artists["path"] = path_planner_artists.get("path", [])
 
         self.draw_lock.release()
+
+    def nav_animation_callback(self):
+        """Timer callback function to animate navigating robots."""
+        if not self.main_window.isVisible():
+            return
+
+        world = self.world
+        # Check if any robot is currently navigating.
+        nav_status = [robot.is_moving() for robot in world.robots]
+        if any(nav_status):
+            self.update_robots_plot()
+
+            # Show the state of the currently selected robot
+            cur_robot = world.gui.get_current_robot()
+            if cur_robot is not None and cur_robot.is_moving():
+                self.show_world_state(cur_robot, navigating=True)
+                world.gui.set_buttons_during_action(False)
+
+            self.draw_and_sleep()
 
     def update_robots_plot(self):
         """Updates the robot visualization graphics objects."""

@@ -79,6 +79,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.create_layout()
         self.update_button_state()
         self.canvas.show()
+        self.canvas.show_objects()
 
     def closeEvent(self, _):
         """Cleans up running threads on closing the window."""
@@ -187,7 +188,6 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
     def update_button_state(self):
         """Update the state of buttons based on the state of the robot."""
         robot = self.get_current_robot()
-        self.canvas.show_objects()
         if robot:
             at_object_spawn = robot.at_object_spawn()
             can_pick = robot.manipulated_object is None
@@ -288,6 +288,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
                 print(f"[{robot.name}] Picking {obj.name}")
                 self.canvas.pick_object(robot, obj)
                 self.update_button_state()
+                self.canvas.show_objects()
 
     def on_place_click(self):
         """Callback to place an object."""
@@ -296,6 +297,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             print(f"[{robot.name}] Placing {robot.manipulated_object.name}")
             self.canvas.place_object(robot)
             self.update_button_state()
+            self.canvas.show_objects()
 
     def on_detect_click(self):
         """Callback to detect objects."""
@@ -304,3 +306,4 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             print(f"[{robot.name}] Detecting objects")
             obj_query = self.goal_textbox.text() or None
             self.canvas.detect_objects(robot, obj_query)
+            self.canvas.show_objects()
