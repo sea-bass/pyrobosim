@@ -358,42 +358,6 @@ class WorldCanvas(FigureCanvasQTAgg):
         time.sleep(0.001)
         self.draw_lock.release()
 
-    def monitor_nav_animation(self):
-        """
-        Monitors the navigation animation (to be started in a separate thread).
-        """
-        sleep_time = self.animation_dt / self.realtime_factor
-        while self.nav_animator.running:
-            # Check if any robot is currently navigating.
-            nav_status = [robot.is_moving() for robot in self.world.robots]
-            if any(nav_status):
-                active_robot_indices = [
-                    i for i, status in enumerate(nav_status) if status
-                ]
-
-                # Update the animation.
-                self.update_robots_plot()
-                self.show_world_state(
-                    self.world.robots[active_robot_indices[0]], navigating=True
-                )
-                self.draw_and_sleep()
-
-                # Check if GUI buttons should be disabled
-                if self.world.has_gui and self.world.gui.layout_created:
-                    cur_robot = self.world.gui.get_current_robot()
-                    is_cur_robot_moving = (
-                        cur_robot in self.world.robots and cur_robot.is_moving()
-                    )
-                    self.world.gui.set_buttons_during_action(not is_cur_robot_moving)
-
-            else:
-                # If the GUI button states did not toggle correctly, force them
-                # to be active once no robots are moving.
-                if self.world.has_gui and self.world.gui.layout_created:
-                    self.world.gui.update_button_state()
-
-            time.sleep(sleep_time)
-
     def show_planner_and_path(self, robot=None, path=None):
         """
         Plot the path planner and latest path, if specified.
