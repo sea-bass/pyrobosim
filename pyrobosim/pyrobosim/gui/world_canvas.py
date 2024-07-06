@@ -92,7 +92,7 @@ class WorldCanvas(FigureCanvasQTAgg):
     robot_dir_line_factor = 3.0
     """ Multiplier of robot radius for plotting robot orientation lines. """
 
-    draw_lock = threading.Lock()
+    draw_lock = threading.RLock()
     """ Lock for drawing on the canvas in a thread-safe manner. """
 
     def __init__(
@@ -148,7 +148,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         # Thread pool for managing long-running tasks in separate threads.
         self.thread_pool = QThreadPool()
 
-        # Start thread for animating robot navigation state.
+        # Start timer for animating robot navigation state.
         if show:
             sleep_time_msec = int(1000.0 * self.animation_dt / self.realtime_factor)
             self.nav_animator = QTimer()
@@ -208,6 +208,7 @@ class WorldCanvas(FigureCanvasQTAgg):
     def show_objects(self):
         """Draws objects and their associated texts."""
         self.draw_lock.acquire()
+
         for obj_patch in self.obj_patches:
             obj_patch.remove()
         for obj_text in self.obj_texts:
@@ -292,12 +293,10 @@ class WorldCanvas(FigureCanvasQTAgg):
 
     def draw_and_sleep(self):
         """Redraws the figure and waits a small amount of time."""
-        if self.draw_lock.locked():
-            return
         self.draw_lock.acquire()
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
-        time.sleep(0.001)
+        time.sleep(0.005)
         self.draw_lock.release()
 
     def show_planner_and_path(self, robot=None, path=None):

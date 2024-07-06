@@ -77,9 +77,8 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.layout_created = False
         self.canvas = WorldCanvas(self, world, show)
         self.create_layout()
-        self.update_button_state()
         self.canvas.show()
-        self.canvas.show_objects()
+        self.on_robot_changed()
 
     def closeEvent(self, _):
         """Cleans up running threads on closing the window."""
@@ -129,7 +128,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         robot_names = [r.name for r in self.world.robots] + ["world"]
         self.robot_textbox.addItems(robot_names)
         self.robot_textbox.setEditable(True)
-        self.robot_textbox.currentTextChanged.connect(self.update_button_state)
+        self.robot_textbox.currentTextChanged.connect(self.on_robot_changed)
         self.queries_layout.addWidget(self.robot_textbox, 3)
 
         self.queries_layout.addWidget(QtWidgets.QWidget(), 1)  # Adds spacing
@@ -249,6 +248,11 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         obj_name = np.random.choice(self.world.get_object_names())
         self.goal_textbox.setText(obj_name)
 
+    def on_robot_changed(self):
+        """Callback when the currently selected robot changes."""
+        self.canvas.show_objects()
+        self.update_button_state()
+
     def on_navigate_click(self):
         """Callback to navigate to a goal location."""
         robot = self.get_current_robot()
@@ -288,7 +292,6 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
                 print(f"[{robot.name}] Picking {obj.name}")
                 self.canvas.pick_object(robot, obj)
                 self.update_button_state()
-                self.canvas.show_objects()
 
     def on_place_click(self):
         """Callback to place an object."""
@@ -297,7 +300,6 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             print(f"[{robot.name}] Placing {robot.manipulated_object.name}")
             self.canvas.place_object(robot)
             self.update_button_state()
-            self.canvas.show_objects()
 
     def on_detect_click(self):
         """Callback to detect objects."""
@@ -306,4 +308,4 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             print(f"[{robot.name}] Detecting objects")
             obj_query = self.goal_textbox.text() or None
             self.canvas.detect_objects(robot, obj_query)
-            self.canvas.show_objects()
+            self.update_button_state()
