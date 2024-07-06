@@ -83,7 +83,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
     def closeEvent(self, _):
         """Cleans up running threads on closing the window."""
         self.canvas.nav_animator.stop()
-        self.canvas.nav_animator.wait()
+        self.canvas.thread_pool.waitForDone()
 
     def set_window_dims(self, screen_fraction=0.8):
         """
@@ -198,6 +198,9 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             self.detect_button.setEnabled(at_object_spawn)
 
             self.canvas.show_world_state(robot, navigating=False)
+        else:
+            self.nav_button.setEnabled(False)
+
         self.canvas.draw_and_sleep()
 
     def set_buttons_during_action(self, state):
@@ -264,7 +267,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             return
 
         print(f"[{robot.name}] Navigating to {loc}")
-        self.canvas.navigate_in_thread(robot, loc)
+        self.canvas.navigate(robot, loc)
 
     def on_pick_click(self):
         """Callback to pick an object."""
