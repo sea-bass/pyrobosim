@@ -58,13 +58,12 @@ class PRMPlannerPolygon:
         for i in range(self.max_nodes):
             n_sample = self.sample_configuration()
             if not n_sample:
-                warnings.warn(f"Could not sample more than {i} nodes")
+                warnings.warn(f"Could not sample more than {i} nodes.")
                 break
-            self.graph.add_node(Node(pose=n_sample))
-        self.sampling_time = time.time() - t_start
-
-        for node in self.graph.nodes:
+            node = Node(pose=n_sample)
+            self.graph.add_node(node)
             self.connect_neighbors(node)
+        self.sampling_time = time.time() - t_start
 
     def connect_neighbors(self, node):
         """
@@ -156,7 +155,7 @@ class PRMPlanner(PathPlannerBase):
         self.impl = None
 
         if planner_config.get("grid", None):
-            raise NotImplementedError("Grid based PRM is not supported. ")
+            raise NotImplementedError("PRM planner does not support grid based search.")
         else:
             self.impl = PRMPlannerPolygon(**planner_config)
 
