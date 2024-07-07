@@ -80,3 +80,27 @@ def test_rrt_grid_not_supported():
     with pytest.raises(NotImplementedError) as exc_info:
         PathPlanner("prm", **planner_config)
     assert exc_info.value.args[0] == "PRM planner does not support grid based search."
+
+
+def test_prm_compress_path():
+    """Tests planning with path compression option."""
+    world = WorldYamlLoader().from_yaml(
+        os.path.join(get_data_folder(), "test_world.yaml")
+    )
+    planner_config = {
+        "world": world,
+        "compress_path": False,
+    }
+    prm = PathPlanner("prm", **planner_config)
+    start = Pose(x=-0.3, y=0.6)
+    goal = Pose(x=2.5, y=3.0)
+
+    np.random.seed(1234)  # Use same seed for reproducibility
+    orig_path = prm.plan(start, goal)
+    assert len(orig_path.poses) >= 2
+
+    np.random.seed(1234)  # Use same seed for reproducibility
+    prm.planner.impl.compress_path = True
+    new_path = prm.plan(start, goal)
+    assert len(new_path.poses) >= 2
+    assert new_path.length < orig_path.length
