@@ -3,6 +3,7 @@
 import copy
 import time
 import numpy as np
+import warnings
 
 from .planner_base import PathPlannerBase
 from ..utils.motion import Path, reduce_waypoints_polygon
@@ -191,12 +192,13 @@ class RRTPlannerPolygon:
             elif connected_node:
                 goal_found, _ = self.try_connect_until(self.graph_start, n_new, n_goal)
 
-            # Check max nodes samples or max time elapsed
+            # Check max nodes sampled or max time elapsed
             self.planning_time = time.time() - t_start
             if (
                 self.planning_time > self.max_time
                 or self.nodes_sampled > self.max_nodes_sampled
             ):
+                warnings.warn("Could not find a path from start to goal.")
                 self.latest_path = Path()
                 return self.latest_path
 
@@ -224,6 +226,7 @@ class RRTPlannerPolygon:
                 else:
                     n = n.parent
                     path_poses.append(n.pose)
+
         if self.compress_path:
             path_poses = reduce_waypoints_polygon(
                 self.world, path_poses, self.collision_check_step_dist
@@ -389,7 +392,7 @@ class RRTPlanner(PathPlannerBase):
 
         self.impl = None
         if planner_config.get("grid", None):
-            raise NotImplementedError("RRT does not support grid based search. ")
+            raise NotImplementedError("RRT planner does not support grid based search.")
         else:
             self.impl = RRTPlannerPolygon(**planner_config)
 
