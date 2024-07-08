@@ -65,7 +65,7 @@ def test_prm_no_path():
     assert warn_info[0].message.args[0] == "Could not find a path from start to goal."
 
 
-def test_rrt_grid_not_supported():
+def test_prm_grid_not_supported():
     """Test that PRM is not (yet) supported with occupancy grid maps."""
     world = WorldYamlLoader().from_yaml(
         os.path.join(get_data_folder(), "test_world.yaml")
