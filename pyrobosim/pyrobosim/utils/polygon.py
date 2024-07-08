@@ -233,7 +233,7 @@ def sample_from_polygon(polygon, max_tries=100):
         if polygon.contains(Point(sample_x, sample_y)):
             return sample_x, sample_y
 
-    warnings.warn(f"Exceeded max polygon samples samples: {max_tries}")
+    warnings.warn(f"Exceeded max polygon samples: {max_tries}")
     return None, None
 
 
