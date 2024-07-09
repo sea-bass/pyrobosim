@@ -6,6 +6,7 @@ import numpy as np
 import warnings
 
 from .dynamics import RobotDynamics2D
+from .hallway import Hallway
 from .locations import ObjectSpawn
 from .objects import Object
 from ..manipulation.grasping import Grasp
@@ -207,6 +208,15 @@ class Robot:
 
         return self.world.objects
 
+    def at_openable_location(self):
+        """
+        Checks whether the robot is at an openable location.
+
+        :return: True if the robot is at an openable location, else False.
+        :type: bool
+        """
+        return isinstance(self.location, Hallway)
+
     def follow_path(
         self,
         path,
@@ -283,7 +293,7 @@ class Robot:
         :type obj_query: str
         :param grasp_pose: A pose describing how to manipulate the object.
         :type grasp_pose: :class:`pyrobosim.utils.pose.Pose`, optional
-        :return: True if picking succeeds, else False
+        :return: True if picking succeeds, else False.
         :rtype: bool
         """
         # Validate input
@@ -363,7 +373,7 @@ class Robot:
 
         :param pose: Placement pose (if not specified, will be sampled).
         :type pose: :class:`pyrobosim.utils.pose.Pose`, optional
-        :return: True if placement succeeds, else False
+        :return: True if placement succeeds, else False.
         :rtype: bool
         """
         # Validate input
@@ -427,7 +437,8 @@ class Robot:
         :param target_object: The name of a target object or category.
             If None, the action succeeds regardless of which object is found.
             Otherwise, the action succeeds only if the target object is found.
-        :return: True if detection succeeds, else False
+        :type target_object: str
+        :return: True if detection succeeds, else False.
         :rtype: bool
         """
         self.last_detected_objects = []
@@ -452,6 +463,42 @@ class Robot:
                 if obj.name == target_object or obj.category == target_object
             ]
             return len(self.last_detected_objects) > 0
+
+    def open_location(self):
+        """
+        Opens the robot's current location, if available.
+
+        :return: True if opening the location succeeds, else False.
+        :rtype: bool
+        """
+        if self.location is None:
+            warnings.warn("Robot location is not set. Cannot open.")
+            return False
+
+        if self.at_openable_location() and not self.location.is_open:
+            self.location.is_open = True
+            return True
+
+        warnings.warn("Robot is not at an openable location.")
+        return False
+
+    def close_location(self):
+        """
+        Closes the robot's current location, if available.
+
+        :return: True if closing the location succeeds, else False.
+        :rtype: bool
+        """
+        if self.location is None:
+            warnings.warn("Robot location is not set. Cannot close.")
+            return False
+
+        if self.at_openable_location() and self.location.is_open:
+            self.location.is_open = False
+            return True
+
+        warnings.warn("Robot is not at a closeable location.")
+        return False
 
     def execute_action(self, action, blocking=False):
         """
@@ -521,6 +568,18 @@ class Robot:
                 success = self.world.gui.canvas.detect_objects(self, action.object)
             else:
                 success = self.detect_objects(action.object)
+
+        elif action.type == "open":
+            if self.world.has_gui:
+                success = self.world.gui.canvas.open_location(self)
+            else:
+                success = self.open_location()
+
+        elif action.type == "close":
+            if self.world.has_gui:
+                success = self.world.gui.canvas.close_location(self)
+            else:
+                success = self.close_location()
 
         else:
             print(f"[{self.name}] Invalid action type: {action.type}")

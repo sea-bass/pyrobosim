@@ -5,7 +5,7 @@ from shapely import intersects_xy
 from shapely.geometry import LineString, MultiLineString
 from shapely.plotting import patch_from_polygon
 
-from ..utils.pose import Pose, get_bearing_range
+from ..utils.pose import Pose, get_angle, get_bearing_range
 from ..utils.polygon import inflate_polygon
 from ..utils.search_graph import Node
 
@@ -24,6 +24,7 @@ class Hallway:
         conn_points=[],
         color=[0.4, 0.4, 0.4],
         wall_width=0.2,
+        is_open=True,
     ):
         """
         Creates a Hallway instance between two rooms.
@@ -53,6 +54,8 @@ class Hallway:
         :type color: (float, float, float), optional
         :param wall_width: Width of hallway walls, in meters.
         :type wall_width: float, optional
+        :param is_open: If True, the hallway is open, otherwise it is closed.
+        :type is_open: bool, optional
         """
         # Validate input
         if room_start is None:
@@ -71,6 +74,7 @@ class Hallway:
         self.offset = offset
         self.viz_color = color
         self.graph_nodes = []
+        self.is_open = is_open
 
         # Parse the connection method
         # If the connection is "auto" or "angle", the hallway is a simple rectangle
@@ -133,6 +137,15 @@ class Hallway:
             self.room_end.external_collision_polygon
         )
 
+        # Closed polygon:
+        # Subtract the outer polygons of the adjacent rooms from the regular polygon
+        self.closed_polygon = self.polygon.difference(
+            self.room_start.external_collision_polygon
+        )
+        self.closed_polygon = self.closed_polygon.difference(
+            self.room_end.external_collision_polygon
+        )
+
     def update_visualization_polygon(self):
         """Updates the visualization polygon for the hallway walls."""
         self.buffered_polygon = inflate_polygon(self.polygon, self.wall_width)
@@ -148,12 +161,28 @@ class Hallway:
             zorder=2,
         )
 
+    def get_closed_patch(self):
+        """
+        Returns a patch of the hallway polygon to display when it is closed.
+
+        :param color: The color tuple to use for visualizing.
+        :type color: tuple[int, int, int], optional
+        """
+        return patch_from_polygon(
+            self.closed_polygon,
+            facecolor=self.viz_color,
+            edgecolor=self.viz_color,
+            linewidth=2,
+            alpha=0.5,
+            zorder=2,
+        )
+
     def get_collision_patch(self):
         """
         Returns a patch of the collision polygon for debug visualization.
 
-        :return: Polygon patch of the collision polygon.
-        :rtype: :class:`matplotlib.patches.PathPatch`
+        :param color: The color tuple to use for visualizing.
+        :type color: tuple[int, int, int], optional
         """
         return patch_from_polygon(
             self.internal_collision_polygon,
@@ -177,7 +206,11 @@ class Hallway:
             x, y = pose.x, pose.y
         else:
             x, y = pose[0], pose[1]
-        return intersects_xy(self.internal_collision_polygon, x, y)
+
+        is_free = intersects_xy(self.internal_collision_polygon, x, y)
+        if not self.is_open:
+            is_free = is_free and not intersects_xy(self.closed_polygon, x, y)
+        return is_free
 
     def add_graph_nodes(self):
         """Creates graph nodes for searching."""
@@ -199,6 +232,18 @@ class Hallway:
                 self.graph_nodes.extend(
                     [Node(Pose(x=p[0], y=p[1]), parent=self) for p in line.coords]
                 )
+
+        # Modify the yaw angles for the endpoint poses at the doors.
+        door_pose_start_yaw = get_angle(
+            (self.graph_nodes[0].pose.x, self.graph_nodes[0].pose.y),
+            (self.graph_nodes[1].pose.x, self.graph_nodes[1].pose.y),
+        )
+        self.graph_nodes[0].pose.set_euler_angles(yaw=door_pose_start_yaw)
+        door_pose_end_yaw = get_angle(
+            (self.graph_nodes[-1].pose.x, self.graph_nodes[-1].pose.y),
+            (self.graph_nodes[-2].pose.x, self.graph_nodes[-2].pose.y),
+        )
+        self.graph_nodes[-1].pose.set_euler_angles(yaw=door_pose_end_yaw)
 
     def __repr__(self):
         """Returns printable string."""

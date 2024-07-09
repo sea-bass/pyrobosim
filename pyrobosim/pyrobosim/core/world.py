@@ -834,6 +834,35 @@ class World:
 
         return entity
 
+    def get_hallway_names(self):
+        """
+        Gets all hallway names.
+
+        :return: List of all hallway names.
+        :rtype: list[str]
+        """
+        return [hall.name for hall in self.hallways]
+
+    def get_hallway_by_name(self, name):
+        """
+        Gets a hallway object by its name.
+
+        :param name: Name of hallway.
+        :type name: str
+        :return: Hallway instance matching the input name, or ``None`` if not valid.
+        :rtype: :class:`pyrobosim.core.hallway.Hallway`
+        """
+        if name not in self.name_to_entity:
+            warnings.warn(f"Hallway not found: {name}")
+            return None
+
+        entity = self.name_to_entity[name]
+        if not isinstance(entity, Hallway):
+            warnings.warn(f"Entity {name} found but it is not a Hallway.")
+            return None
+
+        return entity
+
     def get_hallways_from_rooms(self, room1, room2):
         """
         Returns a list of hallways between two rooms.
@@ -1218,12 +1247,10 @@ class World:
         else:
             entity = entity_query
 
-        if (
-            isinstance(entity, ObjectSpawn)
-            or isinstance(entity, Room)
-            or isinstance(entity, Hallway)
-        ):
+        if isinstance(entity, ObjectSpawn) or isinstance(entity, Room):
             graph_nodes = entity.graph_nodes
+        elif isinstance(entity, Hallway):
+            graph_nodes = [entity.graph_nodes[0], entity.graph_nodes[-1]]
         elif isinstance(entity, Object):
             graph_nodes = entity.parent.graph_nodes
         elif isinstance(entity, Location):

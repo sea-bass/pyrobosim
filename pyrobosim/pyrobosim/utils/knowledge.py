@@ -98,6 +98,11 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
                 if elem == spawn.name:
                     named_location = spawn
                     resolved_queries.add(elem)
+        # Also search for hallway names
+        for hall in world.hallways:
+            if elem == hall.name:
+                named_location = hall
+                resolved_queries.add(elem)
         # Then, directly search for object names and get the location
         for obj in possible_objects:
             if elem == obj.name:
