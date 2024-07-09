@@ -366,19 +366,20 @@ class WorldCanvas(FigureCanvasQTAgg):
 
     def update_robots_plot(self):
         """Updates the robot visualization graphics objects."""
-        if len(self.world.robots) != len(self.robot_bodies):
-            self.show_robots()
-        for i, robot in enumerate(self.world.robots):
-            p = robot.get_pose()
-            self.robot_bodies[i].center = p.x, p.y
-            self.robot_dirs[i].set_xdata(
-                p.x + np.array([0, self.robot_lengths[i] * np.cos(p.get_yaw())])
-            )
-            self.robot_dirs[i].set_ydata(
-                p.y + np.array([0, self.robot_lengths[i] * np.sin(p.get_yaw())])
-            )
-            robot.viz_text.set_position((p.x, p.y - 2.0 * robot.radius))
-            self.update_object_plot(robot.manipulated_object)
+        with self.draw_lock:
+            if len(self.world.robots) != len(self.robot_bodies):
+                self.show_robots()
+            for i, robot in enumerate(self.world.robots):
+                p = robot.get_pose()
+                self.robot_bodies[i].center = p.x, p.y
+                self.robot_dirs[i].set_xdata(
+                    p.x + np.array([0, self.robot_lengths[i] * np.cos(p.get_yaw())])
+                )
+                self.robot_dirs[i].set_ydata(
+                    p.y + np.array([0, self.robot_lengths[i] * np.sin(p.get_yaw())])
+                )
+                robot.viz_text.set_position((p.x, p.y - 2.0 * robot.radius))
+                self.update_object_plot(robot.manipulated_object)
 
     def show_world_state(self, robot=None, navigating=False):
         """

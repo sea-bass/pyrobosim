@@ -475,12 +475,20 @@ class Robot:
             warnings.warn("Robot location is not set. Cannot open.")
             return False
 
-        if self.at_openable_location() and not self.location.is_open:
-            self.location.is_open = True
-            return True
+        if self.manipulated_object is not None:
+            warnings.warn("Robot is holding an object. Cannot open.")
+            return False
 
-        warnings.warn("Robot is not at an openable location.")
-        return False
+        if not self.at_openable_location():
+            warnings.warn("Robot is not at an openable location.")
+            return False
+
+        if self.location.is_open:
+            warnings.warn(f"Location {self.location} is already open.")
+            return False
+
+        self.location.is_open = True
+        return True
 
     def close_location(self):
         """
@@ -493,12 +501,20 @@ class Robot:
             warnings.warn("Robot location is not set. Cannot close.")
             return False
 
-        if self.at_openable_location() and self.location.is_open:
-            self.location.is_open = False
-            return True
+        if self.manipulated_object is not None:
+            warnings.warn("Robot is holding an object. Cannot close.")
+            return False
 
-        warnings.warn("Robot is not at a closeable location.")
-        return False
+        if not self.at_openable_location():
+            warnings.warn("Robot is not at a closeable location.")
+            return False
+
+        if not self.location.is_open:
+            warnings.warn(f"Location {self.location} is already closed.")
+            return False
+
+        self.location.is_open = False
+        return True
 
     def execute_action(self, action, blocking=False):
         """
