@@ -247,4 +247,11 @@ class Hallway:
 
     def __repr__(self):
         """Returns printable string."""
-        return f"Hallway: Connecting {self.room_start.name} and {self.room_end.name}"
+        return f"Hallway: {self.name}"
+
+    def print_details(self):
+        """Prints string with details."""
+        open_str = "open" if self.is_open else "closed"
+        print(
+            f"Hallway: Connecting {self.room_start.name} and {self.room_end.name} ({open_str})"
+        )
