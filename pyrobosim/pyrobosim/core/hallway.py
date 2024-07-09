@@ -62,11 +62,11 @@ class Hallway:
         """
         # Validate input
         if room_start is None:
-            raise Exception("room_start must be a valid Room object.")
+            raise ValueError("room_start must be a valid Room object.")
         if room_end is None:
-            raise Exception("room_end must be a valid Room object.")
+            raise ValueError("room_end must be a valid Room object.")
         if width <= 0.0:
-            raise Exception("width must be a positive value.")
+            raise ValueError("width must be a positive value.")
 
         # Unpack input
         self.room_start = room_start
@@ -101,7 +101,7 @@ class Hallway:
             self.points = conn_points
 
         else:
-            raise Exception(f"No valid connection method: {conn_method}")
+            raise ValueError(f"No valid connection method: {conn_method}.")
 
         # Create the hallway polygon
         self.polygon = LineString(self.points)
