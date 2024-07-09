@@ -165,8 +165,8 @@ class Hallway:
         """
         Returns a patch of the hallway polygon to display when it is closed.
 
-        :param color: The color tuple to use for visualizing.
-        :type color: tuple[int, int, int], optional
+        :return: Polygon patch of the closed polygon.
+        :rtype: :class:`matplotlib.patches.PathPatch`
         """
         return patch_from_polygon(
             self.closed_polygon,
@@ -181,8 +181,8 @@ class Hallway:
         """
         Returns a patch of the collision polygon for debug visualization.
 
-        :param color: The color tuple to use for visualizing.
-        :type color: tuple[int, int, int], optional
+        :return: Polygon patch of the collision polygon.
+        :rtype: :class:`matplotlib.patches.PathPatch`
         """
         return patch_from_polygon(
             self.internal_collision_polygon,
