@@ -25,6 +25,7 @@ class Hallway:
         color=[0.4, 0.4, 0.4],
         wall_width=0.2,
         is_open=True,
+        is_locked=False,
     ):
         """
         Creates a Hallway instance between two rooms.
@@ -56,6 +57,8 @@ class Hallway:
         :type wall_width: float, optional
         :param is_open: If True, the hallway is open, otherwise it is closed.
         :type is_open: bool, optional
+        :param is_locked: If True, the hallway is locked, meaning it cannot be opened or closed.
+        :type is_locked: bool, optional
         """
         # Validate input
         if room_start is None:
@@ -75,6 +78,7 @@ class Hallway:
         self.viz_color = color
         self.graph_nodes = []
         self.is_open = is_open
+        self.is_locked = is_locked
 
         # Parse the connection method
         # If the connection is "auto" or "angle", the hallway is a simple rectangle
@@ -252,6 +256,8 @@ class Hallway:
     def print_details(self):
         """Prints string with details."""
         open_str = "open" if self.is_open else "closed"
+        locked_str = "locked" if self.is_locked else "unlocked"
         print(
-            f"Hallway: Connecting {self.room_start.name} and {self.room_end.name} ({open_str})"
+            f"Hallway: Connecting {self.room_start.name} and {self.room_end.name} "
+            + f"({open_str}, {locked_str})"
         )

@@ -483,12 +483,11 @@ class Robot:
             warnings.warn("Robot is not at an openable location.")
             return False
 
-        if self.location.is_open:
-            warnings.warn(f"Location {self.location} is already open.")
-            return False
+        if isinstance(self.location, Hallway):
+            return self.world.open_hallway(self.location)
 
-        self.location.is_open = True
-        return True
+        # This should not happen
+        return False
 
     def close_location(self):
         """
@@ -509,12 +508,11 @@ class Robot:
             warnings.warn("Robot is not at a closeable location.")
             return False
 
-        if not self.location.is_open:
-            warnings.warn(f"Location {self.location} is already closed.")
-            return False
+        if isinstance(self.location, Hallway):
+            return self.world.close_hallway(self.location)
 
-        self.location.is_open = False
-        return True
+        # This should not happen
+        return False
 
     def execute_action(self, action, blocking=False):
         """

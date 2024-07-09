@@ -263,7 +263,7 @@ class World:
         """
         Removes a hallway between two rooms.
 
-        :param hallway: Hallway object remove.
+        :param hallway: Hallway object to remove.
         :type hallway: :class:`pyrobosim.core.hallway.Hallway`
         :return: True if the hallway was successfully removed, else False.
         :rtype: bool
@@ -281,6 +281,102 @@ class World:
             room.update_collision_polygons()
             room.update_visualization_polygon()
             self.update_bounds(entity=hallway, remove=True)
+        return True
+
+    def open_hallway(self, hallway):
+        """
+        Opens a hallway between two rooms.
+
+        :param hallway: Hallway object to open.
+        :type hallway: :class:`pyrobosim.core.hallway.Hallway`
+        :return: True if the hallway was successfully opened, else False.
+        :rtype: bool
+        """
+        # Validate the input
+        if not hallway in self.hallways:
+            warnings.warn("Invalid hallway specified.")
+            return False
+
+        if hallway.is_open:
+            warnings.warn(f"{hallway} is already open.")
+            return False
+
+        if hallway.is_locked:
+            warnings.warn(f"{hallway} is locked.")
+            return False
+
+        hallway.is_open = True
+        if self.has_gui:
+            self.gui.canvas.show_hallways()
+        return True
+
+    def close_hallway(self, hallway):
+        """
+        Close a hallway between two rooms.
+
+        :param hallway: Hallway object to close.
+        :type hallway: :class:`pyrobosim.core.hallway.Hallway`
+        :return: True if the hallway was successfully closed, else False.
+        :rtype: bool
+        """
+        # Validate the input
+        if not hallway in self.hallways:
+            warnings.warn("Invalid hallway specified.")
+            return False
+
+        if not hallway.is_open:
+            warnings.warn(f"{hallway} is already closed.")
+            return False
+
+        if hallway.is_locked:
+            warnings.warn(f"{hallway} is locked.")
+            return False
+
+        hallway.is_open = False
+        if self.has_gui:
+            self.gui.canvas.show_hallways()
+        return True
+
+    def lock_hallway(self, hallway):
+        """
+        Locks a hallway between two rooms.
+
+        :param hallway: Hallway object to lock.
+        :type hallway: :class:`pyrobosim.core.hallway.Hallway`
+        :return: True if the hallway was successfully locked, else False.
+        :rtype: bool
+        """
+        # Validate the input
+        if not hallway in self.hallways:
+            warnings.warn("Invalid hallway specified.")
+            return False
+
+        if hallway.is_locked:
+            warnings.warn(f"{hallway} is already locked.")
+            return False
+
+        hallway.is_locked = True
+        return True
+
+    def unlock_hallway(self, hallway):
+        """
+        Unlocks a hallway between two rooms.
+
+        :param hallway: Hallway object to unlock.
+        :type hallway: :class:`pyrobosim.core.hallway.Hallway`
+        :return: True if the hallway was successfully unlocked, else False.
+        :rtype: bool
+        """
+        # Validate the input
+        if not hallway in self.hallways:
+            warnings.warn("Invalid hallway specified.")
+            return False
+
+        if not hallway.is_locked:
+            warnings.warn(f"{hallway} is already unlocked.")
+            return False
+
+        hallway.is_locked = False
         return True
 
     def add_location(self, **location_config):
