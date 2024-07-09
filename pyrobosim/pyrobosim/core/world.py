@@ -308,6 +308,7 @@ class World:
         hallway.is_open = True
         if self.has_gui:
             self.gui.canvas.show_hallways()
+            self.gui.canvas.draw_and_sleep()
         return True
 
     def close_hallway(self, hallway):
@@ -335,6 +336,7 @@ class World:
         hallway.is_open = False
         if self.has_gui:
             self.gui.canvas.show_hallways()
+            self.gui.canvas.draw_and_sleep()
         return True
 
     def lock_hallway(self, hallway):

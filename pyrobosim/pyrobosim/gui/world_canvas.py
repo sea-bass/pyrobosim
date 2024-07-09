@@ -525,11 +525,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         if robot is None:
             return False
 
-        success = robot.open_location()
-        if success:
-            self.show_hallways()
-            self.draw_and_sleep()
-        return success
+        return robot.open_location()
 
     def close_location(self, robot):
         """
@@ -543,8 +539,4 @@ class WorldCanvas(FigureCanvasQTAgg):
         if robot is None:
             return False
 
-        success = robot.close_location()
-        if success:
-            self.show_hallways()
-            self.draw_and_sleep()
-        return success
+        return robot.close_location()
