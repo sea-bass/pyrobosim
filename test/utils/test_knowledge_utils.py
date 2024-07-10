@@ -93,12 +93,25 @@ def test_apply_nearest_resolution_strategy():
 
 def test_query_to_entity():
     test_world = load_world()
+
+    # Query exactly named entities
+    entity = query_to_entity(test_world, ["apple0"], "object")
+    assert entity.name == "apple0"
+    entity = query_to_entity(test_world, ["table0"], "location")
+    assert entity.name == "table0"
+    entity = query_to_entity(test_world, ["kitchen"], "location")
+    assert entity.name == "kitchen"
+    entity = query_to_entity(test_world, ["my_desk_desktop"], "location")
+    assert entity.name == "my_desk_desktop"
+    entity = query_to_entity(test_world, ["hall_kitchen_bathroom"], "location")
+    assert entity.name == "hall_kitchen_bathroom"
+
+    # Query entities based on locations and categories
     query = "kitchen table apple"
     entity = query_to_entity(test_world, query.split(), "location")
     assert entity.name == "table0_tabletop"
     entity = query_to_entity(test_world, query.split(), "object")
     assert entity.name == "gala"
-
     query = "kitchen table"
     entity = query_to_entity(test_world, query.split(), "location")
     assert entity.name == "table0"

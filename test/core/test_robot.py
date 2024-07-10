@@ -90,6 +90,12 @@ class TestRobot:
         assert path.poses[0] == init_pose
         assert path.poses[-1] == goal_pose
 
+        # Provide no goal pose
+        with pytest.warns(UserWarning) as warn_info:
+            path = robot.plan_path()
+        assert path is None
+        assert warn_info[0].message.args[0] == "Did not specify a goal. Returning None."
+
     def test_robot_path_executor(self):
         """Check that path executors can be used from a robot."""
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
@@ -102,7 +108,7 @@ class TestRobot:
             path_executor=ConstantVelocityExecutor(linear_velocity=5.0, dt=0.1),
         )
         robot.world = self.test_world
-        robot.location = self.test_world.get_entity_by_name("kitchen")
+        robot.location = "kitchen"
 
         # Non-threaded option -- blocks
         robot.set_pose(init_pose)
@@ -144,6 +150,21 @@ class TestRobot:
         robot.world = self.test_world
         robot.location = self.test_world.get_entity_by_name("table0_tabletop")
 
+        # Try pick with a object query that cannot not be found.
+        with pytest.warns(UserWarning) as warn_info:
+            result = robot.pick_object("nonexistent")
+        assert not result
+        assert "Could not resolve object query" in warn_info[0].message.args[0]
+
+        # Try pick with a object query that can be found, but is not in the robot's location.
+        with pytest.warns(UserWarning) as warn_info:
+            result = robot.pick_object("apple0")
+        assert not result
+        assert (
+            warn_info[0].message.args[0]
+            == "apple0 is at my_desk_desktop and robot is at table0_tabletop. Cannot pick."
+        )
+
         # Pick up the apple on the kitchen table (named "gala")
         result = robot.pick_object("apple")
         assert result
@@ -154,15 +175,37 @@ class TestRobot:
             result = robot.pick_object("banana")
             assert not result
 
-        # Try place the object
+        # Try place the object at a location that does not permit placing.
+        robot.location = "bedroom"
+        with pytest.warns(UserWarning) as warn_info:
+            result = robot.place_object()
+        assert not result
+        assert (
+            warn_info[0].message.args[0]
+            == "Room: bedroom is not an object spawn. Cannot place object."
+        )
+
+        # Try place the object at a valid location.
+        robot.location = "table0_tabletop"
         result = robot.place_object()
         assert result
         assert robot.manipulated_object is None
 
         # Try place an object, which should fail since the robot is holding nothing.
-        with pytest.warns(UserWarning):
+        with pytest.warns(UserWarning) as warn_info:
             result = robot.place_object()
-            assert not result
+        assert not result
+        assert warn_info[0].message.args[0] == "No manipulated object. Cannot place."
+
+        # Pick an object again, and try place it with an explicit pose.
+        robot.pick_object("apple")
+        with pytest.warns(UserWarning) as warn_info:
+            result = robot.place_object(pose=Pose(x=100.0, y=100.0))
+        assert not result
+        assert (
+            warn_info[0].message.args[0]
+            == "Pose in collision or not in location table0_tabletop."
+        )
 
     def test_robot_object_detection(self):
         """Check that the robot can detect objects."""
@@ -190,6 +233,61 @@ class TestRobot:
         assert len(robot.last_detected_objects) == 1
         assert not robot.detect_objects("water")
         assert len(robot.last_detected_objects) == 0
+
+    def test_robot_open_close(self):
+        """Check that the robot can open or close objects."""
+        robot = Robot(
+            pose=Pose(x=1.0, y=0.5, yaw=0.0),
+        )
+        robot.world = self.test_world
+
+        # Try to open and close with an unset location.
+        with pytest.warns(UserWarning) as warn_info:
+            result = robot.open_location()
+        assert not result
+        assert warn_info[0].message.args[0] == "Robot location is not set. Cannot open."
+
+        with pytest.warns(UserWarning) as warn_info:
+            result = robot.close_location()
+        assert not result
+        assert (
+            warn_info[0].message.args[0] == "Robot location is not set. Cannot close."
+        )
+
+        # Now set the location to a non-openable location, and get a different warning.
+        robot.location = self.test_world.get_room_by_name("kitchen")
+        with pytest.warns(UserWarning) as warn_info:
+            result = robot.open_location()
+        assert not result
+        assert warn_info[0].message.args[0] == "Robot is not at an openable location."
+
+        with pytest.warns(UserWarning) as warn_info:
+            result = robot.close_location()
+        assert not result
+        assert warn_info[0].message.args[0] == "Robot is not at a closeable location."
+
+        # Set the location to an openable location, which should work.
+        robot.location = self.test_world.get_hallways_from_rooms("kitchen", "bedroom")[
+            0
+        ]
+        assert robot.close_location()
+        assert robot.open_location()
+
+        # Set a manipulated object, which will stop open/close from succeeding.
+        robot.manipulated_object = self.test_world.get_object_by_name("banana0")
+        with pytest.warns(UserWarning) as warn_info:
+            result = robot.open_location()
+        assert not result
+        assert (
+            warn_info[0].message.args[0] == "Robot is holding an object. Cannot open."
+        )
+
+        with pytest.warns(UserWarning) as warn_info:
+            result = robot.close_location()
+        assert not result
+        assert (
+            warn_info[0].message.args[0] == "Robot is holding an object. Cannot close."
+        )
 
     def test_execute_action(self):
         """Tests execution of a single action."""
@@ -222,6 +320,21 @@ class TestRobot:
         assert not robot.executing_action
         assert robot.current_action is None
 
+    def test_execute_invalid_action(self):
+        """Tests execution of an action that is not recognized as a valid type."""
+        init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
+        robot = Robot(name="test_robot", pose=init_pose)
+        robot.world = self.test_world
+        action = TaskAction("bad_action")
+
+        with pytest.warns(UserWarning) as warn_info:
+            result = robot.execute_action(action)
+        assert not result
+        assert (
+            warn_info[0].message.args[0]
+            == "[test_robot] Invalid action type: bad_action."
+        )
+
     def test_execute_plan(self):
         """Tests execution of a plan consisting of multiple actions."""
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
@@ -242,13 +355,31 @@ class TestRobot:
             TaskAction("detect", object="apple"),
             TaskAction("pick", object="apple"),
             TaskAction("place", "object", "apple"),
+            TaskAction(
+                "navigate",
+                source_location="my_desk",
+                target_location="hall_kitchen_bedroom",
+            ),
+            TaskAction("close", target_location="hall_kitchen_bedroom"),
+            TaskAction("open", target_location="hall_kitchen_bedroom"),
         ]
         plan = TaskPlan(actions=actions)
 
         result, num_completed = robot.execute_plan(plan)
 
         assert result
-        assert num_completed == 4
+        assert num_completed == 7
+
+    def test_execute_blank_plan(self):
+        """Tests a trivial case of executing a plan that is None."""
+        init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
+        robot = Robot(name="test_robot", pose=init_pose)
+        robot.world = self.test_world
+
+        with pytest.warns(UserWarning) as warn_info:
+            result = robot.execute_plan(None)
+        assert not result
+        assert warn_info[0].message.args[0] == "[test_robot] Plan is None. Returning."
 
     def test_at_object_spawn(self):
         """Tests check for robot being at an object spawn."""

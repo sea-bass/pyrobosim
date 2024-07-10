@@ -378,7 +378,7 @@ class Robot:
         """
         # Validate input
         if self.manipulated_object is None:
-            warnings.warn("No manipulated object.")
+            warnings.warn("No manipulated object. Cannot place.")
             return False
 
         # Validate the robot location
@@ -596,7 +596,7 @@ class Robot:
                 success = self.close_location()
 
         else:
-            print(f"[{self.name}] Invalid action type: {action.type}")
+            warnings.warn(f"[{self.name}] Invalid action type: {action.type}.")
             success = False
 
         if self.world.has_gui:
@@ -620,7 +620,7 @@ class Robot:
         :rtype: tuple(bool, int)
         """
         if plan is None:
-            print(f"[{self.name}] Plan is None. Returning.")
+            warnings.warn(f"[{self.name}] Plan is None. Returning.")
             return False
 
         self.executing_plan = True
