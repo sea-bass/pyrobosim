@@ -84,6 +84,8 @@ hallways:
     room_end: bathroom
     width: 0.7
     conn_method: auto
+    is_open: True
+    is_locked: False
 
   - room_start: bathroom
     room_end: bedroom
@@ -91,6 +93,8 @@ hallways:
     conn_method: angle
     conn_angle: 0.0
     offset: 0.8
+    is_open: True
+    is_locked: False
 
   - room_start: kitchen
     room_end: bedroom
@@ -100,6 +104,8 @@ hallways:
       - [1.0, 0.5]
       - [2.5, 0.5]
       - [2.5, 3.0]
+    is_open: True
+    is_locked: False
 
 
 # LOCATIONS: Can contain objects

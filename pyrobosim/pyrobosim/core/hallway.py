@@ -5,7 +5,7 @@ from shapely import intersects_xy
 from shapely.geometry import LineString, MultiLineString
 from shapely.plotting import patch_from_polygon
 
-from ..utils.pose import Pose, get_bearing_range
+from ..utils.pose import Pose, get_angle, get_bearing_range
 from ..utils.polygon import inflate_polygon
 from ..utils.search_graph import Node
 
@@ -24,6 +24,8 @@ class Hallway:
         conn_points=[],
         color=[0.4, 0.4, 0.4],
         wall_width=0.2,
+        is_open=True,
+        is_locked=False,
     ):
         """
         Creates a Hallway instance between two rooms.
@@ -53,14 +55,18 @@ class Hallway:
         :type color: (float, float, float), optional
         :param wall_width: Width of hallway walls, in meters.
         :type wall_width: float, optional
+        :param is_open: If True, the hallway is open, otherwise it is closed.
+        :type is_open: bool, optional
+        :param is_locked: If True, the hallway is locked, meaning it cannot be opened or closed.
+        :type is_locked: bool, optional
         """
         # Validate input
         if room_start is None:
-            raise Exception("room_start must be a valid Room object.")
+            raise ValueError("room_start must be a valid Room object.")
         if room_end is None:
-            raise Exception("room_end must be a valid Room object.")
+            raise ValueError("room_end must be a valid Room object.")
         if width <= 0.0:
-            raise Exception("width must be a positive value.")
+            raise ValueError("width must be a positive value.")
 
         # Unpack input
         self.room_start = room_start
@@ -71,6 +77,8 @@ class Hallway:
         self.offset = offset
         self.viz_color = color
         self.graph_nodes = []
+        self.is_open = is_open
+        self.is_locked = is_locked
 
         # Parse the connection method
         # If the connection is "auto" or "angle", the hallway is a simple rectangle
@@ -93,7 +101,7 @@ class Hallway:
             self.points = conn_points
 
         else:
-            raise Exception(f"No valid connection method: {conn_method}")
+            raise ValueError(f"No valid connection method: {conn_method}.")
 
         # Create the hallway polygon
         self.polygon = LineString(self.points)
@@ -133,6 +141,15 @@ class Hallway:
             self.room_end.external_collision_polygon
         )
 
+        # Closed polygon:
+        # Subtract the outer polygons of the adjacent rooms from the regular polygon
+        self.closed_polygon = self.polygon.difference(
+            self.room_start.external_collision_polygon
+        )
+        self.closed_polygon = self.closed_polygon.difference(
+            self.room_end.external_collision_polygon
+        )
+
     def update_visualization_polygon(self):
         """Updates the visualization polygon for the hallway walls."""
         self.buffered_polygon = inflate_polygon(self.polygon, self.wall_width)
@@ -145,6 +162,22 @@ class Hallway:
             edgecolor=self.viz_color,
             linewidth=2,
             alpha=0.75,
+            zorder=2,
+        )
+
+    def get_closed_patch(self):
+        """
+        Returns a patch of the hallway polygon to display when it is closed.
+
+        :return: Polygon patch of the closed polygon.
+        :rtype: :class:`matplotlib.patches.PathPatch`
+        """
+        return patch_from_polygon(
+            self.closed_polygon,
+            facecolor=self.viz_color,
+            edgecolor=self.viz_color,
+            linewidth=2,
+            alpha=0.5,
             zorder=2,
         )
 
@@ -177,7 +210,11 @@ class Hallway:
             x, y = pose.x, pose.y
         else:
             x, y = pose[0], pose[1]
-        return intersects_xy(self.internal_collision_polygon, x, y)
+
+        is_free = intersects_xy(self.internal_collision_polygon, x, y)
+        if not self.is_open:
+            is_free = is_free and not intersects_xy(self.closed_polygon, x, y)
+        return is_free
 
     def add_graph_nodes(self):
         """Creates graph nodes for searching."""
@@ -200,6 +237,27 @@ class Hallway:
                     [Node(Pose(x=p[0], y=p[1]), parent=self) for p in line.coords]
                 )
 
+        # Modify the yaw angles for the endpoint poses at the doors.
+        door_pose_start_yaw = get_angle(
+            (self.graph_nodes[0].pose.x, self.graph_nodes[0].pose.y),
+            (self.graph_nodes[1].pose.x, self.graph_nodes[1].pose.y),
+        )
+        self.graph_nodes[0].pose.set_euler_angles(yaw=door_pose_start_yaw)
+        door_pose_end_yaw = get_angle(
+            (self.graph_nodes[-1].pose.x, self.graph_nodes[-1].pose.y),
+            (self.graph_nodes[-2].pose.x, self.graph_nodes[-2].pose.y),
+        )
+        self.graph_nodes[-1].pose.set_euler_angles(yaw=door_pose_end_yaw)
+
     def __repr__(self):
         """Returns printable string."""
-        return f"Hallway: Connecting {self.room_start.name} and {self.room_end.name}"
+        return f"Hallway: {self.name}"
+
+    def print_details(self):
+        """Prints string with details."""
+        open_str = "open" if self.is_open else "closed"
+        locked_str = "locked" if self.is_locked else "unlocked"
+        print(
+            f"Hallway: Connecting {self.room_start.name} and {self.room_end.name} "
+            + f"({open_str}, {locked_str})"
+        )

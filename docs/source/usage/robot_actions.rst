@@ -8,6 +8,8 @@ The actions currently supported are:
 * **Pick**: Picks up an object at the robot's current location.
 * **Place**: Places an object at the robot's current location.
 * **Detect**: Detects objects at the robot's current location. Refer to :ref:`partial_observability` for more details.
+* **Open**: Opens the robot's current location (currently, hallways are supported).
+* **Close**: Closes the robot's current location (currently, hallways are supported).
 
 Actions can be triggered in a variety of ways:
 

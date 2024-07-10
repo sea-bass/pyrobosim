@@ -75,7 +75,6 @@ class NavRunner(QRunnable):
 
         self.canvas.show_world_state(robot=robot)
         world.gui.update_button_state()
-        self.canvas.draw_and_sleep()
 
 
 class WorldCanvas(FigureCanvasQTAgg):
@@ -140,6 +139,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.robot_lengths = []
         self.obj_patches = []
         self.obj_texts = []
+        self.hallway_patches = []
         self.path_planner_artists = {"graph": [], "path": []}
 
         # Debug displays (TODO: Should be available from GUI).
@@ -157,88 +157,103 @@ class WorldCanvas(FigureCanvasQTAgg):
 
     def show_robots(self):
         """Draws robots as circles with heading lines for visualization."""
-        self.draw_lock.acquire()
-        n_robots = len(self.world.robots)
-        for body in self.robot_bodies:
-            body.remove()
-        for dir in self.robot_dirs:
-            dir.remove()
-        self.robot_bodies = n_robots * [None]
-        self.robot_dirs = n_robots * [None]
-        self.robot_lengths = n_robots * [None]
+        with self.draw_lock:
+            n_robots = len(self.world.robots)
+            for body in self.robot_bodies:
+                body.remove()
+            for dir in self.robot_dirs:
+                dir.remove()
+            self.robot_bodies = n_robots * [None]
+            self.robot_dirs = n_robots * [None]
+            self.robot_lengths = n_robots * [None]
 
-        for i, robot in enumerate(self.world.robots):
-            p = robot.get_pose()
-            self.robot_bodies[i] = Circle(
-                (p.x, p.y),
-                radius=robot.radius,
-                edgecolor=robot.color,
-                fill=False,
-                linewidth=2,
-                zorder=self.robot_zorder,
-            )
-            self.axes.add_patch(self.robot_bodies[i])
+            for i, robot in enumerate(self.world.robots):
+                p = robot.get_pose()
+                self.robot_bodies[i] = Circle(
+                    (p.x, p.y),
+                    radius=robot.radius,
+                    edgecolor=robot.color,
+                    fill=False,
+                    linewidth=2,
+                    zorder=self.robot_zorder,
+                )
+                self.axes.add_patch(self.robot_bodies[i])
 
-            robot_length = self.robot_dir_line_factor * robot.radius
-            (self.robot_dirs[i],) = self.axes.plot(
-                p.x + np.array([0, robot_length * np.cos(p.get_yaw())]),
-                p.y + np.array([0, robot_length * np.sin(p.get_yaw())]),
-                linestyle="-",
-                color=robot.color,
-                linewidth=2,
-                zorder=self.robot_zorder,
-            )
-            self.robot_lengths[i] = robot_length
+                robot_length = self.robot_dir_line_factor * robot.radius
+                (self.robot_dirs[i],) = self.axes.plot(
+                    p.x + np.array([0, robot_length * np.cos(p.get_yaw())]),
+                    p.y + np.array([0, robot_length * np.sin(p.get_yaw())]),
+                    linestyle="-",
+                    color=robot.color,
+                    linewidth=2,
+                    zorder=self.robot_zorder,
+                )
+                self.robot_lengths[i] = robot_length
 
-            x = p.x
-            y = p.y - 2.0 * robot.radius
-            robot.viz_text = self.axes.text(
-                x,
-                y,
-                robot.name,
-                clip_on=True,
-                color=robot.color,
-                horizontalalignment="center",
-                verticalalignment="top",
-                fontsize=10,
-            )
-        self.robot_texts = [r.viz_text for r in (self.world.robots)]
-        self.draw_lock.release()
+                x = p.x
+                y = p.y - 2.0 * robot.radius
+                robot.viz_text = self.axes.text(
+                    x,
+                    y,
+                    robot.name,
+                    clip_on=True,
+                    color=robot.color,
+                    horizontalalignment="center",
+                    verticalalignment="top",
+                    fontsize=10,
+                )
+            self.robot_texts = [r.viz_text for r in (self.world.robots)]
+
+    def show_hallways(self):
+        """Draws hallways in the world."""
+        with self.draw_lock:
+            for hallway in self.hallway_patches:
+                hallway.remove()
+
+            self.hallway_patches = [h.viz_patch for h in self.world.hallways]
+
+            for h in self.world.hallways:
+                self.axes.add_patch(h.viz_patch)
+                if not h.is_open:
+                    closed_patch = h.get_closed_patch()
+                    self.axes.add_patch(closed_patch)
+                    self.hallway_patches.append(closed_patch)
+                elif self.show_collision_polygons:
+                    coll_patch = h.get_collision_patch()
+                    self.axes.add_patch(coll_patch)
+                    self.hallway_patches.append(coll_patch)
 
     def show_objects(self):
         """Draws objects and their associated texts."""
-        self.draw_lock.acquire()
+        with self.draw_lock:
+            for obj_patch in self.obj_patches:
+                obj_patch.remove()
+            for obj_text in self.obj_texts:
+                obj_text.remove()
+            self.obj_patches = []
+            self.obj_texts = []
 
-        for obj_patch in self.obj_patches:
-            obj_patch.remove()
-        for obj_text in self.obj_texts:
-            obj_text.remove()
-        self.obj_patches = []
-        self.obj_texts = []
+            robot = self.main_window.get_current_robot()
+            if robot:
+                known_objects = robot.get_known_objects()
+            else:
+                known_objects = self.world.objects
 
-        robot = self.main_window.get_current_robot()
-        if robot:
-            known_objects = robot.get_known_objects()
-        else:
-            known_objects = self.world.objects
+            for obj in known_objects:
+                self.axes.add_patch(obj.viz_patch)
+                xmin, ymin, xmax, ymax = obj.polygon.bounds
+                x = obj.pose.x + 1.0 * (xmax - xmin)
+                y = obj.pose.y + 1.0 * (ymax - ymin)
+                obj.viz_text = self.axes.text(
+                    x, y, obj.name, clip_on=True, color=obj.viz_color, fontsize=8
+                )
+            self.obj_patches = [o.viz_patch for o in known_objects]
+            self.obj_texts = [o.viz_text for o in known_objects]
 
-        for obj in known_objects:
-            self.axes.add_patch(obj.viz_patch)
-            xmin, ymin, xmax, ymax = obj.polygon.bounds
-            x = obj.pose.x + 1.0 * (xmax - xmin)
-            y = obj.pose.y + 1.0 * (ymax - ymin)
-            obj.viz_text = self.axes.text(
-                x, y, obj.name, clip_on=True, color=obj.viz_color, fontsize=8
+            # Adjust the text to try avoid collisions
+            adjustText.adjust_text(
+                self.obj_texts, iter_lim=100, objects=self.obj_patches, ax=self.axes
             )
-        self.obj_patches = [o.viz_patch for o in known_objects]
-        self.obj_texts = [o.viz_text for o in known_objects]
-
-        # Adjust the text to try avoid collisions
-        adjustText.adjust_text(
-            self.obj_texts, iter_lim=100, objects=self.obj_patches, ax=self.axes
-        )
-
-        self.draw_lock.release()
 
     def show(self):
         """
@@ -259,10 +274,7 @@ class WorldCanvas(FigureCanvasQTAgg):
             )
             if self.show_collision_polygons:
                 self.axes.add_patch(r.get_collision_patch())
-        for h in self.world.hallways:
-            self.axes.add_patch(h.viz_patch)
-            if self.show_collision_polygons:
-                self.axes.add_patch(h.get_collision_patch())
+        self.show_hallways()
 
         # Locations
         for loc in self.world.locations:
@@ -293,11 +305,10 @@ class WorldCanvas(FigureCanvasQTAgg):
 
     def draw_and_sleep(self):
         """Redraws the figure and waits a small amount of time."""
-        self.draw_lock.acquire()
-        self.fig.canvas.draw()
-        self.fig.canvas.flush_events()
-        time.sleep(0.005)
-        self.draw_lock.release()
+        with self.draw_lock:
+            self.fig.canvas.draw()
+            self.fig.canvas.flush_events()
+            time.sleep(0.01)
 
     def show_planner_and_path(self, robot=None, path=None):
         """
@@ -312,28 +323,27 @@ class WorldCanvas(FigureCanvasQTAgg):
         """
         # Since removing artists while drawing can cause issues,
         # this function should also lock drawing.
-        self.draw_lock.acquire()
+        with self.draw_lock:
+            if not robot:
+                warnings.warn("No robot found")
+            else:
+                color = robot.color if robot is not None else "m"
+                if robot.path_planner:
+                    path_planner_artists = robot.path_planner.plot(
+                        self.axes, path=path, path_color=color
+                    )
 
-        if not robot:
-            warnings.warn("No robot found")
-        else:
-            color = robot.color if robot is not None else "m"
-            if robot.path_planner:
-                path_planner_artists = robot.path_planner.plot(
-                    self.axes, path=path, path_color=color
-                )
+                    for artist in self.path_planner_artists["graph"]:
+                        artist.remove()
+                    self.path_planner_artists["graph"] = path_planner_artists.get(
+                        "graph", []
+                    )
 
-                for artist in self.path_planner_artists["graph"]:
-                    artist.remove()
-                self.path_planner_artists["graph"] = path_planner_artists.get(
-                    "graph", []
-                )
-
-                for artist in self.path_planner_artists["path"]:
-                    artist.remove()
-                self.path_planner_artists["path"] = path_planner_artists.get("path", [])
-
-        self.draw_lock.release()
+                    for artist in self.path_planner_artists["path"]:
+                        artist.remove()
+                    self.path_planner_artists["path"] = path_planner_artists.get(
+                        "path", []
+                    )
 
     def nav_animation_callback(self):
         """Timer callback function to animate navigating robots."""
@@ -356,19 +366,20 @@ class WorldCanvas(FigureCanvasQTAgg):
 
     def update_robots_plot(self):
         """Updates the robot visualization graphics objects."""
-        if len(self.world.robots) != len(self.robot_bodies):
-            self.show_robots()
-        for i, robot in enumerate(self.world.robots):
-            p = robot.get_pose()
-            self.robot_bodies[i].center = p.x, p.y
-            self.robot_dirs[i].set_xdata(
-                p.x + np.array([0, self.robot_lengths[i] * np.cos(p.get_yaw())])
-            )
-            self.robot_dirs[i].set_ydata(
-                p.y + np.array([0, self.robot_lengths[i] * np.sin(p.get_yaw())])
-            )
-            robot.viz_text.set_position((p.x, p.y - 2.0 * robot.radius))
-            self.update_object_plot(robot.manipulated_object)
+        with self.draw_lock:
+            if len(self.world.robots) != len(self.robot_bodies):
+                self.show_robots()
+            for i, robot in enumerate(self.world.robots):
+                p = robot.get_pose()
+                self.robot_bodies[i].center = p.x, p.y
+                self.robot_dirs[i].set_xdata(
+                    p.x + np.array([0, self.robot_lengths[i] * np.cos(p.get_yaw())])
+                )
+                self.robot_dirs[i].set_ydata(
+                    p.y + np.array([0, self.robot_lengths[i] * np.sin(p.get_yaw())])
+                )
+                robot.viz_text.set_position((p.x, p.y - 2.0 * robot.radius))
+                self.update_object_plot(robot.manipulated_object)
 
     def show_world_state(self, robot=None, navigating=False):
         """
@@ -444,7 +455,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         :type obj_name: str
         :param grasp_pose: A pose describing how to manipulate the object.
         :type grasp_pose: :class:`pyrobosim.utils.pose.Pose`, optional
-        :return: True if picking succeeds, else False
+        :return: True if picking succeeds, else False.
         :rtype: bool
         """
         if robot is None:
@@ -465,7 +476,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         :type robot: :class:`pyrobosim.core.robot.Robot`
         :param pose: Optional placement pose, defaults to None.
         :type pose: :class:`pyrobosim.utils.pose.Pose`, optional
-        :return: True if placing succeeds, else False
+        :return: True if placing succeeds, else False.
         :rtype: bool
         """
         if robot is None:
@@ -491,7 +502,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         :type robot: :class:`pyrobosim.core.robot.Robot`
         :param query: Query for object detection.
         :type query: str, optional
-        :return: True if object detection succeeds, else False
+        :return: True if object detection succeeds, else False.
         :rtype: bool
         """
         if robot is None:
@@ -501,3 +512,31 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.show_objects()
         self.draw_and_sleep()
         return success
+
+    def open_location(self, robot):
+        """
+        Opens the robot's current location, if available.
+
+        :param robot: Robot instance to execute action.
+        :type robot: :class:`pyrobosim.core.robot.Robot`
+        :return: True if opening the location succeeds, else False.
+        :rtype: bool
+        """
+        if robot is None:
+            return False
+
+        return robot.open_location()
+
+    def close_location(self, robot):
+        """
+        Closes the robot's current location, if available.
+
+        :param robot: Robot instance to execute action.
+        :type robot: :class:`pyrobosim.core.robot.Robot`
+        :return: True if closing the location succeeds, else False.
+        :rtype: bool
+        """
+        if robot is None:
+            return False
+
+        return robot.close_location()

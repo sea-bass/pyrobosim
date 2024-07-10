@@ -100,6 +100,15 @@ class TaskAction:
             act_str += "Detect"
             if self.object is not None:
                 act_str += f" {self.object}"
+        # OPEN / CLOSE
+        elif self.type == "open":
+            act_str += "Open"
+            if self.target_location is not None:
+                act_str += f" {self.target_location}"
+        elif self.type == "close":
+            act_str += "Close"
+            if self.target_location is not None:
+                act_str += f" {self.target_location}"
         else:
             print(f"Invalid action type {self.action_type}")
             return None
