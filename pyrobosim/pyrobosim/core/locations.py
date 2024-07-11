@@ -125,7 +125,7 @@ class Location:
                     x=rot_p[0] + self.pose.x,
                     y=rot_p[1] + self.pose.y,
                     z=self.pose.z,
-                    q=self.pose.q,
+                    yaw=p[2] + self.pose.get_yaw(),
                 )
                 if self.parent.is_collision_free(nav_pose):
                     self.nav_poses.append(nav_pose)
@@ -251,12 +251,11 @@ class ObjectSpawn:
                 rot_p = rot2d(
                     (p[0] + p_off[0], p[1] + p_off[1]), self.parent.pose.get_yaw()
                 )
-                yaw = p[2] + self.parent.pose.get_yaw()
                 nav_pose = Pose(
                     x=rot_p[0] + self.parent.pose.x,
                     y=rot_p[1] + self.parent.pose.y,
                     z=self.parent.pose.z,
-                    yaw=yaw,
+                    yaw=p[2] + self.parent.pose.get_yaw(),
                 )
                 if self.parent.parent.is_collision_free(nav_pose):
                     self.nav_poses.append(nav_pose)
