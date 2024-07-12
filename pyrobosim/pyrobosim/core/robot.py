@@ -288,6 +288,7 @@ class Robot:
             return False
 
         if path.num_poses == 0:
+            self.last_nav_successful = True
             success = True
         elif use_thread:
             # Start a thread with the path execution
@@ -296,7 +297,7 @@ class Robot:
             )
             self.nav_thread.start()
             if blocking:
-                # Check that robot made it to its goal pose at the end of execution.
+                # Check that the robot made it to its goal pose at the end of execution.
                 self.nav_thread.join()
                 success = self.get_pose().is_approx(path.poses[-1])
             else:
