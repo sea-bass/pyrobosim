@@ -5,7 +5,6 @@ import signal
 import sys
 
 from PySide6 import QtWidgets
-from PySide6.QtCore import QTimer
 from PySide6.QtGui import QFont, QScreen
 from matplotlib.backends.qt_compat import QtCore
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
@@ -22,13 +21,7 @@ def start_gui(world):
     :type world: :class:`pyrobosim.core.world.World`
     """
     app = PyRoboSimGUI(world, sys.argv)
-
-    signal.signal(signal.SIGINT, lambda *args: app.quit())
-
-    timer = QTimer(parent=app)
-    timer.timeout.connect(lambda: None)
-    timer.start(1000)
-
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
     sys.exit(app.exec_())
 
 

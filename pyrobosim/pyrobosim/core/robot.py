@@ -136,23 +136,6 @@ class Robot:
         """
         self.path_planner = path_planner
 
-    def plan_path(self, start=None, goal=None):
-        """
-        Plans a path to a goal position.
-
-        :param start: Start pose for the robot.
-            If not specified, will default to the robot pose.
-        :type start: :class:`pyrobosim.utils.pose.Pose`, optional
-        :param goal: Goal pose for the robot. If not specified,returns None.
-        :type goal: :class:`pyrobosim.utils.pose.Pose`, optional
-        """
-        if start is None:
-            start = self.get_pose()
-        if goal is None:
-            warnings.warn("Did not specify a goal. Returning None.")
-            return None
-        return self.path_planner.plan(start, goal)
-
     def set_path_executor(self, path_executor):
         """
         Sets a path executor for navigation.
@@ -217,60 +200,6 @@ class Robot:
         """
         return isinstance(self.location, Hallway)
 
-    def follow_path(
-        self,
-        path,
-        target_location=None,
-        realtime_factor=1.0,
-        use_thread=True,
-        blocking=False,
-    ):
-        """
-        Follows a specified path using the attached path executor.
-
-        :param path: The path to follow.
-        :type path: :class:`pyrobosim.utils.motion.Path`
-        :param target_location: The target location at the intended goal,
-            used for tracking robot state.
-        :type target_location: Entity.
-        :param realtime_factor: A real-time multiplier on execution speed,
-            defaults to 1.0.
-        :type realtime_factor: float
-        :param use_thread: If True, spawns a new thread to execute the path.
-        :type use_thread: bool
-        :param blocking: If path executes in a new thread, set to True to block
-            and wait for the thread to complete before returning.
-        :return: True if path following is successful, or the path following
-            thread is successfully started.
-        :rtype: bool
-        """
-        if path is None or self.path_executor is None:
-            return
-
-        if use_thread:
-            # Start a thread with the path execution
-            self.nav_thread = threading.Thread(
-                target=self.path_executor.execute, args=(path, realtime_factor)
-            )
-            self.nav_thread.start()
-            if blocking:
-                self.nav_thread.join()
-
-                # Validate that the robot made it to its goal pose
-                if path.num_poses == 0:
-                    success = True
-                else:
-                    success = self.get_pose().is_approx(path.poses[-1])
-            else:
-                success = True
-        else:
-            success = self.path_executor.execute(path, realtime_factor)
-
-        # Update the robot state if successful.
-        if success and target_location is not None:
-            self.location = target_location
-        return success
-
     def _attach_object(self, obj):
         """
         Helper function to attach an object in the world to the robot.
@@ -284,6 +213,152 @@ class Robot:
         obj.parent.children.remove(obj)
         obj.parent = self
         obj.set_pose(self.get_pose())
+
+    def plan_path(self, start=None, goal=None):
+        """
+        Plans a path to a goal position.
+
+        :param start: Start pose for the robot.
+            If not specified, will default to the robot pose.
+        :type start: :class:`pyrobosim.utils.pose.Pose`, optional
+        :param goal: Goal pose or entity name for the robot.
+            If not specified, returns None.
+        :type goal: :class:`pyrobosim.utils.pose.Pose` / str, optional
+        :return: The path, if one was found, otherwise None.
+        :rtype: :class:`pyrobosim.utils.motion.Path` or None
+        """
+        if self.path_planner is None:
+            warnings.warn(f"No path planner attached to robot {self.name}.")
+            return None
+
+        if start is None:
+            start = self.get_pose()
+
+        if goal is None:
+            warnings.warn("Did not specify a goal. Returning None.")
+            return None
+
+        # If the goal is not a pose, we need to extract it from the world knowledge.
+        if not isinstance(goal, Pose):
+            if self.world is None:
+                warnings.warn("Cannot specify a string goal if there is no world set.")
+                return None
+            goal_node = self.world.graph_node_from_entity(goal, robot=self)
+            if goal_node is None:
+                return None
+            goal = goal_node.pose
+
+        path = self.path_planner.plan(start, goal)
+        if self.world and self.world.has_gui:
+            self.world.gui.canvas.show_planner_and_path(robot=self, path=path)
+        return path
+
+    def follow_path(
+        self,
+        path,
+        realtime_factor=1.0,
+        use_thread=True,
+        blocking=False,
+    ):
+        """
+        Follows a specified path using the attached path executor.
+
+        :param path: The path to follow.
+        :type path: :class:`pyrobosim.utils.motion.Path`
+        :param realtime_factor: A real-time multiplier on execution speed,
+            defaults to 1.0.
+        :type realtime_factor: float
+        :param use_thread: If True, spawns a new thread to execute the path.
+        :type use_thread: bool
+        :param blocking: If path executes in a new thread, set to True to block
+            and wait for the thread to complete before returning.
+        :return: True if path following is successful, or the path following
+            thread is successfully started.
+        :rtype: bool
+        """
+        self.last_nav_successful = False
+
+        if path is None:
+            warnings.warn("No path to execute.")
+            self.executing_nav = False
+            return False
+        if self.path_executor is None:
+            warnings.warn("No path executor. Cannot follow path.")
+            self.executing_nav = False
+            return False
+
+        if path.num_poses == 0:
+            self.last_nav_successful = True
+            success = True
+        elif use_thread:
+            # Start a thread with the path execution
+            self.nav_thread = threading.Thread(
+                target=self.path_executor.execute, args=(path, realtime_factor)
+            )
+            self.nav_thread.start()
+            if blocking:
+                # Check that the robot made it to its goal pose at the end of execution.
+                self.nav_thread.join()
+                success = self.get_pose().is_approx(path.poses[-1])
+            else:
+                # Cannot check in the non-blocking case, so we just assume success.
+                success = True
+        else:
+            # Execute in this thread and check that the robot made it to its goal pose.
+            success = self.path_executor.execute(path, realtime_factor)
+            success |= self.get_pose().is_approx(path.poses[-1])
+
+        # Update the robot state if successful.
+        if self.world:
+            self.location = self.world.get_location_from_pose(self.get_pose())
+        self.last_nav_successful = success
+        return success
+
+    def navigate(
+        self,
+        start=None,
+        goal=None,
+        path=None,
+        realtime_factor=1.0,
+        use_thread=True,
+        blocking=False,
+    ):
+        """
+        Executes a navigation task, which combines path planning and following.
+
+        :param start: Start pose for the robot.
+            If not specified, will default to the robot pose.
+        :type start: :class:`pyrobosim.utils.pose.Pose`, optional
+        :param goal: Goal pose or entity name for the robot.
+            If not specified, returns None.
+        :type goal: :class:`pyrobosim.utils.pose.Pose` / str, optional
+        :param path: The path to follow.
+        :type path: :class:`pyrobosim.utils.motion.Path`
+        :param realtime_factor: A real-time multiplier on execution speed,
+            defaults to 1.0.
+        :type realtime_factor: float
+        :param use_thread: If True, spawns a new thread to execute the path.
+        :type use_thread: bool
+        :param blocking: If path executes in a new thread, set to True to block
+            and wait for the thread to complete before returning.
+        :return: True if path following is successful, or the path following
+            thread is successfully started.
+        :rtype: bool
+        """
+        if path is None:
+            path = self.plan_path(start, goal)
+            if path is None or path.num_poses == 0:
+                warnings.warn("Failed to plan a path.")
+                self.executing_nav = False
+                self.last_nav_successful = False
+                return False
+
+        return self.follow_path(
+            path,
+            realtime_factor=realtime_factor,
+            use_thread=use_thread,
+            blocking=blocking,
+        )
 
     def pick_object(self, obj_query, grasp_pose=None):
         """
@@ -533,35 +608,21 @@ class Robot:
 
         if action.type == "navigate":
             self.executing_nav = True
-            self.last_nav_successful = False
+            path = action.path if action.path.num_poses > 0 else None
             if self.world.has_gui:
-                if isinstance(action.target_location, str):
-                    tgt_loc = action.target_location
-                else:
-                    tgt_loc = action.target_location.name
-
-                self.world.gui.canvas.navigate(self, tgt_loc, action.path)
+                self.world.gui.canvas.navigate(self, action.target_location, path)
                 while self.executing_nav:
                     time.sleep(0.5)  # Delay to wait for navigation
                 success = self.last_nav_successful
             else:
-                goal_node = self.world.graph_node_from_entity(
-                    action.target_location, robot=self
+                success = self.navigate(
+                    goal=action.target_location,
+                    path=path,
+                    realtime_factor=1.0,
+                    use_thread=True,
+                    blocking=blocking,
                 )
-                path = self.plan_path(self.get_pose(), goal_node.pose)
-
-                if path.num_poses == 0:
-                    warnings.warn("Failed to plan a path.")
-                    self.executing_nav = False
-                    self.last_nav_successful = False
-                    success = False
-                else:
-                    success = self.follow_path(
-                        path,
-                        target_location=goal_node.parent,
-                        realtime_factor=1.0,
-                        blocking=blocking,
-                    )
+            self.executing_nav = False
 
         elif action.type == "pick":
             if self.world.has_gui:

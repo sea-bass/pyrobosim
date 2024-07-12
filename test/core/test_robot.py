@@ -100,7 +100,6 @@ class TestRobot:
         """Check that path executors can be used from a robot."""
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
         goal_pose = Pose(x=2.5, y=3.0, yaw=np.pi / 2.0)
-        target_location = self.test_world.get_entity_by_name("bedroom")
 
         robot = Robot(
             pose=init_pose,
@@ -113,24 +112,18 @@ class TestRobot:
         # Non-threaded option -- blocks
         robot.set_pose(init_pose)
         path = robot.plan_path(goal=goal_pose)
-        result = robot.follow_path(
-            path, target_location=target_location, use_thread=False
-        )
+        result = robot.follow_path(path, use_thread=False)
         assert result
 
         # Threaded option with blocking
         robot.set_pose(init_pose)
         path = robot.plan_path(goal=goal_pose)
-        result = robot.follow_path(
-            path, target_location=target_location, use_thread=True, blocking=True
-        )
+        result = robot.follow_path(path, use_thread=True, blocking=True)
 
         # Threaded option without blocking -- must check result
         robot.set_pose(init_pose)
         path = robot.plan_path(goal=goal_pose)
-        robot.follow_path(
-            path, target_location=target_location, use_thread=True, blocking=False
-        )
+        robot.follow_path(path, use_thread=True, blocking=False)
         assert robot.executing_nav
         while robot.executing_nav:
             time.sleep(0.1)
