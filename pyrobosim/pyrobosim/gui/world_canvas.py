@@ -40,38 +40,21 @@ class NavRunner(QRunnable):
         """Runs the navigation execution thread."""
         robot = self.robot
         world = self.canvas.world
-        path = self.path
 
         if isinstance(robot, str):
             robot = world.get_robot_by_name(robot)
         if robot is None:
             warnings.warn("No robot found.")
             return
-        if robot.path_planner is None:
-            warnings.warn(f"No path planner attached to robot {robot.name}.")
-            return
 
         # Find a path, or use an existing one, and start the navigation thread.
-        goal_node = world.graph_node_from_entity(self.goal, robot=robot)
-        if not path or path.num_poses < 2:
-            path = robot.plan_path(robot.get_pose(), goal_node.pose)
-        if path.num_poses == 0:
-            warnings.warn(f"Failed to plan a path.")
-            robot.executing_nav = False
-            robot.last_nav_successful = False
-            return
-
-        self.canvas.show_planner_and_path(robot=robot, path=path)
-        robot.follow_path(
-            path,
-            target_location=goal_node.parent,
+        robot.navigate(
+            goal=self.goal,
+            path=self.path,
+            use_thread=True,
+            blocking=True,
             realtime_factor=self.canvas.realtime_factor,
-            blocking=False,
         )
-
-        # Sleep while the robot is executing the action.
-        while robot.executing_nav:
-            time.sleep(0.1)
 
         self.canvas.show_world_state(robot=robot)
         world.gui.update_button_state()

@@ -1052,15 +1052,25 @@ class World:
             This could be a room, hallway, or object spawn.
         :rtype: :class:`pyrobosim.core.room.Room`/:class:`pyrobosim.core.hallway.Hallway`/:class:`pyrobosim.core.locations.ObjectSpawn`
         """
-        # First, check rooms and hallways.
-        for entity in itertools.chain(self.rooms, self.hallways):
-            if entity.is_collision_free(pose):
-                return entity
-        # Then, check object spawns.
-        for loc in self.locations:
-            for spawn in loc.children:
-                if spawn.is_inside(pose):
-                    return spawn
+        # Check hallways and their nav poses.
+        for hallway in self.hallways:
+            for nav_pose in hallway.nav_poses:
+                if pose.is_approx(nav_pose):
+                    return hallway
+            if hallway.is_collision_free(pose):
+                return hallway
+        # Check rooms and the locations / object spawns inside them.
+        for room in self.rooms:
+            if room.is_collision_free(pose):
+                for location in room.locations:
+                    for spawn in location.children:
+                        for nav_pose in spawn.nav_poses:
+                            if pose.is_approx(nav_pose):
+                                return spawn
+                    for nav_pose in location.nav_poses:
+                        if pose.is_approx(nav_pose):
+                            return location
+                return room
         return None
 
     def get_object_spawns(self, category_list=None):

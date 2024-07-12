@@ -54,10 +54,11 @@ class TestSystem:
         window.on_navigate_click()
 
         while not robot.executing_nav:
-            time.sleep(0.1)
+            time.sleep(0.2)
         while robot.executing_nav:
-            time.sleep(0.1)
+            time.sleep(0.2)
 
+        print(f"Robot location: {robot.location}")
         assert (
             robot.location == expected_location
             or robot.location in expected_location.children
