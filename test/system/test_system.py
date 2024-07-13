@@ -14,7 +14,7 @@ from pyrobosim.gui import PyRoboSimGUI
 from pyrobosim.utils.knowledge import query_to_entity
 
 
-# Needed for PyQt5 tests to work with CI
+# Needed for UI tests to work with CI
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 
@@ -57,8 +57,9 @@ class TestSystem:
             time.sleep(0.2)
         while robot.executing_nav:
             time.sleep(0.2)
+        robot.location = world.get_location_from_pose(robot.get_pose())
 
-        print(f"Robot location: {robot.location}")
+        assert robot.last_nav_successful
         assert (
             robot.location == expected_location
             or robot.location in expected_location.children
@@ -117,3 +118,26 @@ class TestSystem:
             # Place an object
             window.on_place_click()
             assert robot.manipulated_object is None
+
+    @pytest.mark.dependency(name="test_open_close", depends=["test_pick_detect_place"])
+    def test_open_close(self):
+        """
+        Test open and close UI actions.
+        """
+        start_end_room_queries = [("kitchen", "bathroom"), ("bedroom", "bathroom")]
+
+        window = self.app.main_window
+        world = self.app.world
+
+        for room_start, room_end in start_end_room_queries:
+            # Navigate to hallway location
+            hallway = world.get_hallways_from_rooms(room_start, room_end)[0]
+            self.nav_helper(hallway.name)
+
+            # Close the hallway and verify that it's closed.
+            window.on_close_click()
+            assert not hallway.is_open
+
+            # Open the hallway and verify that it's open.
+            window.on_open_click()
+            assert hallway.is_open

@@ -71,6 +71,11 @@ def test_path_equality():
     assert path1 == path2
     assert not path1 == path3
 
+    # Check datatype exception.
+    with pytest.raises(TypeError) as exc_info:
+        path1 == 42.0
+    assert exc_info.value.args[0] == "Expected a Path object."
+
 
 ##########################################
 # Tests for waypoint reduction utilities #

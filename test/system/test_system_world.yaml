@@ -33,7 +33,8 @@ robots:
     # Linear motion path executor
     path_executor:
       type: constant_velocity
-      linear_velocity: 3.0
+      linear_velocity: 5.0
+      validate_during_execution: false
     # Grasp generation
     grasping:
       generator: parallel_grasp

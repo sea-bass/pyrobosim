@@ -171,14 +171,11 @@ class WorldYamlLoader:
         if "path_executor" not in robot_data:
             return ConstantVelocityExecutor()
 
-        path_executor_data = robot_data["path_executor"]
+        path_executor_data = robot_data["path_executor"].copy()
         path_executor_type = path_executor_data["type"]
+        del path_executor_data["type"]
         if path_executor_type == "constant_velocity":
-            return ConstantVelocityExecutor(
-                linear_velocity=path_executor_data.get("linear_velocity", 1.0),
-                dt=path_executor_data.get("dt", 0.1),
-                max_angular_velocity=path_executor_data.get("max_angular_velocity"),
-            )
+            return ConstantVelocityExecutor(**path_executor_data)
         else:
             warnings.warn(f"Invalid path executor type specified: {path_executor_type}")
             return None
@@ -193,16 +190,11 @@ class WorldYamlLoader:
         if "grasping" not in robot_data:
             return None
 
-        grasp_params = robot_data["grasping"]
+        grasp_params = robot_data["grasping"].copy()
         grasp_gen_type = grasp_params["generator"]
+        del grasp_params["generator"]
         if grasp_gen_type == "parallel_grasp":
-            grasp_properties = ParallelGraspProperties(
-                max_width=grasp_params.get("max_width", 0.15),
-                depth=grasp_params.get("depth", 0.1),
-                height=grasp_params.get("height", 0.04),
-                width_clearance=grasp_params.get("width_clearance", 0.01),
-                depth_clearance=grasp_params.get("depth_clearance", 0.01),
-            )
+            grasp_properties = ParallelGraspProperties(**grasp_params)
             return GraspGenerator(grasp_properties)
         else:
             warnings.warn(f"Invalid grasp generator type specified: {grasp_gen_type}")

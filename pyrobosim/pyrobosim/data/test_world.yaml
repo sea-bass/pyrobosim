@@ -43,6 +43,10 @@ robots:
       linear_velocity: 1.0
       max_angular_velocity: 4.0
       dt: 0.1
+      validate_during_execution: true
+      validation_dt: 0.5
+      validation_step_dist: 0.025
+
     # Grasp generation
     grasping:
       generator: parallel_grasp
