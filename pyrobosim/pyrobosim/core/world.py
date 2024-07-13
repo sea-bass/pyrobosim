@@ -996,7 +996,7 @@ class World:
         for hall in room1.hallways:
             is_valid_hallway = (
                 (hall.room_start == room1) and (hall.room_end == room2)
-            ) or ((hall.room_end == room2) and (hall.room_end == room1))
+            ) or ((hall.room_start == room2) and (hall.room_end == room1))
             if is_valid_hallway:
                 hallways.append(hall)
         return hallways

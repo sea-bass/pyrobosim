@@ -116,3 +116,26 @@ class TestSystem:
             # Place an object
             window.on_place_click()
             assert robot.manipulated_object is None
+
+    @pytest.mark.dependency(name="test_open_close", depends=["test_pick_detect_place"])
+    def test_open_close(self):
+        """
+        Test open and close UI actions.
+        """
+        start_end_room_queries = [("kitchen", "bathroom"), ("bedroom", "bathroom")]
+
+        window = self.app.main_window
+        world = self.app.world
+
+        for room_start, room_end in start_end_room_queries:
+            # Navigate to hallway location
+            hallway = world.get_hallways_from_rooms(room_start, room_end)[0]
+            self.nav_helper(hallway.name)
+
+            # Close the hallway and verify that it's close.
+            window.on_close_click()
+            assert not hallway.is_open
+
+            # Open the hallway and verify that it's open.
+            window.on_open_click()
+            assert hallway.is_open
