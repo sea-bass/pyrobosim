@@ -59,6 +59,7 @@ class TestSystem:
             time.sleep(0.2)
         robot.location = world.get_location_from_pose(robot.get_pose())
 
+        assert robot.last_nav_successful
         assert (
             robot.location == expected_location
             or robot.location in expected_location.children
