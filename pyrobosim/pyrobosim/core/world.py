@@ -311,12 +311,14 @@ class World:
             self.gui.canvas.draw_and_sleep()
         return True
 
-    def close_hallway(self, hallway):
+    def close_hallway(self, hallway, ignore_robots=[]):
         """
         Close a hallway between two rooms.
 
         :param hallway: Hallway object to close.
         :type hallway: :class:`pyrobosim.core.hallway.Hallway`
+        :param ignore_robots: List of robots to ignore, for example the robot closing the hallway.
+        :type ignore_robots: list[:class:`pyrobosim.core.robot.Robot`]
         :return: True if the hallway was successfully closed, else False.
         :rtype: bool
         """
@@ -333,7 +335,7 @@ class World:
             warnings.warn(f"{hallway} is locked.")
             return False
 
-        for robot in self.robots:
+        for robot in [r for r in self.robots if r not in ignore_robots]:
             if hallway.is_collision_free(robot.get_pose()):
                 warnings.warn(f"Robot {robot.name} is in {hallway}. Cannot close.")
                 return False

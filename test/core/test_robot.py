@@ -160,7 +160,7 @@ class TestRobot:
         def close_all_hallways():
             time.sleep(0.5)
             for hallway in self.test_world.hallways:
-                self.test_world.close_hallway(hallway)
+                self.test_world.close_hallway(hallway, ignore_robots=[robot])
 
         threading.Thread(target=close_all_hallways).start()
 

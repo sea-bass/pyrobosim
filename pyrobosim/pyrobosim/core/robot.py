@@ -586,7 +586,7 @@ class Robot:
             return False
 
         if isinstance(self.location, Hallway):
-            return self.world.close_hallway(self.location)
+            return self.world.close_hallway(self.location, ignore_robots=[self])
 
         # This should not happen
         return False
