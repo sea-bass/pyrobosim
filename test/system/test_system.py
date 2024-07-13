@@ -57,6 +57,7 @@ class TestSystem:
             time.sleep(0.2)
         while robot.executing_nav:
             time.sleep(0.2)
+        robot.location = world.get_location_from_pose(robot.get_pose())
 
         assert (
             robot.location == expected_location
