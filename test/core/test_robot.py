@@ -10,7 +10,7 @@ import time
 
 from pyrobosim.core import Pose, Robot, WorldYamlLoader
 from pyrobosim.navigation import ConstantVelocityExecutor, PathPlanner
-from pyrobosim.planning.actions import TaskAction, TaskPlan
+from pyrobosim.planning.actions import ExecutionOptions, TaskAction, TaskPlan
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.motion import Path
 
@@ -327,6 +327,31 @@ class TestRobot:
             warn_info[0].message.args[0]
             == "[test_robot] Invalid action type: bad_action."
         )
+
+    def test_execute_action_simulated_options(self):
+        """Test execution of an action that has simulated options."""
+        init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
+        robot = Robot(
+            pose=init_pose,
+            path_planner=PathPlanner("world_graph", world=self.test_world),
+            path_executor=ConstantVelocityExecutor(linear_velocity=5.0, dt=0.1),
+        )
+        robot.location = "kitchen"
+        robot.world = self.test_world
+        action = TaskAction(
+            "navigate",
+            source_location="kitchen",
+            target_location="my_desk",
+            execution_options=ExecutionOptions(
+                delay=0.1,
+                success_probability=0.5,
+                rng_seed=1234,
+            ),
+        )
+
+        # The action should fail the first time but succeed the second time.
+        assert not robot.execute_action(action, blocking=True)
+        assert robot.execute_action(action, blocking=True)
 
     def test_execute_plan(self):
         """Tests execution of a plan consisting of multiple actions."""

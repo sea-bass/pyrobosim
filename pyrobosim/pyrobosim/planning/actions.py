@@ -1,6 +1,29 @@
 """ Defines actions for task and motion planning. """
 
+import numpy as np
+import time
+
 from ..utils.motion import Path
+
+
+class ExecutionOptions:
+    """Options for executing actions in simulation."""
+
+    def __init__(self, delay=0.0, success_probability=1.0, rng_seed=None):
+        """
+        Creates a new set of action execution options.
+
+        :param delay: The simulated delay time, in seconds.
+        :type delay: float
+        :param success_probability: The simulated success probability, in the range (0, 1).
+        :type success_probability: float
+        :param rng_seed: The seed to use for random number generation.
+            Defaults to None, but can be changed for determinism.
+        :type rng_seed: int, optional
+        """
+        self.delay = delay
+        self.success_probability = success_probability
+        self.rng_seed = rng_seed
 
 
 class TaskAction:
@@ -17,6 +40,7 @@ class TaskAction:
         pose=None,
         path=Path(),
         cost=None,
+        execution_options=None,
     ):
         """
         Creates a new task action representation.
@@ -39,11 +63,14 @@ class TaskAction:
         :type path: :class:`pyrobosim.utils.motion.Path`, optional
         :param cost: Optional action cost.
         :type cost: float
+        :param execution_options: Options for simulating various action execution properties.
+        :type execution_options: :class:`pyrobosim.planning.actions.ExecutionOptions`
         """
         # Action-agnostic parameters
         self.type = type.lower()
         self.robot = robot
         self.cost = cost
+        self.execution_options = execution_options
 
         # Action-specific parameters
         self.object = object  # Target object name
@@ -52,6 +79,19 @@ class TaskAction:
         self.target_location = target_location  # Target location name
         self.pose = pose  # Target pose
         self.path = path  # Path object containing a list of poses
+
+    def should_succeed(self):
+        """
+        Determines whether the action should succeed, while simulating other aspects such as delays.
+
+        :return: True if the action should success, or False otherwise.
+        :rtype: bool
+        """
+        if self.execution_options:
+            time.sleep(self.execution_options.delay)
+            rng = np.random.default_rng(seed=self.execution_options.rng_seed)
+            return rng.random() <= self.execution_options.success_probability
+        return True
 
     def __repr__(self):
         """Returns printable string describing an action."""

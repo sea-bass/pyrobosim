@@ -289,6 +289,7 @@ class WorldROSWrapper(Node):
         robot_action = task_action_from_ros(goal_handle.request.action)
         self.get_logger().info(f"Executing action with robot {robot.name}...")
         success = robot.execute_action(robot_action)
+        self.get_logger().info(f"Action finished with success: {success}")
 
         # Package up the result
         goal_handle.succeed()
@@ -321,6 +322,9 @@ class WorldROSWrapper(Node):
         self.get_logger().info(f"Executing task plan with robot {robot.name}...")
         robot_plan = task_plan_from_ros(goal_handle.request.plan)
         success, num_completed = robot.execute_plan(robot_plan)
+        self.get_logger().info(
+            f"Plan finished with success: {success} (completed {num_completed}/{robot_plan.size()} actions)"
+        )
 
         # Package up the result
         goal_handle.succeed()
