@@ -34,9 +34,7 @@ robots:
     path_executor:
       type: constant_velocity
       linear_velocity: 3.0
-      validate_during_execution: true
-      validation_dt: 0.5
-      validation_step_dist: 0.025
+      validate_during_execution: false
     # Grasp generation
     grasping:
       generator: parallel_grasp
