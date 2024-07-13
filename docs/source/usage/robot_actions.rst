@@ -102,11 +102,13 @@ Of particular interest is the ``rng_seed`` options which can be used to control 
 If you leave this option at its default value (``None``), the failures will be nondeterministic, but explicitly setting the seed can provide reproducible action failure results.
 
 The ROS 2 interface to actions also supports execution options via the ``pyrobosim_msgs.msg.ActionExecutionOptions`` message, which is a field of the ``pyrobosim_msgs.msg.TaskAction`` message.
-You can show this
+You can try this out by setting more launch parameters in the same example:
 
 ::
 
     ros2 launch pyrobosim_ros demo_commands.launch.py mode:=plan action_delay:=0.1 action_success_probablity:=0.5 action_rng_seed:=1234
+
+**NOTE:** These capabilities are not yet available from the GUI.
 
 
 .. _partial_observability:
