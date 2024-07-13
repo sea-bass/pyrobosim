@@ -83,6 +83,7 @@ def test_task_action_conversion():
         pose=Pose(x=1.0, y=2.0, z=3.0, q=[1.0, 0.0, 0.0, 0.0]),
         path=Path(),
         cost=42.0,
+        execution_options=None,
     )
 
     # Convert to a ROS message
@@ -103,6 +104,9 @@ def test_task_action_conversion():
     assert ros_action.pose.orientation.y == pytest.approx(orig_action.pose.q[2])
     assert ros_action.pose.orientation.z == pytest.approx(orig_action.pose.q[3])
     assert len(ros_action.path.poses) == orig_action.path.num_poses
+    assert ros_action.execution_options.delay == 0.0
+    assert ros_action.execution_options.success_probability == 1.0
+    assert ros_action.execution_options.rng_seed == -1
 
     # Convert back to a pyrobosim task action
     new_action = task_action_from_ros(ros_action)
@@ -119,6 +123,9 @@ def test_task_action_conversion():
     assert new_action.pose.z == pytest.approx(orig_action.pose.z)
     assert new_action.pose.q == pytest.approx(orig_action.pose.q)
     assert new_action.path.num_poses == orig_action.path.num_poses
+    assert new_action.execution_options.delay == 0.0
+    assert new_action.execution_options.success_probability == 1.0
+    assert new_action.execution_options.rng_seed is None
 
 
 def test_task_plan_conversion():
@@ -141,6 +148,11 @@ def test_task_plan_conversion():
             target_location="desk0",
             path=nav_path,
             cost=0.75,
+            execution_options=acts.ExecutionOptions(
+                delay=0.2,
+                success_probability=0.5,
+                rng_seed=1234,
+            ),
         ),
         acts.TaskAction(
             "place", object="apple", target_location="desk0", pose=place_pose, cost=0.5
@@ -156,7 +168,7 @@ def test_task_plan_conversion():
         assert orig_action.type == ros_action.type
     assert ros_plan.cost == pytest.approx(orig_plan.total_cost)
 
-    # Convert back to a pyrobosim task action
+    # Convert back to a pyrobosim task plan
     new_plan = task_plan_from_ros(ros_plan)
     assert new_plan.robot == orig_plan.robot
     assert len(new_plan.actions) == len(orig_plan.actions)

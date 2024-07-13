@@ -10,7 +10,7 @@ from rclpy.node import Node
 import time
 
 from pyrobosim_msgs.action import ExecuteTaskAction, ExecuteTaskPlan
-from pyrobosim_msgs.msg import TaskAction, TaskPlan
+from pyrobosim_msgs.msg import ActionExecutionOptions, TaskAction, TaskPlan
 from pyrobosim_msgs.srv import RequestWorldState
 
 
@@ -18,7 +18,12 @@ class Commander(Node):
     def __init__(self):
         super().__init__("demo_commander")
 
+        # Declare node parameters
+        # NOTE: The action parameters only pertain to single-robot mode.
         self.declare_parameter("mode", value="plan")
+        self.declare_parameter("action_delay", value=0.1)
+        self.declare_parameter("action_success_probability", value=1.0)
+        self.declare_parameter("action_rng_seed", value=-1)
 
         # Action client for a single action
         self.action_client = ActionClient(self, ExecuteTaskAction, "execute_action")
@@ -50,22 +55,44 @@ def main():
     rclpy.init()
     cmd = Commander()
 
+    # Create execution options for the actions
+    exec_options = ActionExecutionOptions(
+        delay=cmd.get_parameter("action_delay").value,
+        success_probability=cmd.get_parameter("action_success_probability").value,
+        rng_seed=cmd.get_parameter("action_rng_seed").value,
+    )
+
     # Choose between action or plan command, based on input parameter.
     mode = cmd.get_parameter("mode").value
     if mode == "action":
         cmd.get_logger().info("Executing task action...")
         goal = ExecuteTaskAction.Goal()
-        goal.action = TaskAction(robot="robot", type="navigate", target_location="desk")
+        goal.action = TaskAction(
+            robot="robot",
+            type="navigate",
+            target_location="desk",
+            execution_options=exec_options,
+        )
         cmd.send_action_goal(goal)
 
     elif mode == "plan":
         cmd.get_logger().info("Executing task plan...")
         task_actions = [
-            TaskAction(type="navigate", target_location="desk"),
-            TaskAction(type="pick", object="water"),
-            TaskAction(type="navigate", target_location="counter"),
-            TaskAction(type="place"),
-            TaskAction(type="navigate", target_location="kitchen"),
+            TaskAction(
+                type="navigate", target_location="desk", execution_options=exec_options
+            ),
+            TaskAction(type="pick", object="water", execution_options=exec_options),
+            TaskAction(
+                type="navigate",
+                target_location="counter",
+                execution_options=exec_options,
+            ),
+            TaskAction(type="place", execution_options=exec_options),
+            TaskAction(
+                type="navigate",
+                target_location="kitchen",
+                execution_options=exec_options,
+            ),
         ]
         goal = ExecuteTaskPlan.Goal()
         goal.plan = TaskPlan(robot="robot", actions=task_actions)

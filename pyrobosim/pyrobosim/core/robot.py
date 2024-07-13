@@ -96,12 +96,14 @@ class Robot:
         self.grasp_generator = grasp_generator
         self.last_grasp_selection = None
 
-        # World interaction properties
-        self.world = None
+        # Action execution options
         self.current_action = None
         self.executing_action = False
         self.current_plan = None
         self.executing_plan = False
+
+        # World interaction properties
+        self.world = None
         self.location = None
         self.manipulated_object = None
         self.partial_observability = partial_observability
@@ -606,7 +608,12 @@ class Robot:
         if self.world.has_gui:
             self.world.gui.set_buttons_during_action(False)
 
-        if action.type == "navigate":
+        # Simulate action-agnostic properties such as delays or failure probabilities.
+        if not action.should_succeed():
+            print("Simulated action failure.")
+            success = False
+
+        elif action.type == "navigate":
             self.executing_nav = True
             path = action.path if action.path.num_poses > 0 else None
             if self.world.has_gui:
