@@ -43,6 +43,24 @@ class Path:
             yaw = prev_pose.get_angular_distance(cur_pose)
             cur_pose.set_euler_angles(yaw=yaw)
 
+    def is_collision_free(self, world, step_dist=0.01):
+        """
+        Check whether a path is collision free in a specific world.
+
+        :param world: The world to use for collision checking.
+        :type world: :class:`pyrobosim.core.world.World`
+        :param step_dist: The step size for discretizing a straight line to check collisions.
+        :type step_dist: float
+        :return: True if the path is collision free, else False.
+        :rtype: bool
+        """
+        for idx in range(len(self.poses) - 1):
+            if not world.is_connectable(
+                self.poses[idx], self.poses[idx + 1], step_dist=step_dist
+            ):
+                return False
+        return True
+
     def __eq__(self, other):
         """
         Check if two paths are exactly equal.

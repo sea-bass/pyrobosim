@@ -333,6 +333,11 @@ class World:
             warnings.warn(f"{hallway} is locked.")
             return False
 
+        for robot in self.robots:
+            if hallway.is_collision_free(robot.get_pose()):
+                warnings.warn(f"Robot {robot.name} is in {hallway}. Cannot close.")
+                return False
+
         hallway.is_open = False
         if self.has_gui:
             self.gui.canvas.show_hallways()

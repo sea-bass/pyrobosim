@@ -7,6 +7,7 @@ import os
 import numpy as np
 import pytest
 import time
+import threading
 
 from pyrobosim.core import Pose, Robot, WorldYamlLoader
 from pyrobosim.navigation import ConstantVelocityExecutor, PathPlanner
@@ -134,6 +135,51 @@ class TestRobot:
         assert pose.y == pytest.approx(goal_pose.y)
         assert pose.q == pytest.approx(goal_pose.q)
 
+    def test_robot_nav_validation(self):
+        """Check that the robot can abort execution with runtime collision validation."""
+        init_pose = Pose(x=1.0, y=0.75, yaw=0.0)
+        goal_pose = Pose(x=2.5, y=3.0, yaw=np.pi / 2.0)
+
+        robot = Robot(
+            pose=init_pose,
+            path_planner=PathPlanner("world_graph", world=self.test_world),
+            path_executor=ConstantVelocityExecutor(
+                linear_velocity=3.0,
+                dt=0.1,
+                validate_during_execution=True,
+            ),
+        )
+        robot.world = self.test_world
+        robot.location = "kitchen"
+
+        # Plan a path.
+        robot.set_pose(init_pose)
+        path = robot.plan_path(goal=goal_pose)
+
+        # Schedule a thread that closes all hallways after a slight delay.
+        def close_all_hallways():
+            time.sleep(0.5)
+            for hallway in self.test_world.hallways:
+                self.test_world.close_hallway(hallway)
+
+        threading.Thread(target=close_all_hallways).start()
+
+        # Follow the path and check that it fails.
+        with pytest.warns(UserWarning) as warn_info:
+            result = robot.follow_path(path, use_thread=False)
+        assert (
+            warn_info[0].message.args[0]
+            == "Remaining path is in collision. Aborting execution."
+        )
+        assert warn_info[1].message.args[0] == "Trajectory execution aborted."
+        assert not result
+
+        # Now open the hallways and try again, which should succeed.
+        for hallway in self.test_world.hallways:
+            self.test_world.open_hallway(hallway)
+        path = robot.plan_path(goal=goal_pose)
+        assert robot.follow_path(path, use_thread=False)
+
     def test_robot_manipulation(self):
         """Check that the robot can manipulate objects."""
         # Spawn the robot near the kitchen table
@@ -227,8 +273,8 @@ class TestRobot:
         assert not robot.detect_objects("water")
         assert len(robot.last_detected_objects) == 0
 
-    def test_robot_open_close(self):
-        """Check that the robot can open or close objects."""
+    def test_robot_open_close_hallway(self):
+        """Check that the robot can open or close hallwys."""
         robot = Robot(
             pose=Pose(x=1.0, y=0.5, yaw=0.0),
         )
@@ -280,6 +326,19 @@ class TestRobot:
         assert not result
         assert (
             warn_info[0].message.args[0] == "Robot is holding an object. Cannot close."
+        )
+
+        # Add a new robot to the world inside the hallway.
+        # Now, closing should fail because of this obstructing robot.
+        robot.manipulated_object = None
+        new_robot = Robot(name="blocker")
+        self.test_world.add_robot(new_robot, pose=Pose(x=2.5, y=0.5, yaw=0.0))
+        with pytest.warns(UserWarning) as warn_info:
+            result = robot.close_location()
+        assert not result
+        assert (
+            warn_info[0].message.args[0]
+            == "Robot blocker is in Hallway: hall_kitchen_bedroom. Cannot close."
         )
 
     def test_execute_action(self):
