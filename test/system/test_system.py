@@ -132,7 +132,7 @@ class TestSystem:
             hallway = world.get_hallways_from_rooms(room_start, room_end)[0]
             self.nav_helper(hallway.name)
 
-            # Close the hallway and verify that it's close.
+            # Close the hallway and verify that it's closed.
             window.on_close_click()
             assert not hallway.is_open
 
