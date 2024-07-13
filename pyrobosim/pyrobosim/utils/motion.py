@@ -71,7 +71,7 @@ class Path:
         :rtype: bool
         """
         if not (isinstance(other, Path)):
-            raise TypeError("Expected a Path object")
+            raise TypeError("Expected a Path object.")
 
         return self.poses == other.poses
 
