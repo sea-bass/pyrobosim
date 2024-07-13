@@ -274,7 +274,7 @@ class TestRobot:
         assert len(robot.last_detected_objects) == 0
 
     def test_robot_open_close_hallway(self):
-        """Check that the robot can open or close hallwys."""
+        """Check that the robot can open or close hallways."""
         robot = Robot(
             pose=Pose(x=1.0, y=0.5, yaw=0.0),
         )
