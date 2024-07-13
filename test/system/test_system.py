@@ -58,7 +58,6 @@ class TestSystem:
         while robot.executing_nav:
             time.sleep(0.2)
 
-        print(f"Robot location: {robot.location}")
         assert (
             robot.location == expected_location
             or robot.location in expected_location.children

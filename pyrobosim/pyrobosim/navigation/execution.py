@@ -113,12 +113,13 @@ class ConstantVelocityExecutor:
 
         # Finalize path execution
         time.sleep(0.1)  # To ensure background threads get the end of the path.
+        self.abort_execution = True
+        if self.validate_during_execution:
+            self.validation_timer.join()
         self.robot.executing_nav = False
         self.robot.last_nav_successful = success
         self.robot.executing_action = False
         self.robot.current_action = None
-        if self.validate_during_execution:
-            self.validation_timer.join()
         return self.robot.last_nav_successful
 
     def validate_remaining_path(self):
@@ -137,6 +138,8 @@ class ConstantVelocityExecutor:
             for idx, t in enumerate(self.traj.t_pts):
                 if t >= cur_time:
                     break
+            if idx == self.traj.num_points() - 1:
+                return
 
             # Collision check the remaining path
             poses = [cur_pose]
