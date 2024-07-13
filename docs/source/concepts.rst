@@ -68,6 +68,6 @@ To enable this, a typical user of ``pyrobosim`` would:
 Some use cases include:
 
 * `Home Service Robotics with the Toyota HSR <https://roboticseabass.com/2020/12/30/2020-review-service-robotics-mit-csail/>`_ -- the start of this work!
-* `Hierarchically Decentralized Heterogeneous Multi-Robot Task Allocation System` <https://arxiv.org/abs/2405.02484>`_ -- by Sujeet Kashid and Ashwin D. Kumat (2024)
+* `Hierarchically Decentralized Heterogeneous Multi-Robot Task Allocation System <https://arxiv.org/abs/2405.02484>`_, by Sujeet Kashid and Ashwin D. Kumat (2024)
 
 We look forward to your Git issues, contributions, and usage examples!
