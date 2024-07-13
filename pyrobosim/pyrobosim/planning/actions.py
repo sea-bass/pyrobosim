@@ -24,6 +24,7 @@ class ExecutionOptions:
         self.delay = delay
         self.success_probability = success_probability
         self.rng_seed = rng_seed
+        self.rng = np.random.default_rng(seed=rng_seed)
 
 
 class TaskAction:
@@ -89,8 +90,10 @@ class TaskAction:
         """
         if self.execution_options:
             time.sleep(self.execution_options.delay)
-            rng = np.random.default_rng(seed=self.execution_options.rng_seed)
-            return rng.random() <= self.execution_options.success_probability
+            return (
+                self.execution_options.rng.random()
+                <= self.execution_options.success_probability
+            )
         return True
 
     def __repr__(self):
