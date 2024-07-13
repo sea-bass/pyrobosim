@@ -126,6 +126,9 @@ def interpolate_trajectory(traj: Trajectory, dt: float):
         warnings.warn("Insufficient trajectory points for interpolation.")
         return None
 
+    if traj.num_points() == 2 and traj.poses[0] == traj.poses[1]:
+        return traj
+
     # De-duplicate time points ensure that Slerp doesn't throw an error.
     # Right now, we're just keeping the later point.
     i = 1
