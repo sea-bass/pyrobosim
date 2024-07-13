@@ -14,7 +14,7 @@ from pyrobosim.gui import PyRoboSimGUI
 from pyrobosim.utils.knowledge import query_to_entity
 
 
-# Needed for PyQt5 tests to work with CI
+# Needed for UI tests to work with CI
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 

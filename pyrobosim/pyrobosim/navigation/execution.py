@@ -77,7 +77,7 @@ class ConstantVelocityExecutor:
         self.current_traj_time = 0.0
         self.abort_execution = False
 
-        # Convert the path to an interpolated trajectory
+        # Convert the path to an interpolated trajectory.
         self.traj = get_constant_speed_trajectory(
             path,
             linear_velocity=self.linear_velocity,
@@ -92,7 +92,7 @@ class ConstantVelocityExecutor:
             )
             self.validation_timer.start()
 
-        # Execute the trajectory
+        # Execute the trajectory.
         success = True
         sleep_time = self.dt / realtime_factor
         is_holding_object = self.robot.manipulated_object is not None
@@ -111,7 +111,7 @@ class ConstantVelocityExecutor:
 
             time.sleep(max(0, sleep_time - (time.time() - start_time)))
 
-        # Finalize path execution
+        # Finalize path execution.
         time.sleep(0.1)  # To ensure background threads get the end of the path.
         self.abort_execution = True
         if self.validate_during_execution:
@@ -141,7 +141,7 @@ class ConstantVelocityExecutor:
             if idx == self.traj.num_points() - 1:
                 return
 
-            # Collision check the remaining path
+            # Collision check the remaining path.
             poses = [cur_pose]
             poses.extend(self.traj.poses[idx:])
             if len(poses) > 2:
