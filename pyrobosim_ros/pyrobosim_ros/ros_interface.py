@@ -3,8 +3,8 @@
 import os
 import numpy as np
 import rclpy
-from rclpy.action import ActionServer
-from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
+from rclpy.action import ActionServer, CancelResponse
+from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 import time
@@ -76,16 +76,14 @@ class WorldROSWrapper(Node):
         self.executing_plan = False
         self.last_command_status = None
 
-        # Set up different callback groups
-        self.action_cb_group = MutuallyExclusiveCallbackGroup()
-        self.query_cb_group = MutuallyExclusiveCallbackGroup()
-
         # Server for executing single action
         self.action_server = ActionServer(
             self,
             ExecuteTaskAction,
             "execute_action",
-            self.action_callback,
+            execute_callback=self.action_callback,
+            cancel_callback=self.action_cancel_callback,
+            callback_group=ReentrantCallbackGroup(),
         )
 
         # Server for executing task plan
@@ -93,7 +91,9 @@ class WorldROSWrapper(Node):
             self,
             ExecuteTaskPlan,
             "execute_task_plan",
-            self.plan_callback,
+            execute_callback=self.plan_callback,
+            cancel_callback=self.plan_cancel_callback,
+            callback_group=ReentrantCallbackGroup(),
         )
 
         # World state service server
@@ -101,7 +101,7 @@ class WorldROSWrapper(Node):
             RequestWorldState,
             "request_world_state",
             self.world_state_callback,
-            callback_group=self.query_cb_group,
+            callback_group=ReentrantCallbackGroup(),
         )
 
         # Initialize robot specific interface lists
@@ -203,18 +203,18 @@ class WorldROSWrapper(Node):
         :param robot: Robot instance.
         :type robot: :class:`pyrobosim.core.robot.Robot`
         """
-        for i, r in self.world.robots:
+        for idx, r in enumerate(self.world.robots):
             if r == robot:
-                sub = self.robot_command_subs.pop(i)
+                sub = self.robot_command_subs.pop(idx)
                 self.destroy_subscription(sub)
                 del sub
-                pub = self.robot_state_pubs.pop(i)
+                pub = self.robot_state_pubs.pop(idx)
                 self.destroy_publisher(pub)
                 del pub
-                pub_timer = self.robot_state_pub_threads.pop(i)
+                pub_timer = self.robot_state_pub_threads.pop(idx)
                 pub_timer.destroy()
                 del pub_thread
-                dynamics_timer = self.robot_dynamics_timers.pop(i)
+                dynamics_timer = self.robot_dynamics_timers.pop(idx)
                 dynamics_timer.destroy()
                 del dynamics_timer
 
@@ -269,7 +269,7 @@ class WorldROSWrapper(Node):
         Handle single action callback.
 
         :param goal_handle: Task action goal handle to process.
-        :type goal_handle: :class:`pyrobosim_msgs.action.TaskAction.Goal`
+        :type goal_handle: :class:`pyrobosim_msgs.action.ExecuteTaskAction.Goal`
         """
         robot = self.world.get_robot_by_name(goal_handle.request.action.robot)
         if not robot:
@@ -297,12 +297,25 @@ class WorldROSWrapper(Node):
         result.success = success
         return result
 
+    def action_cancel_callback(self, goal_handle):
+        """
+        Handle cancellation for single action goals.
+
+        :param goal_handle: Task action goal handle to process.
+        :type goal_handle: :class:`pyrobosim_msgs.action.ExecuteTaskAction.Goal`
+        """
+        robot = self.world.get_robot_by_name(goal_handle.request.action.robot)
+        if robot is not None:
+            self.get_logger().info(f"Canceling action for robot {robot.name}.")
+            robot.cancel_actions()
+        return CancelResponse.ACCEPT
+
     def plan_callback(self, goal_handle):
         """
         Handle task plan action callback.
 
         :param goal_handle: Task plan action goal handle to process.
-        :type goal_handle: :class:`pyrobosim_msgs.action.TaskPlan.Goal`
+        :type goal_handle: :class:`pyrobosim_msgs.action.ExecuteTaskPlan.Goal`
         """
         robot = self.world.get_robot_by_name(goal_handle.request.plan.robot)
         if not robot:
@@ -333,6 +346,19 @@ class WorldROSWrapper(Node):
         result.num_completed = num_completed
         result.num_total = robot_plan.size()
         return result
+
+    def plan_cancel_callback(self, goal_handle):
+        """
+        Handle cancellation for task plans.
+
+        :param goal_handle: Task action goal handle to process.
+        :type goal_handle: :class:`pyrobosim_msgs.action.ExecuteTaskPlan.Goal`
+        """
+        robot = self.world.get_robot_by_name(goal_handle.request.plan.robot)
+        if robot is not None:
+            self.get_logger().info(f"Canceling plan for robot {robot.name}.")
+            robot.cancel_actions()
+        return CancelResponse.ACCEPT
 
     def is_robot_busy(self, robot):
         """
