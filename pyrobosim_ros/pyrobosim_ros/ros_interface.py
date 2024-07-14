@@ -351,7 +351,7 @@ class WorldROSWrapper(Node):
         """
         Handle cancellation for task plans.
 
-        :param goal_handle: Task action goal handle to process.
+        :param goal_handle: Task plan goal handle to process.
         :type goal_handle: :class:`pyrobosim_msgs.action.ExecuteTaskPlan.Goal`
         """
         robot = self.world.get_robot_by_name(goal_handle.request.plan.robot)
