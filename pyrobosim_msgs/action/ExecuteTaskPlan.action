@@ -1,4 +1,4 @@
-# Execute Task Action -- ROS Action Definition
+# Execute Task Plan -- ROS Action Definition
 
 # Goal
 pyrobosim_msgs/TaskPlan plan

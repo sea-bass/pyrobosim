@@ -475,7 +475,7 @@ class WorldROSWrapper(Node):
                     response.result = execution_result_to_ros(result)
                     return response
 
-            # Try lock or unlock the hallway if its status needs to be toggled
+            # Try lock or unlock the hallway if its status needs to be toggled.
             if request.lock != entity.is_locked:
                 if request.lock:
                     result = self.world.lock_hallway(entity)
