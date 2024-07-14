@@ -1,0 +1,10 @@
+# ROS service to set the state of a location
+
+# Request
+string location_name
+bool open
+bool lock
+
+---
+# Response
+ExecutionResult result

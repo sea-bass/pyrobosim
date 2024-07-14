@@ -10,9 +10,10 @@ from rclpy.node import Node
 import time
 
 from geometry_msgs.msg import Twist
+from pyrobosim.core.hallway import Hallway
 from pyrobosim_msgs.action import ExecuteTaskAction, ExecuteTaskPlan
-from pyrobosim_msgs.msg import RobotState, LocationState, ObjectState
-from pyrobosim_msgs.srv import RequestWorldState
+from pyrobosim_msgs.msg import ExecutionResult, RobotState, LocationState, ObjectState
+from pyrobosim_msgs.srv import RequestWorldState, SetLocationState
 from .ros_conversions import (
     execution_result_to_ros,
     pose_from_ros,
@@ -97,11 +98,18 @@ class WorldROSWrapper(Node):
             callback_group=ReentrantCallbackGroup(),
         )
 
-        # World state service server
+        # World state service servers
         self.world_state_srv = self.create_service(
             RequestWorldState,
             "request_world_state",
             self.world_state_callback,
+            callback_group=ReentrantCallbackGroup(),
+        )
+
+        self.set_location_state_srv = self.create_service(
+            SetLocationState,
+            "set_location_state",
+            self.set_location_state_callback,
             callback_group=ReentrantCallbackGroup(),
         )
 
@@ -401,11 +409,11 @@ class WorldROSWrapper(Node):
         Returns the world state as a response to a service request.
 
         :param request: The service request.
-        :type request: :class:`pyrobosim_msgs.srv._request_world_state.RequestWorldState_Request`
+        :type request: :class:`pyrobosim_msgs.srv.RequestWorldState.Request`
         :param response: The unmodified service response.
-        :type response: :class:`pyrobosim_msgs.srv._request_world_state.RequestWorldState_Response`
+        :type response: :class:`pyrobosim_msgs.srv.RequestWorldState.Response`
         :return: The modified service response containing the world state.
-        :rtype: :class:`pyrobosim_msgs.srv._request_world_state.RequestWorldState_Response`
+        :rtype: :class:`pyrobosim_msgs.srv.RequestWorldState.Response`
         """
         self.get_logger().info("Received world state request.")
 
@@ -431,6 +439,61 @@ class WorldROSWrapper(Node):
         for robot in self.world.robots:
             response.state.robots.append(self.package_robot_state(robot))
 
+        return response
+
+    def set_location_state_callback(self, request, response):
+        """
+        Sets the state of a location in the world as a response to a service request.
+
+        :param request: The service request.
+        :type request: :class:`pyrobosim_msgs.srv.SetLocationState.Request`
+        :param response: The unmodified service response.
+        :type response: :class:`pyrobosim_msgs.srv.SetLocationState.Response`
+        :return: The modified service response containing result of setting the location state.
+        :rtype: :class:`pyrobosim_msgs.srv.RequestWorldState.Response`
+        """
+        self.get_logger().info("Received location state setting request.")
+
+        # Check if the entity exists.
+        entity = self.world.get_entity_by_name(request.location_name)
+        if not entity:
+            message = f"No location matching query: {request.location_name}"
+            self.get_logger().warn(message)
+            response.result.status = ExecutionResult.INVALID_ACTION
+            response.result.message = message
+            return response
+
+        if isinstance(entity, Hallway):
+            # Try open or close the hallway if its status needs to be toggled.
+            if request.open != entity.is_open:
+                if request.open:
+                    result = self.world.open_hallway(entity)
+                else:
+                    result = self.world.close_hallway(entity)
+
+                if not result.is_success():
+                    response.result = execution_result_to_ros(result)
+                    return response
+
+            # Try lock or unlock the hallway if its status needs to be toggled
+            if request.lock != entity.is_locked:
+                if request.lock:
+                    result = self.world.lock_hallway(entity)
+                else:
+                    result = self.world.unlock_hallway(entity)
+
+                if not result.is_success():
+                    response.result = execution_result_to_ros(result)
+                    return response
+
+            response.result.status = ExecutionResult.SUCCESS
+            return response
+
+        # If no valid entity type is reached, we should fail here.
+        message = f"Cannot set state for {entity.name} since it is of type {type(entity).__name__}."
+        self.get_logger().warn(message)
+        response.result.status = ExecutionResult.INVALID_ACTION
+        response.result.message = message
         return response
 
 
