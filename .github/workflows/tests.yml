@@ -53,7 +53,7 @@ jobs:
             -w /opt/pyrobosim \
             --volume ./test/results:/opt/pyrobosim/test/results:rw \
             ${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:base \
-            /bin/bash -c 'PYTHONPATH=./dependencies/pddlstream:$PYTHONPATH ./test/run_tests.bash'
+            /bin/bash -c 'PYTHONPATH=./dependencies/pddlstream:$PYTHONPATH ./test/run_tests.bash ${ROS_DISTRO}'
       - name: Pytest coverage comment
         id: coverageComment
         uses: MishaKav/pytest-coverage-comment@main
