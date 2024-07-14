@@ -1,5 +1,6 @@
 """ Defines actions for task and motion planning. """
 
+from enum import IntEnum
 import numpy as np
 import time
 
@@ -25,6 +26,63 @@ class ExecutionOptions:
         self.success_probability = success_probability
         self.rng_seed = rng_seed
         self.rng = np.random.default_rng(seed=rng_seed)
+
+
+class ExecutionStatus(IntEnum):
+    """Enumeration for action or plan execution status."""
+
+    UNKNOWN = -1
+
+    # Action executed successfully.
+    SUCCESS = 0
+
+    # Preconditions not sufficient to execute the action.
+    # For example, the action was to pick an object but there was no object visible.
+    PRECONDITION_FAILURE = 1
+
+    # Planning failed, for example a path planner or grasp planner did not produce a solution.
+    PLANNING_FAILURE = 2
+
+    # Preconditions were met and planning succeeded, but execution failed.
+    EXECUTION_FAILURE = 3
+
+    # Execution succeeded, but post-execution validation failed.
+    POSTCONDITION_FAILURE = 4
+
+    # Invalid action type.
+    INVALID_ACTION = 5
+
+    # The action was canceled by a user or upstream program.
+    CANCELED = 6
+
+
+class ExecutionResult:
+    """Contains the result of executing actions or plans."""
+
+    def __init__(self, status=ExecutionStatus.UNKNOWN, message=None):
+        """
+        Creates a new execution result instance.
+
+        :param status: The resulting status code. Defaults to UNKNOWN.
+        :type status: :class:`pyrobosim.planning.actions.ExecutionStatus`
+        :param message: An optional message describing the result.
+        :type message: str
+        """
+        self.status = status
+        self.message = message
+
+    def is_success(self):
+        """
+        Helper function to determine if an execution result is successful.
+
+        :return: True if successful, otherwise False.
+        :rtype: bool
+        """
+        return self.status == ExecutionStatus.SUCCESS
+
+    def __repr__(self):
+        """Returns printable string."""
+        return f"Execution status: {self.status.name}"
 
 
 class TaskAction:

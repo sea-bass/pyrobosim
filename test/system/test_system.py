@@ -11,6 +11,7 @@ import time
 
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.gui import PyRoboSimGUI
+from pyrobosim.planning.actions import ExecutionStatus
 from pyrobosim.utils.knowledge import query_to_entity
 
 
@@ -59,7 +60,7 @@ class TestSystem:
             time.sleep(0.2)
         robot.location = world.get_location_from_pose(robot.get_pose())
 
-        assert robot.last_nav_successful
+        assert robot.last_nav_status == ExecutionStatus.SUCCESS
         assert (
             robot.location == expected_location
             or robot.location in expected_location.children

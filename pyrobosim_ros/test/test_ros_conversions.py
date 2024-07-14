@@ -6,7 +6,10 @@ from rclpy.duration import Duration
 import pyrobosim.planning.actions as acts
 from pyrobosim.utils.motion import Path
 from pyrobosim.utils.pose import Pose
+import pyrobosim_msgs.msg as ros_msgs
 from pyrobosim_ros.ros_conversions import (
+    execution_result_from_ros,
+    execution_result_to_ros,
     path_from_ros,
     path_to_ros,
     pose_from_ros,
@@ -182,3 +185,27 @@ def test_ros_duration_to_float():
     ros_duration = Duration(seconds=1.0, nanoseconds=500000000)
     float_duration = ros_duration_to_float(ros_duration)
     assert float_duration == pytest.approx(1.5)
+
+
+def test_execution_result_conversion():
+    """Tests round-trip conversion of execution result objects."""
+    code_names = [e.name for e in acts.ExecutionStatus]
+
+    for code in code_names:
+        expected_message = f"Action completed with status {code}."
+
+        # Create a pyrobosim execution result
+        orig_result = acts.ExecutionResult(
+            status=getattr(acts.ExecutionStatus, code),
+            message=expected_message,
+        )
+
+        # Convert to a ROS Message
+        ros_result = execution_result_to_ros(orig_result)
+        assert ros_result.status == getattr(ros_msgs.ExecutionResult, code)
+        assert ros_result.message == expected_message
+
+        # Convert back to a pyrobosim object
+        new_result = execution_result_from_ros(ros_result)
+        assert new_result.status == orig_result.status
+        assert new_result.message == orig_result.message

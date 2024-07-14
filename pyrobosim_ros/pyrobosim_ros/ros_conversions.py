@@ -234,3 +234,33 @@ def ros_duration_to_float(ros_duration):
     :type: float
     """
     return 1.0e-9 * ros_duration.nanoseconds
+
+
+def execution_result_to_ros(result):
+    """
+    Converts an execution result object to its corresponding ROS message.
+
+    :param result: The execution result object.
+    :type result: :class:`pyrobosim.planning.actions.ExecutionResult`
+    :return: The equivalent ROS message.
+    :rtype: :class:`pyrobosim_msgs.msg.ExecutionResult`
+    """
+    return ros_msgs.ExecutionResult(
+        status=getattr(acts.ExecutionStatus, result.status.name),
+        message=result.message or "",
+    )
+
+
+def execution_result_from_ros(msg):
+    """
+    Converts an execution result ROS message to its corresponding object.
+
+    :param result: The execution result ROS message.
+    :type result: :class:`pyrobosim_msgs.msg.ExecutionResult`
+    :return: The equivalent native PyRoboSim object.
+    :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
+    """
+    return acts.ExecutionResult(
+        status=getattr(ros_msgs.ExecutionResult, msg.status.name),
+        message=msg.message or None,
+    )
