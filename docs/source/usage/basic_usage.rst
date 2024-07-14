@@ -91,7 +91,7 @@ Refer to the :doc:`YAML Schemas </yaml/index>` documentation for more informatio
 
 Exporting Worlds to Gazebo
 --------------------------
-To export worlds to Gazebo, there is a :doc:`WorldGazeboExporter </generated/pyrobosim.core.gazebo.WorldGazeboExporter>` utility:
+To export worlds to Gazebo, there is a :py:class:`pyrobosim.core.gazebo.WorldGazeboExporter` utility:
 
 Standalone:
 

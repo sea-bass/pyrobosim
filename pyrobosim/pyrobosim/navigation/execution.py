@@ -4,6 +4,7 @@ import time
 import threading
 import warnings
 
+from ..planning.actions import ExecutionResult, ExecutionStatus
 from ..utils.motion import Path
 from ..utils.trajectory import get_constant_speed_trajectory, interpolate_trajectory
 
@@ -52,7 +53,8 @@ class ConstantVelocityExecutor:
 
         # Execution state
         self.current_traj_time = 0.0
-        self.abort_execution = False
+        self.abort_execution = False  # Flag to abort internally
+        self.cancel_execution = False  # Flag to cancel from user
 
     def execute(self, path, realtime_factor=1.0):
         """
@@ -63,15 +65,23 @@ class ConstantVelocityExecutor:
         :param realtime_factor: A multiplier on the execution time relative to
             real time, defaults to 1.0.
         :type realtime_factor: float, optional
-        :return: True if execution is complete, else False.
-        :rtype: bool
+        :return: An object describing the execution result.
+        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
         if self.robot is None:
-            warnings.warn("No robot attached to execute the trajectory.")
-            return False
+            message = "No robot attached to execute the trajectory."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE,
+                message=message,
+            )
         elif path.num_poses < 2:
-            warnings.warn("Not enough waypoints in path to execute.")
-            return False
+            message = "Not enough waypoints in path to execute."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE,
+                message=message,
+            )
 
         self.robot.executing_nav = True
         self.current_traj_time = 0.0
@@ -93,7 +103,8 @@ class ConstantVelocityExecutor:
             self.validation_timer.start()
 
         # Execute the trajectory.
-        success = True
+        status = ExecutionStatus.SUCCESS
+        message = ""
         sleep_time = self.dt / realtime_factor
         is_holding_object = self.robot.manipulated_object is not None
         for i in range(traj_interp.num_points()):
@@ -105,22 +116,28 @@ class ConstantVelocityExecutor:
                 self.robot.manipulated_object.set_pose(cur_pose)
 
             if self.abort_execution:
-                warnings.warn("Trajectory execution aborted.")
-                success = False
+                if self.validate_during_execution:
+                    self.validation_timer.join()
+                message = "Trajectory execution aborted."
+                warnings.warn(message)
+                status = ExecutionStatus.EXECUTION_FAILURE
+                break
+            if self.cancel_execution:
+                self.cancel_execution = False
+                message = "Trajectory execution canceled by user."
+                warnings.warn(message)
+                status = ExecutionStatus.CANCELED
                 break
 
             time.sleep(max(0, sleep_time - (time.time() - start_time)))
 
         # Finalize path execution.
         time.sleep(0.1)  # To ensure background threads get the end of the path.
-        self.abort_execution = True
-        if self.validate_during_execution:
-            self.validation_timer.join()
+        self.robot.last_nav_result = ExecutionResult(status=status, message=message)
         self.robot.executing_nav = False
-        self.robot.last_nav_successful = success
         self.robot.executing_action = False
         self.robot.current_action = None
-        return self.robot.last_nav_successful
+        return self.robot.last_nav_result
 
     def validate_remaining_path(self):
         """

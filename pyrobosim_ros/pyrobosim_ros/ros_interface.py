@@ -14,6 +14,7 @@ from pyrobosim_msgs.action import ExecuteTaskAction, ExecuteTaskPlan
 from pyrobosim_msgs.msg import RobotState, LocationState, ObjectState
 from pyrobosim_msgs.srv import RequestWorldState
 from .ros_conversions import (
+    execution_result_to_ros,
     pose_from_ros,
     pose_to_ros,
     ros_duration_to_float,
@@ -288,14 +289,16 @@ class WorldROSWrapper(Node):
         # Execute the action
         robot_action = task_action_from_ros(goal_handle.request.action)
         self.get_logger().info(f"Executing action with robot {robot.name}...")
-        success = robot.execute_action(robot_action)
-        self.get_logger().info(f"Action finished with success: {success}")
+        execution_result = robot.execute_action(robot_action)
+        self.get_logger().info(
+            f"Action finished with status: {execution_result.status.name}"
+        )
 
         # Package up the result
         goal_handle.succeed()
-        result = ExecuteTaskAction.Result()
-        result.success = success
-        return result
+        return ExecuteTaskAction.Result(
+            execution_result=execution_result_to_ros(execution_result)
+        )
 
     def action_cancel_callback(self, goal_handle):
         """
@@ -334,18 +337,18 @@ class WorldROSWrapper(Node):
         # Execute the plan
         self.get_logger().info(f"Executing task plan with robot {robot.name}...")
         robot_plan = task_plan_from_ros(goal_handle.request.plan)
-        success, num_completed = robot.execute_plan(robot_plan)
+        execution_result, num_completed = robot.execute_plan(robot_plan)
         self.get_logger().info(
-            f"Plan finished with success: {success} (completed {num_completed}/{robot_plan.size()} actions)"
+            f"Plan finished with status: {execution_result.status.name} (completed {num_completed}/{robot_plan.size()} actions)"
         )
 
         # Package up the result
         goal_handle.succeed()
-        result = ExecuteTaskPlan.Result()
-        result.success = success
-        result.num_completed = num_completed
-        result.num_total = robot_plan.size()
-        return result
+        return ExecuteTaskPlan.Result(
+            execution_result=execution_result_to_ros(execution_result),
+            num_completed=num_completed,
+            num_total=robot_plan.size(),
+        )
 
     def plan_cancel_callback(self, goal_handle):
         """

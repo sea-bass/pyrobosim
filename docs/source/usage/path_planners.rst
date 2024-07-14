@@ -22,9 +22,9 @@ A specific implementation can be selected by providing the relevant parameters i
 
 Available planner types and their available implementations can be found below :
 
-- "astar" : :py:mod:`pyrobosim.navigation.a_star`
-- "prm" : :py:mod:`pyrobosim.navigation.prm`
-- "rrt" : :py:mod:`pyrobosim.navigation.rrt`
+- ``"astar"`` : :py:mod:`pyrobosim.navigation.a_star`
+- ``"prm"`` : :py:mod:`pyrobosim.navigation.prm`
+- ``"rrt"`` : :py:mod:`pyrobosim.navigation.rrt`
 
 
 Adding New Planners
@@ -82,5 +82,5 @@ For example, to add a new planner type called ``NewPlanner``:
 
 .. note::
 
-    Planner implementations that need to display graphs should provide a `get_graphs()` method and set the `graphs` attribute of `PathPlannerBase` like in
+    Planner implementations that need to display graphs should provide a ``get_graphs()`` method and set the ``graphs`` attribute of ``PathPlannerBase`` like in
     :py:func:`pyrobosim.navigation.rrt.RRTPlannerPolygon.get_graphs` and :py:func:`pyrobosim.navigation.rrt.RRTPlanner.plan`.
