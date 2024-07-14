@@ -18,7 +18,7 @@ Worlds in ``pyrobosim`` consist of a hierarchy of polygonal *entities*, includin
 
 This is all represented in a 2.5D environment (SE(2) pose with vertical (Z) height).
 However, full 3D poses are representable as well.
-For more information, refer to the :doc:`Geometry Conventions </usage/geometry_conventions>` section.
+For more information, refer to the :ref:`geometry_conventions` section.
 
 .. image:: media/world_entities.png
     :align: center
@@ -30,19 +30,16 @@ For more information, refer to the :doc:`Geometry Conventions </usage/geometry_c
 Actions
 -------
 
-Within the world, we can spawn a robot that can perform a set of *actions*, such as:
-
-* **Navigate** to a particular entity or pose.
-* **Pick** an object from a specific location.
-* **Place** an object at a specific location and pose.
+Within the world, we can spawn a robot that can perform a set of *actions*, such as navigating, picking and placing.
+To learn more, refer to :ref:`robot_actions`.
 
 These actions can be specified individually, or a sequence of actions (or a *plan*).
 Actions or plans can be commanded directly (e.g., "go to the table and pick up an apple")
-or as part of a *task and motion planning* framework that accepts a task specification
+or as part of a :ref:`task_and_motion_planning` framework that accepts a task specification
 (e.g., "all apples should be on the kitchen table") and outputs a plan that, when executed,
 satisfies the specification.
 
-For example, here is a robot performing a **navigate** action from the kitchen to the desk
+For example, here is a robot performing a **Navigate** action from the kitchen to the desk
 in our simple test world.
 
 .. image:: media/example_navigate.png

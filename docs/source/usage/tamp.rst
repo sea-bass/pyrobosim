@@ -10,7 +10,7 @@ If you did not already install PDDLStream, ensure you do so with this script, th
 
 ::
 
-    ./setup/setup_pddlstream.bash
+    ./setup/configure_pddlstream.bash
     source ./setup/source_pyrobosim.bash
 
 
@@ -22,11 +22,11 @@ demo with continuous action parameters.
 
 The current example list is:
 
-* ``01_simple`` - Simple domain with purely discrete actions
-* ``02_derived`` - Purely discrete actions, but uses *derived predicates* for more complex goals
-* ``03_nav_stream`` - Samples navigation poses and motion plan instances
-* ``04_nav_manip_stream`` - Samples navigation poses, motion plans, and collision-free object placement instances
-* ``05_nav_grasp_stream`` - Samples navigation poses and motion plans, grasp plans, and collision-free object placement instances
+* ``01_simple`` - Simple domain with purely discrete actions.
+* ``02_derived`` - Purely discrete actions, but uses *derived predicates* for more complex goals.
+* ``03_nav_stream`` - Samples navigation poses and motion plan instances.
+* ``04_nav_manip_stream`` - Samples navigation poses, motion plans, and collision-free object placement instances.
+* ``05_nav_grasp_stream`` - Samples navigation poses, motion plans, grasp plans, and collision-free object placement instances.
 
 These PDDL domain and stream description files can be found in the ``pyrobosim/pyrobosim/data/pddlstream/domains`` folder.
 

@@ -1,3 +1,5 @@
+.. _robot_actions:
+
 Robot Actions
 =============
 
@@ -12,10 +14,14 @@ The actions currently supported are:
 * **Open**: Opens the robot's current location (currently, hallways are supported).
 * **Close**: Closes the robot's current location (currently, hallways are supported).
 
-Actions can be triggered in a variety of ways:
+
+Executing Actions and Plans
+---------------------------
+
+Actions can be executed in a variety of ways:
 
 * Through the buttons on the GUI.
-* Using a robot's ``execute_action()`` method.
+* Using a robot's :py:meth:`pyrobosim.core.robot.Robot.execute_action` method.
 * (If using ROS), sending a goal to the ``/execute_action`` ROS action server.
 
 For example, a default action execution code block may look like this:
@@ -33,7 +39,7 @@ For example, a default action execution code block may look like this:
 
 You can also command a robot with a *plan*, which is a sequences of actions:
 
-* Using a robot's ``execute_plan()`` method.
+* Using a robot's :py:meth:`pyrobosim.core.robot.Robot.execute_plan` method.
 * (If using ROS), sending a goal to the ``/execute_task_plan`` ROS action server.
 
 .. code-block:: python
@@ -62,13 +68,22 @@ You can also command a robot with a *plan*, which is a sequences of actions:
 
 Plans can also be automatically generated with :ref:`task_and_motion_planning`.
 
-The ROS 2 interface also supports sending actions and plans, with the ``pyrobosim_msgs.action.ExecuteTaskAction`` and ``pyrobosim.action.ExecuteTaskPlan`` actions, respectively.
+Both actions and plans return an :py:class:`pyrobosim.planning.actions.ExecutionResult` object that contains:
+
+* An :py:class:`pyrobosim.planning.actions.ExecutionStatus` enumeration containing common status such as ``SUCCESS``, ``PLANNING_FAILURE``, and ``EXECUTION_FAILURE``.
+* An optional string describing the result.
+
+You can cancel actions and plans that are executing on a robot using its :py:meth:`pyrobosim.core.robot.Robot.cancel_actions` method.
+
+The ROS 2 interface also supports sending and canceling actions and plans, with the ``pyrobosim_msgs.action.ExecuteTaskAction`` and ``pyrobosim.action.ExecuteTaskPlan`` actions, respectively.
 You can try it out with the following example.
 
 ::
 
-    ros2 launch pyrobosim_ros demo_commands.launch.py mode:=action
-    ros2 launch pyrobosim_ros demo_commands.launch.py mode:=plan
+    ros2 launch pyrobosim_ros demo_commands.launch.py mode:=action send_cancel:=false
+    ros2 launch pyrobosim_ros demo_commands.launch.py mode:=plan send_cancel:=false
+
+Similarly to the Python API, these ROS 2 action definitions embed their status in a message field of type ``pyrobosim_msgs.msg.ExecutionResult``.
 
 
 .. _simulating_action_execution:
@@ -122,7 +137,7 @@ A common use case for design robot behaviors is that a robot instead starts with
 In these cases, the robot must explicitly go to a location and use an object detector to find new objects to add to their world model.
 
 You can model this in ``pyrobosim`` by instantiating robot objects with the ``partial_observability`` option set to ``True``.
-Then, you can use the **detect** action to find objects at the robot's current location.
+Then, you can use the **Detect** action to find objects at the robot's current location.
 
 To test this, you can run the following example.
 
