@@ -74,6 +74,7 @@ class TestSystem:
         nav_queries = [
             "bathroom",
             "bedroom desk",
+            "hall_kitchen_bathroom",
             "counter0_right",
             "kitchen apple",
         ]
