@@ -133,11 +133,11 @@ class ConstantVelocityExecutor:
 
         # Finalize path execution.
         time.sleep(0.1)  # To ensure background threads get the end of the path.
-        self.robot.last_nav_status = status
+        self.robot.last_nav_result = ExecutionResult(status=status, message=message)
         self.robot.executing_nav = False
         self.robot.executing_action = False
         self.robot.current_action = None
-        return ExecutionResult(status=status, message=message)
+        return self.robot.last_nav_result
 
     def validate_remaining_path(self):
         """

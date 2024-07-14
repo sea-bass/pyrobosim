@@ -89,7 +89,7 @@ class Robot:
 
         # Navigation properties
         self.executing_nav = False
-        self.last_nav_status = ExecutionStatus.UNKNOWN
+        self.last_nav_result = ExecutionResult()
         self.set_path_planner(path_planner)
         self.set_path_executor(path_executor)
 
@@ -279,7 +279,7 @@ class Robot:
         :return: An object describing the execution result.
         :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
-        self.last_nav_status = ExecutionStatus.UNKNOWN
+        self.last_nav_result = ExecutionResult()
 
         if path is None:
             self.executing_nav = False
@@ -301,7 +301,7 @@ class Robot:
         if path.num_poses == 0:
             # Trivial case where the path is empty.
             result = ExecutionResult(status=ExecutionStatus.SUCCESS)
-            self.last_nav_status = result.status
+            self.last_nav_result = result
         elif use_thread:
             # Start a thread with the path execution.
             self.nav_thread = threading.Thread(
@@ -310,7 +310,7 @@ class Robot:
             self.nav_thread.start()
             if blocking:
                 self.nav_thread.join()
-                result = ExecutionResult(status=self.last_nav_status)
+                result = self.last_nav_result
             else:
                 # Assume success, but check the postconditions later.
                 result = ExecutionResult(status=ExecutionStatus.SUCCESS)
@@ -333,7 +333,7 @@ class Robot:
         # Update the robot state if successful.
         if self.world:
             self.location = self.world.get_location_from_pose(self.get_pose())
-        self.last_nav_status = result.status
+        self.last_nav_result = result
         return result
 
     def navigate(
@@ -370,7 +370,6 @@ class Robot:
             path = self.plan_path(start, goal)
             if path is None or path.num_poses == 0:
                 self.executing_nav = False
-                self.last_nav_status = ExecutionStatus.UNKNOWN
                 message = "Failed to plan a path."
                 warnings.warn(message)
                 return ExecutionResult(
@@ -694,7 +693,7 @@ class Robot:
                 self.world.gui.canvas.navigate(self, action.target_location, path)
                 while self.executing_nav:
                     time.sleep(0.5)  # Delay to wait for navigation
-                result = ExecutionResult(status=self.last_nav_status)
+                result = self.last_nav_result
             else:
                 result = self.navigate(
                     goal=action.target_location,
