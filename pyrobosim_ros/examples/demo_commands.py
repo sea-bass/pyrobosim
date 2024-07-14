@@ -24,6 +24,7 @@ class Commander(Node):
         self.declare_parameter("action_delay", value=0.1)
         self.declare_parameter("action_success_probability", value=1.0)
         self.declare_parameter("action_rng_seed", value=-1)
+        self.declare_parameter("send_cancel", value=False)
 
         # Action client for a single action
         self.action_client = ActionClient(self, ExecuteTaskAction, "execute_action")
@@ -42,13 +43,38 @@ class Commander(Node):
         future = self.world_state_client.call_async(RequestWorldState.Request())
         rclpy.spin_until_future_complete(self, future)
 
-    def send_action_goal(self, goal):
+    def send_action_goal(self, goal, cancel=False):
         self.action_client.wait_for_server()
-        return self.action_client.send_goal_async(goal)
+        goal_future = self.action_client.send_goal_async(goal)
+        if cancel:
+            goal_future.add_done_callback(self.goal_response_callback)
 
-    def send_plan_goal(self, goal):
+    def send_plan_goal(self, goal, cancel=False):
         self.plan_client.wait_for_server()
-        return self.plan_client.send_goal_async(goal)
+        goal_future = self.plan_client.send_goal_async(goal)
+        if cancel:
+            goal_future.add_done_callback(
+                lambda goal_future: self.goal_response_callback(
+                    goal_future, cancel_delay=12.5
+                )
+            )
+
+    def goal_response_callback(self, goal_future, cancel_delay=2.0):
+        """Starts a timer to cancel the goal handle, upon receiving an accepted goal."""
+        goal_handle = goal_future.result()
+        if not goal_handle.accepted:
+            self.get_logger().info("Goal was rejected.")
+            return
+
+        self.cancel_timer = self.create_timer(
+            cancel_delay, lambda: self.cancel_goal(goal_handle)
+        )
+
+    def cancel_goal(self, goal):
+        """Timer callback function that cancels a goal."""
+        self.get_logger().info("Canceling goal")
+        goal.cancel_goal_async()
+        self.cancel_timer.cancel()
 
 
 def main():
@@ -64,6 +90,8 @@ def main():
 
     # Choose between action or plan command, based on input parameter.
     mode = cmd.get_parameter("mode").value
+    send_cancel = cmd.get_parameter("send_cancel").value
+
     if mode == "action":
         cmd.get_logger().info("Executing task action...")
         goal = ExecuteTaskAction.Goal()
@@ -73,7 +101,7 @@ def main():
             target_location="desk",
             execution_options=exec_options,
         )
-        cmd.send_action_goal(goal)
+        cmd.send_action_goal(goal, cancel=send_cancel)
 
     elif mode == "plan":
         cmd.get_logger().info("Executing task plan...")
@@ -96,7 +124,7 @@ def main():
         ]
         goal = ExecuteTaskPlan.Goal()
         goal.plan = TaskPlan(robot="robot", actions=task_actions)
-        cmd.send_plan_goal(goal)
+        cmd.send_plan_goal(goal, cancel=send_cancel)
 
     elif mode == "multirobot-plan":
         cmd.get_logger().info("Executing multirobot task plan...")

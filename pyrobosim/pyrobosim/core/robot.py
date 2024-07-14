@@ -101,6 +101,7 @@ class Robot:
         self.executing_action = False
         self.current_plan = None
         self.executing_plan = False
+        self.canceling_execution = False
 
         # World interaction properties
         self.world = None
@@ -675,6 +676,17 @@ class Robot:
             self.executing_action = False
         return success
 
+    def cancel_actions(self):
+        """Cancels any currently running actions for the robot."""
+        if not (self.executing_action or self.executing_plan):
+            warnings.warn("There is no running action or plan to cancel.")
+            return
+
+        self.canceling_execution = True
+        if self.executing_nav and self.path_executor is not None:
+            print(f"[{self.name}] Canceling path execution...")
+            self.path_executor.abort_execution = True
+
     def execute_plan(self, plan, delay=0.5):
         """
         Executes a task plan, specified as a
@@ -702,6 +714,12 @@ class Robot:
         num_completed = 0
         num_acts = len(plan.actions)
         for n, act_msg in enumerate(plan.actions):
+            if self.canceling_execution:
+                print(f"[{self.name}] Canceled plan execution.")
+                success = False
+                self.canceling_execution = False
+                break
+
             print(f"[{self.name}] Executing action {act_msg.type} [{n+1}/{num_acts}]")
             success = self.execute_action(act_msg, blocking=True)
             if not success:

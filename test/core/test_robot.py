@@ -23,6 +23,26 @@ class TestRobot:
             os.path.join(get_data_folder(), "test_world.yaml")
         )
 
+    def create_test_plan(self):
+        actions = [
+            TaskAction(
+                "navigate",
+                source_location="kitchen",
+                target_location="my_desk",
+            ),
+            TaskAction("detect", object="apple"),
+            TaskAction("pick", object="apple"),
+            TaskAction("place", "object", "apple"),
+            TaskAction(
+                "navigate",
+                source_location="my_desk",
+                target_location="hall_kitchen_bedroom",
+            ),
+            TaskAction("close", target_location="hall_kitchen_bedroom"),
+            TaskAction("open", target_location="hall_kitchen_bedroom"),
+        ]
+        return TaskPlan(actions=actions)
+
     def test_create_robot_default_args(self):
         """Check that a robot can be created with all default arguments."""
         robot = Robot()
@@ -412,6 +432,42 @@ class TestRobot:
         assert not robot.execute_action(action, blocking=True)
         assert robot.execute_action(action, blocking=True)
 
+    def test_execute_action_cancel(self):
+        """Tests that actions can be canceled during execution."""
+        init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
+        robot = Robot(
+            pose=init_pose,
+            path_planner=PathPlanner("world_graph", world=self.test_world),
+            path_executor=ConstantVelocityExecutor(linear_velocity=3.0, dt=0.1),
+        )
+        robot.location = "kitchen"
+        robot.world = self.test_world
+        action = TaskAction(
+            "navigate",
+            source_location="kitchen",
+            target_location="my_desk",
+        )
+
+        # Start a thread that cancels the actions mid execution.
+        threading.Timer(1.0, robot.cancel_actions).start()
+
+        # Run action and check that it failed due to being canceled.
+        with pytest.warns(UserWarning) as warn_info:
+            result = robot.execute_action(action, blocking=True)
+        assert not result
+        assert warn_info[0].message.args[0] == "Trajectory execution aborted."
+
+        # Retry the action, which should now succeed.
+        assert robot.execute_action(action, blocking=True)
+
+        # Try to cancel actions again, which should warn.
+        with pytest.warns(UserWarning) as warn_info:
+            robot.cancel_actions()
+        assert (
+            warn_info[0].message.args[0]
+            == "There is no running action or plan to cancel."
+        )
+
     def test_execute_plan(self):
         """Tests execution of a plan consisting of multiple actions."""
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
@@ -423,26 +479,7 @@ class TestRobot:
         robot.location = "kitchen"
         robot.world = self.test_world
 
-        actions = [
-            TaskAction(
-                "navigate",
-                source_location="kitchen",
-                target_location="my_desk",
-            ),
-            TaskAction("detect", object="apple"),
-            TaskAction("pick", object="apple"),
-            TaskAction("place", "object", "apple"),
-            TaskAction(
-                "navigate",
-                source_location="my_desk",
-                target_location="hall_kitchen_bedroom",
-            ),
-            TaskAction("close", target_location="hall_kitchen_bedroom"),
-            TaskAction("open", target_location="hall_kitchen_bedroom"),
-        ]
-        plan = TaskPlan(actions=actions)
-
-        result, num_completed = robot.execute_plan(plan)
+        result, num_completed = robot.execute_plan(self.create_test_plan())
 
         assert result
         assert num_completed == 7
@@ -457,6 +494,32 @@ class TestRobot:
             result = robot.execute_plan(None)
         assert not result
         assert warn_info[0].message.args[0] == "[test_robot] Plan is None. Returning."
+
+    def test_execute_plan_cancel(self):
+        """Tests that task plans can be canceled during execution."""
+        init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
+        robot = Robot(
+            pose=init_pose,
+            path_planner=PathPlanner("world_graph", world=self.test_world),
+            path_executor=ConstantVelocityExecutor(linear_velocity=5.0, dt=0.1),
+        )
+        robot.location = "kitchen"
+        robot.world = self.test_world
+
+        # Start a thread that cancels the plan mid execution.
+        threading.Timer(3.0, robot.cancel_actions).start()
+
+        # Run plan and check that it failed due to being canceled.
+        plan = self.create_test_plan()
+        result, num_completed = robot.execute_plan(plan)
+        assert not result
+        assert num_completed < plan.size()
+
+        # Resume the plan from where it left off, which should now succeed.
+        remaining_plan = TaskPlan(actions=plan.actions[num_completed:])
+        result, remaining_num_completed = robot.execute_plan(remaining_plan)
+        assert result
+        assert num_completed + remaining_num_completed == plan.size()
 
     def test_at_object_spawn(self):
         """Tests check for robot being at an object spawn."""
