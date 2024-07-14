@@ -6,7 +6,7 @@ pyrobosim_msgs/TaskAction action
 ---
 
 # Result
-bool success
+pyrobosim_msgs/ExecutionResult execution_result
 
 ---
 

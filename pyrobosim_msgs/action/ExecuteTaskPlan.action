@@ -6,7 +6,7 @@ pyrobosim_msgs/TaskPlan plan
 ---
 
 # Result
-bool success
+pyrobosim_msgs/ExecutionResult execution_result
 int64 num_completed
 int64 num_total
 
