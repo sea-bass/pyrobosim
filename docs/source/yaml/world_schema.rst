@@ -1,12 +1,5 @@
 World Schema
 ============
-Worlds can be specified programmatically or loaded from YAML files as follows:
-
-.. code-block:: python
-
-   from pyrobosim.core import WorldYamlLoader
-   loader = WorldYamlLoader()
-   world = loader.from_yaml("/path/to/world.yaml")
 
 The world schema looks as follows, where ``<angle brackets>`` are placeholders:
 
@@ -65,13 +58,15 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
      - ...
      - ...
 
-   # Hallways (refer to Hallways API)
+   # Hallways
    hallways:
      - room_start: <room1>
        room_end: <room2>
        width: <value>
        conn_method: <type>
        <conn_property>: <value>
+       is_open: true
+       is_locked: false
      - ...
      - ...
 

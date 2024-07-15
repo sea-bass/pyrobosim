@@ -1,24 +1,46 @@
+.. _yaml_schemas:
+
 YAML Schemas
 ============
+
 ``pyrobosim`` relies on YAML files to define entities in the world.
 
-Specifically, each world draws from a set of **locations** and **objects**.
-Worlds themselves can be created programmatically, or defined using their own YAML files.
+Specifically, each world draws from a set of **location** and **object** metadata files.
 
-For the programmatic approach,
+Worlds themselves can be created programmatically, or defined using world YAML files.
+
+For the programmatic approach, you can create a world as follows.
 
 .. code-block:: python
 
-   world.set_metadata(locations="location_data.yaml",
-                      objects="object_data.yaml")
+   from pyrobosim.core import Robot, World
 
-For the YAML approach, you can define this in the schema,
+   world = World()
+   world.set_metadata(locations="/path/to/location_data.yaml",
+                      objects="/path/to/object_data.yaml")
+
+   # Then, you can add the other entities
+   world.add_robot(...)
+   world.add_room(...)
+   world.add_hallway(...)
+   world.add_location(...)
+   world.add_object(...)
+
+For the YAML approach, you can directly point to the location and object metadata in the world YAML file itself.
 
 .. code-block:: yaml
 
     metadata:
-      locations: </path/to/location_data_file.yaml>
-      objects: </path/to/object_data_file.yaml>
+      locations: /path/to/location_data.yaml
+      objects: /path/to/object_data.yaml
+
+Then, the world can be loaded from file as follows.
+
+.. code-block:: python
+
+   from pyrobosim.core import WorldYamlLoader
+
+   world = WorldYamlLoader().from_yaml("/path/to/world_file.yaml")
 
 Refer to the following sections for more details on the schemas.
 
