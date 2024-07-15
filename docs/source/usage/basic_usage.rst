@@ -6,22 +6,21 @@ To get started with ``pyrobosim``, you can run the following examples.
 Standalone
 ----------
 
-First, install the module.
+First, go to the ``pyrobosim`` subfolder under the repository root.
 
 ::
 
     cd /path/to/pyrobosim/pyrobosim
-    pip3 install .
 
-Then, run the test script.
+Then, run the example.
 
 ::
 
     python3 examples/demo.py
 
 You can now interact with the GUI through the buttons and text boxes.
-For example, enter "bedroom desk" in the **Goal query** text box and then
-click the **Navigate** button. Once at the destination, click **Pick**.
+For example, enter "bedroom desk" in the **Goal query** text box and then click the **Navigate** button.
+Once at the destination, click **Pick**.
 
 .. image:: ../media/pyrobosim_demo.png
     :align: center
@@ -33,11 +32,11 @@ click the **Navigate** button. Once at the destination, click **Pick**.
 With ROS 2
 ----------
 
-First, build and setup the colcon workspace (or use one of our provided Docker containers).
+First, build and setup your ROS 2 workspace (or use one of our provided Docker containers).
 
 ::
 
-    cd /path/to/colcon/workspace
+    cd /path/to/ros_workspace
     colcon build
     . install/local_setup.bash
 
@@ -76,36 +75,38 @@ The first command will start a world as a ROS 2 node, and the second one will ex
 
 Creating Worlds
 ---------------
-Worlds can be created either with the ``pyrobosim`` API, or loaded from a YAML file using the :doc:`WorldYamlLoader </generated/pyrobosim.core.yaml_utils.WorldYamlLoader>` utility:
+
+Worlds can be created either with the ``pyrobosim`` API, or loaded from a YAML file using the :py:class:`pyrobosim.core.yaml_utils.WorldYamlLoader` utility.
 
 By default, ``demo.py`` creates a world using the API, but you can alternatively try a demo YAML file using the ``--world-file`` argument.
 For example:
 
 ::
 
-    python examples/demo.py --world-file test_world.yaml
+    # Standalone
+    python3 examples/demo.py --world-file test_world.yaml
+
+    # ROS 2
     ros2 launch pyrobosim_ros demo.launch.py world_file:=test_world.yaml
 
-Refer to the :doc:`YAML Schemas </yaml/index>` documentation for more information.
+Refer to the :ref:`yaml_schemas` documentation for more information.
 
 
 Exporting Worlds to Gazebo
 --------------------------
-To export worlds to Gazebo, there is a :py:class:`pyrobosim.core.gazebo.WorldGazeboExporter` utility:
 
-Standalone:
+To export worlds to Gazebo, there is a :py:class:`pyrobosim.core.gazebo.WorldGazeboExporter` utility.
+You can try this with the following commands.
 
 ::
 
+    # Standalone
     python3 examples/demo_world_save.py
 
-ROS:
-
-::
-
+    # ROS 2
     ros2 run pyrobosim_ros demo_world_save.py
 
-You can then follow the steps to see the generated world.
+Then, follow the steps displayed on the console to see the generated world.
 
 .. image:: ../media/gazebo_demo_world.png
     :align: center
@@ -116,6 +117,10 @@ If you add the ``--classic`` flag to this demo, you can similarly export to Gaze
 
 ::
 
+    # Standalone
+    python3 examples/demo_world_save.py --classic
+
+    # ROS 2
     ros2 run pyrobosim_ros demo_world_save.py --classic
 
 .. image:: ../media/gazebo_classic_demo_world.png

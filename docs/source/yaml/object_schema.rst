@@ -1,5 +1,6 @@
 Object Schema
 =============
+
 Objects in a world come from a library of categories defined in a YAML file.
 
 The generic object schema, where ``<angle brackets>`` are placeholders, is:
@@ -14,7 +15,8 @@ The generic object schema, where ``<angle brackets>`` are placeholders, is:
 
 Examples
 --------
-A simple object with a circle footprint.
+
+A simple object with a circular footprint.
 
 .. code-block:: yaml
 
@@ -53,8 +55,7 @@ An object with a generic polygon footprint.
      color: [0.0, 0.1, 0.9] # Blue
 
 An object with a footprint read from a mesh file.
-Note that the literal ``$DATA`` resolves to the ``pyrobosim/data`` folder,
-but you can specify an absolute path as well or create your own tokens.
+Note that the literal ``$DATA`` resolves to the ``pyrobosim/data`` folder, but you can specify an absolute path as well or create your own tokens.
 
 .. code-block:: yaml
 

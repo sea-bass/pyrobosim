@@ -3,7 +3,7 @@
 Robot Actions
 =============
 
-``pyrobosim`` enables you to command your robot to take high-level actions.
+``pyrobosim`` enables you to command robots to take high-level actions.
 
 The actions currently supported are:
 
@@ -18,7 +18,7 @@ The actions currently supported are:
 Executing Actions and Plans
 ---------------------------
 
-Actions can be executed in a variety of ways:
+Actions can be executed in a few ways:
 
 * Through the buttons on the GUI.
 * Using a robot's :py:meth:`pyrobosim.core.robot.Robot.execute_action` method.
