@@ -1,8 +1,9 @@
 Robot Dynamics
 ==============
-While the main focus of ``pyrobosim`` is to command robots with high-level actions, it is also possible to directly send velocity commands to your robots for other applications.
 
-When you instantiate a :py:class:`pyrobosim.core.robot.Robot` object, it also gets created with a :py:class:`pyrobosim.core.dynamics.RobotDynamics2D` object.
+While the main focus of ``pyrobosim`` is to command robots with high-level actions, it is also possible to directly send velocity commands to your robots.
+
+When you instantiate a :py:class:`pyrobosim.core.robot.Robot` object, it contains a :py:class:`pyrobosim.core.dynamics.RobotDynamics2D` object.
 
 The linear and angular velocity limits can be specified here as well.
 For example:
@@ -40,7 +41,7 @@ For example, you can create a simulation loop as follows:
                 robot.dynamics.step(cmd_vel, dt, world=world, check_collisions=True)
             time.sleep(dt)
 
-Notice that the ability to pass in a world and check collisions is optional.
+Note that the ability to pass in a world and check collisions is optional.
 If you want to optimize for speed and do not need collision checking, you can disable this.
 
 Also, you can check whether a robot's previous velocity command caused a collision and the robot did not move.
@@ -51,8 +52,8 @@ Also, you can check whether a robot's previous velocity command caused a collisi
     if robot.is_in_collision():
         cmd_vel = np.array([-0.5, 0.0, 0.0])
 
-Finally, if you want to run with the GUI up, you must ensure that the GUI is running on the main thread and the dynamics are on a separate thread.
-You can do this as follows, using our ``command_robots()`` function.
+Finally, if you want to run with the GUI, you must ensure that the GUI is running on the main thread and the dynamics are on a separate thread.
+You can do this as follows, using our ``command_robots()`` function above.
 
 .. code-block:: python
 
@@ -70,6 +71,7 @@ The full example is available here for you to run and modify.
 ::
 
     python3 examples/demo_dynamics.py
+
 
 ROS 2 Interface Usage
 ---------------------
@@ -91,7 +93,7 @@ To command this robot from an existing ROS 2 node in Python, you can do somethin
 
     vel_pub.publish(vel_cmd)
 
-To handle the nondeterminism of publishing velocity commands using ROS topics, the :doc:`WorldROSWrapper </generated/pyrobosim_ros.ros_interface.WorldROSWrapper>` class provides arguments to latch velocity commands and then ramp them down to zero velocity.
+To handle the nondeterminism of publishing velocity commands using ROS topics, the :py:class:`pyrobosim_ros.ros_interface.WorldROSWrapper` class provides arguments to latch velocity commands and then ramp them down to zero velocity.
 While you can look at the documentation for a full list of arguments, the important ones to know are:
 
 .. code-block:: python

@@ -2,6 +2,7 @@
 
 Task and Motion Planning
 ========================
+
 We use `PDDLStream <https://github.com/caelan/pddlstream>`_ to perform integrated task and motion planning (TAMP).
 This tool expands task planning with purely discrete parameters using `Planning Domain Definition Language (PDDL) <https://planning.wiki/guide/whatis/pddl>`_
 by adding the concept of *streams* for sampling continuous parameters in actions.
@@ -16,9 +17,9 @@ If you did not already install PDDLStream, ensure you do so with this script, th
 
 Examples
 --------
-Regardless of running PDDLStream standalone or using ROS 2, we have included a set of examples
-that gradually build up from simple, purely discrete planning, to a more complex integrated TAMP
-demo with continuous action parameters.
+
+Regardless of running standalone or using ROS 2, we have included a set of examples
+that gradually build up from simple, purely discrete planning, to a more complex integrated TAMP demo with continuous action parameters.
 
 The current example list is:
 
@@ -29,6 +30,7 @@ The current example list is:
 * ``05_nav_grasp_stream`` - Samples navigation poses, motion plans, grasp plans, and collision-free object placement instances.
 
 These PDDL domain and stream description files can be found in the ``pyrobosim/pyrobosim/data/pddlstream/domains`` folder.
+
 
 Standalone
 ----------
@@ -50,11 +52,11 @@ You can try running a sample script as follows
 With ROS 2
 ----------
 
-First, build and setup the colcon workspace (or use one of our provided Docker containers).
+First, build and setup your ROS 2 workspace (or use one of our provided Docker containers).
 
 ::
 
-    cd /path/to/colcon/workspace
+    cd /path/to/ros_workspace
     colcon build
     . install/local_setup.bash
 
