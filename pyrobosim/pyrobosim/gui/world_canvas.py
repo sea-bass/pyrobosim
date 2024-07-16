@@ -291,7 +291,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         with self.draw_lock:
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()
-            time.sleep(0.01)
+            time.sleep(0.001)
 
     def show_planner_and_path(self, robot=None, path=None):
         """
