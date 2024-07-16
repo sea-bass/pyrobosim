@@ -82,7 +82,7 @@ class ExecutionResult:
 
     def __repr__(self):
         """Returns printable string."""
-        return f"Execution status: {self.status.name}"
+        return f"Execution result with status: {self.status.name}"
 
 
 class TaskAction:
@@ -171,9 +171,9 @@ class TaskAction:
             if self.target_location is not None:
                 act_str += f" to {self.target_location}"
             if self.pose is not None:
-                act_str += f"\nAt {self.pose}"
+                act_str += f"\n  At {self.pose}"
             if self.path.num_poses > 0:
-                act_str += f"\n{self.path}"
+                act_str += f"\n  {self.path}"
         # PICK
         elif self.type == "pick":
             act_str += "Pick"
@@ -184,7 +184,7 @@ class TaskAction:
             if self.target_location is not None:
                 act_str += f" from {self.target_location}"
             if self.pose is not None:
-                act_str += f"\nAt {self.pose}"
+                act_str += f"\n  At {self.pose}"
         # PLACE
         elif self.type == "place":
             act_str += "Place"
@@ -195,27 +195,32 @@ class TaskAction:
             if self.target_location is not None:
                 act_str += f" at {self.target_location}"
             if self.pose is not None:
-                act_str += f"\nAt {self.pose}"
+                act_str += f"\n  At {self.pose}"
         # DETECT
         elif self.type == "detect":
             act_str += "Detect"
             if self.object is not None:
                 act_str += f" {self.object}"
+            else:
+                act_str += " objects"
         # OPEN / CLOSE
         elif self.type == "open":
             act_str += "Open"
             if self.target_location is not None:
                 act_str += f" {self.target_location}"
+            else:
+                act_str += " current location"
         elif self.type == "close":
             act_str += "Close"
             if self.target_location is not None:
                 act_str += f" {self.target_location}"
+            else:
+                act_str += " current location"
         else:
-            print(f"Invalid action type {self.action_type}")
-            return None
+            return f"Invalid action type: {self.type}"
 
         if self.cost is not None:
-            act_str += f", Cost: {self.cost:.3f}"
+            act_str += f"\n  Cost: {self.cost:.3f}"
         return act_str
 
 
