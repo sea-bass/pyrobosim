@@ -1,5 +1,5 @@
 """
-Unit tests for core world modeling
+Unit tests for core world modeling.
 """
 
 import os
@@ -9,7 +9,7 @@ import numpy as np
 from pyrobosim.core import Hallway, Object, World
 from pyrobosim.utils.pose import Pose
 
-from pyrobosim.utils.general import get_data_folder, InvalidEntityCategoryException
+from pyrobosim.utils.general import get_data_folder
 
 
 class TestWorldModeling:

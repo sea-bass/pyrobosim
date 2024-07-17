@@ -202,7 +202,9 @@ class Robot:
         :return: True if the robot is at an openable location, else False.
         :type: bool
         """
-        return isinstance(self.location, Hallway)
+        return isinstance(self.location, Hallway) or isinstance(
+            self.location, ObjectSpawn
+        )
 
     def _attach_object(self, obj):
         """
@@ -434,6 +436,12 @@ class Robot:
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
+        if not loc.is_open:
+            message = f"{loc.parent.name} is not open. Cannot pick object."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
 
         # If a grasp generator has been specified and no explicit grasp has been provided,
         # generate grasps here.
@@ -460,7 +468,7 @@ class Robot:
             )
 
             if len(grasps) == 0:
-                message = f"Could not generate valid grasps. Cannot pick."
+                message = f"Could not generate valid grasps. Cannot pick object."
                 warnings.warn(message)
                 return ExecutionResult(
                     status=ExecutionStatus.PLANNING_FAILURE, message=message
@@ -498,6 +506,12 @@ class Robot:
             loc = self.world.get_entity_by_name(self.location)
         if not isinstance(loc, ObjectSpawn):
             message = f"{loc} is not an object spawn. Cannot place object."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+        if not loc.is_open:
+            message = f"{loc.parent.name} is not open. Cannot place object."
             warnings.warn(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
@@ -569,6 +583,12 @@ class Robot:
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
+        if not self.location.is_open:
+            message = f"{self.location.parent.name} is not open. Cannot detect objects."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
 
         # Add all the objects at the current robot's location.
         for obj in self.location.children:
@@ -621,7 +641,9 @@ class Robot:
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
 
-        if isinstance(self.location, Hallway):
+        if isinstance(self.location, ObjectSpawn):
+            return self.world.open_location(self.location.parent)
+        elif isinstance(self.location, Hallway):
             return self.world.open_hallway(self.location)
 
         # This should not happen
@@ -655,7 +677,9 @@ class Robot:
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
 
-        if isinstance(self.location, Hallway):
+        if isinstance(self.location, ObjectSpawn):
+            return self.world.close_location(self.location.parent)
+        elif isinstance(self.location, Hallway):
             return self.world.close_hallway(self.location, ignore_robots=[self])
 
         # This should not happen

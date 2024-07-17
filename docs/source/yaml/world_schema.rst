@@ -65,8 +65,8 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
        width: <value>
        conn_method: <type>
        <conn_property>: <value>
-       is_open: true
-       is_locked: false
+       is_open: true  # Can only navigate through hallway if open
+       is_locked: false  # Can only open and close if unlocked
      - ...
      - ...
 
@@ -76,6 +76,8 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
        category: <loc_category>  # From location YAML file
        parent: <room_name>
        pose: [<x>, <y>, <z>, <yaw>]  # If not specified, will sample
+       is_open: true  # Can only pick, place, and detect if open
+       is_locked: true  # Can only open and close if unlocked
      - ...
      - ...
 

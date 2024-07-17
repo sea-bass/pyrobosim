@@ -253,7 +253,7 @@ class TestRobot:
         )
 
         # Try place the object at a valid location.
-        robot.location = "table0_tabletop"
+        robot.location = self.test_world.get_entity_by_name("table0_tabletop")
         result = robot.place_object()
         assert result.status == ExecutionStatus.SUCCESS
         assert robot.manipulated_object is None
@@ -270,6 +270,25 @@ class TestRobot:
             result = robot.place_object(pose=Pose(x=100.0, y=100.0))
         assert result.status == ExecutionStatus.PLANNING_FAILURE
         assert result.message == "Pose in collision or not in location table0_tabletop."
+
+        # Unlock the table to allow opening and closing for this test.
+        self.test_world.unlock_location(robot.location.parent)
+
+        # Closing the location should make placing fail.
+        self.test_world.close_location(robot.location.parent)
+        with pytest.warns(UserWarning):
+            result = robot.place_object()
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "table0 is not open. Cannot place object."
+
+        # With a closed location, picking should fail too.
+        self.test_world.open_location(robot.location.parent)
+        robot.place_object()
+        self.test_world.close_location(robot.location.parent)
+        with pytest.warns(UserWarning):
+            result = robot.pick_object("apple")
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "table0 is not open. Cannot pick object."
 
     def test_robot_object_detection(self):
         """Check that the robot can detect objects."""
@@ -304,6 +323,16 @@ class TestRobot:
             result.message == "Failed to detect any objects matching the query 'water'."
         )
         assert len(robot.last_detected_objects) == 0
+
+        # Unlock the table to allow opening and closing for this test.
+        self.test_world.unlock_location(robot.location.parent)
+
+        # Closing the location should make detection fail.
+        self.test_world.close_location(robot.location.parent)
+        with pytest.warns(UserWarning):
+            result = robot.detect_objects()
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "table0 is not open. Cannot detect objects."
 
     def test_robot_open_close_hallway(self):
         """Check that the robot can open or close hallways."""

@@ -26,6 +26,9 @@ The generic location schema, where ``<angle brackets>`` are placeholders, is:
            type: <footprint_type>
            <property>: <footprint_property>
      color: [<r>, <g>, <b>]
+     is_open: True
+     is_locked: False
+
 
 Examples
 --------

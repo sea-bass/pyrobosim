@@ -161,11 +161,3 @@ class TestHallway:
         assert result.is_success()
         assert hallway.is_open
         assert not hallway.is_locked
-
-        # Opening again should not work due to already being open
-        with pytest.warns(UserWarning):
-            result = self.test_world.open_hallway(hallway)
-        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
-        assert result.message == "Hallway: hall_room_start_room_end is already open."
-        assert hallway.is_open
-        assert not hallway.is_locked
