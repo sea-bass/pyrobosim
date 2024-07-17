@@ -11,7 +11,7 @@ import time
 
 from geometry_msgs.msg import Twist
 from pyrobosim.core.hallway import Hallway
-from pyrobosim.core.locations import ObjectSpawn
+from pyrobosim.core.locations import Location
 from pyrobosim_msgs.action import ExecuteTaskAction, ExecuteTaskPlan
 from pyrobosim_msgs.msg import ExecutionResult, RobotState, LocationState, ObjectState
 from pyrobosim_msgs.srv import RequestWorldState, SetLocationState
@@ -464,14 +464,13 @@ class WorldROSWrapper(Node):
             response.result.message = message
             return response
 
-        if isinstance(entity, ObjectSpawn):
+        if isinstance(entity, Location):
             # Try open or close the location if its status needs to be toggled.
-            location = entity.parent
             if request.open != entity.is_open:
                 if request.open:
-                    result = self.world.open_location(location)
+                    result = self.world.open_location(entity)
                 else:
-                    result = self.world.close_hallway(location)
+                    result = self.world.close_location(entity)
 
                 if not result.is_success():
                     response.result = execution_result_to_ros(result)
@@ -480,9 +479,9 @@ class WorldROSWrapper(Node):
             # Try lock or unlock the location if its status needs to be toggled.
             if request.lock != entity.is_locked:
                 if request.lock:
-                    result = self.world.lock_hallway(location)
+                    result = self.world.lock_location(entity)
                 else:
-                    result = self.world.unlock_hallway(location)
+                    result = self.world.unlock_location(entity)
 
                 if not result.is_success():
                     response.result = execution_result_to_ros(result)
