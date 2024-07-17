@@ -493,6 +493,10 @@ class World:
             self.name_to_entity[spawn.name] = spawn
 
         loc.add_graph_nodes()
+        if self.has_gui:
+            self.gui.canvas.show_locations()
+            self.gui.canvas.show_objects()
+            self.gui.canvas.draw_and_sleep()
         return loc
 
     def update_location(self, loc, pose, room=None):
@@ -545,6 +549,10 @@ class World:
         loc.create_polygons(self.inflation_radius)
         for spawn in loc.children:
             spawn.set_pose_from_parent()
+        if self.has_gui:
+            self.gui.canvas.show_locations()
+            self.gui.canvas.show_objects()
+            self.gui.canvas.draw_and_sleep()
         return True
 
     def remove_location(self, loc):
@@ -560,23 +568,30 @@ class World:
         if isinstance(loc, str):
             loc = self.get_location_by_name(loc)
 
-        if loc in self.locations:
-            # remove objects at the location before removing the location
-            for spawn in loc.children:
-                while len(spawn.children) > 0:
-                    self.remove_object(spawn.children[-1])
-            # Remove location
-            self.locations.remove(loc)
-            self.num_locations -= 1
-            self.location_instance_counts[loc.category] -= 1
-            room = loc.parent
-            room.locations.remove(loc)
-            room.update_collision_polygons(self.inflation_radius)
-            self.name_to_entity.pop(loc.name)
-            for spawn in loc.children:
-                self.name_to_entity.pop(spawn.name)
-            return True
-        return False
+        if loc not in self.locations:
+            warnings.warn(f"{loc} not found in world. Cannot remove.")
+            return False
+
+        # Remove objects at the location before removing the location.
+        for spawn in loc.children:
+            while len(spawn.children) > 0:
+                self.remove_object(spawn.children[-1])
+
+        # Remove the location.
+        self.locations.remove(loc)
+        self.num_locations -= 1
+        self.location_instance_counts[loc.category] -= 1
+        room = loc.parent
+        room.locations.remove(loc)
+        room.update_collision_polygons(self.inflation_radius)
+        self.name_to_entity.pop(loc.name)
+        for spawn in loc.children:
+            self.name_to_entity.pop(spawn.name)
+        if self.has_gui:
+            self.gui.canvas.show_locations()
+            self.gui.canvas.show_objects()
+            self.gui.canvas.draw_and_sleep()
+        return True
 
     def open_location(self, location):
         """
