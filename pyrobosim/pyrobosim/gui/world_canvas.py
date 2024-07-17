@@ -123,6 +123,8 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.obj_patches = []
         self.obj_texts = []
         self.hallway_patches = []
+        self.location_patches = []
+        self.location_texts = []
         self.path_planner_artists = {"graph": [], "path": []}
 
         # Debug displays (TODO: Should be available from GUI).
@@ -206,6 +208,37 @@ class WorldCanvas(FigureCanvasQTAgg):
                     self.axes.add_patch(coll_patch)
                     self.hallway_patches.append(coll_patch)
 
+    def show_locations(self):
+        """Draws locations and object spawns in the world."""
+        with self.draw_lock:
+            for location in self.location_patches:
+                location.remove()
+            for text in self.location_texts:
+                text.remove()
+
+            self.location_patches = [loc.viz_patch for loc in self.world.locations]
+            self.location_texts = []
+
+            for loc in self.world.locations:
+                self.axes.add_patch(loc.viz_patch)
+                loc_text = self.axes.text(
+                    loc.pose.x,
+                    loc.pose.y,
+                    loc.name,
+                    color=loc.viz_color,
+                    fontsize=10,
+                    ha="center",
+                    va="top",
+                    clip_on=True,
+                )
+                for spawn in loc.children:
+                    self.axes.add_patch(spawn.viz_patch)
+
+                self.location_texts.append(loc_text)
+                self.location_patches.extend(
+                    [spawn.viz_patch for spawn in loc.children]
+                )
+
     def show_objects(self):
         """Draws objects and their associated texts."""
         with self.draw_lock:
@@ -242,40 +275,24 @@ class WorldCanvas(FigureCanvasQTAgg):
         """
         Displays all entities in the world (robots, rooms, objects, etc.).
         """
-        # Rooms and hallways
-        for r in self.world.rooms:
-            self.axes.add_patch(r.viz_patch)
+        # Entities in the world.
+        self.room_patches = [room.viz_patch for room in self.world.rooms]
+        for room in self.world.rooms:
+            self.axes.add_patch(room.viz_patch)
             self.axes.text(
-                r.centroid[0],
-                r.centroid[1],
-                r.name,
-                color=r.viz_color,
+                room.centroid[0],
+                room.centroid[1],
+                room.name,
+                color=room.viz_color,
                 fontsize=12,
                 ha="center",
                 va="top",
                 clip_on=True,
             )
             if self.show_collision_polygons:
-                self.axes.add_patch(r.get_collision_patch())
+                self.axes.add_patch(room.get_collision_patch())
         self.show_hallways()
-
-        # Locations
-        for loc in self.world.locations:
-            self.axes.add_patch(loc.viz_patch)
-            self.axes.text(
-                loc.pose.x,
-                loc.pose.y,
-                loc.name,
-                color=loc.viz_color,
-                fontsize=10,
-                ha="center",
-                va="top",
-                clip_on=True,
-            )
-            for spawn in loc.children:
-                self.axes.add_patch(spawn.viz_patch)
-
-        # Objects
+        self.show_locations()
         self.show_objects()
 
         # Robots, along with their paths and planner graphs
@@ -291,7 +308,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         with self.draw_lock:
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()
-            time.sleep(0.001)
+            time.sleep(0.005)
 
     def show_planner_and_path(self, robot=None, path=None):
         """

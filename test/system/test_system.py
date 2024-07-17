@@ -126,20 +126,20 @@ class TestSystem:
         """
         Test open and close UI actions.
         """
-        start_end_room_queries = [("kitchen", "bathroom"), ("bedroom", "bathroom")]
+        location_queries = ["hall_kitchen_bathroom", "my_desk"]
 
         window = self.app.main_window
         world = self.app.world
 
-        for room_start, room_end in start_end_room_queries:
+        for location_name in location_queries:
             # Navigate to hallway location
-            hallway = world.get_hallways_from_rooms(room_start, room_end)[0]
-            self.nav_helper(hallway.name)
+            location = world.get_entity_by_name(location_name)
+            self.nav_helper(location.name)
 
-            # Close the hallway and verify that it's closed.
+            # Close the location and verify that it's closed.
             window.on_close_click()
-            assert not hallway.is_open
+            assert not location.is_open
 
-            # Open the hallway and verify that it's open.
+            # Open the location and verify that it's open.
             window.on_open_click()
-            assert hallway.is_open
+            assert location.is_open

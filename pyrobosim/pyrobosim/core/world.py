@@ -493,6 +493,10 @@ class World:
             self.name_to_entity[spawn.name] = spawn
 
         loc.add_graph_nodes()
+        if self.has_gui:
+            self.gui.canvas.show_locations()
+            self.gui.canvas.show_objects()
+            self.gui.canvas.draw_and_sleep()
         return loc
 
     def update_location(self, loc, pose, room=None):
@@ -545,6 +549,10 @@ class World:
         loc.create_polygons(self.inflation_radius)
         for spawn in loc.children:
             spawn.set_pose_from_parent()
+        if self.has_gui:
+            self.gui.canvas.show_locations()
+            self.gui.canvas.show_objects()
+            self.gui.canvas.draw_and_sleep()
         return True
 
     def remove_location(self, loc):
@@ -560,23 +568,160 @@ class World:
         if isinstance(loc, str):
             loc = self.get_location_by_name(loc)
 
-        if loc in self.locations:
-            # remove objects at the location before removing the location
-            for spawn in loc.children:
-                while len(spawn.children) > 0:
-                    self.remove_object(spawn.children[-1])
-            # Remove location
-            self.locations.remove(loc)
-            self.num_locations -= 1
-            self.location_instance_counts[loc.category] -= 1
-            room = loc.parent
-            room.locations.remove(loc)
-            room.update_collision_polygons(self.inflation_radius)
-            self.name_to_entity.pop(loc.name)
-            for spawn in loc.children:
-                self.name_to_entity.pop(spawn.name)
-            return True
-        return False
+        if loc not in self.locations:
+            warnings.warn(f"{loc} not found in world. Cannot remove.")
+            return False
+
+        # Remove objects at the location before removing the location.
+        for spawn in loc.children:
+            while len(spawn.children) > 0:
+                self.remove_object(spawn.children[-1])
+
+        # Remove the location.
+        self.locations.remove(loc)
+        self.num_locations -= 1
+        self.location_instance_counts[loc.category] -= 1
+        room = loc.parent
+        room.locations.remove(loc)
+        room.update_collision_polygons(self.inflation_radius)
+        self.name_to_entity.pop(loc.name)
+        for spawn in loc.children:
+            self.name_to_entity.pop(spawn.name)
+        if self.has_gui:
+            self.gui.canvas.show_locations()
+            self.gui.canvas.show_objects()
+            self.gui.canvas.draw_and_sleep()
+        return True
+
+    def open_location(self, location):
+        """
+        Opens a storage location.
+
+        :param location: Location object to open.
+        :type location: :class:`pyrobosim.core.locations.Location`
+        :return: An object describing the execution result.
+        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
+        """
+        # Validate the input
+        if not location in self.locations:
+            message = "Invalid location specified."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        if location.is_open:
+            message = f"{location} is already open."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        if location.is_locked:
+            message = f"{location} is locked."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        location.is_open = True
+        location.update_visualization_polygon()
+        if self.has_gui:
+            self.gui.canvas.show_locations()
+            self.gui.canvas.draw_and_sleep()
+        return ExecutionResult(status=ExecutionStatus.SUCCESS)
+
+    def close_location(self, location):
+        """
+        Close a storage location.
+
+        :param location: Location object to close.
+        :type location: :class:`pyrobosim.core.locations.Location`
+        :return: An object describing the execution result.
+        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
+        """
+        # Validate the input
+        if not location in self.locations:
+            message = "Invalid location specified."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        if not location.is_open:
+            message = f"{location} is already closed."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        if location.is_locked:
+            message = f"{location} is locked."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        location.is_open = False
+        location.update_visualization_polygon()
+        if self.has_gui:
+            self.gui.canvas.show_locations()
+            self.gui.canvas.draw_and_sleep()
+        return ExecutionResult(status=ExecutionStatus.SUCCESS)
+
+    def lock_location(self, location):
+        """
+        Locks a storage location.
+
+        :param location: Location object to lock.
+        :type location: :class:`pyrobosim.core.locations.Location`
+        :return: An object describing the execution result.
+        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
+        """
+        # Validate the input
+        if not location in self.locations:
+            message = "Invalid location specified."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        if location.is_locked:
+            message = f"{location} is already locked."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        location.is_locked = True
+        return ExecutionResult(status=ExecutionStatus.SUCCESS)
+
+    def unlock_location(self, location):
+        """
+        Unlocks a storage location.
+
+        :param location: Location object to unlock.
+        :type location: :class:`pyrobosim.core.locations.Location`
+        :return: An object describing the execution result.
+        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
+        """
+        # Validate the input
+        if not location in self.locations:
+            message = "Invalid location specified."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        if not location.is_locked:
+            message = f"{location} is already unlocked."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        location.is_locked = False
+        return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
     def add_object(self, **object_config):
         r"""
