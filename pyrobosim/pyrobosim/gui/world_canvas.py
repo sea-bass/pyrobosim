@@ -9,7 +9,10 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.pyplot import Circle
 from matplotlib.transforms import Affine2D
-from PySide6.QtCore import QRunnable, QThreadPool, QTimer
+from PySide6.QtCore import QRunnable, QThreadPool, QTimer, Signal
+
+from pyrobosim.core.robot import Robot
+from pyrobosim.utils.motion import Path
 
 
 class NavRunner(QRunnable):
@@ -77,6 +80,24 @@ class WorldCanvas(FigureCanvasQTAgg):
     draw_lock = threading.RLock()
     """ Lock for drawing on the canvas in a thread-safe manner. """
 
+    draw_signal = Signal()
+    """ Signal for drawing without threading errors. """
+
+    show_hallways_signal = Signal()
+    """ Signal for showing hallways without threading errors. """
+
+    show_locations_signal = Signal()
+    """ Signal for showing locations without threading errors. """
+
+    show_objects_signal = Signal()
+    """ Signal for showing objects without threading errors. """
+
+    show_robots_signal = Signal()
+    """ Signal for showing robots without threading errors. """
+
+    show_planner_and_path_signal = Signal(Robot, Path)
+    """ Signal for showing planners and paths without threading errors. """
+
     def __init__(
         self,
         main_window,
@@ -129,6 +150,14 @@ class WorldCanvas(FigureCanvasQTAgg):
 
         # Debug displays (TODO: Should be available from GUI).
         self.show_collision_polygons = False
+
+        # Connect signals
+        self.draw_signal.connect(self.draw_and_sleep)
+        self.show_hallways_signal.connect(self.show_hallways)
+        self.show_locations_signal.connect(self.show_locations)
+        self.show_objects_signal.connect(self.show_objects)
+        self.show_robots_signal.connect(self.show_robots)
+        self.show_planner_and_path_signal.connect(self.show_planner_and_path)
 
         # Thread pool for managing long-running tasks in separate threads.
         self.thread_pool = QThreadPool()
@@ -362,7 +391,7 @@ class WorldCanvas(FigureCanvasQTAgg):
                 self.show_world_state(cur_robot, navigating=True)
                 world.gui.set_buttons_during_action(False)
 
-            self.draw_and_sleep()
+            self.draw_signal.emit()
 
     def update_robots_plot(self):
         """Updates the robot visualization graphics objects."""
@@ -465,7 +494,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         if success:
             self.update_object_plot(robot.manipulated_object)
             self.show_world_state(robot)
-            self.draw_and_sleep()
+            self.draw_signal.emit()
         return success
 
     def place_object(self, robot, pose=None):
@@ -491,7 +520,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.axes.add_patch(obj.viz_patch)
         self.obj_patches.append(obj.viz_patch)
         self.show_world_state(robot)
-        self.draw_and_sleep()
+        self.draw_signal.emit()
         return success
 
     def detect_objects(self, robot, query=None):
@@ -510,7 +539,7 @@ class WorldCanvas(FigureCanvasQTAgg):
 
         success = robot.detect_objects(query)
         self.show_objects()
-        self.draw_and_sleep()
+        self.draw_signal.emit()
         return success
 
     def open_location(self, robot):
