@@ -196,8 +196,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         else:
             self.nav_button.setEnabled(False)
 
-        if not any([robot.is_moving() for robot in self.world.robots]):
-            self.canvas.draw_signal.emit()
+        self.canvas.draw_signal.emit()
 
     def set_buttons_during_action(self, state):
         """
