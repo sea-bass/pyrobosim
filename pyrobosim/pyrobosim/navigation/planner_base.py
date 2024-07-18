@@ -64,6 +64,8 @@ class PathPlannerBase:
 
         :param axes: The axes on which to draw.
         :type axes: :class:`matplotlib.axes.Axes`
+        :param show_graph: If True, shows the path planner's latest graph(s).
+        :type show_graph: bool
         :param path: Path to display, defaults to None. If none, uses the `latest_path` attribute.
         :type path: :class:`pyrobosim.utils.motion.Path`, optional
         :param path_color: Color of the path, as an RGB tuple or string.

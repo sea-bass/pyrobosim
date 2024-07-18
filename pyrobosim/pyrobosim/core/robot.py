@@ -256,7 +256,10 @@ class Robot:
 
         path = self.path_planner.plan(start, goal)
         if self.world and self.world.has_gui:
-            self.world.gui.canvas.show_planner_and_path_signal.emit(self, path)
+            show_graph = True
+            self.world.gui.canvas.show_planner_and_path_signal.emit(
+                self, show_graph, path
+            )
         return path
 
     def follow_path(
@@ -378,6 +381,11 @@ class Robot:
                     status=ExecutionStatus.PLANNING_FAILURE,
                     message=message,
                 )
+        elif self.world and self.world.has_gui:
+            show_graph = False
+            self.world.gui.canvas.show_planner_and_path_signal.emit(
+                self, show_graph, path
+            )
 
         return self.follow_path(
             path,
