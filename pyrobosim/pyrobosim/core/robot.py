@@ -256,7 +256,7 @@ class Robot:
 
         path = self.path_planner.plan(start, goal)
         if self.world and self.world.has_gui:
-            self.world.gui.canvas.show_planner_and_path(robot=self, path=path)
+            self.world.gui.canvas.show_planner_and_path_signal.emit(self, path)
         return path
 
     def follow_path(

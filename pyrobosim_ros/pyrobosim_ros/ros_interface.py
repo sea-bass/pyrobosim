@@ -2,6 +2,7 @@
 
 import os
 import numpy as np
+from functools import partial
 import rclpy
 from rclpy.action import ActionServer, CancelResponse
 from rclpy.callback_groups import ReentrantCallbackGroup
@@ -119,7 +120,6 @@ class WorldROSWrapper(Node):
         self.robot_state_pubs = []
         self.robot_state_pub_threads = []
         self.latest_robot_cmds = {}
-        self.robot_dynamics_timers = []
 
         # Start a dynamics timer
         self.dynamics_rate = dynamics_rate
@@ -156,8 +156,14 @@ class WorldROSWrapper(Node):
         if not self.world:
             self.get_logger().error("Must set a world before starting node.")
 
+        # Create robot specific interfaces
         for robot in self.world.robots:
             self.add_robot_ros_interfaces(robot)
+
+        # Create dynamics timer
+        self.dynamics_timer = self.create_timer(
+            self.dynamics_rate, self.dynamics_callback
+        )
 
         while wait_for_gui and not self.world.has_gui:
             self.get_logger().info("Waiting for GUI...")
@@ -177,6 +183,8 @@ class WorldROSWrapper(Node):
         :param robot: Robot instance.
         :type robot: :class:`pyrobosim.core.robot.Robot`
         """
+        self.latest_robot_cmds[robot.name] = None
+
         # Create subscriber
         sub = self.create_subscription(
             Twist,
@@ -194,17 +202,10 @@ class WorldROSWrapper(Node):
             10,
             callback_group=ReentrantCallbackGroup(),
         )
-        pub_timer = self.create_timer(
-            self.state_pub_rate, lambda: pub.publish(self.package_robot_state(robot))
-        )
+        pub_fn = partial(self.package_robot_state, robot=robot)
+        pub_timer = self.create_timer(self.state_pub_rate, pub_fn)
         self.robot_state_pubs.append(pub)
-
         self.robot_state_pub_threads.append(pub_timer)
-
-        # Create dynamics timer
-        self.latest_robot_cmds[robot.name] = None
-        dynamics_timer = self.create_timer(self.dynamics_rate, self.dynamics_callback)
-        self.robot_dynamics_timers.append(dynamics_timer)
 
     def remove_robot_ros_interfaces(self, robot):
         """
@@ -224,9 +225,6 @@ class WorldROSWrapper(Node):
                 pub_timer = self.robot_state_pub_threads.pop(idx)
                 pub_timer.destroy()
                 del pub_thread
-                dynamics_timer = self.robot_dynamics_timers.pop(idx)
-                dynamics_timer.destroy()
-                del dynamics_timer
 
     def dynamics_callback(self):
         """
