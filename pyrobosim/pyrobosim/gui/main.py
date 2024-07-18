@@ -259,19 +259,9 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         if robot and robot.executing_action:
             return
 
-        query_list = [elem for elem in self.goal_textbox.text().split(" ") if elem]
-        loc = query_to_entity(
-            self.world,
-            query_list,
-            mode="location",
-            robot=robot,
-            resolution_strategy="nearest",
-        )
-        if not loc:
-            return
-
+        loc = self.goal_textbox.text()
         print(f"[{robot.name}] Navigating to {loc}")
-        self.canvas.navigate(robot, loc)
+        self.canvas.navigate_signal.emit(robot, loc, None)
 
     def on_pick_click(self):
         """Callback to pick an object."""

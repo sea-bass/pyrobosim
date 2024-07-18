@@ -11,7 +11,7 @@ from .locations import ObjectSpawn
 from .objects import Object
 from ..manipulation.grasping import Grasp
 from ..planning.actions import ExecutionResult, ExecutionStatus
-from ..utils.knowledge import resolve_to_object
+from ..utils.knowledge import resolve_to_object, query_to_entity
 from ..utils.polygon import sample_from_polygon, transform_polygon
 from ..utils.pose import Pose
 
@@ -249,8 +249,25 @@ class Robot:
             if self.world is None:
                 warnings.warn("Cannot specify a string goal if there is no world set.")
                 return None
+
+            if isinstance(goal, str):
+                query_list = [elem for elem in goal.split(" ") if elem]
+                goal = query_to_entity(
+                    self.world,
+                    query_list,
+                    mode="location",
+                    robot=self,
+                    resolution_strategy="nearest",
+                )
+                if not goal:
+                    warnings.warn(
+                        f"Could not resolve goal location query: {query_list}"
+                    )
+                    return False
+
             goal_node = self.world.graph_node_from_entity(goal, robot=self)
             if goal_node is None:
+                warnings.warn(f"Could not find graph node associated with goal.")
                 return None
             goal = goal_node.pose
 
@@ -722,7 +739,9 @@ class Robot:
             self.executing_nav = True
             path = action.path if action.path.num_poses > 0 else None
             if self.world.has_gui:
-                self.world.gui.canvas.navigate(self, action.target_location, path)
+                self.world.gui.canvas.navigate_signal.emit(
+                    self, action.target_location, path
+                )
                 while self.executing_nav:
                     time.sleep(0.5)  # Delay to wait for navigation
                 result = self.last_nav_result

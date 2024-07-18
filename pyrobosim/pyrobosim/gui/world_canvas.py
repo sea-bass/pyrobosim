@@ -83,6 +83,9 @@ class WorldCanvas(FigureCanvasQTAgg):
     draw_signal = Signal()
     """ Signal for drawing without threading errors. """
 
+    navigate_signal = Signal(Robot, str, Path)
+    """ Signal for starting a navigation task without threading errors. """
+
     show_hallways_signal = Signal()
     """ Signal for showing hallways without threading errors. """
 
@@ -153,6 +156,7 @@ class WorldCanvas(FigureCanvasQTAgg):
 
         # Connect signals
         self.draw_signal.connect(self.draw_and_sleep)
+        self.navigate_signal.connect(self.navigate)
         self.show_hallways_signal.connect(self.show_hallways)
         self.show_locations_signal.connect(self.show_locations)
         self.show_objects_signal.connect(self.show_objects)
