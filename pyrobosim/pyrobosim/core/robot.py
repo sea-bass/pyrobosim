@@ -440,12 +440,12 @@ class Robot:
         else:
             obj = self.world.get_object_by_name(obj_query)
             if not obj and isinstance(obj_query, str):
-                obj = resolve_to_object(
+                obj = query_to_entity(
                     self.world,
-                    category=obj_query,
-                    location=loc,
-                    resolution_strategy="nearest",
+                    obj_query,
+                    mode="object",
                     robot=self,
+                    resolution_strategy="nearest",
                 )
             if not obj:
                 message = f"Found no object {obj_query} to pick."

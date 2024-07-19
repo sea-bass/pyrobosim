@@ -10,7 +10,6 @@ from matplotlib.backends.qt_compat import QtCore
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
 
 from .world_canvas import WorldCanvas
-from ..utils.knowledge import query_to_entity
 
 
 def start_gui(world):
@@ -260,26 +259,17 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             return
 
         loc = self.goal_textbox.text()
-        print(f"[{robot.name}] Navigating to {loc}")
-        self.canvas.navigate_signal.emit(robot, loc, None)
+        if loc:
+            print(f"[{robot.name}] Navigating to {loc}")
+            self.canvas.navigate_signal.emit(robot, loc, None)
 
     def on_pick_click(self):
         """Callback to pick an object."""
         robot = self.get_current_robot()
         if robot:
-            loc = robot.location
-            query_list = [elem for elem in self.goal_textbox.text().split(" ") if elem]
-            if loc:
-                query_list.append(loc.name)
-            obj = query_to_entity(
-                self.world,
-                query_list,
-                mode="object",
-                robot=robot,
-                resolution_strategy="nearest",
-            )
+            obj = self.goal_textbox.text()
             if obj:
-                print(f"[{robot.name}] Picking {obj.name}")
+                print(f"[{robot.name}] Picking {obj}")
                 self.canvas.pick_object(robot, obj)
                 self.update_button_state()
 

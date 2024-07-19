@@ -61,8 +61,9 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
 
     :param world: World model.
     :type world: :class:`pyrobosim.core.world.World`
-    :param query_list: List of query terms (e.g., "kitchen table apple")
-    :type query_list: list[str]
+    :param query_list: List of query terms (e.g., "kitchen table apple").
+        These can be specified as a list of strings, or as a single space-separated string.
+    :type query_list: str or list[str]
     :param mode: Can be either "location" or "object".
     :type mode: str
     :param resolution_strategy: Resolution strategy to apply (see :func:`apply_resolution_strategy`)
@@ -79,6 +80,12 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
     named_location = None
     loc_category = None
     obj_category = None
+
+    # Process the input and convert it to a list.
+    if query_list is None:
+        query_list = []
+    elif isinstance(query_list, str):
+        query_list = [elem for elem in query_list.split(" ") if elem]
 
     if robot is None:
         possible_objects = world.get_objects()
