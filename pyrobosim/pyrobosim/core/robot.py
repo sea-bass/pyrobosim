@@ -739,8 +739,13 @@ class Robot:
             self.executing_nav = True
             path = action.path if action.path.num_poses > 0 else None
             if self.world.has_gui:
+                if not isinstance(action.target_location, str):
+                    target_location_name = action.target_location.name
+                else:
+                    target_location_name = action.target_location
+
                 self.world.gui.canvas.navigate_signal.emit(
-                    self, action.target_location, path
+                    self, target_location_name, path
                 )
                 while self.executing_nav:
                     time.sleep(0.5)  # Delay to wait for navigation
