@@ -138,7 +138,13 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
             return None
 
     # Special case: A room is selected purely by name
-    if room and not named_location and not loc_category and not obj_category:
+    if (
+        mode == "location"
+        and room
+        and not named_location
+        and not loc_category
+        and not obj_category
+    ):
         return world.get_room_by_name(room)
 
     # If a named location is given, check that have an object category and filter by that.
@@ -165,6 +171,9 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
                 return obj_candidate
             elif mode == "location":
                 return obj_candidate.parent
+
+    if mode == "object" and loc_category is None and robot:
+        loc_category = robot.location.name
 
     # Resolve a location from any other query
     if obj_category or mode == "object":

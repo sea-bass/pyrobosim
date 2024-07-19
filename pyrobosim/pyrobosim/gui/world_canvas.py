@@ -524,6 +524,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         success = robot.place_object(pose=pose)
         self.axes.add_patch(obj.viz_patch)
         self.obj_patches.append(obj.viz_patch)
+        self.update_object_plot(obj)
         self.show_world_state(robot)
         self.draw_signal.emit()
         return success
