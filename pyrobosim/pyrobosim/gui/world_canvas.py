@@ -83,6 +83,9 @@ class WorldCanvas(FigureCanvasQTAgg):
     draw_signal = Signal()
     """ Signal for drawing without threading errors. """
 
+    navigate_signal = Signal(Robot, str, Path)
+    """ Signal for starting a navigation task without threading errors. """
+
     show_hallways_signal = Signal()
     """ Signal for showing hallways without threading errors. """
 
@@ -95,7 +98,7 @@ class WorldCanvas(FigureCanvasQTAgg):
     show_robots_signal = Signal()
     """ Signal for showing robots without threading errors. """
 
-    show_planner_and_path_signal = Signal(Robot, Path)
+    show_planner_and_path_signal = Signal(Robot, bool, Path)
     """ Signal for showing planners and paths without threading errors. """
 
     def __init__(
@@ -153,6 +156,7 @@ class WorldCanvas(FigureCanvasQTAgg):
 
         # Connect signals
         self.draw_signal.connect(self.draw_and_sleep)
+        self.navigate_signal.connect(self.navigate)
         self.show_hallways_signal.connect(self.show_hallways)
         self.show_locations_signal.connect(self.show_locations)
         self.show_objects_signal.connect(self.show_objects)
@@ -339,7 +343,7 @@ class WorldCanvas(FigureCanvasQTAgg):
             self.fig.canvas.flush_events()
             time.sleep(0.005)
 
-    def show_planner_and_path(self, robot=None, path=None):
+    def show_planner_and_path(self, robot=None, show_graph=True, path=None):
         """
         Plot the path planner and latest path, if specified.
         This planner could be global (property of the world)
@@ -347,32 +351,33 @@ class WorldCanvas(FigureCanvasQTAgg):
 
         :param robot: If set to a Robot instance, uses that robot for display.
         :type robot: :class:`pyrobosim.core.robot.Robot`, optional
+        :param show_graph: If True, shows the path planner's latest graph(s).
+        :type show_graph: bool
         :param path: Path to goal location, defaults to None.
         :type path: :class:`pyrobosim.utils.motion.Path`, optional
         """
+        if not robot:
+            warnings.warn("No robot found")
+            return
+
         # Since removing artists while drawing can cause issues,
         # this function should also lock drawing.
         with self.draw_lock:
-            if not robot:
-                warnings.warn("No robot found")
-            else:
-                color = robot.color if robot is not None else "m"
-                if robot.path_planner:
-                    path_planner_artists = robot.path_planner.plot(
-                        self.axes, path=path, path_color=color
-                    )
+            color = robot.color if robot is not None else "m"
+            if robot.path_planner:
+                path_planner_artists = robot.path_planner.plot(
+                    self.axes, show_graph=show_graph, path=path, path_color=color
+                )
 
-                    for artist in self.path_planner_artists["graph"]:
-                        artist.remove()
-                    self.path_planner_artists["graph"] = path_planner_artists.get(
-                        "graph", []
-                    )
+                for artist in self.path_planner_artists["graph"]:
+                    artist.remove()
+                self.path_planner_artists["graph"] = path_planner_artists.get(
+                    "graph", []
+                )
 
-                    for artist in self.path_planner_artists["path"]:
-                        artist.remove()
-                    self.path_planner_artists["path"] = path_planner_artists.get(
-                        "path", []
-                    )
+                for artist in self.path_planner_artists["path"]:
+                    artist.remove()
+                self.path_planner_artists["path"] = path_planner_artists.get("path", [])
 
     def nav_animation_callback(self):
         """Timer callback function to animate navigating robots."""
@@ -519,6 +524,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         success = robot.place_object(pose=pose)
         self.axes.add_patch(obj.viz_patch)
         self.obj_patches.append(obj.viz_patch)
+        self.update_object_plot(obj)
         self.show_world_state(robot)
         self.draw_signal.emit()
         return success

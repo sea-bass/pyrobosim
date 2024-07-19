@@ -11,7 +11,7 @@ from .locations import ObjectSpawn
 from .objects import Object
 from ..manipulation.grasping import Grasp
 from ..planning.actions import ExecutionResult, ExecutionStatus
-from ..utils.knowledge import resolve_to_object
+from ..utils.knowledge import resolve_to_object, query_to_entity
 from ..utils.polygon import sample_from_polygon, transform_polygon
 from ..utils.pose import Pose
 
@@ -249,14 +249,34 @@ class Robot:
             if self.world is None:
                 warnings.warn("Cannot specify a string goal if there is no world set.")
                 return None
+
+            if isinstance(goal, str):
+                query_list = [elem for elem in goal.split(" ") if elem]
+                goal = query_to_entity(
+                    self.world,
+                    query_list,
+                    mode="location",
+                    robot=self,
+                    resolution_strategy="nearest",
+                )
+                if not goal:
+                    warnings.warn(
+                        f"Could not resolve goal location query: {query_list}"
+                    )
+                    return False
+
             goal_node = self.world.graph_node_from_entity(goal, robot=self)
             if goal_node is None:
+                warnings.warn(f"Could not find graph node associated with goal.")
                 return None
             goal = goal_node.pose
 
         path = self.path_planner.plan(start, goal)
         if self.world and self.world.has_gui:
-            self.world.gui.canvas.show_planner_and_path_signal.emit(self, path)
+            show_graph = True
+            self.world.gui.canvas.show_planner_and_path_signal.emit(
+                self, show_graph, path
+            )
         return path
 
     def follow_path(
@@ -378,6 +398,11 @@ class Robot:
                     status=ExecutionStatus.PLANNING_FAILURE,
                     message=message,
                 )
+        elif self.world and self.world.has_gui:
+            show_graph = False
+            self.world.gui.canvas.show_planner_and_path_signal.emit(
+                self, show_graph, path
+            )
 
         return self.follow_path(
             path,
@@ -415,12 +440,12 @@ class Robot:
         else:
             obj = self.world.get_object_by_name(obj_query)
             if not obj and isinstance(obj_query, str):
-                obj = resolve_to_object(
+                obj = query_to_entity(
                     self.world,
-                    category=obj_query,
-                    location=loc,
-                    resolution_strategy="nearest",
+                    obj_query,
+                    mode="object",
                     robot=self,
+                    resolution_strategy="nearest",
                 )
             if not obj:
                 message = f"Found no object {obj_query} to pick."
@@ -714,7 +739,14 @@ class Robot:
             self.executing_nav = True
             path = action.path if action.path.num_poses > 0 else None
             if self.world.has_gui:
-                self.world.gui.canvas.navigate(self, action.target_location, path)
+                if not isinstance(action.target_location, str):
+                    target_location_name = action.target_location.name
+                else:
+                    target_location_name = action.target_location
+
+                self.world.gui.canvas.navigate_signal.emit(
+                    self, target_location_name, path
+                )
                 while self.executing_nav:
                     time.sleep(0.5)  # Delay to wait for navigation
                 result = self.last_nav_result

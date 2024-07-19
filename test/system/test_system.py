@@ -45,7 +45,7 @@ class TestSystem:
         robot = window.get_current_robot()
         expected_location = query_to_entity(
             world,
-            nav_query.split(" "),
+            nav_query,
             mode="location",
             robot=robot,
             resolution_strategy="nearest",
