@@ -281,17 +281,23 @@ class WorldROSWrapper(Node):
         """
         robot = self.world.get_robot_by_name(goal_handle.request.action.robot)
         if not robot:
-            self.get_logger().info(
-                f"Invalid robot name: {goal_handle.request.action.robot}"
-            )
+            message = f"Invalid robot name: {goal_handle.request.action.robot}"
+            self.get_logger().error(message)
             goal_handle.abort()
-            return
+            return ExecuteTaskAction.Result(
+                execution_result=ExecutionResult(
+                    status=ExecutionResult.INVALID_ACTION, message=message
+                )
+            )
         if self.is_robot_busy(robot):
-            self.get_logger().info(
-                "Currently executing action(s). Discarding this one."
-            )
+            message = "Currently executing action(s). Discarding this one."
+            self.get_logger().warn(message)
             goal_handle.abort()
-            return
+            return ExecuteTaskAction.Result(
+                execution_result=ExecutionResult(
+                    status=ExecutionResult.CANCELED, message=message
+                )
+            )
 
         # Execute the action
         robot_action = task_action_from_ros(goal_handle.request.action)
@@ -327,23 +333,34 @@ class WorldROSWrapper(Node):
         :param goal_handle: Task plan action goal handle to process.
         :type goal_handle: :class:`pyrobosim_msgs.action.ExecuteTaskPlan.Goal`
         """
-        robot = self.world.get_robot_by_name(goal_handle.request.plan.robot)
+        plan_msg = goal_handle.request.plan
+        robot = self.world.get_robot_by_name(plan_msg.robot)
         if not robot:
-            self.get_logger().info(
-                f"Invalid robot name: {goal_handle.request.plan.robot}"
-            )
+            message = f"Invalid robot name: {plan_msg.robot}"
+            self.get_logger().error(message)
             goal_handle.abort()
-            return
+            return ExecuteTaskAction.Result(
+                execution_result=ExecutionResult(
+                    status=ExecutionResult.INVALID_ACTION, message=message
+                ),
+                num_completed=0,
+                num_total=len(plan_msg.actions),
+            )
         if self.is_robot_busy(robot):
-            self.get_logger().info(
-                f"Currently executing action(s). Discarding this one."
-            )
+            message = "Currently executing action(s). Discarding this plan."
+            self.get_logger().warn(message)
             goal_handle.abort()
-            return
+            return ExecuteTaskAction.Result(
+                execution_result=ExecutionResult(
+                    status=ExecutionResult.CANCELED, message=message
+                ),
+                num_completed=0,
+                num_total=len(plan_msg.actions),
+            )
 
         # Execute the plan
         self.get_logger().info(f"Executing task plan with robot {robot.name}...")
-        robot_plan = task_plan_from_ros(goal_handle.request.plan)
+        robot_plan = task_plan_from_ros(plan_msg.plan)
         execution_result, num_completed = robot.execute_plan(robot_plan)
         self.get_logger().info(
             f"Plan finished with status: {execution_result.status.name} (completed {num_completed}/{robot_plan.size()} actions)"
