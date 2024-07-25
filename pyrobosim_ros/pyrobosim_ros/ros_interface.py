@@ -288,7 +288,7 @@ class WorldROSWrapper(Node):
         # Execute the action
         robot_action = task_action_from_ros(goal_handle.request.action)
         self.get_logger().info(f"Executing action with robot {robot.name}...")
-        success = robot.execute_action(robot_action)
+        success = robot.execute_action(robot_action, blocking=True)
 
         # Package up the result
         goal_handle.succeed()
