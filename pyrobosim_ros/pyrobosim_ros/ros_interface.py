@@ -2,18 +2,22 @@
 
 import os
 import numpy as np
+from functools import partial
 import rclpy
-from rclpy.action import ActionServer
-from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
+from rclpy.action import ActionServer, CancelResponse
+from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 import time
 
 from geometry_msgs.msg import Twist
+from pyrobosim.core.hallway import Hallway
+from pyrobosim.core.locations import Location
 from pyrobosim_msgs.action import ExecuteTaskAction, ExecuteTaskPlan
-from pyrobosim_msgs.msg import RobotState, LocationState, ObjectState
-from pyrobosim_msgs.srv import RequestWorldState
+from pyrobosim_msgs.msg import ExecutionResult, RobotState, LocationState, ObjectState
+from pyrobosim_msgs.srv import RequestWorldState, SetLocationState
 from .ros_conversions import (
+    execution_result_to_ros,
     pose_from_ros,
     pose_to_ros,
     ros_duration_to_float,
@@ -76,16 +80,14 @@ class WorldROSWrapper(Node):
         self.executing_plan = False
         self.last_command_status = None
 
-        # Set up different callback groups
-        self.action_cb_group = MutuallyExclusiveCallbackGroup()
-        self.query_cb_group = MutuallyExclusiveCallbackGroup()
-
         # Server for executing single action
         self.action_server = ActionServer(
             self,
             ExecuteTaskAction,
             "execute_action",
-            self.action_callback,
+            execute_callback=self.action_callback,
+            cancel_callback=self.action_cancel_callback,
+            callback_group=ReentrantCallbackGroup(),
         )
 
         # Server for executing task plan
@@ -93,15 +95,24 @@ class WorldROSWrapper(Node):
             self,
             ExecuteTaskPlan,
             "execute_task_plan",
-            self.plan_callback,
+            execute_callback=self.plan_callback,
+            cancel_callback=self.plan_cancel_callback,
+            callback_group=ReentrantCallbackGroup(),
         )
 
-        # World state service server
+        # World state service servers
         self.world_state_srv = self.create_service(
             RequestWorldState,
             "request_world_state",
             self.world_state_callback,
-            callback_group=self.query_cb_group,
+            callback_group=ReentrantCallbackGroup(),
+        )
+
+        self.set_location_state_srv = self.create_service(
+            SetLocationState,
+            "set_location_state",
+            self.set_location_state_callback,
+            callback_group=ReentrantCallbackGroup(),
         )
 
         # Initialize robot specific interface lists
@@ -109,7 +120,6 @@ class WorldROSWrapper(Node):
         self.robot_state_pubs = []
         self.robot_state_pub_threads = []
         self.latest_robot_cmds = {}
-        self.robot_dynamics_timers = []
 
         # Start a dynamics timer
         self.dynamics_rate = dynamics_rate
@@ -146,8 +156,14 @@ class WorldROSWrapper(Node):
         if not self.world:
             self.get_logger().error("Must set a world before starting node.")
 
+        # Create robot specific interfaces
         for robot in self.world.robots:
             self.add_robot_ros_interfaces(robot)
+
+        # Create dynamics timer
+        self.dynamics_timer = self.create_timer(
+            self.dynamics_rate, self.dynamics_callback
+        )
 
         while wait_for_gui and not self.world.has_gui:
             self.get_logger().info("Waiting for GUI...")
@@ -167,6 +183,8 @@ class WorldROSWrapper(Node):
         :param robot: Robot instance.
         :type robot: :class:`pyrobosim.core.robot.Robot`
         """
+        self.latest_robot_cmds[robot.name] = None
+
         # Create subscriber
         sub = self.create_subscription(
             Twist,
@@ -184,17 +202,10 @@ class WorldROSWrapper(Node):
             10,
             callback_group=ReentrantCallbackGroup(),
         )
-        pub_timer = self.create_timer(
-            self.state_pub_rate, lambda: pub.publish(self.package_robot_state(robot))
-        )
+        pub_fn = partial(self.package_robot_state, robot=robot)
+        pub_timer = self.create_timer(self.state_pub_rate, pub_fn)
         self.robot_state_pubs.append(pub)
-
         self.robot_state_pub_threads.append(pub_timer)
-
-        # Create dynamics timer
-        self.latest_robot_cmds[robot.name] = None
-        dynamics_timer = self.create_timer(self.dynamics_rate, self.dynamics_callback)
-        self.robot_dynamics_timers.append(dynamics_timer)
 
     def remove_robot_ros_interfaces(self, robot):
         """
@@ -203,20 +214,17 @@ class WorldROSWrapper(Node):
         :param robot: Robot instance.
         :type robot: :class:`pyrobosim.core.robot.Robot`
         """
-        for i, r in self.world.robots:
+        for idx, r in enumerate(self.world.robots):
             if r == robot:
-                sub = self.robot_command_subs.pop(i)
+                sub = self.robot_command_subs.pop(idx)
                 self.destroy_subscription(sub)
                 del sub
-                pub = self.robot_state_pubs.pop(i)
+                pub = self.robot_state_pubs.pop(idx)
                 self.destroy_publisher(pub)
                 del pub
-                pub_timer = self.robot_state_pub_threads.pop(i)
+                pub_timer = self.robot_state_pub_threads.pop(idx)
                 pub_timer.destroy()
                 del pub_thread
-                dynamics_timer = self.robot_dynamics_timers.pop(i)
-                dynamics_timer.destroy()
-                del dynamics_timer
 
     def dynamics_callback(self):
         """
@@ -269,66 +277,115 @@ class WorldROSWrapper(Node):
         Handle single action callback.
 
         :param goal_handle: Task action goal handle to process.
-        :type goal_handle: :class:`pyrobosim_msgs.action.TaskAction.Goal`
+        :type goal_handle: :class:`pyrobosim_msgs.action.ExecuteTaskAction.Goal`
         """
         robot = self.world.get_robot_by_name(goal_handle.request.action.robot)
         if not robot:
-            self.get_logger().info(
-                f"Invalid robot name: {goal_handle.request.action.robot}"
-            )
+            message = f"Invalid robot name: {goal_handle.request.action.robot}"
+            self.get_logger().error(message)
             goal_handle.abort()
-            return
+            return ExecuteTaskAction.Result(
+                execution_result=ExecutionResult(
+                    status=ExecutionResult.INVALID_ACTION, message=message
+                )
+            )
         if self.is_robot_busy(robot):
-            self.get_logger().info(
-                "Currently executing action(s). Discarding this one."
-            )
+            message = "Currently executing action(s). Discarding this one."
+            self.get_logger().warn(message)
             goal_handle.abort()
-            return
+            return ExecuteTaskAction.Result(
+                execution_result=ExecutionResult(
+                    status=ExecutionResult.CANCELED, message=message
+                )
+            )
 
         # Execute the action
         robot_action = task_action_from_ros(goal_handle.request.action)
         self.get_logger().info(f"Executing action with robot {robot.name}...")
-        success = robot.execute_action(robot_action, blocking=True)
+        execution_result = robot.execute_action(robot_action, blocking=True)
+        self.get_logger().info(
+            f"Action finished with status: {execution_result.status.name}"
+        )
 
         # Package up the result
         goal_handle.succeed()
-        result = ExecuteTaskAction.Result()
-        result.success = success
-        return result
+        return ExecuteTaskAction.Result(
+            execution_result=execution_result_to_ros(execution_result)
+        )
+
+    def action_cancel_callback(self, goal_handle):
+        """
+        Handle cancellation for single action goals.
+
+        :param goal_handle: Task action goal handle to process.
+        :type goal_handle: :class:`pyrobosim_msgs.action.ExecuteTaskAction.Goal`
+        """
+        robot = self.world.get_robot_by_name(goal_handle.request.action.robot)
+        if robot is not None:
+            self.get_logger().info(f"Canceling action for robot {robot.name}.")
+            robot.cancel_actions()
+        return CancelResponse.ACCEPT
 
     def plan_callback(self, goal_handle):
         """
         Handle task plan action callback.
 
         :param goal_handle: Task plan action goal handle to process.
-        :type goal_handle: :class:`pyrobosim_msgs.action.TaskPlan.Goal`
+        :type goal_handle: :class:`pyrobosim_msgs.action.ExecuteTaskPlan.Goal`
         """
-        robot = self.world.get_robot_by_name(goal_handle.request.plan.robot)
+        plan_msg = goal_handle.request.plan
+        robot = self.world.get_robot_by_name(plan_msg.robot)
         if not robot:
-            self.get_logger().info(
-                f"Invalid robot name: {goal_handle.request.plan.robot}"
-            )
+            message = f"Invalid robot name: {plan_msg.robot}"
+            self.get_logger().error(message)
             goal_handle.abort()
-            return
+            return ExecuteTaskAction.Result(
+                execution_result=ExecutionResult(
+                    status=ExecutionResult.INVALID_ACTION, message=message
+                ),
+                num_completed=0,
+                num_total=len(plan_msg.actions),
+            )
         if self.is_robot_busy(robot):
-            self.get_logger().info(
-                f"Currently executing action(s). Discarding this one."
-            )
+            message = "Currently executing action(s). Discarding this plan."
+            self.get_logger().warn(message)
             goal_handle.abort()
-            return
+            return ExecuteTaskAction.Result(
+                execution_result=ExecutionResult(
+                    status=ExecutionResult.CANCELED, message=message
+                ),
+                num_completed=0,
+                num_total=len(plan_msg.actions),
+            )
 
         # Execute the plan
         self.get_logger().info(f"Executing task plan with robot {robot.name}...")
-        robot_plan = task_plan_from_ros(goal_handle.request.plan)
-        success, num_completed = robot.execute_plan(robot_plan)
+        robot_plan = task_plan_from_ros(plan_msg.plan)
+        execution_result, num_completed = robot.execute_plan(robot_plan)
+        self.get_logger().info(
+            f"Plan finished with status: {execution_result.status.name} (completed {num_completed}/{robot_plan.size()} actions)"
+        )
 
         # Package up the result
         goal_handle.succeed()
-        result = ExecuteTaskPlan.Result()
-        result.success = success
-        result.num_completed = num_completed
-        result.num_total = robot_plan.size()
-        return result
+        return ExecuteTaskPlan.Result(
+            execution_result=execution_result_to_ros(execution_result),
+            num_completed=num_completed,
+            num_total=robot_plan.size(),
+        )
+
+    def plan_cancel_callback(self, goal_handle):
+        """
+        Handle cancellation for task plans.
+
+        :param goal_handle: Task plan goal handle to process.
+        :type goal_handle: :class:`pyrobosim_msgs.action.ExecuteTaskPlan.Goal`
+        """
+        robot = self.world.get_robot_by_name(goal_handle.request.plan.robot)
+        if robot is not None:
+            self.get_logger().info(f"Canceling plan for robot {robot.name}.")
+            robot.cancel_actions()
+        return CancelResponse.ACCEPT
 
     def is_robot_busy(self, robot):
         """
@@ -368,11 +425,11 @@ class WorldROSWrapper(Node):
         Returns the world state as a response to a service request.
 
         :param request: The service request.
-        :type request: :class:`pyrobosim_msgs.srv._request_world_state.RequestWorldState_Request`
+        :type request: :class:`pyrobosim_msgs.srv.RequestWorldState.Request`
         :param response: The unmodified service response.
-        :type response: :class:`pyrobosim_msgs.srv._request_world_state.RequestWorldState_Response`
+        :type response: :class:`pyrobosim_msgs.srv.RequestWorldState.Response`
         :return: The modified service response containing the world state.
-        :rtype: :class:`pyrobosim_msgs.srv._request_world_state.RequestWorldState_Response`
+        :rtype: :class:`pyrobosim_msgs.srv.RequestWorldState.Response`
         """
         self.get_logger().info("Received world state request.")
 
@@ -398,6 +455,87 @@ class WorldROSWrapper(Node):
         for robot in self.world.robots:
             response.state.robots.append(self.package_robot_state(robot))
 
+        return response
+
+    def set_location_state_callback(self, request, response):
+        """
+        Sets the state of a location in the world as a response to a service request.
+
+        :param request: The service request.
+        :type request: :class:`pyrobosim_msgs.srv.SetLocationState.Request`
+        :param response: The unmodified service response.
+        :type response: :class:`pyrobosim_msgs.srv.SetLocationState.Response`
+        :return: The modified service response containing result of setting the location state.
+        :rtype: :class:`pyrobosim_msgs.srv.RequestWorldState.Response`
+        """
+        self.get_logger().info("Received location state setting request.")
+
+        # Check if the entity exists.
+        entity = self.world.get_entity_by_name(request.location_name)
+        if not entity:
+            message = f"No location matching query: {request.location_name}"
+            self.get_logger().warn(message)
+            response.result.status = ExecutionResult.INVALID_ACTION
+            response.result.message = message
+            return response
+
+        if isinstance(entity, Location):
+            # Try open or close the location if its status needs to be toggled.
+            if request.open != entity.is_open:
+                if request.open:
+                    result = self.world.open_location(entity)
+                else:
+                    result = self.world.close_location(entity)
+
+                if not result.is_success():
+                    response.result = execution_result_to_ros(result)
+                    return response
+
+            # Try lock or unlock the location if its status needs to be toggled.
+            if request.lock != entity.is_locked:
+                if request.lock:
+                    result = self.world.lock_location(entity)
+                else:
+                    result = self.world.unlock_location(entity)
+
+                if not result.is_success():
+                    response.result = execution_result_to_ros(result)
+                    return response
+
+            response.result.status = ExecutionResult.SUCCESS
+            return response
+
+        elif isinstance(entity, Hallway):
+            # Try open or close the hallway if its status needs to be toggled.
+            if request.open != entity.is_open:
+                if request.open:
+                    result = self.world.open_hallway(entity)
+                else:
+                    result = self.world.close_hallway(entity)
+
+                if not result.is_success():
+                    response.result = execution_result_to_ros(result)
+                    return response
+
+            # Try lock or unlock the hallway if its status needs to be toggled.
+            if request.lock != entity.is_locked:
+                if request.lock:
+                    result = self.world.lock_hallway(entity)
+                else:
+                    result = self.world.unlock_hallway(entity)
+
+                if not result.is_success():
+                    response.result = execution_result_to_ros(result)
+                    return response
+
+            response.result.status = ExecutionResult.SUCCESS
+            return response
+
+        # If no valid entity type is reached, we should fail here.
+        message = f"Cannot set state for {entity.name} since it is of type {type(entity).__name__}."
+        self.get_logger().warn(message)
+        response.result.status = ExecutionResult.INVALID_ACTION
+        response.result.message = message
         return response
 
 

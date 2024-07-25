@@ -102,7 +102,10 @@ def create_world(multirobot=False):
         name="robot0",
         radius=0.1,
         path_executor=ConstantVelocityExecutor(
-            linear_velocity=1.0, dt=0.1, max_angular_velocity=4.0
+            linear_velocity=1.0,
+            dt=0.1,
+            max_angular_velocity=4.0,
+            validate_during_execution=True,
         ),
         grasp_generator=GraspGenerator(grasp_props),
         partial_observability=args.partial_observability,

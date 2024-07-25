@@ -5,59 +5,130 @@ Tests for location and object spawn creation in pyrobosim.
 """
 
 import os
+import pytest
 
 from pyrobosim.core import Location, World
+from pyrobosim.planning.actions import ExecutionStatus
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
 
-data_folder = get_data_folder()
-
-
 class TestLocations:
-    def test_add_location_to_world_from_object(self):
-        """Test adding a location from a Location object."""
-        world = World()
-        world.set_metadata(
+    @pytest.fixture(autouse=True)
+    def create_test_world(self):
+        data_folder = get_data_folder()
+        self.test_world = World()
+        self.test_world.set_metadata(
             locations=os.path.join(data_folder, "example_location_data.yaml"),
             objects=os.path.join(data_folder, "example_object_data.yaml"),
         )
 
         coords = [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)]
-        room = world.add_room(name="test_room", footprint=coords)
-        assert room is not None
+        self.test_room = self.test_world.add_room(name="test_room", footprint=coords)
 
-        location = Location(category="table", parent=room, pose=Pose(x=0.0, y=0.0))
-        result = world.add_location(location=location)
+    def test_add_location_to_world_from_object(self):
+        """Test adding a location from a Location object."""
+        location = Location(
+            category="table", parent=self.test_room, pose=Pose(x=0.0, y=0.0)
+        )
+        result = self.test_world.add_location(location=location)
         assert isinstance(result, Location)
-        assert world.num_locations == 1
-        assert world.locations[0].name == "table0"
+        assert self.test_world.num_locations == 1
+        assert self.test_world.locations[0].name == "table0"
+        assert self.test_world.locations[0].is_open
+        assert not self.test_world.locations[0].is_locked
 
     def test_add_location_to_world_from_args(self):
         """Test adding a location from a list of named keyword arguments."""
-        world = World()
-        world.set_metadata(
-            locations=os.path.join(data_folder, "example_location_data.yaml"),
-            objects=os.path.join(data_folder, "example_object_data.yaml"),
+        result = self.test_world.add_location(
+            name="test_table",
+            category="table",
+            parent="test_room",
+            pose=Pose(x=0.0, y=0.0),
+            is_open=False,
+            is_locked=True,
         )
+        assert isinstance(result, Location)
+        assert self.test_world.num_locations == 1
+        assert self.test_world.locations[0].name == "test_table"
+        assert not self.test_world.locations[0].is_open
+        assert self.test_world.locations[0].is_locked
 
-        coords = [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)]
-        room = world.add_room(name="test_room", footprint=coords)
-        assert room is not None
-
-        result = world.add_location(
+    def test_add_location_open_close_lock_unlock(self):
+        """Test the open, close, lock, and unlock capabilities of locations."""
+        result = self.test_world.add_location(
             name="test_table",
             category="table",
             parent="test_room",
             pose=Pose(x=0.0, y=0.0),
         )
+
         assert isinstance(result, Location)
-        assert world.num_locations == 1
-        assert world.locations[0].name == "test_table"
+        assert self.test_world.num_locations == 1
+        location = self.test_world.locations[0]
+        assert location.is_open
+        assert not location.is_locked
 
+        # When trying to open the location, it should say it's already open.
+        with pytest.warns(UserWarning):
+            result = self.test_world.open_location(location)
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "Location: test_table is already open."
+        assert location.is_open
+        assert not location.is_locked
 
-if __name__ == "__main__":
-    t = TestLocations()
-    t.test_add_location_to_world_from_object()
-    t.test_add_location_to_world_from_args()
-    print("Tests passed!")
+        # Closing should work
+        result = self.test_world.close_location(location)
+        assert result.is_success()
+        assert not location.is_open
+        assert not location.is_locked
+
+        # Locking should work
+        result = self.test_world.lock_location(location)
+        assert result.is_success()
+        assert not location.is_open
+        assert location.is_locked
+
+        # Opening should not work due to being locked
+        with pytest.warns(UserWarning):
+            result = self.test_world.open_location(location)
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "Location: test_table is locked."
+        assert not location.is_open
+        assert location.is_locked
+
+        # Closing should not work due to already being closed
+        with pytest.warns(UserWarning):
+            result = self.test_world.close_location(location)
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "Location: test_table is already closed."
+        assert not location.is_open
+        assert location.is_locked
+
+        # Locking should not work due to already being locked
+        with pytest.warns(UserWarning):
+            result = self.test_world.lock_location(location)
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "Location: test_table is already locked."
+        assert not location.is_open
+        assert location.is_locked
+
+        # Unlocking should work
+        result = self.test_world.unlock_location(location)
+        assert result.is_success()
+        assert not location.is_open
+        assert not location.is_locked
+
+        # Unlocking should not work due to already being unlocked
+        with pytest.warns(UserWarning):
+            result = self.test_world.unlock_location(location)
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "Location: test_table is already unlocked."
+        assert not location.is_open
+        assert not location.is_locked
+
+        # Opening should work
+        result = self.test_world.open_location(location)
+        assert result.is_success()
+        assert location.is_open
+        assert not location.is_locked

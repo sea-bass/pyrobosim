@@ -11,10 +11,11 @@ import time
 
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.gui import PyRoboSimGUI
+from pyrobosim.planning.actions import ExecutionStatus
 from pyrobosim.utils.knowledge import query_to_entity
 
 
-# Needed for PyQt5 tests to work with CI
+# Needed for UI tests to work with CI
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 
@@ -44,7 +45,7 @@ class TestSystem:
         robot = window.get_current_robot()
         expected_location = query_to_entity(
             world,
-            nav_query.split(" "),
+            nav_query,
             mode="location",
             robot=robot,
             resolution_strategy="nearest",
@@ -54,10 +55,12 @@ class TestSystem:
         window.on_navigate_click()
 
         while not robot.executing_nav:
-            time.sleep(0.1)
+            time.sleep(0.2)
         while robot.executing_nav:
-            time.sleep(0.1)
+            time.sleep(0.2)
+        robot.location = world.get_location_from_pose(robot.get_pose())
 
+        assert robot.last_nav_result.is_success()
         assert (
             robot.location == expected_location
             or robot.location in expected_location.children
@@ -71,6 +74,7 @@ class TestSystem:
         nav_queries = [
             "bathroom",
             "bedroom desk",
+            "hall_kitchen_bathroom",
             "counter0_right",
             "kitchen apple",
         ]
@@ -116,3 +120,26 @@ class TestSystem:
             # Place an object
             window.on_place_click()
             assert robot.manipulated_object is None
+
+    @pytest.mark.dependency(name="test_open_close", depends=["test_pick_detect_place"])
+    def test_open_close(self):
+        """
+        Test open and close UI actions.
+        """
+        location_queries = ["hall_kitchen_bathroom", "my_desk"]
+
+        window = self.app.main_window
+        world = self.app.world
+
+        for location_name in location_queries:
+            # Navigate to hallway location
+            location = world.get_entity_by_name(location_name)
+            self.nav_helper(location.name)
+
+            # Close the location and verify that it's closed.
+            window.on_close_click()
+            assert not location.is_open
+
+            # Open the location and verify that it's open.
+            window.on_open_click()
+            assert location.is_open

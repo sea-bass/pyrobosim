@@ -34,6 +34,9 @@ robots:
       linear_velocity: 1.0
       max_angular_velocity: 4.0
       dt: 0.1
+      validate_during_execution: true
+      validation_dt: 0.5
+      validation_step_dist: 0.025
     grasping:
       generator: parallel_grasp
       max_width: 0.15
@@ -84,6 +87,8 @@ hallways:
     room_end: bathroom
     width: 0.7
     conn_method: auto
+    is_open: True
+    is_locked: False
 
   - room_start: bathroom
     room_end: bedroom
@@ -91,6 +96,8 @@ hallways:
     conn_method: angle
     conn_angle: 0.0
     offset: 0.8
+    is_open: True
+    is_locked: False
 
   - room_start: kitchen
     room_end: bedroom
@@ -100,6 +107,8 @@ hallways:
       - [1.0, 0.5]
       - [2.5, 0.5]
       - [2.5, 3.0]
+    is_open: True
+    is_locked: False
 
 
 # LOCATIONS: Can contain objects
@@ -107,14 +116,20 @@ locations:
   - category: table
     parent: kitchen
     pose: [0.85, -0.5, 0.0, -1.57]
+    is_open: True
+    is_locked: True
 
   - category: desk
     parent: bedroom
     pose: [3.15, 3.65, 0.0, 0.0]
+    is_open: True
+    is_locked: False
 
   - category: counter
     parent: bathroom
     pose: [-2.45, 2.5, 0.0, 1.767]
+    is_open: True
+    is_locked: True
 
 
 # OBJECTS: Can be picked, placed, and moved by robot

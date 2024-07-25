@@ -22,7 +22,7 @@ def test_path_default_args():
     assert path.length == 0.0
 
 
-def test_path_pose_list():
+def test_path_pose_list(capsys):
     """Test creating a path with a list of poses."""
     path = Path(
         poses=[
@@ -34,6 +34,17 @@ def test_path_pose_list():
     assert len(path.poses) == 3
     assert path.num_poses == 3
     assert path.length == pytest.approx(4.0)
+
+    path.print_details()
+    out, _ = capsys.readouterr()
+    expected_str = (
+        "Path with 3 points.\n"
+        + "  1. Pose: [x=0.00, y=0.00, z=0.00, qw=1.000, qx=0.000, qy=-0.000, qz=0.000]\n"
+        + "  2. Pose: [x=1.00, y=0.00, z=0.00, qw=0.707, qx=0.000, qy=-0.000, qz=0.707]\n"
+        + "  3. Pose: [x=1.00, y=3.00, z=0.00, qw=0.707, qx=0.000, qy=0.707, qz=0.000]\n"
+        + "Total Length: 4.000\n"
+    )
+    assert out == expected_str
 
 
 def test_path_fill_yaws():
@@ -70,6 +81,11 @@ def test_path_equality():
     assert path1 == path1
     assert path1 == path2
     assert not path1 == path3
+
+    # Check datatype exception.
+    with pytest.raises(TypeError) as exc_info:
+        path1 == 42.0
+    assert exc_info.value.args[0] == "Expected a Path object."
 
 
 ##########################################

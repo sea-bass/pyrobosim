@@ -1,4 +1,4 @@
-# Execute Task Action -- ROS Action Definition
+# Execute Task Plan -- ROS Action Definition
 
 # Goal
 pyrobosim_msgs/TaskPlan plan
@@ -6,7 +6,7 @@ pyrobosim_msgs/TaskPlan plan
 ---
 
 # Result
-bool success
+pyrobosim_msgs/ExecutionResult execution_result
 int64 num_completed
 int64 num_total
 

@@ -1,3 +1,5 @@
+.. _geometry_conventions:
+
 Geometry Conventions
 ====================
 
@@ -5,7 +7,7 @@ Geometry Conventions
 For simplicity, if you are representing poses in 2D, you can use the yaw angle (Z Euler angle), but we recommend using quaternions for generic 3D pose calculations and for interfacing with ROS.
 
 The Euler angle convention is extrinsic XYZ (roll = X, pitch = Y, yaw = Z) in radians.
-Quaternions use the order convention [qw, qx, qy, qz].
-There is more documentation in the :doc:`Pose </generated/pyrobosim.utils.pose.Pose>` source code.
+Quaternions use the order convention ``[qw, qx, qy, qz]``.
+There is more documentation in the :py:class:`pyrobosim.utils.pose.Pose` source code.
 
-When ROS 2 is connected to pyrobosim, the reference frame is `map`.
+When ROS 2 is connected to pyrobosim, the reference frame is ``map``.

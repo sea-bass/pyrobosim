@@ -14,6 +14,8 @@ find_package(geometry_msgs REQUIRED)
 
 # Generate custom interfaces
 set(msg_files
+  "msg/ActionExecutionOptions.msg"
+  "msg/ExecutionResult.msg"
   "msg/GoalPredicate.msg"
   "msg/GoalSpecification.msg"
   "msg/LocationState.msg"
@@ -27,6 +29,7 @@ set(msg_files
 
 set(srv_files
   "srv/RequestWorldState.srv"
+  "srv/SetLocationState.srv"
 )
 
 set(action_files

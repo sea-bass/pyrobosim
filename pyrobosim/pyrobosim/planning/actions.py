@@ -1,6 +1,88 @@
 """ Defines actions for task and motion planning. """
 
+from enum import IntEnum
+import numpy as np
+import time
+
 from ..utils.motion import Path
+
+
+class ExecutionOptions:
+    """Options for executing actions in simulation."""
+
+    def __init__(self, delay=0.0, success_probability=1.0, rng_seed=None):
+        """
+        Creates a new set of action execution options.
+
+        :param delay: The simulated delay time, in seconds.
+        :type delay: float
+        :param success_probability: The simulated success probability, in the range (0, 1).
+        :type success_probability: float
+        :param rng_seed: The seed to use for random number generation.
+            Defaults to None, but can be changed for determinism.
+        :type rng_seed: int, optional
+        """
+        self.delay = delay
+        self.success_probability = success_probability
+        self.rng_seed = rng_seed
+        self.rng = np.random.default_rng(seed=rng_seed)
+
+
+class ExecutionStatus(IntEnum):
+    """Enumeration for action or plan execution status."""
+
+    UNKNOWN = -1
+
+    # Action executed successfully.
+    SUCCESS = 0
+
+    # Preconditions not sufficient to execute the action.
+    # For example, the action was to pick an object but there was no object visible.
+    PRECONDITION_FAILURE = 1
+
+    # Planning failed, for example a path planner or grasp planner did not produce a solution.
+    PLANNING_FAILURE = 2
+
+    # Preconditions were met and planning succeeded, but execution failed.
+    EXECUTION_FAILURE = 3
+
+    # Execution succeeded, but post-execution validation failed.
+    POSTCONDITION_FAILURE = 4
+
+    # Invalid action type.
+    INVALID_ACTION = 5
+
+    # The action was canceled by a user or upstream program.
+    CANCELED = 6
+
+
+class ExecutionResult:
+    """Contains the result of executing actions or plans."""
+
+    def __init__(self, status=ExecutionStatus.UNKNOWN, message=None):
+        """
+        Creates a new execution result instance.
+
+        :param status: The resulting status code. Defaults to UNKNOWN.
+        :type status: :class:`pyrobosim.planning.actions.ExecutionStatus`
+        :param message: An optional message describing the result.
+        :type message: str
+        """
+        self.status = status
+        self.message = message
+
+    def is_success(self):
+        """
+        Helper function to determine if an execution result is successful.
+
+        :return: True if successful, otherwise False.
+        :rtype: bool
+        """
+        return self.status == ExecutionStatus.SUCCESS
+
+    def __repr__(self):
+        """Returns printable string."""
+        return f"Execution result with status: {self.status.name}"
 
 
 class TaskAction:
@@ -17,6 +99,7 @@ class TaskAction:
         pose=None,
         path=Path(),
         cost=None,
+        execution_options=None,
     ):
         """
         Creates a new task action representation.
@@ -39,11 +122,14 @@ class TaskAction:
         :type path: :class:`pyrobosim.utils.motion.Path`, optional
         :param cost: Optional action cost.
         :type cost: float
+        :param execution_options: Options for simulating various action execution properties.
+        :type execution_options: :class:`pyrobosim.planning.actions.ExecutionOptions`
         """
         # Action-agnostic parameters
         self.type = type.lower()
         self.robot = robot
         self.cost = cost
+        self.execution_options = execution_options
 
         # Action-specific parameters
         self.object = object  # Target object name
@@ -52,6 +138,21 @@ class TaskAction:
         self.target_location = target_location  # Target location name
         self.pose = pose  # Target pose
         self.path = path  # Path object containing a list of poses
+
+    def should_succeed(self):
+        """
+        Determines whether the action should succeed, while simulating other aspects such as delays.
+
+        :return: True if the action should success, or False otherwise.
+        :rtype: bool
+        """
+        if self.execution_options:
+            time.sleep(self.execution_options.delay)
+            return (
+                self.execution_options.rng.random()
+                <= self.execution_options.success_probability
+            )
+        return True
 
     def __repr__(self):
         """Returns printable string describing an action."""
@@ -70,9 +171,9 @@ class TaskAction:
             if self.target_location is not None:
                 act_str += f" to {self.target_location}"
             if self.pose is not None:
-                act_str += f"\nAt {self.pose}"
+                act_str += f"\n  At {self.pose}"
             if self.path.num_poses > 0:
-                act_str += f"\n{self.path}"
+                act_str += f"\n  {self.path}"
         # PICK
         elif self.type == "pick":
             act_str += "Pick"
@@ -83,7 +184,7 @@ class TaskAction:
             if self.target_location is not None:
                 act_str += f" from {self.target_location}"
             if self.pose is not None:
-                act_str += f"\nAt {self.pose}"
+                act_str += f"\n  At {self.pose}"
         # PLACE
         elif self.type == "place":
             act_str += "Place"
@@ -94,18 +195,32 @@ class TaskAction:
             if self.target_location is not None:
                 act_str += f" at {self.target_location}"
             if self.pose is not None:
-                act_str += f"\nAt {self.pose}"
+                act_str += f"\n  At {self.pose}"
         # DETECT
         elif self.type == "detect":
             act_str += "Detect"
             if self.object is not None:
                 act_str += f" {self.object}"
+            else:
+                act_str += " objects"
+        # OPEN / CLOSE
+        elif self.type == "open":
+            act_str += "Open"
+            if self.target_location is not None:
+                act_str += f" {self.target_location}"
+            else:
+                act_str += " current location"
+        elif self.type == "close":
+            act_str += "Close"
+            if self.target_location is not None:
+                act_str += f" {self.target_location}"
+            else:
+                act_str += " current location"
         else:
-            print(f"Invalid action type {self.action_type}")
-            return None
+            return f"Invalid action type: {self.type}"
 
         if self.cost is not None:
-            act_str += f", Cost: {self.cost:.3f}"
+            act_str += f"\n  Cost: {self.cost:.3f}"
         return act_str
 
 

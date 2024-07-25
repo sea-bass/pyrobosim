@@ -25,7 +25,7 @@ class RRTPlannerPolygon:
         collision_check_step_dist=0.025,
         max_connection_dist=0.25,
         max_nodes_sampled=1000,
-        max_time=5.0,
+        max_time=2.0,
         rewire_radius=1.0,
         compress_path=False,
     ):

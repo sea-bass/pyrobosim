@@ -61,8 +61,9 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
 
     :param world: World model.
     :type world: :class:`pyrobosim.core.world.World`
-    :param query_list: List of query terms (e.g., "kitchen table apple")
-    :type query_list: list[str]
+    :param query_list: List of query terms (e.g., "kitchen table apple").
+        These can be specified as a list of strings, or as a single space-separated string.
+    :type query_list: str or list[str]
     :param mode: Can be either "location" or "object".
     :type mode: str
     :param resolution_strategy: Resolution strategy to apply (see :func:`apply_resolution_strategy`)
@@ -79,6 +80,12 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
     named_location = None
     loc_category = None
     obj_category = None
+
+    # Process the input and convert it to a list.
+    if query_list is None:
+        query_list = []
+    elif isinstance(query_list, str):
+        query_list = [elem for elem in query_list.split(" ") if elem]
 
     if robot is None:
         possible_objects = world.get_objects()
@@ -98,6 +105,11 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
                 if elem == spawn.name:
                     named_location = spawn
                     resolved_queries.add(elem)
+        # Also search for hallway names
+        for hall in world.hallways:
+            if elem == hall.name:
+                named_location = hall
+                resolved_queries.add(elem)
         # Then, directly search for object names and get the location
         for obj in possible_objects:
             if elem == obj.name:
@@ -126,7 +138,13 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
             return None
 
     # Special case: A room is selected purely by name
-    if room and not named_location and not loc_category and not obj_category:
+    if (
+        mode == "location"
+        and room
+        and not named_location
+        and not loc_category
+        and not obj_category
+    ):
         return world.get_room_by_name(room)
 
     # If a named location is given, check that have an object category and filter by that.
@@ -153,6 +171,9 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
                 return obj_candidate
             elif mode == "location":
                 return obj_candidate.parent
+
+    if mode == "object" and loc_category is None and robot:
+        loc_category = robot.location.name
 
     # Resolve a location from any other query
     if obj_category or mode == "object":

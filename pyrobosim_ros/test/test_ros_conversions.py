@@ -6,7 +6,10 @@ from rclpy.duration import Duration
 import pyrobosim.planning.actions as acts
 from pyrobosim.utils.motion import Path
 from pyrobosim.utils.pose import Pose
+import pyrobosim_msgs.msg as ros_msgs
 from pyrobosim_ros.ros_conversions import (
+    execution_result_from_ros,
+    execution_result_to_ros,
     path_from_ros,
     path_to_ros,
     pose_from_ros,
@@ -83,6 +86,7 @@ def test_task_action_conversion():
         pose=Pose(x=1.0, y=2.0, z=3.0, q=[1.0, 0.0, 0.0, 0.0]),
         path=Path(),
         cost=42.0,
+        execution_options=None,
     )
 
     # Convert to a ROS message
@@ -103,6 +107,9 @@ def test_task_action_conversion():
     assert ros_action.pose.orientation.y == pytest.approx(orig_action.pose.q[2])
     assert ros_action.pose.orientation.z == pytest.approx(orig_action.pose.q[3])
     assert len(ros_action.path.poses) == orig_action.path.num_poses
+    assert ros_action.execution_options.delay == 0.0
+    assert ros_action.execution_options.success_probability == 1.0
+    assert ros_action.execution_options.rng_seed == -1
 
     # Convert back to a pyrobosim task action
     new_action = task_action_from_ros(ros_action)
@@ -119,6 +126,9 @@ def test_task_action_conversion():
     assert new_action.pose.z == pytest.approx(orig_action.pose.z)
     assert new_action.pose.q == pytest.approx(orig_action.pose.q)
     assert new_action.path.num_poses == orig_action.path.num_poses
+    assert new_action.execution_options.delay == 0.0
+    assert new_action.execution_options.success_probability == 1.0
+    assert new_action.execution_options.rng_seed is None
 
 
 def test_task_plan_conversion():
@@ -141,6 +151,11 @@ def test_task_plan_conversion():
             target_location="desk0",
             path=nav_path,
             cost=0.75,
+            execution_options=acts.ExecutionOptions(
+                delay=0.2,
+                success_probability=0.5,
+                rng_seed=1234,
+            ),
         ),
         acts.TaskAction(
             "place", object="apple", target_location="desk0", pose=place_pose, cost=0.5
@@ -156,7 +171,7 @@ def test_task_plan_conversion():
         assert orig_action.type == ros_action.type
     assert ros_plan.cost == pytest.approx(orig_plan.total_cost)
 
-    # Convert back to a pyrobosim task action
+    # Convert back to a pyrobosim task plan
     new_plan = task_plan_from_ros(ros_plan)
     assert new_plan.robot == orig_plan.robot
     assert len(new_plan.actions) == len(orig_plan.actions)
@@ -170,3 +185,27 @@ def test_ros_duration_to_float():
     ros_duration = Duration(seconds=1.0, nanoseconds=500000000)
     float_duration = ros_duration_to_float(ros_duration)
     assert float_duration == pytest.approx(1.5)
+
+
+def test_execution_result_conversion():
+    """Tests round-trip conversion of execution result objects."""
+    code_names = [e.name for e in acts.ExecutionStatus]
+
+    for code in code_names:
+        expected_message = f"Action completed with status {code}."
+
+        # Create a pyrobosim execution result
+        orig_result = acts.ExecutionResult(
+            status=getattr(acts.ExecutionStatus, code),
+            message=expected_message,
+        )
+
+        # Convert to a ROS Message
+        ros_result = execution_result_to_ros(orig_result)
+        assert ros_result.status == getattr(ros_msgs.ExecutionResult, code)
+        assert ros_result.message == expected_message
+
+        # Convert back to a pyrobosim object
+        new_result = execution_result_from_ros(ros_result)
+        assert new_result.status == orig_result.status
+        assert new_result.message == orig_result.message

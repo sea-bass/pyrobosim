@@ -208,7 +208,7 @@ class Pose:
         :rtype: bool
         """
         if not (isinstance(other, Pose)):
-            raise TypeError("Expected a Pose")
+            raise TypeError("Expected a Pose object.")
 
         return np.allclose(
             self.get_translation(), other.get_translation(), rel_tol, abs_tol
@@ -224,7 +224,7 @@ class Pose:
         :rtype: bool
         """
         if not (isinstance(other, Pose)):
-            raise TypeError("Expected a Pose object")
+            raise TypeError("Expected a Pose object.")
 
         return np.all(self.get_translation() == other.get_translation()) and np.all(
             self.q == other.q

@@ -180,6 +180,11 @@ def test_is_approx():
     # Can relax tolerances
     assert pose1.is_approx(pose2, rel_tol=1e-3, abs_tol=1e-3)
 
+    # Check datatype exception.
+    with pytest.raises(TypeError) as exc_info:
+        pose1.is_approx(42.0)
+    assert exc_info.value.args[0] == "Expected a Pose object."
+
 
 def test_equality():
     """Test pose equality operator."""
@@ -193,6 +198,11 @@ def test_equality():
     assert pose1 == pose1
     assert pose1 == pose2
     assert not pose1 == pose3
+
+    # Check datatype exception.
+    with pytest.raises(TypeError) as exc_info:
+        pose1 == 42.0
+    assert exc_info.value.args[0] == "Expected a Pose object."
 
 
 ###############################

@@ -1,5 +1,6 @@
 Location Schema
 ===============
+
 Locations in a world come from a library of categories defined in a YAML file.
 
 The generic location schema, where ``<angle brackets>`` are placeholders, is:
@@ -25,9 +26,13 @@ The generic location schema, where ``<angle brackets>`` are placeholders, is:
            type: <footprint_type>
            <property>: <footprint_property>
      color: [<r>, <g>, <b>]
+     is_open: True
+     is_locked: False
+
 
 Examples
 --------
+
 A simple object with a box footprint and one object spawn that inherits parent geometry.
 
 .. code-block:: yaml
@@ -84,8 +89,7 @@ A more complex object with a box footprint and two separate object spawns.
      color: [0, 0.2, 0]        # Dark green
 
 A location with a footprint read from a mesh file.
-Note that the literal ``$DATA`` resolves to the ``pyrobosim/data`` folder,
-but you can specify an absolute path as well or create your own tokens.
+Note that the literal ``$DATA`` resolves to the ``pyrobosim/data`` folder, but you can specify an absolute path as well or create your own tokens.
 
 .. code-block:: yaml
 

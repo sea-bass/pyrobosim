@@ -5,13 +5,11 @@ import signal
 import sys
 
 from PySide6 import QtWidgets
-from PySide6.QtCore import QTimer
 from PySide6.QtGui import QFont, QScreen
 from matplotlib.backends.qt_compat import QtCore
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
 
 from .world_canvas import WorldCanvas
-from ..utils.knowledge import query_to_entity
 
 
 def start_gui(world):
@@ -22,13 +20,7 @@ def start_gui(world):
     :type world: :class:`pyrobosim.core.world.World`
     """
     app = PyRoboSimGUI(world, sys.argv)
-
-    signal.signal(signal.SIGINT, lambda *args: app.quit())
-
-    timer = QTimer(parent=app)
-    timer.timeout.connect(lambda: None)
-    timer.start(1000)
-
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
     sys.exit(app.exec_())
 
 
@@ -154,10 +146,10 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.detect_button.clicked.connect(self.on_detect_click)
         self.action_layout.addWidget(self.detect_button, 1, 0)
         self.open_button = QtWidgets.QPushButton("Open")
-        self.open_button.setEnabled(False)  # TODO: Add functionality
+        self.open_button.clicked.connect(self.on_open_click)
         self.action_layout.addWidget(self.open_button, 1, 1)
         self.close_button = QtWidgets.QPushButton("Close")
-        self.close_button.setEnabled(False)  # TODO: Add functionality
+        self.close_button.clicked.connect(self.on_close_click)
         self.action_layout.addWidget(self.close_button, 1, 2)
 
         # World layout (Matplotlib affordances)
@@ -188,19 +180,22 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         """Update the state of buttons based on the state of the robot."""
         robot = self.get_current_robot()
         if robot:
-            at_object_spawn = robot.at_object_spawn()
+            at_open_object_spawn = robot.at_object_spawn() and robot.location.is_open
             can_pick = robot.manipulated_object is None
+            can_open_close = robot.at_openable_location() and can_pick
 
             self.nav_button.setEnabled(not robot.is_moving())
-            self.pick_button.setEnabled(can_pick and at_object_spawn)
-            self.place_button.setEnabled((not can_pick) and at_object_spawn)
-            self.detect_button.setEnabled(at_object_spawn)
+            self.pick_button.setEnabled(can_pick and at_open_object_spawn)
+            self.place_button.setEnabled((not can_pick) and at_open_object_spawn)
+            self.detect_button.setEnabled(at_open_object_spawn)
+            self.open_button.setEnabled(can_open_close and not robot.location.is_open)
+            self.close_button.setEnabled(can_open_close and robot.location.is_open)
 
             self.canvas.show_world_state(robot, navigating=False)
         else:
             self.nav_button.setEnabled(False)
 
-        self.canvas.draw_and_sleep()
+        self.canvas.draw_signal.emit()
 
     def set_buttons_during_action(self, state):
         """
@@ -239,7 +234,11 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
 
     def rand_goal_cb(self):
         """Callback to randomize robot goal."""
-        all_entities = self.world.get_location_names() + self.world.get_room_names()
+        all_entities = (
+            self.world.get_location_names()
+            + self.world.get_hallway_names()
+            + self.world.get_room_names()
+        )
         entity_name = np.random.choice(all_entities)
         self.goal_textbox.setText(entity_name)
 
@@ -250,7 +249,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
 
     def on_robot_changed(self):
         """Callback when the currently selected robot changes."""
-        self.canvas.show_objects()
+        self.canvas.show_objects_signal.emit()
         self.update_button_state()
 
     def on_navigate_click(self):
@@ -259,37 +258,18 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         if robot and robot.executing_action:
             return
 
-        query_list = [elem for elem in self.goal_textbox.text().split(" ") if elem]
-        loc = query_to_entity(
-            self.world,
-            query_list,
-            mode="location",
-            robot=robot,
-            resolution_strategy="nearest",
-        )
-        if not loc:
-            return
-
-        print(f"[{robot.name}] Navigating to {loc}")
-        self.canvas.navigate(robot, loc)
+        loc = self.goal_textbox.text()
+        if loc:
+            print(f"[{robot.name}] Navigating to {loc}")
+            self.canvas.navigate_signal.emit(robot, loc, None)
 
     def on_pick_click(self):
         """Callback to pick an object."""
         robot = self.get_current_robot()
         if robot:
-            loc = robot.location
-            query_list = [elem for elem in self.goal_textbox.text().split(" ") if elem]
-            if loc:
-                query_list.append(loc.name)
-            obj = query_to_entity(
-                self.world,
-                query_list,
-                mode="object",
-                robot=robot,
-                resolution_strategy="nearest",
-            )
+            obj = self.goal_textbox.text()
             if obj:
-                print(f"[{robot.name}] Picking {obj.name}")
+                print(f"[{robot.name}] Picking {obj}")
                 self.canvas.pick_object(robot, obj)
                 self.update_button_state()
 
@@ -308,4 +288,20 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             print(f"[{robot.name}] Detecting objects")
             obj_query = self.goal_textbox.text() or None
             self.canvas.detect_objects(robot, obj_query)
+            self.update_button_state()
+
+    def on_open_click(self):
+        """Callback to open a location."""
+        robot = self.get_current_robot()
+        if robot and robot.location:
+            print(f"[{robot.name}] Opening {robot.location}")
+            self.canvas.open_location(robot)
+            self.update_button_state()
+
+    def on_close_click(self):
+        """Callback to close a location."""
+        robot = self.get_current_robot()
+        if robot and robot.location:
+            print(f"[{robot.name}] Closing {robot.location}")
+            self.canvas.close_location(robot)
             self.update_button_state()

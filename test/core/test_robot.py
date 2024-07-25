@@ -7,10 +7,16 @@ import os
 import numpy as np
 import pytest
 import time
+import threading
 
 from pyrobosim.core import Pose, Robot, WorldYamlLoader
 from pyrobosim.navigation import ConstantVelocityExecutor, PathPlanner
-from pyrobosim.planning.actions import TaskAction, TaskPlan
+from pyrobosim.planning.actions import (
+    ExecutionStatus,
+    ExecutionOptions,
+    TaskAction,
+    TaskPlan,
+)
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.motion import Path
 
@@ -21,6 +27,26 @@ class TestRobot:
         self.test_world = WorldYamlLoader().from_yaml(
             os.path.join(get_data_folder(), "test_world.yaml")
         )
+
+    def create_test_plan(self):
+        actions = [
+            TaskAction(
+                "navigate",
+                source_location="kitchen",
+                target_location="my_desk",
+            ),
+            TaskAction("detect", object="apple"),
+            TaskAction("pick", object="apple"),
+            TaskAction("place", "object", "apple"),
+            TaskAction(
+                "navigate",
+                source_location="my_desk",
+                target_location="hall_kitchen_bedroom",
+            ),
+            TaskAction("close", target_location="hall_kitchen_bedroom"),
+            TaskAction("open", target_location="hall_kitchen_bedroom"),
+        ]
+        return TaskPlan(actions=actions)
 
     def test_create_robot_default_args(self):
         """Check that a robot can be created with all default arguments."""
@@ -90,11 +116,16 @@ class TestRobot:
         assert path.poses[0] == init_pose
         assert path.poses[-1] == goal_pose
 
+        # Provide no goal pose
+        with pytest.warns(UserWarning) as warn_info:
+            path = robot.plan_path()
+        assert path is None
+        assert warn_info[0].message.args[0] == "Did not specify a goal. Returning None."
+
     def test_robot_path_executor(self):
         """Check that path executors can be used from a robot."""
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
         goal_pose = Pose(x=2.5, y=3.0, yaw=np.pi / 2.0)
-        target_location = self.test_world.get_entity_by_name("bedroom")
 
         robot = Robot(
             pose=init_pose,
@@ -102,38 +133,79 @@ class TestRobot:
             path_executor=ConstantVelocityExecutor(linear_velocity=5.0, dt=0.1),
         )
         robot.world = self.test_world
-        robot.location = self.test_world.get_entity_by_name("kitchen")
+        robot.location = "kitchen"
 
         # Non-threaded option -- blocks
         robot.set_pose(init_pose)
         path = robot.plan_path(goal=goal_pose)
-        result = robot.follow_path(
-            path, target_location=target_location, use_thread=False
-        )
-        assert result
+        result = robot.follow_path(path, use_thread=False)
+        assert result.status == ExecutionStatus.SUCCESS
 
         # Threaded option with blocking
         robot.set_pose(init_pose)
         path = robot.plan_path(goal=goal_pose)
-        result = robot.follow_path(
-            path, target_location=target_location, use_thread=True, blocking=True
-        )
+        result = robot.follow_path(path, use_thread=True, blocking=True)
+        assert result.status == ExecutionStatus.SUCCESS
 
         # Threaded option without blocking -- must check result
         robot.set_pose(init_pose)
         path = robot.plan_path(goal=goal_pose)
-        robot.follow_path(
-            path, target_location=target_location, use_thread=True, blocking=False
-        )
+        robot.follow_path(path, use_thread=True, blocking=False)
         assert robot.executing_nav
         while robot.executing_nav:
             time.sleep(0.1)
         assert not robot.executing_nav
-        assert robot.last_nav_successful
+        assert robot.last_nav_result.is_success()
         pose = robot.get_pose()
         assert pose.x == pytest.approx(goal_pose.x)
         assert pose.y == pytest.approx(goal_pose.y)
         assert pose.q == pytest.approx(goal_pose.q)
+
+    def test_robot_nav_validation(self):
+        """Check that the robot can abort execution with runtime collision validation."""
+        init_pose = Pose(x=1.0, y=0.75, yaw=0.0)
+        goal_pose = Pose(x=2.5, y=3.0, yaw=np.pi / 2.0)
+
+        robot = Robot(
+            pose=init_pose,
+            path_planner=PathPlanner("world_graph", world=self.test_world),
+            path_executor=ConstantVelocityExecutor(
+                linear_velocity=3.0,
+                dt=0.1,
+                validate_during_execution=True,
+            ),
+        )
+        robot.world = self.test_world
+        robot.location = "kitchen"
+
+        # Plan a path.
+        robot.set_pose(init_pose)
+        path = robot.plan_path(goal=goal_pose)
+
+        # Schedule a thread that closes all hallways after a slight delay.
+        def close_all_hallways():
+            time.sleep(0.5)
+            for hallway in self.test_world.hallways:
+                self.test_world.close_hallway(hallway, ignore_robots=[robot])
+
+        threading.Thread(target=close_all_hallways).start()
+
+        # Follow the path and check that it fails.
+        with pytest.warns(UserWarning) as warn_info:
+            result = robot.follow_path(path, use_thread=False)
+        assert (
+            warn_info[0].message.args[0]
+            == "Remaining path is in collision. Aborting execution."
+        )
+        assert warn_info[1].message.args[0] == "Trajectory execution aborted."
+        assert result.status == ExecutionStatus.EXECUTION_FAILURE
+
+        # Now open the hallways and try again, which should succeed.
+        for hallway in self.test_world.hallways:
+            self.test_world.open_hallway(hallway)
+        path = robot.plan_path(goal=goal_pose)
+        result = robot.follow_path(path, use_thread=False)
+        assert result.status == ExecutionStatus.SUCCESS
 
     def test_robot_manipulation(self):
         """Check that the robot can manipulate objects."""
@@ -144,25 +216,79 @@ class TestRobot:
         robot.world = self.test_world
         robot.location = self.test_world.get_entity_by_name("table0_tabletop")
 
+        # Try pick with a object query that cannot not be found.
+        with pytest.warns(UserWarning):
+            result = robot.pick_object("nonexistent")
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "Found no object nonexistent to pick."
+
+        # Try pick with a object query that can be found, but is not in the robot's location.
+        with pytest.warns(UserWarning):
+            result = robot.pick_object("apple0")
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert (
+            result.message
+            == "apple0 is at my_desk_desktop and robot is at table0_tabletop. Cannot pick."
+        )
+
         # Pick up the apple on the kitchen table (named "gala")
         result = robot.pick_object("apple")
-        assert result
+        assert result.status == ExecutionStatus.SUCCESS
         assert robot.manipulated_object == self.test_world.get_entity_by_name("gala")
 
         # Try pick up another object, which should fail since the robot is holding something.
         with pytest.warns(UserWarning):
             result = robot.pick_object("banana")
-            assert not result
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "Robot is already holding gala."
 
-        # Try place the object
+        # Try place the object at a location that does not permit placing.
+        robot.location = "bedroom"
+        with pytest.warns(UserWarning):
+            result = robot.place_object()
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert (
+            result.message
+            == "Room: bedroom is not an object spawn. Cannot place object."
+        )
+
+        # Try place the object at a valid location.
+        robot.location = self.test_world.get_entity_by_name("table0_tabletop")
         result = robot.place_object()
-        assert result
+        assert result.status == ExecutionStatus.SUCCESS
         assert robot.manipulated_object is None
 
         # Try place an object, which should fail since the robot is holding nothing.
         with pytest.warns(UserWarning):
             result = robot.place_object()
-            assert not result
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "No manipulated object. Cannot place."
+
+        # Pick an object again, and try place it with an explicit pose.
+        robot.pick_object("apple")
+        with pytest.warns(UserWarning):
+            result = robot.place_object(pose=Pose(x=100.0, y=100.0))
+        assert result.status == ExecutionStatus.PLANNING_FAILURE
+        assert result.message == "Pose in collision or not in location table0_tabletop."
+
+        # Unlock the table to allow opening and closing for this test.
+        self.test_world.unlock_location(robot.location.parent)
+
+        # Closing the location should make placing fail.
+        self.test_world.close_location(robot.location.parent)
+        with pytest.warns(UserWarning):
+            result = robot.place_object()
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "table0 is not open. Cannot place object."
+
+        # With a closed location, picking should fail too.
+        self.test_world.open_location(robot.location.parent)
+        robot.place_object()
+        self.test_world.close_location(robot.location.parent)
+        with pytest.warns(UserWarning):
+            result = robot.pick_object("apple")
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "table0 is not open. Cannot pick object."
 
     def test_robot_object_detection(self):
         """Check that the robot can detect objects."""
@@ -173,23 +299,101 @@ class TestRobot:
         robot.world = self.test_world
 
         # Detecting objects this way will fail because the robot is not at an object spawn.
-        with pytest.warns(UserWarning) as warn_info:
-            assert not robot.detect_objects()
+        with pytest.warns(UserWarning):
+            result = robot.detect_objects()
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
         assert (
-            warn_info[0].message.args[0]
-            == "Robot is not at an object spawn. Cannot detect objects."
+            result.message == "Robot is not at an object spawn. Cannot detect objects."
         )
 
         # Moving the robot to a valid location should work.
         robot.location = self.test_world.get_entity_by_name("table0_tabletop")
-        assert robot.detect_objects()
+        result = robot.detect_objects()
+        assert result.status == ExecutionStatus.SUCCESS
         assert len(robot.last_detected_objects) == 2
 
         # Filtering by category should also affect results.
-        assert robot.detect_objects("apple")
-        assert len(robot.last_detected_objects) == 1
-        assert not robot.detect_objects("water")
+        robot.detect_objects("apple")
+        assert result.status == ExecutionStatus.SUCCESS
+        len(robot.last_detected_objects) == 1
+
+        result = robot.detect_objects("water")
+        assert result.status == ExecutionStatus.EXECUTION_FAILURE
+        assert (
+            result.message == "Failed to detect any objects matching the query 'water'."
+        )
         assert len(robot.last_detected_objects) == 0
+
+        # Unlock the table to allow opening and closing for this test.
+        self.test_world.unlock_location(robot.location.parent)
+
+        # Closing the location should make detection fail.
+        self.test_world.close_location(robot.location.parent)
+        with pytest.warns(UserWarning):
+            result = robot.detect_objects()
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "table0 is not open. Cannot detect objects."
+
+    def test_robot_open_close_hallway(self):
+        """Check that the robot can open or close hallways."""
+        robot = Robot(
+            pose=Pose(x=1.0, y=0.5, yaw=0.0),
+        )
+        robot.world = self.test_world
+
+        # Try to open and close with an unset location.
+        with pytest.warns(UserWarning):
+            result = robot.open_location()
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "Robot location is not set. Cannot open."
+
+        with pytest.warns(UserWarning):
+            result = robot.close_location()
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "Robot location is not set. Cannot close."
+
+        # Now set the location to a non-openable location, and get a different warning.
+        robot.location = self.test_world.get_room_by_name("kitchen")
+        with pytest.warns(UserWarning):
+            result = robot.open_location()
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "Robot is not at an openable location."
+
+        with pytest.warns(UserWarning) as warn_info:
+            result = robot.close_location()
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "Robot is not at a closeable location."
+
+        # Set the location to an openable location, which should work.
+        hallway = self.test_world.get_hallways_from_rooms("kitchen", "bedroom")[0]
+        robot.location = hallway
+        assert robot.close_location().is_success()
+        assert robot.open_location().is_success()
+
+        # Set a manipulated object, which will stop open/close from succeeding.
+        robot.manipulated_object = self.test_world.get_object_by_name("banana0")
+        with pytest.warns(UserWarning):
+            result = robot.open_location()
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "Robot is holding an object. Cannot open."
+
+        with pytest.warns(UserWarning):
+            result = robot.close_location()
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "Robot is holding an object. Cannot close."
+
+        # Add a new robot to the world inside the hallway.
+        # Now, closing should fail because of this obstructing robot.
+        robot.manipulated_object = None
+        new_robot = Robot(name="blocker")
+        self.test_world.add_robot(new_robot, pose=Pose(x=2.5, y=0.5, yaw=0.0))
+        with pytest.warns(UserWarning):
+            result = robot.close_location()
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert (
+            result.message
+            == "Robot blocker is in Hallway: hall_kitchen_bedroom. Cannot close."
+        )
 
     def test_execute_action(self):
         """Tests execution of a single action."""
@@ -209,18 +413,92 @@ class TestRobot:
 
         # Blocking action
         result = robot.execute_action(action, blocking=True)
-        assert result
+        assert result.is_success()
 
         # Non-blocking action
         robot.set_pose(init_pose)
         result = robot.execute_action(action, blocking=False)
-        assert result
+        assert result.is_success()
         assert robot.executing_action
         assert robot.current_action == action
         while robot.executing_action:
             time.sleep(0.1)
         assert not robot.executing_action
         assert robot.current_action is None
+
+    def test_execute_invalid_action(self):
+        """Tests execution of an action that is not recognized as a valid type."""
+        init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
+        robot = Robot(name="test_robot", pose=init_pose)
+        robot.world = self.test_world
+        action = TaskAction("bad_action")
+
+        with pytest.warns(UserWarning):
+            result = robot.execute_action(action)
+        assert result.status == ExecutionStatus.INVALID_ACTION
+        assert result.message == "[test_robot] Invalid action type: bad_action."
+
+    def test_execute_action_simulated_options(self):
+        """Test execution of an action that has simulated options."""
+        init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
+        robot = Robot(
+            pose=init_pose,
+            path_planner=PathPlanner("world_graph", world=self.test_world),
+            path_executor=ConstantVelocityExecutor(linear_velocity=5.0, dt=0.1),
+        )
+        robot.location = "kitchen"
+        robot.world = self.test_world
+        action = TaskAction(
+            "navigate",
+            source_location="kitchen",
+            target_location="my_desk",
+            execution_options=ExecutionOptions(
+                delay=0.1,
+                success_probability=0.5,
+                rng_seed=1234,
+            ),
+        )
+
+        # The action should fail the first time but succeed the second time.
+        result = robot.execute_action(action, blocking=True)
+        assert result.status == ExecutionStatus.EXECUTION_FAILURE
+        assert result.message == "[robot] Simulated action failure."
+        assert robot.execute_action(action, blocking=True).is_success()
+
+    def test_execute_action_cancel(self):
+        """Tests that actions can be canceled during execution."""
+        init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
+        robot = Robot(
+            pose=init_pose,
+            path_planner=PathPlanner("world_graph", world=self.test_world),
+            path_executor=ConstantVelocityExecutor(linear_velocity=3.0, dt=0.1),
+        )
+        robot.location = "kitchen"
+        robot.world = self.test_world
+        action = TaskAction(
+            "navigate",
+            source_location="kitchen",
+            target_location="my_desk",
+        )
+
+        # Start a thread that cancels the actions mid execution.
+        threading.Timer(1.0, robot.cancel_actions).start()
+
+        # Run action and check that it failed due to being canceled.
+        with pytest.warns(UserWarning):
+            result = robot.execute_action(action, blocking=True)
+        assert result.status == ExecutionStatus.CANCELED
+
+        # Retry the action, which should now succeed.
+        assert robot.execute_action(action, blocking=True).is_success()
+
+        # Try to cancel actions again, which should warn.
+        with pytest.warns(UserWarning) as warn_info:
+            robot.cancel_actions()
+        assert (
+            warn_info[0].message.args[0]
+            == "There is no running action or plan to cancel."
+        )
 
     def test_execute_plan(self):
         """Tests execution of a plan consisting of multiple actions."""
@@ -233,22 +511,49 @@ class TestRobot:
         robot.location = "kitchen"
         robot.world = self.test_world
 
-        actions = [
-            TaskAction(
-                "navigate",
-                source_location="kitchen",
-                target_location="my_desk",
-            ),
-            TaskAction("detect", object="apple"),
-            TaskAction("pick", object="apple"),
-            TaskAction("place", "object", "apple"),
-        ]
-        plan = TaskPlan(actions=actions)
+        result, num_completed = robot.execute_plan(self.create_test_plan())
 
+        assert result.is_success()
+        assert num_completed == 7
+
+    def test_execute_blank_plan(self):
+        """Tests a trivial case of executing a plan that is None."""
+        init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
+        robot = Robot(name="test_robot", pose=init_pose)
+        robot.world = self.test_world
+
+        with pytest.warns(UserWarning):
+            result, num_completed = robot.execute_plan(None)
+        assert result.status == ExecutionStatus.INVALID_ACTION
+        assert num_completed == 0
+        assert result.message == "[test_robot] Plan is None. Returning."
+
+    def test_execute_plan_cancel(self):
+        """Tests that task plans can be canceled during execution."""
+        init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
+        robot = Robot(
+            pose=init_pose,
+            path_planner=PathPlanner("world_graph", world=self.test_world),
+            path_executor=ConstantVelocityExecutor(linear_velocity=5.0, dt=0.1),
+        )
+        robot.location = "kitchen"
+        robot.world = self.test_world
+
+        # Start a thread that cancels the plan mid execution.
+        threading.Timer(3.0, robot.cancel_actions).start()
+
+        # Run plan and check that it failed due to being canceled.
+        plan = self.create_test_plan()
         result, num_completed = robot.execute_plan(plan)
+        assert result.status == ExecutionStatus.CANCELED
+        assert result.message == "[robot] Canceled plan execution."
+        assert num_completed < plan.size()
 
-        assert result
-        assert num_completed == 4
+        # Resume the plan from where it left off, which should now succeed.
+        remaining_plan = TaskPlan(actions=plan.actions[num_completed:])
+        result, remaining_num_completed = robot.execute_plan(remaining_plan)
+        assert result.is_success()
+        assert num_completed + remaining_num_completed == plan.size()
 
     def test_at_object_spawn(self):
         """Tests check for robot being at an object spawn."""

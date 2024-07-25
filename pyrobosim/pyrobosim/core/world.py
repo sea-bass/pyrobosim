@@ -9,6 +9,7 @@ from .locations import Location, ObjectSpawn
 from .objects import Object
 from .room import Room
 from .robot import Robot
+from ..planning.actions import ExecutionResult, ExecutionStatus
 from ..utils.general import InvalidEntityCategoryException
 from ..utils.pose import Pose
 from ..utils.knowledge import (
@@ -263,7 +264,7 @@ class World:
         """
         Removes a hallway between two rooms.
 
-        :param hallway: Hallway object remove.
+        :param hallway: Hallway object to remove.
         :type hallway: :class:`pyrobosim.core.hallway.Hallway`
         :return: True if the hallway was successfully removed, else False.
         :rtype: bool
@@ -282,6 +283,144 @@ class World:
             room.update_visualization_polygon()
             self.update_bounds(entity=hallway, remove=True)
         return True
+
+    def open_hallway(self, hallway):
+        """
+        Opens a hallway between two rooms.
+
+        :param hallway: Hallway object to open.
+        :type hallway: :class:`pyrobosim.core.hallway.Hallway`
+        :return: An object describing the execution result.
+        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
+        """
+        # Validate the input
+        if not hallway in self.hallways:
+            message = "Invalid hallway specified."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        if hallway.is_open:
+            message = f"{hallway} is already open."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        if hallway.is_locked:
+            message = f"{hallway} is locked."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        hallway.is_open = True
+        if self.has_gui:
+            self.gui.canvas.show_hallways_signal.emit()
+            self.gui.canvas.draw_signal.emit()
+        return ExecutionResult(status=ExecutionStatus.SUCCESS)
+
+    def close_hallway(self, hallway, ignore_robots=[]):
+        """
+        Close a hallway between two rooms.
+
+        :param hallway: Hallway object to close.
+        :type hallway: :class:`pyrobosim.core.hallway.Hallway`
+        :param ignore_robots: List of robots to ignore, for example the robot closing the hallway.
+        :type ignore_robots: list[:class:`pyrobosim.core.robot.Robot`]
+        :return: An object describing the execution result.
+        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
+        """
+        # Validate the input
+        if not hallway in self.hallways:
+            message = "Invalid hallway specified."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        if not hallway.is_open:
+            message = f"{hallway} is already closed."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        if hallway.is_locked:
+            message = f"{hallway} is locked."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        for robot in [r for r in self.robots if r not in ignore_robots]:
+            if hallway.is_collision_free(robot.get_pose()):
+                message = f"Robot {robot.name} is in {hallway}. Cannot close."
+                warnings.warn(message)
+                return ExecutionResult(
+                    status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+                )
+
+        hallway.is_open = False
+        if self.has_gui:
+            self.gui.canvas.show_hallways_signal.emit()
+            self.gui.canvas.draw_signal.emit()
+        return ExecutionResult(status=ExecutionStatus.SUCCESS)
+
+    def lock_hallway(self, hallway):
+        """
+        Locks a hallway between two rooms.
+
+        :param hallway: Hallway object to lock.
+        :type hallway: :class:`pyrobosim.core.hallway.Hallway`
+        :return: An object describing the execution result.
+        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
+        """
+        # Validate the input
+        if not hallway in self.hallways:
+            message = "Invalid hallway specified."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        if hallway.is_locked:
+            message = f"{hallway} is already locked."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        hallway.is_locked = True
+        return ExecutionResult(status=ExecutionStatus.SUCCESS)
+
+    def unlock_hallway(self, hallway):
+        """
+        Unlocks a hallway between two rooms.
+
+        :param hallway: Hallway object to unlock.
+        :type hallway: :class:`pyrobosim.core.hallway.Hallway`
+        :return: An object describing the execution result.
+        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
+        """
+        # Validate the input
+        if not hallway in self.hallways:
+            message = "Invalid hallway specified."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        if not hallway.is_locked:
+            message = f"{hallway} is already unlocked."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        hallway.is_locked = False
+        return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
     def add_location(self, **location_config):
         r"""
@@ -354,6 +493,10 @@ class World:
             self.name_to_entity[spawn.name] = spawn
 
         loc.add_graph_nodes()
+        if self.has_gui:
+            self.gui.canvas.show_locations_signal.emit()
+            self.gui.canvas.show_objects_signal.emit()
+            self.gui.canvas.draw_signal.emit()
         return loc
 
     def update_location(self, loc, pose, room=None):
@@ -406,6 +549,10 @@ class World:
         loc.create_polygons(self.inflation_radius)
         for spawn in loc.children:
             spawn.set_pose_from_parent()
+        if self.has_gui:
+            self.gui.canvas.show_locations_signal.emit()
+            self.gui.canvas.show_objects_signal.emit()
+            self.gui.canvas.draw_signal.emit()
         return True
 
     def remove_location(self, loc):
@@ -421,23 +568,160 @@ class World:
         if isinstance(loc, str):
             loc = self.get_location_by_name(loc)
 
-        if loc in self.locations:
-            # remove objects at the location before removing the location
-            for spawn in loc.children:
-                while len(spawn.children) > 0:
-                    self.remove_object(spawn.children[-1])
-            # Remove location
-            self.locations.remove(loc)
-            self.num_locations -= 1
-            self.location_instance_counts[loc.category] -= 1
-            room = loc.parent
-            room.locations.remove(loc)
-            room.update_collision_polygons(self.inflation_radius)
-            self.name_to_entity.pop(loc.name)
-            for spawn in loc.children:
-                self.name_to_entity.pop(spawn.name)
-            return True
-        return False
+        if loc not in self.locations:
+            warnings.warn(f"{loc} not found in world. Cannot remove.")
+            return False
+
+        # Remove objects at the location before removing the location.
+        for spawn in loc.children:
+            while len(spawn.children) > 0:
+                self.remove_object(spawn.children[-1])
+
+        # Remove the location.
+        self.locations.remove(loc)
+        self.num_locations -= 1
+        self.location_instance_counts[loc.category] -= 1
+        room = loc.parent
+        room.locations.remove(loc)
+        room.update_collision_polygons(self.inflation_radius)
+        self.name_to_entity.pop(loc.name)
+        for spawn in loc.children:
+            self.name_to_entity.pop(spawn.name)
+        if self.has_gui:
+            self.gui.canvas.show_locations_signal.emit()
+            self.gui.canvas.show_objects_signal.emit()
+            self.gui.canvas.draw_signal.emit()
+        return True
+
+    def open_location(self, location):
+        """
+        Opens a storage location.
+
+        :param location: Location object to open.
+        :type location: :class:`pyrobosim.core.locations.Location`
+        :return: An object describing the execution result.
+        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
+        """
+        # Validate the input
+        if not location in self.locations:
+            message = "Invalid location specified."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        if location.is_open:
+            message = f"{location} is already open."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        if location.is_locked:
+            message = f"{location} is locked."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        location.is_open = True
+        location.update_visualization_polygon()
+        if self.has_gui:
+            self.gui.canvas.show_locations_signal.emit()
+            self.gui.canvas.draw_signal.emit()
+        return ExecutionResult(status=ExecutionStatus.SUCCESS)
+
+    def close_location(self, location):
+        """
+        Close a storage location.
+
+        :param location: Location object to close.
+        :type location: :class:`pyrobosim.core.locations.Location`
+        :return: An object describing the execution result.
+        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
+        """
+        # Validate the input
+        if not location in self.locations:
+            message = "Invalid location specified."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        if not location.is_open:
+            message = f"{location} is already closed."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        if location.is_locked:
+            message = f"{location} is locked."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        location.is_open = False
+        location.update_visualization_polygon()
+        if self.has_gui:
+            self.gui.canvas.show_locations_signal.emit()
+            self.gui.canvas.draw_signal.emit()
+        return ExecutionResult(status=ExecutionStatus.SUCCESS)
+
+    def lock_location(self, location):
+        """
+        Locks a storage location.
+
+        :param location: Location object to lock.
+        :type location: :class:`pyrobosim.core.locations.Location`
+        :return: An object describing the execution result.
+        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
+        """
+        # Validate the input
+        if not location in self.locations:
+            message = "Invalid location specified."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        if location.is_locked:
+            message = f"{location} is already locked."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        location.is_locked = True
+        return ExecutionResult(status=ExecutionStatus.SUCCESS)
+
+    def unlock_location(self, location):
+        """
+        Unlocks a storage location.
+
+        :param location: Location object to unlock.
+        :type location: :class:`pyrobosim.core.locations.Location`
+        :return: An object describing the execution result.
+        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
+        """
+        # Validate the input
+        if not location in self.locations:
+            message = "Invalid location specified."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        if not location.is_locked:
+            message = f"{location} is already unlocked."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        location.is_locked = False
+        return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
     def add_object(self, **object_config):
         r"""
@@ -546,7 +830,7 @@ class World:
         self.name_to_entity[obj.name] = obj
         self.num_objects += 1
         if self.has_gui:
-            self.gui.canvas.show_objects()
+            self.gui.canvas.show_objects_signal.emit()
         return obj
 
     def update_object(self, obj, loc=None, pose=None):
@@ -617,7 +901,7 @@ class World:
         self.num_objects -= 1
         obj.parent.children.remove(obj)
         if self.has_gui:
-            self.gui.canvas.show_objects()
+            self.gui.canvas.show_objects_signal.emit()
         return True
 
     def remove_all_objects(self, restart_numbering=True):
@@ -726,7 +1010,7 @@ class World:
             self.set_inflation_radius(old_inflation_radius)
 
         if self.has_gui:
-            self.gui.canvas.show_robots()
+            self.gui.canvas.show_robots_signal.emit()
         if self.has_ros_node:
             self.ros_node.add_robot_ros_interfaces()
 
@@ -742,7 +1026,7 @@ class World:
             self.robots.remove(robot)
             self.name_to_entity.pop(robot_name)
             if self.has_gui:
-                self.gui.canvas.show_robots()
+                self.gui.canvas.show_robots_signal.emit()
             if self.has_ros_node:
                 self.ros_node.remove_robot_ros_interfaces(robot)
 
@@ -834,6 +1118,35 @@ class World:
 
         return entity
 
+    def get_hallway_names(self):
+        """
+        Gets all hallway names.
+
+        :return: List of all hallway names.
+        :rtype: list[str]
+        """
+        return [hall.name for hall in self.hallways]
+
+    def get_hallway_by_name(self, name):
+        """
+        Gets a hallway object by its name.
+
+        :param name: Name of hallway.
+        :type name: str
+        :return: Hallway instance matching the input name, or ``None`` if not valid.
+        :rtype: :class:`pyrobosim.core.hallway.Hallway`
+        """
+        if name not in self.name_to_entity:
+            warnings.warn(f"Hallway not found: {name}")
+            return None
+
+        entity = self.name_to_entity[name]
+        if not isinstance(entity, Hallway):
+            warnings.warn(f"Entity {name} found but it is not a Hallway.")
+            return None
+
+        return entity
+
     def get_hallways_from_rooms(self, room1, room2):
         """
         Returns a list of hallways between two rooms.
@@ -862,7 +1175,7 @@ class World:
         for hall in room1.hallways:
             is_valid_hallway = (
                 (hall.room_start == room1) and (hall.room_end == room2)
-            ) or ((hall.room_end == room2) and (hall.room_end == room1))
+            ) or ((hall.room_start == room2) and (hall.room_end == room1))
             if is_valid_hallway:
                 hallways.append(hall)
         return hallways
@@ -925,15 +1238,25 @@ class World:
             This could be a room, hallway, or object spawn.
         :rtype: :class:`pyrobosim.core.room.Room`/:class:`pyrobosim.core.hallway.Hallway`/:class:`pyrobosim.core.locations.ObjectSpawn`
         """
-        # First, check rooms and hallways.
-        for entity in itertools.chain(self.rooms, self.hallways):
-            if entity.is_collision_free(pose):
-                return entity
-        # Then, check object spawns.
-        for loc in self.locations:
-            for spawn in loc.children:
-                if spawn.is_inside(pose):
-                    return spawn
+        # Check hallways and their nav poses.
+        for hallway in self.hallways:
+            for nav_pose in hallway.nav_poses:
+                if pose.is_approx(nav_pose):
+                    return hallway
+            if hallway.is_collision_free(pose):
+                return hallway
+        # Check rooms and the locations / object spawns inside them.
+        for room in self.rooms:
+            if room.is_collision_free(pose):
+                for location in room.locations:
+                    for spawn in location.children:
+                        for nav_pose in spawn.nav_poses:
+                            if pose.is_approx(nav_pose):
+                                return spawn
+                    for nav_pose in location.nav_poses:
+                        if pose.is_approx(nav_pose):
+                            return location
+                return room
         return None
 
     def get_object_spawns(self, category_list=None):
@@ -1218,12 +1541,10 @@ class World:
         else:
             entity = entity_query
 
-        if (
-            isinstance(entity, ObjectSpawn)
-            or isinstance(entity, Room)
-            or isinstance(entity, Hallway)
-        ):
+        if isinstance(entity, ObjectSpawn) or isinstance(entity, Room):
             graph_nodes = entity.graph_nodes
+        elif isinstance(entity, Hallway):
+            graph_nodes = [entity.graph_nodes[0], entity.graph_nodes[-1]]
         elif isinstance(entity, Object):
             graph_nodes = entity.parent.graph_nodes
         elif isinstance(entity, Location):

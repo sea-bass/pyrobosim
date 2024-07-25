@@ -9,6 +9,9 @@ on:
   schedule:
     - cron: '0 0 * * *'
 
+  # Allow tests to be run manually
+  workflow_dispatch:
+
 # Ensures that only one workflow runs at a time for this branch
 concurrency:
   group: ${{ github.ref }}
@@ -50,7 +53,7 @@ jobs:
             -w /opt/pyrobosim \
             --volume ./test/results:/opt/pyrobosim/test/results:rw \
             ${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:base \
-            /bin/bash -c 'PYTHONPATH=./dependencies/pddlstream:$PYTHONPATH ./test/run_tests.bash'
+            /bin/bash -c 'PYTHONPATH=./dependencies/pddlstream:${PYTHONPATH} ./test/run_tests.bash'
       - name: Pytest coverage comment
         id: coverageComment
         uses: MishaKav/pytest-coverage-comment@main
@@ -122,7 +125,7 @@ jobs:
             --volume ./test/:/pyrobosim_ws/test/:rw \
             --volume ./pytest.ini:/pyrobosim_ws/pytest.ini:rw \
             ${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:${{ matrix.ros_distro }} \
-            /bin/bash -c './test/run_tests.bash'
+            /bin/bash -c './test/run_tests.bash ${{ matrix.ros_distro }}'
       - name: Upload test results
         uses: actions/upload-artifact@v4
         with:
