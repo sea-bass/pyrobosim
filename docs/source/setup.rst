@@ -20,8 +20,21 @@ However, note that this will not include any of the ROS 2 or Task and Motion Pla
 Local Setup
 -----------
 
+If running standalone, clone this repo wherever you would like.
+
+::
+
+    git clone https://github.com/sea-bass/pyrobosim_ros.git
+
 If using ROS 2, clone this repo in a valid `ROS 2 workspace <https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Creating-A-Workspace/Creating-A-Workspace.html>`_.
-Otherwise, if running standalone, clone it wherever you would like.
+Also ensure to **include submodules**.
+
+::
+
+    mkdir -p ~/my_workspace/src
+    cd ~/my_workspace/src
+    git clone --recurse-submodules https://github.com/sea-bass/pyrobosim_ros.git
+
 
 To set up your Python virtual environment, configure and run
 
