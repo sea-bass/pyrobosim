@@ -1,6 +1,0 @@
-# ROS service to request the world state
-
-# No request
----
-# Response contains a world state
-WorldState state
