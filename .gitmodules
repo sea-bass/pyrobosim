@@ -1,0 +1,3 @@
+[submodule "pyrobosim_ros"]
+	path = pyrobosim_ros
+	url = https://github.com/sea-bass/pyrobosim_ros.git
