@@ -307,7 +307,7 @@ class WorldROSWrapper(Node):
         # Execute the action
         robot_action = task_action_from_ros(goal_handle.request.action)
         self.get_logger().info(f"Executing action with robot {robot.name}...")
-        execution_result = robot.execute_action(robot_action)
+        execution_result = robot.execute_action(robot_action, blocking=True)
         self.get_logger().info(
             f"Action finished with status: {execution_result.status.name}"
         )
