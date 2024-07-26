@@ -5,6 +5,7 @@ set(AMENT_CMAKE_PYTEST_WITH_COVERAGE ON)
 
 set(_pytest_tests
     test_ros_conversions.py
+    test_ros_interface.py
 )
 foreach(_test_path ${_pytest_tests})
 get_filename_component(_test_name ${_test_path} NAME_WE)
