@@ -143,15 +143,18 @@ class WorldROSWrapper(Node):
         self.world.ros_node = self
         self.world.has_ros_node = True
 
-    def start(self, wait_for_gui=False):
+    def start(self, wait_for_gui=False, auto_spin=True):
         """
         Starts the node.
 
         :param wait_for_gui: If true, waits for the GUI to come up before spinning.
-        :type wait_for_gui: bool, optional
+        :type wait_for_gui: bool
+        :param auto_spin: If true, spins an executor.
+        :type auto_spin: bool
         """
-        executor = MultiThreadedExecutor(num_threads=self.num_threads)
-        executor.add_node(self)
+        if auto_spin:
+            executor = MultiThreadedExecutor(num_threads=self.num_threads)
+            executor.add_node(self)
 
         if not self.world:
             self.get_logger().error("Must set a world before starting node.")
@@ -169,12 +172,14 @@ class WorldROSWrapper(Node):
             self.get_logger().info("Waiting for GUI...")
             time.sleep(1.0)
 
-        try:
-            executor.spin()
-        finally:
-            executor.shutdown()
-            self.destroy_node()
-            rclpy.shutdown()
+        if auto_spin:
+            try:
+                executor.spin()
+            finally:
+                executor.remove_node(self)
+                self.destroy_node()
+                executor.shutdown()
+                rclpy.shutdown()
 
     def add_robot_ros_interfaces(self, robot):
         """
@@ -202,7 +207,7 @@ class WorldROSWrapper(Node):
             10,
             callback_group=ReentrantCallbackGroup(),
         )
-        pub_fn = partial(self.package_robot_state, robot=robot)
+        pub_fn = partial(self.publish_robot_state, pub=pub, robot=robot)
         pub_timer = self.create_timer(self.state_pub_rate, pub_fn)
         self.robot_state_pubs.append(pub)
         self.robot_state_pub_threads.append(pub_timer)
@@ -360,7 +365,7 @@ class WorldROSWrapper(Node):
 
         # Execute the plan
         self.get_logger().info(f"Executing task plan with robot {robot.name}...")
-        robot_plan = task_plan_from_ros(plan_msg.plan)
+        robot_plan = task_plan_from_ros(plan_msg)
         execution_result, num_completed = robot.execute_plan(robot_plan)
         self.get_logger().info(
             f"Plan finished with status: {execution_result.status.name} (completed {num_completed}/{robot_plan.size()} actions)"
@@ -419,6 +424,17 @@ class WorldROSWrapper(Node):
         else:
             state_msg.last_visited_location = robot.location.name
         return state_msg
+
+    def publish_robot_state(self, pub, robot):
+        """
+        Helper function to publish robot state.
+        
+        :param pub: The publisher on which to publish the robot state information.
+        :type pub: :class:`rclpy.publisher.Publisher`
+        :param robot: Robot instance from which to extract state.
+        :type robot: :class:`pyrobosim.core.robot.Robot`
+        """
+        pub.publish(self.package_robot_state(robot))
 
     def world_state_callback(self, request, response):
         """

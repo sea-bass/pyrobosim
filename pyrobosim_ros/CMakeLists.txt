@@ -11,10 +11,7 @@ find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 
-# Install pyrobosim Python package
-ament_python_install_package(
-  pyrobosim
-  PACKAGE_DIR ../pyrobosim/pyrobosim)
+# Install examples
 install(PROGRAMS
   examples/demo.py
   examples/demo_commands.py
@@ -22,10 +19,6 @@ install(PROGRAMS
   examples/demo_pddl_planner.py
   examples/demo_pddl_goal_publisher.py
   examples/demo_velocity_publisher.py
-  ../pyrobosim/examples/demo_prm.py
-  ../pyrobosim/examples/demo_rrt.py
-  ../pyrobosim/examples/demo_pddl.py
-  ../pyrobosim/examples/demo_world_save.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -33,12 +26,6 @@ install(PROGRAMS
 ament_python_install_package(
   pyrobosim_ros
   PACKAGE_DIR pyrobosim_ros)
-
-# Install data files
-install(DIRECTORY
-  ../pyrobosim/pyrobosim/data
-  DESTINATION share/${PROJECT_NAME}
-)
 
 # Install launch files
 install(DIRECTORY

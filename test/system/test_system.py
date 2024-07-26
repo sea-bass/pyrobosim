@@ -11,7 +11,6 @@ import time
 
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.gui import PyRoboSimGUI
-from pyrobosim.planning.actions import ExecutionStatus
 from pyrobosim.utils.knowledge import query_to_entity
 
 
