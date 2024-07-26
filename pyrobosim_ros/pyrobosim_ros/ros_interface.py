@@ -428,7 +428,7 @@ class WorldROSWrapper(Node):
     def publish_robot_state(self, pub, robot):
         """
         Helper function to publish robot state.
-        
+
         :param pub: The publisher on which to publish the robot state information.
         :type pub: :class:`rclpy.publisher.Publisher`
         :param robot: Robot instance from which to extract state.
