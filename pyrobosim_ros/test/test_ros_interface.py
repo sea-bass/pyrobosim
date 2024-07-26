@@ -1,4 +1,4 @@
-# Tests for pyrobosim ROS conversions functionality
+# Integration tests for the PyRoboSim ROS interface.
 
 import os
 import pytest

@@ -147,9 +147,10 @@ class WorldROSWrapper(Node):
         """
         Starts the node.
 
-        :param wait_for_gui: If true, waits for the GUI to come up before spinning.
+        :param wait_for_gui: If True, waits for the GUI to come up before starting.
         :type wait_for_gui: bool
-        :param auto_spin: If true, spins an executor.
+        :param auto_spin: If True, creates an executor and spins it indefinitely.
+            If you want to handle your own node execution, set this to False.
         :type auto_spin: bool
         """
         if auto_spin:
