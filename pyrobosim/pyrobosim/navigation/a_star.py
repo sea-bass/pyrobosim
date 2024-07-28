@@ -7,17 +7,20 @@ from astar import AStar
 from pyrobosim.utils.pose import Pose
 from pyrobosim.utils.motion import Path, reduce_waypoints_grid
 from pyrobosim.navigation.planner_base import PathPlannerBase
+from pyrobosim.navigation.occupancy_grid import OccupancyGrid
 
 
 class AStarGrid(AStar):
     """Occupancy grid based implementation of A*."""
 
     def __init__(
-        self, grid, heuristic="euclidean", diagonal_motion=True, compress_path=False
+        self, robot, grid_params=None, heuristic="euclidean", diagonal_motion=True, compress_path=False
     ):
         """
         Creates an instance of grid based A* planner.
 
+        :param robot: The robot to which owns the planner.
+        :type robot: :class:`pyrobosim.core.robot.Robot`
         :param heuristic: The metric to be used as heuristic ('manhattan', 'euclidean', 'none').
         :type heuristic: string
         :param diagonal_motion: If true, expand nodes using diagonal motion.
@@ -27,7 +30,11 @@ class AStarGrid(AStar):
         """
         super().__init__()
 
-        self.grid = grid
+        if grid_params:
+            self.grid = OccupancyGrid.from_world(robot.world, **grid_params)
+        else:
+            self.grid = OccupancyGrid.from_world(robot.world, resolution=0.05, inflation_radius= 1.5 * robot.radius)
+
         self.heuristic = heuristic
         self.diagonal_motion = diagonal_motion
         self.compress_path = compress_path
@@ -158,13 +165,18 @@ class AstarPlanner(PathPlannerBase):
         super().__init__()
         self.impl = None  # Holds the implementation.
 
-        # Depending on if grid is provided, select the implementation.
-        if planner_config.get("grid", None):
-            self.impl = AStarGrid(**planner_config)
-        else:
-            raise NotImplementedError(
-                "A-star does not have a standalone graph based implementation."
-            )
+        if not hasattr(planner_config["robot"], "world") or planner_config["robot"].world is None:
+            raise AttributeError("Planner expects the robot to have a `world` attribute")
+            
+        self.impl = AStarGrid(**planner_config)
+
+        # # Depending on if grid is provided, select the implementation.
+        # if planner_config.get("use_grid", None) and planner_config.get("use_grid") is True:
+        #     self.impl = AStarGrid(**planner_config)
+        # else:
+        #     raise NotImplementedError(
+        #         "A-star does not have a standalone graph based implementation."
+        #     )
 
     def plan(self, start, goal):
         """
