@@ -112,6 +112,7 @@ class TestRosInterface:
             RequestWorldState, "request_world_state"
         )
 
+        # Full world state.
         future = client.call_async(RequestWorldState.Request())
         start_time = time.time()
         while not future.done():
@@ -124,6 +125,28 @@ class TestRosInterface:
         assert len(result.state.robots) == 3
         assert len(result.state.locations) == 4
         assert len(result.state.objects) == 8
+
+        # Partial robot state.
+        # Since the world is not configured for partial observability, we make manual modifications to robot1.
+        world = TestRosInterface.ros_interface.world
+        robot1 = world.get_robot_by_name("robot1")
+        robot1.partial_observability = True
+        robot1.known_objects = set(
+            [world.get_object_by_name("apple0"), world.get_object_by_name("banana0")]
+        )
+
+        future = client.call_async(RequestWorldState.Request(robot="robot1"))
+        start_time = time.time()
+        while not future.done():
+            TestRosInterface.executor.spin_once(timeout_sec=0.1)
+            if time.time() - start_time > 2.0:
+                break
+
+        assert future.done()
+        result = future.result()
+        assert len(result.state.robots) == 3
+        assert len(result.state.locations) == 4
+        assert len(result.state.objects) == 2
 
         TestRosInterface.node.destroy_client(client)
 
