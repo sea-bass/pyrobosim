@@ -263,7 +263,7 @@ class Robot:
                     warnings.warn(
                         f"Could not resolve goal location query: {query_list}"
                     )
-                    return False
+                    return None
 
             goal_node = self.world.graph_node_from_entity(goal, robot=self)
             if goal_node is None:
@@ -394,10 +394,11 @@ class Robot:
                 self.executing_nav = False
                 message = "Failed to plan a path."
                 warnings.warn(message)
-                return ExecutionResult(
+                self.last_nav_result = ExecutionResult(
                     status=ExecutionStatus.PLANNING_FAILURE,
                     message=message,
                 )
+                return self.last_nav_result
         elif self.world and self.world.has_gui:
             show_graph = False
             self.world.gui.canvas.show_planner_and_path_signal.emit(

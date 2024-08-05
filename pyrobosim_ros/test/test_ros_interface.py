@@ -18,6 +18,28 @@ from pyrobosim_msgs.srv import RequestWorldState, SetLocationState
 from pyrobosim_ros.ros_interface import WorldROSWrapper
 
 
+def execute_ros_action(
+    goal_future, spin_timeout=0.1, goal_timeout=1.0, result_timeout=30.0
+):
+    """Helper function to execute a ROS action and wait for a result."""
+    start_time = time.time()
+    while not goal_future.done():
+        TestRosInterface.executor.spin_once(timeout_sec=spin_timeout)
+        if time.time() - start_time > goal_timeout:
+            print("Timed out waiting for goal to be accepted.")
+            break
+    assert goal_future.done()
+
+    result_future = goal_future.result().get_result_async()
+    while not result_future.done():
+        TestRosInterface.executor.spin_once(timeout_sec=spin_timeout)
+        if time.time() - start_time > result_timeout:
+            print("Timed out waiting for result to be received.")
+            break
+
+    return result_future
+
+
 class TestRosInterface:
     @staticmethod
     @pytest.mark.dependency(name="test_start_ros_interface")
@@ -187,6 +209,37 @@ class TestRosInterface:
             TestRosInterface.node, ExecuteTaskAction, "execute_action"
         )
 
+        # This is an invalid action.
+        goal = ExecuteTaskAction.Goal()
+        goal.action = TaskAction(robot="robot0", type="nonexistent_action")
+        goal_future = action_client.send_goal_async(goal)
+        with pytest.warns(UserWarning):
+            result_future = execute_ros_action(goal_future)
+
+        assert result_future.done()
+        exec_result = result_future.result().result.execution_result
+        assert exec_result.status == ExecutionResult.INVALID_ACTION
+        assert (
+            exec_result.message == "[robot0] Invalid action type: nonexistent_action."
+        )
+
+        # This action has bad parameters.
+        goal = ExecuteTaskAction.Goal()
+        goal.action = TaskAction(
+            robot="robot0",
+            type="navigate",
+            target_location="counter42",
+        )
+        goal_future = action_client.send_goal_async(goal)
+        with pytest.warns(UserWarning):
+            result_future = execute_ros_action(goal_future)
+
+        assert result_future.done()
+        exec_result = result_future.result().result.execution_result
+        assert exec_result.status == ExecutionResult.PLANNING_FAILURE
+        assert exec_result.message == "Failed to plan a path."
+
+        # This action should succeed.
         goal = ExecuteTaskAction.Goal()
         goal.action = TaskAction(
             robot="robot0",
@@ -194,19 +247,7 @@ class TestRosInterface:
             target_location="my_desk",
         )
         goal_future = action_client.send_goal_async(goal)
-
-        start_time = time.time()
-        while not goal_future.done():
-            TestRosInterface.executor.spin_once(timeout_sec=0.1)
-            if time.time() - start_time > 1.0:
-                break
-        assert goal_future.done()
-
-        result_future = goal_future.result().get_result_async()
-        while not result_future.done():
-            TestRosInterface.executor.spin_once(timeout_sec=0.1)
-            if time.time() - start_time > 30.0:
-                break
+        result_future = execute_ros_action(goal_future)
 
         assert result_future.done()
         assert (
@@ -236,19 +277,7 @@ class TestRosInterface:
         ]
         goal = ExecuteTaskPlan.Goal(plan=TaskPlan(robot="robot0", actions=task_actions))
         goal_future = action_client.send_goal_async(goal)
-
-        start_time = time.time()
-        while not goal_future.done():
-            TestRosInterface.executor.spin_once(timeout_sec=0.1)
-            if time.time() - start_time > 1.0:
-                break
-        assert goal_future.done()
-
-        result_future = goal_future.result().get_result_async()
-        while not result_future.done():
-            TestRosInterface.executor.spin_once(timeout_sec=0.1)
-            if time.time() - start_time > 30.0:
-                break
+        result_future = execute_ros_action(goal_future)
 
         assert result_future.done()
         assert (
