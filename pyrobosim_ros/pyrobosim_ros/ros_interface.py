@@ -450,6 +450,15 @@ class WorldROSWrapper(Node):
         """
         self.get_logger().info("Received world state request.")
 
+        # Determine whether to use a robot's local observations or the full world state.
+        if request.robot:
+            robot = self.world.get_robot_by_name(request.robot)
+            if not robot:
+                return response  # empty response
+            objects = robot.get_known_objects()
+        else:
+            objects = self.world.objects
+
         # Add the object and location states.
         for loc in self.world.locations:
             loc_msg = LocationState(
@@ -459,7 +468,7 @@ class WorldROSWrapper(Node):
                 pose=pose_to_ros(loc.pose),
             )
             response.state.locations.append(loc_msg)
-        for obj in self.world.objects:
+        for obj in objects:
             obj_msg = ObjectState(
                 name=obj.name,
                 category=obj.category,

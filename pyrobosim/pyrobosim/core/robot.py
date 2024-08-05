@@ -11,7 +11,7 @@ from .locations import ObjectSpawn
 from .objects import Object
 from ..manipulation.grasping import Grasp
 from ..planning.actions import ExecutionResult, ExecutionStatus
-from ..utils.knowledge import resolve_to_object, query_to_entity
+from ..utils.knowledge import query_to_entity
 from ..utils.polygon import sample_from_polygon, transform_polygon
 from ..utils.pose import Pose
 
