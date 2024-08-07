@@ -41,6 +41,7 @@ class Location:
         color=None,
         is_open=True,
         is_locked=False,
+        is_charger=False,
     ):
         """
         Creates a location instance.
@@ -60,6 +61,8 @@ class Location:
         :type is_open: bool, optional
         :param is_locked: If True, the location is locked, meaning it cannot be opened or closed.
         :type is_locked: bool, optional
+        :param is_charger: If True, the robot charges its battery at this location.
+        :type is_charger: bool, optional
         """
         # Validate input
         if parent is None:
@@ -73,6 +76,7 @@ class Location:
         self.parent = parent
         self.is_open = is_open
         self.is_locked = is_locked
+        self.is_charger = is_charger
 
         self.metadata = Location.metadata.get(self.category)
         if not self.metadata:

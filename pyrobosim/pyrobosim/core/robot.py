@@ -362,8 +362,6 @@ class Robot:
             )
 
         # Update the robot state.
-        if self.world:
-            self.location = self.world.get_location_from_pose(self.get_pose())
         exec_options = self.action_execution_options.get("navigate")
         if exec_options:
             self.battery_level = max(
@@ -372,6 +370,11 @@ class Robot:
                 - exec_options.battery_usage
                 * self.path_executor.current_distance_traveled,
             )
+        if self.world:
+            self.location = self.world.get_location_from_pose(self.get_pose())
+            if isinstance(self.location, ObjectSpawn) and self.location.parent.is_charger:
+                print(f"[{self.name}] Battery charged at {self.location.name}!")
+                self.battery_level = 100.0
         self.last_nav_result = result
         return result
 

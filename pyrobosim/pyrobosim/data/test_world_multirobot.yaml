@@ -183,6 +183,14 @@ locations:
     is_open: False
     is_locked: False
 
+  - name: charger
+    category: charger
+    parent: bedroom
+    pose: [3.15, 2.7, 0.0, 0.0]
+    is_open: False
+    is_locked: True
+    is_charger: True
+
 
 # OBJECTS: Can be picked, placed, and moved by robot
 objects:
