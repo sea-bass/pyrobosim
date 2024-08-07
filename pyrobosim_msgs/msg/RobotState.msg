@@ -5,6 +5,7 @@ string name
 
 # Continuous state
 geometry_msgs/Pose pose
+float64 battery_level
 
 # Discrete state
 bool executing_action

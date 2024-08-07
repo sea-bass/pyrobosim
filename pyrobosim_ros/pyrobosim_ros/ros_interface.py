@@ -416,6 +416,7 @@ class WorldROSWrapper(Node):
         """
         state_msg = RobotState(name=robot.name)
         state_msg.pose = pose_to_ros(robot.get_pose())
+        state_msg.battery_level = robot.battery_level
         state_msg.executing_action = robot.executing_action
         if robot.manipulated_object is not None:
             state_msg.holding_object = True

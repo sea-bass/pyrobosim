@@ -10,7 +10,9 @@ from ..utils.motion import Path
 class ExecutionOptions:
     """Options for executing actions in simulation."""
 
-    def __init__(self, delay=0.0, success_probability=1.0, rng_seed=None):
+    def __init__(
+        self, delay=0.0, success_probability=1.0, rng_seed=None, battery_usage=0.0
+    ):
         """
         Creates a new set of action execution options.
 
@@ -21,11 +23,17 @@ class ExecutionOptions:
         :param rng_seed: The seed to use for random number generation.
             Defaults to None, but can be changed for determinism.
         :type rng_seed: int, optional
+        :param battery_usage: Amount of battery reduction from running the action.
+            Note that some actions apply this as a fixed reductions, and others apply it
+            per some unit of measure (for example, battery per distance moved).
+            Must be greater than 0.
+        :type battery_usage: float
         """
         self.delay = delay
         self.success_probability = success_probability
         self.rng_seed = rng_seed
         self.rng = np.random.default_rng(seed=rng_seed)
+        self.battery_usage = battery_usage
 
     def should_succeed(self):
         """

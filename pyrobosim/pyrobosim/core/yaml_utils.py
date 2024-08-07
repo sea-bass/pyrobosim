@@ -131,6 +131,7 @@ class WorldYamlLoader:
                 grasp_generator=self.get_grasp_generator(robot_data),
                 partial_observability=robot_data.get("partial_observability", False),
                 action_execution_options=self.get_action_execution_options(robot_data),
+                initial_battery_level=robot_data.get("initial_battery_level", 100.0),
             )
 
             loc = robot_data["location"] if "location" in robot_data else None

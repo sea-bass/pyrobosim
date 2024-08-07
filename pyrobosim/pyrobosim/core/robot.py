@@ -35,6 +35,7 @@ class Robot:
         grasp_generator=None,
         partial_observability=False,
         action_execution_options={},
+        initial_battery_level=100.0,
     ):
         """
         Creates a robot instance.
@@ -71,6 +72,8 @@ class Robot:
         :param action_execution_options: A dictionary of action names and their execution options.
             This defines properties such as delays and nondeterminism.
         :type action_execution_options: dict[str, :class:`pyrobosim.planning.actions.ExecutionOptions`]
+        :param initial_battery_level: The initial battery charge, from 0 to 100.
+        :type initial_battery_level: float
         """
         # Basic properties
         self.name = name
@@ -108,6 +111,7 @@ class Robot:
         self.current_plan = None
         self.executing_plan = False
         self.canceling_execution = False
+        self.battery_level = initial_battery_level
 
         # World interaction properties
         self.world = None
@@ -357,9 +361,17 @@ class Robot:
                 message="Robot is not at its intended target pose.",
             )
 
-        # Update the robot state if successful.
+        # Update the robot state.
         if self.world:
             self.location = self.world.get_location_from_pose(self.get_pose())
+        exec_options = self.action_execution_options.get("navigate")
+        if exec_options:
+            self.battery_level = max(
+                0.0,
+                self.battery_level
+                - exec_options.battery_usage
+                * self.path_executor.current_distance_traveled,
+            )
         self.last_nav_result = result
         return result
 
@@ -393,6 +405,14 @@ class Robot:
         :return: An object describing the execution result.
         :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
+        if self.battery_level <= 0.0:
+            message = "Out of battery. Cannot navigate."
+            warnings.warn(message)
+            self.last_nav_result = ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+            return self.last_nav_result
+
         if path is None:
             path = self.plan_path(start, goal)
             if path is None or path.num_poses == 0:
@@ -409,6 +429,17 @@ class Robot:
             self.world.gui.canvas.show_planner_and_path_signal.emit(
                 self, show_graph, path
             )
+
+        # Simulate execution options.
+        exec_options = self.action_execution_options.get("navigate")
+        if exec_options:
+            if not exec_options.should_succeed():
+                message = f"[{self.name}] Simulated navigation failure."
+                print(message)
+                self.last_nav_result = ExecutionResult(
+                    status=ExecutionStatus.EXECUTION_FAILURE, message=message
+                )
+                return self.last_nav_result
 
         return self.follow_path(
             path,
@@ -473,6 +504,12 @@ class Robot:
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
+        if self.battery_level <= 0.0:
+            message = "Out of battery. Cannot pick."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
 
         # If a grasp generator has been specified and no explicit grasp has been provided,
         # generate grasps here.
@@ -510,6 +547,19 @@ class Robot:
         if self.last_grasp_selection is not None:
             print(f"Selected {self.last_grasp_selection}")
 
+        # Simulate execution options.
+        exec_options = self.action_execution_options.get("pick")
+        if exec_options:
+            self.battery_level = max(
+                0.0, self.battery_level - exec_options.battery_usage
+            )
+            if not exec_options.should_succeed():
+                message = f"[{self.name}] Simulated pick failure."
+                print(message)
+                return ExecutionResult(
+                    status=ExecutionStatus.EXECUTION_FAILURE, message=message
+                )
+
         # Denote the target object as the manipulated object
         self._attach_object(obj)
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
@@ -543,6 +593,12 @@ class Robot:
             )
         if not loc.is_open:
             message = f"{loc.parent.name} is not open. Cannot place object."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+        if self.battery_level <= 0.0:
+            message = "Out of battery. Cannot place."
             warnings.warn(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
@@ -587,13 +643,25 @@ class Robot:
                     status=ExecutionStatus.PLANNING_FAILURE, message=message
                 )
 
-        if is_valid_pose:
-            self.manipulated_object.parent = loc
-            self.manipulated_object.set_pose(pose)
-            self.manipulated_object.create_polygons()
-            loc.children.append(self.manipulated_object)
-            self.manipulated_object = None
-            return ExecutionResult(status=ExecutionStatus.SUCCESS)
+        # Simulate execution options.
+        exec_options = self.action_execution_options.get("place")
+        if exec_options:
+            self.battery_level = max(
+                0.0, self.battery_level - exec_options.battery_usage
+            )
+            if not exec_options.should_succeed():
+                message = f"[{self.name}] Simulated place failure."
+                print(message)
+                return ExecutionResult(
+                    status=ExecutionStatus.EXECUTION_FAILURE, message=message
+                )
+
+        self.manipulated_object.parent = loc
+        self.manipulated_object.set_pose(pose)
+        self.manipulated_object.create_polygons()
+        loc.children.append(self.manipulated_object)
+        self.manipulated_object = None
+        return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
     def detect_objects(self, target_object=None):
         """
@@ -620,6 +688,26 @@ class Robot:
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
+
+        if self.battery_level <= 0.0:
+            message = "Out of battery. Cannot detect objects."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        # Simulate execution options.
+        exec_options = self.action_execution_options.get("detect")
+        if exec_options:
+            self.battery_level = max(
+                0.0, self.battery_level - exec_options.battery_usage
+            )
+            if not exec_options.should_succeed():
+                message = f"[{self.name}] Simulated detection failure."
+                print(message)
+                return ExecutionResult(
+                    status=ExecutionStatus.EXECUTION_FAILURE, message=message
+                )
 
         # Add all the objects at the current robot's location.
         for obj in self.location.children:
@@ -672,6 +760,26 @@ class Robot:
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
 
+        if self.battery_level <= 0.0:
+            message = "Out of battery. Cannot open location."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        # Simulate execution options.
+        exec_options = self.action_execution_options.get("open")
+        if exec_options:
+            self.battery_level = max(
+                0.0, self.battery_level - exec_options.battery_usage
+            )
+            if not exec_options.should_succeed():
+                message = f"[{self.name}] Simulated opening failure."
+                print(message)
+                return ExecutionResult(
+                    status=ExecutionStatus.EXECUTION_FAILURE, message=message
+                )
+
         if isinstance(self.location, ObjectSpawn):
             return self.world.open_location(self.location.parent)
         elif isinstance(self.location, Hallway):
@@ -708,6 +816,26 @@ class Robot:
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
 
+        if self.battery_level <= 0.0:
+            message = "Out of battery. Cannot close location."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
+
+        # Simulate execution options.
+        exec_options = self.action_execution_options.get("close")
+        if exec_options:
+            self.battery_level = max(
+                0.0, self.battery_level - exec_options.battery_usage
+            )
+            if not exec_options.should_succeed():
+                message = f"[{self.name}] Simulated closing failure."
+                print(message)
+                return ExecutionResult(
+                    status=ExecutionStatus.EXECUTION_FAILURE, message=message
+                )
+
         if isinstance(self.location, ObjectSpawn):
             return self.world.close_location(self.location.parent)
         elif isinstance(self.location, Hallway):
@@ -733,16 +861,7 @@ class Robot:
         if self.world.has_gui:
             self.world.gui.set_buttons_during_action(False)
 
-        # Simulate action-agnostic properties such as delays or failure probabilities.
-        execution_options = self.action_execution_options.get(action.type)
-        if execution_options and not execution_options.should_succeed():
-            message = f"[{self.name}] Simulated action failure."
-            print(message)
-            result = ExecutionResult(
-                status=ExecutionStatus.EXECUTION_FAILURE, message=message
-            )
-
-        elif action.type == "navigate":
+        if action.type == "navigate":
             self.executing_nav = True
             path = action.path if action.path.num_poses > 0 else None
             if self.world.has_gui:

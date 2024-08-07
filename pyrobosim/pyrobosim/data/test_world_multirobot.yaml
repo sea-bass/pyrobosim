@@ -67,15 +67,26 @@ robots:
     # Simulate properties of actions
     action_execution_options:
       navigate:
+        rng_seed: 1234
         success_probability: 0.9
+        battery_usage: 0.5
       pick:
         delay: 1.0
         success_probability: 0.75
+        battery_usage: 5.0
       place:
         delay: 0.5
+        success_probability: 0.75
+        battery_usage: 5.0
+      open:
         success_probability: 0.5
-        rng_seed: 1234
-
+        battery_usage: 5.0
+      close:
+        success_probability: 0.5
+        battery_usage: 5.0
+      detect:
+        success_probability: 0.8
+        battery_usage: 2.0
 
 # ROOMS: Polygonal regions that can contain object locations
 rooms:
