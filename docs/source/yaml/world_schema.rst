@@ -40,6 +40,16 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
          type: parallel_grasp  # Supported types -- parallel_grasp
          <property>: <grasp_generator_property>
        partial_observability: False  # If True, robot starts with no detected objects
+       # Options to control the execution of actions
+       action_execution_options:
+         navigate:
+           delay: 0.1
+           success_probability: 0.5
+           rng_seed: 1234
+         pick:
+           delay: 1.0
+         place:
+           success_probability: 0.75
      - ...
      - ...
 

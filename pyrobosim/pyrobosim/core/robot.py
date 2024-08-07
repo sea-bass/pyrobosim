@@ -34,6 +34,7 @@ class Robot:
         path_executor=None,
         grasp_generator=None,
         partial_observability=False,
+        action_execution_options={},
     ):
         """
         Creates a robot instance.
@@ -67,6 +68,9 @@ class Robot:
         :param partial_observability: If False, the robot can access all objects in the world.
             If True, it must detect new objects at specific locations.
         :type partial_observability: bool, optional
+        :param action_execution_options: A dictionary of action names and their execution options.
+            This defines properties such as delays and nondeterminism.
+        :type action_execution_options: dict[str, :class:`pyrobosim.planning.actions.ExecutionOptions`]
         """
         # Basic properties
         self.name = name
@@ -98,6 +102,7 @@ class Robot:
         self.last_grasp_selection = None
 
         # Action execution options
+        self.action_execution_options = action_execution_options
         self.current_action = None
         self.executing_action = False
         self.current_plan = None
@@ -729,7 +734,8 @@ class Robot:
             self.world.gui.set_buttons_during_action(False)
 
         # Simulate action-agnostic properties such as delays or failure probabilities.
-        if not action.should_succeed():
+        execution_options = self.action_execution_options.get(action.type)
+        if execution_options and not execution_options.should_succeed():
             message = f"[{self.name}] Simulated action failure."
             print(message)
             result = ExecutionResult(

@@ -441,10 +441,18 @@ class TestRobot:
     def test_execute_action_simulated_options(self):
         """Test execution of an action that has simulated options."""
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
+        action_execution_options = {
+            "navigate": ExecutionOptions(
+                delay=0.1,
+                success_probability=0.5,
+                rng_seed=1234,
+            ),
+        }
         robot = Robot(
             pose=init_pose,
             path_planner=PathPlanner("world_graph", world=self.test_world),
             path_executor=ConstantVelocityExecutor(linear_velocity=5.0, dt=0.1),
+            action_execution_options=action_execution_options,
         )
         robot.location = "kitchen"
         robot.world = self.test_world
@@ -452,11 +460,6 @@ class TestRobot:
             "navigate",
             source_location="kitchen",
             target_location="my_desk",
-            execution_options=ExecutionOptions(
-                delay=0.1,
-                success_probability=0.5,
-                rng_seed=1234,
-            ),
         )
 
         # The action should fail the first time but succeed the second time.

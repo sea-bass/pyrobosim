@@ -64,6 +64,17 @@ robots:
       heuristic: euclidean
       diagonal_motion: true
       compress_path: false
+    # Simulate properties of actions
+    action_execution_options:
+      navigate:
+        success_probability: 0.9
+      pick:
+        delay: 1.0
+        success_probability: 0.75
+      place:
+        delay: 0.5
+        success_probability: 0.5
+        rng_seed: 1234
 
 
 # ROOMS: Polygonal regions that can contain object locations

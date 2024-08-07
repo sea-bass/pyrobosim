@@ -99,31 +99,35 @@ For example,
 
 .. code-block:: python
 
+    from pyrobosim.core import Robot
     from pyrobosim.planning.actions import ExecutionOptions, TaskAction
+
+    robot = Robot(
+        name="robot0",
+        action_execution_options = {
+            "navigate": ExecutionOptions(
+                delay=0.1,
+                success_probability=0.5,
+                rng_seed=1234
+            ),
+            "pick": ExecutionOptions(delay=1.0),
+            "place": ExecutionOptions(success_probability=0.75),
+        },
+    )
 
     action = TaskAction(
         "navigate",
         source_location="kitchen",
         target_location="my_desk",
-        execution_options=ExecutionOptions(
-            delay=0.1,
-            success_probability=0.5,
-            rng_seed=1234,
-        ),
     )
+
     robot.execute_action(action)
+
 
 Of particular interest is the ``rng_seed`` options which can be used to control determinism of simulated failures.
 If you leave this option at its default value (``None``), the failures will be nondeterministic, but explicitly setting the seed can provide reproducible action failure results.
 
-The ROS 2 interface to actions also supports execution options via the ``pyrobosim_msgs.msg.ActionExecutionOptions`` message, which is a field of the ``pyrobosim_msgs.msg.TaskAction`` message.
-You can try this out by setting more launch parameters in the same example:
-
-::
-
-    ros2 launch pyrobosim_ros demo_commands.launch.py mode:=plan action_delay:=0.1 action_success_probablity:=0.5 action_rng_seed:=1234
-
-**NOTE:** These capabilities are not yet available from the GUI.
+**NOTE:** You can also set these action execution options in the :ref:`YAML specification <yaml_schemas>` for your robot.
 
 
 .. _partial_observability:

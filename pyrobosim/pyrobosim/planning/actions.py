@@ -27,6 +27,16 @@ class ExecutionOptions:
         self.rng_seed = rng_seed
         self.rng = np.random.default_rng(seed=rng_seed)
 
+    def should_succeed(self):
+        """
+        Determines whether the action should succeed, while simulating other aspects such as delays.
+
+        :return: True if the action should succeed, or False otherwise.
+        :rtype: bool
+        """
+        time.sleep(self.delay)
+        return self.rng.random() <= self.success_probability
+
 
 class ExecutionStatus(IntEnum):
     """Enumeration for action or plan execution status."""
@@ -99,7 +109,6 @@ class TaskAction:
         pose=None,
         path=Path(),
         cost=None,
-        execution_options=None,
     ):
         """
         Creates a new task action representation.
@@ -122,14 +131,11 @@ class TaskAction:
         :type path: :class:`pyrobosim.utils.motion.Path`, optional
         :param cost: Optional action cost.
         :type cost: float
-        :param execution_options: Options for simulating various action execution properties.
-        :type execution_options: :class:`pyrobosim.planning.actions.ExecutionOptions`
         """
         # Action-agnostic parameters
         self.type = type.lower()
         self.robot = robot
         self.cost = cost
-        self.execution_options = execution_options
 
         # Action-specific parameters
         self.object = object  # Target object name
@@ -138,21 +144,6 @@ class TaskAction:
         self.target_location = target_location  # Target location name
         self.pose = pose  # Target pose
         self.path = path  # Path object containing a list of poses
-
-    def should_succeed(self):
-        """
-        Determines whether the action should succeed, while simulating other aspects such as delays.
-
-        :return: True if the action should success, or False otherwise.
-        :rtype: bool
-        """
-        if self.execution_options:
-            time.sleep(self.execution_options.delay)
-            return (
-                self.execution_options.rng.random()
-                <= self.execution_options.success_probability
-            )
-        return True
 
     def __repr__(self):
         """Returns printable string describing an action."""
