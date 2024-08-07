@@ -65,9 +65,10 @@ robots:
       diagonal_motion: true
       compress_path: false
     # Simulate properties of actions
+    initial_battery_level: 100.0
     action_execution_options:
       navigate:
-        rng_seed: 1234
+        rng_seed: 42
         success_probability: 0.9
         battery_usage: 0.5
       pick:

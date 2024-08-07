@@ -28,6 +28,7 @@ The generic location schema, where ``<angle brackets>`` are placeholders, is:
      color: [<r>, <g>, <b>]
      is_open: True
      is_locked: False
+     is_charger: False
 
 
 Examples

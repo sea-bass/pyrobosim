@@ -24,6 +24,7 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
        height: <value>  # Robot height
        location: <loc_name>  # Initial location
        pose: [<x>, <y>, <z>, <yaw>]  # Initial pose, if not specified will sample
+       initial_battery_level: 50.0
        # Dynamics limits
        max_linear_velocity: <value>
        max_angular_velocity: <value>
@@ -44,12 +45,15 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
        action_execution_options:
          navigate:
            delay: 0.1
-           success_probability: 0.5
-           rng_seed: 1234
+           success_probability: 0.9
+           rng_seed: 42
+           battery_usage: 1.0
          pick:
            delay: 1.0
+           battery_usage: 5.0
          place:
            success_probability: 0.75
+           battery_usage: 5.0
      - ...
      - ...
 
@@ -88,6 +92,7 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
        pose: [<x>, <y>, <z>, <yaw>]  # If not specified, will sample
        is_open: true  # Can only pick, place, and detect if open
        is_locked: true  # Can only open and close if unlocked
+       is_charger: false  # Robots can charge at this location
      - ...
      - ...
 
