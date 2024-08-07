@@ -148,15 +148,6 @@ def task_action_from_ros(msg):
         pose=pose_from_ros(msg.pose) if msg.has_pose else None,
         path=path_from_ros(msg.path),
         cost=msg.cost,
-        execution_options=acts.ExecutionOptions(
-            delay=msg.execution_options.delay,
-            success_probability=msg.execution_options.success_probability,
-            rng_seed=(
-                msg.execution_options.rng_seed
-                if msg.execution_options.rng_seed >= 0
-                else None
-            ),
-        ),
     )
 
 
@@ -184,12 +175,6 @@ def task_action_to_ros(act):
     act_msg.path = path_to_ros(act.path)
     if act.cost:
         act_msg.cost = float(act.cost)
-    if act.execution_options:
-        act_msg.execution_options = ros_msgs.ActionExecutionOptions(
-            delay=act.execution_options.delay,
-            success_probability=act.execution_options.success_probability,
-            rng_seed=act.execution_options.rng_seed or -1,
-        )
 
     return act_msg
 

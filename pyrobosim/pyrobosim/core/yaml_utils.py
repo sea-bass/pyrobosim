@@ -7,13 +7,14 @@ import yaml
 
 from .robot import Robot
 from .world import World
-from ..utils.general import replace_special_yaml_tokens
-from ..utils.pose import Pose
 from ..navigation import (
     ConstantVelocityExecutor,
     OccupancyGrid,
     PathPlanner,
 )
+from ..planning.actions import ExecutionOptions
+from ..utils.general import replace_special_yaml_tokens
+from ..utils.pose import Pose
 
 
 class WorldYamlLoader:
@@ -129,6 +130,7 @@ class WorldYamlLoader:
                 path_executor=self.get_path_executor(robot_data),
                 grasp_generator=self.get_grasp_generator(robot_data),
                 partial_observability=robot_data.get("partial_observability", False),
+                action_execution_options=self.get_action_execution_options(robot_data),
             )
 
             loc = robot_data["location"] if "location" in robot_data else None
@@ -199,3 +201,13 @@ class WorldYamlLoader:
         else:
             warnings.warn(f"Invalid grasp generator type specified: {grasp_gen_type}")
             return None
+
+    def get_action_execution_options(self, robot_data):
+        """Gets action execution information to add to a robot."""
+        action_execution_options = {}
+        exec_data = robot_data.get("action_execution_options", {})
+
+        for action_name, kwargs in exec_data.items():
+            action_execution_options[action_name] = ExecutionOptions(**kwargs)
+
+        return action_execution_options

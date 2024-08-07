@@ -5,7 +5,6 @@
 import pytest
 
 from pyrobosim.planning.actions import (
-    ExecutionOptions,
     ExecutionResult,
     ExecutionStatus,
     TaskAction,
@@ -39,8 +38,6 @@ def test_task_action_nondefault_args():
         Pose(x=0.5, y=1.0, yaw=1.5),
         Pose(x=1.0, y=2.0, yaw=3.0),
     ]
-    opts = ExecutionOptions()
-
     action = TaskAction(
         "Pick",
         robot="robot0",
@@ -51,7 +48,6 @@ def test_task_action_nondefault_args():
         pose=test_poses[-1],
         path=Path(poses=test_poses),
         cost=42.0,
-        execution_options=opts,
     )
 
     assert action.type == "pick"  # Should be converted to lower case
@@ -63,7 +59,6 @@ def test_task_action_nondefault_args():
     assert action.target_location == "counter0_right"
     assert action.pose == test_poses[-1]
     assert action.path == Path(poses=test_poses)
-    assert action.execution_options == opts
 
 
 def test_print_task_action(capsys):

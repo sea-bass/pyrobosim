@@ -14,7 +14,6 @@ find_package(geometry_msgs REQUIRED)
 
 # Generate custom interfaces
 set(msg_files
-  "msg/ActionExecutionOptions.msg"
   "msg/ExecutionResult.msg"
   "msg/GoalPredicate.msg"
   "msg/GoalSpecification.msg"

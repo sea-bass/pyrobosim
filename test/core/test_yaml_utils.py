@@ -373,6 +373,15 @@ class TestWorldYamlLoading:
                         "depth_clearance": 0.01,
                     },
                     "partial_observability": True,
+                    "action_execution_options": {
+                        "pick": {
+                            "delay": 1.0,
+                        },
+                        "place": {
+                            "success_probability": 0.5,
+                            "rng_seed": 1234,
+                        },
+                    },
                 },
             ],
         }
@@ -380,29 +389,27 @@ class TestWorldYamlLoading:
         loader.add_robots()
         assert len(loader.world.robots) == 2
 
-        assert loader.world.robots[0].name == "robot0"  # Auto-named
-        assert loader.world.robots[0].radius == 0.12
-        assert loader.world.robots[0].location.name == "kitchen"
-        assert loader.world.robots[0].path_planner is None
-        assert isinstance(
-            loader.world.robots[0].path_executor, ConstantVelocityExecutor
-        )
-        assert loader.world.robots[0].grasp_generator is None
+        robot0 = loader.world.robots[0]
+        assert robot0.name == "robot0"  # Auto-named
+        assert robot0.radius == 0.12
+        assert robot0.location.name == "kitchen"
+        assert robot0.path_planner is None
+        assert isinstance(robot0.path_executor, ConstantVelocityExecutor)
+        assert robot0.grasp_generator is None
+        assert not robot0.partial_observability
+        assert robot0.action_execution_options == {}
 
-        assert loader.world.robots[1].name == "test_robot"
-        assert loader.world.robots[1].radius == 0.09
-        assert loader.world.robots[1].height == 0.05
-        assert loader.world.robots[1].location.name == "bedroom"
-        assert loader.world.robots[1].get_pose() == Pose.from_list([2.5, 3.0, 1.57])
-        assert np.all(
-            loader.world.robots[1].dynamics.vel_limits == np.array([1.0, 1.0, 3.0])
-        )
-        assert np.all(
-            loader.world.robots[1].dynamics.accel_limits == np.array([2.0, 2.0, 6.0])
-        )
-        assert loader.world.robots[1].partial_observability == True
+        robot1 = loader.world.robots[1]
+        assert robot1.name == "test_robot"
+        assert robot1.radius == 0.09
+        assert robot1.height == 0.05
+        assert robot1.location.name == "bedroom"
+        assert robot1.get_pose() == Pose.from_list([2.5, 3.0, 1.57])
+        assert np.all(robot1.dynamics.vel_limits == np.array([1.0, 1.0, 3.0]))
+        assert np.all(robot1.dynamics.accel_limits == np.array([2.0, 2.0, 6.0]))
+        assert robot1.partial_observability
 
-        path_planner = loader.world.robots[1].path_planner
+        path_planner = robot1.path_planner
         assert isinstance(path_planner, PathPlanner)
         assert path_planner.planner_type == "rrt"
         assert path_planner.planner_config["collision_check_step_dist"] == 0.025
@@ -411,13 +418,13 @@ class TestWorldYamlLoading:
         assert path_planner.planner_config["rrt_star"] == True
         assert path_planner.planner_config["rewire_radius"] == 1.5
 
-        path_executor = loader.world.robots[1].path_executor
+        path_executor = robot1.path_executor
         assert isinstance(path_executor, ConstantVelocityExecutor)
         assert path_executor.linear_velocity == 1.0
         assert path_executor.max_angular_velocity == 3.14
         assert path_executor.dt == 0.1
 
-        grasp_generator = loader.world.robots[1].grasp_generator
+        grasp_generator = robot1.grasp_generator
         assert isinstance(grasp_generator, GraspGenerator)
         assert isinstance(grasp_generator.properties, ParallelGraspProperties)
         assert grasp_generator.properties.max_width == 0.175
@@ -425,3 +432,13 @@ class TestWorldYamlLoading:
         assert grasp_generator.properties.height == 0.04
         assert grasp_generator.properties.width_clearance == 0.01
         assert grasp_generator.properties.depth_clearance == 0.01
+
+        action_exec_options = robot1.action_execution_options
+        assert len(action_exec_options) == 2
+        pick_options = action_exec_options.get("pick")
+        assert pick_options
+        assert pick_options.delay == 1.0
+        place_options = action_exec_options.get("place")
+        assert place_options
+        assert place_options.success_probability == 0.5
+        assert place_options.rng_seed == 1234
