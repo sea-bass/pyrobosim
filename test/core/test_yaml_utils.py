@@ -382,6 +382,7 @@ class TestWorldYamlLoading:
                             "rng_seed": 1234,
                         },
                     },
+                    "initial_battery_level": 50.0,
                 },
             ],
         }
@@ -398,6 +399,7 @@ class TestWorldYamlLoading:
         assert robot0.grasp_generator is None
         assert not robot0.partial_observability
         assert robot0.action_execution_options == {}
+        assert robot0.battery_level == 100.0
 
         robot1 = loader.world.robots[1]
         assert robot1.name == "test_robot"
@@ -408,6 +410,7 @@ class TestWorldYamlLoading:
         assert np.all(robot1.dynamics.vel_limits == np.array([1.0, 1.0, 3.0]))
         assert np.all(robot1.dynamics.accel_limits == np.array([2.0, 2.0, 6.0]))
         assert robot1.partial_observability
+        assert robot1.battery_level == 50.0
 
         path_planner = robot1.path_planner
         assert isinstance(path_planner, PathPlanner)

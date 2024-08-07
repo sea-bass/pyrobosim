@@ -308,7 +308,7 @@ class WorldROSWrapper(Node):
         # Execute the action
         robot_action = task_action_from_ros(goal_handle.request.action)
         self.get_logger().info(f"Executing action with robot {robot.name}...")
-        execution_result = robot.execute_action(robot_action, blocking=True)
+        execution_result = robot.execute_action(robot_action)
         self.get_logger().info(
             f"Action finished with status: {execution_result.status.name}"
         )
@@ -416,6 +416,7 @@ class WorldROSWrapper(Node):
         """
         state_msg = RobotState(name=robot.name)
         state_msg.pose = pose_to_ros(robot.get_pose())
+        state_msg.battery_level = robot.battery_level
         state_msg.executing_action = robot.executing_action
         if robot.manipulated_object is not None:
             state_msg.holding_object = True

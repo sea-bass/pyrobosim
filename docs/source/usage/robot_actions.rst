@@ -94,7 +94,7 @@ Simulating Action Execution
 By default, all robots can execute their actions perfectly.
 However, actions can still fail due to planning errors or because they are infeasible (e.g, picking an object while holding another).
 
-You can use the action's *execution options* to modify the behavior of your robot to simulate delays or failures.
+You can use the action's *execution options* to modify the behavior of your robot to simulate delays, failures, or battery consumption.
 For example,
 
 .. code-block:: python
@@ -104,14 +104,18 @@ For example,
 
     robot = Robot(
         name="robot0",
+        initial_battery_level=100.0,
         action_execution_options = {
             "navigate": ExecutionOptions(
-                delay=0.1,
                 success_probability=0.5,
-                rng_seed=1234
+                rng_seed=1234,
+                battery_usage=1.0,
             ),
-            "pick": ExecutionOptions(delay=1.0),
-            "place": ExecutionOptions(success_probability=0.75),
+            "pick": ExecutionOptions(
+                delay=1.0,
+                success_probability=0.75,
+                battery_usage=5.0
+            ),
         },
     )
 

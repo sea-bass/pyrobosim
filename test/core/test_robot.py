@@ -48,7 +48,7 @@ class TestRobot:
         ]
         return TaskPlan(actions=actions)
 
-    def test_create_robot_default_args(self):
+    def test_create_robot_default_args(self, capsys):
         """Check that a robot can be created with all default arguments."""
         robot = Robot()
 
@@ -65,8 +65,19 @@ class TestRobot:
         assert robot.path_executor == None
         assert robot.grasp_generator == None
         assert robot.world == None
+        assert not robot.partial_observability
+        assert robot.battery_level == 100.0
 
-    def test_create_robot_nondefault_args(self):
+        robot.print_details()
+        out, _ = capsys.readouterr()
+        expected_details_str = (
+            "Robot: robot\n"
+            + "\tPose: [x=0.00, y=0.00, z=0.00, qw=1.000, qx=0.000, qy=-0.000, qz=0.000]\n"
+            + "\tBattery: 100.00%\n"
+        )
+        assert out == expected_details_str
+
+    def test_create_robot_nondefault_args(self, capsys):
         """Check that a robot can be created with nondefault arguments."""
         robot = Robot(
             name="test_robot",
@@ -74,6 +85,8 @@ class TestRobot:
             radius=0.1,
             height=0.15,
             color=(0.5, 0.5, 0.5),
+            partial_observability=True,
+            initial_battery_level=50.0,
         )
 
         assert robot.name == "test_robot"
@@ -85,6 +98,18 @@ class TestRobot:
         assert robot.radius == pytest.approx(0.1)
         assert robot.height == pytest.approx(0.15)
         assert robot.color == pytest.approx((0.5, 0.5, 0.5))
+        assert robot.partial_observability
+        assert robot.battery_level == 50.0
+
+        robot.print_details()
+        out, _ = capsys.readouterr()
+        expected_details_str = (
+            "Robot: test_robot\n"
+            + "\tPose: [x=1.00, y=2.00, z=0.00, qw=0.707, qx=0.000, qy=-0.000, qz=0.707]\n"
+            + "\tBattery: 50.00%\n"
+            "\tPartial observability enabled\n"
+        )
+        assert out == expected_details_str
 
     def test_robot_bad_name(self):
         """Check that a robot with an invalid name raises an exception."""
@@ -121,6 +146,15 @@ class TestRobot:
             path = robot.plan_path()
         assert path is None
         assert warn_info[0].message.args[0] == "Did not specify a goal. Returning None."
+
+        # Provide no path planner
+        robot.path_planner = None
+        with pytest.warns(UserWarning) as warn_info:
+            path = robot.plan_path()
+        assert path is None
+        assert (
+            warn_info[0].message.args[0] == "No path planner attached to robot robot."
+        )
 
     def test_robot_path_executor(self):
         """Check that path executors can be used from a robot."""
@@ -160,6 +194,18 @@ class TestRobot:
         assert pose.x == pytest.approx(goal_pose.x)
         assert pose.y == pytest.approx(goal_pose.y)
         assert pose.q == pytest.approx(goal_pose.q)
+
+        # Provide no path and no path executor.
+        with pytest.warns(UserWarning):
+            result = robot.follow_path(None)
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "No path to execute."
+
+        robot.path_executor = None
+        with pytest.warns(UserWarning):
+            result = robot.follow_path(path)
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "No path executor. Cannot follow path."
 
     def test_robot_nav_validation(self):
         """Check that the robot can abort execution with runtime collision validation."""
@@ -212,6 +258,10 @@ class TestRobot:
         # Spawn the robot near the kitchen table
         robot = Robot(
             pose=Pose(x=1.0, y=0.5, yaw=0.0),
+            action_execution_options={
+                "pick": ExecutionOptions(battery_usage=5.0),
+                "place": ExecutionOptions(battery_usage=10.0),
+            },
         )
         robot.world = self.test_world
         robot.location = self.test_world.get_entity_by_name("table0_tabletop")
@@ -231,10 +281,19 @@ class TestRobot:
             == "apple0 is at my_desk_desktop and robot is at table0_tabletop. Cannot pick."
         )
 
-        # Pick up the apple on the kitchen table (named "gala")
+        # Pick up the apple on the kitchen table (named "gala").
+        # Trying on empty battery should fail.
+        robot.battery_level = 0.0
+        with pytest.warns(UserWarning):
+            result = robot.pick_object("apple")
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "Out of battery. Cannot pick."
+
+        robot.battery_level = 100.0
         result = robot.pick_object("apple")
         assert result.status == ExecutionStatus.SUCCESS
         assert robot.manipulated_object == self.test_world.get_entity_by_name("gala")
+        assert robot.battery_level == pytest.approx(95.0)
 
         # Try pick up another object, which should fail since the robot is holding something.
         with pytest.warns(UserWarning):
@@ -253,10 +312,19 @@ class TestRobot:
         )
 
         # Try place the object at a valid location.
+        # Trying on empty battery should fail.
         robot.location = self.test_world.get_entity_by_name("table0_tabletop")
+        robot.battery_level = 0.0
+        with pytest.warns(UserWarning):
+            result = robot.place_object()
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "Out of battery. Cannot place."
+
+        robot.battery_level = 100.0
         result = robot.place_object()
         assert result.status == ExecutionStatus.SUCCESS
         assert robot.manipulated_object is None
+        assert robot.battery_level == pytest.approx(90.0)
 
         # Try place an object, which should fail since the robot is holding nothing.
         with pytest.warns(UserWarning):
@@ -295,6 +363,7 @@ class TestRobot:
         # Spawn the robot near the kitchen table
         robot = Robot(
             pose=Pose(x=1.0, y=0.5, yaw=0.0),
+            action_execution_options={"detect": ExecutionOptions(battery_usage=1.0)},
         )
         robot.world = self.test_world
 
@@ -311,11 +380,21 @@ class TestRobot:
         result = robot.detect_objects()
         assert result.status == ExecutionStatus.SUCCESS
         assert len(robot.last_detected_objects) == 2
+        assert robot.battery_level == pytest.approx(99.0)
+
+        # Trying on empty battery should fail.
+        robot.battery_level = 0.0
+        with pytest.warns(UserWarning):
+            result = robot.detect_objects()
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "Out of battery. Cannot detect objects."
+        robot.battery_level = 100.0
 
         # Filtering by category should also affect results.
-        robot.detect_objects("apple")
+        result = robot.detect_objects("apple")
         assert result.status == ExecutionStatus.SUCCESS
         len(robot.last_detected_objects) == 1
+        assert robot.battery_level == pytest.approx(99.0)
 
         result = robot.detect_objects("water")
         assert result.status == ExecutionStatus.EXECUTION_FAILURE
@@ -338,6 +417,10 @@ class TestRobot:
         """Check that the robot can open or close hallways."""
         robot = Robot(
             pose=Pose(x=1.0, y=0.5, yaw=0.0),
+            action_execution_options={
+                "open": ExecutionOptions(battery_usage=20.0),
+                "close": ExecutionOptions(battery_usage=25.0),
+            },
         )
         robot.world = self.test_world
 
@@ -359,16 +442,38 @@ class TestRobot:
         assert result.status == ExecutionStatus.PRECONDITION_FAILURE
         assert result.message == "Robot is not at an openable location."
 
-        with pytest.warns(UserWarning) as warn_info:
+        with pytest.warns(UserWarning):
             result = robot.close_location()
         assert result.status == ExecutionStatus.PRECONDITION_FAILURE
         assert result.message == "Robot is not at a closeable location."
 
-        # Set the location to an openable location, which should work.
+        # Set the location to an openable location.
         hallway = self.test_world.get_hallways_from_rooms("kitchen", "bedroom")[0]
         robot.location = hallway
+
+        # Trying to close on empty battery should fail.
+        robot.battery_level = 0.0
+        with pytest.warns(UserWarning):
+            result = robot.close_location()
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "Out of battery. Cannot close location."
+
+        # Trying to close with battery should succeed.
+        robot.battery_level = 100.0
         assert robot.close_location().is_success()
+        assert robot.battery_level == pytest.approx(75.0)
+
+        # Trying to open empty battery should fail.
+        robot.battery_level = 0.0
+        with pytest.warns(UserWarning):
+            result = robot.open_location()
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "Out of battery. Cannot open location."
+
+        # Trying to open with battery should succeed.
+        robot.battery_level = 100.0
         assert robot.open_location().is_success()
+        assert robot.battery_level == pytest.approx(80.0)
 
         # Set a manipulated object, which will stop open/close from succeeding.
         robot.manipulated_object = self.test_world.get_object_by_name("banana0")
@@ -402,6 +507,7 @@ class TestRobot:
             pose=init_pose,
             path_planner=PathPlanner("world_graph", world=self.test_world),
             path_executor=ConstantVelocityExecutor(linear_velocity=5.0, dt=0.1),
+            action_execution_options={"navigate": ExecutionOptions(battery_usage=1.0)},
         )
         robot.location = "kitchen"
         robot.world = self.test_world
@@ -411,20 +517,9 @@ class TestRobot:
             target_location="my_desk",
         )
 
-        # Blocking action
-        result = robot.execute_action(action, blocking=True)
+        result = robot.execute_action(action)
         assert result.is_success()
-
-        # Non-blocking action
-        robot.set_pose(init_pose)
-        result = robot.execute_action(action, blocking=False)
-        assert result.is_success()
-        assert robot.executing_action
-        assert robot.current_action == action
-        while robot.executing_action:
-            time.sleep(0.1)
-        assert not robot.executing_action
-        assert robot.current_action is None
+        assert robot.battery_level < 100.0
 
     def test_execute_invalid_action(self):
         """Tests execution of an action that is not recognized as a valid type."""
@@ -446,6 +541,7 @@ class TestRobot:
                 delay=0.1,
                 success_probability=0.5,
                 rng_seed=1234,
+                battery_usage=1.0,
             ),
         }
         robot = Robot(
@@ -453,9 +549,12 @@ class TestRobot:
             path_planner=PathPlanner("world_graph", world=self.test_world),
             path_executor=ConstantVelocityExecutor(linear_velocity=5.0, dt=0.1),
             action_execution_options=action_execution_options,
+            initial_battery_level=80.0,
         )
         robot.location = "kitchen"
         robot.world = self.test_world
+        my_desk = self.test_world.get_location_by_name("my_desk")
+        my_desk.is_charger = True  # Make into a charger to test charging capabilities.
         action = TaskAction(
             "navigate",
             source_location="kitchen",
@@ -463,10 +562,20 @@ class TestRobot:
         )
 
         # The action should fail the first time but succeed the second time.
-        result = robot.execute_action(action, blocking=True)
+        result = robot.execute_action(action)
         assert result.status == ExecutionStatus.EXECUTION_FAILURE
-        assert result.message == "[robot] Simulated action failure."
-        assert robot.execute_action(action, blocking=True).is_success()
+        assert result.message == "[robot] Simulated navigation failure."
+        assert robot.battery_level == pytest.approx(80.0)
+
+        assert robot.execute_action(action).is_success()
+        assert robot.battery_level == pytest.approx(100.0)  # Charged!
+
+        # Navigating on empty battery should fail.
+        robot.battery_level = 0.0
+        with pytest.warns(UserWarning):
+            result = robot.execute_action(action)
+        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.message == "Out of battery. Cannot navigate."
 
     def test_execute_action_cancel(self):
         """Tests that actions can be canceled during execution."""
@@ -489,11 +598,11 @@ class TestRobot:
 
         # Run action and check that it failed due to being canceled.
         with pytest.warns(UserWarning):
-            result = robot.execute_action(action, blocking=True)
+            result = robot.execute_action(action)
         assert result.status == ExecutionStatus.CANCELED
 
         # Retry the action, which should now succeed.
-        assert robot.execute_action(action, blocking=True).is_success()
+        assert robot.execute_action(action).is_success()
 
         # Try to cancel actions again, which should warn.
         with pytest.warns(UserWarning) as warn_info:

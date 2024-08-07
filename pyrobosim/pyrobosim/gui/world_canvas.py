@@ -439,7 +439,9 @@ class WorldCanvas(FigureCanvasQTAgg):
                 title_bits.append(f"Location: {robot_loc}")
             if robot.manipulated_object is not None:
                 title_bits.append(f"Holding: {robot.manipulated_object.name}")
-            title_str = f"[{robot.name}] " + ", ".join(title_bits)
+
+            battery_str = f"Battery: {robot.battery_level:.2f}%"
+            title_str = f"[{robot.name}] " + battery_str + "\n" + ", ".join(title_bits)
             self.axes.set_title(title_str)
 
     def update_object_plot(self, obj):

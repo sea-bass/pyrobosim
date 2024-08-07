@@ -268,10 +268,9 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         robot = self.get_current_robot()
         if robot:
             obj = self.goal_textbox.text()
-            if obj:
-                print(f"[{robot.name}] Picking {obj}")
-                self.canvas.pick_object(robot, obj)
-                self.update_button_state()
+            print(f"[{robot.name}] Picking {obj}")
+            self.canvas.pick_object(robot, obj)
+            self.update_button_state()
 
     def on_place_click(self):
         """Callback to place an object."""

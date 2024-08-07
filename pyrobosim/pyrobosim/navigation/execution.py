@@ -53,6 +53,7 @@ class ConstantVelocityExecutor:
 
         # Execution state
         self.current_traj_time = 0.0
+        self.current_distance_traveled = 0.0
         self.abort_execution = False  # Flag to abort internally
         self.cancel_execution = False  # Flag to cancel from user
 
@@ -85,6 +86,7 @@ class ConstantVelocityExecutor:
 
         self.robot.executing_nav = True
         self.current_traj_time = 0.0
+        self.current_distance_traveled = 0.0
         self.abort_execution = False
 
         # Convert the path to an interpolated trajectory.
@@ -107,6 +109,7 @@ class ConstantVelocityExecutor:
         message = ""
         sleep_time = self.dt / realtime_factor
         is_holding_object = self.robot.manipulated_object is not None
+        prev_pose = traj_interp.poses[0]
         for i in range(traj_interp.num_points()):
             start_time = time.time()
             cur_pose = traj_interp.poses[i]
@@ -129,6 +132,8 @@ class ConstantVelocityExecutor:
                 status = ExecutionStatus.CANCELED
                 break
 
+            self.current_distance_traveled += cur_pose.get_linear_distance(prev_pose)
+            prev_pose = cur_pose
             time.sleep(max(0, sleep_time - (time.time() - start_time)))
 
         # Finalize path execution.
