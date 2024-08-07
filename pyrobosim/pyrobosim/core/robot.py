@@ -850,15 +850,13 @@ class Robot:
         # This should not happen
         return ExecutionResult(status=ExecutionResult.UNKNOWN)
 
-    def execute_action(self, action, blocking=False):
+    def execute_action(self, action):
         """
         Executes an action, specified as a
         :class:`pyrobosim.planning.actions.TaskAction` object.
 
         :param action: Action to execute.
         :type action: :class:`pyrobosim.planning.actions.TaskAction`
-        :param blocking: True to block execution until the action is complete.
-        :type blocking: bool, optional
         :return: An object describing the execution result.
         :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
@@ -879,7 +877,7 @@ class Robot:
                 self.world.gui.canvas.navigate_signal.emit(
                     self, target_location_name, path
                 )
-                while blocking and self.executing_nav:
+                while self.executing_nav:
                     time.sleep(0.5)  # Delay to wait for navigation
                 result = self.last_nav_result
             else:
@@ -888,7 +886,7 @@ class Robot:
                     path=path,
                     realtime_factor=1.0,
                     use_thread=True,
-                    blocking=blocking,
+                    blocking=True,
                 )
             self.executing_nav = False
 
@@ -934,9 +932,8 @@ class Robot:
         if self.world.has_gui:
             self.world.gui.set_buttons_during_action(True)
         print(f"[{self.name}] Action completed with result: {result.status.name}")
-        if blocking:
-            self.current_action = None
-            self.executing_action = False
+        self.current_action = None
+        self.executing_action = False
         return result
 
     def cancel_actions(self):
@@ -991,7 +988,7 @@ class Robot:
                 break
 
             print(f"[{self.name}] Executing action {act_msg.type} [{n+1}/{num_acts}]")
-            result = self.execute_action(act_msg, blocking=True)
+            result = self.execute_action(act_msg)
             if not result.is_success():
                 print(
                     f"[{self.name}] Task plan failed to execute on action {n+1}/{num_acts}"

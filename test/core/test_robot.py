@@ -517,22 +517,9 @@ class TestRobot:
             target_location="my_desk",
         )
 
-        # Blocking action
-        result = robot.execute_action(action, blocking=True)
+        result = robot.execute_action(action)
         assert result.is_success()
         assert robot.battery_level < 100.0
-
-        # Non-blocking action (battery will not update in this case)
-        robot.set_pose(init_pose)
-        robot.location = "kitchen"
-        result = robot.execute_action(action, blocking=False)
-        assert result.is_success()
-        assert robot.executing_action
-        assert robot.current_action == action
-        while robot.executing_action:
-            time.sleep(0.1)
-        assert not robot.executing_action
-        assert robot.current_action is None
 
     def test_execute_invalid_action(self):
         """Tests execution of an action that is not recognized as a valid type."""
@@ -575,18 +562,18 @@ class TestRobot:
         )
 
         # The action should fail the first time but succeed the second time.
-        result = robot.execute_action(action, blocking=True)
+        result = robot.execute_action(action)
         assert result.status == ExecutionStatus.EXECUTION_FAILURE
         assert result.message == "[robot] Simulated navigation failure."
         assert robot.battery_level == pytest.approx(80.0)
 
-        assert robot.execute_action(action, blocking=True).is_success()
-        assert robot.battery_level == pytest.approx(100.0)
+        assert robot.execute_action(action).is_success()
+        assert robot.battery_level == pytest.approx(100.0)  # Charged!
 
         # Navigating on empty battery should fail.
         robot.battery_level = 0.0
         with pytest.warns(UserWarning):
-            result = robot.execute_action(action, blocking=True)
+            result = robot.execute_action(action)
         assert result.status == ExecutionStatus.PRECONDITION_FAILURE
         assert result.message == "Out of battery. Cannot navigate."
 
@@ -611,11 +598,11 @@ class TestRobot:
 
         # Run action and check that it failed due to being canceled.
         with pytest.warns(UserWarning):
-            result = robot.execute_action(action, blocking=True)
+            result = robot.execute_action(action)
         assert result.status == ExecutionStatus.CANCELED
 
         # Retry the action, which should now succeed.
-        assert robot.execute_action(action, blocking=True).is_success()
+        assert robot.execute_action(action).is_success()
 
         # Try to cancel actions again, which should warn.
         with pytest.warns(UserWarning) as warn_info:
