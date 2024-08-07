@@ -1014,8 +1014,9 @@ class Robot:
 
     def print_details(self):
         """Prints string with details."""
-        details_str = f"Robot: {self.name}, ID={self.id}"
+        details_str = f"Robot: {self.name}"
         details_str += f"\n\t{self.get_pose()}"
+        details_str += f"\n\tBattery: {self.battery_level:.2f}%"
         if self.partial_observability:
             details_str += "\n\tPartial observability enabled"
         print(details_str)
