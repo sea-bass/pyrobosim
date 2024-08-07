@@ -446,6 +446,7 @@ class TestRobot:
                 delay=0.1,
                 success_probability=0.5,
                 rng_seed=1234,
+                battery_usage=1.0,
             ),
         }
         robot = Robot(
@@ -465,8 +466,9 @@ class TestRobot:
         # The action should fail the first time but succeed the second time.
         result = robot.execute_action(action, blocking=True)
         assert result.status == ExecutionStatus.EXECUTION_FAILURE
-        assert result.message == "[robot] Simulated action failure."
+        assert result.message == "[robot] Simulated navigation failure."
         assert robot.execute_action(action, blocking=True).is_success()
+        assert robot.battery_level < 100.0
 
     def test_execute_action_cancel(self):
         """Tests that actions can be canceled during execution."""
