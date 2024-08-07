@@ -99,17 +99,21 @@ For example,
 
 .. code-block:: python
 
+    from pyrobosim.core import Robot
     from pyrobosim.planning.actions import ExecutionOptions, TaskAction
 
-    robot.action_execution_options = {
-        "navigate": ExecutionOptions(
-            delay=0.1,
-            success_probability=0.5,
-            rng_seed=1234
-        ),
-        "pick": ExecutionOptions(delay=1.0),
-        "place": ExecutionOptions(success_probability=0.75),
-    }
+    robot = Robot(
+        name="robot0",
+        action_execution_options = {
+            "navigate": ExecutionOptions(
+                delay=0.1,
+                success_probability=0.5,
+                rng_seed=1234
+            ),
+            "pick": ExecutionOptions(delay=1.0),
+            "place": ExecutionOptions(success_probability=0.75),
+        },
+    )
 
     action = TaskAction(
         "navigate",

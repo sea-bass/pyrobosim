@@ -28,7 +28,6 @@ def test_task_action_default_args():
     assert action.pose is None
     assert isinstance(action.path, Path)
     assert action.path.num_poses == 0
-    assert action.execution_options is None
 
 
 def test_task_action_nondefault_args():

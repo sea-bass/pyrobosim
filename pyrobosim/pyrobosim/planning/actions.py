@@ -31,7 +31,7 @@ class ExecutionOptions:
         """
         Determines whether the action should succeed, while simulating other aspects such as delays.
 
-        :return: True if the action should success, or False otherwise.
+        :return: True if the action should succeed, or False otherwise.
         :rtype: bool
         """
         time.sleep(self.delay)
