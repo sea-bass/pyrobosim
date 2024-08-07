@@ -372,7 +372,10 @@ class Robot:
             )
         if self.world:
             self.location = self.world.get_location_from_pose(self.get_pose())
-            if isinstance(self.location, ObjectSpawn) and self.location.parent.is_charger:
+            if (
+                isinstance(self.location, ObjectSpawn)
+                and self.location.parent.is_charger
+            ):
                 print(f"[{self.name}] Battery charged at {self.location.name}!")
                 self.battery_level = 100.0
         self.last_nav_result = result
