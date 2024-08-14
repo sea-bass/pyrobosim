@@ -499,7 +499,7 @@ class World:
             self.gui.canvas.draw_signal.emit()
         return loc
 
-    def update_location(self, loc, pose, room=None):
+    def update_location(self, loc, pose, room=None, is_open=None, is_locked=None):
         """
         Updates an existing location in the world.
 
@@ -509,6 +509,10 @@ class World:
         :type pose: :class:`pyrobosim.utils.pose.Pose`
         :param room: Room instance or name. If none, uses the previous room.
         :type room: :class:`pyrobosim.core.room.Room`/str, optional
+        :param is_open: Whether the location should be open. If None, keeps the current state.
+        :type is_open: bool, optional
+        :param is_locked: Whether the location should be locked. If None, keeps the current state.
+        :type is_locked: bool, optional
         :return: True if the update was successful, else False.
         :rtype: bool
         """
@@ -527,6 +531,11 @@ class World:
                     f"Room {loc} did not resolve to a valid room for a location."
                 )
                 return False
+
+        if is_open is not None:
+            loc.is_open = is_open
+        if is_locked is not None:
+            loc.is_locked = is_locked
 
         # Check that the location fits within the room and is not in collision with
         # other locations already in the room. Else, warn and do not add it.

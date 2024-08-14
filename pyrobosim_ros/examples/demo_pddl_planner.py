@@ -88,6 +88,7 @@ class PlannerNode(Node):
                 "03_nav_stream",
                 "04_nav_manip_stream",
                 "05_nav_grasp_stream",
+                "06_open_close_detect",
             ]:
                 # Task specification for derived predicate example.
                 self.latest_goal = [

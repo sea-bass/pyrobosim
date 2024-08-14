@@ -29,6 +29,8 @@ def get_stream_map(world, robot):
         "PickPlaceCost": primitives.get_pick_place_cost,
         "PickPlaceAtPoseCost": primitives.get_pick_place_at_pose_cost,
         "GraspAtPoseCost": primitives.get_grasp_at_pose_cost,
+        "DetectCost": primitives.get_detect_cost,
+        "OpenCloseCost": primitives.get_open_close_cost,
         "PathLength": primitives.get_path_length,
         # Streams (that sample)
         "s-navpose": from_list_fn(primitives.get_nav_poses),
