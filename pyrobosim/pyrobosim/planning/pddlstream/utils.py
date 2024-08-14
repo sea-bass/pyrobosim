@@ -74,7 +74,8 @@ def world_to_pddlstream_init(world, robot):
     ]
 
     # Loop through all the locations and their relationships.
-    # This includes rooms, hallways, and object spawns (which are children of locations).
+    # This includes rooms and object spawns (which are children of locations).
+    # TODO: This does not yet include hallways.
     for room in world.rooms:
         init.append(("Room", room))
         init.append(("Location", room))
