@@ -16,6 +16,7 @@
     (Robot ?r)              ; Represents the robot
     (Obj ?o)                ; Object representation
     (Room ?r)               ; Room representation
+    (Hallway ?h)            ; Hallway representation
     (Location ?l)           ; Location representation
     (Type ?t)               ; Type of location or object
     (Is ?o ?t)              ; Type correspondence of location or object
@@ -61,6 +62,7 @@
                        (Obj ?o)
                        (Location ?l)
                        (not (Room ?l))
+                       (not (Hallway ?l))
                        (HandEmpty ?r)
                        (At ?r ?l)
                        (IsObserved ?l)
@@ -79,6 +81,7 @@
                        (Obj ?o)
                        (Location ?l)
                        (not (Room ?l))
+                       (not (Hallway ?l))
                        (At ?r ?l)
                        (IsObserved ?l)
                        (IsOpen ?l)
@@ -96,6 +99,7 @@
     :precondition (and (Robot ?r)
                        (Location ?l)
                        (not (Room ?l))
+                       (not (Hallway ?l))
                        (At ?r ?l)
                        (not (IsObserved ?l))
                        (IsOpen ?l))

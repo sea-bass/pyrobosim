@@ -600,3 +600,5 @@ def update_world_from_state_msg(world, msg):
             is_open=loc_state.is_open,
             is_locked=loc_state.is_locked,
         )
+
+    # TODO: Update the hallway states once this is supported.

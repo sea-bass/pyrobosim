@@ -74,8 +74,7 @@ def world_to_pddlstream_init(world, robot):
     ]
 
     # Loop through all the locations and their relationships.
-    # This includes rooms and object spawns (which are children of locations).
-    # TODO: This does not yet include hallways.
+    # This includes rooms, hallways, and object spawns (which are children of locations).
     for room in world.rooms:
         init.append(("Room", room))
         init.append(("Location", room))
@@ -97,6 +96,13 @@ def world_to_pddlstream_init(world, robot):
         loc_categories.add(loc.category)
     for loc_cat in loc_categories:
         init.append(("Type", loc_cat))
+    for hallway in world.hallways:
+        init.append(("Hallway", hallway))
+        init.append(("Location", hallway))
+        if hallway.is_open:
+            init.append(("IsOpen", hallway))
+        if hallway.is_locked:
+            init.append(("IsLocked", hallway))
 
     # Loop through all the objects and their relationships.
     obj_categories = set()
