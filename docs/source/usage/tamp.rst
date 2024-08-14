@@ -28,6 +28,7 @@ The current example list is:
 * ``03_nav_stream`` - Samples navigation poses and motion plan instances.
 * ``04_nav_manip_stream`` - Samples navigation poses, motion plans, and collision-free object placement instances.
 * ``05_nav_grasp_stream`` - Samples navigation poses, motion plans, grasp plans, and collision-free object placement instances.
+* ``06_open_close_detect`` - Extends the ``02_derived`` domain with additional actions to detect objects and open and close locations. Does not contain any streams.
 
 These PDDL domain and stream description files can be found in the ``pyrobosim/pyrobosim/data/pddlstream/domains`` folder.
 

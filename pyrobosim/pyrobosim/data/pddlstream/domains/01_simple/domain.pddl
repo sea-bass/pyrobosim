@@ -15,6 +15,7 @@
     (Robot ?r)          ; Represents the robot
     (Obj ?o)            ; Object representation
     (Room ?r)           ; Room representation
+    (Hallway ?h)        ; Hallway representation
     (Location ?l)       ; Location representation
 
     ; Fluent predicates
@@ -51,6 +52,7 @@
                        (Obj ?o)
                        (Location ?l)
                        (not (Room ?l))
+                       (not (Hallway ?l))
                        (HandEmpty ?r)
                        (At ?r ?l)
                        (At ?o ?l))
@@ -67,6 +69,7 @@
                        (Obj ?o)
                        (Location ?l)
                        (not (Room ?l))
+                       (not (Hallway ?l))
                        (At ?r ?l)
                        (not (HandEmpty ?r))
                        (Holding ?r ?o))

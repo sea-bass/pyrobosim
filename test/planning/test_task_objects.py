@@ -128,9 +128,9 @@ def test_print_task_action(capsys):
     out, _ = capsys.readouterr()
     assert out == "Detect objects\n"
 
-    print(TaskAction("detect", object="banana"))
+    print(TaskAction("detect", object="banana", target_location="table"))
     out, _ = capsys.readouterr()
-    assert out == "Detect banana\n"
+    assert out == "Detect banana at table\n"
 
     print(TaskAction("open"))
     out, _ = capsys.readouterr()

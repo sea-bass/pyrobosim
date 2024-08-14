@@ -461,12 +461,15 @@ class WorldROSWrapper(Node):
             objects = self.world.objects
 
         # Add the object and location states.
+        # TODO: Support hallway states as well.
         for loc in self.world.locations:
             loc_msg = LocationState(
                 name=loc.name,
                 category=loc.category,
                 parent=loc.get_room_name(),
                 pose=pose_to_ros(loc.pose),
+                is_open=loc.is_open,
+                is_locked=loc.is_locked,
             )
             response.state.locations.append(loc_msg)
         for obj in objects:
@@ -592,5 +595,11 @@ def update_world_from_state_msg(world, msg):
     # Update the location states
     for loc_state in msg.locations:
         world.update_location(
-            loc_state.name, room=loc_state.parent, pose=pose_from_ros(loc_state.pose)
+            loc_state.name,
+            room=loc_state.parent,
+            pose=pose_from_ros(loc_state.pose),
+            is_open=loc_state.is_open,
+            is_locked=loc_state.is_locked,
         )
+
+    # TODO: Update the hallway states once this is supported.

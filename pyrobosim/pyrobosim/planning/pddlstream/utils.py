@@ -74,7 +74,7 @@ def world_to_pddlstream_init(world, robot):
     ]
 
     # Loop through all the locations and their relationships.
-    # This includes rooms and object spawns (which are children of locations).
+    # This includes rooms, hallways, and object spawns (which are children of locations).
     for room in world.rooms:
         init.append(("Room", room))
         init.append(("Location", room))
@@ -84,13 +84,29 @@ def world_to_pddlstream_init(world, robot):
             init.append(("Location", spawn))
             init.append(("Is", spawn, loc.category))
             init.append(("AtRoom", spawn, loc.parent))
+            # TODO: Note that open/locked status pertains to the entire location,
+            # but the PDDL domain only knows about the individual object spawns.
+            # As such, this may not work on locations that have multiple object spawns.
+            if loc.is_open:
+                init.append(("IsOpen", spawn))
+            if loc.is_locked:
+                init.append(("IsLocked", spawn))
+            # TODO: This assumes no locations have been observed at the start of planning.
+            # You could add something like: init.append(("IsObserved", spawn))
         loc_categories.add(loc.category)
     for loc_cat in loc_categories:
         init.append(("Type", loc_cat))
+    for hallway in world.hallways:
+        init.append(("Hallway", hallway))
+        init.append(("Location", hallway))
+        if hallway.is_open:
+            init.append(("IsOpen", hallway))
+        if hallway.is_locked:
+            init.append(("IsLocked", hallway))
 
     # Loop through all the objects and their relationships.
     obj_categories = set()
-    for obj in world.objects:
+    for obj in robot.get_known_objects():
         init.append(("Obj", obj))
         init.append(("Is", obj, obj.category))
         # If the object is the current manipulated object, change the state of
@@ -166,7 +182,6 @@ def pddlstream_solution_to_plan(solution, robot):
         # Convert the PDDL action to a TaskAction
         act = TaskAction(act_pddl.name)
         act.robot = robot
-        # Parse a NAVIGATE action
         if act.type == "navigate":
             act.source_location = act_pddl.args[1]
             act.target_location = act_pddl.args[2]
@@ -174,8 +189,8 @@ def pddlstream_solution_to_plan(solution, robot):
             for arg in act_pddl.args[3:]:
                 if isinstance(arg, Path):
                     act.path = arg
-        # Parse a PICK or PLACE action
-        elif act.type == "pick" or act.type == "place":
+
+        elif act.type in ("pick", "place"):
             act.object = act_pddl.args[1]
             act.target_location = act_pddl.args[2]
             # If a pick/place pose is specified, add it.
@@ -188,6 +203,12 @@ def pddlstream_solution_to_plan(solution, robot):
                 for arg in act_pddl.args:
                     if isinstance(arg, Grasp):
                         act.pose = arg.origin_wrt_world
+
+        elif act.type in ("detect", "open", "close"):
+            act.target_location = act_pddl.args[1]
+
+        else:
+            raise ValueError(f"No known action type: {act.type}")
 
         # Add the action to the task plan
         plan_out.actions.append(act)

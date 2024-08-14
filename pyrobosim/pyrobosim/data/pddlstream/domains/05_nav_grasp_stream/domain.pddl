@@ -23,6 +23,7 @@
     (Robot ?r)              ; Represents the robot
     (Obj ?o)                ; Object representation
     (Room ?r)               ; Room representation
+    (Hallway ?h)            ; Hallway representation
     (Location ?l)           ; Location representation
     (Type ?t)               ; Type of location or object
     (Is ?o ?t)              ; Type correspondence of location or object
@@ -84,6 +85,7 @@
                        (Pose ?pr) (AtPose ?r ?pr)
                        (Grasp ?g)
                        (not (Room ?l))
+                       (not (Hallway ?l))
                        (HandEmpty ?r)
                        (At ?r ?l)
                        (At ?o ?l)
@@ -104,6 +106,7 @@
                        (Pose ?p)
                        (Pose ?pr) (AtPose ?r ?pr)
                        (not (Room ?l))
+                       (not (Hallway ?l))
                        (At ?r ?l)
                        (not (HandEmpty ?r))
                        (Holding ?r ?o)

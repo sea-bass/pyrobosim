@@ -1,17 +1,15 @@
-; PDDL PLANNING DOMAIN (DERIVED PREDICATES)
+; PDDL PLANNING DOMAIN (OPEN, CLOSE, AND DETECT)
 ;
-; This planning domain contains `navigate`, `pick`, and `place` actions.
+; This planning domain contains the original `navigate`, `pick`, and `place` actions,
+; as well as `open`, `close`, and `detect` actions.
 ;
 ; All actions are symbolic, meaning there are no different types of grasps
 ; or feasibility checks, under the assumption that a downstream planner exists.
 ;
-; This domain introduces the derived predicates `Has`, `HasNone`, and `HasAll`,
-; which allow for more complex goal specifications.
-;
 ; Accompanying streams are defined in the `streams.pddl` file.
 
 
-(define (domain domain_derived)
+(define (domain domain_open_close_detect)
   (:requirements :strips :equality)
   (:predicates
     ; Static predicates
@@ -32,6 +30,9 @@
     (Has ?loc ?entity)      ; Check existence of entities (object instances or types) in locations
     (HasNone ?loc ?entity)  ; Check nonexistence of entities (object instances or types) in locations
     (HasAll ?loc ?entity)   ; Check exclusivity of entities (object instances or types) in locations
+    (IsOpen ?l)             ; Whether a location is open
+    (IsLocked ?l)           ; Whether a location is locked (robot cannot open it)
+    (IsObserved ?l)         ; Whether a location has been observed with a detect action
   )
 
   ; FUNCTIONS : See their descriptions in the stream PDDL file
@@ -64,6 +65,8 @@
                        (not (Hallway ?l))
                        (HandEmpty ?r)
                        (At ?r ?l)
+                       (IsObserved ?l)
+                       (IsOpen ?l)
                        (At ?o ?l))
     :effect (and (Holding ?r ?o) (CanMove ?r)
                  (not (HandEmpty ?r))
@@ -80,12 +83,56 @@
                        (not (Room ?l))
                        (not (Hallway ?l))
                        (At ?r ?l)
+                       (IsObserved ?l)
+                       (IsOpen ?l)
                        (not (HandEmpty ?r))
                        (Holding ?r ?o))
     :effect (and (HandEmpty ?r) (CanMove ?r)
                  (At ?o ?l)
                  (not (Holding ?r ?o))
                  (increase (total-cost) (PickPlaceCost ?l ?o)))
+  )
+
+  ; DETECT: Detects objects in a specified location
+  (:action detect
+    :parameters (?r ?l)
+    :precondition (and (Robot ?r)
+                       (Location ?l)
+                       (not (Room ?l))
+                       (not (Hallway ?l))
+                       (At ?r ?l)
+                       (not (IsObserved ?l))
+                       (IsOpen ?l))
+    :effect (and (IsObserved ?l)
+                 (increase (total-cost) (DetectCost ?l)))
+  )
+
+  ; OPEN: Opens a specified location
+  (:action open
+    :parameters (?r ?l)
+    :precondition (and (Robot ?r)
+                       (Location ?l)
+                       (not (Room ?l))
+                       (At ?r ?l)
+                       (HandEmpty ?r)
+                       (not (IsOpen ?l))
+                       (not (IsLocked ?l)))
+    :effect (and (IsOpen ?l)
+                 (increase (total-cost) (OpenCloseCost ?l)))
+  )
+
+  ; CLOSE: Closes a specified location
+  (:action close
+    :parameters (?r ?l)
+    :precondition (and (Robot ?r)
+                       (Location ?l)
+                       (not (Room ?l))
+                       (At ?r ?l)
+                       (HandEmpty ?r)
+                       (IsOpen ?l)
+                       (not (IsLocked ?l)))
+    :effect (and (not (IsOpen ?l))
+                 (increase (total-cost) (OpenCloseCost ?l)))
   )
 
 
