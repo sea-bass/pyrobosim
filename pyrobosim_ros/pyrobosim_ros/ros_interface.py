@@ -461,6 +461,7 @@ class WorldROSWrapper(Node):
             objects = self.world.objects
 
         # Add the object and location states.
+        # TODO: Support hallway states as well.
         for loc in self.world.locations:
             loc_msg = LocationState(
                 name=loc.name,
