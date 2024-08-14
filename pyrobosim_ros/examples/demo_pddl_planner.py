@@ -97,9 +97,6 @@ class PlannerNode(Node):
                     ("HasNone", "bathroom", "banana"),
                     ("HasAll", "table", "water"),
                 ]
-                # If using the open/close/detect example, close the desk location.
-                if example == "06_open_close_detect":
-                    self.world.close_location(self.world.get_location_by_name("desk0"))
             else:
                 print(f"Invalid example: {example}")
                 return

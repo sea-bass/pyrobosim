@@ -63,18 +63,19 @@ class GoalPublisher(Node):
                 GoalPredicate(type="HasAll", args=("table", "water")),
             ]
             # If running the open/close/detect example, close the desk location.
-            future = self.set_location_state_client.call_async(
-                SetLocationState.Request(
-                    location_name="desk0",
-                    open=False,
-                    lock=False,
+            if example == "06_open_close_detect":
+                future = self.set_location_state_client.call_async(
+                    SetLocationState.Request(
+                        location_name="desk0",
+                        open=False,
+                        lock=False,
+                    )
                 )
-            )
-            start_time = time.time()
-            while not future.done():
-                rclpy.spin_once(self, timeout_sec=0.1)
-                if time.time() - start_time > 2.0:
-                    raise TimeoutError("Failed to close location before planning.")
+                start_time = time.time()
+                while not future.done():
+                    rclpy.spin_once(self, timeout_sec=0.1)
+                    if time.time() - start_time > 2.0:
+                        raise TimeoutError("Failed to close location before planning.")
         else:
             self.get_logger().info(f"Invalid example: {example}")
             return
