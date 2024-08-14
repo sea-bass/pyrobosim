@@ -70,6 +70,30 @@ def get_grasp_at_pose_cost(g, pr):
     return distance_cost + face_cost
 
 
+def get_detect_cost(loc):
+    """
+    Estimates the cost of detecting objects at a location.
+
+    :param loc: Location where the detect action occurs.
+    :type loc: Location
+    :return: Cost of performing action.
+    :rtype: float
+    """
+    return 0.5
+
+
+def get_open_close_cost(loc):
+    """
+    Estimates the detection cost of opening or closing a location.
+
+    :param loc: Location where the open or close action occurs.
+    :type loc: Location
+    :return: Cost of performing action.
+    :rtype: float
+    """
+    return 1.0
+
+
 def get_straight_line_distance(l1, l2):
     """
     Optimistically estimate the distance between two locations by getting the

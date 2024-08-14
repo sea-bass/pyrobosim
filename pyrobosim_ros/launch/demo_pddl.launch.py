@@ -32,7 +32,7 @@ def generate_launch_description():
         "example",
         default_value=TextSubstitution(text="01_simple"),
         description="Example name, must be one of "
-        + "(01_simple, 02_derived, 03_nav_stream, 04_nav_manip_stream, 05_nav_grasp_stream)",
+        + "(01_simple, 02_derived, 03_nav_stream, 04_nav_manip_stream, 05_nav_grasp_stream, 06_open_close_detect)",
     )
     verbose_arg = DeclareLaunchArgument(
         "verbose",

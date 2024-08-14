@@ -7,6 +7,7 @@ Test script showing how to perform task and motion planning with PDDLStream.
 import os
 import argparse
 import threading
+import time
 
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.gui import start_gui
@@ -20,7 +21,7 @@ def parse_args():
     parser.add_argument(
         "--example",
         default="01_simple",
-        help="Example name (01_simple, 02_derived, 03_nav_stream, 04_nav_manip_stream, 05_nav_grasp_stream)",
+        help="Example name (01_simple, 02_derived, 03_nav_stream, 04_nav_manip_stream, 05_nav_grasp_stream, 06_open_close_detect)",
     )
     parser.add_argument("--verbose", action="store_true", help="Print planning output")
     parser.add_argument(
@@ -43,6 +44,10 @@ def start_planner(world, args):
     domain_folder = os.path.join(get_default_domains_folder(), args.example)
     planner = PDDLStreamPlanner(world, domain_folder)
 
+    # Wait for the GUI to load
+    while not world.has_gui:
+        time.sleep(1.0)
+
     if args.example == "01_simple":
         # Task specification for simple example.
         goal_literals = [
@@ -56,6 +61,7 @@ def start_planner(world, args):
         "03_nav_stream",
         "04_nav_manip_stream",
         "05_nav_grasp_stream",
+        "06_open_close_detect",
     ]:
         # Task specification for derived predicate example.
         goal_literals = [
@@ -64,6 +70,9 @@ def start_planner(world, args):
             ("HasNone", "bathroom", "banana"),
             ("HasAll", "table", "water"),
         ]
+        # If using the open/close/detect example, close the desk location.
+        if args.example == "06_open_close_detect":
+            world.close_location(world.get_location_by_name("desk0"))
     else:
         print(f"Invalid example: {args.example}")
         return

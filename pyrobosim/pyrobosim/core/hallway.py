@@ -80,6 +80,7 @@ class Hallway:
         self.nav_poses = []
         self.is_open = is_open
         self.is_locked = is_locked
+        self.height = 0.0  # For compatibility with PDDLStream costs
 
         # Parse the connection method
         # If the connection is "auto" or "angle", the hallway is a simple rectangle

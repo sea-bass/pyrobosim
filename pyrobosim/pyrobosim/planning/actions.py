@@ -202,6 +202,8 @@ class TaskAction:
                 act_str += f" {self.object}"
             else:
                 act_str += " objects"
+            if self.target_location is not None:
+                act_str += f" at {self.target_location}"
         # OPEN / CLOSE
         elif self.type == "open":
             act_str += "Open"

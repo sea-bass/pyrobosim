@@ -9,6 +9,7 @@ from rclpy.node import Node
 import time
 
 from pyrobosim_msgs.msg import GoalPredicate, GoalSpecification
+from pyrobosim_msgs.srv import SetLocationState
 
 
 class GoalPublisher(Node):
@@ -18,6 +19,11 @@ class GoalPublisher(Node):
         # Declare parameters
         self.declare_parameter("example", value="01_simple")
         self.declare_parameter("verbose", value=True)
+
+        # Create a service to set the location state (for the open/close/detect example)
+        self.set_location_state_client = self.create_client(
+            SetLocationState, "set_location_state"
+        )
 
         # Publisher for a goal specification
         self.goalspec_pub = self.create_publisher(
@@ -47,6 +53,7 @@ class GoalPublisher(Node):
             "03_nav_stream",
             "04_nav_manip_stream",
             "05_nav_grasp_stream",
+            "06_open_close_detect",
         ]:
             # Goal specification for derived predicate example.
             goal_predicates = [
@@ -55,6 +62,19 @@ class GoalPublisher(Node):
                 GoalPredicate(type="HasNone", args=("bathroom", "banana")),
                 GoalPredicate(type="HasAll", args=("table", "water")),
             ]
+            # If running the open/close/detect example, close the desk location.
+            future = self.set_location_state_client.call_async(
+                SetLocationState.Request(
+                    location_name="desk0",
+                    open=False,
+                    lock=False,
+                )
+            )
+            start_time = time.time()
+            while not future.done():
+                rclpy.spin_once(self, timeout_sec=0.1)
+                if time.time() - start_time > 2.0:
+                    raise TimeoutError("Failed to close location before planning.")
         else:
             self.get_logger().info(f"Invalid example: {example}")
             return

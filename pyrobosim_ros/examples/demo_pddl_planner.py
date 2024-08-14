@@ -88,6 +88,7 @@ class PlannerNode(Node):
                 "03_nav_stream",
                 "04_nav_manip_stream",
                 "05_nav_grasp_stream",
+                "06_open_close_detect",
             ]:
                 # Task specification for derived predicate example.
                 self.latest_goal = [
@@ -96,6 +97,9 @@ class PlannerNode(Node):
                     ("HasNone", "bathroom", "banana"),
                     ("HasAll", "table", "water"),
                 ]
+                # If using the open/close/detect example, close the desk location.
+                if example == "06_open_close_detect":
+                    self.world.close_location(self.world.get_location_by_name("desk0"))
             else:
                 print(f"Invalid example: {example}")
                 return
