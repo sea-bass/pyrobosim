@@ -478,6 +478,8 @@ class WorldROSWrapper(Node):
         path = path_from_ros(goal_handle.request.path)
 
         execution_result = robot.follow_path(path, blocking=True)
+        if self.world.has_gui:
+            self.world.gui.set_buttons_during_action(True)
         goal_handle.succeed()
 
         return FollowPath.Result(
