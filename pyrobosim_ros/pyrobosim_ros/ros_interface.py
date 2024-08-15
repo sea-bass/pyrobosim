@@ -491,7 +491,7 @@ class WorldROSWrapper(Node):
 
         if self.world.has_gui:
             self.world.gui.set_buttons_during_action(True)
-        
+
         goal_handle.succeed()
         return FollowPath.Result(
             execution_result=execution_result_to_ros(robot.last_nav_result)
