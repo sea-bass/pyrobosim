@@ -1,14 +1,16 @@
 """ ROS interfaces to world model. """
 
-import os
-import numpy as np
 from functools import partial
+import numpy as np
+import os
+import time
+
+from action_msgs.msg import GoalStatus
 import rclpy
 from rclpy.action import ActionServer, CancelResponse
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
-import time
 
 from geometry_msgs.msg import Twist
 from pyrobosim.core.hallway import Hallway
@@ -479,19 +481,22 @@ class WorldROSWrapper(Node):
         path = path_from_ros(goal_handle.request.path)
         robot.follow_path(path, blocking=False)
 
-        while robot.executing_nav:
+        while robot.executing_nav and not (
+            goal_handle.status == GoalStatus.STATUS_CANCELED
+        ):
             if goal_handle.is_cancel_requested:
                 robot.cancel_actions()
                 goal_handle.canceled()
-                return FollowPath.Result(
-                    execution_result=ExecutionResult(status=ExecutionResult.CANCELED),
-                    message="Path following canceled.",
-                )
             time.sleep(0.5)
 
         if self.world.has_gui:
             self.world.gui.set_buttons_during_action(True)
 
+        if goal_handle.status == GoalStatus.STATUS_CANCELED:
+            return FollowPath.Result(
+                execution_result=ExecutionResult(status=ExecutionResult.CANCELED),
+                message="Path following canceled.",
+            )
         goal_handle.succeed()
         return FollowPath.Result(
             execution_result=execution_result_to_ros(robot.last_nav_result)
