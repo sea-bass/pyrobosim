@@ -501,7 +501,7 @@ class WorldROSWrapper(Node):
         """
         Handle a cancel request for the robot path following action.
 
-        :param goal_handle: Path following action goal handle to process.
+        :param goal_handle: Path following action goal handle to cancel.
         :type goal_handle: :class:`pyrobosim_msgs.action.FollowPath.Goal`
         :param robot: The robot instance corresponding to this request.
         :type robot: :class:`pyrobosim.core.robot.Robot`
