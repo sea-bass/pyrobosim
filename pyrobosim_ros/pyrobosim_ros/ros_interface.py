@@ -4,6 +4,7 @@ from functools import partial
 import numpy as np
 import os
 import time
+from threading import Thread
 
 from action_msgs.msg import GoalStatus
 import rclpy
@@ -479,11 +480,13 @@ class WorldROSWrapper(Node):
         :rtype: :class:`pyrobosim_msgs.action.FollowPath.Result`
         """
         path = path_from_ros(goal_handle.request.path)
-        robot.follow_path(path, blocking=False)
+        Thread(
+            target=robot.follow_path,
+            args=(path,),
+            kwargs={"use_thread": False, "blocking": True},
+        ).start()
 
-        while robot.executing_nav and not (
-            goal_handle.status == GoalStatus.STATUS_CANCELED
-        ):
+        while robot.executing_nav and goal_handle.status != GoalStatus.STATUS_CANCELED:
             if goal_handle.is_cancel_requested:
                 robot.cancel_actions()
                 goal_handle.canceled()
