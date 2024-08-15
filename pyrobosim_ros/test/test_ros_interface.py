@@ -353,14 +353,20 @@ class TestRosInterface:
         assert len(action_result.detected_objects) == 2
 
         # Verify that object detection works with filtering.
-        goal = DetectObjects.Goal(target_object="apple")
+        goal = DetectObjects.Goal(target_object="water")
         goal_future = detect_objects_action_client.send_goal_async(goal)
         result_future = execute_ros_action(goal_future)
 
         assert result_future.done()
         action_result = result_future.result().result
-        assert action_result.execution_result.status == ExecutionResult.SUCCESS
-        assert len(action_result.detected_objects) == 1
+        assert (
+            action_result.execution_result.status == ExecutionResult.EXECUTION_FAILURE
+        )
+        assert (
+            action_result.execution_result.message
+            == "Failed to detect any objects matching the query 'water'."
+        )
+        assert len(action_result.detected_objects) == 0
 
     @pytest.mark.dependency(
         name="test_shutdown_ros_interface", depends=["test_specialized_actions"]
