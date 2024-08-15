@@ -13,11 +13,18 @@ import time
 from geometry_msgs.msg import Twist
 from pyrobosim.core.hallway import Hallway
 from pyrobosim.core.locations import Location
-from pyrobosim_msgs.action import ExecuteTaskAction, ExecuteTaskPlan
+from pyrobosim_msgs.action import (
+    ExecuteTaskAction,
+    ExecuteTaskPlan,
+    FollowPath,
+    PlanPath,
+)
 from pyrobosim_msgs.msg import ExecutionResult, RobotState, LocationState, ObjectState
 from pyrobosim_msgs.srv import RequestWorldState, SetLocationState
 from .ros_conversions import (
     execution_result_to_ros,
+    path_from_ros,
+    path_to_ros,
     pose_from_ros,
     pose_to_ros,
     ros_duration_to_float,
@@ -119,6 +126,8 @@ class WorldROSWrapper(Node):
         self.robot_command_subs = []
         self.robot_state_pubs = []
         self.robot_state_pub_threads = []
+        self.robot_plan_path_servers = []
+        self.robot_follow_path_servers = []
         self.latest_robot_cmds = {}
 
         # Start a dynamics timer
@@ -172,6 +181,7 @@ class WorldROSWrapper(Node):
         while wait_for_gui and not self.world.has_gui:
             self.get_logger().info("Waiting for GUI...")
             time.sleep(1.0)
+        self.get_logger().info("PyRoboSim ROS node ready!")
 
         if auto_spin:
             try:
@@ -213,6 +223,25 @@ class WorldROSWrapper(Node):
         self.robot_state_pubs.append(pub)
         self.robot_state_pub_threads.append(pub_timer)
 
+        # Specialized action servers for path planning and execution.
+        plan_path_server = ActionServer(
+            self,
+            PlanPath,
+            f"{robot.name}/plan_path",
+            execute_callback=partial(self.robot_path_plan_callback, robot=robot),
+            callback_group=ReentrantCallbackGroup(),
+        )
+        self.robot_plan_path_servers.append(plan_path_server)
+
+        follow_path_server = ActionServer(
+            self,
+            FollowPath,
+            f"{robot.name}/follow_path",
+            execute_callback=partial(self.robot_path_follow_callback, robot=robot),
+            callback_group=ReentrantCallbackGroup(),
+        )
+        self.robot_follow_path_servers.append(follow_path_server)
+
     def remove_robot_ros_interfaces(self, robot):
         """
         Removes ROS interfaces for a specific robot.
@@ -231,6 +260,12 @@ class WorldROSWrapper(Node):
                 pub_timer = self.robot_state_pub_threads.pop(idx)
                 pub_timer.destroy()
                 del pub_thread
+                plan_path_server = self.robot_plan_path_servers.pop(idx)
+                plan_path_server.destroy()
+                del plan_path_server
+                plan_follow_server = self.robot_follow_path_servers.pop(idx)
+                plan_follow_server.destroy()
+                del plan_follow_server
 
     def dynamics_callback(self):
         """
@@ -284,6 +319,8 @@ class WorldROSWrapper(Node):
 
         :param goal_handle: Task action goal handle to process.
         :type goal_handle: :class:`pyrobosim_msgs.action.ExecuteTaskAction.Goal`
+        :return: The action execution action result.
+        :rtype: :class:`pyrobosim_msgs.action.ExecuteTaskAction.Result`
         """
         robot = self.world.get_robot_by_name(goal_handle.request.action.robot)
         if not robot:
@@ -338,6 +375,8 @@ class WorldROSWrapper(Node):
 
         :param goal_handle: Task plan action goal handle to process.
         :type goal_handle: :class:`pyrobosim_msgs.action.ExecuteTaskPlan.Goal`
+        :return: The plan execution action result.
+        :rtype: :class:`pyrobosim_msgs.action.ExecuteTaskPlan.Result`
         """
         plan_msg = goal_handle.request.plan
         robot = self.world.get_robot_by_name(plan_msg.robot)
@@ -392,6 +431,57 @@ class WorldROSWrapper(Node):
             self.get_logger().info(f"Canceling plan for robot {robot.name}.")
             robot.cancel_actions()
         return CancelResponse.ACCEPT
+
+    def robot_path_plan_callback(self, goal_handle, robot=None):
+        """
+        Handle path planning action callback for a specific robot.
+
+        :param goal_handle: Path planning action goal handle to process.
+        :type goal_handle: :class:`pyrobosim_msgs.action.PlanPath.Goal`
+        :param robot: The robot instance corresponding to this request.
+        :type robot: :class:`pyrobosim.core.robot.Robot`
+        :return: The path planning action result.
+        :rtype: :class:`pyrobosim_msgs.action.PlanPath.Result`
+        """
+        goal = goal_handle.request.target_location or pose_from_ros(
+            goal_handle.request.target_pose
+        )
+
+        path = robot.plan_path(goal=goal)
+        goal_handle.succeed()
+
+        if path is None:
+            return PlanPath.Result(
+                execution_result=ExecutionResult(
+                    status=ExecutionResult.PLANNING_FAILURE,
+                    message="Path planning failed.",
+                )
+            )
+
+        return PlanPath.Result(
+            execution_result=ExecutionResult(status=ExecutionResult.SUCCESS),
+            path=path_to_ros(path),
+        )
+
+    def robot_path_follow_callback(self, goal_handle, robot=None):
+        """
+        Handle path following action callback for a specific robot.
+
+        :param goal_handle: Path following action goal handle to process.
+        :type goal_handle: :class:`pyrobosim_msgs.action.FollowPath.Goal`
+        :param robot: The robot instance corresponding to this request.
+        :type robot: :class:`pyrobosim.core.robot.Robot`
+        :return: The path following action result.
+        :rtype: :class:`pyrobosim_msgs.action.FollowPath.Result`
+        """
+        path = path_from_ros(goal_handle.request.path)
+
+        execution_result = robot.follow_path(path, blocking=True)
+        goal_handle.succeed()
+
+        return FollowPath.Result(
+            execution_result=execution_result_to_ros(execution_result)
+        )
 
     def is_robot_busy(self, robot):
         """

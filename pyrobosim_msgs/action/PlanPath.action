@@ -1,0 +1,15 @@
+# ROS Action Definition for Path Planning
+
+# Goal
+string target_location
+geometry_msgs/Pose target_pose
+
+---
+
+# Result
+pyrobosim_msgs/ExecutionResult execution_result
+pyrobosim_msgs/Path path
+
+---
+
+# No Feedback
