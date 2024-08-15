@@ -540,11 +540,11 @@ class WorldROSWrapper(Node):
         Handle object detection action callback for a specific robot.
 
         :param goal_handle: Object detection action goal handle to process.
-        :type goal_handle: :class:`pyrobosim_msgs.action.FollowPath.Goal`
+        :type goal_handle: :class:`pyrobosim_msgs.action.DetectObjects.Goal`
         :param robot: The robot instance corresponding to this request.
         :type robot: :class:`pyrobosim.core.robot.Robot`
         :return: The object detection action result.
-        :rtype: :class:`pyrobosim_msgs.action.FollowPath.Result`
+        :rtype: :class:`pyrobosim_msgs.action.DetectObjects.Result`
         """
 
         execution_result = robot.detect_objects(
