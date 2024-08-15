@@ -938,7 +938,7 @@ class Robot:
 
     def cancel_actions(self):
         """Cancels any currently running actions for the robot."""
-        if not (self.executing_action or self.executing_plan):
+        if not (self.executing_action or self.executing_plan or self.executing_nav):
             warnings.warn("There is no running action or plan to cancel.")
             return
 

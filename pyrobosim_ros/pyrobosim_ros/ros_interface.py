@@ -239,6 +239,7 @@ class WorldROSWrapper(Node):
             FollowPath,
             f"{robot.name}/follow_path",
             execute_callback=partial(self.robot_path_follow_callback, robot=robot),
+            cancel_callback=partial(self.robot_path_cancel_callback, robot=robot),
             callback_group=ReentrantCallbackGroup(),
         )
         self.robot_follow_path_servers.append(follow_path_server)
@@ -476,15 +477,39 @@ class WorldROSWrapper(Node):
         :rtype: :class:`pyrobosim_msgs.action.FollowPath.Result`
         """
         path = path_from_ros(goal_handle.request.path)
+        robot.follow_path(path, blocking=False)
 
-        execution_result = robot.follow_path(path, blocking=True)
+        while robot.executing_nav:
+            if goal_handle.is_cancel_requested:
+                robot.cancel_actions()
+                goal_handle.canceled()
+                return FollowPath.Result(
+                    execution_result=ExecutionResult(status=ExecutionResult.CANCELED),
+                    message="Path following canceled.",
+                )
+            time.sleep(0.5)
+
         if self.world.has_gui:
             self.world.gui.set_buttons_during_action(True)
+        
         goal_handle.succeed()
-
         return FollowPath.Result(
-            execution_result=execution_result_to_ros(execution_result)
+            execution_result=execution_result_to_ros(robot.last_nav_result)
         )
+
+    def robot_path_cancel_callback(self, goal_handle, robot=None):
+        """
+        Handle a cancel request for the robot path following action.
+
+        :param goal_handle: Path following action goal handle to process.
+        :type goal_handle: :class:`pyrobosim_msgs.action.FollowPath.Goal`
+        :param robot: The robot instance corresponding to this request.
+        :type robot: :class:`pyrobosim.core.robot.Robot`
+        :return: The goal handle cancellation response.
+        :rtype: :class:`rclpy.action.CancelResponse`
+        """
+        self.get_logger().info(f"Canceling path following for {robot}.")
+        return CancelResponse.ACCEPT
 
     def is_robot_busy(self, robot):
         """
