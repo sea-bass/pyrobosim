@@ -53,6 +53,7 @@ class WorldROSWrapper(Node):
         This node will:
             * Publish states for each robot on ``<robot_name>/robot_state`` topics.
             * Subscribe to velocity commands for each robot on ``<robot_name>/cmd_vel`` topics.
+            * Allow path planning and following for each robot on ``<robot_name>/plan_path`` and ``<robot_name>/follow_path`` action servers, respectively.
             * Serve a ``request_world_state`` service to retrieve the world state for planning.
             * Serve a ``execute_action`` action server to run single actions on a robot.
             * Serve a ``execute_task_plan`` action server to run entire task plans on a robot.
