@@ -292,8 +292,6 @@ class Robot:
         self,
         path,
         realtime_factor=1.0,
-        use_thread=True,
-        blocking=False,
     ):
         """
         Follows a specified path using the attached path executor.
@@ -303,10 +301,6 @@ class Robot:
         :param realtime_factor: A real-time multiplier on execution speed,
             defaults to 1.0.
         :type realtime_factor: float
-        :param use_thread: If True, spawns a new thread to execute the path.
-        :type use_thread: bool
-        :param blocking: If path executes in a new thread, set to True to block
-            and wait for the thread to complete before returning.
         :return: An object describing the execution result.
         :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
@@ -333,29 +327,13 @@ class Robot:
             # Trivial case where the path is empty.
             result = ExecutionResult(status=ExecutionStatus.SUCCESS)
             self.last_nav_result = result
-        elif use_thread:
-            # Start a thread with the path execution.
-            self.nav_thread = threading.Thread(
-                target=self.path_executor.execute, args=(path, realtime_factor)
-            )
-            self.nav_thread.start()
-            if blocking:
-                self.nav_thread.join()
-                result = self.last_nav_result
-            else:
-                # Assume success, but check the postconditions later.
-                result = ExecutionResult(status=ExecutionStatus.SUCCESS)
         else:
             # Execute in this thread and check that the robot made it to its goal pose.
             result = self.path_executor.execute(path, realtime_factor)
 
         # Check that the robot made it to its goal pose at the end of execution.
         at_goal_pose = self.get_pose().is_approx(path.poses[-1])
-        if (
-            not (use_thread and not blocking)
-            and result.is_success()
-            and not at_goal_pose
-        ):
+        if result.is_success() and not at_goal_pose:
             result = ExecutionResult(
                 status=ExecutionStatus.POSTCONDITION_FAILURE,
                 message="Robot is not at its intended target pose.",
@@ -387,8 +365,6 @@ class Robot:
         goal=None,
         path=None,
         realtime_factor=1.0,
-        use_thread=True,
-        blocking=False,
     ):
         """
         Executes a navigation task, which combines path planning and following.
@@ -404,10 +380,6 @@ class Robot:
         :param realtime_factor: A real-time multiplier on execution speed,
             defaults to 1.0.
         :type realtime_factor: float
-        :param use_thread: If True, spawns a new thread to execute the path.
-        :type use_thread: bool
-        :param blocking: If path executes in a new thread, set to True to block
-            and wait for the thread to complete before returning.
         :return: An object describing the execution result.
         :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
@@ -447,12 +419,7 @@ class Robot:
                 )
                 return self.last_nav_result
 
-        return self.follow_path(
-            path,
-            realtime_factor=realtime_factor,
-            use_thread=use_thread,
-            blocking=blocking,
-        )
+        return self.follow_path(path, realtime_factor=realtime_factor)
 
     def pick_object(self, obj_query, grasp_pose=None):
         """
@@ -885,10 +852,7 @@ class Robot:
                     goal=action.target_location,
                     path=path,
                     realtime_factor=1.0,
-                    use_thread=True,
-                    blocking=True,
                 )
-            self.executing_nav = False
 
         elif action.type == "pick":
             if self.world.has_gui:

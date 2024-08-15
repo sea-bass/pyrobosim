@@ -172,22 +172,9 @@ class TestRobot:
         # Non-threaded option -- blocks
         robot.set_pose(init_pose)
         path = robot.plan_path(goal=goal_pose)
-        result = robot.follow_path(path, use_thread=False)
-        assert result.status == ExecutionStatus.SUCCESS
+        result = robot.follow_path(path)
 
-        # Threaded option with blocking
-        robot.set_pose(init_pose)
-        path = robot.plan_path(goal=goal_pose)
-        result = robot.follow_path(path, use_thread=True, blocking=True)
         assert result.status == ExecutionStatus.SUCCESS
-
-        # Threaded option without blocking -- must check result
-        robot.set_pose(init_pose)
-        path = robot.plan_path(goal=goal_pose)
-        robot.follow_path(path, use_thread=True, blocking=False)
-        assert robot.executing_nav
-        while robot.executing_nav:
-            time.sleep(0.1)
         assert not robot.executing_nav
         assert robot.last_nav_result.is_success()
         pose = robot.get_pose()
@@ -238,7 +225,7 @@ class TestRobot:
 
         # Follow the path and check that it fails.
         with pytest.warns(UserWarning) as warn_info:
-            result = robot.follow_path(path, use_thread=False)
+            result = robot.follow_path(path)
         assert (
             warn_info[0].message.args[0]
             == "Remaining path is in collision. Aborting execution."
@@ -250,7 +237,7 @@ class TestRobot:
         for hallway in self.test_world.hallways:
             self.test_world.open_hallway(hallway)
         path = robot.plan_path(goal=goal_pose)
-        result = robot.follow_path(path, use_thread=False)
+        result = robot.follow_path(path)
         assert result.status == ExecutionStatus.SUCCESS
 
     def test_robot_manipulation(self):

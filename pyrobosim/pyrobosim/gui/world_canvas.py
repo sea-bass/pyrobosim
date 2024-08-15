@@ -54,8 +54,6 @@ class NavRunner(QRunnable):
         robot.navigate(
             goal=self.goal,
             path=self.path,
-            use_thread=True,
-            blocking=True,
             realtime_factor=self.canvas.realtime_factor,
         )
 

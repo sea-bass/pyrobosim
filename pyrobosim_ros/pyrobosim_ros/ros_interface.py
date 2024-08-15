@@ -479,12 +479,10 @@ class WorldROSWrapper(Node):
         :return: The path following action result.
         :rtype: :class:`pyrobosim_msgs.action.FollowPath.Result`
         """
+
+        # Follow path in a separate thread so we can check for cancellation in parallel.
         path = path_from_ros(goal_handle.request.path)
-        Thread(
-            target=robot.follow_path,
-            args=(path,),
-            kwargs={"use_thread": False, "blocking": True},
-        ).start()
+        Thread(target=robot.follow_path, args=(path,)).start()
 
         while robot.executing_nav and goal_handle.status != GoalStatus.STATUS_CANCELED:
             if goal_handle.is_cancel_requested:
