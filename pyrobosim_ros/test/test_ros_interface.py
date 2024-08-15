@@ -12,7 +12,12 @@ from rclpy.node import Node
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.utils.general import get_data_folder
 
-from pyrobosim_msgs.action import ExecuteTaskAction, ExecuteTaskPlan
+from pyrobosim_msgs.action import (
+    ExecuteTaskAction,
+    ExecuteTaskPlan,
+    FollowPath,
+    PlanPath,
+)
 from pyrobosim_msgs.msg import ExecutionResult, RobotState, TaskAction, TaskPlan
 from pyrobosim_msgs.srv import RequestWorldState, SetLocationState
 from pyrobosim_ros.ros_interface import WorldROSWrapper
@@ -292,8 +297,46 @@ class TestRosInterface:
         assert robot.location.parent == world.get_entity_by_name("counter0")
         assert world.get_entity_by_name("water1").parent == robot.location
 
+    @staticmethod
     @pytest.mark.dependency(
-        name="test_shutdown_ros_interface", depends=["test_execute_task_plan"]
+        name="test_path_plan_and_follow", depends=["test_execute_task_plan"]
+    )
+    def test_path_plan_and_follow():
+        """Test that we can run the specialized path planning and following actions."""
+
+        path_plan_action_client = ActionClient(
+            TestRosInterface.node, PlanPath, "robot0/plan_path"
+        )
+        path_follow_action_client = ActionClient(
+            TestRosInterface.node, FollowPath, "robot0/follow_path"
+        )
+
+        # Verify that path planning succeeds.
+        goal = PlanPath.Goal(target_location="my_desk")
+        goal_future = path_plan_action_client.send_goal_async(goal)
+        result_future = execute_ros_action(goal_future)
+
+        assert result_future.done()
+        action_result = result_future.result().result
+        assert action_result.execution_result.status == ExecutionResult.SUCCESS
+        assert len(action_result.path.poses) >= 2
+
+        # Verify that path following succeeds.
+        goal = FollowPath.Goal(path=action_result.path)
+        goal_future = path_follow_action_client.send_goal_async(goal)
+        result_future = execute_ros_action(goal_future)
+
+        assert result_future.done()
+        action_result = result_future.result().result
+        assert action_result.execution_result.status == ExecutionResult.SUCCESS
+
+        # Check that the robot actually reached its destination.
+        world = TestRosInterface.ros_interface.world
+        robot = world.get_robot_by_name("robot0")
+        assert robot.location.parent == world.get_entity_by_name("my_desk")
+
+    @pytest.mark.dependency(
+        name="test_shutdown_ros_interface", depends=["test_path_plan_and_follow"]
     )
     def test_shutdown_ros_interface(self):
         """Shuts down rclpy at the end of all other tests."""

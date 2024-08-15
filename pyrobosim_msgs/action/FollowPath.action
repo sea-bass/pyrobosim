@@ -1,0 +1,13 @@
+# ROS Action Definition for Path Following
+
+# Goal
+pyrobosim_msgs/Path path
+
+---
+
+# Result
+pyrobosim_msgs/ExecutionResult execution_result
+
+---
+
+# No Feedback

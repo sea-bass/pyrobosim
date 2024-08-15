@@ -209,6 +209,8 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.pick_button.setEnabled(state)
         self.place_button.setEnabled(state)
         self.detect_button.setEnabled(state)
+        self.open_button.setEnabled(state)
+        self.close_button.setEnabled(state)
         self.rand_pose_button.setEnabled(state)
 
     ####################
