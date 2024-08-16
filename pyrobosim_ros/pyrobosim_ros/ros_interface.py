@@ -546,10 +546,14 @@ class WorldROSWrapper(Node):
         :return: The object detection action result.
         :rtype: :class:`pyrobosim_msgs.action.DetectObjects.Result`
         """
-
-        execution_result = robot.detect_objects(
-            target_object=goal_handle.request.target_object
-        )
+        if self.world.has_gui:
+            execution_result = self.world.gui.canvas.detect_objects(
+                robot, goal_handle.request.target_object
+            )
+        else:
+            execution_result = robot.detect_objects(
+                target_object=goal_handle.request.target_object
+            )
 
         detected_objects_msg = [
             ObjectState(
