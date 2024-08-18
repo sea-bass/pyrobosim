@@ -32,8 +32,11 @@ set(srv_files
 )
 
 set(action_files
+  "action/DetectObjects.action"
   "action/ExecuteTaskAction.action"
   "action/ExecuteTaskPlan.action"
+  "action/FollowPath.action"
+  "action/PlanPath.action"
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}

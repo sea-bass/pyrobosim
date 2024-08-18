@@ -1,0 +1,15 @@
+# ROS Action Definition for Object Detection
+
+# Goal
+# This can be a specific object name or an object category.
+string target_object
+
+---
+
+# Result
+pyrobosim_msgs/ExecutionResult execution_result
+ObjectState[] detected_objects
+
+---
+
+# No Feedback

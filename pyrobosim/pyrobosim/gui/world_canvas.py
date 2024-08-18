@@ -55,8 +55,6 @@ class NavRunner(QRunnable):
         robot.navigate(
             goal=self.goal,
             path=self.path,
-            use_thread=True,
-            blocking=True,
             realtime_factor=self.canvas.realtime_factor,
         )
 
@@ -396,6 +394,8 @@ class WorldCanvas(FigureCanvasQTAgg):
                 for artist in self.path_planner_artists["path"]:
                     artist.remove()
                 self.path_planner_artists["path"] = path_planner_artists.get("path", [])
+
+            self.draw_and_sleep()
 
     def nav_animation_callback(self):
         """Timer callback function to animate navigating robots."""
