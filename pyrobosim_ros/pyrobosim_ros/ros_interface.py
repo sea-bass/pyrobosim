@@ -25,6 +25,8 @@ from pyrobosim_msgs.action import (
 )
 from pyrobosim_msgs.msg import ExecutionResult, RobotState, LocationState, ObjectState
 from pyrobosim_msgs.srv import RequestWorldState, SetLocationState
+from std_srvs.srv import Trigger
+
 from .ros_conversions import (
     execution_result_to_ros,
     path_from_ros,
@@ -58,6 +60,7 @@ class WorldROSWrapper(Node):
             * Publish states for each robot on ``<robot_name>/robot_state`` topics.
             * Subscribe to velocity commands for each robot on ``<robot_name>/cmd_vel`` topics.
             * Allow path planning and following for each robot on ``<robot_name>/plan_path`` and ``<robot_name>/follow_path`` action servers, respectively.
+            * Allow path planner reset on a ``<robot_name>/reset_path_planner`` service server.
             * Allow object detection for each robot on a ``<robot_name>/detect_objects`` action server.
             * Serve a ``request_world_state`` service to retrieve the world state for planning.
             * Serve a ``execute_action`` action server to run single actions on a robot.
@@ -134,6 +137,7 @@ class WorldROSWrapper(Node):
         self.robot_state_pub_threads = []
         self.robot_plan_path_servers = []
         self.robot_follow_path_servers = []
+        self.robot_reset_path_planner_servers = []
         self.robot_object_detection_servers = []
         self.latest_robot_cmds = {}
 
@@ -252,6 +256,15 @@ class WorldROSWrapper(Node):
         )
         self.robot_follow_path_servers.append(follow_path_server)
 
+        # Service server for resetting path planner.
+        reset_path_planner_srv = self.create_service(
+            Trigger,
+            f"{robot.name}/reset_path_planner",
+            partial(self.robot_path_planner_reset_callback, robot=robot),
+            callback_group=ReentrantCallbackGroup(),
+        )
+        self.robot_reset_path_planner_servers.append(reset_path_planner_srv)
+
         # Specialized action server for object detection.
         object_detection_server = ActionServer(
             self,
@@ -286,6 +299,11 @@ class WorldROSWrapper(Node):
                 plan_follow_server = self.robot_follow_path_servers.pop(idx)
                 plan_follow_server.destroy()
                 del plan_follow_server
+                reset_path_planner_server = self.robot_reset_path_planner_servers.pop(
+                    idx
+                )
+                self.destroy_service(reset_path_planner_server)
+                del reset_path_planner_server
                 detect_objects_server = self.robot_object_detection_servers.pop(idx)
                 detect_objects_server.destroy()
                 del detect_objects_server
@@ -534,6 +552,33 @@ class WorldROSWrapper(Node):
         """
         self.get_logger().info(f"Canceling path following for {robot}.")
         return CancelResponse.ACCEPT
+
+    def robot_path_planner_reset_callback(self, request, response, robot=None):
+        """
+        Resets a robot's path planner as a response to a service request.
+
+        :param request: The service request.
+        :type request: :class:`std_srvs.srv.Trigger.Request`
+        :param response: The unmodified service response.
+        :type response: :class:`std_srvs.srv.Trigger.Response`
+        :return: The modified service response containing the reset result.
+        :rtype: :class:`std_srvs.srv.Trigger.Response`
+        """
+        self.get_logger().info(f"Resetting path planner for {robot}.")
+
+        if not robot.path_planner:
+            message = f"{robot} does not have a path planner. Cannot reset."
+            self.get_logger().warn(message)
+            return Trigger.Response(success=False, message=message)
+
+        robot.path_planner.reset()
+        if self.world.has_gui:
+            show_graphs = True
+            path = None
+            self.world.gui.canvas.show_planner_and_path_signal.emit(
+                robot, show_graphs, path
+            )
+        return Trigger.Response(success=True)
 
     def robot_detect_objects_callback(self, goal_handle, robot=None):
         """
