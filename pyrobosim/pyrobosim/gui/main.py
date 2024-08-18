@@ -151,6 +151,9 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.close_button = QtWidgets.QPushButton("Close")
         self.close_button.clicked.connect(self.on_close_click)
         self.action_layout.addWidget(self.close_button, 1, 2)
+        self.toggle_collision_polygons_checkbox = QtWidgets.QCheckBox("Collision Polygons")
+        self.toggle_collision_polygons_checkbox.clicked.connect(self.on_toggle_click)
+        self.action_layout.addWidget(self.toggle_collision_polygons_checkbox, 2, 0)
 
         # World layout (Matplotlib affordances)
         self.world_layout = QtWidgets.QVBoxLayout()
@@ -303,4 +306,12 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         if robot and robot.location:
             print(f"[{robot.name}] Closing {robot.location}")
             self.canvas.close_location(robot)
+            self.update_button_state()
+
+    def on_toggle_click(self):
+        """Callback to toggle collision polygons."""
+        robot = self.get_current_robot()
+        if robot and robot.location:
+            print(f"[{robot.name}] Toggling collision polygons")
+            self.canvas.toggle_collision_polygons()
             self.update_button_state()
