@@ -3,7 +3,7 @@ import os
 
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.gui import start_gui
-from pyrobosim.navigation import PathPlanner
+from pyrobosim.navigation import RRTPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
@@ -21,7 +21,7 @@ def test_rrt():
         "rrt_star": True,
         "compress_path": False,
     }
-    rrt = PathPlanner("rrt", **planner_config)
+    rrt = RRTPlanner(**planner_config)
     start = Pose(x=-0.5, y=-0.5)
     goal = Pose(x=3.0, y=3.0)
 

@@ -3,7 +3,7 @@
 Path Planners
 =============
 
-This section explains how to use and optionally extend the path planners in ``pyrobosim``.
+This section explains how to use (and optionally extend) path planners in ``pyrobosim``.
 
 ``PathPlanner`` Interface
 -------------------------

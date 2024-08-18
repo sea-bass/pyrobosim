@@ -10,7 +10,7 @@ from .world import World
 from ..navigation import (
     ConstantVelocityExecutor,
     OccupancyGrid,
-    PathPlanner,
+    get_planner_class,
 )
 from ..planning.actions import ExecutionOptions
 from ..utils.general import replace_special_yaml_tokens
@@ -126,7 +126,7 @@ class WorldYamlLoader:
                 max_angular_acceleration=robot_data.get(
                     "max_angular_acceleration", np.inf
                 ),
-                path_planner=self.get_local_path_planner(robot_data),
+                path_planner=self.get_path_planner(robot_data),
                 path_executor=self.get_path_executor(robot_data),
                 grasp_generator=self.get_grasp_generator(robot_data),
                 partial_observability=robot_data.get("partial_observability", False),
@@ -143,8 +143,8 @@ class WorldYamlLoader:
                 pose = None
             self.world.add_robot(robot, loc=loc, pose=pose)
 
-    def get_local_path_planner(self, robot_data):
-        """Gets local planner path planner to a robot."""
+    def get_path_planner(self, robot_data):
+        """Gets path planner to add to a robot."""
         if "path_planner" not in robot_data:
             return None
 
@@ -165,8 +165,9 @@ class WorldYamlLoader:
         # We only need to include a world object if occupancy grid was not specified.
         if not occupancy_grid:
             planner_data["world"] = self.world
-        path_planner = PathPlanner(planner_type, **planner_data)
 
+        planner_class = get_planner_class(planner_type)
+        path_planner = planner_class(**planner_data)
         return path_planner
 
     def get_path_executor(self, robot_data):

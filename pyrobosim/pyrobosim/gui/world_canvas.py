@@ -12,6 +12,7 @@ from matplotlib.transforms import Affine2D
 from PySide6.QtCore import QRunnable, QThreadPool, QTimer, Signal
 
 from pyrobosim.core.robot import Robot
+from pyrobosim.navigation.visualization import plot_path_planner
 from pyrobosim.utils.motion import Path
 
 
@@ -341,7 +342,7 @@ class WorldCanvas(FigureCanvasQTAgg):
             self.fig.canvas.flush_events()
             time.sleep(0.005)
 
-    def show_planner_and_path(self, robot=None, show_graph=True, path=None):
+    def show_planner_and_path(self, robot=None, show_graphs=True, path=None):
         """
         Plot the path planner and latest path, if specified.
         This planner could be global (property of the world)
@@ -349,8 +350,8 @@ class WorldCanvas(FigureCanvasQTAgg):
 
         :param robot: If set to a Robot instance, uses that robot for display.
         :type robot: :class:`pyrobosim.core.robot.Robot`, optional
-        :param show_graph: If True, shows the path planner's latest graph(s).
-        :type show_graph: bool
+        :param show_graphs: If True, shows the path planner's latest graph(s).
+        :type show_graphs: bool
         :param path: Path to goal location, defaults to None.
         :type path: :class:`pyrobosim.utils.motion.Path`, optional
         """
@@ -363,8 +364,10 @@ class WorldCanvas(FigureCanvasQTAgg):
         with self.draw_lock:
             color = robot.color if robot is not None else "m"
             if robot.path_planner:
-                path_planner_artists = robot.path_planner.plot(
-                    self.axes, show_graph=show_graph, path=path, path_color=color
+                graphs = robot.path_planner.get_graphs() if show_graphs else []
+                path = path or robot.path_planner.get_latest_path()
+                path_planner_artists = plot_path_planner(
+                    self.axes, graphs=graphs, path=path, path_color=color
                 )
 
                 for artist in self.path_planner_artists["graph"]:

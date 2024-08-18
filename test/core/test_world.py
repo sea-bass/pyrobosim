@@ -175,11 +175,11 @@ class TestWorldModeling:
     def test_add_robot():
         """Tests adding a robot to the world"""
         from pyrobosim.core import Robot
-        from pyrobosim.navigation import PathPlanner
+        from pyrobosim.navigation import RRTPlanner
 
         world_robots = TestWorldModeling.world.robots
         path_planner_config = {"world": TestWorldModeling.world}
-        path_planner = PathPlanner("rrt", **path_planner_config)
+        path_planner = RRTPlanner(**path_planner_config)
 
         # Add a robot at a specific location, but let the pose be sampled.
         robot = Robot(name="test_robot", radius=0.05, path_planner=path_planner)

@@ -6,14 +6,17 @@ Motion planning utilities.
 class Path:
     """Representation of a path for motion planning."""
 
-    def __init__(self, poses=[]):
+    def __init__(self, poses=[], planning_time=None):
         """
         Creates a Path object instance.
 
         :param poses: List of poses representing a path.
         :type poses: list[:class:`pyrobosim.utils.pose.Pose`], optional
+        :param planning_time: The time taken to generate this path.
+        :type planning_time: float, optional
         """
         self.set_poses(poses)
+        self.planning_time = planning_time
 
     def set_poses(self, poses):
         """
@@ -86,6 +89,13 @@ class Path:
         for i, p in enumerate(self.poses):
             print_str += f"\n  {i + 1}. {p}"
         print_str += f"\nTotal Length: {self.length:.3f}"
+        if self.planning_time:
+            if self.planning_time > 0.01:
+                print_str += f"\nPlanning time: {self.planning_time:3f} seconds"
+            else:
+                print_str += (
+                    f"\nPlanning time: {self.planning_time * 1000.0:3f} milliseconds"
+                )
         print(print_str)
 
 
