@@ -4,19 +4,34 @@ import math
 import time
 import warnings
 from astar import AStar
-from pyrobosim.utils.pose import Pose
-from pyrobosim.utils.motion import Path, reduce_waypoints_grid
+
+from .occupancy_grid import OccupancyGrid
+from ..utils.pose import Pose
+from ..utils.motion import Path, reduce_waypoints_grid
 
 
 class AStarPlanner(AStar):
     """Occupancy grid based implementation of the A* path planning algorithm."""
 
     def __init__(
-        self, *, grid, heuristic="euclidean", diagonal_motion=True, compress_path=False
+        self,
+        *,
+        world,
+        grid_resolution,
+        grid_inflation_radius,
+        heuristic="euclidean",
+        diagonal_motion=True,
+        compress_path=False,
     ):
         """
         Creates an instance of grid based A* planner.
 
+        :param world: World object to use in the planner.
+        :type world: :class:`pyrobosim.core.world.World`
+        :param grid_resolution: The resolution of the occupancy grid, in meters.
+        :type grid_resolution: float
+        :param grid_inflation_radius: The inflation radius of the occupancy grid, in meters.
+        :type grid_inflation_radius: float
         :param heuristic: The metric to be used as heuristic ('manhattan', 'euclidean', 'none').
         :type heuristic: string
         :param diagonal_motion: If true, expand nodes using diagonal motion.
@@ -25,13 +40,15 @@ class AStarPlanner(AStar):
         :type compress_path: bool
         """
         super().__init__()
-
-        self.grid = grid
+        self.world = world
+        self.grid_resolution = grid_resolution
+        self.grid_inflation_radius = grid_inflation_radius
         self.heuristic = heuristic
         self.diagonal_motion = diagonal_motion
         self.compress_path = compress_path
         self._set_actions()
         self._set_heuristic()
+        self.reset()
 
     def _set_actions(self):
         """
@@ -112,6 +129,14 @@ class AStarPlanner(AStar):
             if not self.grid.is_occupied((x, y)):
                 neighbors_list.append((x, y))
         return neighbors_list
+
+    def reset(self):
+        """Resets the occupancy grid."""
+        self.grid = OccupancyGrid.from_world(
+            self.world,
+            resolution=self.grid_resolution,
+            inflation_radius=self.grid_inflation_radius,
+        )
 
     def plan(self, start, goal):
         """

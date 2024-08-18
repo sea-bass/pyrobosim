@@ -149,22 +149,9 @@ class WorldYamlLoader:
             return None
 
         planner_data = robot_data["path_planner"]
+        planner_data["world"] = self.world
         planner_type = planner_data["type"]
         planner_data.pop("type")
-        occupancy_grid = planner_data.get("occupancy_grid", None)
-        if occupancy_grid:
-            resolution = occupancy_grid.get("resolution", 0.05)
-            inflation_radius = occupancy_grid.get("inflation_radius", 0.15)
-            occupancy_grid = OccupancyGrid.from_world(
-                self.world, resolution, inflation_radius
-            )
-            # Remove the metadata about occupancy grid.
-            planner_data.pop("occupancy_grid")
-            planner_data["grid"] = occupancy_grid
-
-        # We only need to include a world object if occupancy grid was not specified.
-        if not occupancy_grid:
-            planner_data["world"] = self.world
 
         planner_class = get_planner_class(planner_type)
         path_planner = planner_class(**planner_data)

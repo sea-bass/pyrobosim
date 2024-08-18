@@ -12,7 +12,6 @@ from pyrobosim.gui import start_gui
 from pyrobosim.manipulation import GraspGenerator, ParallelGraspProperties
 from pyrobosim.navigation import (
     ConstantVelocityExecutor,
-    OccupancyGrid,
     AStarPlanner,
     PRMPlanner,
     RRTPlanner,
@@ -159,9 +158,9 @@ def create_world(multirobot=False):
             partial_observability=args.partial_observability,
         )
         planner_config_astar = {
-            "grid": OccupancyGrid.from_world(
-                world, resolution=0.05, inflation_radius=0.15
-            ),
+            "world": world,
+            "grid_resolution": 0.05,
+            "grid_inflation_radius": 0.15,
             "diagonal_motion": True,
             "heuristic": "euclidean",
         }

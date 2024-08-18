@@ -49,7 +49,6 @@ class WorldGraphPlanner:
         """
         Initializes the graph from the entity nodes in the world linked to this planner.
         """
-
         # Create a search graph from the nodes in the world.
         self.graph = SearchGraph(color=[0, 0.4, 0.8], color_alpha=0.5, use_planner=True)
         for entity in itertools.chain(
