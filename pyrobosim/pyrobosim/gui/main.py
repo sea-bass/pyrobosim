@@ -151,7 +151,9 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.close_button = QtWidgets.QPushButton("Close")
         self.close_button.clicked.connect(self.on_close_click)
         self.action_layout.addWidget(self.close_button, 1, 2)
-        self.toggle_collision_polygons_checkbox = QtWidgets.QCheckBox("Collision Polygons")
+        self.toggle_collision_polygons_checkbox = QtWidgets.QCheckBox(
+            "Collision Polygons"
+        )
         self.toggle_collision_polygons_checkbox.clicked.connect(self.on_toggle_click)
         self.action_layout.addWidget(self.toggle_collision_polygons_checkbox, 2, 0)
 

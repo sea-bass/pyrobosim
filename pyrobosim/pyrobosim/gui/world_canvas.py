@@ -253,7 +253,7 @@ class WorldCanvas(FigureCanvasQTAgg):
                 room.remove()
 
             self.room_patches = [room.viz_patch for room in self.world.rooms]
-            
+
             for room in self.world.rooms:
                 self.axes.add_patch(room.viz_patch)
                 self.axes.text(
