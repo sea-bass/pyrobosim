@@ -151,17 +151,17 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.close_button = QtWidgets.QPushButton("Close")
         self.close_button.clicked.connect(self.on_close_click)
         self.action_layout.addWidget(self.close_button, 1, 2)
-        self.toggle_collision_polygons_checkbox = QtWidgets.QCheckBox(
-            "Collision Polygons"
-        )
-        self.toggle_collision_polygons_checkbox.clicked.connect(self.on_toggle_click)
-        self.action_layout.addWidget(self.toggle_collision_polygons_checkbox, 2, 0)
 
         # World layout (Matplotlib affordances)
         self.world_layout = QtWidgets.QVBoxLayout()
         self.nav_toolbar = NavigationToolbar2QT(self.canvas, self)
         self.addToolBar(QtCore.Qt.BottomToolBarArea, self.nav_toolbar)
         self.world_layout.addWidget(self.canvas)
+        self.toggle_collision_polygons_checkbox = QtWidgets.QCheckBox(
+            "Show collision polygons"
+        )
+        self.toggle_collision_polygons_checkbox.clicked.connect(self.on_collision_polygon_toggle_click)
+        self.world_layout.addWidget(self.toggle_collision_polygons_checkbox)
 
         # Main layout
         self.main_layout = QtWidgets.QVBoxLayout(self.main_widget)
@@ -312,10 +312,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             self.canvas.close_location(robot)
             self.update_button_state()
 
-    def on_toggle_click(self):
+    def on_collision_polygon_toggle_click(self):
         """Callback to toggle collision polygons."""
-        robot = self.get_current_robot()
-        if robot and robot.location:
-            print(f"[{robot.name}] Toggling collision polygons")
-            self.canvas.toggle_collision_polygons()
-            self.update_button_state()
+        self.canvas.toggle_collision_polygons()
+        self.canvas.draw_signal.emit()

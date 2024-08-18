@@ -150,8 +150,6 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.location_patches = []
         self.location_texts = []
         self.path_planner_artists = {"graph": [], "path": []}
-
-        # Debug displays (TODO: Should be available from GUI).
         self.show_collision_polygons = False
 
         # Connect signals
@@ -174,6 +172,8 @@ class WorldCanvas(FigureCanvasQTAgg):
             self.nav_animator.start(sleep_time_msec)
 
     def toggle_collision_polygons(self):
+        """Shows/hides collision polygons."""
+        print("Disabling collision polygons" if self.show_collision_polygons else "Enabling collision polygons")
         self.show_collision_polygons = not self.show_collision_polygons
         self.show_hallways()
         self.show_rooms()
