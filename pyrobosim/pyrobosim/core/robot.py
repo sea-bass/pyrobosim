@@ -688,7 +688,7 @@ class Robot:
 
         # If a target object was specified, look for a matching instance.
         # We should only return SUCCESS if one such instance was found.
-        if target_object is None:
+        if not target_object:
             self.last_detected_objects = self.location.children
             return ExecutionResult(status=ExecutionStatus.SUCCESS)
         else:

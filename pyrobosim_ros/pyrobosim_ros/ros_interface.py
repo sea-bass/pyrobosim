@@ -17,6 +17,7 @@ from geometry_msgs.msg import Twist
 from pyrobosim.core.hallway import Hallway
 from pyrobosim.core.locations import Location
 from pyrobosim_msgs.action import (
+    DetectObjects,
     ExecuteTaskAction,
     ExecuteTaskPlan,
     FollowPath,
@@ -57,6 +58,7 @@ class WorldROSWrapper(Node):
             * Publish states for each robot on ``<robot_name>/robot_state`` topics.
             * Subscribe to velocity commands for each robot on ``<robot_name>/cmd_vel`` topics.
             * Allow path planning and following for each robot on ``<robot_name>/plan_path`` and ``<robot_name>/follow_path`` action servers, respectively.
+            * Allow object detection for each robot on a ``<robot_name>/detect_objects`` action server.
             * Serve a ``request_world_state`` service to retrieve the world state for planning.
             * Serve a ``execute_action`` action server to run single actions on a robot.
             * Serve a ``execute_task_plan`` action server to run entire task plans on a robot.
@@ -132,6 +134,7 @@ class WorldROSWrapper(Node):
         self.robot_state_pub_threads = []
         self.robot_plan_path_servers = []
         self.robot_follow_path_servers = []
+        self.robot_object_detection_servers = []
         self.latest_robot_cmds = {}
 
         # Start a dynamics timer
@@ -227,13 +230,15 @@ class WorldROSWrapper(Node):
         self.robot_state_pubs.append(pub)
         self.robot_state_pub_threads.append(pub_timer)
 
+        robot_action_callback_group = ReentrantCallbackGroup()
+
         # Specialized action servers for path planning and execution.
         plan_path_server = ActionServer(
             self,
             PlanPath,
             f"{robot.name}/plan_path",
             execute_callback=partial(self.robot_path_plan_callback, robot=robot),
-            callback_group=ReentrantCallbackGroup(),
+            callback_group=robot_action_callback_group,
         )
         self.robot_plan_path_servers.append(plan_path_server)
 
@@ -243,9 +248,19 @@ class WorldROSWrapper(Node):
             f"{robot.name}/follow_path",
             execute_callback=partial(self.robot_path_follow_callback, robot=robot),
             cancel_callback=partial(self.robot_path_cancel_callback, robot=robot),
-            callback_group=ReentrantCallbackGroup(),
+            callback_group=robot_action_callback_group,
         )
         self.robot_follow_path_servers.append(follow_path_server)
+
+        # Specialized action server for object detection.
+        object_detection_server = ActionServer(
+            self,
+            DetectObjects,
+            f"{robot.name}/detect_objects",
+            execute_callback=partial(self.robot_detect_objects_callback, robot=robot),
+            callback_group=robot_action_callback_group,
+        )
+        self.robot_object_detection_servers.append(object_detection_server)
 
     def remove_robot_ros_interfaces(self, robot):
         """
@@ -271,6 +286,9 @@ class WorldROSWrapper(Node):
                 plan_follow_server = self.robot_follow_path_servers.pop(idx)
                 plan_follow_server.destroy()
                 del plan_follow_server
+                detect_objects_server = self.robot_object_detection_servers.pop(idx)
+                detect_objects_server.destroy()
+                del detect_objects_server
 
     def dynamics_callback(self):
         """
@@ -516,6 +534,42 @@ class WorldROSWrapper(Node):
         """
         self.get_logger().info(f"Canceling path following for {robot}.")
         return CancelResponse.ACCEPT
+
+    def robot_detect_objects_callback(self, goal_handle, robot=None):
+        """
+        Handle object detection action callback for a specific robot.
+
+        :param goal_handle: Object detection action goal handle to process.
+        :type goal_handle: :class:`pyrobosim_msgs.action.DetectObjects.Goal`
+        :param robot: The robot instance corresponding to this request.
+        :type robot: :class:`pyrobosim.core.robot.Robot`
+        :return: The object detection action result.
+        :rtype: :class:`pyrobosim_msgs.action.DetectObjects.Result`
+        """
+        if self.world.has_gui:
+            execution_result = self.world.gui.canvas.detect_objects(
+                robot, goal_handle.request.target_object
+            )
+        else:
+            execution_result = robot.detect_objects(
+                target_object=goal_handle.request.target_object
+            )
+
+        detected_objects_msg = [
+            ObjectState(
+                name=obj.name,
+                category=obj.category,
+                parent=obj.parent.name,
+                pose=pose_to_ros(obj.pose),
+            )
+            for obj in robot.last_detected_objects
+        ]
+
+        goal_handle.succeed()
+        return DetectObjects.Result(
+            execution_result=execution_result_to_ros(execution_result),
+            detected_objects=detected_objects_msg,
+        )
 
     def is_robot_busy(self, robot):
         """
