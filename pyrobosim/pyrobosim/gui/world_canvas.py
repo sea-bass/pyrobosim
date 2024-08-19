@@ -145,11 +145,10 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.obj_patches = []
         self.obj_texts = []
         self.hallway_patches = []
+        self.room_patches = []
         self.location_patches = []
         self.location_texts = []
         self.path_planner_artists = {"graph": [], "path": []}
-
-        # Debug displays (TODO: Should be available from GUI).
         self.show_collision_polygons = False
 
         # Connect signals
@@ -170,6 +169,17 @@ class WorldCanvas(FigureCanvasQTAgg):
             self.nav_animator = QTimer()
             self.nav_animator.timeout.connect(self.nav_animation_callback)
             self.nav_animator.start(sleep_time_msec)
+
+    def toggle_collision_polygons(self):
+        """Shows/hides collision polygons."""
+        self.show_collision_polygons = not self.show_collision_polygons
+        print(
+            "Enabling collision polygons"
+            if self.show_collision_polygons
+            else "Disabling collision polygons"
+        )
+        self.show_hallways()
+        self.show_rooms()
 
     def show_robots(self):
         """Draws robots as circles with heading lines for visualization."""
@@ -239,6 +249,31 @@ class WorldCanvas(FigureCanvasQTAgg):
                     self.axes.add_patch(coll_patch)
                     self.hallway_patches.append(coll_patch)
 
+    def show_rooms(self):
+        """Draws rooms in the world."""
+        with self.draw_lock:
+            for room in self.room_patches:
+                room.remove()
+
+            self.room_patches = [room.viz_patch for room in self.world.rooms]
+
+            for room in self.world.rooms:
+                self.axes.add_patch(room.viz_patch)
+                self.axes.text(
+                    room.centroid[0],
+                    room.centroid[1],
+                    room.name,
+                    color=room.viz_color,
+                    fontsize=12,
+                    ha="center",
+                    va="top",
+                    clip_on=True,
+                )
+                if self.show_collision_polygons:
+                    coll_patch = room.get_collision_patch()
+                    self.axes.add_patch(coll_patch)
+                    self.room_patches.append(coll_patch)
+
     def show_locations(self):
         """Draws locations and object spawns in the world."""
         with self.draw_lock:
@@ -307,21 +342,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         Displays all entities in the world (robots, rooms, objects, etc.).
         """
         # Entities in the world.
-        self.room_patches = [room.viz_patch for room in self.world.rooms]
-        for room in self.world.rooms:
-            self.axes.add_patch(room.viz_patch)
-            self.axes.text(
-                room.centroid[0],
-                room.centroid[1],
-                room.name,
-                color=room.viz_color,
-                fontsize=12,
-                ha="center",
-                va="top",
-                clip_on=True,
-            )
-            if self.show_collision_polygons:
-                self.axes.add_patch(room.get_collision_patch())
+        self.show_rooms()
         self.show_hallways()
         self.show_locations()
         self.show_objects()
