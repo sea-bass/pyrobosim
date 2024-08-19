@@ -9,7 +9,6 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.pyplot import Circle
 from matplotlib.transforms import Affine2D
-from matplotlib.artist import Artist
 from PySide6.QtCore import QRunnable, QThreadPool, QTimer, Signal
 
 from pyrobosim.core.robot import Robot
