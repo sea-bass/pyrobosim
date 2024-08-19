@@ -160,7 +160,9 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.toggle_collision_polygons_checkbox = QtWidgets.QCheckBox(
             "Show collision polygons"
         )
-        self.toggle_collision_polygons_checkbox.clicked.connect(self.on_collision_polygon_toggle_click)
+        self.toggle_collision_polygons_checkbox.clicked.connect(
+            self.on_collision_polygon_toggle_click
+        )
         self.world_layout.addWidget(self.toggle_collision_polygons_checkbox)
 
         # Main layout

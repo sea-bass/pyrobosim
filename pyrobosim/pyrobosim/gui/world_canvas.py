@@ -173,7 +173,11 @@ class WorldCanvas(FigureCanvasQTAgg):
 
     def toggle_collision_polygons(self):
         """Shows/hides collision polygons."""
-        print("Disabling collision polygons" if self.show_collision_polygons else "Enabling collision polygons")
+        print(
+            "Disabling collision polygons"
+            if self.show_collision_polygons
+            else "Enabling collision polygons"
+        )
         self.show_collision_polygons = not self.show_collision_polygons
         self.show_hallways()
         self.show_rooms()
