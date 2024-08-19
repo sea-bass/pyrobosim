@@ -77,7 +77,7 @@ jobs:
           file: docker/Dockerfile
           target: pyrobosim
           context: .
-          tags: iridiumxi/pyrobosim:base
+          tags: pyrobosim:base
           push: false
           outputs: type=docker,dest=./pyrobosim_base.tar
         if: ${{ github.event.pull_request.head.repo.fork }}
@@ -87,7 +87,7 @@ jobs:
           docker run \
             -w /opt/pyrobosim \
             --volume ./test/results:/opt/pyrobosim/test/results:rw \
-            iridiumxi/pyrobosim:base \
+            pyrobosim:base \
             /bin/bash -c 'PYTHONPATH=./dependencies/pddlstream:${PYTHONPATH} ./test/run_tests.bash'
         if: ${{ github.event.pull_request.head.repo.fork }}
 
@@ -168,7 +168,7 @@ jobs:
           context: .
           build-args: |
             ROS_DISTRO=${{ matrix.ros_distro }}
-          tags: iridiumxi/pyrobosim:${{ matrix.ros_distro }}
+          tags: pyrobosim:${{ matrix.ros_distro }}
           push: false
           outputs: type=docker,dest=./pyrobosim_${{ matrix.ros_distro }}.tar
         if: ${{ github.event.pull_request.head.repo.fork }}
@@ -178,7 +178,7 @@ jobs:
           docker run \
             --volume ./test/:/pyrobosim_ws/test/:rw \
             --volume ./pytest.ini:/pyrobosim_ws/pytest.ini:rw \
-            iridiumxi/pyrobosim:${{ matrix.ros_distro }} \
+            pyrobosim:${{ matrix.ros_distro }} \
             /bin/bash -c './test/run_tests.bash ${{ matrix.ros_distro }}'
         if: ${{ github.event.pull_request.head.repo.fork }}
 
