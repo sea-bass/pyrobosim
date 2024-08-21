@@ -71,7 +71,7 @@ jobs:
         if: ${{ !github.event.pull_request.head.repo.fork }}
 
       # These steps run from a fork
-      - name: Build Docker image (no cache)
+      - name: Build Docker image (no push)
         uses: docker/build-push-action@v5
         with:
           file: docker/Dockerfile
@@ -79,6 +79,8 @@ jobs:
           context: .
           tags: pyrobosim:base
           push: false
+          cache-from: |
+            type=registry,ref=iridiumxi/pyrobosim:buildcache-base
           outputs: type=docker,dest=./pyrobosim_base.tar
         if: ${{ github.event.pull_request.head.repo.fork }}
       - name: Run tests (from loaded image)
@@ -160,7 +162,7 @@ jobs:
         if: ${{ !github.event.pull_request.head.repo.fork }}
 
       # These steps run from a fork
-      - name: Build Docker image (no cache)
+      - name: Build Docker image (no push)
         uses: docker/build-push-action@v5
         with:
           file: docker/Dockerfile
@@ -170,6 +172,8 @@ jobs:
             ROS_DISTRO=${{ matrix.ros_distro }}
           tags: pyrobosim:${{ matrix.ros_distro }}
           push: false
+          cache-from: |
+            type=registry,ref=iridiumxi/pyrobosim:buildcache-${{ matrix.ros_distro }}
           outputs: type=docker,dest=./pyrobosim_${{ matrix.ros_distro }}.tar
         if: ${{ github.event.pull_request.head.repo.fork }}
       - name: Run tests (from loaded image)
