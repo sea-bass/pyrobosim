@@ -35,7 +35,7 @@ services:
       - QT_X11_NO_MITSHM=1
       - NVIDIA_DRIVER_CAPABILITIES=all
     volumes:
-    # Mount the source code
+      # Mount the source code and testing utilities.
       - ./pyrobosim/:/pyrobosim_ws/src/pyrobosim/:rw
       - ./pyrobosim_msgs/:/pyrobosim_ws/src/pyrobosim_msgs/:rw
       - ./pyrobosim_ros/:/pyrobosim_ws/src/pyrobosim_ros/:rw
