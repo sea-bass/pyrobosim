@@ -40,7 +40,7 @@ then
     pushd "${WORKSPACE_DIR}" > /dev/null || exit
     colcon test \
         --event-handlers console_cohesion+ \
-        --pytest-with-coverage --pytest-args " --cov-report term" || SUCCESS=$?
+        --pytest-with-coverage || SUCCESS=$?
     echo ""
     colcon test-result --verbose \
      | tee "${TEST_RESULTS_DIR}/test_results_ros.xml"
