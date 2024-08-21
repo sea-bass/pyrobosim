@@ -1,6 +1,7 @@
 lark
 py
-pytest<8.1.0
+pytest
 pytest-cov
 pytest-dependency
 pytest-html
+setuptools<72.0.0  # colcon test will fail with newer versions

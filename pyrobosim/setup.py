@@ -2,8 +2,6 @@ import os
 from pathlib import Path
 from setuptools import setup, find_packages
 
-# This is for standalone (non-ROS) use.
-
 
 def get_files_in_folder(directory):
     """Helper function to get all files in a specific directory."""
@@ -31,6 +29,11 @@ install_requires = [
     "trimesh",
 ]
 
+# This will gracefully fall back to an empty string if the README.md cannot be read.
+# This can happen if building this package with `colcon build --symlink-install`.
+readme_path = Path(__file__).parent / "README.md"
+readme_text = readme_path.read_text() if readme_path.exists() else ""
+
 setup(
     name=project_name,
     version="2.0.0",
@@ -38,11 +41,12 @@ setup(
     author="Sebastian Castro",
     author_email="sebas.a.castro@gmail.com",
     description="ROS 2 enabled 2D mobile robot simulator for behavior prototyping.",
-    long_description=(Path(__file__).parent / "README.md").read_text(),
+    long_description=readme_text,
     long_description_content_type="text/markdown",
     license="MIT",
     install_requires=install_requires,
     packages=find_packages(),
     package_data={project_name: get_files_in_folder(data_dir)},
+    tests_require=["pytest"],
     zip_safe=True,
 )
