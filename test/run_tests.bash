@@ -21,14 +21,14 @@ set -o pipefail
 # Run regular pytest tests
 echo "Running Python package unit tests..."
 python3 -m pytest "${SCRIPT_DIR}" \
- --cov="${SCRIPT_DIR}/../pyrobosim/pyrobosim" --cov-branch \
- --cov-report term \
- --cov-report html:"${TEST_RESULTS_DIR}/test_results_coverage_html" \
- --cov-report xml:"${TEST_RESULTS_DIR}/test_results_coverage.xml" \
- --junitxml="${TEST_RESULTS_DIR}/test_results.xml" \
- --html="${TEST_RESULTS_DIR}/test_results.html" \
- --self-contained-html \
- | tee "${TEST_RESULTS_DIR}/pytest-coverage.txt" || SUCCESS=$?
+    --cov="${SCRIPT_DIR}/../pyrobosim/pyrobosim" --cov-branch \
+    --cov-report term \
+    --cov-report html:"${TEST_RESULTS_DIR}/test_results_coverage_html" \
+    --cov-report xml:"${TEST_RESULTS_DIR}/test_results_coverage.xml" \
+    --junitxml="${TEST_RESULTS_DIR}/test_results.xml" \
+    --html="${TEST_RESULTS_DIR}/test_results.html" \
+    --self-contained-html \
+    | tee "${TEST_RESULTS_DIR}/pytest-coverage.txt" || SUCCESS=$?
 echo ""
 
 # Run ROS package tests, if using a ROS distro
@@ -43,7 +43,7 @@ then
         --pytest-with-coverage || SUCCESS=$?
     echo ""
     colcon test-result --verbose \
-     | tee "${TEST_RESULTS_DIR}/test_results_ros.xml"
+        | tee "${TEST_RESULTS_DIR}/test_results_ros.xml"
     popd > /dev/null || exit
 fi
 
