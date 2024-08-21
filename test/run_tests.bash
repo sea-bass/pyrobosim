@@ -39,7 +39,7 @@ then
     echo "Running ROS package unit tests from ${WORKSPACE_DIR}..."
     pushd "${WORKSPACE_DIR}" > /dev/null || exit
     colcon test \
-        --packages-select pyrobosim_ros\
+        --packages-select pyrobosim_ros \
         --event-handlers console_cohesion+ \
         --pytest-with-coverage || SUCCESS=$?
     echo ""
