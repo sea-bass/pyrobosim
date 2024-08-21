@@ -125,7 +125,7 @@ jobs:
             --volume ./test/:/pyrobosim_ws/src/test/:rw \
             --volume ./pytest.ini:/pyrobosim_ws/pytest.ini:rw \
             ${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:${{ matrix.ros_distro }} \
-            /bin/bash -c './test/run_tests.bash ${{ matrix.ros_distro }}'
+            /bin/bash -c './src/test/run_tests.bash ${{ matrix.ros_distro }}'
       - name: Upload test results
         uses: actions/upload-artifact@v4
         with:
