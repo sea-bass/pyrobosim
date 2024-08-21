@@ -20,8 +20,9 @@ set -o pipefail
 
 # Run regular pytest tests
 echo "Running Python package unit tests..."
-python3 -m pytest "${SCRIPT_DIR}/../pyrobosim" \
-    --cov="${SCRIPT_DIR}/../pyrobosim/pyrobosim" --cov-branch \
+pushd "${SCRIPT_DIR}/../pyrobosim" || exit
+python3 -m pytest . \
+    --cov="pyrobosim" --cov-branch \
     --cov-report term \
     --cov-report html:"${TEST_RESULTS_DIR}/test_results_coverage_html" \
     --cov-report xml:"${TEST_RESULTS_DIR}/test_results_coverage.xml" \
@@ -30,6 +31,7 @@ python3 -m pytest "${SCRIPT_DIR}/../pyrobosim" \
     --self-contained-html \
     | tee "${TEST_RESULTS_DIR}/pytest-coverage.txt" || SUCCESS=$?
 echo ""
+popd || exit
 
 # Run ROS package tests, if using a ROS distro.
 ROS_DISTRO=$1
