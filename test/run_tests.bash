@@ -20,7 +20,7 @@ set -o pipefail
 
 # Run regular pytest tests
 echo "Running Python package unit tests..."
-python3 -m pytest "${SCRIPT_DIR}" \
+python3 -m pytest "${SCRIPT_DIR}/../pyrobosim" \
     --cov="${SCRIPT_DIR}/../pyrobosim/pyrobosim" --cov-branch \
     --cov-report term \
     --cov-report html:"${TEST_RESULTS_DIR}/test_results_coverage_html" \
@@ -31,7 +31,7 @@ python3 -m pytest "${SCRIPT_DIR}" \
     | tee "${TEST_RESULTS_DIR}/pytest-coverage.txt" || SUCCESS=$?
 echo ""
 
-# Run ROS package tests, if using a ROS distro
+# Run ROS package tests, if using a ROS distro.
 ROS_DISTRO=$1
 if [[ -n "${ROS_DISTRO}" && -n "${COLCON_PREFIX_PATH}" ]]
 then
@@ -39,6 +39,7 @@ then
     echo "Running ROS package unit tests from ${WORKSPACE_DIR}..."
     pushd "${WORKSPACE_DIR}" > /dev/null || exit
     colcon test \
+        --packages-select pyrobosim_ros\
         --event-handlers console_cohesion+ \
         --pytest-with-coverage || SUCCESS=$?
     echo ""
