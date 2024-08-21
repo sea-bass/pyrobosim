@@ -20,18 +20,20 @@ set -o pipefail
 
 # Run regular pytest tests
 echo "Running Python package unit tests..."
-python3 -m pytest "${SCRIPT_DIR}" \
- --cov="${SCRIPT_DIR}/../pyrobosim/pyrobosim" --cov-branch \
- --cov-report term \
- --cov-report html:"${TEST_RESULTS_DIR}/test_results_coverage_html" \
- --cov-report xml:"${TEST_RESULTS_DIR}/test_results_coverage.xml" \
- --junitxml="${TEST_RESULTS_DIR}/test_results.xml" \
- --html="${TEST_RESULTS_DIR}/test_results.html" \
- --self-contained-html \
- | tee "${TEST_RESULTS_DIR}/pytest-coverage.txt" || SUCCESS=$?
+pushd "${SCRIPT_DIR}/../pyrobosim" || exit
+python3 -m pytest . \
+    --cov="pyrobosim" --cov-branch \
+    --cov-report term \
+    --cov-report html:"${TEST_RESULTS_DIR}/test_results_coverage_html" \
+    --cov-report xml:"${TEST_RESULTS_DIR}/test_results_coverage.xml" \
+    --junitxml="${TEST_RESULTS_DIR}/test_results.xml" \
+    --html="${TEST_RESULTS_DIR}/test_results.html" \
+    --self-contained-html \
+    | tee "${TEST_RESULTS_DIR}/pytest-coverage.txt" || SUCCESS=$?
 echo ""
+popd || exit
 
-# Run ROS package tests, if using a ROS distro
+# Run ROS package tests, if using a ROS distro.
 ROS_DISTRO=$1
 if [[ -n "${ROS_DISTRO}" && -n "${COLCON_PREFIX_PATH}" ]]
 then
@@ -39,11 +41,12 @@ then
     echo "Running ROS package unit tests from ${WORKSPACE_DIR}..."
     pushd "${WORKSPACE_DIR}" > /dev/null || exit
     colcon test \
+        --packages-select pyrobosim_ros \
         --event-handlers console_cohesion+ \
-        --pytest-with-coverage --pytest-args " --cov-report term" || SUCCESS=$?
+        --pytest-with-coverage || SUCCESS=$?
     echo ""
     colcon test-result --verbose \
-     | tee "${TEST_RESULTS_DIR}/test_results_ros.xml"
+        | tee "${TEST_RESULTS_DIR}/test_results_ros.xml"
     popd > /dev/null || exit
 fi
 
