@@ -37,7 +37,7 @@ class RRTPlanner:
         :param bidirectional: If True, uses bidirectional RRT to grow trees
             from both start and goal.
         :type bidirectional: bool
-        :param rrt_connect: If True, uses RRT-connect to bias tree growth
+        :param rrt_connect: If True, uses RRTConnect to bias tree growth
             towards goals.
         :type rrt_connect: bool
         :param rrt_star: If True, uses RRT* to rewire trees to smooth and
@@ -169,7 +169,7 @@ class RRTPlanner:
 
             # See if the new nodes can directly connect to the goal.
             # This is done either as a single connection within max distance,
-            # or using RRT-Connect.
+            # or using RRTConnect.
             if self.bidirectional:
                 if connected_node:
                     # If we added a node to the start tree,
@@ -319,7 +319,7 @@ class RRTPlanner:
         """
         Try to connect a node ``n_curr`` to a target node ``n_tgt``.
         This will keep extending the current node towards the target if
-        RRT-Connect is enabled, or else will just try once.
+        RRTConnect is enabled, or else will just try once.
 
         :param graph: The tree object.
         :type graph: :class:`pyrobosim.utils.search_graph.SearchGraph`
@@ -351,7 +351,7 @@ class RRTPlanner:
                 return True, n_tgt
 
             if self.rrt_connect:
-                # If using RRT-Connect, keep trying to connect.
+                # If using RRTConnect, keep trying to connect.
                 n_new = self.extend(n_curr, n_tgt.pose)
                 if self.world.is_connectable(
                     n_curr.pose,

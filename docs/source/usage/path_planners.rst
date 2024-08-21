@@ -68,7 +68,9 @@ For example, this planner accepts a world and a few parameters and builds an occ
                 inflation_radius=grid_inflation_radius,
             )
 
-If you want any data to be resettable -- for example, if the world changes and you want to generate a new occupancy grid -- you can create a ``reset()`` method and put your code in there.
+Next, you should implement a ``reset()`` method.
+This is needed if, for example, the world changes and you want to generate new persistent data structures such as a new occupancy grid or roadmap.
+If your planner does not have any such data, you still must implement this.
 
 .. code-block:: python
 
@@ -86,7 +88,7 @@ If you want any data to be resettable -- for example, if the world changes and y
                 inflation_radius=self.grid_inflation_radius,
             )
 
-Next you need to implement the actual path planning.
+Then, you need to implement the actual path planning.
 This is done using a ``plan()`` method that accepts a start and goal pose and returns a ``Path`` object.
 
 .. code-block:: python

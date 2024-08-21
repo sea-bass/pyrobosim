@@ -7,7 +7,6 @@ from pyrobosim.gui import start_gui
 from pyrobosim.navigation import AStarPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
-from pyrobosim.navigation import OccupancyGrid
 
 # Load a test world.
 world_file = os.path.join(get_data_folder(), "test_world.yaml")
@@ -31,8 +30,9 @@ def demo_astar():
     goal = Pose(x=3.0, y=3.0)
     robot.set_pose(start)
     robot.set_path_planner(planner)
-    result = robot.plan_path(start, goal)
-    planner.info()
+    path = robot.plan_path(start, goal)
+    if path:
+        path.print_details()
 
 
 if __name__ == "__main__":

@@ -30,8 +30,8 @@ def get_planner_class(planner_type):
     :param planner_type: The type of path planner.
     :type planner_type: str
     :return: The class corresponding to the planner type specified.
-        Raises a `ValueError` if the planner type is invalid.
     :rtype: PathPlanner
+    :raises ValueError: if the planner type is invalid.
     """
     if planner_type not in PATH_PLANNERS_MAP:
         raise ValueError(f"{planner_type} is not a supported planner type.")

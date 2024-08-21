@@ -28,8 +28,9 @@ def test_rrt():
     robot = world.robots[0]
     robot.set_pose(start)
     robot.set_path_planner(rrt)
-    result = robot.plan_path(start, goal)
-    rrt.info()
+    path = robot.plan_path(start, goal)
+    if path:
+        path.print_details()
 
 
 if __name__ == "__main__":
