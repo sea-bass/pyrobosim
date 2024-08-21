@@ -157,13 +157,21 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.nav_toolbar = NavigationToolbar2QT(self.canvas, self)
         self.addToolBar(QtCore.Qt.BottomToolBarArea, self.nav_toolbar)
         self.world_layout.addWidget(self.canvas)
+
+        # Other options
+        self.other_options_layout = QtWidgets.QGridLayout()
         self.toggle_collision_polygons_checkbox = QtWidgets.QCheckBox(
             "Show collision polygons"
         )
         self.toggle_collision_polygons_checkbox.clicked.connect(
             self.on_collision_polygon_toggle_click
         )
-        self.world_layout.addWidget(self.toggle_collision_polygons_checkbox)
+        self.other_options_layout.addWidget(
+            self.toggle_collision_polygons_checkbox, 0, 0
+        )
+        self.cancel_action_button = QtWidgets.QPushButton("Cancel ongoing action")
+        self.cancel_action_button.clicked.connect(self.on_cancel_action_click)
+        self.other_options_layout.addWidget(self.cancel_action_button, 0, 1)
 
         # Main layout
         self.main_layout = QtWidgets.QVBoxLayout(self.main_widget)
@@ -171,6 +179,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.main_layout.addLayout(self.queries_layout)
         self.main_layout.addLayout(self.action_layout)
         self.main_layout.addLayout(self.world_layout)
+        self.main_layout.addLayout(self.other_options_layout)
 
         self.main_widget.setLayout(self.main_layout)
         self.setCentralWidget(self.main_widget)
@@ -317,4 +326,9 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
     def on_collision_polygon_toggle_click(self):
         """Callback to toggle collision polygons."""
         self.canvas.toggle_collision_polygons()
+        self.canvas.draw_signal.emit()
+
+    def on_cancel_action_click(self):
+        """Callback to cancel any running action"""
+        [r.cancel_actions() for r in self.world.robots]
         self.canvas.draw_signal.emit()
