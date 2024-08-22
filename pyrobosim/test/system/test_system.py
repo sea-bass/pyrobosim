@@ -177,5 +177,4 @@ class TestSystem:
         ]
 
         for nav_query in nav_queries:
-            # Navigate to location
             self.cancel_helper(nav_query)
