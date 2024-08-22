@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-"""Unit tests for A-star planner"""
+"""Unit tests for A* planner"""
 
 import os
 
 from pyrobosim.core import WorldYamlLoader
-from pyrobosim.navigation import OccupancyGrid, PathPlanner
+from pyrobosim.navigation import AStarPlanner, OccupancyGrid
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
@@ -22,14 +22,14 @@ def test_astar():
 
     robot = world.robots[0]
     planner_config = {
-        "grid": OccupancyGrid.from_world(
-            world, resolution=0.05, inflation_radius=1.5 * robot.radius
-        ),
+        "world": world,
+        "grid_resolution": 0.05,
+        "grid_inflation_radius": 1.5 * robot.radius,
         "diagonal_motion": True,
         "heuristic": "euclidean",
         "compress_path": False,
     }
-    astar_planner = PathPlanner("astar", **planner_config)
+    astar_planner = AStarPlanner(**planner_config)
 
     full_path = astar_planner.plan(start, goal).poses
 
@@ -39,14 +39,14 @@ def test_astar():
 
     # Plan for same start and goal with path compression enabled
     planner_config = {
-        "grid": OccupancyGrid.from_world(
-            world, resolution=0.05, inflation_radius=1.5 * robot.radius
-        ),
+        "world": world,
+        "grid_resolution": 0.05,
+        "grid_inflation_radius": 1.5 * robot.radius,
         "diagonal_motion": True,
         "heuristic": "euclidean",
         "compress_path": True,
     }
-    astar_planner = PathPlanner("astar", **planner_config)
+    astar_planner = AStarPlanner(**planner_config)
 
     compressed_path = astar_planner.plan(start, goal).poses
 

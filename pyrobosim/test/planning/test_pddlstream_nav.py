@@ -13,7 +13,7 @@ if importlib.util.find_spec("pddlstream") is None:
 
 from pyrobosim.core import Robot, World
 from pyrobosim.gui import start_gui
-from pyrobosim.navigation import ConstantVelocityExecutor, PathPlanner
+from pyrobosim.navigation import ConstantVelocityExecutor, RRTPlanner
 from pyrobosim.planning.pddlstream.planner import PDDLStreamPlanner
 from pyrobosim.planning.pddlstream.utils import get_default_domains_folder
 from pyrobosim.utils.general import get_data_folder
@@ -72,7 +72,7 @@ def create_test_world(add_hallway=True):
         "collision_check_step_dist": 0.025,
         "max_connection_dist": 1.0,
     }
-    rrt = PathPlanner("rrt", **planner_config)
+    rrt = RRTPlanner(**planner_config)
     robot.set_path_planner(rrt)
 
     return world

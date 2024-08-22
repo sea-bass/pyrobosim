@@ -11,7 +11,7 @@ import numpy as np
 
 from pyrobosim.core import Robot, World, WorldYamlLoader
 from pyrobosim.gui import start_gui
-from pyrobosim.navigation import ConstantVelocityExecutor, PathPlanner
+from pyrobosim.navigation import ConstantVelocityExecutor, RRTPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 from pyrobosim_ros.ros_interface import WorldROSWrapper
@@ -92,7 +92,7 @@ def create_world():
         "rewire_radius": 1.5,
         "compress_path": False,
     }
-    path_planner = PathPlanner("rrt", **planner_config)
+    path_planner = RRTPlanner(**planner_config)
     robot = Robot(
         name="robot",
         radius=0.1,

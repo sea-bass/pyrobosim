@@ -319,7 +319,7 @@ class TestWorldYamlLoading:
             GraspGenerator,
             ParallelGraspProperties,
         )
-        from pyrobosim.navigation import PathPlanner
+        from pyrobosim.navigation import RRTPlanner
         from pyrobosim.navigation.execution import ConstantVelocityExecutor
 
         loader = TestWorldYamlLoading.yaml_loader
@@ -413,13 +413,12 @@ class TestWorldYamlLoading:
         assert robot1.battery_level == 50.0
 
         path_planner = robot1.path_planner
-        assert isinstance(path_planner, PathPlanner)
-        assert path_planner.planner_type == "rrt"
-        assert path_planner.planner_config["collision_check_step_dist"] == 0.025
-        assert path_planner.planner_config["max_connection_dist"] == 0.5
-        assert path_planner.planner_config["bidirectional"] == True
-        assert path_planner.planner_config["rrt_star"] == True
-        assert path_planner.planner_config["rewire_radius"] == 1.5
+        assert isinstance(path_planner, RRTPlanner)
+        assert path_planner.collision_check_step_dist == 0.025
+        assert path_planner.max_connection_dist == 0.5
+        assert path_planner.bidirectional
+        assert path_planner.rrt_star
+        assert path_planner.rewire_radius == 1.5
 
         path_executor = robot1.path_executor
         assert isinstance(path_executor, ConstantVelocityExecutor)

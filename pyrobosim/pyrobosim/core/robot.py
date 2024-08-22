@@ -282,9 +282,9 @@ class Robot:
 
         path = self.path_planner.plan(start, goal)
         if self.world and self.world.has_gui:
-            show_graph = True
+            show_graphs = True
             self.world.gui.canvas.show_planner_and_path_signal.emit(
-                self, show_graph, path
+                self, show_graphs, path
             )
         return path
 
@@ -403,9 +403,9 @@ class Robot:
                 )
                 return self.last_nav_result
         elif self.world and self.world.has_gui:
-            show_graph = False
+            show_graphs = False
             self.world.gui.canvas.show_planner_and_path_signal.emit(
-                self, show_graph, path
+                self, show_graphs, path
             )
 
         # Simulate execution options.

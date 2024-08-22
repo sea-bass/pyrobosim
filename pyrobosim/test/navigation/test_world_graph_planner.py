@@ -6,7 +6,7 @@ import os
 import pytest
 
 from pyrobosim.core import WorldYamlLoader
-from pyrobosim.navigation import PathPlanner
+from pyrobosim.navigation import WorldGraphPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
@@ -19,7 +19,7 @@ def test_world_graph_default():
     planner_config = {
         "world": world,
     }
-    planner = PathPlanner("world_graph", **planner_config)
+    planner = WorldGraphPlanner(**planner_config)
     start = Pose(x=-1.6, y=2.8)
     goal = Pose(x=2.5, y=3.0)
 
@@ -39,7 +39,7 @@ def test_world_graph_short_connection_distance():
         "collision_check_step_dist": 0.025,
         "max_connection_dist": 1.0,
     }
-    planner = PathPlanner("world_graph", **planner_config)
+    planner = WorldGraphPlanner(**planner_config)
     start = Pose(x=-1.6, y=2.8)
     goal = Pose(x=2.5, y=3.0)
 

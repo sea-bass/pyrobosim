@@ -3,93 +3,130 @@
 Path Planners
 =============
 
-This section explains how to use and optionally extend the path planners in ``pyrobosim``.
+This section explains how to use (and optionally extend) path planners in ``pyrobosim``.
 
-``PathPlanner`` Interface
--------------------------
+Path Planner Definitions
+------------------------
 
-``pyrobosim`` uses an interface based approach to path planners.
-A specific planner can be selected through the planner interface, by providing the planner type and a set of planner-specific keyword arguments.
+The ``pyrobosim/navigation`` module contains all path planner implementations.
+
+In the ``__init__.py`` file available, you will see a list of implemented planner classes that looks like this:
 
 .. code-block:: python
 
-    from pyrobosim.navigation import PathPlanner
-
-    path_planner = PathPlanner("planner_type", **planner_config)
-
-Available planner types and their available implementations can be found below :
-
-- ``"astar"`` : :py:mod:`pyrobosim.navigation.a_star`
-- ``"prm"`` : :py:mod:`pyrobosim.navigation.prm`
-- ``"rrt"`` : :py:mod:`pyrobosim.navigation.rrt`
-
-Each planner can potentially have multiple implementations.
-A specific implementation can be selected by providing the relevant parameters in the keyword arguments contained in ``**planner_config``.
+    # Planners
+    from .a_star import AStarPlanner
+    from .rrt import RRTPlanner
+    from .prm import PRMPlanner
+    from .world_graph import WorldGraphPlanner
 
 
-Adding New Planners
--------------------
+    PATH_PLANNERS_MAP = {
+        "astar": AStarPlanner,
+        "rrt": RRTPlanner,
+        "prm": PRMPlanner,
+        "world_graph": WorldGraphPlanner,
+    }
 
-The path planners in ``pyrobosim`` are designed to be extensible, so that you can add your own implementation for an existing planner type, or even a new planner type.
+When loading path planners from YAML, the ``planner.type`` entry will correspond to one of these entries in the ``PATH_PLANNERS_MAP`` dictionary.
+As such, if you would like to add your own planner, you can do so in this file.
 
-For example, to add a new planner type called ``NewPlanner``:
+.. code-block:: python
 
-- Create the planner factory class ``NewPlanner`` which inherits :py:mod:`pyrobosim.navigation.planner_base`.
+    # Planners
+    from .a_star import AStarPlanner
+    from .rrt import RRTPlanner
+    from .prm import PRMPlanner
+    from .world_graph import WorldGraphPlanner
+    from my_module.my_file import MyNewPlanner
 
-    .. code-block:: python
 
-        from pyrobosim.navigation import PathPlannerBase
+    PATH_PLANNERS_MAP = {
+        "astar": AStarPlanner,
+        "rrt": RRTPlanner,
+        "prm": PRMPlanner,
+        "world_graph": WorldGraphPlanner,
+        "my_planner": MyNewPlanner,
+    }
 
-        class NewPlanner(PathPlannerBase):
-            pass
 
-- Create concrete implementations of your planner similar to :py:class:`pyrobosim.navigation.rrt.RRTPlannerPolygon`.
+What to Implement in a Planner
+------------------------------
 
-    .. code-block:: python
+The path planners implemented in ``pyrobosim`` provide general functionality to plan paths in a known world, as well as data for visualization in the UI.
 
-        class NewPlannerPolygon:
-            pass
+First, you want to make a constructor that accepts a world in a ``world`` keyword argument, along with any other data you might expect.
+For example, this planner accepts a world and a few parameters and builds an occupancy grid.
 
-- Next, you should specify the mechanism to select the concrete implementation of your planner type in the ``__init__()`` method, and implement the ``plan()`` method.
-  Refer to :py:class:`pyrobosim.navigation.rrt.RRTPlanner` for an example on how to do this.
+.. code-block:: python
 
-    .. code-block:: python
+    class MyNewPlanner:
+        def __init__(self, *, world, grid_resolution, grid_inflation_radius):
+            self.grid = OccupancyGrid.from_world(
+                world,
+                resolution=grid_resolution,
+                inflation_radius=grid_inflation_radius,
+            )
 
-        from pyrobosim.navigation import PathPlannerBase
+Next, you should implement a ``reset()`` method.
+This is needed if, for example, the world changes and you want to generate new persistent data structures such as a new occupancy grid or roadmap.
+If your planner does not have any such data, you still must implement this.
 
-        class NewPlanner(PathPlannerBase):
+.. code-block:: python
 
-            def __init__(self, **planner_config):
-                # Select the implementation here
-                if planner_config.get("some_param", None):
-                    self.impl = NewPlannerPolygon(**planner_config)
-                else:
-                    raise NotImplementedError("This configuration is not valid!")
+    class MyNewPlanner:
+        def __init__(self, *, world, grid_resolution, grid_inflation_radius):
+            self.world = world
+            self.grid_resolution = grid_resolution
+            self.grid_inflation_radius = grid_inflation_radius
+            self.reset()
 
-            def plan(self, start, goal):
-                # Call implementations to compute path , do any pre- or post- processing.
-                path = self.impl.plan(start, goal)
-                return path
+        def reset(self):
+            self.grid = OccupancyGrid.from_world(
+                self.world,
+                resolution=self.grid_resolution,
+                inflation_radius=self.grid_inflation_radius,
+            )
 
-- Add the planner type to the list of supported planners in :py:mod:`pyrobosim.navigation.path_planner`.
+Then, you need to implement the actual path planning.
+This is done using a ``plan()`` method that accepts a start and goal pose and returns a ``Path`` object.
 
-    .. code-block:: python
+.. code-block:: python
 
-        self.planners = {
-            "astar": AstarPlanner,
-            "rrt": RRTPlanner,
-            "prm": PRMPlanner,
-            "new_planner": NewPlanner,  # Here is our new planner!
-        }
+    import time
+    from pyrobosim.utils.motion import Path
 
-- Use the ``PathPlanner`` interface to use your new planner.
+        def plan(self, start, goal):
+            t_start = time.time()
+            # Your planning logic goes here
+            return Path(
+                poses=[start, goal],
+                planning_time=time.time() - t_start
+            )
 
-    .. code-block:: python
+For visualization, you can provide ``get_graphs()`` and ``get_latest_paths()`` methods.
 
-        planner_config = {"some_param": some_value, "some_other_param": some_other_value}
-        new_path_planner  = PathPlanner("new_planner", **planner_config)
+.. code-block:: python
 
-.. note::
+    from pyrobosim.utils.search_graph.SearchGraph
 
-    Planner implementations that need to display graphs and planned paths should set the ``graphs`` and ``latest_path`` attributes of ``PathPlannerBase``.
-    Refer to :py:func:`pyrobosim.navigation.rrt.RRTPlanner.plan` and :py:func:`pyrobosim.navigation.prm.PRMPlanner.plan` for some example implementations.
+        def plan(self, start, goal):
+            t_start = time.time()
+            self.search_graph = SearchGraph()
+
+            # Your planning logic goes here
+
+            self.latest_path = Path(
+                poses=[start, goal],
+                planning_time=time.time() - t_start
+            )
+            return self.latest_path
+
+        def get_graphs(self):
+            return [SearchGraph()]
+
+        def get_latest_path(self):
+            return self.latest_path
+
+If you would like to implement your own path planner, it is highly recommended to look at the existing planner implementations as a reference.
+You can also always ask the maintainers through a Git issue!

@@ -17,6 +17,7 @@
   <exec_depend>rclpy</exec_depend>
   <exec_depend>ros2launch</exec_depend>
   <exec_depend>pyrobosim_msgs</exec_depend>
+  <exec_depend>std_srvs</exec_depend>
 
   <!-- Test dependencies -->
   <test_depend>ament_cmake_pytest</test_depend>
