@@ -10,7 +10,7 @@ import time
 import threading
 
 from pyrobosim.core import Pose, Robot, WorldYamlLoader
-from pyrobosim.navigation import ConstantVelocityExecutor, PathPlanner
+from pyrobosim.navigation import ConstantVelocityExecutor, WorldGraphPlanner
 from pyrobosim.planning.actions import (
     ExecutionStatus,
     ExecutionOptions,
@@ -124,7 +124,7 @@ class TestRobot:
 
         robot = Robot(
             pose=init_pose,
-            path_planner=PathPlanner("world_graph", world=self.test_world),
+            path_planner=WorldGraphPlanner(world=self.test_world),
         )
         robot.world = self.test_world
         robot.location = self.test_world.get_entity_by_name("kitchen")
@@ -163,7 +163,7 @@ class TestRobot:
 
         robot = Robot(
             pose=init_pose,
-            path_planner=PathPlanner("world_graph", world=self.test_world),
+            path_planner=WorldGraphPlanner(world=self.test_world),
             path_executor=ConstantVelocityExecutor(linear_velocity=5.0, dt=0.1),
         )
         robot.world = self.test_world
@@ -201,7 +201,7 @@ class TestRobot:
 
         robot = Robot(
             pose=init_pose,
-            path_planner=PathPlanner("world_graph", world=self.test_world),
+            path_planner=WorldGraphPlanner(world=self.test_world),
             path_executor=ConstantVelocityExecutor(
                 linear_velocity=3.0,
                 dt=0.1,
@@ -492,7 +492,7 @@ class TestRobot:
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
         robot = Robot(
             pose=init_pose,
-            path_planner=PathPlanner("world_graph", world=self.test_world),
+            path_planner=WorldGraphPlanner(world=self.test_world),
             path_executor=ConstantVelocityExecutor(linear_velocity=5.0, dt=0.1),
             action_execution_options={"navigate": ExecutionOptions(battery_usage=1.0)},
         )
@@ -533,7 +533,7 @@ class TestRobot:
         }
         robot = Robot(
             pose=init_pose,
-            path_planner=PathPlanner("world_graph", world=self.test_world),
+            path_planner=WorldGraphPlanner(world=self.test_world),
             path_executor=ConstantVelocityExecutor(linear_velocity=5.0, dt=0.1),
             action_execution_options=action_execution_options,
             initial_battery_level=80.0,
@@ -569,7 +569,7 @@ class TestRobot:
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
         robot = Robot(
             pose=init_pose,
-            path_planner=PathPlanner("world_graph", world=self.test_world),
+            path_planner=WorldGraphPlanner(world=self.test_world),
             path_executor=ConstantVelocityExecutor(linear_velocity=3.0, dt=0.1),
         )
         robot.location = "kitchen"
@@ -604,7 +604,7 @@ class TestRobot:
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
         robot = Robot(
             pose=init_pose,
-            path_planner=PathPlanner("world_graph", world=self.test_world),
+            path_planner=WorldGraphPlanner(world=self.test_world),
             path_executor=ConstantVelocityExecutor(linear_velocity=5.0, dt=0.1),
         )
         robot.location = "kitchen"
@@ -632,7 +632,7 @@ class TestRobot:
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
         robot = Robot(
             pose=init_pose,
-            path_planner=PathPlanner("world_graph", world=self.test_world),
+            path_planner=WorldGraphPlanner(world=self.test_world),
             path_executor=ConstantVelocityExecutor(linear_velocity=5.0, dt=0.1),
         )
         robot.location = "kitchen"

@@ -10,7 +10,12 @@ import numpy as np
 from pyrobosim.core import Robot, World, WorldYamlLoader
 from pyrobosim.gui import start_gui
 from pyrobosim.manipulation import GraspGenerator, ParallelGraspProperties
-from pyrobosim.navigation import ConstantVelocityExecutor, OccupancyGrid, PathPlanner
+from pyrobosim.navigation import (
+    ConstantVelocityExecutor,
+    AStarPlanner,
+    PRMPlanner,
+    RRTPlanner,
+)
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
@@ -120,7 +125,7 @@ def create_world(multirobot=False):
         "rewire_radius": 1.5,
         "compress_path": False,
     }
-    rrt_planner = PathPlanner("rrt", **planner_config_rrt)
+    rrt_planner = RRTPlanner(**planner_config_rrt)
     robot0.set_path_planner(rrt_planner)
     world.add_robot(robot0, loc="kitchen")
 
@@ -140,7 +145,7 @@ def create_world(multirobot=False):
             "max_nodes": 100,
             "compress_path": False,
         }
-        prm_planner = PathPlanner("prm", **planner_config_prm)
+        prm_planner = PRMPlanner(**planner_config_prm)
         robot1.set_path_planner(prm_planner)
         world.add_robot(robot1, loc="bathroom")
 
@@ -153,13 +158,13 @@ def create_world(multirobot=False):
             partial_observability=args.partial_observability,
         )
         planner_config_astar = {
-            "grid": OccupancyGrid.from_world(
-                world, resolution=0.05, inflation_radius=0.15
-            ),
+            "world": world,
+            "grid_resolution": 0.05,
+            "grid_inflation_radius": 0.15,
             "diagonal_motion": True,
             "heuristic": "euclidean",
         }
-        astar_planner = PathPlanner("astar", **planner_config_astar)
+        astar_planner = AStarPlanner(**planner_config_astar)
         robot2.set_path_planner(astar_planner)
         world.add_robot(robot2, loc="bedroom")
 

@@ -5,19 +5,19 @@ import time
 import numpy as np
 import warnings
 
-from .planner_base import PathPlannerBase
 from ..utils.motion import Path, reduce_waypoints_polygon
 from ..utils.pose import Pose
 from ..utils.search_graph import SearchGraph, Node
 
 
-class RRTPlannerPolygon:
+class RRTPlanner:
     """
-    Polygon representation based implementation of RRT.
+    Implements a Rapidly-exploring Random Tree (RRT) path planner.
     """
 
     def __init__(
         self,
+        *,
         world,
         bidirectional=False,
         rrt_connect=False,
@@ -37,7 +37,7 @@ class RRTPlannerPolygon:
         :param bidirectional: If True, uses bidirectional RRT to grow trees
             from both start and goal.
         :type bidirectional: bool
-        :param rrt_connect: If True, uses RRT-connect to bias tree growth
+        :param rrt_connect: If True, uses RRTConnect to bias tree growth
             towards goals.
         :type rrt_connect: bool
         :param rrt_star: If True, uses RRT* to rewire trees to smooth and
@@ -86,7 +86,6 @@ class RRTPlannerPolygon:
         if self.bidirectional:
             self.graph_goal = SearchGraph(color=[0, 0.4, 0.8])
         self.latest_path = Path()
-        self.planning_time = 0.0
         self.nodes_sampled = 0
         self.n_rewires = 0
 
@@ -102,6 +101,8 @@ class RRTPlannerPolygon:
         :rtype: :class:`pyrobosim.utils.motion.Path`
         """
         self.reset()
+        t_start = time.time()
+        goal_found = False
 
         # Create the start and goal nodes
         n_start = Node(start, parent=None)
@@ -109,9 +110,6 @@ class RRTPlannerPolygon:
         self.graph_start.nodes = {n_start}
         if self.bidirectional:
             self.graph_goal.nodes = {n_goal}
-
-        t_start = time.time()
-        goal_found = False
 
         # If the goal is within max connection distance of the start, connect them directly
         if self.world.is_connectable(
@@ -123,7 +121,7 @@ class RRTPlannerPolygon:
             path_poses = [n_start.pose, n_goal.pose]
             self.latest_path = Path(poses=path_poses)
             self.latest_path.fill_yaws()
-            self.planning_time = time.time() - t_start
+            self.latest_path.planning_time = time.time() - t_start
             return self.latest_path
 
         while not goal_found:
@@ -171,7 +169,7 @@ class RRTPlannerPolygon:
 
             # See if the new nodes can directly connect to the goal.
             # This is done either as a single connection within max distance,
-            # or using RRT-Connect.
+            # or using RRTConnect.
             if self.bidirectional:
                 if connected_node:
                     # If we added a node to the start tree,
@@ -193,13 +191,13 @@ class RRTPlannerPolygon:
                 goal_found, _ = self.try_connect_until(self.graph_start, n_new, n_goal)
 
             # Check max nodes sampled or max time elapsed
-            self.planning_time = time.time() - t_start
+            planning_time = time.time() - t_start
             if (
-                self.planning_time > self.max_time
+                planning_time > self.max_time
                 or self.nodes_sampled > self.max_nodes_sampled
             ):
                 warnings.warn("Could not find a path from start to goal.")
-                self.latest_path = Path()
+                self.latest_path = Path(planning_time=planning_time)
                 return self.latest_path
 
         # Now back out the path
@@ -231,7 +229,8 @@ class RRTPlannerPolygon:
             path_poses = reduce_waypoints_polygon(
                 self.world, path_poses, self.collision_check_step_dist
             )
-        self.latest_path = Path(poses=path_poses)
+        planning_time = time.time() - t_start
+        self.latest_path = Path(poses=path_poses, planning_time=planning_time)
         self.latest_path.fill_yaws()
         return self.latest_path
 
@@ -320,7 +319,7 @@ class RRTPlannerPolygon:
         """
         Try to connect a node ``n_curr`` to a target node ``n_tgt``.
         This will keep extending the current node towards the target if
-        RRT-Connect is enabled, or else will just try once.
+        RRTConnect is enabled, or else will just try once.
 
         :param graph: The tree object.
         :type graph: :class:`pyrobosim.utils.search_graph.SearchGraph`
@@ -352,7 +351,7 @@ class RRTPlannerPolygon:
                 return True, n_tgt
 
             if self.rrt_connect:
-                # If using RRT-Connect, keep trying to connect.
+                # If using RRTConnect, keep trying to connect.
                 n_new = self.extend(n_curr, n_tgt.pose)
                 if self.world.is_connectable(
                     n_curr.pose,
@@ -365,7 +364,7 @@ class RRTPlannerPolygon:
                 else:
                     return False, n_curr
             else:
-                # If not using RRT-Connect, we only get one chance to connect.
+                # If not using RRTConnect, we only get one chance to connect.
                 return False, n_curr
 
     def get_graphs(self):
@@ -380,35 +379,11 @@ class RRTPlannerPolygon:
             graphs.append(self.graph_goal)
         return graphs
 
-
-class RRTPlanner(PathPlannerBase):
-    """Factory class for Rapidly-Exploring Random Trees path planner."""
-
-    def __init__(self, **planner_config):
+    def get_latest_path(self):
         """
-        Creates and instance of RRT Planner.
-        """
-        super().__init__()
+        Returns the latest path generated by the planner, if any.
 
-        self.impl = None
-        if planner_config.get("grid", None):
-            raise NotImplementedError("RRT planner does not support grid based search.")
-        else:
-            self.impl = RRTPlannerPolygon(**planner_config)
-
-    def plan(self, start, goal):
+        :return: List of graphs.
+        :rtype: list[:class:`pyrobosim.utils.motion.Path`]
         """
-        Plans a path from start to goal.
-
-        :param start: Start pose.
-        :type start: :class:`pyrobosim.utils.pose.Pose`
-        :param goal: Goal pose.
-        :type goal: :class:`pyrobosim.utils.pose.Pose`
-        :return: Path from start to goal.
-        :rtype: :class:`pyrobosim.utils.motion.Path`
-        """
-        start_time = time.time()
-        self.latest_path = self.impl.plan(start, goal)
-        self.planning_time = time.time() - start_time
-        self.graphs = self.impl.get_graphs()
         return self.latest_path
