@@ -169,7 +169,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.other_options_layout.addWidget(
             self.toggle_collision_polygons_checkbox, 0, 0
         )
-        self.cancel_action_button = QtWidgets.QPushButton("Cancel ongoing action")
+        self.cancel_action_button = QtWidgets.QPushButton("Cancel action")
         self.cancel_action_button.clicked.connect(self.on_cancel_action_click)
         self.other_options_layout.addWidget(self.cancel_action_button, 0, 1)
 
@@ -206,10 +206,12 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             self.detect_button.setEnabled(at_open_object_spawn)
             self.open_button.setEnabled(can_open_close and not robot.location.is_open)
             self.close_button.setEnabled(can_open_close and robot.location.is_open)
+            self.cancel_action_button.setEnabled(robot.is_moving())
 
             self.canvas.show_world_state(robot, navigating=False)
         else:
             self.nav_button.setEnabled(False)
+            self.cancel_action_button.setEnabled(False)
 
         self.canvas.draw_signal.emit()
 
@@ -228,6 +230,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.open_button.setEnabled(state)
         self.close_button.setEnabled(state)
         self.rand_pose_button.setEnabled(state)
+        self.cancel_action_button.setEnabled(not state)
 
     ####################
     # Button Callbacks #
@@ -329,6 +332,6 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.canvas.draw_signal.emit()
 
     def on_cancel_action_click(self):
-        """Callback to cancel any running action"""
-        [r.cancel_actions() for r in self.world.robots]
+        """Callback to cancel any running action for the current robot."""
+        self.get_current_robot().cancel_actions()
         self.canvas.draw_signal.emit()
