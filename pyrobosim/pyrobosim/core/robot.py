@@ -421,6 +421,20 @@ class Robot:
 
         return self.follow_path(path, realtime_factor=realtime_factor)
 
+    def reset_path_planner(self):
+        """Resets the robot's path planner, if available."""
+        if self.path_planner is None:
+            warnings.warn(f"[{self.name}] Robot has no path planner. Cannot reset.")
+            return
+
+        if not hasattr(self.path_planner, "reset"):
+            warnings.warn(
+                f"[{self.name}] Path planner does not have a reset() method. Cannot reset."
+            )
+            return
+
+        self.path_planner.reset()
+
     def pick_object(self, obj_query, grasp_pose=None):
         """
         Picks up an object in the world given an object and/or location query.

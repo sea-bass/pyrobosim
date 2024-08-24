@@ -571,7 +571,7 @@ class WorldROSWrapper(Node):
             self.get_logger().warn(message)
             return Trigger.Response(success=False, message=message)
 
-        robot.path_planner.reset()
+        robot.reset_path_planner()
         if self.world.has_gui:
             show_graphs = True
             path = None
