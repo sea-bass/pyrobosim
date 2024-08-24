@@ -434,6 +434,12 @@ class Robot:
             return
 
         self.path_planner.reset()
+        if self.world.has_gui:
+            show_graphs = True
+            path = None
+            self.world.gui.canvas.show_planner_and_path_signal.emit(
+                self, show_graphs, path
+            )
 
     def pick_object(self, obj_query, grasp_pose=None):
         """

@@ -572,12 +572,6 @@ class WorldROSWrapper(Node):
             return Trigger.Response(success=False, message=message)
 
         robot.reset_path_planner()
-        if self.world.has_gui:
-            show_graphs = True
-            path = None
-            self.world.gui.canvas.show_planner_and_path_signal.emit(
-                robot, show_graphs, path
-            )
         return Trigger.Response(success=True)
 
     def robot_detect_objects_callback(self, goal_handle, robot=None):
