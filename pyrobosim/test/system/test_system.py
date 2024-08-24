@@ -142,3 +142,23 @@ class TestSystem:
             # Open the location and verify that it's open.
             window.on_open_click()
             assert location.is_open
+
+    @pytest.mark.dependency(name="test_nav_cancel", depends=["test_open_close"])
+    def test_nav_cancel(self):
+        """
+        Test canceling navigation UI action.
+        """
+        nav_query = "hall_kitchen_bathroom"
+        window = self.app.main_window
+        robot = window.get_current_robot()
+
+        window.goal_textbox.setText(nav_query)
+        window.on_navigate_click()
+
+        while not robot.executing_nav:
+            time.sleep(0.2)
+        if robot.executing_nav:
+            time.sleep(0.2)
+            window.on_cancel_action_click()
+
+        assert robot.canceling_execution == True
