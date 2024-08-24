@@ -12,12 +12,14 @@ ROS_WORKSPACE=~/pyrobosim_ws
 python3 -m venv ${VIRTUALENV_FOLDER}
 echo -e "Created Python virtual environment in ${VIRTUALENV_FOLDER}\n"
 
-# Install all the Python packages required
+# Install all the Python dependencies required
 # Note that these overlay over whatever ROS 2 already contains
 source "${VIRTUALENV_FOLDER}/bin/activate"
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 pushd "${SCRIPT_DIR}/.." > /dev/null
-pip3 install -e ./pyrobosim
+python3 pyrobosim/setup.py egg_info
+pip3 install -r pyrobosim.egg-info/requires.txt
+rm -rf pyrobosim.egg-info/
 pip3 install -r test/python_test_requirements.txt
 
 # Write key variables to file
@@ -50,9 +52,7 @@ then
   echo "PYROBOSIM_ROS_WORKSPACE=${ROS_WORKSPACE}" >> ${ENV_FILE}
   echo "PYROBOSIM_ROS_DISTRO=${ROS_DISTRO,,}" >> ${ENV_FILE}
 
-  # Wipe non-colcon installs of pyrobosim and install packages needed to run
-  # colcon build from within our virtual environment.
-  pip3 uninstall -y pyrobosim
+  # Install packages needed to run colcon build from within our virtual environment.
   pip3 install colcon-common-extensions
 else
   # Install pyrobosim using pip in the non-ROS case.

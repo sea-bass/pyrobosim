@@ -836,7 +836,9 @@ class Robot:
             self.executing_nav = True
             path = action.path if action.path.num_poses > 0 else None
             if self.world.has_gui:
-                if not isinstance(action.target_location, str):
+                if action.target_location and not isinstance(
+                    action.target_location, str
+                ):
                     target_location_name = action.target_location.name
                 else:
                     target_location_name = action.target_location
