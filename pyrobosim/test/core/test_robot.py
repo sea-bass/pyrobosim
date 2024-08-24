@@ -162,7 +162,7 @@ class TestRobot:
             == "[robot] Robot has no path planner. Cannot reset."
         )
 
-        # Re-add the path planner and set it
+        # Re-add the path planner and reset it. There should be no warnings.
         robot.path_planner = path_planner
         robot.reset_path_planner()
 
