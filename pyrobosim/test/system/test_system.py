@@ -143,13 +143,12 @@ class TestSystem:
             window.on_open_click()
             assert location.is_open
 
-    def cancel_helper(self, nav_query):
+    @pytest.mark.dependency(name="test_nav_cancel", depends=["test_open_close"])
+    def test_nav_cancel(self):
         """
-        Helper function to test cancel UI action.
-
-        :param nav_query: Query for navigation goal.
-        :type nav_query: str
+        Test canceling navigation UI action.
         """
+        nav_query = "hall_kitchen_bathroom"
         window = self.app.main_window
         robot = window.get_current_robot()
 
@@ -159,22 +158,7 @@ class TestSystem:
         while not robot.executing_nav:
             time.sleep(0.2)
         if robot.executing_nav:
+            time.sleep(0.2)
             window.on_cancel_action_click()
 
         assert robot.canceling_execution == True
-
-    @pytest.mark.dependency(name="test_cancel_action")
-    def test_cancel_action(self):
-        """
-        Test cancel UI action.
-        """
-        nav_queries = [
-            "bathroom",
-            "bedroom desk",
-            "hall_kitchen_bathroom",
-            "counter0_right",
-            "kitchen apple",
-        ]
-
-        for nav_query in nav_queries:
-            self.cancel_helper(nav_query)

@@ -333,5 +333,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
 
     def on_cancel_action_click(self):
         """Callback to cancel any running action for the current robot."""
-        self.get_current_robot().cancel_actions()
-        self.canvas.draw_signal.emit()
+        robot = self.get_current_robot()
+        if robot:
+            robot.cancel_actions()
+            self.canvas.draw_signal.emit()
