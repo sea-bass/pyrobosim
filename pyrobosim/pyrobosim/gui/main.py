@@ -169,9 +169,12 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.other_options_layout.addWidget(
             self.toggle_collision_polygons_checkbox, 0, 0
         )
+        self.reset_path_planner_button = QtWidgets.QPushButton("Reset path planner")
+        self.reset_path_planner_button.clicked.connect(self.on_reset_path_planner_click)
+        self.other_options_layout.addWidget(self.reset_path_planner_button, 0, 1)
         self.cancel_action_button = QtWidgets.QPushButton("Cancel action")
         self.cancel_action_button.clicked.connect(self.on_cancel_action_click)
-        self.other_options_layout.addWidget(self.cancel_action_button, 0, 1)
+        self.other_options_layout.addWidget(self.cancel_action_button, 0, 2)
 
         # Main layout
         self.main_layout = QtWidgets.QVBoxLayout(self.main_widget)
@@ -196,22 +199,25 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         """Update the state of buttons based on the state of the robot."""
         robot = self.get_current_robot()
         if robot:
+            is_moving = robot.is_moving()
             at_open_object_spawn = robot.at_object_spawn() and robot.location.is_open
             can_pick = robot.manipulated_object is None
             can_open_close = robot.at_openable_location() and can_pick
 
-            self.nav_button.setEnabled(not robot.is_moving())
+            self.nav_button.setEnabled(not is_moving)
             self.pick_button.setEnabled(can_pick and at_open_object_spawn)
             self.place_button.setEnabled((not can_pick) and at_open_object_spawn)
             self.detect_button.setEnabled(at_open_object_spawn)
             self.open_button.setEnabled(can_open_close and not robot.location.is_open)
             self.close_button.setEnabled(can_open_close and robot.location.is_open)
-            self.cancel_action_button.setEnabled(robot.is_moving())
+            self.cancel_action_button.setEnabled(is_moving)
+            self.reset_path_planner_button.setEnabled(not is_moving)
 
-            self.canvas.show_world_state(robot, navigating=False)
+            self.canvas.show_world_state(robot, navigating=is_moving)
         else:
             self.nav_button.setEnabled(False)
             self.cancel_action_button.setEnabled(False)
+            self.reset_path_planner_button.setEnabled(False)
 
         self.canvas.draw_signal.emit()
 
@@ -231,6 +237,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.close_button.setEnabled(state)
         self.rand_pose_button.setEnabled(state)
         self.cancel_action_button.setEnabled(not state)
+        self.reset_path_planner_button.setEnabled(state)
 
     ####################
     # Button Callbacks #
@@ -336,4 +343,11 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         robot = self.get_current_robot()
         if robot:
             robot.cancel_actions()
+            self.canvas.draw_signal.emit()
+
+    def on_reset_path_planner_click(self):
+        """Callback to reset the path planner for the current robot."""
+        robot = self.get_current_robot()
+        if robot:
+            robot.reset_path_planner()
             self.canvas.draw_signal.emit()

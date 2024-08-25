@@ -122,10 +122,8 @@ class TestRobot:
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
         goal_pose = Pose(x=2.5, y=3.0, yaw=np.pi / 2.0)
 
-        robot = Robot(
-            pose=init_pose,
-            path_planner=WorldGraphPlanner(world=self.test_world),
-        )
+        path_planner = WorldGraphPlanner(world=self.test_world)
+        robot = Robot(pose=init_pose, path_planner=path_planner)
         robot.world = self.test_world
         robot.location = self.test_world.get_entity_by_name("kitchen")
 
@@ -155,6 +153,18 @@ class TestRobot:
         assert (
             warn_info[0].message.args[0] == "No path planner attached to robot robot."
         )
+
+        # Try and reset the path planner with no planner set
+        with pytest.warns(UserWarning) as warn_info:
+            robot.reset_path_planner()
+        assert (
+            warn_info[0].message.args[0]
+            == "[robot] Robot has no path planner. Cannot reset."
+        )
+
+        # Re-add the path planner and reset it. There should be no warnings.
+        robot.path_planner = path_planner
+        robot.reset_path_planner()
 
     def test_robot_path_executor(self):
         """Check that path executors can be used from a robot."""
