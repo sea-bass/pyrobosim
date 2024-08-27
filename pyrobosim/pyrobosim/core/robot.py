@@ -306,7 +306,7 @@ class Robot:
         """
         self.last_nav_result = ExecutionResult()
 
-        if path is None:
+        if path is None or path.num_poses == 0:
             self.executing_nav = False
             message = "No path to execute."
             warnings.warn(message)
@@ -323,13 +323,8 @@ class Robot:
                 message=message,
             )
 
-        if path.num_poses == 0:
-            # Trivial case where the path is empty.
-            result = ExecutionResult(status=ExecutionStatus.SUCCESS)
-            self.last_nav_result = result
-        else:
-            # Execute in this thread and check that the robot made it to its goal pose.
-            result = self.path_executor.execute(path, realtime_factor)
+        # Follow the path.
+        result = self.path_executor.execute(path, realtime_factor)
 
         # Check that the robot made it to its goal pose at the end of execution.
         at_goal_pose = self.get_pose().is_approx(path.poses[-1])
