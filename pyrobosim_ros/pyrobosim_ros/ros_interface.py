@@ -491,7 +491,7 @@ class WorldROSWrapper(Node):
         path = robot.plan_path(goal=goal)
         goal_handle.succeed()
 
-        if path is None:
+        if path is None or path.num_poses == 0:
             return PlanPath.Result(
                 execution_result=ExecutionResult(
                     status=ExecutionResult.PLANNING_FAILURE,

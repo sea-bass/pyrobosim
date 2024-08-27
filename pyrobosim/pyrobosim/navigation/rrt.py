@@ -69,14 +69,12 @@ class RRTPlanner:
         self.max_nodes_sampled = max_nodes_sampled
         self.max_time = max_time
         self.rewire_radius = rewire_radius
+        self.compress_path = compress_path
 
         # Visualization
         self.color_start = [0, 0, 0]
         self.color_goal = [0, 0.4, 0.8]
         self.color_alpha = 0.5
-
-        self.latest_path = Path()
-        self.compress_path = compress_path
 
         self.reset()
 
