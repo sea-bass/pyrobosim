@@ -219,7 +219,6 @@ class TestRobot:
             ),
         )
         robot.world = self.test_world
-        robot.location = "kitchen"
 
         # Plan a path.
         robot.set_pose(init_pose)

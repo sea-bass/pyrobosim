@@ -748,6 +748,11 @@ class WorldROSWrapper(Node):
                 response.result = execution_result_to_ros(result)
                 return response
 
+        # If the command is a no-op, count it as a success.
+        response.result.status = ExecutionResult.SUCCESS
+        response.result.message = "No action needed."
+        return response
+
 
 def update_world_from_state_msg(world, msg):
     """
