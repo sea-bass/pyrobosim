@@ -769,12 +769,10 @@ class Robot:
                 )
 
         if isinstance(self.location, ObjectSpawn):
-            return self.world.open_location(self.location.parent)
-        elif isinstance(self.location, Hallway):
-            return self.world.open_hallway(self.location)
-
-        # This should not happen
-        return ExecutionResult(status=ExecutionResult.UNKNOWN)
+            loc_to_open = self.location.parent
+        else:
+            loc_to_open = self.location
+        return self.world.open_location(loc_to_open)
 
     def close_location(self):
         """
@@ -825,12 +823,10 @@ class Robot:
                 )
 
         if isinstance(self.location, ObjectSpawn):
-            return self.world.close_location(self.location.parent)
-        elif isinstance(self.location, Hallway):
-            return self.world.close_hallway(self.location, ignore_robots=[self])
-
-        # This should not happen
-        return ExecutionResult(status=ExecutionResult.UNKNOWN)
+            loc_to_close = self.location.parent
+        else:
+            loc_to_close = self.location
+        return self.world.close_location(loc_to_close, ignore_robots=[self])
 
     def execute_action(self, action):
         """

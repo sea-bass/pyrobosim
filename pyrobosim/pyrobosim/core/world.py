@@ -284,144 +284,6 @@ class World:
             self.update_bounds(entity=hallway, remove=True)
         return True
 
-    def open_hallway(self, hallway):
-        """
-        Opens a hallway between two rooms.
-
-        :param hallway: Hallway object to open.
-        :type hallway: :class:`pyrobosim.core.hallway.Hallway`
-        :return: An object describing the execution result.
-        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
-        """
-        # Validate the input
-        if not hallway in self.hallways:
-            message = "Invalid hallway specified."
-            warnings.warn(message)
-            return ExecutionResult(
-                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
-            )
-
-        if hallway.is_open:
-            message = f"{hallway} is already open."
-            warnings.warn(message)
-            return ExecutionResult(
-                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
-            )
-
-        if hallway.is_locked:
-            message = f"{hallway} is locked."
-            warnings.warn(message)
-            return ExecutionResult(
-                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
-            )
-
-        hallway.is_open = True
-        if self.has_gui:
-            self.gui.canvas.show_hallways_signal.emit()
-            self.gui.canvas.draw_signal.emit()
-        return ExecutionResult(status=ExecutionStatus.SUCCESS)
-
-    def close_hallway(self, hallway, ignore_robots=[]):
-        """
-        Close a hallway between two rooms.
-
-        :param hallway: Hallway object to close.
-        :type hallway: :class:`pyrobosim.core.hallway.Hallway`
-        :param ignore_robots: List of robots to ignore, for example the robot closing the hallway.
-        :type ignore_robots: list[:class:`pyrobosim.core.robot.Robot`]
-        :return: An object describing the execution result.
-        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
-        """
-        # Validate the input
-        if not hallway in self.hallways:
-            message = "Invalid hallway specified."
-            warnings.warn(message)
-            return ExecutionResult(
-                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
-            )
-
-        if not hallway.is_open:
-            message = f"{hallway} is already closed."
-            warnings.warn(message)
-            return ExecutionResult(
-                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
-            )
-
-        if hallway.is_locked:
-            message = f"{hallway} is locked."
-            warnings.warn(message)
-            return ExecutionResult(
-                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
-            )
-
-        for robot in [r for r in self.robots if r not in ignore_robots]:
-            if hallway.is_collision_free(robot.get_pose()):
-                message = f"Robot {robot.name} is in {hallway}. Cannot close."
-                warnings.warn(message)
-                return ExecutionResult(
-                    status=ExecutionStatus.PRECONDITION_FAILURE, message=message
-                )
-
-        hallway.is_open = False
-        if self.has_gui:
-            self.gui.canvas.show_hallways_signal.emit()
-            self.gui.canvas.draw_signal.emit()
-        return ExecutionResult(status=ExecutionStatus.SUCCESS)
-
-    def lock_hallway(self, hallway):
-        """
-        Locks a hallway between two rooms.
-
-        :param hallway: Hallway object to lock.
-        :type hallway: :class:`pyrobosim.core.hallway.Hallway`
-        :return: An object describing the execution result.
-        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
-        """
-        # Validate the input
-        if not hallway in self.hallways:
-            message = "Invalid hallway specified."
-            warnings.warn(message)
-            return ExecutionResult(
-                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
-            )
-
-        if hallway.is_locked:
-            message = f"{hallway} is already locked."
-            warnings.warn(message)
-            return ExecutionResult(
-                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
-            )
-
-        hallway.is_locked = True
-        return ExecutionResult(status=ExecutionStatus.SUCCESS)
-
-    def unlock_hallway(self, hallway):
-        """
-        Unlocks a hallway between two rooms.
-
-        :param hallway: Hallway object to unlock.
-        :type hallway: :class:`pyrobosim.core.hallway.Hallway`
-        :return: An object describing the execution result.
-        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
-        """
-        # Validate the input
-        if not hallway in self.hallways:
-            message = "Invalid hallway specified."
-            warnings.warn(message)
-            return ExecutionResult(
-                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
-            )
-
-        if not hallway.is_locked:
-            message = f"{hallway} is already unlocked."
-            warnings.warn(message)
-            return ExecutionResult(
-                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
-            )
-
-        hallway.is_locked = False
-        return ExecutionResult(status=ExecutionStatus.SUCCESS)
-
     def add_location(self, **location_config):
         r"""
         Adds a location at the specified parent entity, usually a room.
@@ -604,15 +466,26 @@ class World:
 
     def open_location(self, location):
         """
-        Opens a storage location.
+        Opens a storage location or hallway between two rooms..
 
-        :param location: Location object to open.
-        :type location: :class:`pyrobosim.core.locations.Location`
+        :param location: Location or Hallway object to open.
+        :type location: :class:`pyrobosim.core.locations.Location` or :class:`pyrobosim.core.hallway.Hallway`
         :return: An object describing the execution result.
         :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
         # Validate the input
-        if not location in self.locations:
+        if isinstance(location, str):
+            location = self.get_entity_by_name(location)
+        if not (isinstance(location, Location) or isinstance(location, Hallway)):
+            message = message = (
+                f"Cannot open {location} since it is of type {type(location).__name__}."
+            )
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.INVALID_ACTION, message=message
+            )
+
+        if not (location in self.locations or location in self.hallways):
             message = "Invalid location specified."
             warnings.warn(message)
             return ExecutionResult(
@@ -636,21 +509,37 @@ class World:
         location.is_open = True
         location.update_visualization_polygon()
         if self.has_gui:
-            self.gui.canvas.show_locations_signal.emit()
+            if isinstance(location, Hallway):
+                self.gui.canvas.show_hallways_signal.emit()
+            else:
+                self.gui.canvas.show_locations_signal.emit()
             self.gui.canvas.draw_signal.emit()
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
-    def close_location(self, location):
+    def close_location(self, location, ignore_robots=[]):
         """
-        Close a storage location.
+        Close a storage location or hallway.
 
-        :param location: Location object to close.
-        :type location: :class:`pyrobosim.core.locations.Location`
+        :param location: Location or Hallway object to close.
+        :type location: :class:`pyrobosim.core.locations.Location` or :class:`pyrobosim.core.hallway.Hallway`
+        :param ignore_robots: List of robots to ignore, for example the robot closing the hallway.
+        :type ignore_robots: list[:class:`pyrobosim.core.robot.Robot`]
         :return: An object describing the execution result.
         :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
         # Validate the input
-        if not location in self.locations:
+        if isinstance(location, str):
+            location = self.get_entity_by_name(location)
+        if not (isinstance(location, Location) or isinstance(location, Hallway)):
+            message = message = (
+                f"Cannot close {location} since it is of type {type(location).__name__}."
+            )
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.INVALID_ACTION, message=message
+            )
+
+        if not (location in self.locations or location in self.hallways):
             message = "Invalid location specified."
             warnings.warn(message)
             return ExecutionResult(
@@ -671,24 +560,48 @@ class World:
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
 
+        is_hallway = isinstance(location, Hallway)
+        if is_hallway:
+            for robot in [r for r in self.robots if r not in ignore_robots]:
+                if location.is_collision_free(robot.get_pose()):
+                    message = f"Robot {robot.name} is in {location}. Cannot close."
+                    warnings.warn(message)
+                    return ExecutionResult(
+                        status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+                    )
+
         location.is_open = False
         location.update_visualization_polygon()
         if self.has_gui:
-            self.gui.canvas.show_locations_signal.emit()
+            if is_hallway:
+                self.gui.canvas.show_hallways_signal.emit()
+            else:
+                self.gui.canvas.show_locations_signal.emit()
             self.gui.canvas.draw_signal.emit()
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
     def lock_location(self, location):
         """
-        Locks a storage location.
+        Locks a storage location or hallway.
 
         :param location: Location object to lock.
-        :type location: :class:`pyrobosim.core.locations.Location`
+        :type location: :class:`pyrobosim.core.locations.Location` or :class:`pyrobosim.core.hallway.Hallway`
         :return: An object describing the execution result.
         :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
         # Validate the input
-        if not location in self.locations:
+        if isinstance(location, str):
+            location = self.get_entity_by_name(location)
+        if not (isinstance(location, Location) or isinstance(location, Hallway)):
+            message = message = (
+                f"Cannot lock {location} since it is of type {type(location).__name__}."
+            )
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.INVALID_ACTION, message=message
+            )
+
+        if not (location in self.locations or location in self.hallways):
             message = "Invalid location specified."
             warnings.warn(message)
             return ExecutionResult(
@@ -707,15 +620,26 @@ class World:
 
     def unlock_location(self, location):
         """
-        Unlocks a storage location.
+        Unlocks a storage location or hallway.
 
         :param location: Location object to unlock.
-        :type location: :class:`pyrobosim.core.locations.Location`
+        :type location: :class:`pyrobosim.core.locations.Location` or :class:`pyrobosim.core.hallway.Hallway`
         :return: An object describing the execution result.
         :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
         # Validate the input
-        if not location in self.locations:
+        if isinstance(location, str):
+            location = self.get_entity_by_name(location)
+        if not (isinstance(location, Location) or isinstance(location, Hallway)):
+            message = message = (
+                f"Cannot unlock {location} since it is of type {type(location).__name__}."
+            )
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.INVALID_ACTION, message=message
+            )
+
+        if not (location in self.locations or location in self.hallways):
             message = "Invalid location specified."
             warnings.warn(message)
             return ExecutionResult(

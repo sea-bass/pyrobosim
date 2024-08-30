@@ -726,64 +726,27 @@ class WorldROSWrapper(Node):
             response.result.message = message
             return response
 
-        if isinstance(entity, Location):
-            # Try open or close the location if its status needs to be toggled.
-            if request.open != entity.is_open:
-                if request.open:
-                    result = self.world.open_location(entity)
-                else:
-                    result = self.world.close_location(entity)
+        # Try open or close the location if its status needs to be toggled.
+        if request.open != entity.is_open:
+            if request.open:
+                result = self.world.open_location(entity)
+            else:
+                result = self.world.close_location(entity)
 
-                if not result.is_success():
-                    response.result = execution_result_to_ros(result)
-                    return response
+            if not result.is_success():
+                response.result = execution_result_to_ros(result)
+                return response
 
-            # Try lock or unlock the location if its status needs to be toggled.
-            if request.lock != entity.is_locked:
-                if request.lock:
-                    result = self.world.lock_location(entity)
-                else:
-                    result = self.world.unlock_location(entity)
+        # Try lock or unlock the location if its status needs to be toggled.
+        if request.lock != entity.is_locked:
+            if request.lock:
+                result = self.world.lock_location(entity)
+            else:
+                result = self.world.unlock_location(entity)
 
-                if not result.is_success():
-                    response.result = execution_result_to_ros(result)
-                    return response
-
-            response.result.status = ExecutionResult.SUCCESS
-            return response
-
-        elif isinstance(entity, Hallway):
-            # Try open or close the hallway if its status needs to be toggled.
-            if request.open != entity.is_open:
-                if request.open:
-                    result = self.world.open_hallway(entity)
-                else:
-                    result = self.world.close_hallway(entity)
-
-                if not result.is_success():
-                    response.result = execution_result_to_ros(result)
-                    return response
-
-            # Try lock or unlock the hallway if its status needs to be toggled.
-            if request.lock != entity.is_locked:
-                if request.lock:
-                    result = self.world.lock_hallway(entity)
-                else:
-                    result = self.world.unlock_hallway(entity)
-
-                if not result.is_success():
-                    response.result = execution_result_to_ros(result)
-                    return response
-
-            response.result.status = ExecutionResult.SUCCESS
-            return response
-
-        # If no valid entity type is reached, we should fail here.
-        message = f"Cannot set state for {entity.name} since it is of type {type(entity).__name__}."
-        self.get_logger().warn(message)
-        response.result.status = ExecutionResult.INVALID_ACTION
-        response.result.message = message
-        return response
+            if not result.is_success():
+                response.result = execution_result_to_ros(result)
+                return response
 
 
 def update_world_from_state_msg(world, msg):
