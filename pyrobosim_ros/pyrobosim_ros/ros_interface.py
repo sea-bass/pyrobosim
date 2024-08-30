@@ -14,8 +14,6 @@ from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 
 from geometry_msgs.msg import Twist
-from pyrobosim.core.hallway import Hallway
-from pyrobosim.core.locations import Location
 from pyrobosim_msgs.action import (
     DetectObjects,
     ExecuteTaskAction,
@@ -726,14 +724,20 @@ class WorldROSWrapper(Node):
             response.result.message = message
             return response
 
+        # Initialize the result in case no actions need to happen.
+        response.result = ExecutionResult(
+            status=ExecutionResult.SUCCESS, message="No action taken."
+        )
+
         # Try open or close the location if its status needs to be toggled.
+        result = None
         if request.open != entity.is_open:
             if request.open:
                 result = self.world.open_location(entity)
             else:
                 result = self.world.close_location(entity)
 
-            if not result.is_success():
+            if not response.result.is_success():
                 response.result = execution_result_to_ros(result)
                 return response
 
@@ -748,9 +752,9 @@ class WorldROSWrapper(Node):
                 response.result = execution_result_to_ros(result)
                 return response
 
-        # If the command is a no-op, count it as a success.
-        response.result.status = ExecutionResult.SUCCESS
-        response.result.message = "No action needed."
+        # If we made it here, return the latest result.
+        if result is not None:
+            response.result = execution_result_to_ros(result)
         return response
 
 
