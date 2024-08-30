@@ -737,7 +737,7 @@ class WorldROSWrapper(Node):
             else:
                 result = self.world.close_location(entity)
 
-            if not response.result.is_success():
+            if not result.is_success():
                 response.result = execution_result_to_ros(result)
                 return response
 
