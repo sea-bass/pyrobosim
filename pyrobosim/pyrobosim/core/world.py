@@ -1164,8 +1164,8 @@ class World:
         :type room1: :class:`pyrobosim.core.room.Room`/str
         :param room2: Instance or name of second room.
         :type room2: :class:`pyrobosim.core.room.Room`/str
-        :return: Hallway instance matching the inputs, or ``None`` if not valid.
-        :rtype: :class:`pyrobosim.core.hallway.Hallway`
+        :return: List of hallways.
+        :rtype: list[:class:`pyrobosim.core.hallway.Hallway`]
         """
         # Validate room input
         if isinstance(room1, str):
@@ -1185,6 +1185,30 @@ class World:
             is_valid_hallway = (
                 (hall.room_start == room1) and (hall.room_end == room2)
             ) or ((hall.room_start == room2) and (hall.room_end == room1))
+            if is_valid_hallway:
+                hallways.append(hall)
+        return hallways
+
+    def get_hallways_attached_to_room(self, room):
+        """
+        Returns a list of hallways attached to a specific room.
+
+        :param room: Instance or name of room.
+        :type room: :class:`pyrobosim.core.room.Room`/str
+        :return: List of hallways.
+        :rtype: list[:class:`pyrobosim.core.hallway.Hallway`]
+        """
+        # Validate room input
+        if isinstance(room, str):
+            room = self.get_room_by_name(room)
+        if not isinstance(room, Room):
+            warnings.warn("Invalid room specified.")
+            return []
+
+        # Now search through the hallways and add any valid ones to the list
+        hallways = []
+        for hall in room.hallways:
+            is_valid_hallway = (hall.room_start == room) or (hall.room_end == room)
             if is_valid_hallway:
                 hallways.append(hall)
         return hallways
@@ -1554,6 +1578,31 @@ class World:
             graph_nodes = entity.graph_nodes
         elif isinstance(entity, Hallway):
             graph_nodes = [entity.graph_nodes[0], entity.graph_nodes[-1]]
+
+            # Special rule: If all the hallways connected to the room are closed, and the robot is not in the room, remove the graph node from consideration.
+            if robot is not None:
+                robot_in_start_room = entity.room_start.is_collision_free(
+                    robot.get_pose()
+                )
+                if not robot_in_start_room:
+                    room_accessible = False
+                    for hall in self.get_hallways_attached_to_room(entity.room_start):
+                        if hall.is_open:
+                            room_accessible = True
+                            break
+                    if not room_accessible:
+                        graph_nodes.remove(entity.graph_nodes[0])
+
+                robot_in_end_room = entity.room_end.is_collision_free(robot.get_pose())
+                if not robot_in_end_room:
+                    room_accessible = False
+                    for hall in self.get_hallways_attached_to_room(entity.room_end):
+                        if hall.is_open:
+                            room_accessible = True
+                            break
+                    if not room_accessible:
+                        graph_nodes.remove(entity.graph_nodes[-1])
+
         elif isinstance(entity, Object):
             graph_nodes = entity.parent.graph_nodes
         elif isinstance(entity, Location):
