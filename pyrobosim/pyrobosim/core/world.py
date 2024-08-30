@@ -468,8 +468,8 @@ class World:
         """
         Opens a storage location or hallway between two rooms..
 
-        :param location: Location or Hallway object to open.
-        :type location: :class:`pyrobosim.core.locations.Location` or :class:`pyrobosim.core.hallway.Hallway`
+        :param location: Location or Hallway object to open, or its name.
+        :type location: :class:`pyrobosim.core.locations.Location`, :class:`pyrobosim.core.hallway.Hallway`, or str
         :return: An object describing the execution result.
         :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
@@ -520,8 +520,8 @@ class World:
         """
         Close a storage location or hallway.
 
-        :param location: Location or Hallway object to close.
-        :type location: :class:`pyrobosim.core.locations.Location` or :class:`pyrobosim.core.hallway.Hallway`
+        :param location: Location or Hallway object to close, or its name.
+        :type location: :class:`pyrobosim.core.locations.Location`, :class:`pyrobosim.core.hallway.Hallway`, or str
         :param ignore_robots: List of robots to ignore, for example the robot closing the hallway.
         :type ignore_robots: list[:class:`pyrobosim.core.robot.Robot`]
         :return: An object describing the execution result.
@@ -584,8 +584,8 @@ class World:
         """
         Locks a storage location or hallway.
 
-        :param location: Location object to lock.
-        :type location: :class:`pyrobosim.core.locations.Location` or :class:`pyrobosim.core.hallway.Hallway`
+        :param location: Location or Hallway object to lock, or its name.
+        :type location: :class:`pyrobosim.core.locations.Location`, :class:`pyrobosim.core.hallway.Hallway`, or str
         :return: An object describing the execution result.
         :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
@@ -622,8 +622,8 @@ class World:
         """
         Unlocks a storage location or hallway.
 
-        :param location: Location object to unlock.
-        :type location: :class:`pyrobosim.core.locations.Location` or :class:`pyrobosim.core.hallway.Hallway`
+        :param location: Location or Hallway object to unlock, or its name.
+        :type location: :class:`pyrobosim.core.locations.Location`, :class:`pyrobosim.core.hallway.Hallway`, or str
         :return: An object describing the execution result.
         :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
