@@ -217,10 +217,14 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             self.canvas.show_world_state(robot, navigating=is_moving)
         else:
             self.nav_button.setEnabled(False)
+            self.pick_button.setEnabled(False)
+            self.place_button.setEnabled(False)
+            self.detect_button.setEnabled(False)
             self.cancel_action_button.setEnabled(False)
-            self.reset_path_planner_button.setEnabled(False)
             self.open_button.setEnabled(True)
             self.close_button.setEnabled(True)
+            self.reset_path_planner_button.setEnabled(False)
+            self.rand_pose_button.setEnabled(False)
 
         self.canvas.draw_signal.emit()
 

@@ -907,7 +907,7 @@ class Robot:
             )
 
         if self.world.has_gui:
-            self.world.gui.set_buttons_during_action(True)
+            self.world.gui.update_button_state()
         print(f"[{self.name}] Action completed with result: {result.status.name}")
         self.current_action = None
         self.executing_action = False
@@ -975,7 +975,7 @@ class Robot:
             time.sleep(delay)  # Artificial delay between actions
 
         if self.world.has_gui:
-            self.world.gui.set_buttons_during_action(True)
+            self.world.gui.update_button_state()
 
         print(f"[{self.name}] Task plan completed with status: {result.status.name}")
         self.executing_plan = False
