@@ -384,18 +384,19 @@ class Robot:
             self.last_nav_result = ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
+            self.executing_nav = False
             return self.last_nav_result
 
         if path is None:
             path = self.plan_path(start, goal)
             if path is None or path.num_poses == 0:
-                self.executing_nav = False
                 message = "Failed to plan a path."
                 warnings.warn(message)
                 self.last_nav_result = ExecutionResult(
                     status=ExecutionStatus.PLANNING_FAILURE,
                     message=message,
                 )
+                self.executing_nav = False
                 return self.last_nav_result
         elif self.world and self.world.has_gui:
             show_graphs = False
@@ -412,6 +413,7 @@ class Robot:
                 self.last_nav_result = ExecutionResult(
                     status=ExecutionStatus.EXECUTION_FAILURE, message=message
                 )
+                self.executing_nav = False
                 return self.last_nav_result
 
         return self.follow_path(path, realtime_factor=realtime_factor)
