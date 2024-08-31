@@ -21,7 +21,13 @@ from pyrobosim_msgs.action import (
     FollowPath,
     PlanPath,
 )
-from pyrobosim_msgs.msg import ExecutionResult, RobotState, LocationState, ObjectState
+from pyrobosim_msgs.msg import (
+    ExecutionResult,
+    HallwayState,
+    LocationState,
+    ObjectState,
+    RobotState,
+)
 from pyrobosim_msgs.srv import RequestWorldState, SetLocationState
 from std_srvs.srv import Trigger
 
@@ -683,8 +689,7 @@ class WorldROSWrapper(Node):
         else:
             objects = self.world.objects
 
-        # Add the object and location states.
-        # TODO: Support hallway states as well.
+        # Add location, hallway, and object states.
         for loc in self.world.locations:
             loc_msg = LocationState(
                 name=loc.name,
@@ -695,6 +700,15 @@ class WorldROSWrapper(Node):
                 is_locked=loc.is_locked,
             )
             response.state.locations.append(loc_msg)
+        for hall in self.world.hallways:
+            hall_msg = HallwayState(
+                name=hall.name,
+                room_start=hall.room_start.name,
+                room_end=hall.room_end.name,
+                is_open=hall.is_open,
+                is_locked=hall.is_locked,
+            )
+            response.state.hallways.append(hall_msg)
         for obj in objects:
             obj_msg = ObjectState(
                 name=obj.name,
