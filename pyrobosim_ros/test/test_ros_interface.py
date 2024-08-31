@@ -130,6 +130,7 @@ class TestRosInterface:
         result = future.result()
         assert len(result.state.robots) == 3
         assert len(result.state.locations) == 5
+        assert len(result.state.hallways) == 3
         assert len(result.state.objects) == 8
 
         # Partial robot state.
@@ -152,6 +153,7 @@ class TestRosInterface:
         result = future.result()
         assert len(result.state.robots) == 3
         assert len(result.state.locations) == 5
+        assert len(result.state.hallways) == 3
         assert len(result.state.objects) == 2
 
         TestRosInterface.node.destroy_client(client)

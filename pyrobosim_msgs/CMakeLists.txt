@@ -17,6 +17,7 @@ set(msg_files
   "msg/ExecutionResult.msg"
   "msg/GoalPredicate.msg"
   "msg/GoalSpecification.msg"
+  "msg/HallwayState.msg"
   "msg/LocationState.msg"
   "msg/ObjectState.msg"
   "msg/Path.msg"

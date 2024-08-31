@@ -2,4 +2,5 @@
 
 RobotState[] robots
 LocationState[] locations
+HallwayState[] hallways
 ObjectState[] objects
