@@ -769,12 +769,10 @@ class Robot:
                 )
 
         if isinstance(self.location, ObjectSpawn):
-            return self.world.open_location(self.location.parent)
-        elif isinstance(self.location, Hallway):
-            return self.world.open_hallway(self.location)
-
-        # This should not happen
-        return ExecutionResult(status=ExecutionResult.UNKNOWN)
+            loc_to_open = self.location.parent
+        else:
+            loc_to_open = self.location
+        return self.world.open_location(loc_to_open)
 
     def close_location(self):
         """
@@ -825,12 +823,10 @@ class Robot:
                 )
 
         if isinstance(self.location, ObjectSpawn):
-            return self.world.close_location(self.location.parent)
-        elif isinstance(self.location, Hallway):
-            return self.world.close_hallway(self.location, ignore_robots=[self])
-
-        # This should not happen
-        return ExecutionResult(status=ExecutionResult.UNKNOWN)
+            loc_to_close = self.location.parent
+        else:
+            loc_to_close = self.location
+        return self.world.close_location(loc_to_close, ignore_robots=[self])
 
     def execute_action(self, action):
         """
@@ -911,7 +907,7 @@ class Robot:
             )
 
         if self.world.has_gui:
-            self.world.gui.set_buttons_during_action(True)
+            self.world.gui.update_button_state()
         print(f"[{self.name}] Action completed with result: {result.status.name}")
         self.current_action = None
         self.executing_action = False
@@ -979,7 +975,7 @@ class Robot:
             time.sleep(delay)  # Artificial delay between actions
 
         if self.world.has_gui:
-            self.world.gui.set_buttons_during_action(True)
+            self.world.gui.update_button_state()
 
         print(f"[{self.name}] Task plan completed with status: {result.status.name}")
         self.executing_plan = False

@@ -217,8 +217,14 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             self.canvas.show_world_state(robot, navigating=is_moving)
         else:
             self.nav_button.setEnabled(False)
+            self.pick_button.setEnabled(False)
+            self.place_button.setEnabled(False)
+            self.detect_button.setEnabled(False)
             self.cancel_action_button.setEnabled(False)
+            self.open_button.setEnabled(True)
+            self.close_button.setEnabled(True)
             self.reset_path_planner_button.setEnabled(False)
+            self.rand_pose_button.setEnabled(False)
 
         self.canvas.draw_signal.emit()
 
@@ -325,6 +331,8 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             print(f"[{robot.name}] Opening {robot.location}")
             self.canvas.open_location(robot)
             self.update_button_state()
+        elif not robot and self.goal_textbox.text():
+            self.world.open_location(self.goal_textbox.text())
 
     def on_close_click(self):
         """Callback to close a location."""
@@ -333,6 +341,8 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             print(f"[{robot.name}] Closing {robot.location}")
             self.canvas.close_location(robot)
             self.update_button_state()
+        elif not robot and self.goal_textbox.text():
+            self.world.close_location(self.goal_textbox.text())
 
     def on_collision_polygon_toggle_click(self):
         """Callback to toggle collision polygons."""
