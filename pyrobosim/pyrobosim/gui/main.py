@@ -76,6 +76,8 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         """Cleans up running threads on closing the window."""
         self.canvas.nav_animator.stop()
         self.canvas.thread_pool.waitForDone()
+        if self.world and self.world.has_ros_node:
+            self.world.ros_node.shutdown()
 
     def set_window_dims(self, screen_fraction=0.8):
         """

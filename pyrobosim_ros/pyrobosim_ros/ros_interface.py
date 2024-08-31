@@ -93,6 +93,7 @@ class WorldROSWrapper(Node):
         # Internal state
         self.executing_plan = False
         self.last_command_status = None
+        self.executor = None
 
         # Server for executing single action
         self.action_server = ActionServer(
@@ -174,6 +175,7 @@ class WorldROSWrapper(Node):
         if auto_spin:
             executor = MultiThreadedExecutor(num_threads=self.num_threads)
             executor.add_node(self)
+            self.executor = executor
 
         if not self.world:
             self.get_logger().error("Must set a world before starting node.")
@@ -196,10 +198,16 @@ class WorldROSWrapper(Node):
             try:
                 executor.spin()
             finally:
-                executor.remove_node(self)
-                self.destroy_node()
-                executor.shutdown()
-                rclpy.shutdown()
+                self.shutdown()
+
+    def shutdown(self):
+        """Shuts down cleanly."""
+        if self.executor:
+            self.executor.remove_node(self)
+            self.destroy_node()
+            self.executor.shutdown()
+            self.executor = None
+            rclpy.shutdown()
 
     def add_robot_ros_interfaces(self, robot):
         """
