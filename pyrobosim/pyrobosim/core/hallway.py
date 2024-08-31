@@ -87,7 +87,7 @@ class Hallway:
         if conn_method == "auto" or conn_method == "angle":
             theta, length = get_bearing_range(room_start.centroid, room_end.centroid)
             if conn_method == "angle":
-                length = length / np.cos(theta - conn_angle)
+                length = length * np.cos(theta - conn_angle)
                 theta = conn_angle
 
             # Calculate start and end points for the hallway

@@ -14,8 +14,6 @@ from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 
 from geometry_msgs.msg import Twist
-from pyrobosim.core.hallway import Hallway
-from pyrobosim.core.locations import Location
 from pyrobosim_msgs.action import (
     DetectObjects,
     ExecuteTaskAction,
@@ -726,63 +724,37 @@ class WorldROSWrapper(Node):
             response.result.message = message
             return response
 
-        if isinstance(entity, Location):
-            # Try open or close the location if its status needs to be toggled.
-            if request.open != entity.is_open:
-                if request.open:
-                    result = self.world.open_location(entity)
-                else:
-                    result = self.world.close_location(entity)
+        # Initialize the result in case no actions need to happen.
+        response.result = ExecutionResult(
+            status=ExecutionResult.SUCCESS, message="No action taken."
+        )
 
-                if not result.is_success():
-                    response.result = execution_result_to_ros(result)
-                    return response
+        # Try open or close the location if its status needs to be toggled.
+        result = None
+        if request.open != entity.is_open:
+            if request.open:
+                result = self.world.open_location(entity)
+            else:
+                result = self.world.close_location(entity)
 
-            # Try lock or unlock the location if its status needs to be toggled.
-            if request.lock != entity.is_locked:
-                if request.lock:
-                    result = self.world.lock_location(entity)
-                else:
-                    result = self.world.unlock_location(entity)
+            if not result.is_success():
+                response.result = execution_result_to_ros(result)
+                return response
 
-                if not result.is_success():
-                    response.result = execution_result_to_ros(result)
-                    return response
+        # Try lock or unlock the location if its status needs to be toggled.
+        if request.lock != entity.is_locked:
+            if request.lock:
+                result = self.world.lock_location(entity)
+            else:
+                result = self.world.unlock_location(entity)
 
-            response.result.status = ExecutionResult.SUCCESS
-            return response
+            if not result.is_success():
+                response.result = execution_result_to_ros(result)
+                return response
 
-        elif isinstance(entity, Hallway):
-            # Try open or close the hallway if its status needs to be toggled.
-            if request.open != entity.is_open:
-                if request.open:
-                    result = self.world.open_hallway(entity)
-                else:
-                    result = self.world.close_hallway(entity)
-
-                if not result.is_success():
-                    response.result = execution_result_to_ros(result)
-                    return response
-
-            # Try lock or unlock the hallway if its status needs to be toggled.
-            if request.lock != entity.is_locked:
-                if request.lock:
-                    result = self.world.lock_hallway(entity)
-                else:
-                    result = self.world.unlock_hallway(entity)
-
-                if not result.is_success():
-                    response.result = execution_result_to_ros(result)
-                    return response
-
-            response.result.status = ExecutionResult.SUCCESS
-            return response
-
-        # If no valid entity type is reached, we should fail here.
-        message = f"Cannot set state for {entity.name} since it is of type {type(entity).__name__}."
-        self.get_logger().warn(message)
-        response.result.status = ExecutionResult.INVALID_ACTION
-        response.result.message = message
+        # If we made it here, return the latest result.
+        if result is not None:
+            response.result = execution_result_to_ros(result)
         return response
 
 

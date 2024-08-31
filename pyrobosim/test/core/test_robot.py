@@ -219,7 +219,6 @@ class TestRobot:
             ),
         )
         robot.world = self.test_world
-        robot.location = "kitchen"
 
         # Plan a path.
         robot.set_pose(init_pose)
@@ -229,7 +228,7 @@ class TestRobot:
         def close_all_hallways():
             time.sleep(0.5)
             for hallway in self.test_world.hallways:
-                self.test_world.close_hallway(hallway, ignore_robots=[robot])
+                self.test_world.close_location(hallway, ignore_robots=[robot])
 
         threading.Thread(target=close_all_hallways).start()
 
@@ -245,7 +244,7 @@ class TestRobot:
 
         # Now open the hallways and try again, which should succeed.
         for hallway in self.test_world.hallways:
-            self.test_world.open_hallway(hallway)
+            self.test_world.open_location(hallway)
         path = robot.plan_path(goal=goal_pose)
         result = robot.follow_path(path)
         assert result.status == ExecutionStatus.SUCCESS
