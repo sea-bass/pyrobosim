@@ -374,5 +374,5 @@ class TestRosInterface:
         name="test_shutdown_ros_interface", depends=["test_specialized_actions"]
     )
     def test_shutdown_ros_interface(self):
-        """Shuts down rclpy at the end of all other tests."""
-        rclpy.shutdown()
+        """Shuts down the interface node and rclpy at the end of all other tests."""
+        TestRosInterface.ros_interface.shutdown()
