@@ -76,7 +76,7 @@ class Path:
         if not (isinstance(other, Path)):
             raise TypeError("Expected a Path object.")
 
-        return self.poses == other.poses
+        return (self.poses == other.poses) and (self.length == other.length)
 
     def __repr__(self):
         """Return brief description of the path."""

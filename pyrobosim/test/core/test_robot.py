@@ -213,7 +213,7 @@ class TestRobot:
             pose=init_pose,
             path_planner=WorldGraphPlanner(world=self.test_world),
             path_executor=ConstantVelocityExecutor(
-                linear_velocity=3.0,
+                linear_velocity=1.0,  # Move slowly to give time to cancel.
                 dt=0.1,
                 validate_during_execution=True,
             ),
