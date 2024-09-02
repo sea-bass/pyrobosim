@@ -25,7 +25,7 @@ from pyrobosim_ros.ros_conversions import (
 def test_pose_conversion():
     """Tests round-trip conversion of pose objects."""
     # Create a pyrobosim pose
-    orig_pose = Pose(x=1.0, y=2.0, z=3.0, q=[0.707, 0.0, 0.707, 0])  # wxyz
+    orig_pose = Pose(x=1.0, y=2.0, z=3.0, q=[0.707, 0.0, 0.707, 0.0])  # wxyz
 
     # Convert to a ROS Message
     ros_pose = pose_to_ros(orig_pose)
@@ -56,6 +56,7 @@ def test_path_conversion():
     # Convert to a ROS Message
     ros_path = path_to_ros(orig_path)
     assert len(ros_path.poses) == orig_path.num_poses
+    assert orig_path.length == ros_path.length
     for orig_pose, ros_pose in zip(orig_path.poses, ros_path.poses):
         assert ros_pose.position.x == pytest.approx(orig_pose.x)
         assert ros_pose.position.y == pytest.approx(orig_pose.y)
@@ -68,6 +69,7 @@ def test_path_conversion():
     # Convert back to a pyrobosim path
     new_path = path_from_ros(ros_path)
     assert new_path.num_poses == orig_path.num_poses
+    assert new_path.length == orig_path.length
     for orig_pose, new_pose in zip(orig_path.poses, new_path.poses):
         assert orig_pose.is_approx(new_pose)
 

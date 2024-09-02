@@ -77,10 +77,13 @@ def test_path_equality():
     path1 = Path(poses=test_poses)
     path2 = Path(poses=test_poses)  # Same poses, but different object
     path3 = Path(poses=list(reversed(test_poses)))  # Different poses
+    path4 = Path(poses=test_poses)  # Path with out-of-sync length attribute
+    path4.length = -1.0
 
     assert path1 == path1
     assert path1 == path2
     assert not path1 == path3
+    assert not path1 == path4
 
     # Check datatype exception.
     with pytest.raises(TypeError) as exc_info:

@@ -77,6 +77,7 @@ def path_to_ros(path):
     """
     path_msg = ros_msgs.Path()
     path_msg.poses = [pose_to_ros(p) for p in path.poses]
+    path_msg.length = path.length
     return path_msg
 
 
