@@ -17,6 +17,7 @@ echo -e "Created Python virtual environment in ${VIRTUALENV_FOLDER}\n"
 source "${VIRTUALENV_FOLDER}/bin/activate"
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 pushd "${SCRIPT_DIR}/.." > /dev/null
+pip3 install setuptools
 python3 pyrobosim/setup.py egg_info
 pip3 install -r pyrobosim.egg-info/requires.txt
 rm -rf pyrobosim.egg-info/
