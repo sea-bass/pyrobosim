@@ -13,6 +13,7 @@ from PySide6.QtCore import QRunnable, QThreadPool, QTimer, Signal
 
 from pyrobosim.core.robot import Robot
 from pyrobosim.navigation.visualization import plot_path_planner
+from pyrobosim.planning.actions import ExecutionResult, ExecutionStatus
 from pyrobosim.utils.motion import Path
 
 
@@ -515,18 +516,21 @@ class WorldCanvas(FigureCanvasQTAgg):
         :type obj_name: str
         :param grasp_pose: A pose describing how to manipulate the object.
         :type grasp_pose: :class:`pyrobosim.utils.pose.Pose`, optional
-        :return: True if picking succeeds, else False.
-        :rtype: bool
+        :return: An object describing the execution result.
+        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
         if robot is None:
-            return False
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE,
+                message="Robot is not specified. Cannot pick.",
+            )
 
-        success = robot.pick_object(obj_name, grasp_pose)
-        if success:
+        result = robot.pick_object(obj_name, grasp_pose)
+        if result.is_success():
             self.update_object_plot(robot.manipulated_object)
             self.show_world_state(robot)
             self.draw_signal.emit()
-        return success
+        return result
 
     def place_object(self, robot, pose=None):
         """
@@ -536,24 +540,27 @@ class WorldCanvas(FigureCanvasQTAgg):
         :type robot: :class:`pyrobosim.core.robot.Robot`
         :param pose: Optional placement pose, defaults to None.
         :type pose: :class:`pyrobosim.utils.pose.Pose`, optional
-        :return: True if placing succeeds, else False.
-        :rtype: bool
+        :return: An object describing the execution result.
+        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
         if robot is None:
-            return False
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE,
+                message="Robot is not specified. Cannot place.",
+            )
 
         obj = robot.manipulated_object
-        if obj is None:
-            return
-        self.obj_patches.remove(obj.viz_patch)
-        obj.viz_patch.remove()
-        success = robot.place_object(pose=pose)
-        self.axes.add_patch(obj.viz_patch)
-        self.obj_patches.append(obj.viz_patch)
-        self.update_object_plot(obj)
+        if obj is not None:
+            self.obj_patches.remove(obj.viz_patch)
+            obj.viz_patch.remove()
+        result = robot.place_object(pose=pose)
+        if obj is not None:
+            self.axes.add_patch(obj.viz_patch)
+            self.obj_patches.append(obj.viz_patch)
+            self.update_object_plot(obj)
         self.show_world_state(robot)
         self.draw_signal.emit()
-        return success
+        return result
 
     def detect_objects(self, robot, query=None):
         """
@@ -563,16 +570,19 @@ class WorldCanvas(FigureCanvasQTAgg):
         :type robot: :class:`pyrobosim.core.robot.Robot`
         :param query: Query for object detection.
         :type query: str, optional
-        :return: True if object detection succeeds, else False.
-        :rtype: bool
+        :return: An object describing the execution result.
+        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
         if robot is None:
-            return False
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE,
+                message="Robot is not specified. Cannot detect objects.",
+            )
 
-        success = robot.detect_objects(query)
+        result = robot.detect_objects(query)
         self.show_objects()
         self.draw_signal.emit()
-        return success
+        return result
 
     def open_location(self, robot):
         """
@@ -580,11 +590,14 @@ class WorldCanvas(FigureCanvasQTAgg):
 
         :param robot: Robot instance to execute action.
         :type robot: :class:`pyrobosim.core.robot.Robot`
-        :return: True if opening the location succeeds, else False.
-        :rtype: bool
+        :return: An object describing the execution result.
+        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
         if robot is None:
-            return False
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE,
+                message="Robot is not specified. Cannot open location.",
+            )
 
         return robot.open_location()
 
@@ -594,10 +607,13 @@ class WorldCanvas(FigureCanvasQTAgg):
 
         :param robot: Robot instance to execute action.
         :type robot: :class:`pyrobosim.core.robot.Robot`
-        :return: True if closing the location succeeds, else False.
-        :rtype: bool
+        :return: An object describing the execution result.
+        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
         if robot is None:
-            return False
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE,
+                message="Robot is not specified. Cannot close location.",
+            )
 
         return robot.close_location()
