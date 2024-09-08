@@ -579,10 +579,10 @@ class WorldCanvas(FigureCanvasQTAgg):
                 message="Robot is not specified. Cannot detect objects.",
             )
 
-        success = robot.detect_objects(query)
+        result = robot.detect_objects(query)
         self.show_objects()
         self.draw_signal.emit()
-        return success
+        return result
 
     def open_location(self, robot):
         """
