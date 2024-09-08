@@ -1,5 +1,8 @@
 # Robot state definition message
 
+# Header containing a timestamp
+std_msgs/Header header
+
 # Robot information
 string name
 

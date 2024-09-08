@@ -647,6 +647,7 @@ class WorldROSWrapper(Node):
         :rtype: :class:`pyrobosim_msgs.msg.RobotState`
         """
         state_msg = RobotState(name=robot.name)
+        state_msg.header.stamp = self.get_clock().now().to_msg()
         state_msg.pose = pose_to_ros(robot.get_pose())
         state_msg.battery_level = robot.battery_level
         state_msg.executing_action = robot.executing_action
