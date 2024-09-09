@@ -351,6 +351,11 @@ class Robot:
             ):
                 print(f"[{self.name}] Battery charged at {self.location.name}!")
                 self.battery_level = 100.0
+
+            if self.world.has_gui:
+                self.world.gui.canvas.show_world_state(robot=self)
+                self.world.gui.update_button_state()
+
         self.last_nav_result = result
         return result
 
