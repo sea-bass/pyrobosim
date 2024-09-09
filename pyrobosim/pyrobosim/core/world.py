@@ -496,7 +496,7 @@ class World:
             message = f"{location} is already open."
             warnings.warn(message)
             return ExecutionResult(
-                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+                status=ExecutionStatus.SUCCESS, message=message
             )
 
         if location.is_locked:
@@ -550,7 +550,7 @@ class World:
             message = f"{location} is already closed."
             warnings.warn(message)
             return ExecutionResult(
-                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+                status=ExecutionStatus.SUCCESS, message=message
             )
 
         if location.is_locked:
@@ -612,7 +612,7 @@ class World:
             message = f"{location} is already locked."
             warnings.warn(message)
             return ExecutionResult(
-                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+                status=ExecutionStatus.SUCCESS, message=message
             )
 
         location.is_locked = True
@@ -650,7 +650,7 @@ class World:
             message = f"{location} is already unlocked."
             warnings.warn(message)
             return ExecutionResult(
-                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+                status=ExecutionStatus.SUCCESS, message=message
             )
 
         location.is_locked = False

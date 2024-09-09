@@ -69,10 +69,10 @@ class TestLocations:
         assert location.is_open
         assert not location.is_locked
 
-        # When trying to open the location, it should say it's already open.
+        # When trying to open the location, it should succeed and say it's already open.
         with pytest.warns(UserWarning):
             result = self.test_world.open_location(location)
-        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.is_success()
         assert result.message == "Location: test_table is already open."
         assert location.is_open
         assert not location.is_locked
@@ -97,18 +97,18 @@ class TestLocations:
         assert not location.is_open
         assert location.is_locked
 
-        # Closing should not work due to already being closed
+        # Closing should succeed due to already being closed
         with pytest.warns(UserWarning):
             result = self.test_world.close_location(location)
-        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.is_success()
         assert result.message == "Location: test_table is already closed."
         assert not location.is_open
         assert location.is_locked
 
-        # Locking should not work due to already being locked
+        # Locking should succeed due to already being locked
         with pytest.warns(UserWarning):
             result = self.test_world.lock_location(location)
-        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.is_success()
         assert result.message == "Location: test_table is already locked."
         assert not location.is_open
         assert location.is_locked
@@ -119,10 +119,10 @@ class TestLocations:
         assert not location.is_open
         assert not location.is_locked
 
-        # Unlocking should not work due to already being unlocked
+        # Unlocking should succeed due to already being unlocked
         with pytest.warns(UserWarning):
             result = self.test_world.unlock_location(location)
-        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.is_success()
         assert result.message == "Location: test_table is already unlocked."
         assert not location.is_open
         assert not location.is_locked
