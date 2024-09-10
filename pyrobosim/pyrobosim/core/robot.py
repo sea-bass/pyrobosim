@@ -282,7 +282,7 @@ class Robot:
                 return None
             goal = goal_node.pose
 
-        if start.is_approx(goal):
+        if start.is_approx(goal,rel_tol=0.02, abs_tol=0.02):
             path = Path([start, goal])
         else:
             path = self.path_planner.plan(start, goal)
