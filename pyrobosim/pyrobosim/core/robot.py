@@ -138,6 +138,7 @@ class Robot:
         :type pose: :class:`pyrobosim.utils.pose.Pose`
         """
         self.dynamics.pose = pose
+        self.location = self.world.get_location_from_pose(pose)
 
     def set_path_planner(self, path_planner):
         """

@@ -934,8 +934,8 @@ class World:
         # If we got a valid location / pose combination, add the robot
         if valid_pose:
             robot.location = loc
-            robot.set_pose(robot_pose)
             robot.world = self
+            robot.set_pose(robot_pose)
             self.robots.append(robot)
             self.name_to_entity[robot.name] = robot
         else:
