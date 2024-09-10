@@ -12,6 +12,7 @@ from .objects import Object
 from ..manipulation.grasping import Grasp
 from ..planning.actions import ExecutionResult, ExecutionStatus
 from ..utils.knowledge import query_to_entity
+from ..utils.motion import Path
 from ..utils.polygon import sample_from_polygon, transform_polygon
 from ..utils.pose import Pose
 
@@ -281,7 +282,10 @@ class Robot:
                 return None
             goal = goal_node.pose
 
-        path = self.path_planner.plan(start, goal)
+        if start.is_approx(goal):
+            path = Path([start, goal])
+        else:
+            path = self.path_planner.plan(start, goal)
         if self.world and self.world.has_gui:
             show_graphs = True
             self.world.gui.canvas.show_planner_and_path_signal.emit(
