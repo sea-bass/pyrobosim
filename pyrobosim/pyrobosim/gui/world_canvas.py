@@ -59,9 +59,6 @@ class NavRunner(QRunnable):
             realtime_factor=self.canvas.realtime_factor,
         )
 
-        self.canvas.show_world_state(robot=robot)
-        world.gui.update_button_state()
-
 
 class WorldCanvas(FigureCanvasQTAgg):
     """
