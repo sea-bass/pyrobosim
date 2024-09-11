@@ -1243,11 +1243,12 @@ class World:
             if isinstance(prev_location, Room):
                 loc = self.get_location_in_room(pose, prev_location)
                 if loc is not None:
-                    for hallway in self.get_hallways_attached_to_room(prev_location):
+                    attached_hallways = self.get_hallways_attached_to_room(prev_location)
+                    for hallway in attached_hallways:
                         hall_loc = self.get_location_in_hallway(pose, hallway)
                         if hall_loc:
                             return hall_loc
-                        prev_hallways.append(hall_loc)
+                        prev_hallways = attached_hallways
                     return loc
                 prev_room = loc
             elif isinstance(prev_location, Hallway):
