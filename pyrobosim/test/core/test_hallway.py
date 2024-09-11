@@ -96,10 +96,10 @@ class TestHallway:
         assert hallway.is_open
         assert not hallway.is_locked
 
-        # When trying to open the hallway, it should say it's already open.
+        # When trying to open the hallway, it should succeed and say it's already open.
         with pytest.warns(UserWarning):
             result = self.test_world.open_location(hallway)
-        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.is_success()
         assert result.message == "Hallway: hall_room_start_room_end is already open."
         assert hallway.is_open
         assert not hallway.is_locked
@@ -124,18 +124,18 @@ class TestHallway:
         assert not hallway.is_open
         assert hallway.is_locked
 
-        # Closing should not work due to already being closed
+        # Closing should succeed due to already being closed
         with pytest.warns(UserWarning):
             result = self.test_world.close_location(hallway)
-        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.is_success()
         assert result.message == "Hallway: hall_room_start_room_end is already closed."
         assert not hallway.is_open
         assert hallway.is_locked
 
-        # Locking should not work due to already being locked
+        # Locking should succeed due to already being locked
         with pytest.warns(UserWarning):
             result = self.test_world.lock_location(hallway)
-        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.is_success()
         assert result.message == "Hallway: hall_room_start_room_end is already locked."
         assert not hallway.is_open
         assert hallway.is_locked
@@ -146,10 +146,10 @@ class TestHallway:
         assert not hallway.is_open
         assert not hallway.is_locked
 
-        # Unlocking should not work due to already being unlocked
+        # Unlocking should succeed due to already being unlocked
         with pytest.warns(UserWarning):
             result = self.test_world.unlock_location(hallway)
-        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
+        assert result.is_success()
         assert (
             result.message == "Hallway: hall_room_start_room_end is already unlocked."
         )
