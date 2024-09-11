@@ -449,11 +449,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         """
         if robot is not None:
             title_bits = []
-            if navigating:
-                robot_loc = self.world.get_location_from_pose(robot.get_pose())
-                if robot_loc is not None:
-                    title_bits.append(f"Location: {robot_loc.name}")
-            elif robot.location is not None:
+            if robot.location is not None:
                 if isinstance(robot.location, str):
                     robot_loc = robot.location
                 else:

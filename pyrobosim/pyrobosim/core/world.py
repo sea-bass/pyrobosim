@@ -1177,35 +1177,101 @@ class World:
 
         return entity
 
-    def get_location_from_pose(self, pose):
+    def get_location_in_room(self, pose, room):
+        """
+        Gets a location in a room given an input pose.
+
+        :param pose: Input pose.
+        :type pose: :class:`pyrobosim.utils.pose.Pose`
+        :param room: The reference room object.
+        :type room: :class:`pyrobosim.core.room.Room`
+        :return: Entity matching the input pose and room, or ``None`` if not valid.
+            This could either be the Room itself, an object spawn, or ``None``.
+        :rtype: :class:`pyrobosim.core.room.Room` / :class:`pyrobosim.core.locations.ObjectSpawn` / None
+        """
+        if room.is_collision_free(pose):
+            for location in room.locations:
+                for spawn in location.children:
+                    for nav_pose in spawn.nav_poses:
+                        if pose.is_approx(nav_pose):
+                            return spawn
+                for nav_pose in location.nav_poses:
+                    if pose.is_approx(nav_pose):
+                        return location
+            return room
+        return None
+
+    def get_location_in_hallway(self, pose, hallway):
+        """
+        Gets a location in a hallway given an input pose.
+
+        :param pose: Input pose.
+        :type pose: :class:`pyrobosim.utils.pose.Pose`
+        :param hallway: The reference hallway object.
+        :type hallway: :class:`pyrobosim.core.hallway.Hallway`
+        :return: Entity matching the input pose and hallway, or ``None`` if not valid.
+            This could either be the Hallway itself, or ``None``.
+        :rtype: :class:`pyrobosim.core.hallway.Hallway` / None
+        """
+        for nav_pose in hallway.nav_poses:
+            if pose.is_approx(nav_pose):
+                return hallway
+        if hallway.is_collision_free(pose):
+            return hallway
+        return None
+
+    def get_location_from_pose(self, pose, prev_location=None):
         """
         Gets the name of a location given a pose.
 
         :param pose: Input pose.
-        :type name: :class:`pyrobosim.utils.pose.Pose`
+        :type pose: :class:`pyrobosim.utils.pose.Pose`
+        :param prev_location: The robot's previous location.
+            This helps optimize this function by first checking the robot's previous location.
+        :type prev_location: :class:`pyrobosim.core.room.Room`/:class:`pyrobosim.core.hallway.Hallway`/:class:`pyrobosim.core.locations.ObjectSpawn`
         :return: Entity matching the input pose, or ``None`` if not valid.
             This could be a room, hallway, or object spawn.
         :rtype: :class:`pyrobosim.core.room.Room`/:class:`pyrobosim.core.hallway.Hallway`/:class:`pyrobosim.core.locations.ObjectSpawn`
         """
-        # Check hallways and their nav poses.
+        # Check the previous location.
+        prev_room = None
+        prev_hallways = []
+        if prev_location is not None:
+            if isinstance(prev_location, ObjectSpawn):
+                prev_location = prev_location.get_room_name()
+
+            if isinstance(prev_location, Room):
+                loc = self.get_location_in_room(pose, prev_location)
+                if loc is not None:
+                    for hallway in self.get_hallways_attached_to_room(prev_location):
+                        hall_loc = self.get_location_in_hallway(pose, hallway)
+                        if hall_loc:
+                            return hall_loc
+                        prev_hallways.append(hall_loc)
+                    return loc
+                prev_room = loc
+            elif isinstance(prev_location, Hallway):
+                loc = self.get_location_in_hallway(pose, prev_location)
+                if loc is not None:
+                    return loc
+                prev_hallways.append(loc)
+
+        # Check remaining hallways and their nav poses.
         for hallway in self.hallways:
-            for nav_pose in hallway.nav_poses:
-                if pose.is_approx(nav_pose):
-                    return hallway
-            if hallway.is_collision_free(pose):
-                return hallway
-        # Check rooms and the locations / object spawns inside them.
+            if hallway in prev_hallways:
+                continue
+            loc = self.get_location_in_hallway(pose, hallway)
+            if loc is not None:
+                return loc
+        # Check remaining rooms and the locations / object spawns inside them.
         for room in self.rooms:
-            if room.is_collision_free(pose):
-                for location in room.locations:
-                    for spawn in location.children:
-                        for nav_pose in spawn.nav_poses:
-                            if pose.is_approx(nav_pose):
-                                return spawn
-                    for nav_pose in location.nav_poses:
-                        if pose.is_approx(nav_pose):
-                            return location
-                return room
+            if room == prev_room:
+                continue
+            loc = self.get_location_in_room(pose, room)
+            if loc is not None:
+                return loc
+
+        # No valid location was found.
         return None
 
     def get_object_spawns(self, category_list=None):
