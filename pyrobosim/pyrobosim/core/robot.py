@@ -138,6 +138,10 @@ class Robot:
         :type pose: :class:`pyrobosim.utils.pose.Pose`
         """
         self.dynamics.pose = pose
+        if self.world:
+            self.location = self.world.get_location_from_pose(
+                pose, prev_location=self.location
+            )
 
     def set_path_planner(self, path_planner):
         """
@@ -344,7 +348,6 @@ class Robot:
                 * self.path_executor.current_distance_traveled,
             )
         if self.world:
-            self.location = self.world.get_location_from_pose(self.get_pose())
             if (
                 isinstance(self.location, ObjectSpawn)
                 and self.location.parent.is_charger
