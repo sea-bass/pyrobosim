@@ -1564,8 +1564,9 @@ class World:
         elif isinstance(entity, Hallway):
             graph_nodes = [entity.graph_nodes[0], entity.graph_nodes[-1]]
 
-            # Special rule: If all the hallways connected to the room are closed, and the robot is not in the room, remove the graph node from consideration.
-            if robot is not None:
+            # Special rule: If all the hallways connected to the room are closed, and the robot is not in the room or at the hallway,
+            # remove the graph node from consideration.
+            if (robot is not None) and (robot.location != entity):
                 robot_in_start_room = entity.room_start.is_collision_free(
                     robot.get_pose()
                 )
