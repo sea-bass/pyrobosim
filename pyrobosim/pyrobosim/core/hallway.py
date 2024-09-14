@@ -151,6 +151,10 @@ class Hallway:
         self.closed_polygon = self.closed_polygon.difference(
             self.room_end.external_collision_polygon
         )
+        # This is needed for collision checking.
+        self.inflated_closed_polygon = inflate_polygon(
+            self.closed_polygon, inflation_radius
+        )
 
     def update_visualization_polygon(self):
         """Updates the visualization polygon for the hallway walls."""
@@ -215,7 +219,7 @@ class Hallway:
 
         is_free = intersects_xy(self.internal_collision_polygon, x, y)
         if not self.is_open:
-            is_free = is_free and not intersects_xy(self.closed_polygon, x, y)
+            is_free = is_free and not intersects_xy(self.inflated_closed_polygon, x, y)
         return is_free
 
     def add_graph_nodes(self):
