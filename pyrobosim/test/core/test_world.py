@@ -66,7 +66,7 @@ class TestWorldModeling:
     def test_create_hallway():
         """Tests the creation of a hallway between 2 rooms"""
 
-        TestWorldModeling.world.add_hallway(
+        hallway = TestWorldModeling.world.add_hallway(
             room_start="kitchen",
             room_end="bedroom",
             offset=0.5,
@@ -74,6 +74,14 @@ class TestWorldModeling:
             width=0.5,
         )
         assert len(TestWorldModeling.world.hallways) == 1
+        assert (
+            TestWorldModeling.world.get_location_by_name("hall_kitchen_bedroom")
+            == hallway
+        )
+        assert (
+            TestWorldModeling.world.get_location_by_name("hall_bedroom_kitchen")
+            == hallway
+        )
 
     @staticmethod
     @pytest.mark.dependency(
