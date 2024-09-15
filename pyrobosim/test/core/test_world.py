@@ -75,11 +75,11 @@ class TestWorldModeling:
         )
         assert len(TestWorldModeling.world.hallways) == 1
         assert (
-            TestWorldModeling.world.get_location_by_name("hall_kitchen_bedroom")
+            TestWorldModeling.world.get_hallway_by_name("hall_kitchen_bedroom")
             == hallway
         )
         assert (
-            TestWorldModeling.world.get_location_by_name("hall_bedroom_kitchen")
+            TestWorldModeling.world.get_hallway_by_name("hall_bedroom_kitchen")
             == hallway
         )
 
