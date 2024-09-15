@@ -49,7 +49,6 @@ class TestHallway:
         assert self.test_world.num_hallways == 1
         assert self.test_world.hallways[0].room_start == self.room_start
         assert self.test_world.hallways[0].room_end == self.room_end
-        assert self.test_world.hallways[0].width == 0.1
         assert self.test_world.hallways[0].name == "hall_room_start_room_end"
         assert self.test_world.hallways[0].reversed_name == "hall_room_end_room_start"
         assert self.test_world.hallways[0].width == 0.1
