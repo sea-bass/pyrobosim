@@ -98,7 +98,10 @@ class RobotDynamics2D:
 
         # If we made it, we succeeded
         self.collision = False
-        self.pose = target_pose
+        if self.robot:
+            self.robot.set_pose(target_pose)
+        else:
+            self.pose = target_pose
 
     def enforce_dynamics_limits(self, cmd_vel, dt):
         """
@@ -133,5 +136,8 @@ class RobotDynamics2D:
         :type velocity: :class:`numpy.array`, optional
         """
         if pose is not None:
-            self.pose = pose
+            if self.robot:
+                self.robot.set_pose(pose)
+            else:
+                self.pose = pose
         self.velocity = velocity
