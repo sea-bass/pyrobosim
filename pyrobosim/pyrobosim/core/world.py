@@ -248,6 +248,7 @@ class World:
         # Do all the necessary bookkeeping
         self.hallways.append(hallway)
         self.name_to_entity[hallway.name] = hallway
+        self.name_to_entity[hallway.reversed_name] = hallway
         hallway.room_start.hallways.append(hallway)
         hallway.room_start.update_visualization_polygon()
         hallway.room_end.hallways.append(hallway)
@@ -277,6 +278,7 @@ class World:
         # Remove the hallways from the world and relevant rooms.
         self.hallways.remove(hallway)
         self.name_to_entity.pop(hallway.name)
+        self.name_to_entity.pop(hallway.reversed_name)
         for room in [hallway.room_start, hallway.room_end]:
             room.hallways.remove(hallway)
             room.update_collision_polygons()

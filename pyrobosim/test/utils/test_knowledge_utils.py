@@ -105,6 +105,8 @@ def test_query_to_entity():
     assert entity.name == "my_desk_desktop"
     entity = query_to_entity(test_world, ["hall_kitchen_bathroom"], "location")
     assert entity.name == "hall_kitchen_bathroom"
+    entity = query_to_entity(test_world, ["hall_bathroom_kitchen"], "location")
+    assert entity.name == "hall_kitchen_bathroom"
 
     # Query entities based on locations and categories
     query = "kitchen table apple"

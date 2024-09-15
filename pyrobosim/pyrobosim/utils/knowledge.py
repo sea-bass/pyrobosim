@@ -107,7 +107,7 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
                     resolved_queries.add(elem)
         # Also search for hallway names
         for hall in world.hallways:
-            if elem == hall.name:
+            if (elem == hall.name) or (elem == hall.reversed_name):
                 named_location = hall
                 resolved_queries.add(elem)
         # Then, directly search for object names and get the location
