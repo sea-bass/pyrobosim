@@ -64,6 +64,7 @@ class World:
         self.num_hallways = 0
         self.num_locations = 0
         self.num_objects = 0
+        self.hallway_instance_counts = {}
         self.location_instance_counts = {}
         self.object_instance_counts = {}
 
@@ -137,6 +138,11 @@ class World:
             room = room_config["room"]
         else:
             room = Room(**room_config)
+
+        # Check for duplicate names.
+        if room.name in self.get_room_names():
+            warnings.warn(f"Room {room.name} already exists in the world. Cannot add.")
+            return None
 
         # If the room name is empty, automatically name it.
         if room.name is None:
@@ -231,6 +237,27 @@ class World:
 
             hallway = Hallway(**hallway_config)
 
+        # Check for duplicate names.
+        if hallway.name in self.get_hallway_names():
+            warnings.warn(
+                f"Hallway {hallway.name} already exists in the world. Cannot add."
+            )
+            return None
+
+        # If the hallway name is empty, automatically name it.
+        ordered_rooms = tuple(sorted([hallway.room_start.name, hallway.room_end.name]))
+        if ordered_rooms not in self.hallway_instance_counts:
+            self.hallway_instance_counts[ordered_rooms] = 0
+            suffix = ""
+        else:
+            suffix = f"_{self.hallway_instance_counts[ordered_rooms]}"
+
+        if hallway.name is None:
+            hallway.name = f"hall_{ordered_rooms[0]}_{ordered_rooms[1]}{suffix}"
+            hallway.reversed_name = (
+                f"hall_{ordered_rooms[1]}_{ordered_rooms[0]}{suffix}"
+            )
+
         # Check if the hallway collides with any other rooms or hallways
         is_valid_pose = True
         for other_loc in self.rooms + self.hallways:
@@ -253,6 +280,7 @@ class World:
         hallway.room_start.update_visualization_polygon()
         hallway.room_end.hallways.append(hallway)
         hallway.room_end.update_visualization_polygon()
+        self.hallway_instance_counts[ordered_rooms] += 1
         self.num_hallways += 1
         hallway.update_collision_polygons(self.inflation_radius)
         self.update_bounds(entity=hallway)
@@ -277,6 +305,9 @@ class World:
 
         # Remove the hallways from the world and relevant rooms.
         self.hallways.remove(hallway)
+        self.num_hallways -= 1
+        ordered_rooms = tuple(sorted([hallway.room_start.name, hallway.room_end.name]))
+        self.hallway_instance_counts[ordered_rooms] -= 1
         self.name_to_entity.pop(hallway.name)
         self.name_to_entity.pop(hallway.reversed_name)
         for room in [hallway.room_start, hallway.room_end]:
@@ -320,6 +351,13 @@ class World:
                 return None
         else:
             warnings.warn("Location instance or parent must be specified.")
+            return None
+
+        # Check for duplicate names.
+        if loc.name in self.get_location_names():
+            warnings.warn(
+                f"Location {loc.name} already exists in the world. Cannot add."
+            )
             return None
 
         # If the category name is empty, use "location" as the base name.
@@ -699,6 +737,11 @@ class World:
                 return None
         else:
             warnings.warn("Object instance or parent must be specified.")
+            return None
+
+        # Check for duplicate names.
+        if obj.name in self.get_object_names():
+            warnings.warn(f"Object {obj.name} already exists in the world. Cannot add.")
             return None
 
         # If the category name is empty, use "object" as the base name.

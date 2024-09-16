@@ -14,12 +14,22 @@ class TestRoom:
         world = World()
 
         coords = [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)]
-        room = Room(footprint=coords)
+        room = Room(name="test_room", footprint=coords)
         result = world.add_room(room=room)
 
         assert isinstance(result, Room)
         assert world.num_rooms == 1
-        assert world.rooms[0].name == "room0"
+        assert world.rooms[0].name == "test_room"
+
+        # Adding the same room again should fail due to duplicate names.
+        with pytest.warns(UserWarning) as warn_info:
+            result = world.add_room(room=room)
+        assert result is None
+        assert world.num_rooms == 1
+        assert (
+            warn_info[0].message.args[0]
+            == "Room test_room already exists in the world. Cannot add."
+        )
 
     def test_add_room_to_world_from_args(self):
         """Test adding a room from a list of named keyword arguments."""
@@ -27,11 +37,11 @@ class TestRoom:
 
         coords = [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)]
         color = [1.0, 0.0, 0.1]
-        result = world.add_room(name="test_room", footprint=coords, color=color)
+        result = world.add_room(footprint=coords, color=color)
 
         assert isinstance(result, Room)
         assert world.num_rooms == 1
-        assert world.rooms[0].name == "test_room"
+        assert world.rooms[0].name == "room0"
         assert world.rooms[0].viz_color == color
 
     def test_add_room_to_world_empty_geometry(self):

@@ -26,15 +26,30 @@ class TestHallway:
     def test_add_hallway_to_world_from_object(self):
         """Test adding a hallway from a Hallway object."""
 
-        hallway = Hallway(room_start=self.room_start, room_end=self.room_end, width=0.1)
+        hallway = Hallway(
+            room_start=self.room_start,
+            room_end=self.room_end,
+            name="test_hallway",
+            width=0.1,
+        )
         result = self.test_world.add_hallway(hallway=hallway)
         assert isinstance(result, Hallway)
         assert self.test_world.num_hallways == 1
         assert self.test_world.hallways[0].room_start == self.room_start
         assert self.test_world.hallways[0].room_end == self.room_end
-        assert self.test_world.hallways[0].name == "hall_room_start_room_end"
-        assert self.test_world.hallways[0].reversed_name == "hall_room_end_room_start"
+        assert self.test_world.hallways[0].name == "test_hallway"
+        assert self.test_world.hallways[0].reversed_name == "test_hallway"
         assert self.test_world.hallways[0].width == 0.1
+
+        # Adding the same hallway again should fail due to duplicate names.
+        with pytest.warns(UserWarning) as warn_info:
+            result = self.test_world.add_hallway(hallway=hallway)
+        assert result is None
+        assert self.test_world.num_hallways == 1
+        assert (
+            warn_info[0].message.args[0]
+            == "Hallway test_hallway already exists in the world. Cannot add."
+        )
 
     def test_add_hallway_to_world_from_args(self):
         """Test adding a hallway from a list of named keyword arguments."""
@@ -49,9 +64,25 @@ class TestHallway:
         assert self.test_world.num_hallways == 1
         assert self.test_world.hallways[0].room_start == self.room_start
         assert self.test_world.hallways[0].room_end == self.room_end
-        assert self.test_world.hallways[0].name == "hall_room_start_room_end"
-        assert self.test_world.hallways[0].reversed_name == "hall_room_end_room_start"
+        assert self.test_world.hallways[0].name == "hall_room_end_room_start"
+        assert self.test_world.hallways[0].reversed_name == "hall_room_start_room_end"
         assert self.test_world.hallways[0].width == 0.1
+
+        # Adding a second room should add a mangle.
+        result = self.test_world.add_hallway(
+            room_start=self.room_start,
+            room_end="room_end",
+            width=0.08,
+            conn_method="points",
+            conn_points=[(0.0, 0.0), (-2.0, 0.0), (-2.0, 4.0)],
+        )
+        assert isinstance(result, Hallway)
+        assert self.test_world.num_hallways == 2
+        assert self.test_world.hallways[1].room_start == self.room_start
+        assert self.test_world.hallways[1].room_end == self.room_end
+        assert self.test_world.hallways[1].name == "hall_room_end_room_start_1"
+        assert self.test_world.hallways[1].reversed_name == "hall_room_start_room_end_1"
+        assert self.test_world.hallways[1].width == 0.08
 
     def test_add_hallway_fail_validation(self):
         """Test that all the hallway validation checks work."""
@@ -104,7 +135,7 @@ class TestHallway:
         with pytest.warns(UserWarning):
             result = self.test_world.open_location(hallway)
         assert result.is_success()
-        assert result.message == "Hallway: hall_room_start_room_end is already open."
+        assert result.message == "Hallway: hall_room_end_room_start is already open."
         assert hallway.is_open
         assert not hallway.is_locked
 
@@ -124,7 +155,7 @@ class TestHallway:
         with pytest.warns(UserWarning):
             result = self.test_world.open_location(hallway)
         assert result.status == ExecutionStatus.PRECONDITION_FAILURE
-        assert result.message == "Hallway: hall_room_start_room_end is locked."
+        assert result.message == "Hallway: hall_room_end_room_start is locked."
         assert not hallway.is_open
         assert hallway.is_locked
 
@@ -132,7 +163,7 @@ class TestHallway:
         with pytest.warns(UserWarning):
             result = self.test_world.close_location(hallway)
         assert result.is_success()
-        assert result.message == "Hallway: hall_room_start_room_end is already closed."
+        assert result.message == "Hallway: hall_room_end_room_start is already closed."
         assert not hallway.is_open
         assert hallway.is_locked
 
@@ -140,7 +171,7 @@ class TestHallway:
         with pytest.warns(UserWarning):
             result = self.test_world.lock_location(hallway)
         assert result.is_success()
-        assert result.message == "Hallway: hall_room_start_room_end is already locked."
+        assert result.message == "Hallway: hall_room_end_room_start is already locked."
         assert not hallway.is_open
         assert hallway.is_locked
 
@@ -155,7 +186,7 @@ class TestHallway:
             result = self.test_world.unlock_location(hallway)
         assert result.is_success()
         assert (
-            result.message == "Hallway: hall_room_start_room_end is already unlocked."
+            result.message == "Hallway: hall_room_end_room_start is already unlocked."
         )
         assert not hallway.is_open
         assert not hallway.is_locked
