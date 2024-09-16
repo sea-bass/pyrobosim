@@ -7,6 +7,7 @@ build:
   tools:
     python: "3.12"
 
+# Install the Python modules to generate the documentation
 python:
   install:
     - requirements: docs/python_docs_requirements.txt
