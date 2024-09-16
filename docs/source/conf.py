@@ -41,7 +41,14 @@ templates_path = ["_templates"]
 exclude_patterns = []
 
 # Mock imports for external dependencies.
-autodoc_mock_imports = ["geometry_msgs", "rclpy", "pddlstream", "pyrobosim_msgs"]
+autodoc_mock_imports = [
+    "action_msgs",
+    "geometry_msgs",
+    "pddlstream",
+    "pyrobosim_msgs",
+    "rclpy",
+    "std_srvs",
+]
 
 
 # -- Options for HTML output -------------------------------------------------
