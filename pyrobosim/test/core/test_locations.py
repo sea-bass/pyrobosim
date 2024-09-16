@@ -29,19 +29,31 @@ class TestLocations:
     def test_add_location_to_world_from_object(self):
         """Test adding a location from a Location object."""
         location = Location(
-            category="table", parent=self.test_room, pose=Pose(x=0.0, y=0.0)
+            category="table",
+            name="test_table",
+            parent=self.test_room,
+            pose=Pose(x=0.0, y=0.0),
         )
         result = self.test_world.add_location(location=location)
         assert isinstance(result, Location)
         assert self.test_world.num_locations == 1
-        assert self.test_world.locations[0].name == "table0"
+        assert self.test_world.locations[0].name == "test_table"
         assert self.test_world.locations[0].is_open
         assert not self.test_world.locations[0].is_locked
+
+        # Adding the same location again should fail due to duplicate names.
+        with pytest.warns(UserWarning) as warn_info:
+            result = self.test_world.add_location(location=location)
+        assert result is None
+        assert self.test_world.num_locations == 1
+        assert (
+            warn_info[0].message.args[0]
+            == "Location test_table already exists in the world. Cannot add."
+        )
 
     def test_add_location_to_world_from_args(self):
         """Test adding a location from a list of named keyword arguments."""
         result = self.test_world.add_location(
-            name="test_table",
             category="table",
             parent="test_room",
             pose=Pose(x=0.0, y=0.0),
@@ -50,7 +62,7 @@ class TestLocations:
         )
         assert isinstance(result, Location)
         assert self.test_world.num_locations == 1
-        assert self.test_world.locations[0].name == "test_table"
+        assert self.test_world.locations[0].name == "table0"
         assert not self.test_world.locations[0].is_open
         assert self.test_world.locations[0].is_locked
 

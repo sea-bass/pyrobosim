@@ -5,6 +5,7 @@ Tests for object creation in pyrobosim.
 """
 
 import os
+import pytest
 
 from pyrobosim.core import Object, World
 from pyrobosim.utils.general import get_data_folder
@@ -36,6 +37,7 @@ class TestObjects:
         assert table is not None
 
         obj = Object(
+            name="test_banana",
             category="banana",
             parent=table.children[0],
             pose=Pose(x=0.0, y=0.0, yaw=1.0),
@@ -43,8 +45,18 @@ class TestObjects:
         result = world.add_object(object=obj)
         assert isinstance(result, Object)
         assert world.num_objects == 1
-        assert world.objects[0].name == "banana0"
+        assert world.objects[0].name == "test_banana"
         assert world.objects[0].parent.parent == table
+
+        # Adding the same object again should fail due to duplicate names.
+        with pytest.warns(UserWarning) as warn_info:
+            result = world.add_object(object=obj)
+        assert result is None
+        assert world.num_objects == 1
+        assert (
+            warn_info[0].message.args[0]
+            == "Object test_banana already exists in the world. Cannot add."
+        )
 
     def test_add_object_to_world_from_args(self):
         """Test adding an object from a list of named keyword arguments."""
@@ -66,15 +78,8 @@ class TestObjects:
         )
         assert table is not None
 
-        result = world.add_object(name="test_banana", category="banana", parent=table)
+        result = world.add_object(category="banana", parent=table)
         assert isinstance(result, Object)
         assert world.num_objects == 1
-        assert world.objects[0].name == "test_banana"
+        assert world.objects[0].name == "banana0"
         assert world.objects[0].parent.parent == table
-
-
-if __name__ == "__main__":
-    t = TestObjects()
-    t.test_add_object_to_world_from_object()
-    t.test_add_object_to_world_from_args()
-    print("Tests passed!")

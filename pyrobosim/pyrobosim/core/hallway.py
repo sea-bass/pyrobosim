@@ -17,6 +17,7 @@ class Hallway:
         self,
         room_start=None,
         room_end=None,
+        name=None,
         width=0.0,
         conn_method="auto",
         offset=0,
@@ -71,8 +72,7 @@ class Hallway:
         # Unpack input
         self.room_start = room_start
         self.room_end = room_end
-        self.name = f"hall_{room_start.name}_{room_end.name}"
-        self.reversed_name = f"hall_{room_end.name}_{room_start.name}"
+        self.name = self.reversed_name = name
         self.width = width
         self.wall_width = wall_width
         self.offset = offset
