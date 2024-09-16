@@ -253,9 +253,7 @@ class World:
             suffix = f"_{self.hallway_instance_counts[ordered_rooms]}"
 
         if hallway.name is None:
-            hallway.name = (
-                f"hall_{ordered_rooms[0]}_{ordered_rooms[1]}{suffix}"
-            )
+            hallway.name = f"hall_{ordered_rooms[0]}_{ordered_rooms[1]}{suffix}"
             hallway.reversed_name = (
                 f"hall_{ordered_rooms[1]}_{ordered_rooms[0]}{suffix}"
             )
