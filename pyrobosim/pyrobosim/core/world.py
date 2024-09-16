@@ -254,10 +254,10 @@ class World:
 
         if hallway.name is None:
             hallway.name = (
-                f"hall_{hallway.room_start.name}_{hallway.room_end.name}{suffix}"
+                f"hall_{ordered_rooms[0]}_{ordered_rooms[1]}{suffix}"
             )
             hallway.reversed_name = (
-                f"hall_{hallway.room_end.name}_{hallway.room_start.name}{suffix}"
+                f"hall_{ordered_rooms[1]}_{ordered_rooms[0]}{suffix}"
             )
 
         # Check if the hallway collides with any other rooms or hallways
