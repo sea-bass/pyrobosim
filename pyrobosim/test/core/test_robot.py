@@ -493,7 +493,7 @@ class TestRobot:
         assert result.status == ExecutionStatus.PRECONDITION_FAILURE
         assert (
             result.message
-            == "Robot blocker is in Hallway: hall_kitchen_bedroom. Cannot close."
+            == "Robot blocker is in Hallway: hall_bedroom_kitchen. Cannot close."
         )
 
     def test_execute_action(self):
