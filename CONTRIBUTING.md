@@ -58,17 +58,13 @@ You can open the `test_results.html` file using your favorite browser if you wan
 You can also build the `pyrobosim` documentation locally.
 This lets you verify how changes to the documentation (new pages, changes to existing pages, docstrings in the Python code, etc.) look before you push to your branch.
 
+The docs are built using [Sphinx](https://www.sphinx-doc.org/en/master/) and [ReadTheDocs (RTD)](https://about.readthedocs.com/).
+
 To build docs locally:
 
+* Install the packages needed to build docs: `pip3 install -r docs/python_docs_requirements.txt`
 * Go to the root folder of this repository.
-* Run `setup/generate_docs.bash`
+* Run `docs/generate_docs.bash`
 
 This will generate docs pages to the `docs/build` folder.
 You can view the homepage by opening `docs/build/html/index.html` using your favorite browser.
-
-The docs are built using [Sphinx](https://www.sphinx-doc.org/en/master/) and [ReadTheDocs (RTD)](https://about.readthedocs.com/).
-As such, you may need to install additional Python packages for the build to succeed.
-
-```
-pip3 install -r docs/python_docs_requirements.txt
-```

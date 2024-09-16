@@ -3,10 +3,11 @@ version: 2
 
 # Set the version of Python and other tools
 build:
-  os: ubuntu-22.04
+  os: ubuntu-24.04
   tools:
-    python: "3.10"
+    python: "3.12"
 
+# Install the Python modules to generate the documentation
 python:
   install:
     - requirements: docs/python_docs_requirements.txt
