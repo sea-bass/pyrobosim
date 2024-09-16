@@ -40,6 +40,8 @@ class Hallway:
         :type room_start: :class:`pyrobosim.core.room.Room`
         :param room_end: Room object for the end of the hallway (required).
         :type room_end: :class:`pyrobosim.core.room.Room`
+        :param name: Hallway name.
+        :type name: str, optional
         :param width: Width of the hallway, in meters (required).
         :type width: float
         :param conn_method: Connection method (see description above).
