@@ -61,7 +61,7 @@ This lets you verify how changes to the documentation (new pages, changes to exi
 To build docs locally:
 
 * Go to the root folder of this repository.
-* Run `setup/generate_docs.bash`
+* Run `docs/generate_docs.bash`
 
 This will generate docs pages to the `docs/build` folder.
 You can view the homepage by opening `docs/build/html/index.html` using your favorite browser.
