@@ -305,7 +305,7 @@ class WorldROSWrapper(Node):
                 del pub
                 pub_timer = self.robot_state_pub_threads.pop(idx)
                 pub_timer.destroy()
-                del pub_thread
+                del pub_timer
                 plan_path_server = self.robot_plan_path_servers.pop(idx)
                 plan_path_server.destroy()
                 del plan_path_server
