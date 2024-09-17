@@ -141,10 +141,12 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.robot_bodies = []
         self.robot_dirs = []
         self.robot_lengths = []
+        self.robot_texts = []
         self.obj_patches = []
         self.obj_texts = []
         self.hallway_patches = []
         self.room_patches = []
+        self.room_texts = []
         self.location_patches = []
         self.location_texts = []
         self.path_planner_artists = {"graph": [], "path": []}
@@ -188,6 +190,8 @@ class WorldCanvas(FigureCanvasQTAgg):
                 body.remove()
             for dir in self.robot_dirs:
                 dir.remove()
+            for text in self.robot_texts:
+                text.remove()
             self.robot_bodies = n_robots * [None]
             self.robot_dirs = n_robots * [None]
             self.robot_lengths = n_robots * [None]
@@ -227,7 +231,7 @@ class WorldCanvas(FigureCanvasQTAgg):
                     verticalalignment="top",
                     fontsize=10,
                 )
-            self.robot_texts = [r.viz_text for r in (self.world.robots)]
+            self.robot_texts = [robot.viz_text for robot in self.world.robots]
 
     def show_hallways(self):
         """Draws hallways in the world."""
@@ -253,12 +257,15 @@ class WorldCanvas(FigureCanvasQTAgg):
         with self.draw_lock:
             for room in self.room_patches:
                 room.remove()
+            for text in self.room_texts:
+                text.remove()
 
             self.room_patches = [room.viz_patch for room in self.world.rooms]
+            self.room_texts = []
 
             for room in self.world.rooms:
                 self.axes.add_patch(room.viz_patch)
-                self.axes.text(
+                viz_text = self.axes.text(
                     room.centroid[0],
                     room.centroid[1],
                     room.name,
@@ -268,6 +275,8 @@ class WorldCanvas(FigureCanvasQTAgg):
                     va="top",
                     clip_on=True,
                 )
+                self.room_texts.append(viz_text)
+
                 if self.show_collision_polygons:
                     coll_patch = room.get_collision_patch()
                     self.axes.add_patch(coll_patch)
@@ -311,8 +320,6 @@ class WorldCanvas(FigureCanvasQTAgg):
                 obj_patch.remove()
             for obj_text in self.obj_texts:
                 obj_text.remove()
-            self.obj_patches = []
-            self.obj_texts = []
 
             robot = self.main_window.get_current_robot()
             if robot:

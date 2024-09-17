@@ -41,6 +41,7 @@ class World:
         """
         self.name = name
         self.wall_height = wall_height
+        self.source_file = None
 
         # Connected apps
         self.has_gui = False

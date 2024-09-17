@@ -136,14 +136,14 @@ class WorldROSWrapper(Node):
             callback_group=ReentrantCallbackGroup(),
         )
 
-        # Initialize robot specific interface lists
-        self.robot_command_subs = []
-        self.robot_state_pubs = []
-        self.robot_state_pub_threads = []
-        self.robot_plan_path_servers = []
-        self.robot_follow_path_servers = []
-        self.robot_reset_path_planner_servers = []
-        self.robot_object_detection_servers = []
+        # Initialize robot specific interface dictionaries
+        self.robot_command_subs = {}
+        self.robot_state_pubs = {}
+        self.robot_state_pub_threads = {}
+        self.robot_plan_path_servers = {}
+        self.robot_follow_path_servers = {}
+        self.robot_reset_path_planner_servers = {}
+        self.robot_object_detection_servers = {}
         self.latest_robot_cmds = {}
 
         # Start a dynamics timer
@@ -233,7 +233,7 @@ class WorldROSWrapper(Node):
             10,
             callback_group=ReentrantCallbackGroup(),
         )
-        self.robot_command_subs.append(sub)
+        self.robot_command_subs[robot.name] = sub
 
         # Create robot state publisher timer
         pub = self.create_publisher(
@@ -244,8 +244,8 @@ class WorldROSWrapper(Node):
         )
         pub_fn = partial(self.publish_robot_state, pub=pub, robot=robot)
         pub_timer = self.create_timer(self.state_pub_rate, pub_fn)
-        self.robot_state_pubs.append(pub)
-        self.robot_state_pub_threads.append(pub_timer)
+        self.robot_state_pubs[robot.name] = pub
+        self.robot_state_pub_threads[robot.name] = pub_timer
 
         robot_action_callback_group = ReentrantCallbackGroup()
 
@@ -257,7 +257,7 @@ class WorldROSWrapper(Node):
             execute_callback=partial(self.robot_path_plan_callback, robot=robot),
             callback_group=robot_action_callback_group,
         )
-        self.robot_plan_path_servers.append(plan_path_server)
+        self.robot_plan_path_servers[robot.name] = plan_path_server
 
         follow_path_server = ActionServer(
             self,
@@ -267,7 +267,7 @@ class WorldROSWrapper(Node):
             cancel_callback=partial(self.robot_path_cancel_callback, robot=robot),
             callback_group=robot_action_callback_group,
         )
-        self.robot_follow_path_servers.append(follow_path_server)
+        self.robot_follow_path_servers[robot.name] = follow_path_server
 
         # Service server for resetting path planner.
         reset_path_planner_srv = self.create_service(
@@ -276,7 +276,7 @@ class WorldROSWrapper(Node):
             partial(self.robot_path_planner_reset_callback, robot=robot),
             callback_group=ReentrantCallbackGroup(),
         )
-        self.robot_reset_path_planner_servers.append(reset_path_planner_srv)
+        self.robot_reset_path_planner_servers[robot.name] = reset_path_planner_srv
 
         # Specialized action server for object detection.
         object_detection_server = ActionServer(
@@ -286,7 +286,7 @@ class WorldROSWrapper(Node):
             execute_callback=partial(self.robot_detect_objects_callback, robot=robot),
             callback_group=robot_action_callback_group,
         )
-        self.robot_object_detection_servers.append(object_detection_server)
+        self.robot_object_detection_servers[robot.name] = object_detection_server
 
     def remove_robot_ros_interfaces(self, robot):
         """
@@ -295,31 +295,35 @@ class WorldROSWrapper(Node):
         :param robot: Robot instance.
         :type robot: :class:`pyrobosim.core.robot.Robot`
         """
-        for idx, r in enumerate(self.world.robots):
-            if r == robot:
-                sub = self.robot_command_subs.pop(idx)
-                self.destroy_subscription(sub)
-                del sub
-                pub = self.robot_state_pubs.pop(idx)
-                self.destroy_publisher(pub)
-                del pub
-                pub_timer = self.robot_state_pub_threads.pop(idx)
-                pub_timer.destroy()
-                del pub_thread
-                plan_path_server = self.robot_plan_path_servers.pop(idx)
-                plan_path_server.destroy()
-                del plan_path_server
-                plan_follow_server = self.robot_follow_path_servers.pop(idx)
-                plan_follow_server.destroy()
-                del plan_follow_server
-                reset_path_planner_server = self.robot_reset_path_planner_servers.pop(
-                    idx
-                )
-                self.destroy_service(reset_path_planner_server)
-                del reset_path_planner_server
-                detect_objects_server = self.robot_object_detection_servers.pop(idx)
-                detect_objects_server.destroy()
-                del detect_objects_server
+        name = robot.name
+
+        sub = self.robot_command_subs[name]
+        self.destroy_subscription(sub)
+        del self.robot_command_subs[name]
+
+        pub = self.robot_state_pubs[name]
+        self.destroy_publisher(pub)
+        del self.robot_state_pubs[name]
+
+        pub_timer = self.robot_state_pub_threads[name]
+        pub_timer.destroy()
+        del self.robot_state_pub_threads[name]
+
+        plan_path_server = self.robot_plan_path_servers[name]
+        plan_path_server.destroy()
+        del self.robot_plan_path_servers[name]
+
+        plan_follow_server = self.robot_follow_path_servers[name]
+        plan_follow_server.destroy()
+        del self.robot_follow_path_servers[name]
+
+        reset_path_planner_server = self.robot_reset_path_planner_servers[name]
+        self.destroy_service(reset_path_planner_server)
+        del self.robot_reset_path_planner_servers[name]
+
+        detect_objects_server = self.robot_object_detection_servers[name]
+        detect_objects_server.destroy()
+        del self.robot_object_detection_servers[name]
 
     def dynamics_callback(self):
         """
@@ -818,4 +822,8 @@ def update_world_from_state_msg(world, msg):
             is_locked=loc_state.is_locked,
         )
 
-    # TODO: Update the hallway states once this is supported.
+    # Update the hallway states
+    for hallway_state in msg.hallways:
+        hallway = world.get_hallway_by_name(hallway_state.name)
+        hallway.is_open = hallway_state.is_open
+        hallway.is_locked = hallway_state.is_locked
