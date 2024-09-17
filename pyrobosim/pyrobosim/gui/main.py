@@ -40,7 +40,7 @@ class PyRoboSimGUI(QtWidgets.QApplication):
         """
         super(PyRoboSimGUI, self).__init__(args)
         self.world = world
-        self.main_window = PyRoboSimMainWindow(world, show)
+        self.main_window = PyRoboSimMainWindow(self.world, show)
         if show:
             self.main_window.show()
 
@@ -58,19 +58,31 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         :type show: bool, optional
         """
         super(PyRoboSimMainWindow, self).__init__(*args, **kwargs)
+        self.canvas = None
+        self.layout_created = False
+
         self.setWindowTitle("pyrobosim")
         self.set_window_dims()
 
-        # Connect the GUI to the world
-        self.world = world
-        self.world.gui = self
-        self.world.has_gui = True
+        self.set_world(world)
 
-        self.layout_created = False
-        self.canvas = WorldCanvas(self, world, show)
+        self.canvas = WorldCanvas(self, self.world, show)
         self.create_layout()
         self.canvas.show()
         self.on_robot_changed()
+
+    def set_world(self, world):
+        """
+        Sets the world for the GUI.
+
+        :param world: World object to attach.
+        :type world: :class:`pyrobosim.core.world.World`
+        """
+        self.world = world
+        self.world.gui = self
+        self.world.has_gui = True
+        if self.canvas is not None:
+            self.canvas.world = world
 
     def closeEvent(self, _):
         """Cleans up running threads on closing the window."""
@@ -171,12 +183,16 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.other_options_layout.addWidget(
             self.toggle_collision_polygons_checkbox, 0, 0
         )
+        self.reset_world_button = QtWidgets.QPushButton("Reset world")
+        self.reset_world_button.clicked.connect(self.on_reset_world_click)
+        self.other_options_layout.addWidget(self.reset_world_button, 0, 1)
+        self.reset_world_button.setEnabled(self.world.source_file is not None)
         self.reset_path_planner_button = QtWidgets.QPushButton("Reset path planner")
         self.reset_path_planner_button.clicked.connect(self.on_reset_path_planner_click)
-        self.other_options_layout.addWidget(self.reset_path_planner_button, 0, 1)
+        self.other_options_layout.addWidget(self.reset_path_planner_button, 0, 2)
         self.cancel_action_button = QtWidgets.QPushButton("Cancel action")
         self.cancel_action_button.clicked.connect(self.on_cancel_action_click)
-        self.other_options_layout.addWidget(self.cancel_action_button, 0, 2)
+        self.other_options_layout.addWidget(self.cancel_action_button, 0, 3)
 
         # Main layout
         self.main_layout = QtWidgets.QVBoxLayout(self.main_widget)
@@ -213,6 +229,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             self.open_button.setEnabled(can_open_close and not robot.location.is_open)
             self.close_button.setEnabled(can_open_close and robot.location.is_open)
             self.cancel_action_button.setEnabled(is_moving)
+            self.reset_world_button.setEnabled(not is_moving)
             self.reset_path_planner_button.setEnabled(not is_moving)
             self.rand_pose_button.setEnabled(not is_moving)
 
@@ -225,6 +242,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             self.cancel_action_button.setEnabled(False)
             self.open_button.setEnabled(True)
             self.close_button.setEnabled(True)
+            self.reset_world_button.setEnabled(True)
             self.reset_path_planner_button.setEnabled(False)
             self.rand_pose_button.setEnabled(False)
 
@@ -246,6 +264,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.close_button.setEnabled(state)
         self.rand_pose_button.setEnabled(state)
         self.cancel_action_button.setEnabled(not state)
+        self.reset_world_button.setEnabled(state)
         self.reset_path_planner_button.setEnabled(state)
 
     ####################
@@ -357,6 +376,16 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         if robot:
             robot.cancel_actions()
             self.canvas.draw_signal.emit()
+
+    def on_reset_world_click(self):
+        """Callback to reset the entire world."""
+        from ..core.yaml_utils import WorldYamlLoader
+
+        world = WorldYamlLoader().from_yaml(self.world.source_file)
+        self.set_world(world)
+        self.canvas.show()
+        self.canvas.draw_signal.emit()
+        self.on_robot_changed()
 
     def on_reset_path_planner_click(self):
         """Callback to reset the path planner for the current robot."""

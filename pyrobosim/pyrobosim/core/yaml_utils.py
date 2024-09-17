@@ -36,6 +36,7 @@ class WorldYamlLoader:
         self.add_locations()
         self.add_objects()
         self.add_robots()
+        self.world.source_file = filename
         return self.world
 
     def create_world(self):
