@@ -6,8 +6,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from enum import Enum
-from mpl_toolkits.mplot3d import Axes3D
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from transforms3d.quaternions import rotate_vector, qinverse
 
 
@@ -107,6 +105,8 @@ class Grasp:
 
     def plot(self, ax, color, alpha=0.8):
         """Displays the grasp on an existing set of axes."""
+        from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+
         d = self.properties.depth
         h = self.properties.height / 2
         w = self.properties.max_width / 2
@@ -563,6 +563,9 @@ class GraspGenerator:
         :param object_footprint: Optional N-by-2 array of the object footprint points to overlay
         :type object_footprint: :class:`numpy.ndarray`, optional
         """
+        from mpl_toolkits.mplot3d import Axes3D
+        from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+
         fig = plt.figure()
         ax = Axes3D(fig)
         fig.add_axes(ax)
