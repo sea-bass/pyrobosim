@@ -328,7 +328,11 @@ class Robot:
             )
 
         # Follow the path.
-        result = self.path_executor.execute(path, realtime_factor)
+        exec_options = self.action_execution_options.get("navigate")
+        battery_usage = exec_options.battery_usage if exec_options else 0.0
+        result = self.path_executor.execute(
+            path, realtime_factor=realtime_factor, battery_usage=battery_usage
+        )
 
         # Check that the robot made it to its goal pose at the end of execution.
         at_goal_pose = self.get_pose().is_approx(path.poses[-1])
@@ -339,14 +343,6 @@ class Robot:
             )
 
         # Update the robot state.
-        exec_options = self.action_execution_options.get("navigate")
-        if exec_options:
-            self.battery_level = max(
-                0.0,
-                self.battery_level
-                - exec_options.battery_usage
-                * self.path_executor.current_distance_traveled,
-            )
         if self.world:
             if (
                 isinstance(self.location, ObjectSpawn)

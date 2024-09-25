@@ -53,11 +53,10 @@ class ConstantVelocityExecutor:
 
         # Execution state
         self.current_traj_time = 0.0
-        self.current_distance_traveled = 0.0
         self.abort_execution = False  # Flag to abort internally
         self.cancel_execution = False  # Flag to cancel from user
 
-    def execute(self, path, realtime_factor=1.0):
+    def execute(self, path, realtime_factor=1.0, battery_usage=0.0):
         """
         Generates and executes a trajectory on the robot.
 
@@ -66,6 +65,8 @@ class ConstantVelocityExecutor:
         :param realtime_factor: A multiplier on the execution time relative to
             real time, defaults to 1.0.
         :type realtime_factor: float, optional
+        :param battery_usage: Robot battery usage per unit distance.
+        :type battery_usage: float, optional
         :return: An object describing the execution result.
         :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
@@ -86,7 +87,6 @@ class ConstantVelocityExecutor:
 
         self.robot.executing_nav = True
         self.current_traj_time = 0.0
-        self.current_distance_traveled = 0.0
         self.abort_execution = False
 
         # Convert the path to an interpolated trajectory.
@@ -132,7 +132,17 @@ class ConstantVelocityExecutor:
                 status = ExecutionStatus.CANCELED
                 break
 
-            self.current_distance_traveled += cur_pose.get_linear_distance(prev_pose)
+            # Simulate battery usage and exit if the battery is fully depleted.
+            self.robot.battery_level -= battery_usage * cur_pose.get_linear_distance(
+                prev_pose
+            )
+            if self.robot.battery_level <= 0.0:
+                self.robot.battery_level = 0.0
+                message = f"[{self.robot.name}] Battery depleted while navigating."
+                warnings.warn(message)
+                status = ExecutionStatus.EXECUTION_FAILURE
+                break
+
             prev_pose = cur_pose
             time.sleep(max(0, sleep_time - (time.time() - start_time)))
 

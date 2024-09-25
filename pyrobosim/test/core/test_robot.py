@@ -500,6 +500,7 @@ class TestRobot:
         """Tests execution of a single action."""
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
         robot = Robot(
+            name="test_robot",
             pose=init_pose,
             path_planner=WorldGraphPlanner(world=self.test_world),
             path_executor=ConstantVelocityExecutor(linear_velocity=5.0, dt=0.1),
@@ -507,15 +508,29 @@ class TestRobot:
         )
         robot.location = "kitchen"
         robot.world = self.test_world
+
+        # Navigate to a location and check that the battery level decreased.
         action = TaskAction(
             "navigate",
             source_location="kitchen",
             target_location="my_desk",
         )
-
         result = robot.execute_action(action)
         assert result.is_success()
         assert robot.battery_level < 100.0
+
+        # Modify the action execution options to deplete the battery extremely quickly.
+        robot.action_execution_options["navigate"].battery_usage = 100.0
+        action = TaskAction(
+            "navigate",
+            source_location="my_desk",
+            target_location="bathroom",
+        )
+        with pytest.warns(UserWarning):
+            result = robot.execute_action(action)
+        assert result.status == ExecutionStatus.EXECUTION_FAILURE
+        assert result.message == "[test_robot] Battery depleted while navigating."
+        assert robot.battery_level == 0.0
 
     def test_execute_invalid_action(self):
         """Tests execution of an action that is not recognized as a valid type."""
