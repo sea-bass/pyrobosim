@@ -6,7 +6,7 @@ ARG ROS_DISTRO=humble
 # base pyrobosim build for Ubuntu
 #
 ##################################
-FROM ubuntu:latest as pyrobosim
+FROM ubuntu:latest AS pyrobosim
 
 # Install dependencies
 ARG DEBIAN_FRONTEND=noninteractive
@@ -49,7 +49,7 @@ CMD /bin/bash
 # pyrobosim build for Ubuntu / ROS
 #
 ##################################
-FROM ros:${ROS_DISTRO}-ros-base as pyrobosim_ros
+FROM ros:${ROS_DISTRO}-ros-base AS pyrobosim_ros
 ENV ROS_DISTRO=${ROS_DISTRO}
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
