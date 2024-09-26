@@ -234,7 +234,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             self.reset_path_planner_button.setEnabled(not is_moving)
             self.rand_pose_button.setEnabled(not is_moving)
 
-            self.canvas.show_world_state(robot, navigating=is_moving)
+            self.canvas.show_world_state(robot)
         else:
             self.nav_button.setEnabled(False)
             self.pick_button.setEnabled(False)
@@ -286,7 +286,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             if robot.manipulated_object is not None:
                 robot.manipulated_object.pose = sampled_pose
         self.canvas.update_robots_plot()
-        self.canvas.show_world_state(navigating=True)
+        self.canvas.show_world_state()
         self.canvas.draw()
 
     def rand_goal_cb(self):

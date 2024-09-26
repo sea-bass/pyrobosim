@@ -423,7 +423,7 @@ class WorldCanvas(FigureCanvasQTAgg):
             # Show the state of the currently selected robot
             cur_robot = world.gui.get_current_robot()
             if cur_robot is not None and cur_robot.is_moving():
-                self.show_world_state(cur_robot, navigating=True)
+                self.show_world_state(cur_robot)
                 world.gui.set_buttons_during_action(False)
 
             self.draw_signal.emit()
@@ -445,15 +445,12 @@ class WorldCanvas(FigureCanvasQTAgg):
                 robot.viz_text.set_position((p.x, p.y - 2.0 * robot.radius))
                 self.update_object_plot(robot.manipulated_object)
 
-    def show_world_state(self, robot=None, navigating=False):
+    def show_world_state(self, robot=None):
         """
         Shows the world state in the figure title.
 
         :param robot: If set to a Robot instance, uses that robot for showing state.
         :type robot: :class:`pyrobosim.core.robot.Robot`, optional
-        :param navigating: Flag that indicates that the robot is moving so we
-            should continuously update the title containing the robot location.
-        :type navigating: bool, optional
         """
         if robot is not None:
             title_bits = []
