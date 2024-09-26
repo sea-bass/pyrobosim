@@ -328,6 +328,7 @@ class Robot:
             )
 
         # Follow the path.
+        self.executing_nav = True
         exec_options = self.action_execution_options.get("navigate")
         battery_usage = exec_options.battery_usage if exec_options else 0.0
         result = self.path_executor.execute(
@@ -356,6 +357,7 @@ class Robot:
                 self.world.gui.update_button_state()
 
         self.last_nav_result = result
+        self.executing_nav = False
         return result
 
     def navigate(

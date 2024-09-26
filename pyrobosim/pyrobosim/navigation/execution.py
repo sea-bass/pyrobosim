@@ -53,6 +53,7 @@ class ConstantVelocityExecutor:
 
         # Execution state
         self.current_traj_time = 0.0
+        self.following_path = False  # Flag to track path following
         self.abort_execution = False  # Flag to abort internally
         self.cancel_execution = False  # Flag to cancel from user
 
@@ -85,9 +86,9 @@ class ConstantVelocityExecutor:
                 message=message,
             )
 
-        self.robot.executing_nav = True
         self.current_traj_time = 0.0
         self.abort_execution = False
+        self.following_path = True
 
         # Convert the path to an interpolated trajectory.
         self.traj = get_constant_speed_trajectory(
@@ -147,11 +148,9 @@ class ConstantVelocityExecutor:
             time.sleep(max(0, sleep_time - (time.time() - start_time)))
 
         # Finalize path execution.
+        self.following_path = False
         time.sleep(0.1)  # To ensure background threads get the end of the path.
         self.robot.last_nav_result = ExecutionResult(status=status, message=message)
-        self.robot.executing_nav = False
-        self.robot.executing_action = False
-        self.robot.current_action = None
         return self.robot.last_nav_result
 
     def validate_remaining_path(self):
@@ -161,7 +160,7 @@ class ConstantVelocityExecutor:
         This function will set the `abort_execution` attribute to `True`,
         which cancels the main trajectory execution loop.
         """
-        while self.robot.executing_nav and not self.abort_execution:
+        while self.following_path and not self.abort_execution:
             start_time = time.time()
             cur_pose = self.robot.get_pose()
             cur_time = self.current_traj_time
