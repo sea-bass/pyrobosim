@@ -216,6 +216,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
     def update_button_state(self):
         """Update the state of buttons based on the state of the robot."""
         robot = self.get_current_robot()
+        has_source_file = self.world.source_file is not None
         if robot:
             is_moving = robot.is_moving()
             at_open_object_spawn = robot.at_object_spawn() and robot.location.is_open
@@ -229,7 +230,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             self.open_button.setEnabled(can_open_close and not robot.location.is_open)
             self.close_button.setEnabled(can_open_close and robot.location.is_open)
             self.cancel_action_button.setEnabled(is_moving)
-            self.reset_world_button.setEnabled(not is_moving)
+            self.reset_world_button.setEnabled(has_source_file and not is_moving)
             self.reset_path_planner_button.setEnabled(not is_moving)
             self.rand_pose_button.setEnabled(not is_moving)
 
@@ -242,7 +243,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             self.cancel_action_button.setEnabled(False)
             self.open_button.setEnabled(True)
             self.close_button.setEnabled(True)
-            self.reset_world_button.setEnabled(True)
+            self.reset_world_button.setEnabled(has_source_file)
             self.reset_path_planner_button.setEnabled(False)
             self.rand_pose_button.setEnabled(False)
 
@@ -264,7 +265,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.close_button.setEnabled(state)
         self.rand_pose_button.setEnabled(state)
         self.cancel_action_button.setEnabled(not state)
-        self.reset_world_button.setEnabled(state)
+        self.reset_world_button.setEnabled(state and self.world.source_file is not None)
         self.reset_path_planner_button.setEnabled(state)
 
     ####################
