@@ -539,6 +539,9 @@ class WorldROSWrapper(Node):
         path = path_from_ros(goal_handle.request.path)
         Thread(target=robot.follow_path, args=(path,)).start()
 
+        if self.world.has_gui:
+            self.world.gui.set_buttons_during_action(False)
+
         while robot.executing_nav and goal_handle.status != GoalStatus.STATUS_CANCELED:
             if goal_handle.is_cancel_requested:
                 robot.cancel_actions()
