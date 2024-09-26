@@ -94,7 +94,7 @@ def main():
     elif mode == "plan":
         cmd.get_logger().info("Executing task plan...")
         task_actions = [
-            TaskAction(),
+            TaskAction(type="navigate", target_location="desk"),
             TaskAction(type="pick", object="water"),
             TaskAction(
                 type="navigate",
