@@ -426,7 +426,7 @@ class WorldCanvas(FigureCanvasQTAgg):
                 self.show_world_state(cur_robot)
                 world.gui.set_buttons_during_action(False)
 
-            self.draw_signal.emit()
+            self.draw_and_sleep()
 
     def update_robots_plot(self):
         """Updates the robot visualization graphics objects."""
@@ -527,7 +527,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         if result.is_success():
             self.update_object_plot(robot.manipulated_object)
             self.show_world_state(robot)
-            self.draw_signal.emit()
+            self.draw_and_sleep()
         return result
 
     def place_object(self, robot, pose=None):
@@ -557,7 +557,7 @@ class WorldCanvas(FigureCanvasQTAgg):
             self.obj_patches.append(obj.viz_patch)
             self.update_object_plot(obj)
         self.show_world_state(robot)
-        self.draw_signal.emit()
+        self.draw_and_sleep()
         return result
 
     def detect_objects(self, robot, query=None):
@@ -579,7 +579,7 @@ class WorldCanvas(FigureCanvasQTAgg):
 
         result = robot.detect_objects(query)
         self.show_objects()
-        self.draw_signal.emit()
+        self.draw_and_sleep()
         return result
 
     def open_location(self, robot):

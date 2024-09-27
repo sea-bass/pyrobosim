@@ -326,6 +326,13 @@ class Robot:
                 status=ExecutionStatus.PRECONDITION_FAILURE,
                 message=message,
             )
+        if self.path_executor.following_path:
+            message = "Robot is already following an existing path."
+            warnings.warn(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE,
+                message=message,
+            )
 
         # Follow the path.
         self.executing_nav = True
@@ -344,6 +351,8 @@ class Robot:
             )
 
         # Update the robot state.
+        self.last_nav_result = result
+        self.executing_nav = False
         if self.world:
             if (
                 isinstance(self.location, ObjectSpawn)
@@ -355,9 +364,6 @@ class Robot:
             if self.world.has_gui:
                 self.world.gui.canvas.show_world_state(robot=self)
                 self.world.gui.update_button_state()
-
-        self.last_nav_result = result
-        self.executing_nav = False
         return result
 
     def navigate(
@@ -927,10 +933,16 @@ class Robot:
             warnings.warn("There is no running action or plan to cancel.")
             return
 
-        self.canceling_execution = True
         if self.executing_nav and self.path_executor is not None:
             print(f"[{self.name}] Canceling path execution...")
             self.path_executor.cancel_execution = True
+            while self.executing_nav:
+                time.sleep(0.1)
+
+        if self.executing_action or self.executing_plan:
+            self.canceling_execution = True
+            while self.canceling_execution:
+                time.sleep(0.1)
 
     def execute_plan(self, plan, delay=0.5):
         """

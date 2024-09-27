@@ -376,6 +376,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         robot = self.get_current_robot()
         if robot:
             robot.cancel_actions()
+            self.update_button_state()
             self.canvas.draw_signal.emit()
 
     def on_reset_world_click(self):
