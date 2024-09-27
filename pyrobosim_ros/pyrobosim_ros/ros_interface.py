@@ -546,7 +546,8 @@ class WorldROSWrapper(Node):
             if goal_handle.is_cancel_requested:
                 robot.cancel_actions()
                 goal_handle.canceled()
-            time.sleep(0.5)
+                break
+            time.sleep(0.1)
 
         if self.world.has_gui:
             self.world.gui.set_buttons_during_action(True)
