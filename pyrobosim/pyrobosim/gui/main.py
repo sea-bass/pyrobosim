@@ -257,16 +257,19 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         :param state: Desired button state (True to enable, False to disable)
         :type state: bool
         """
-        self.nav_button.setEnabled(state)
-        self.pick_button.setEnabled(state)
-        self.place_button.setEnabled(state)
-        self.detect_button.setEnabled(state)
-        self.open_button.setEnabled(state)
-        self.close_button.setEnabled(state)
-        self.rand_pose_button.setEnabled(state)
-        self.cancel_action_button.setEnabled(not state)
-        self.reset_world_button.setEnabled(state and self.world.source_file is not None)
-        self.reset_path_planner_button.setEnabled(state)
+        if self.get_current_robot():
+            self.nav_button.setEnabled(state)
+            self.pick_button.setEnabled(state)
+            self.place_button.setEnabled(state)
+            self.detect_button.setEnabled(state)
+            self.open_button.setEnabled(state)
+            self.close_button.setEnabled(state)
+            self.rand_pose_button.setEnabled(state)
+            self.cancel_action_button.setEnabled(not state)
+            self.reset_world_button.setEnabled(
+                state and self.world.source_file is not None
+            )
+            self.reset_path_planner_button.setEnabled(state)
 
     ####################
     # Button Callbacks #

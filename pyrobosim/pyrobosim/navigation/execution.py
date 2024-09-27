@@ -52,6 +52,12 @@ class ConstantVelocityExecutor:
         self.validation_step_dist = validation_step_dist
 
         # Execution state
+        self.reset_state()
+
+    def reset_state(self):
+        """
+        Resets all the states for tracking the status of path execution.
+        """
         self.current_traj_time = 0.0
         self.following_path = False  # Flag to track path following
         self.abort_execution = False  # Flag to abort internally
@@ -86,8 +92,7 @@ class ConstantVelocityExecutor:
                 message=message,
             )
 
-        self.current_traj_time = 0.0
-        self.abort_execution = False
+        self.reset_state()
         self.following_path = True
 
         # Convert the path to an interpolated trajectory.
@@ -148,7 +153,7 @@ class ConstantVelocityExecutor:
             time.sleep(max(0, sleep_time - (time.time() - start_time)))
 
         # Finalize path execution.
-        self.following_path = False
+        self.reset_state()
         time.sleep(0.1)  # To ensure background threads get the end of the path.
         self.robot.last_nav_result = ExecutionResult(status=status, message=message)
         return self.robot.last_nav_result
