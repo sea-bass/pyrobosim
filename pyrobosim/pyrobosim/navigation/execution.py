@@ -93,6 +93,7 @@ class ConstantVelocityExecutor:
             )
 
         self.reset_state()
+        self.following_path = True
 
         # Convert the path to an interpolated trajectory.
         self.traj = get_constant_speed_trajectory(
