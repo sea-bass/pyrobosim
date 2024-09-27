@@ -56,7 +56,7 @@ class ConstantVelocityExecutor:
 
     def reset_state(self):
         """
-        Resets all the states for tracking path following.
+        Resets all the states for tracking the status of path execution.
         """
         self.current_traj_time = 0.0
         self.following_path = False  # Flag to track path following
