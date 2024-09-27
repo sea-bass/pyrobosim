@@ -266,7 +266,9 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             self.close_button.setEnabled(state)
             self.rand_pose_button.setEnabled(state)
             self.cancel_action_button.setEnabled(not state)
-            self.reset_world_button.setEnabled(state and self.world.source_file is not None)
+            self.reset_world_button.setEnabled(
+                state and self.world.source_file is not None
+            )
             self.reset_path_planner_button.setEnabled(state)
 
     ####################
