@@ -161,4 +161,5 @@ class TestSystem:
             time.sleep(0.2)
             window.on_cancel_action_click()
 
-        assert robot.canceling_execution == True
+        # State should be reset after canceling is complete.
+        assert not robot.canceling_execution
