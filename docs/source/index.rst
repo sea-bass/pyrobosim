@@ -36,6 +36,7 @@ Below is a list of known projects that use ``pyrobosim``.
 * `Home Service Robotics at MIT CSAIL <https://roboticseabass.com/2020/12/30/2020-review-service-robotics-mit-csail/>`_, by Sebastian Castro (2020) -- the precursor to this work!
 * `Task Planning in Robotics <https://roboticseabass.com/2022/07/19/task-planning-in-robotics/>`_ and `Integrated Task and Motion Planning in Robotics <https://roboticseabass.com/2022/07/30/integrated-task-and-motion-planning-in-robotics/>`_ blog posts, by Sebastian Castro (2022)
 * `Hierarchically Decentralized Heterogeneous Multi-Robot Task Allocation System <https://arxiv.org/abs/2405.02484>`_, by Sujeet Kashid and Ashwin D. Kumat (2024)
+* `Hands-On with ROS 2 Deliberation Technologies <https://github.com/ros-wg-delib/roscon24-workshop>`_ workshop at `ROSCon 2024 <https://roscon.ros.org/2024/>`_, by Christian Henkel, Sebastian Castro, Davide Faconti, David Oberacker, David Conner, and Matthias Mayr (2024)
 
 If you have something to add, please submit a pull request!
 
