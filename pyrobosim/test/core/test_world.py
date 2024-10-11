@@ -45,6 +45,7 @@ class TestWorldModeling:
         )
 
         assert len(TestWorldModeling.world.rooms) == 1
+        assert TestWorldModeling.world.get_room_names() == ["kitchen"]
         assert TestWorldModeling.world.get_room_by_name(room1_name) is not None
 
         room2_name = "bedroom"
@@ -54,6 +55,7 @@ class TestWorldModeling:
         )
 
         assert len(TestWorldModeling.world.rooms) == 2
+        assert TestWorldModeling.world.get_room_names() == ["kitchen", "bedroom"]
         assert TestWorldModeling.world.get_room_by_name(room2_name) is not None
 
     @staticmethod
@@ -74,6 +76,7 @@ class TestWorldModeling:
             width=0.5,
         )
         assert len(TestWorldModeling.world.hallways) == 1
+        assert TestWorldModeling.world.get_hallway_names() == ["hall_bedroom_kitchen"]
         assert (
             TestWorldModeling.world.get_hallway_by_name("hall_kitchen_bedroom")
             == hallway
@@ -82,6 +85,18 @@ class TestWorldModeling:
             TestWorldModeling.world.get_hallway_by_name("hall_bedroom_kitchen")
             == hallway
         )
+        assert TestWorldModeling.world.get_hallways_from_rooms(
+            "kitchen", "bedroom"
+        ) == [hallway]
+        assert TestWorldModeling.world.get_hallways_from_rooms(
+            "bedroom", "kitchen"
+        ) == [hallway]
+        assert TestWorldModeling.world.get_hallways_attached_to_room("bedroom") == [
+            hallway
+        ]
+        assert TestWorldModeling.world.get_hallways_attached_to_room("kitchen") == [
+            hallway
+        ]
 
     @staticmethod
     @pytest.mark.dependency(
@@ -103,6 +118,14 @@ class TestWorldModeling:
         assert (
             TestWorldModeling.world.get_location_by_name("table0") == table
         )  # automatic naming check
+        assert TestWorldModeling.world.get_locations() == [table]
+        assert TestWorldModeling.world.get_locations(category_list=["table"]) == [table]
+        assert TestWorldModeling.world.get_locations(category_list=["desk"]) == []
+        assert TestWorldModeling.world.get_location_names() == ["table0"]
+        assert TestWorldModeling.world.get_location_names(category_list=["table"]) == [
+            "table0"
+        ]
+        assert TestWorldModeling.world.get_location_names(category_list=["desk"]) == []
 
         desk = TestWorldModeling.world.add_location(
             category="desk",
@@ -112,6 +135,39 @@ class TestWorldModeling:
         )
         assert len(TestWorldModeling.world.locations) == 2
         assert TestWorldModeling.world.get_location_by_name("study_desk") == desk
+        assert TestWorldModeling.world.get_locations() == [table, desk]
+        assert TestWorldModeling.world.get_locations(category_list=["table"]) == [table]
+        assert TestWorldModeling.world.get_locations(category_list=["desk"]) == [desk]
+        assert TestWorldModeling.world.get_location_names() == ["table0", "study_desk"]
+        assert TestWorldModeling.world.get_location_names(category_list=["table"]) == [
+            "table0"
+        ]
+        assert TestWorldModeling.world.get_location_names(category_list=["desk"]) == [
+            "study_desk"
+        ]
+
+        # Check object spawns
+        assert TestWorldModeling.world.get_object_spawns() == (
+            table.children + desk.children
+        )
+        assert (
+            TestWorldModeling.world.get_object_spawns(category_list=["table"])
+            == table.children
+        )
+        assert (
+            TestWorldModeling.world.get_object_spawns(category_list=["desk"])
+            == desk.children
+        )
+        assert TestWorldModeling.world.get_object_spawn_names() == [
+            "table0_tabletop",
+            "study_desk_desktop",
+        ]
+        assert TestWorldModeling.world.get_object_spawn_names(
+            category_list=["table"]
+        ) == ["table0_tabletop"]
+        assert TestWorldModeling.world.get_object_spawn_names(
+            category_list=["desk"]
+        ) == ["study_desk_desktop"]
 
         # Test missing parent
         with pytest.warns(UserWarning):
@@ -142,16 +198,33 @@ class TestWorldModeling:
     def test_create_object():
         """Tests adding objects to a location"""
 
-        TestWorldModeling.world.add_object(category="apple", parent="table0")
-        TestWorldModeling.world.add_object(category="apple", parent="study_desk")
+        apple = TestWorldModeling.world.add_object(category="apple", parent="table0")
+        banana = TestWorldModeling.world.add_object(
+            category="banana", name="ripe_banana", parent="study_desk"
+        )
         assert len(TestWorldModeling.world.objects) == 2
 
         # second apple
         test_obj = TestWorldModeling.world.objects[1]
         assert isinstance(test_obj, Object)
         assert (
-            TestWorldModeling.world.get_object_by_name("apple1") == test_obj
+            TestWorldModeling.world.get_object_by_name("apple0") == apple
         )  # Automatic naming
+        assert (
+            TestWorldModeling.world.get_object_by_name("ripe_banana") == banana
+        )  # Manual naming
+        assert TestWorldModeling.world.get_objects() == [apple, banana]
+        assert TestWorldModeling.world.get_objects(category_list=["apple"]) == [apple]
+        assert TestWorldModeling.world.get_objects(category_list=["banana"]) == [banana]
+        assert TestWorldModeling.world.get_objects(category_list=["water"]) == []
+        assert TestWorldModeling.world.get_object_names() == ["apple0", "ripe_banana"]
+        assert TestWorldModeling.world.get_object_names(category_list=["apple"]) == [
+            "apple0"
+        ]
+        assert TestWorldModeling.world.get_object_names(category_list=["banana"]) == [
+            "ripe_banana"
+        ]
+        assert TestWorldModeling.world.get_object_names(category_list=["water"]) == []
 
         # Test missing parent
         with pytest.warns(UserWarning):
@@ -330,9 +403,9 @@ class TestWorldModeling:
     def test_remove_object():
         """Tests deleting objects from the world"""
 
-        assert TestWorldModeling.world.remove_object("apple1") is True
+        assert TestWorldModeling.world.remove_object("ripe_banana") is True
         assert len(TestWorldModeling.world.locations) == 2
-        assert TestWorldModeling.world.get_object_by_name("apple1") is None
+        assert TestWorldModeling.world.get_object_by_name("ripe_banana") is None
         assert TestWorldModeling.world.objects[0].name == "apple0"
 
     @staticmethod
