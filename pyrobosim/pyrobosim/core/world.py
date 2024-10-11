@@ -1337,6 +1337,7 @@ class World:
         for loc in self.locations:
             if not category_list or loc.category in category_list:
                 spawn_list.extend(loc.children)
+        return spawn_list
 
     def get_object_spawn_names(self, category_list=None):
         """
@@ -1352,6 +1353,7 @@ class World:
         for loc in self.locations:
             if not category_list or loc.category in category_list:
                 spawn_name_list.extend([spawn.name for spawn in loc.children])
+        return spawn_name_list
 
     def get_objects(self, category_list=None):
         """
