@@ -365,7 +365,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         """Redraws the figure and waits a small amount of time."""
         with self.draw_lock:
             self.fig.canvas.draw()
-            self.fig.canvas.flush_events()
+            # self.fig.canvas.flush_events()
             time.sleep(0.005)
 
     def show_planner_and_path(self, robot=None, show_graphs=True, path=None):
