@@ -5,6 +5,7 @@ import numpy as np
 import time
 import threading
 import warnings
+import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.pyplot import Circle
@@ -126,6 +127,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         self.fig = Figure(dpi=dpi, tight_layout=True)
         self.axes = self.fig.add_subplot(111)
         super(WorldCanvas, self).__init__(self.fig)
+        plt.ion()
 
         self.main_window = main_window
         self.world = world
@@ -417,14 +419,13 @@ class WorldCanvas(FigureCanvasQTAgg):
         # Check if any robot is currently navigating.
         nav_status = [robot.is_moving() for robot in world.robots]
         if any(nav_status):
-            self.update_robots_plot()
-
             # Show the state of the currently selected robot
             cur_robot = world.gui.get_current_robot()
             if cur_robot is not None and cur_robot.is_moving():
                 self.show_world_state(cur_robot)
                 world.gui.set_buttons_during_action(False)
 
+            self.update_robots_plot()
             self.draw_and_sleep()
 
     def update_robots_plot(self):
