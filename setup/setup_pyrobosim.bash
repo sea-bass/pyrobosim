@@ -55,6 +55,11 @@ then
 
   # Install packages needed to run colcon build from within our virtual environment.
   pip3 install colcon-common-extensions
+
+  # Install any ROS package dependencies that may be missing.
+  pushd ${ROS_WORKSPACE} > /dev/null
+  rosdep install --from-paths src -y --ignore-src --rosdistro ${ROS_DISTRO}
+  popd
 else
   # Install pyrobosim using pip in the non-ROS case.
   pip3 install -e ./pyrobosim
