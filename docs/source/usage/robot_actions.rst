@@ -54,7 +54,7 @@ You can also command a robot with a *plan*, which is a sequences of actions:
         ),
         TaskAction("detect", object="apple"),
         TaskAction("pick", object="apple"),
-        TaskAction("place", "object", "apple"),
+        TaskAction("place", object="apple"),
         TaskAction(
             "navigate",
             source_location="my_desk",

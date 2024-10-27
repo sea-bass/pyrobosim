@@ -37,7 +37,7 @@ class TestRobot:
             ),
             TaskAction("detect", object="apple"),
             TaskAction("pick", object="apple"),
-            TaskAction("place", "object", "apple"),
+            TaskAction("place", object="apple"),
             TaskAction(
                 "navigate",
                 source_location="my_desk",
