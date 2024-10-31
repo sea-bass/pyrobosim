@@ -708,13 +708,12 @@ class World:
             pose_sample = Pose(x=x_sample, y=y_sample, z=0.0, yaw=yaw_sample)
             poly = transform_polygon(object.raw_collision_polygon, pose_sample)
 
-            is_valid_pose = poly.within(obj_spawn.polygon)
+            if not poly.within(obj_spawn.polygon):
+                continue
             for other_obj in obj_spawn.children:
-                is_valid_pose = is_valid_pose and not poly.intersects(
-                    other_obj.collision_polygon
-                )
-            if is_valid_pose:
-                return pose_sample
+                if poly.intersects(other_obj.collision_polygon):
+                    continue
+            return pose_sample
         return None
 
     def add_object(self, **object_config):
