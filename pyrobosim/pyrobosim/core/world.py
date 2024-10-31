@@ -689,12 +689,12 @@ class World:
         location.is_locked = False
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
-    def sample_object_spawn_pose(self, object, obj_spawn, max_tries):
+    def sample_object_spawn_pose(self, obj, obj_spawn, max_tries):
         """
         Samples an object pose in a specific object spawn.
 
-        :param object: Object instance.
-        :type object: :class:`pyrobosim.core.objects.Object`
+        :param obj: Object instance.
+        :type obj: :class:`pyrobosim.core.objects.Object`
         :param obj_spawn: Object spawn instance.
         :type obj_spawn: :class:`pyrobosim.core.locations.ObjectSpawn`
         :param max_tries: The maximum number of tries to sample.
@@ -706,14 +706,19 @@ class World:
             x_sample, y_sample = sample_from_polygon(obj_spawn.polygon)
             yaw_sample = np.random.uniform(-np.pi, np.pi)
             pose_sample = Pose(x=x_sample, y=y_sample, z=0.0, yaw=yaw_sample)
-            poly = transform_polygon(object.raw_collision_polygon, pose_sample)
+            poly = transform_polygon(obj.raw_collision_polygon, pose_sample)
 
+            is_valid_pose = True
             if not poly.within(obj_spawn.polygon):
                 continue
             for other_obj in obj_spawn.children:
-                if poly.intersects(other_obj.collision_polygon):
+                if other_obj == obj:
                     continue
-            return pose_sample
+                if poly.intersects(other_obj.collision_polygon):
+                    is_valid_pose = False
+                    break
+            if is_valid_pose:
+                return pose_sample
         return None
 
     def add_object(self, **object_config):
