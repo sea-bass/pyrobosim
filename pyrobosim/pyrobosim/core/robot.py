@@ -363,7 +363,7 @@ class Robot:
 
             if self.world.has_gui:
                 self.world.gui.canvas.show_world_state(robot=self)
-                self.world.gui.update_button_state()
+                self.world.gui.update_buttons_signal.emit()
         return result
 
     def navigate(
@@ -921,7 +921,7 @@ class Robot:
             )
 
         if self.world.has_gui:
-            self.world.gui.update_button_state()
+            self.world.gui.update_buttons_signal.emit()
         print(f"[{self.name}] Action completed with result: {result.status.name}")
         self.current_action = None
         self.executing_action = False
@@ -995,9 +995,10 @@ class Robot:
             time.sleep(delay)  # Artificial delay between actions
 
         if self.world.has_gui:
-            self.world.gui.update_button_state()
+            self.world.gui.update_buttons_signal.emit()
 
         print(f"[{self.name}] Task plan completed with status: {result.status.name}")
+        self.canceling_execution = False
         self.executing_plan = False
         self.current_plan = None
         return result, num_completed
