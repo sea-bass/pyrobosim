@@ -842,15 +842,8 @@ class World:
             return False
 
         if loc is not None:
-            if pose is None:
-                pose = self.sample_object_spawn_pose(
-                    obj, obj_spawn, self.max_object_sample_tries
-                )
-            if pose is None:
-                warnings.warn("Cannot sample a valid spawn pose.")
-                return False
-
-            # If it's a string, get the location name
+            # Find an object spawn that matches the specified location.
+            # If it's a string, get the location name.
             if isinstance(loc, str):
                 loc = self.get_entity_by_name(loc)
             # If it's a location object, pick an object spawn at random.
@@ -863,6 +856,15 @@ class World:
                 warnings.warn(
                     f"Location {loc} did not resolve to a valid location for an object."
                 )
+                return False
+
+            # Next, sample a pose within the new object spawn, if one was not specified.
+            if pose is None:
+                pose = self.sample_object_spawn_pose(
+                    obj, obj_spawn, self.max_object_sample_tries
+                )
+            if pose is None:
+                warnings.warn("Cannot sample a valid spawn pose.")
                 return False
 
             obj.parent.children.remove(obj)
