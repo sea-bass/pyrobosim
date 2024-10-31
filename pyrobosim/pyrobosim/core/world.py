@@ -689,6 +689,38 @@ class World:
         location.is_locked = False
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
+    def sample_object_spawn_pose(self, obj, obj_spawn, max_tries):
+        """
+        Samples an object pose in a specific object spawn.
+
+        :param obj: Object instance.
+        :type obj: :class:`pyrobosim.core.objects.Object`
+        :param obj_spawn: Object spawn instance.
+        :type obj_spawn: :class:`pyrobosim.core.locations.ObjectSpawn`
+        :param max_tries: The maximum number of tries to sample.
+        :type max_tries: int
+        :return: A sampled spawn pose, if one was found. Otherwise returns None.
+        :rtype: :class:`pyrobosim.utils.pose.Pose` / None
+        """
+        for _ in range(max_tries):
+            x_sample, y_sample = sample_from_polygon(obj_spawn.polygon)
+            yaw_sample = np.random.uniform(-np.pi, np.pi)
+            pose_sample = Pose(x=x_sample, y=y_sample, z=0.0, yaw=yaw_sample)
+            poly = transform_polygon(obj.raw_collision_polygon, pose_sample)
+
+            is_valid_pose = True
+            if not poly.within(obj_spawn.polygon):
+                continue
+            for other_obj in obj_spawn.children:
+                if other_obj == obj:
+                    continue
+                if poly.intersects(other_obj.collision_polygon):
+                    is_valid_pose = False
+                    break
+            if is_valid_pose:
+                return pose_sample
+        return None
+
     def add_object(self, **object_config):
         r"""
         Adds an object to a specific location.
@@ -759,25 +791,15 @@ class World:
         # If no pose is specified, sample a valid one.
         obj_spawn = obj.parent
         if obj.pose is None:
-            obj_added = False
-            for _ in range(self.max_object_sample_tries):
-                x_sample, y_sample = sample_from_polygon(obj_spawn.polygon)
-                yaw_sample = np.random.uniform(-np.pi, np.pi)
-                pose_sample = Pose(x=x_sample, y=y_sample, z=0.0, yaw=yaw_sample)
-                poly = transform_polygon(obj.raw_collision_polygon, pose_sample)
+            pose_sample = self.sample_object_spawn_pose(
+                obj, obj_spawn, self.max_object_sample_tries
+            )
 
-                is_valid_pose = poly.within(obj_spawn.polygon)
-                for other_obj in obj_spawn.children:
-                    is_valid_pose = is_valid_pose and not poly.intersects(
-                        other_obj.collision_polygon
-                    )
-                if is_valid_pose:
-                    obj.parent = obj_spawn
-                    obj.set_pose(pose_sample)
-                    obj.create_polygons()
-                    obj_added = True
-                    break
-            if not obj_added:
+            if pose_sample:
+                obj.parent = obj_spawn
+                obj.set_pose(pose_sample)
+                obj.create_polygons()
+            else:
                 warnings.warn(f"Could not sample valid pose to add object {obj.name}.")
                 return None
 
@@ -812,7 +834,7 @@ class World:
         :type obj: :class:`pyrobosim.core.objects.Object`/str
         :param loc: Location or object spawn instance or name. If none, uses the previous location.
         :type loc: :class:`pyrobosim.core.locations.Location`/:class:`pyrobosim.core.locations.ObjectSpawn`/str, optional
-        :param pose: Pose of the location. If none is specified, it will be sampled.
+        :param pose: Pose of the object. If none is specified, it will be sampled.
         :type pose: :class:`pyrobosim.utils.pose.Pose`, optional
         :return: True if the update was successful, else False.
         :rtype: bool
@@ -824,10 +846,8 @@ class World:
             return False
 
         if loc is not None:
-            if pose is None:
-                warnings.warn("Cannot specify a location without a pose.")
-
-            # If it's a string, get the location name
+            # Find an object spawn that matches the specified location.
+            # If it's a string, get the location name.
             if isinstance(loc, str):
                 loc = self.get_entity_by_name(loc)
             # If it's a location object, pick an object spawn at random.
@@ -840,6 +860,15 @@ class World:
                 warnings.warn(
                     f"Location {loc} did not resolve to a valid location for an object."
                 )
+                return False
+
+            # Next, sample a pose within the new object spawn, if one was not specified.
+            if pose is None:
+                pose = self.sample_object_spawn_pose(
+                    obj, obj_spawn, self.max_object_sample_tries
+                )
+            if pose is None:
+                warnings.warn("Cannot sample a valid spawn pose.")
                 return False
 
             obj.parent.children.remove(obj)
