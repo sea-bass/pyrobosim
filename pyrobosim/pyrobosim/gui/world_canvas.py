@@ -10,55 +10,19 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.pyplot import Circle
 from matplotlib.transforms import Affine2D
-from PySide6.QtCore import QRunnable, QThreadPool, QTimer, Signal
+from PySide6.QtCore import QThreadPool, QTimer, Signal
 
-from pyrobosim.core.robot import Robot
-from pyrobosim.navigation.visualization import plot_path_planner
-from pyrobosim.planning.actions import ExecutionResult, ExecutionStatus
-from pyrobosim.utils.motion import Path
-
-
-class NavRunner(QRunnable):
-    """
-    Helper class that wraps navigation execution in a QThread.
-    """
-
-    def __init__(self, canvas, robot, goal, path):
-        """
-        Creates a navigation execution thread.
-
-        :param canvas: A world canvas object linked to this thread.
-        :type canvas: :class:`pyrobosim.gui.world_canvas.WorldCanvas`
-        :param robot: Robot instance or name to execute action.
-        :type robot: :class:`pyrobosim.core.robot.Robot` or str
-        :param goal: Name of goal location (resolved by the world model).
-        :type goal: str
-        :param path: Path to goal location, defaults to None.
-        :type path: :class:`pyrobosim.utils.motion.Path`, optional
-        """
-        super(NavRunner, self).__init__()
-        self.canvas = canvas
-        self.robot = robot
-        self.goal = goal
-        self.path = path
-
-    def run(self):
-        """Runs the navigation execution thread."""
-        robot = self.robot
-        world = self.canvas.world
-
-        if isinstance(robot, str):
-            robot = world.get_robot_by_name(robot)
-        if robot is None:
-            warnings.warn("No robot found.")
-            return
-
-        # Find a path, or use an existing one, and start the navigation thread.
-        robot.navigate(
-            goal=self.goal,
-            path=self.path,
-            realtime_factor=self.canvas.realtime_factor,
-        )
+from .action_runners import (
+    NavRunner,
+    PickRunner,
+    PlaceRunner,
+    DetectRunner,
+    OpenRunner,
+    CloseRunner,
+)
+from ..core.robot import Robot
+from ..navigation.visualization import plot_path_planner
+from ..utils.motion import Path
 
 
 class WorldCanvas(FigureCanvasQTAgg):
@@ -514,21 +478,9 @@ class WorldCanvas(FigureCanvasQTAgg):
         :type obj_name: str
         :param grasp_pose: A pose describing how to manipulate the object.
         :type grasp_pose: :class:`pyrobosim.utils.pose.Pose`, optional
-        :return: An object describing the execution result.
-        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
-        if robot is None:
-            return ExecutionResult(
-                status=ExecutionStatus.PRECONDITION_FAILURE,
-                message="Robot is not specified. Cannot pick.",
-            )
-
-        result = robot.pick_object(obj_name, grasp_pose)
-        if result.is_success():
-            self.update_object_plot(robot.manipulated_object)
-            self.show_world_state(robot)
-            self.draw_and_sleep()
-        return result
+        pick_thread = PickRunner(self, robot, obj_name, grasp_pose)
+        self.thread_pool.start(pick_thread)
 
     def place_object(self, robot, pose=None):
         """
@@ -536,29 +488,11 @@ class WorldCanvas(FigureCanvasQTAgg):
 
         :param robot: Robot instance to execute action.
         :type robot: :class:`pyrobosim.core.robot.Robot`
-        :param pose: Optional placement pose, defaults to None.
+        :param pose: Optional pose describing how to place the object.
         :type pose: :class:`pyrobosim.utils.pose.Pose`, optional
-        :return: An object describing the execution result.
-        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
-        if robot is None:
-            return ExecutionResult(
-                status=ExecutionStatus.PRECONDITION_FAILURE,
-                message="Robot is not specified. Cannot place.",
-            )
-
-        obj = robot.manipulated_object
-        if obj is not None:
-            self.obj_patches.remove(obj.viz_patch)
-            obj.viz_patch.remove()
-        result = robot.place_object(pose=pose)
-        if obj is not None:
-            self.axes.add_patch(obj.viz_patch)
-            self.obj_patches.append(obj.viz_patch)
-            self.update_object_plot(obj)
-        self.show_world_state(robot)
-        self.draw_and_sleep()
-        return result
+        place_thread = PlaceRunner(self, robot, pose)
+        self.thread_pool.start(place_thread)
 
     def detect_objects(self, robot, query=None):
         """
@@ -568,19 +502,9 @@ class WorldCanvas(FigureCanvasQTAgg):
         :type robot: :class:`pyrobosim.core.robot.Robot`
         :param query: Query for object detection.
         :type query: str, optional
-        :return: An object describing the execution result.
-        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
-        if robot is None:
-            return ExecutionResult(
-                status=ExecutionStatus.PRECONDITION_FAILURE,
-                message="Robot is not specified. Cannot detect objects.",
-            )
-
-        result = robot.detect_objects(query)
-        self.show_objects()
-        self.draw_and_sleep()
-        return result
+        detect_thread = DetectRunner(self, robot, query)
+        self.thread_pool.start(detect_thread)
 
     def open_location(self, robot):
         """
@@ -588,16 +512,12 @@ class WorldCanvas(FigureCanvasQTAgg):
 
         :param robot: Robot instance to execute action.
         :type robot: :class:`pyrobosim.core.robot.Robot`
-        :return: An object describing the execution result.
-        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
-        if robot is None:
-            return ExecutionResult(
-                status=ExecutionStatus.PRECONDITION_FAILURE,
-                message="Robot is not specified. Cannot open location.",
-            )
-
-        return robot.open_location()
+        open_thread = OpenRunner(
+            self,
+            robot,
+        )
+        self.thread_pool.start(open_thread)
 
     def close_location(self, robot):
         """
@@ -605,13 +525,9 @@ class WorldCanvas(FigureCanvasQTAgg):
 
         :param robot: Robot instance to execute action.
         :type robot: :class:`pyrobosim.core.robot.Robot`
-        :return: An object describing the execution result.
-        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
-        if robot is None:
-            return ExecutionResult(
-                status=ExecutionStatus.PRECONDITION_FAILURE,
-                message="Robot is not specified. Cannot close location.",
-            )
-
-        return robot.close_location()
+        close_thread = CloseRunner(
+            self,
+            robot,
+        )
+        self.thread_pool.start(close_thread)

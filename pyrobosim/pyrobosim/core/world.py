@@ -552,7 +552,7 @@ class World:
                 self.gui.canvas.show_hallways_signal.emit()
             else:
                 self.gui.canvas.show_locations_signal.emit()
-            self.gui.canvas.draw_signal.emit()
+            self.gui.update_buttons_signal.emit()
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
     def close_location(self, location, ignore_robots=[]):
@@ -614,7 +614,7 @@ class World:
                 self.gui.canvas.show_hallways_signal.emit()
             else:
                 self.gui.canvas.show_locations_signal.emit()
-            self.gui.canvas.draw_signal.emit()
+            self.gui.update_buttons_signal.emit()
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
     def lock_location(self, location):

@@ -564,6 +564,10 @@ class Robot:
 
         # Denote the target object as the manipulated object
         self._attach_object(obj)
+        if self.world.has_gui:
+            self.world.gui.canvas.update_object_plot(self.manipulated_object)
+            self.world.gui.canvas.show_world_state(self)
+            self.world.gui.update_buttons_signal.emit()
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
     def place_object(self, pose=None):
@@ -658,10 +662,23 @@ class Robot:
                     status=ExecutionStatus.EXECUTION_FAILURE, message=message
                 )
 
+        obj = self.manipulated_object
+        if self.world.has_gui:
+            self.world.gui.canvas.obj_patches.remove(obj.viz_patch)
+            obj.viz_patch.remove()
+
         self.manipulated_object.parent = loc
         self.manipulated_object.set_pose(pose)
         self.manipulated_object.create_polygons()
         loc.children.append(self.manipulated_object)
+
+        if self.world.has_gui:
+            self.world.gui.canvas.axes.add_patch(obj.viz_patch)
+            self.world.gui.canvas.obj_patches.append(obj.viz_patch)
+            self.world.gui.canvas.update_object_plot(obj)
+            self.world.gui.canvas.show_world_state(self)
+            self.world.gui.update_buttons_signal.emit()
+
         self.manipulated_object = None
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
@@ -717,6 +734,9 @@ class Robot:
 
         # If a target object was specified, look for a matching instance.
         # We should only return SUCCESS if one such instance was found.
+        if self.world.has_gui:
+            self.world.gui.canvas.show_objects()
+            self.world.gui.update_buttons_signal.emit()
         if not target_object:
             self.last_detected_objects = self.location.children
             return ExecutionResult(status=ExecutionStatus.SUCCESS)
@@ -882,36 +902,19 @@ class Robot:
                 )
 
         elif action.type == "pick":
-            if self.world.has_gui:
-                result = self.world.gui.canvas.pick_object(
-                    self, action.object, action.pose
-                )
-            else:
-                result = self.pick_object(action.object, action.pose)
+            result = self.pick_object(action.object, action.pose)
 
         elif action.type == "place":
-            if self.world.has_gui:
-                result = self.world.gui.canvas.place_object(self, action.pose)
-            else:
-                result = self.place_object(action.pose)
+            result = self.place_object(action.pose)
 
         elif action.type == "detect":
-            if self.world.has_gui:
-                result = self.world.gui.canvas.detect_objects(self, action.object)
-            else:
-                result = self.detect_objects(action.object)
+            result = self.detect_objects(action.object)
 
         elif action.type == "open":
-            if self.world.has_gui:
-                result = self.world.gui.canvas.open_location(self)
-            else:
-                result = self.open_location()
+            result = self.open_location()
 
         elif action.type == "close":
-            if self.world.has_gui:
-                result = self.world.gui.canvas.close_location(self)
-            else:
-                result = self.close_location()
+            result = self.close_location()
 
         else:
             message = f"[{self.name}] Invalid action type: {action.type}."
@@ -920,8 +923,6 @@ class Robot:
                 status=ExecutionStatus.INVALID_ACTION, message=message
             )
 
-        if self.world.has_gui:
-            self.world.gui.update_buttons_signal.emit()
         print(f"[{self.name}] Action completed with result: {result.status.name}")
         self.current_action = None
         self.executing_action = False
@@ -993,9 +994,6 @@ class Robot:
                 break
             num_completed += 1
             time.sleep(delay)  # Artificial delay between actions
-
-        if self.world.has_gui:
-            self.world.gui.update_buttons_signal.emit()
 
         print(f"[{self.name}] Task plan completed with status: {result.status.name}")
         self.canceling_execution = False
