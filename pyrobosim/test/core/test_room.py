@@ -9,7 +9,7 @@ from pyrobosim.core import Room, World
 
 
 class TestRoom:
-    def test_add_room_to_world_from_object(self):
+    def test_add_room_to_world_from_object(self, caplog):
         """Test adding a room from a Room object."""
         world = World()
 
@@ -22,14 +22,10 @@ class TestRoom:
         assert world.rooms[0].name == "test_room"
 
         # Adding the same room again should fail due to duplicate names.
-        with pytest.warns(UserWarning) as warn_info:
-            result = world.add_room(room=room)
+        result = world.add_room(room=room)
         assert result is None
         assert world.num_rooms == 1
-        assert (
-            warn_info[0].message.args[0]
-            == "Room test_room already exists in the world. Cannot add."
-        )
+        assert "Room test_room already exists in the world. Cannot add." in caplog.text
 
     def test_add_room_to_world_from_args(self):
         """Test adding a room from a list of named keyword arguments."""
@@ -51,7 +47,7 @@ class TestRoom:
         with pytest.raises(Exception):
             result = world.add_room(name="test_room")
 
-    def test_add_room_to_world_in_collision(self):
+    def test_add_room_to_world_in_collision(self, caplog):
         """Test adding a room in collision with another room."""
         world = World()
 
@@ -63,16 +59,7 @@ class TestRoom:
 
         # This new room should fail to add since it's in the collision with the first room.
         new_coords = [(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0)]
-        with pytest.warns(UserWarning):
-            result = world.add_room(footprint=new_coords)
-            assert result is None
-            assert world.num_rooms == 1
-
-
-if __name__ == "__main__":
-    t = TestRoom()
-    t.test_add_room_to_world_from_object()
-    t.test_add_room_to_world_from_args()
-    t.test_add_room_to_world_empty_geometry()
-    t.test_add_room_to_world_in_collision()
-    print("Tests passed!")
+        result = world.add_room(footprint=new_coords)
+        assert result is None
+        assert world.num_rooms == 1
+        assert "Room room1 in collision. Cannot add to world." in caplog.text
