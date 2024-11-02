@@ -74,6 +74,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.create_layout()
         self.canvas.show()
         self.on_robot_changed()
+        self.world.logger.info(f"Initialized PyRoboSim GUI.")
 
     def set_world(self, world):
         """
@@ -284,7 +285,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         """Callback to randomize robot pose."""
         robot = self.get_current_robot()
         if not robot:
-            print("No robot available.")
+            self.world.logger.warning("No robot available.")
             return None
 
         sampled_pose = self.world.sample_free_robot_pose_uniform(
@@ -326,7 +327,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
 
         loc = self.goal_textbox.text()
         if loc:
-            print(f"[{robot.name}] Navigating to {loc}")
+            robot.logger.info(f"Navigating to {loc}")
             self.canvas.navigate_signal.emit(robot, loc, None)
 
     def on_pick_click(self):
@@ -334,7 +335,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         robot = self.get_current_robot()
         if robot:
             obj = self.goal_textbox.text()
-            print(f"[{robot.name}] Picking {obj}")
+            robot.logger.info(f"Picking {obj}")
             self.canvas.pick_object(robot, obj)
             self.update_buttons_signal.emit()
 
@@ -342,7 +343,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         """Callback to place an object."""
         robot = self.get_current_robot()
         if robot and robot.manipulated_object is not None:
-            print(f"[{robot.name}] Placing {robot.manipulated_object.name}")
+            robot.logger.info(f"Placing {robot.manipulated_object.name}")
             self.canvas.place_object(robot)
             self.update_buttons_signal.emit()
 
@@ -350,8 +351,11 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         """Callback to detect objects."""
         robot = self.get_current_robot()
         if robot:
-            print(f"[{robot.name}] Detecting objects")
             obj_query = self.goal_textbox.text() or None
+            log_message = "Detecting objects"
+            if obj_query is not None:
+                log_message += f" with query: {obj_query}"
+            robot.logger.info(log_message)
             self.canvas.detect_objects(robot, obj_query)
             self.update_buttons_signal.emit()
 
@@ -359,7 +363,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         """Callback to open a location."""
         robot = self.get_current_robot()
         if robot and robot.location:
-            print(f"[{robot.name}] Opening {robot.location}")
+            robot.logger.info(f"Opening {robot.location}")
             self.canvas.open_location(robot)
             self.update_buttons_signal.emit()
         elif not robot and self.goal_textbox.text():
@@ -369,7 +373,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         """Callback to close a location."""
         robot = self.get_current_robot()
         if robot and robot.location:
-            print(f"[{robot.name}] Closing {robot.location}")
+            robot.logger.info(f"Closing {robot.location}")
             self.canvas.close_location(robot)
             self.update_buttons_signal.emit()
         elif not robot and self.goal_textbox.text():

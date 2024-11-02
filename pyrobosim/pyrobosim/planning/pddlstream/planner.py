@@ -116,12 +116,12 @@ class PDDLStreamPlanner:
         # Convert the solution to a TaskPlan object.
         self.latest_plan = plan_out
         if verbose:
-            print("\nInitial conditions:")
+            verbose_str = "\nInitial conditions:\n"
             for i in init:
-                print(f"\t{i}")
-            print("\nGoal Specification:")
+                verbose_str += f"\t{i}\n"
+            verbose_str += "\nGoal Specification:\n"
             for g in goal_literals:
-                print(f"\t{g}")
-            print("")
-            print(self.latest_plan)
+                verbose_str += f"\t{g}\n"
+            verbose_str += f"\n{self.latest_plan}"
+            robot.logger.info(verbose_str)
         return self.latest_plan

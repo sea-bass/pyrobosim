@@ -100,34 +100,34 @@ class TestGetEntities:
         result = self.world.get_room_by_name("kitchen")
         assert isinstance(result, Room) and result.name == "kitchen"
 
-    def test_invalid_room(self):
+    def test_invalid_room(self, caplog):
         """Checks for existence of invalid room."""
-        with pytest.warns(UserWarning):
-            result = self.world.get_room_by_name("living room")
-            assert result is None
+        result = self.world.get_room_by_name("living room")
+        assert result is None
+        assert "Room not found: living room" in caplog.text
 
-    def test_add_remove_room(self):
+    def test_add_remove_room(self, caplog):
         """Checks adding a room and removing it cleanly."""
         room_name = "test_room"
         coords = [(9, 9), (11, 9), (11, 11), (9, 11)]
         result = self.world.add_room(name=room_name, footprint=coords, color=[0, 0, 0])
         assert result is not None
 
-        with pytest.warns(UserWarning):
-            self.world.remove_room(room_name)
-            result = self.world.get_room_by_name(room_name)
-            assert result is None
+        self.world.remove_room(room_name)
+        result = self.world.get_room_by_name(room_name)
+        assert result is None
+        assert "Room not found: test_room" in caplog.text
 
     def test_valid_location(self):
         """Checks for existence of valid location."""
         result = self.world.get_location_by_name("counter0")
         assert isinstance(result, Location) and result.name == "counter0"
 
-    def test_invalid_location(self):
+    def test_invalid_location(self, caplog):
         """Checks for existence of invalid location."""
-        with pytest.warns(UserWarning):
-            result = self.world.get_location_by_name("table42")
-            assert result is None
+        result = self.world.get_location_by_name("table42")
+        assert result is None
+        assert "Location not found: table42" in caplog.text
 
     def test_valid_spawn(self):
         """Checks for existence of valid object spawn."""
@@ -139,7 +139,7 @@ class TestGetEntities:
         result = self.world.get_entity_by_name("counter0_middle")
         assert result is None
 
-    def test_add_remove_location(self):
+    def test_add_remove_location(self, caplog):
         """
         Checks adding a location and removing it cleanly.
         This also includes any object spawns created for the location.
@@ -154,11 +154,13 @@ class TestGetEntities:
         assert isinstance(new_desk, Location)
         self.world.remove_location(loc_name)
 
-        with pytest.warns(UserWarning):
-            result = self.world.get_location_by_name(loc_name)
-            assert result is None
-            result = self.world.get_entity_by_name(loc_name + "_desktop")
-            assert result is None
+        result = self.world.get_location_by_name(loc_name)
+        assert result is None
+        assert "Location not found: desk42" in caplog.text
+        caplog.clear()
+
+        result = self.world.get_entity_by_name(loc_name + "_desktop")
+        assert result is None
 
     def test_valid_object(self):
         """Checks for existence of valid object."""
@@ -170,14 +172,14 @@ class TestGetEntities:
         result = self.world.get_object_by_name("apple42")
         assert result is None
 
-    def test_invalid_object_valid_name(self):
+    def test_invalid_object_valid_name(self, caplog):
         """
         Checks for existence of invalid object, but whose name is a valid name
         for another entity type.
         """
-        with pytest.warns(UserWarning):
-            result = self.world.get_object_by_name("counter0")
-            assert result is None
+        result = self.world.get_object_by_name("counter0")
+        assert result is None
+        assert "Entity counter0 found but it is not an Object." in caplog.text
 
         result = self.world.get_entity_by_name("counter0")
         assert isinstance(result, Location) and result.name == "counter0"
@@ -202,7 +204,7 @@ class TestGetEntities:
         result = self.world.get_robot_by_name("robot0")
         assert result is None
 
-    def test_get_graph_node_from_entity(self):
+    def test_get_graph_node_from_entity(self, caplog):
         """Checks whether graph nodes can be found from various entities."""
         robot = self.world.robots[0]
 
@@ -236,5 +238,5 @@ class TestGetEntities:
         )
 
         # Querying for a type of entity that does not have graph nodes will fail
-        with pytest.warns(UserWarning):
-            assert not self.world.graph_node_from_entity("robot0", robot=robot)
+        assert not self.world.graph_node_from_entity("robot0", robot=robot)
+        assert "Could not resolve location query with category: robot0" in caplog.text

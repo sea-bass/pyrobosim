@@ -1,7 +1,6 @@
 """ Probabilistic Roadmap (PRM) implementation. """
 
 import time
-import warnings
 
 from ..utils.motion import Path, reduce_waypoints_polygon
 from ..utils.pose import Pose
@@ -57,7 +56,7 @@ class PRMPlanner:
         for i in range(self.max_nodes):
             n_sample = self.sample_configuration()
             if not n_sample:
-                warnings.warn(f"Could not sample more than {i} nodes.")
+                self.world.logger.warning(f"Could not sample more than {i} nodes.")
                 break
             node = Node(pose=n_sample)
             self.graph.add_node(node)

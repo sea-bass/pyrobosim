@@ -2,7 +2,6 @@
 
 import math
 import time
-import warnings
 from astar import AStar
 
 from .occupancy_grid import OccupancyGrid
@@ -82,13 +81,15 @@ class AStarPlanner(AStar):
             self._heuristic = euclidean
         elif self.heuristic == "manhattan":
             if not self.diagonal_motion:
-                warnings.warn("Manhattan over estimates without diagonal motion")
+                self.world.logger.warning(
+                    "Manhattan over estimates without diagonal motion"
+                )
             self._heuristic = manhattan
         elif self.heuristic == "none":
             self._heuristic = lambda p1, p2: 0
         else:
-            warnings.warn(f"Unknown heuristic : {self.heuristic}")
-            warnings.warn(f"Defaulting to heuristic : 'none' ")
+            self.world.logger.warning.warn(f"Unknown heuristic : {self.heuristic}")
+            self.world.logger.warning.warn(f"Defaulting to heuristic : 'none' ")
             self._heuristic = lambda p1, p2: 0
 
     def heuristic_cost_estimate(self, cell1, cell2):

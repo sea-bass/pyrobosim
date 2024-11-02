@@ -4,8 +4,9 @@ Utilities to reason about entities using world knowledge
 """
 
 import sys
-import warnings
 import numpy as np
+
+from .. import get_global_logger
 
 
 def apply_resolution_strategy(entity_list, resolution_strategy, robot=None):
@@ -38,7 +39,9 @@ def apply_resolution_strategy(entity_list, resolution_strategy, robot=None):
         return np.random.choice(entity_list)
     elif resolution_strategy == "nearest":
         if not robot:
-            warnings.warn("Cannot apply nearest resolution strategy without a robot!")
+            get_global_logger().warning(
+                "Cannot apply nearest resolution strategy without a robot!"
+            )
             return None
         nearest_dist = sys.float_info.max
         nearest_entity = None
@@ -50,7 +53,9 @@ def apply_resolution_strategy(entity_list, resolution_strategy, robot=None):
                 nearest_entity = entity
         return nearest_entity
     else:
-        warnings.warn(f"Invalid resolution strategy: {resolution_strategy}")
+        get_global_logger().warning(
+            f"Invalid resolution strategy: {resolution_strategy}"
+        )
         return None
 
 
@@ -134,7 +139,9 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
     # then entity resolution should fail.
     for elem in query_list:
         if elem not in resolved_queries:
-            warnings.warn(f"Did not resolve query element {elem}. Returning None.")
+            get_global_logger().warning(
+                f"Did not resolve query element {elem}. Returning None."
+            )
             return None
 
     # Special case: A room is selected purely by name
@@ -165,7 +172,7 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
             entity_list, resolution_strategy=resolution_strategy, robot=robot
         )
         if not obj_candidate:
-            warnings.warn(f"Could not resolve query {query_list}")
+            get_global_logger().warning(f"Could not resolve query {query_list}")
         else:
             if mode == "object":
                 return obj_candidate
@@ -186,7 +193,7 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
             robot=robot,
         )
         if not obj_candidate:
-            warnings.warn(f"Could not resolve query {query_list}")
+            get_global_logger().warning(f"Could not resolve query {query_list}")
         else:
             if mode == "object":
                 return obj_candidate
@@ -201,7 +208,7 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
             robot=robot,
         )
         if not loc_candidate:
-            warnings.warn(f"Could not resolve query {query_list}")
+            get_global_logger().warning(f"Could not resolve query {query_list}")
         else:
             return loc_candidate
 
@@ -271,7 +278,7 @@ def resolve_to_location(
         expanded_locations, resolution_strategy, robot=robot
     )
     if not loc:
-        warnings.warn(
+        get_global_logger().warning(
             f"Could not resolve location query with category: {category}, room: {room_name}."
         )
         return None
@@ -349,7 +356,7 @@ def resolve_to_object(
 
     obj = apply_resolution_strategy(possible_objects, resolution_strategy, robot=robot)
     if not obj:
-        warnings.warn(
+        get_global_logger().warning(
             f"Could not resolve object query with category: {category}, location: {location}, room: {room}."
         )
         return None

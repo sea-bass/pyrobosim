@@ -1,8 +1,8 @@
 """ Main file containing the core world modeling tools. """
 
 import itertools
+import logging
 import numpy as np
-import warnings
 
 from .hallway import Hallway
 from .locations import Location, ObjectSpawn
@@ -43,6 +43,15 @@ class World:
         self.wall_height = wall_height
         self.source_file = None
 
+        # Logger for the world
+        self.logger = logging.getLogger(self.name)
+        self.logger.setLevel(logging.INFO)
+        log_formatter = logging.Formatter("[%(name)s] %(levelname)s: %(message)s")
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(log_formatter)
+        self.logger.addHandler(console_handler)
+        self.logger.propagate = True
+
         # Connected apps
         self.has_gui = False
         self.gui = None
@@ -81,6 +90,8 @@ class World:
         # Distances for collision-aware navigation and sampling
         self.object_radius = object_radius
         self.set_inflation_radius(inflation_radius)
+
+        self.logger.info("Created world.")
 
     ############
     # Metadata #
@@ -142,7 +153,9 @@ class World:
 
         # Check for duplicate names.
         if room.name in self.get_room_names():
-            warnings.warn(f"Room {room.name} already exists in the world. Cannot add.")
+            self.logger.warning(
+                f"Room {room.name} already exists in the world. Cannot add."
+            )
             return None
 
         # If the room name is empty, automatically name it.
@@ -151,7 +164,9 @@ class World:
 
         # If the room geometry is empty, do not allow it
         if room.polygon.is_empty:
-            warnings.warn(f"Room {room.name} has empty geometry. Cannot add to world.")
+            self.logger.warning(
+                f"Room {room.name} has empty geometry. Cannot add to world."
+            )
             return None
 
         # Check if the room collides with any other rooms or hallways
@@ -163,7 +178,7 @@ class World:
                 is_valid_pose = False
                 break
         if not is_valid_pose:
-            warnings.warn(f"Room {room.name} in collision. Cannot add to world.")
+            self.logger.warning(f"Room {room.name} in collision. Cannot add to world.")
             return None
 
         self.rooms.append(room)
@@ -188,7 +203,7 @@ class World:
         """
         room = self.get_room_by_name(room_name)
         if room is None:
-            warnings.warn(f"No room {room_name} found for removal.")
+            self.logger.warning(f"No room {room_name} found for removal.")
             return False
 
         # Remove hallways associated with the room
@@ -240,7 +255,7 @@ class World:
 
         # Check for duplicate names.
         if hallway.name in self.get_hallway_names():
-            warnings.warn(
+            self.logger.warning(
                 f"Hallway {hallway.name} already exists in the world. Cannot add."
             )
             return None
@@ -270,7 +285,9 @@ class World:
                 is_valid_pose = False
                 break
         if not is_valid_pose:
-            warnings.warn(f"Hallway {hallway.name} in collision. Cannot add to world.")
+            self.logger.warning(
+                f"Hallway {hallway.name} in collision. Cannot add to world."
+            )
             return None
 
         # Do all the necessary bookkeeping
@@ -301,7 +318,7 @@ class World:
         """
         # Validate the input
         if not hallway in self.hallways:
-            warnings.warn("Invalid hallway specified.")
+            self.logger.warning("Invalid hallway specified.")
             return False
 
         # Remove the hallways from the world and relevant rooms.
@@ -348,15 +365,15 @@ class World:
             try:
                 loc = Location(**location_config)
             except InvalidEntityCategoryException as exception:
-                warnings.warn(str(exception))
+                self.logger.warning(str(exception))
                 return None
         else:
-            warnings.warn("Location instance or parent must be specified.")
+            self.logger.warning("Location instance or parent must be specified.")
             return None
 
         # Check for duplicate names.
         if loc.name in self.get_location_names():
-            warnings.warn(
+            self.logger.warning(
                 f"Location {loc.name} already exists in the world. Cannot add."
             )
             return None
@@ -381,7 +398,9 @@ class World:
                     is_valid_pose = False
                     break
         if not is_valid_pose:
-            warnings.warn(f"Location {loc.name} in collision. Cannot add to world.")
+            self.logger.warning(
+                f"Location {loc.name} in collision. Cannot add to world."
+            )
             return None
 
         # Do all the necessary bookkeeping
@@ -422,7 +441,7 @@ class World:
         if isinstance(loc, str):
             loc = self.get_location_by_name(loc)
         if not isinstance(loc, Location):
-            warnings.warn("Could not find location. Not updating.")
+            self.logger.warning("Could not find location. Not updating.")
             return False
 
         if room is not None:
@@ -430,7 +449,7 @@ class World:
                 room = self.get_room_by_name(room)
 
             if not isinstance(room, Room):
-                warnings.warn(
+                self.logger.warning(
                     f"Room {loc} did not resolve to a valid room for a location."
                 )
                 return False
@@ -450,7 +469,9 @@ class World:
                     other_loc.polygon
                 )
         if not is_valid_pose:
-            warnings.warn(f"Location {loc.name} in collision. Cannot add to world.")
+            self.logger.warning(
+                f"Location {loc.name} in collision. Cannot add to world."
+            )
             return False
 
         # If we passed all checks, update the polygon.
@@ -481,7 +502,7 @@ class World:
             loc = self.get_location_by_name(loc)
 
         if loc not in self.locations:
-            warnings.warn(f"{loc} not found in world. Cannot remove.")
+            self.logger.warning(f"{loc} not found in world. Cannot remove.")
             return False
 
         # Remove objects at the location before removing the location.
@@ -521,26 +542,26 @@ class World:
             message = message = (
                 f"Cannot open {location} since it is of type {type(location).__name__}."
             )
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.INVALID_ACTION, message=message
             )
 
         if not (location in self.locations or location in self.hallways):
             message = "Invalid location specified."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
 
         if location.is_open:
             message = f"{location} is already open."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(status=ExecutionStatus.SUCCESS, message=message)
 
         if location.is_locked:
             message = f"{location} is locked."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
@@ -573,26 +594,26 @@ class World:
             message = message = (
                 f"Cannot close {location} since it is of type {type(location).__name__}."
             )
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.INVALID_ACTION, message=message
             )
 
         if not (location in self.locations or location in self.hallways):
             message = "Invalid location specified."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
 
         if not location.is_open:
             message = f"{location} is already closed."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(status=ExecutionStatus.SUCCESS, message=message)
 
         if location.is_locked:
             message = f"{location} is locked."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
@@ -602,7 +623,7 @@ class World:
             for robot in [r for r in self.robots if r not in ignore_robots]:
                 if location.is_collision_free(robot.get_pose()):
                     message = f"Robot {robot.name} is in {location}. Cannot close."
-                    warnings.warn(message)
+                    self.logger.warning(message)
                     return ExecutionResult(
                         status=ExecutionStatus.PRECONDITION_FAILURE, message=message
                     )
@@ -633,21 +654,21 @@ class World:
             message = message = (
                 f"Cannot lock {location} since it is of type {type(location).__name__}."
             )
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.INVALID_ACTION, message=message
             )
 
         if not (location in self.locations or location in self.hallways):
             message = "Invalid location specified."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
 
         if location.is_locked:
             message = f"{location} is already locked."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(status=ExecutionStatus.SUCCESS, message=message)
 
         location.is_locked = True
@@ -669,21 +690,21 @@ class World:
             message = message = (
                 f"Cannot unlock {location} since it is of type {type(location).__name__}."
             )
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.INVALID_ACTION, message=message
             )
 
         if not (location in self.locations or location in self.hallways):
             message = "Invalid location specified."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
 
         if not location.is_locked:
             message = f"{location} is already unlocked."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(status=ExecutionStatus.SUCCESS, message=message)
 
         location.is_locked = False
@@ -756,7 +777,7 @@ class World:
 
             if not isinstance(parent, ObjectSpawn):
                 parent_arg = object_config.get("parent", None)
-                warnings.warn(
+                self.logger.warning(
                     f"Parent location {parent_arg} did not resolve to a valid location for an object."
                 )
                 return None
@@ -766,15 +787,17 @@ class World:
             try:
                 obj = Object(**object_config)
             except InvalidEntityCategoryException as exception:
-                warnings.warn(str(exception))
+                self.logger.warning(str(exception))
                 return None
         else:
-            warnings.warn("Object instance or parent must be specified.")
+            self.logger.warning("Object instance or parent must be specified.")
             return None
 
         # Check for duplicate names.
         if obj.name in self.get_object_names():
-            warnings.warn(f"Object {obj.name} already exists in the world. Cannot add.")
+            self.logger.warning(
+                f"Object {obj.name} already exists in the world. Cannot add."
+            )
             return None
 
         # If the category name is empty, use "object" as the base name.
@@ -800,7 +823,9 @@ class World:
                 obj.set_pose(pose_sample)
                 obj.create_polygons()
             else:
-                warnings.warn(f"Could not sample valid pose to add object {obj.name}.")
+                self.logger.warning(
+                    f"Could not sample valid pose to add object {obj.name}."
+                )
                 return None
 
         # If a pose was specified, collision check it
@@ -812,7 +837,7 @@ class World:
                     other_obj.collision_polygon
                 )
             if not is_valid_pose:
-                warnings.warn(
+                self.logger.warning(
                     f"Object {obj.name} in collision or not in location {obj_spawn.name}. Cannot add to world."
                 )
                 return None
@@ -842,7 +867,7 @@ class World:
         if isinstance(obj, str):
             obj = self.get_object_by_name(obj)
         if not isinstance(obj, Object):
-            warnings.warn("Could not find object. Not updating.")
+            self.logger.warning("Could not find object. Not updating.")
             return False
 
         if loc is not None:
@@ -857,7 +882,7 @@ class World:
             elif isinstance(loc, ObjectSpawn):
                 obj_spawn = loc
             else:
-                warnings.warn(
+                self.logger.warning(
                     f"Location {loc} did not resolve to a valid location for an object."
                 )
                 return False
@@ -868,7 +893,7 @@ class World:
                     obj, obj_spawn, self.max_object_sample_tries
                 )
             if pose is None:
-                warnings.warn("Cannot sample a valid spawn pose.")
+                self.logger.warning("Cannot sample a valid spawn pose.")
                 return False
 
             obj.parent.children.remove(obj)
@@ -931,7 +956,7 @@ class World:
         """
         # Check that the robot name doesn't already exist.
         if robot.name in self.get_robot_names():
-            warnings.warn(f"Robot name {robot.name} already exists in world.")
+            self.logger.warning(f"Robot name {robot.name} already exists in world.")
             return
 
         # If the new robot has a bigger inflation radius than previously,
@@ -951,12 +976,12 @@ class World:
                     robot, ignore_robots=False
                 )
                 if robot_pose is None:
-                    warnings.warn("Unable to sample free pose.")
+                    self.logger.warning("Unable to sample free pose.")
                     valid_pose = False
             else:
                 # Validate that the pose is unoccupied
                 if self.check_occupancy((pose.x, pose.y)):
-                    warnings.warn(f"{pose} is occupied.")
+                    self.logger.warning(f"{pose} is occupied.")
                     valid_pose = False
                 robot_pose = pose
             # If we have a valid pose, extract its location
@@ -975,14 +1000,14 @@ class World:
                         max_tries=self.max_object_sample_tries,
                     )
                     if x_sample is None:
-                        warnings.warn(f"Could not sample pose in {loc.name}.")
+                        self.logger.warning(f"Could not sample pose in {loc.name}.")
                         valid_pose = False
                     yaw_sample = np.random.uniform(-np.pi, np.pi)
                     robot_pose = Pose(x=x_sample, y=y_sample, z=0.0, yaw=yaw_sample)
                 else:
                     # Validate that the pose is unoccupied and in the right location
                     if not loc.is_collision_free(pose):
-                        warnings.warn(f"{pose} is occupied")
+                        self.logger.warning(f"{pose} is occupied")
                         valid_pose = False
                     robot_pose = pose
             elif isinstance(loc, Location) or isinstance(loc, ObjectSpawn):
@@ -995,7 +1020,7 @@ class World:
                 else:
                     robot_pose = np.random.choice(loc.nav_poses)
             else:
-                warnings.warn("Invalid location specified.")
+                self.logger.warning("Invalid location specified.")
                 valid_pose = False
 
         # If we got a valid location / pose combination, add the robot
@@ -1006,7 +1031,7 @@ class World:
             self.robots.append(robot)
             self.name_to_entity[robot.name] = robot
         else:
-            warnings.warn("Could not add robot.")
+            self.logger.warning("Could not add robot.")
             self.set_inflation_radius(old_inflation_radius)
 
         if self.has_gui:
@@ -1038,7 +1063,7 @@ class World:
                 self.set_inflation_radius(new_inflation_radius)
             return True
         else:
-            warnings.warn(f"Could not find robot {robot_name} to remove.")
+            self.logger.warning(f"Could not find robot {robot_name} to remove.")
             return False
 
     def update_bounds(self, entity, remove=False):
@@ -1082,7 +1107,7 @@ class World:
                 self.y_bounds[0] = min(self.y_bounds[0], ymin)
                 self.y_bounds[1] = max(self.y_bounds[1], ymax)
         else:
-            warnings.warn(
+            self.logger.warning(
                 f"Updating bounds with unsupported entity type {type(entity)}"
             )
 
@@ -1108,12 +1133,12 @@ class World:
         :rtype: :class:`pyrobosim.core.room.Room`
         """
         if name not in self.name_to_entity:
-            warnings.warn(f"Room not found: {name}")
+            self.logger.warning(f"Room not found: {name}")
             return None
 
         entity = self.name_to_entity[name]
         if not isinstance(entity, Room):
-            warnings.warn(f"Entity {name} found but it is not a Room.")
+            self.logger.warning(f"Entity {name} found but it is not a Room.")
             return None
 
         return entity
@@ -1137,12 +1162,12 @@ class World:
         :rtype: :class:`pyrobosim.core.hallway.Hallway`
         """
         if name not in self.name_to_entity:
-            warnings.warn(f"Hallway not found: {name}")
+            self.logger.warning(f"Hallway not found: {name}")
             return None
 
         entity = self.name_to_entity[name]
         if not isinstance(entity, Hallway):
-            warnings.warn(f"Entity {name} found but it is not a Hallway.")
+            self.logger.warning(f"Entity {name} found but it is not a Hallway.")
             return None
 
         return entity
@@ -1162,12 +1187,12 @@ class World:
         if isinstance(room1, str):
             room1 = self.get_room_by_name(room1)
         if not isinstance(room1, Room):
-            warnings.warn("Invalid room1 specified.")
+            self.logger.warning("Invalid room1 specified.")
             return []
         if isinstance(room2, str):
             room2 = self.get_room_by_name(room2)
         if not isinstance(room2, Room):
-            warnings.warn("Invalid room2 specified.")
+            self.logger.warning("Invalid room2 specified.")
             return []
 
         # Now search through the hallways and add any valid ones to the list
@@ -1193,7 +1218,7 @@ class World:
         if isinstance(room, str):
             room = self.get_room_by_name(room)
         if not isinstance(room, Room):
-            warnings.warn("Invalid room specified.")
+            self.logger.warning("Invalid room specified.")
             return []
 
         # Now search through the hallways and add any valid ones to the list
@@ -1242,12 +1267,12 @@ class World:
         :rtype: :class:`pyrobosim.core.locations.Location`
         """
         if name not in self.name_to_entity:
-            warnings.warn(f"Location not found: {name}")
+            self.logger.warning(f"Location not found: {name}")
             return None
 
         entity = self.name_to_entity[name]
         if not isinstance(entity, Location):
-            warnings.warn(f"Entity {name} found but it is not a Location.")
+            self.logger.warning(f"Entity {name} found but it is not a Location.")
             return None
 
         return entity
@@ -1426,7 +1451,7 @@ class World:
 
         entity = self.name_to_entity[name]
         if not isinstance(entity, Object):
-            warnings.warn(f"Entity {name} found but it is not an Object.")
+            self.logger.warning(f"Entity {name} found but it is not an Object.")
             return None
 
         return entity
@@ -1454,7 +1479,7 @@ class World:
 
         entity = self.name_to_entity[name]
         if not isinstance(entity, Robot):
-            warnings.warn(f"Entity {name} found but it is not a Robot.")
+            self.logger.warning(f"Entity {name} found but it is not a Robot.")
             return None
 
         return entity
@@ -1587,7 +1612,7 @@ class World:
                 ignore_robots or not self.collides_with_robots(pose, robot)
             ):
                 return pose
-        warnings.warn("Could not sample pose.")
+        self.logger.warning("Could not sample pose.")
         return None
 
     ###################
@@ -1671,7 +1696,7 @@ class World:
         elif isinstance(entity, Location):
             graph_nodes = entity.children[0].graph_nodes
         else:
-            warnings.warn(f"Cannot get graph node from {entity}")
+            self.logger.warning(f"Cannot get graph node from {entity}")
             return None
 
         # Select a graph node using the same resolution strategy.

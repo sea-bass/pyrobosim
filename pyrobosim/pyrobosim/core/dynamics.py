@@ -4,8 +4,8 @@ Robot dynamics utilities.
 
 import copy
 import numpy as np
-import warnings
 
+from .. import get_global_logger
 from ..utils.pose import Pose
 
 
@@ -86,7 +86,9 @@ class RobotDynamics2D:
         # Check collisions
         if check_collisions:
             if world is None:
-                warnings.warn("Cannot check collisions without a world.")
+                warn_msg = "Cannot check collisions without a world."
+                logger = self.robot.logger if self.robot else get_global_logger()
+                logger.warning(warn_msg)
                 return
 
             if world.collides_with_robots(

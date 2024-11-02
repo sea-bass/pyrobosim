@@ -1,7 +1,5 @@
 """ Utilities for executing actions from the UI in separate QThreads. """
 
-import warnings
-
 from PySide6.QtCore import QRunnable
 
 
@@ -37,7 +35,7 @@ class NavRunner(QRunnable):
         if isinstance(robot, str):
             robot = world.get_robot_by_name(robot)
         if robot is None:
-            warnings.warn("Robot is not specified. Cannot navigate.")
+            self.world.logger.warning("Robot is not specified. Cannot navigate.")
             return
 
         robot.navigate(
@@ -79,7 +77,7 @@ class PickRunner(QRunnable):
         if isinstance(robot, str):
             robot = world.get_robot_by_name(robot)
         if robot is None:
-            warnings.warn("Robot is not specified. Cannot pick objects.")
+            self.world.logger.warning("Robot is not specified. Cannot pick objects.")
             return
 
         robot.pick_object(self.obj_query, self.grasp_pose)
@@ -114,7 +112,7 @@ class PlaceRunner(QRunnable):
         if isinstance(robot, str):
             robot = world.get_robot_by_name(robot)
         if robot is None:
-            warnings.warn("Robot is not specified. Cannot place objects.")
+            self.world.logger.warning("Robot is not specified. Cannot place objects.")
             return
 
         robot.place_object(pose=self.pose)
@@ -149,7 +147,7 @@ class DetectRunner(QRunnable):
         if isinstance(robot, str):
             robot = world.get_robot_by_name(robot)
         if robot is None:
-            warnings.warn("Robot is not specified. Cannot detect objects.")
+            self.world.logger.warning("Robot is not specified. Cannot detect objects.")
             return
 
         robot.detect_objects(self.query)
@@ -181,7 +179,7 @@ class OpenRunner(QRunnable):
         if isinstance(robot, str):
             robot = world.get_robot_by_name(robot)
         if robot is None:
-            warnings.warn("Robot is not specified. Cannot open locations.")
+            self.world.logger.warning("Robot is not specified. Cannot open locations.")
             return
 
         robot.open_location()
@@ -213,7 +211,7 @@ class CloseRunner(QRunnable):
         if isinstance(robot, str):
             robot = world.get_robot_by_name(robot)
         if robot is None:
-            warnings.warn("Robot is not specified. Cannot close locations.")
+            self.world.logger.warning("Robot is not specified. Cannot close locations.")
             return
 
         robot.close_location()

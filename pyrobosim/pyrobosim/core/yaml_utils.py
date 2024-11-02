@@ -2,11 +2,11 @@
 
 import numpy as np
 import os
-import warnings
 import yaml
 
 from .robot import Robot
 from .world import World
+from .. import get_global_logger
 from ..navigation import ConstantVelocityExecutor, get_planner_class
 from ..planning.actions import ExecutionOptions
 from ..utils.general import replace_special_yaml_tokens
@@ -165,7 +165,9 @@ class WorldYamlLoader:
         if path_executor_type == "constant_velocity":
             return ConstantVelocityExecutor(**path_executor_data)
         else:
-            warnings.warn(f"Invalid path executor type specified: {path_executor_type}")
+            get_global_logger().warning(
+                f"Invalid path executor type specified: {path_executor_type}"
+            )
             return None
 
     def get_grasp_generator(self, robot_data):
@@ -185,7 +187,9 @@ class WorldYamlLoader:
             grasp_properties = ParallelGraspProperties(**grasp_params)
             return GraspGenerator(grasp_properties)
         else:
-            warnings.warn(f"Invalid grasp generator type specified: {grasp_gen_type}")
+            get_global_logger().warning(
+                f"Invalid grasp generator type specified: {grasp_gen_type}"
+            )
             return None
 
     def get_action_execution_options(self, robot_data):

@@ -1,9 +1,8 @@
 """ Defines a robot which operates in a world. """
 
+import logging
 import time
-import threading
 import numpy as np
-import warnings
 
 from .dynamics import RobotDynamics2D
 from .hallway import Hallway
@@ -84,6 +83,15 @@ class Robot:
         if name == "world":
             raise ValueError("Robots cannot be named 'world'.")
 
+        # Logger for this robot
+        self.logger = logging.getLogger(self.name)
+        self.logger.setLevel(logging.INFO)
+        log_formatter = logging.Formatter("[%(name)s] %(levelname)s: %(message)s")
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(log_formatter)
+        self.logger.addHandler(console_handler)
+        self.logger.propagate = True
+
         # Dynamics properties
         self.dynamics = RobotDynamics2D(
             robot=self,
@@ -120,6 +128,8 @@ class Robot:
         self.partial_observability = partial_observability
         self.known_objects = set()
         self.last_detected_objects = []
+
+        self.logger.info("Created robot.")
 
     def get_pose(self):
         """
@@ -247,20 +257,22 @@ class Robot:
         :rtype: :class:`pyrobosim.utils.motion.Path` or None
         """
         if self.path_planner is None:
-            warnings.warn(f"No path planner attached to robot {self.name}.")
+            self.logger.warning(f"No path planner attached to robot.")
             return None
 
         if start is None:
             start = self.get_pose()
 
         if goal is None:
-            warnings.warn("Did not specify a goal. Returning None.")
+            self.logger.warning("Did not specify a goal. Returning None.")
             return None
 
         # If the goal is not a pose, we need to extract it from the world knowledge.
         if not isinstance(goal, Pose):
             if self.world is None:
-                warnings.warn("Cannot specify a string goal if there is no world set.")
+                self.logger.warning(
+                    "Cannot specify a string goal if there is no world set."
+                )
                 return None
 
             if isinstance(goal, str):
@@ -273,14 +285,14 @@ class Robot:
                     resolution_strategy="nearest",
                 )
                 if not goal:
-                    warnings.warn(
+                    self.logger.warning(
                         f"Could not resolve goal location query: {query_list}"
                     )
                     return None
 
             goal_node = self.world.graph_node_from_entity(goal, robot=self)
             if goal_node is None:
-                warnings.warn(f"Could not find graph node associated with goal.")
+                self.logger.warning(f"Could not find graph node associated with goal.")
                 return None
             goal = goal_node.pose
 
@@ -313,7 +325,7 @@ class Robot:
         if path is None or path.num_poses == 0:
             self.executing_nav = False
             message = "No path to execute."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE,
                 message=message,
@@ -321,14 +333,14 @@ class Robot:
         if self.path_executor is None:
             self.executing_nav = False
             message = "No path executor. Cannot follow path."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE,
                 message=message,
             )
         if self.path_executor.following_path:
             message = "Robot is already following an existing path."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE,
                 message=message,
@@ -358,7 +370,7 @@ class Robot:
                 isinstance(self.location, ObjectSpawn)
                 and self.location.parent.is_charger
             ):
-                print(f"[{self.name}] Battery charged at {self.location.name}!")
+                self.logger.info(f"Battery charged at {self.location.name}!")
                 self.battery_level = 100.0
 
             if self.world.has_gui:
@@ -392,7 +404,7 @@ class Robot:
         """
         if self.battery_level <= 0.0:
             message = "Out of battery. Cannot navigate."
-            warnings.warn(message)
+            self.logger.warning(message)
             self.last_nav_result = ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
@@ -403,7 +415,7 @@ class Robot:
             path = self.plan_path(start, goal)
             if path is None or path.num_poses == 0:
                 message = "Failed to plan a path."
-                warnings.warn(message)
+                self.logger.warning(message)
                 self.last_nav_result = ExecutionResult(
                     status=ExecutionStatus.PLANNING_FAILURE,
                     message=message,
@@ -420,8 +432,8 @@ class Robot:
         exec_options = self.action_execution_options.get("navigate")
         if exec_options:
             if not exec_options.should_succeed():
-                message = f"[{self.name}] Simulated navigation failure."
-                print(message)
+                message = "Simulated navigation failure."
+                self.logger.info(message)
                 self.last_nav_result = ExecutionResult(
                     status=ExecutionStatus.EXECUTION_FAILURE, message=message
                 )
@@ -433,12 +445,12 @@ class Robot:
     def reset_path_planner(self):
         """Resets the robot's path planner, if available."""
         if self.path_planner is None:
-            warnings.warn(f"[{self.name}] Robot has no path planner. Cannot reset.")
+            self.logger.warning("Robot has no path planner to reset.")
             return
 
         if not hasattr(self.path_planner, "reset"):
-            warnings.warn(
-                f"[{self.name}] Path planner does not have a reset() method. Cannot reset."
+            self.logger.warning(
+                "Path planner does not have a reset() method. Cannot reset."
             )
             return
 
@@ -465,7 +477,7 @@ class Robot:
         if self.manipulated_object is not None:
             obj_name = self.manipulated_object.name
             message = f"Robot is already holding {obj_name}."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
@@ -488,7 +500,7 @@ class Robot:
                 )
             if not obj:
                 message = f"Found no object {obj_query} to pick."
-                warnings.warn(message)
+                self.logger.warning(message)
                 return ExecutionResult(
                     status=ExecutionStatus.PRECONDITION_FAILURE, message=message
                 )
@@ -496,19 +508,19 @@ class Robot:
         # Validate the robot location
         if obj.parent != loc:
             message = f"{obj.name} is at {obj.parent.name} and robot is at {loc.name}. Cannot pick."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
         if not loc.is_open:
             message = f"{loc.parent.name} is not open. Cannot pick object."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
         if self.battery_level <= 0.0:
             message = "Out of battery. Cannot pick."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
@@ -538,8 +550,8 @@ class Robot:
             )
 
             if len(grasps) == 0:
-                message = f"Could not generate valid grasps. Cannot pick object."
-                warnings.warn(message)
+                message = "Could not generate valid grasps. Cannot pick object."
+                self.logger.warning(message)
                 return ExecutionResult(
                     status=ExecutionStatus.PLANNING_FAILURE, message=message
                 )
@@ -547,7 +559,7 @@ class Robot:
                 # TODO: For now, just pick a random grasp.
                 self.last_grasp_selection = np.random.choice(grasps)
         if self.last_grasp_selection is not None:
-            print(f"Selected {self.last_grasp_selection}")
+            self.logger.info(f"Selected {self.last_grasp_selection}")
 
         # Simulate execution options.
         exec_options = self.action_execution_options.get("pick")
@@ -556,8 +568,8 @@ class Robot:
                 0.0, self.battery_level - exec_options.battery_usage
             )
             if not exec_options.should_succeed():
-                message = f"[{self.name}] Simulated pick failure."
-                print(message)
+                message = "Simulated pick failure."
+                self.logger.info(message)
                 return ExecutionResult(
                     status=ExecutionStatus.EXECUTION_FAILURE, message=message
                 )
@@ -582,7 +594,7 @@ class Robot:
         # Validate input
         if self.manipulated_object is None:
             message = "No manipulated object. Cannot place."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
@@ -593,19 +605,19 @@ class Robot:
             loc = self.world.get_entity_by_name(self.location)
         if not isinstance(loc, ObjectSpawn):
             message = f"{loc} is not an object spawn. Cannot place object."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
         if not loc.is_open:
             message = f"{loc.parent.name} is not open. Cannot place object."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
         if self.battery_level <= 0.0:
             message = "Out of battery. Cannot place."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
@@ -630,7 +642,7 @@ class Robot:
                     break
             if not is_valid_pose:
                 message = f"Could not sample a placement position at {loc.name}"
-                warnings.warn(message)
+                self.logger.warning(message)
                 return ExecutionResult(
                     status=ExecutionStatus.PLANNING_FAILURE, message=message
                 )
@@ -644,7 +656,7 @@ class Robot:
                 )
             if not is_valid_pose:
                 message = f"Pose in collision or not in location {loc.name}."
-                warnings.warn(message)
+                self.logger.warning(message)
                 return ExecutionResult(
                     status=ExecutionStatus.PLANNING_FAILURE, message=message
                 )
@@ -656,8 +668,8 @@ class Robot:
                 0.0, self.battery_level - exec_options.battery_usage
             )
             if not exec_options.should_succeed():
-                message = f"[{self.name}] Simulated place failure."
-                print(message)
+                message = "Simulated place failure."
+                self.logger.info(message)
                 return ExecutionResult(
                     status=ExecutionStatus.EXECUTION_FAILURE, message=message
                 )
@@ -696,21 +708,21 @@ class Robot:
         self.last_detected_objects = []
 
         if not self.at_object_spawn():
-            message = f"Robot is not at an object spawn. Cannot detect objects."
-            warnings.warn(message)
+            message = "Robot is not at an object spawn. Cannot detect objects."
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
         if not self.location.is_open:
             message = f"{self.location.parent.name} is not open. Cannot detect objects."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
 
         if self.battery_level <= 0.0:
             message = "Out of battery. Cannot detect objects."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
@@ -722,8 +734,8 @@ class Robot:
                 0.0, self.battery_level - exec_options.battery_usage
             )
             if not exec_options.should_succeed():
-                message = f"[{self.name}] Simulated detection failure."
-                print(message)
+                message = "Simulated detection failure."
+                self.logger.info(message)
                 return ExecutionResult(
                     status=ExecutionStatus.EXECUTION_FAILURE, message=message
                 )
@@ -763,28 +775,28 @@ class Robot:
         """
         if self.location is None:
             message = "Robot location is not set. Cannot open."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
 
         if self.manipulated_object is not None:
             message = "Robot is holding an object. Cannot open."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
 
         if not self.at_openable_location():
             message = "Robot is not at an openable location."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
 
         if self.battery_level <= 0.0:
             message = "Out of battery. Cannot open location."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
@@ -796,8 +808,8 @@ class Robot:
                 0.0, self.battery_level - exec_options.battery_usage
             )
             if not exec_options.should_succeed():
-                message = f"[{self.name}] Simulated opening failure."
-                print(message)
+                message = "Simulated opening failure."
+                self.logger.info(message)
                 return ExecutionResult(
                     status=ExecutionStatus.EXECUTION_FAILURE, message=message
                 )
@@ -817,28 +829,28 @@ class Robot:
         """
         if self.location is None:
             message = "Robot location is not set. Cannot close."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
 
         if self.manipulated_object is not None:
             message = "Robot is holding an object. Cannot close."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
 
         if not self.at_openable_location():
             message = "Robot is not at a closeable location."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
 
         if self.battery_level <= 0.0:
             message = "Out of battery. Cannot close location."
-            warnings.warn(message)
+            self.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
@@ -850,8 +862,8 @@ class Robot:
                 0.0, self.battery_level - exec_options.battery_usage
             )
             if not exec_options.should_succeed():
-                message = f"[{self.name}] Simulated closing failure."
-                print(message)
+                message = "Simulated closing failure."
+                self.logger.info(message)
                 return ExecutionResult(
                     status=ExecutionStatus.EXECUTION_FAILURE, message=message
                 )
@@ -917,13 +929,13 @@ class Robot:
             result = self.close_location()
 
         else:
-            message = f"[{self.name}] Invalid action type: {action.type}."
-            warnings.warn(message)
+            message = f"Invalid action type: {action.type}."
+            self.logger.warning(message)
             result = ExecutionResult(
                 status=ExecutionStatus.INVALID_ACTION, message=message
             )
 
-        print(f"[{self.name}] Action completed with result: {result.status.name}")
+        self.logger.info(f"Action completed with result: {result.status.name}")
         self.current_action = None
         self.executing_action = False
         return result
@@ -931,11 +943,11 @@ class Robot:
     def cancel_actions(self):
         """Cancels any currently running actions for the robot."""
         if not (self.executing_action or self.executing_plan or self.executing_nav):
-            warnings.warn("There is no running action or plan to cancel.")
+            self.logger.warning("There is no running action or plan to cancel.")
             return
 
         if self.executing_nav and self.path_executor is not None:
-            print(f"[{self.name}] Canceling path execution...")
+            self.logger.info("Canceling path execution...")
             self.path_executor.cancel_execution = True
             while self.executing_nav:
                 time.sleep(0.1)
@@ -958,8 +970,8 @@ class Robot:
         :rtype: tuple[:class:`pyrobosim.planning.actions.ExecutionResult`, int]
         """
         if plan is None:
-            message = f"[{self.name}] Plan is None. Returning."
-            warnings.warn(message)
+            message = "Plan is None. Returning."
+            self.logger.warning(message)
             return (
                 ExecutionResult(status=ExecutionStatus.INVALID_ACTION, message=message),
                 0,
@@ -968,7 +980,7 @@ class Robot:
         self.executing_plan = True
         self.current_plan = plan
 
-        print(f"[{self.name}] Executing task plan...")
+        self.logger.info("Executing task plan...")
         if self.world.has_gui:
             self.world.gui.set_buttons_during_action(False)
 
@@ -978,24 +990,24 @@ class Robot:
         for n, act_msg in enumerate(plan.actions):
             if self.canceling_execution:
                 self.canceling_execution = False
-                message = f"[{self.name}] Canceled plan execution."
-                print(message)
+                message = "Canceled plan execution."
+                self.logger.info(message)
                 result = ExecutionResult(
                     status=ExecutionStatus.CANCELED, message=message
                 )
                 break
 
-            print(f"[{self.name}] Executing action {act_msg.type} [{n+1}/{num_acts}]")
+            self.logger.info(f"Executing action {act_msg.type} [{n+1}/{num_acts}]")
             result = self.execute_action(act_msg)
             if not result.is_success():
-                print(
-                    f"[{self.name}] Task plan failed to execute on action {n+1}/{num_acts}"
+                self.logger.info(
+                    f"Task plan failed to execute on action {n+1}/{num_acts}"
                 )
                 break
             num_completed += 1
             time.sleep(delay)  # Artificial delay between actions
 
-        print(f"[{self.name}] Task plan completed with status: {result.status.name}")
+        self.logger.info(f"Task plan completed with status: {result.status.name}")
         self.canceling_execution = False
         self.executing_plan = False
         self.current_plan = None

@@ -77,6 +77,7 @@ def start_planner(world, args):
         print(f"Invalid example: {args.example}")
         return
 
+    time.sleep(0.5)
     input("Press Enter to start planning.")
     robot = world.robots[0]
     plan = planner.plan(
