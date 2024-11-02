@@ -124,28 +124,33 @@ def test_search_graph_get_nearest_node():
     assert graph.nearest(query_pose) == nodes[2]
 
 
-def test_search_graph_find_path_no_planner():
+def test_search_graph_find_path_no_planner(caplog):
     """Checks that path finding fails if no planner is specified in the graph."""
     graph, nodes = create_test_graph()
-    with pytest.warns(UserWarning):
-        path = graph.find_path(nodes[0], nodes[2])
-        assert path.num_poses == 0
+    path = graph.find_path(nodes[0], nodes[2])
+    assert path.num_poses == 0
+    assert (
+        "Graph should be created with `use_planner = True` to use planner."
+        in caplog.text
+    )
 
 
-def test_search_graph_find_path_no_nodes():
+def test_search_graph_find_path_no_nodes(caplog):
     """Checks that path finding fails with missing nodes."""
     graph, nodes = create_test_graph(use_planner=True)
 
     dummy_node = Node(Pose(x=2.0, y=2.0))
-    with pytest.warns(UserWarning):
-        path = graph.find_path(nodes[0], dummy_node)
-        assert path.num_poses == 0
-    with pytest.warns(UserWarning):
-        path = graph.find_path(dummy_node, nodes[2])
-        assert path.num_poses == 0
+    path = graph.find_path(nodes[0], dummy_node)
+    assert path.num_poses == 0
+    assert "Node `nodeB` is not in the search graph." in caplog.text
+    caplog.clear()
+
+    path = graph.find_path(dummy_node, nodes[2])
+    assert path.num_poses == 0
+    assert "Node `nodeA` is not in the search graph." in caplog.text
 
 
-def test_search_graph_find_path():
+def test_search_graph_find_path(caplog):
     """Checks successful path planning."""
     graph, nodes = create_test_graph(use_planner=True)
 
@@ -172,6 +177,6 @@ def test_search_graph_find_path():
 
     # If we remove the edge to the goal node, we should find no path.
     graph.remove_edge(nodes[2], new_node)
-    with pytest.warns(UserWarning):
-        path = graph.find_path(nodes[0], new_node)
-        assert path.num_poses == 0
+    path = graph.find_path(nodes[0], new_node)
+    assert path.num_poses == 0
+    assert "Could not find a path from start to goal." in caplog.text

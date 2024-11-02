@@ -48,7 +48,7 @@ def test_prm_default():
     assert path.poses[-1] == goal
 
 
-def test_prm_no_path():
+def test_prm_no_path(caplog):
     """Test that PRM gracefully returns when there is no feasible path."""
     world = WorldYamlLoader().from_yaml(
         os.path.join(get_data_folder(), "test_world.yaml")
@@ -59,10 +59,9 @@ def test_prm_no_path():
     start = Pose(x=-1.6, y=2.8)
     goal = Pose(x=12.5, y=3.0)
 
-    with pytest.warns(UserWarning) as warn_info:
-        path = prm.plan(start, goal)
-        assert len(path.poses) == 0
-    assert warn_info[0].message.args[0] == "Could not find a path from start to goal."
+    path = prm.plan(start, goal)
+    assert len(path.poses) == 0
+    assert "Could not find a path from start to goal." in caplog.text
 
 
 def test_prm_compress_path():

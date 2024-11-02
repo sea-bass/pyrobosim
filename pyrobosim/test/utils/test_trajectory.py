@@ -43,13 +43,13 @@ def test_create_trajectory():
     assert traj.poses[2].get_yaw() == np.pi / 2
 
 
-def test_delete_empty_trajectory():
+def test_delete_empty_trajectory(caplog):
     traj = Trajectory()
-    with pytest.warns(UserWarning):
-        assert not traj.delete(0)
+    assert not traj.delete(0)
+    assert "Trajectory is empty. Cannot delete point." in caplog.text
 
 
-def test_delete_at_invalid_indices():
+def test_delete_at_invalid_indices(caplog):
     poses = [
         Pose(x=0.1, y=1.1, yaw=0.0),
         Pose(x=0.2, y=1.2, yaw=np.pi / 4),
@@ -57,9 +57,12 @@ def test_delete_at_invalid_indices():
     ]
     traj = Trajectory([0.0, 1.0, 2.0], poses)
 
-    with pytest.warns(UserWarning):
-        assert not traj.delete(-1)
-        assert not traj.delete(5)
+    assert not traj.delete(-1)
+    assert "Invalid index -1 for trajectory length 3" in caplog.text
+    caplog.clear()
+
+    assert not traj.delete(5)
+    assert "Invalid index 5 for trajectory length 3" in caplog.text
 
     assert traj.num_points() == 3
 
@@ -94,16 +97,16 @@ def test_create_invalid_trajectory():
         Trajectory([0.0, 10.0], poses)
 
 
-def test_get_constant_speed_trajectory_empty_path():
+def test_get_constant_speed_trajectory_empty_path(caplog):
     path = Path(poses=[])
-    with pytest.warns(UserWarning):
-        assert get_constant_speed_trajectory(path) is None
+    assert get_constant_speed_trajectory(path) is None
+    assert "Insufficient points to generate trajectory." in caplog.text
 
 
-def test_get_constant_speed_trajectory_insufficient_points():
+def test_get_constant_speed_trajectory_insufficient_points(caplog):
     path = Path(poses=[Pose(x=1.0, y=1.0)])
-    with pytest.warns(UserWarning):
-        assert get_constant_speed_trajectory(path) is None
+    assert get_constant_speed_trajectory(path) is None
+    assert "Insufficient points to generate trajectory." in caplog.text
 
 
 def test_get_constant_speed_trajectory_unlimited_ang_vel():
@@ -155,7 +158,7 @@ def test_interpolate_trajectory():
     assert interpolated_traj.num_points() == 31
 
 
-def test_interpolate_trajectory_duplicate_points():
+def test_interpolate_trajectory_duplicate_points(caplog):
     path = Path(
         poses=[
             Pose(x=0.0, y=0.0),
@@ -168,14 +171,13 @@ def test_interpolate_trajectory_duplicate_points():
         ]
     )
     traj = get_constant_speed_trajectory(path, linear_velocity=1.0)
-    with pytest.warns(UserWarning):
-        interpolated_traj = interpolate_trajectory(traj, dt=0.1)
-
+    interpolated_traj = interpolate_trajectory(traj, dt=0.1)
+    assert "De-duplicated trajectory points at the same time." in caplog.text
     assert interpolated_traj.num_points() == 31
 
 
-def test_interpolate_trajectory_insufficient_points():
+def test_interpolate_trajectory_insufficient_points(caplog):
     traj = Trajectory([1.0], [Pose()])
-    with pytest.warns(UserWarning):
-        interpolated_traj = interpolate_trajectory(traj, dt=0.1)
+    interpolated_traj = interpolate_trajectory(traj, dt=0.1)
     assert interpolated_traj is None
+    assert "Insufficient trajectory points for interpolation." in caplog.text
