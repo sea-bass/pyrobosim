@@ -171,9 +171,7 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
         obj_candidate = apply_resolution_strategy(
             entity_list, resolution_strategy=resolution_strategy, robot=robot
         )
-        if not obj_candidate:
-            get_global_logger().warning(f"Could not resolve query {query_list}")
-        else:
+        if obj_candidate is not None:
             if mode == "object":
                 return obj_candidate
             elif mode == "location":
@@ -192,9 +190,7 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
             resolution_strategy=resolution_strategy,
             robot=robot,
         )
-        if not obj_candidate:
-            get_global_logger().warning(f"Could not resolve query {query_list}")
-        else:
+        if obj_candidate is not None:
             if mode == "object":
                 return obj_candidate
             elif mode == "location":
@@ -207,11 +203,10 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
             resolution_strategy=resolution_strategy,
             robot=robot,
         )
-        if not loc_candidate:
-            get_global_logger().warning(f"Could not resolve query {query_list}")
-        else:
+        if loc_candidate is not None:
             return loc_candidate
 
+    get_global_logger().warning(f"Could not resolve query {query_list}")
     return None
 
 
