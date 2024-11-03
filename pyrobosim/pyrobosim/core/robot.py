@@ -11,6 +11,7 @@ from .objects import Object
 from ..manipulation.grasping import Grasp
 from ..planning.actions import ExecutionResult, ExecutionStatus
 from ..utils.knowledge import query_to_entity
+from ..utils.logging import create_logger
 from ..utils.polygon import sample_from_polygon, transform_polygon
 from ..utils.pose import Pose
 
@@ -84,13 +85,7 @@ class Robot:
             raise ValueError("Robots cannot be named 'world'.")
 
         # Logger for this robot
-        self.logger = logging.getLogger(self.name)
-        self.logger.setLevel(logging.INFO)
-        log_formatter = logging.Formatter("[%(name)s] %(levelname)s: %(message)s")
-        console_handler = logging.StreamHandler()
-        console_handler.setFormatter(log_formatter)
-        self.logger.addHandler(console_handler)
-        self.logger.propagate = True
+        self.logger = create_logger(self.name)
 
         # Dynamics properties
         self.dynamics = RobotDynamics2D(

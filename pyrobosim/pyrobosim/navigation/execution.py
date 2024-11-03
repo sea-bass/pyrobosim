@@ -4,7 +4,7 @@ import time
 import threading
 
 from ..planning.actions import ExecutionResult, ExecutionStatus
-from .. import get_global_logger
+from ..utils.logging import get_global_logger
 from ..utils.motion import Path
 from ..utils.trajectory import get_constant_speed_trajectory, interpolate_trajectory
 

@@ -11,6 +11,7 @@ from .room import Room
 from .robot import Robot
 from ..planning.actions import ExecutionResult, ExecutionStatus
 from ..utils.general import InvalidEntityCategoryException
+from ..utils.logging import create_logger
 from ..utils.pose import Pose
 from ..utils.knowledge import (
     apply_resolution_strategy,
@@ -42,15 +43,7 @@ class World:
         self.name = name
         self.wall_height = wall_height
         self.source_file = None
-
-        # Logger for the world
-        self.logger = logging.getLogger(self.name)
-        self.logger.setLevel(logging.INFO)
-        log_formatter = logging.Formatter("[%(name)s] %(levelname)s: %(message)s")
-        console_handler = logging.StreamHandler()
-        console_handler.setFormatter(log_formatter)
-        self.logger.addHandler(console_handler)
-        self.logger.propagate = True
+        self.logger = create_logger(self.name)
 
         # Connected apps
         self.has_gui = False

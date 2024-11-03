@@ -6,10 +6,10 @@ import yaml
 
 from .robot import Robot
 from .world import World
-from .. import get_global_logger
 from ..navigation import ConstantVelocityExecutor, get_planner_class
 from ..planning.actions import ExecutionOptions
 from ..utils.general import replace_special_yaml_tokens
+from ..utils.logging import get_global_logger
 from ..utils.pose import Pose
 
 

@@ -5,7 +5,7 @@ Robot dynamics utilities.
 import copy
 import numpy as np
 
-from .. import get_global_logger
+from ..utils.logging import get_global_logger
 from ..utils.pose import Pose
 
 

@@ -15,6 +15,7 @@ from rclpy.logging import get_logger
 from rclpy.node import Node
 
 from geometry_msgs.msg import Twist
+from pyrobosim.utils.logging import set_global_logger
 from pyrobosim_msgs.action import (
     DetectObjects,
     ExecuteTaskAction,
@@ -169,6 +170,7 @@ class WorldROSWrapper(Node):
         self.world.ros_node = self
         self.world.has_ros_node = True
 
+        set_global_logger(get_logger("pyrobosim"))
         self.world.logger = get_logger(self.world.name)
         self.world.logger.info("Configured ROS node.")
 

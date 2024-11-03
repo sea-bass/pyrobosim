@@ -6,7 +6,7 @@ Utilities to reason about entities using world knowledge
 import sys
 import numpy as np
 
-from .. import get_global_logger
+from ..utils.logging import get_global_logger
 
 
 def apply_resolution_strategy(entity_list, resolution_strategy, robot=None):

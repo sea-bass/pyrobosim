@@ -7,7 +7,7 @@ import os
 from PIL import Image
 import yaml
 
-from .. import get_global_logger
+from ..utils.logging import get_global_logger
 
 
 class OccupancyGrid:

@@ -16,7 +16,7 @@ from shapely.geometry.polygon import orient
 
 from .general import replace_special_yaml_tokens
 from .pose import Pose, rot2d
-from .. import get_global_logger
+from ..utils.logging import get_global_logger
 
 
 def add_coords(coords, offset):

@@ -4,7 +4,7 @@ from astar import AStar
 import numpy as np
 
 from .motion import Path
-from .. import get_global_logger
+from ..utils.logging import get_global_logger
 
 
 class Node:

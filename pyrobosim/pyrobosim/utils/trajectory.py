@@ -5,7 +5,7 @@ import numpy as np
 from scipy.spatial.transform import Slerp, Rotation
 
 from .pose import Pose, wrap_angle
-from .. import get_global_logger
+from ..utils.logging import get_global_logger
 
 
 class Trajectory:
