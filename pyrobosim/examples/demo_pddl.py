@@ -47,6 +47,7 @@ def start_planner(world, args):
     # Wait for the GUI to load
     while not world.has_gui:
         time.sleep(1.0)
+    time.sleep(0.5)  # Extra time for log messages to not interfere with prompt
 
     if args.example == "01_simple":
         # Task specification for simple example.

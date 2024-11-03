@@ -1,11 +1,10 @@
 """ Graph search utilities. """
 
-import warnings
-
 from astar import AStar
 import numpy as np
 
 from .motion import Path
+from ..utils.logging import get_global_logger
 
 
 class Node:
@@ -164,17 +163,17 @@ class SearchGraph:
         path = Path()
 
         if not self.use_planner:
-            warnings.warn(
+            get_global_logger().warning(
                 "Graph should be created with `use_planner = True` to use planner."
             )
         elif nodeA not in self.nodes:
-            warnings.warn("Node `nodeA` is not in the search graph.")
+            get_global_logger().warning("Node `nodeA` is not in the search graph.")
         elif nodeB not in self.nodes:
-            warnings.warn("Node `nodeB` is not in the search graph.")
+            get_global_logger().warning("Node `nodeB` is not in the search graph.")
         else:
             path_nodes = self.path_finder.plan(nodeA, nodeB)
             if path_nodes is None:
-                warnings.warn("Could not find a path from start to goal.")
+                get_global_logger().warning("Could not find a path from start to goal.")
                 return path
 
             path_poses = [node.pose for node in path_nodes]
@@ -238,6 +237,6 @@ class SearchGraphPlanner(AStar):
         try:
             self.latest_path = self.astar(start, goal)
         except IndexError as e:
-            warnings.warn(f"Error calling astar: {e}")
+            get_global_logger().warning(f"Error calling astar: {e}")
             self.latest_path = None
         return self.latest_path

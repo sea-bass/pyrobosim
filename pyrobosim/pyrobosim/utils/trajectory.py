@@ -3,9 +3,9 @@
 import copy
 import numpy as np
 from scipy.spatial.transform import Slerp, Rotation
-import warnings
 
 from .pose import Pose, wrap_angle
+from ..utils.logging import get_global_logger
 
 
 class Trajectory:
@@ -60,10 +60,10 @@ class Trajectory:
         :rtype: bool
         """
         if self.is_empty():
-            warnings.warn("Trajectory is empty. Cannot delete point.")
+            get_global_logger().warning("Trajectory is empty. Cannot delete point.")
             return False
         elif idx < 0 or idx >= self.num_points():
-            warnings.warn(
+            get_global_logger().warning(
                 f"Invalid index {idx} for trajectory length {self.num_points()}"
             )
             return False
@@ -89,7 +89,7 @@ def get_constant_speed_trajectory(path, linear_velocity=0.2, max_angular_velocit
     :rtype: :class:`pyrobosim.utils.trajectory.Trajectory`
     """
     if path.num_poses < 2:
-        warnings.warn("Insufficient points to generate trajectory.")
+        get_global_logger().warning("Insufficient points to generate trajectory.")
         return None
 
     # Calculate the time points for the path at constant velocity, also
@@ -123,7 +123,7 @@ def interpolate_trajectory(traj: Trajectory, dt: float):
     :rtype: :class:`pyrobosim.utils.trajectory.Trajectory`
     """
     if traj.num_points() < 2:
-        warnings.warn("Insufficient trajectory points for interpolation.")
+        get_global_logger().warning("Insufficient trajectory points for interpolation.")
         return None
 
     if traj.num_points() == 2 and traj.poses[0] == traj.poses[1]:
@@ -135,7 +135,9 @@ def interpolate_trajectory(traj: Trajectory, dt: float):
     modified_traj = copy.deepcopy(traj)
     while i < modified_traj.num_points():
         if modified_traj.t_pts[i] <= modified_traj.t_pts[i - 1]:
-            warnings.warn("De-duplicated trajectory points at the same time.")
+            get_global_logger().warning(
+                "De-duplicated trajectory points at the same time."
+            )
             modified_traj.delete(i - 1)
         else:
             i += 1

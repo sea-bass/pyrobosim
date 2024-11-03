@@ -133,7 +133,7 @@ def test_transform_polygon():
     coords_approx_equal(transformed_poly_coords, expected_coords)
 
 
-def test_sample_from_polygon():
+def test_sample_from_polygon(caplog):
     # Regular polygon
     poly = Polygon(square_coords)
     out = sample_from_polygon(poly)
@@ -141,12 +141,12 @@ def test_sample_from_polygon():
 
     # Adversarial polygon that is just a straight line
     poly = Polygon([(0.0, 0.0), (0.0, 0.0), (1.0, 1.0), (1.0, 1.0)])
-    with pytest.warns(UserWarning):
-        out = sample_from_polygon(poly)
-        assert out == (None, None)
+    out = sample_from_polygon(poly)
+    assert out == (None, None)
+    assert "Exceeded max polygon samples" in caplog.text
 
 
-def test_polygon_from_footprint():
+def test_polygon_from_footprint(caplog):
     # Box type
     footprint = {
         "type": "box",
@@ -236,11 +236,9 @@ def test_polygon_from_footprint():
 
     # Invalid type
     footprint = {"type": "invalid"}
-    with pytest.warns(UserWarning):
-        output = polygon_and_height_from_footprint(
-            footprint, parent_polygon=parent_polygon
-        )
-        assert output is None
+    output = polygon_and_height_from_footprint(footprint, parent_polygon=parent_polygon)
+    assert output is None
+    assert "Invalid footprint type: invalid" in caplog.text
 
 
 def test_convhull_to_rectangle(display=False):

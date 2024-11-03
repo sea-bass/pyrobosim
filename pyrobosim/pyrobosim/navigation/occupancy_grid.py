@@ -5,8 +5,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from PIL import Image
-import warnings
 import yaml
+
+from ..utils.logging import get_global_logger
 
 
 class OccupancyGrid:
@@ -235,7 +236,9 @@ class OccupancyGrid:
                     "No YAML files found. Cannot load occupancy grid."
                 )
             elif len(yaml_files) > 1:
-                warnings.warn("Found multiple YAML files. Loading the first one.")
+                get_global_logger().warning(
+                    "Found multiple YAML files. Loading the first one."
+                )
             yaml_path = os.path.join(folder, yaml_files[0])
 
         with open(yaml_path, "r") as f:

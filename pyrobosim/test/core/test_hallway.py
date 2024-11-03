@@ -23,7 +23,7 @@ class TestHallway:
         coords_end = [(3.0, 5.0), (5.0, 3.0), (5.0, 5.0), (3.0, 5.0)]
         self.room_end = self.test_world.add_room(name="room_end", footprint=coords_end)
 
-    def test_add_hallway_to_world_from_object(self):
+    def test_add_hallway_to_world_from_object(self, caplog):
         """Test adding a hallway from a Hallway object."""
 
         hallway = Hallway(
@@ -42,13 +42,12 @@ class TestHallway:
         assert self.test_world.hallways[0].width == 0.1
 
         # Adding the same hallway again should fail due to duplicate names.
-        with pytest.warns(UserWarning) as warn_info:
-            result = self.test_world.add_hallway(hallway=hallway)
+        result = self.test_world.add_hallway(hallway=hallway)
         assert result is None
         assert self.test_world.num_hallways == 1
         assert (
-            warn_info[0].message.args[0]
-            == "Hallway test_hallway already exists in the world. Cannot add."
+            "Hallway test_hallway already exists in the world. Cannot add."
+            in caplog.text
         )
 
     def test_add_hallway_to_world_from_args(self):
@@ -84,22 +83,21 @@ class TestHallway:
         assert self.test_world.hallways[1].reversed_name == "hall_room_start_room_end_1"
         assert self.test_world.hallways[1].width == 0.08
 
-    def test_add_hallway_fail_validation(self):
+    def test_add_hallway_fail_validation(self, caplog):
         """Test that all the hallway validation checks work."""
-        with pytest.warns(UserWarning) as warn_info:
-            with pytest.raises(ValueError) as exc_info:
-                self.test_world.add_hallway(
-                    room_start="bad_start_room", room_end="room_end", width=0.1
-                )
-        assert warn_info[0].message.args[0] == "Room not found: bad_start_room"
+        with pytest.raises(ValueError) as exc_info:
+            self.test_world.add_hallway(
+                room_start="bad_start_room", room_end="room_end", width=0.1
+            )
+        assert "Room not found: bad_start_room" in caplog.text
         assert exc_info.value.args[0] == "room_start must be a valid Room object."
 
-        with pytest.warns(UserWarning) as warn_info:
-            with pytest.raises(ValueError) as exc_info:
-                self.test_world.add_hallway(
-                    room_start="room_start", room_end="bad_end_room", width=0.1
-                )
-        assert warn_info[0].message.args[0] == "Room not found: bad_end_room"
+        caplog.clear()
+        with pytest.raises(ValueError) as exc_info:
+            self.test_world.add_hallway(
+                room_start="room_start", room_end="bad_end_room", width=0.1
+            )
+        assert "Room not found: bad_end_room" in caplog.text
         assert exc_info.value.args[0] == "room_end must be a valid Room object."
 
         with pytest.raises(ValueError) as exc_info:
@@ -117,7 +115,7 @@ class TestHallway:
             )
         assert exc_info.value.args[0] == "No valid connection method: bad_conn_method."
 
-    def test_add_hallway_open_close_lock_unlock(self):
+    def test_add_hallway_open_close_lock_unlock(self, caplog):
         """Test the open, close, lock, and unlock capabilities of hallways."""
         result = self.test_world.add_hallway(
             room_start="room_start",
@@ -132,10 +130,9 @@ class TestHallway:
         assert not hallway.is_locked
 
         # When trying to open the hallway, it should succeed and say it's already open.
-        with pytest.warns(UserWarning):
-            result = self.test_world.open_location(hallway)
+        result = self.test_world.open_location(hallway)
         assert result.is_success()
-        assert result.message == "Hallway: hall_room_end_room_start is already open."
+        assert "Hallway: hall_room_end_room_start is already open." in caplog.text
         assert hallway.is_open
         assert not hallway.is_locked
 
@@ -152,26 +149,26 @@ class TestHallway:
         assert hallway.is_locked
 
         # Opening should not work due to being locked
-        with pytest.warns(UserWarning):
-            result = self.test_world.open_location(hallway)
+        caplog.clear()
+        result = self.test_world.open_location(hallway)
         assert result.status == ExecutionStatus.PRECONDITION_FAILURE
-        assert result.message == "Hallway: hall_room_end_room_start is locked."
+        assert "Hallway: hall_room_end_room_start is locked." in caplog.text
         assert not hallway.is_open
         assert hallway.is_locked
 
         # Closing should succeed due to already being closed
-        with pytest.warns(UserWarning):
-            result = self.test_world.close_location(hallway)
+        caplog.clear()
+        result = self.test_world.close_location(hallway)
         assert result.is_success()
-        assert result.message == "Hallway: hall_room_end_room_start is already closed."
+        assert "Hallway: hall_room_end_room_start is already closed." in caplog.text
         assert not hallway.is_open
         assert hallway.is_locked
 
         # Locking should succeed due to already being locked
-        with pytest.warns(UserWarning):
-            result = self.test_world.lock_location(hallway)
+        caplog.clear()
+        result = self.test_world.lock_location(hallway)
         assert result.is_success()
-        assert result.message == "Hallway: hall_room_end_room_start is already locked."
+        assert "Hallway: hall_room_end_room_start is already locked." in caplog.text
         assert not hallway.is_open
         assert hallway.is_locked
 
@@ -182,12 +179,10 @@ class TestHallway:
         assert not hallway.is_locked
 
         # Unlocking should succeed due to already being unlocked
-        with pytest.warns(UserWarning):
-            result = self.test_world.unlock_location(hallway)
+        caplog.clear()
+        result = self.test_world.unlock_location(hallway)
         assert result.is_success()
-        assert (
-            result.message == "Hallway: hall_room_end_room_start is already unlocked."
-        )
+        assert "Hallway: hall_room_end_room_start is already unlocked." in caplog.text
         assert not hallway.is_open
         assert not hallway.is_locked
 

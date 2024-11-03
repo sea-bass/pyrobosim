@@ -3,7 +3,6 @@
 import copy
 import time
 import numpy as np
-import warnings
 
 from ..utils.motion import Path, reduce_waypoints_polygon
 from ..utils.pose import Pose
@@ -194,7 +193,7 @@ class RRTPlanner:
                 planning_time > self.max_time
                 or self.nodes_sampled > self.max_nodes_sampled
             ):
-                warnings.warn("Could not find a path from start to goal.")
+                self.world.logger.warning("Could not find a path from start to goal.")
                 self.latest_path = Path(planning_time=planning_time)
                 return self.latest_path
 

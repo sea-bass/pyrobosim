@@ -11,9 +11,11 @@ import rclpy
 from rclpy.action import ActionServer, CancelResponse
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
+from rclpy.logging import get_logger
 from rclpy.node import Node
 
 from geometry_msgs.msg import Twist
+from pyrobosim.utils.logging import set_global_logger
 from pyrobosim_msgs.action import (
     DetectObjects,
     ExecuteTaskAction,
@@ -168,6 +170,10 @@ class WorldROSWrapper(Node):
         self.world.ros_node = self
         self.world.has_ros_node = True
 
+        set_global_logger(get_logger("pyrobosim"))
+        self.world.logger = get_logger(self.world.name)
+        self.world.logger.info("Configured ROS node.")
+
     def start(self, wait_for_gui=False, auto_spin=True):
         """
         Starts the node.
@@ -287,6 +293,10 @@ class WorldROSWrapper(Node):
             callback_group=robot_action_callback_group,
         )
         self.robot_object_detection_servers[robot.name] = object_detection_server
+
+        # Set up logger interface for robot
+        robot.logger = get_logger(robot.name)
+        robot.logger.info("Configured ROS logger.")
 
     def remove_robot_ros_interfaces(self, robot):
         """

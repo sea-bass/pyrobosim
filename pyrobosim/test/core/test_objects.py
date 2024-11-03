@@ -16,7 +16,7 @@ data_folder = get_data_folder()
 
 
 class TestObjects:
-    def test_add_object_to_world_from_object(self):
+    def test_add_object_to_world_from_object(self, caplog):
         """Test adding an object from an Object instance."""
         world = World()
         world.set_metadata(
@@ -49,13 +49,11 @@ class TestObjects:
         assert world.objects[0].parent.parent == table
 
         # Adding the same object again should fail due to duplicate names.
-        with pytest.warns(UserWarning) as warn_info:
-            result = world.add_object(object=obj)
+        result = world.add_object(object=obj)
         assert result is None
         assert world.num_objects == 1
         assert (
-            warn_info[0].message.args[0]
-            == "Object test_banana already exists in the world. Cannot add."
+            "Object test_banana already exists in the world. Cannot add." in caplog.text
         )
 
     def test_add_object_to_world_from_args(self):

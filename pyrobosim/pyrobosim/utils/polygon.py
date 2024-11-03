@@ -8,7 +8,6 @@ import os
 import collada
 import numpy as np
 import trimesh
-import warnings
 
 from scipy.spatial import ConvexHull
 from shapely.affinity import rotate, translate
@@ -17,6 +16,7 @@ from shapely.geometry.polygon import orient
 
 from .general import replace_special_yaml_tokens
 from .pose import Pose, rot2d
+from ..utils.logging import get_global_logger
 
 
 def add_coords(coords, offset):
@@ -164,7 +164,7 @@ def polygon_and_height_from_footprint(footprint, pose=None, parent_polygon=None)
         elif ftype == "mesh":
             polygon, height = polygon_and_height_from_mesh(footprint)
         else:
-            warnings.warn(f"Invalid footprint type: {ftype}")
+            get_global_logger().warning(f"Invalid footprint type: {ftype}")
             return None
 
     # Offset the polygon, if specified
@@ -233,7 +233,7 @@ def sample_from_polygon(polygon, max_tries=100):
         if polygon.contains(Point(sample_x, sample_y)):
             return sample_x, sample_y
 
-    warnings.warn(f"Exceeded max polygon samples: {max_tries}")
+    get_global_logger().warning(f"Exceeded max polygon samples: {max_tries}")
     return None, None
 
 

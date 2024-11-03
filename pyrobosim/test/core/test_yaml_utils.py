@@ -171,7 +171,7 @@ class TestWorldYamlLoading:
     @pytest.mark.dependency(
         depends=["TestWorldYamlLoading::test_create_hallways_from_yaml"]
     )
-    def test_create_locations_from_yaml():
+    def test_create_locations_from_yaml(caplog):
         """Tests adding locations to a world from YAML data."""
         loader = TestWorldYamlLoading.yaml_loader
 
@@ -189,9 +189,10 @@ class TestWorldYamlLoading:
                 }
             ]
         }
-        with pytest.warns(UserWarning):
-            loader.add_locations()
-            assert len(loader.world.locations) == 0
+        loader.add_locations()
+        assert len(loader.world.locations) == 0
+        assert "Location instance or parent must be specified." in caplog.text
+        caplog.clear()
 
         # Invalid location category means the object is not added.
         loader.data = {
@@ -203,9 +204,10 @@ class TestWorldYamlLoading:
                 }
             ]
         }
-        with pytest.warns(UserWarning):
-            loader.add_locations()
-            assert len(loader.world.locations) == 0
+        loader.add_locations()
+        assert len(loader.world.locations) == 0
+        assert "Invalid location category: does_not_exist" in caplog.text
+        caplog.clear()
 
         # Load locations from a YAML specified dictionary.
         locations_dict = {
@@ -243,7 +245,7 @@ class TestWorldYamlLoading:
     @pytest.mark.dependency(
         depends=["TestWorldYamlLoading::test_create_locations_from_yaml"]
     )
-    def test_create_objects_from_yaml():
+    def test_create_objects_from_yaml(caplog):
         """Tests adding objects to a world from YAML data."""
         loader = TestWorldYamlLoading.yaml_loader
 
@@ -261,9 +263,10 @@ class TestWorldYamlLoading:
                 }
             ]
         }
-        with pytest.warns(UserWarning):
-            loader.add_objects()
-            assert len(loader.world.objects) == 0
+        loader.add_objects()
+        assert len(loader.world.objects) == 0
+        assert "Object instance or parent must be specified." in caplog.text
+        caplog.clear()
 
         # Invalid object category means the object is not added.
         loader.data = {
@@ -275,9 +278,10 @@ class TestWorldYamlLoading:
                 }
             ]
         }
-        with pytest.warns(UserWarning):
-            loader.add_objects()
-            assert len(loader.world.objects) == 0
+        loader.add_objects()
+        assert len(loader.world.objects) == 0
+        assert "Invalid object category: does_not_exist" in caplog.text
+        caplog.clear()
 
         # Load objects from a YAML specified dictionary.
         objects_dict = {

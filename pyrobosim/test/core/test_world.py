@@ -106,7 +106,7 @@ class TestWorldModeling:
             "TestWorldModeling::test_create_hallway",
         ]
     )
-    def test_create_location():
+    def test_create_location(caplog):
         """Tests the creation of locations"""
         table = TestWorldModeling.world.add_location(
             category="table",
@@ -170,21 +170,22 @@ class TestWorldModeling:
         ) == ["study_desk_desktop"]
 
         # Test missing parent
-        with pytest.warns(UserWarning):
-            result = TestWorldModeling.world.add_location(
-                category="desk",
-                pose=Pose(),
-            )
-            assert result is None
+        result = TestWorldModeling.world.add_location(
+            category="desk",
+            pose=Pose(),
+        )
+        assert result is None
+        assert "Location instance or parent must be specified." in caplog.text
+        caplog.clear()
 
         # Test invalid category
-        with pytest.warns(UserWarning):
-            result = TestWorldModeling.world.add_location(
-                category="does_not_exist",
-                parent="bedroom",
-                pose=Pose(),
-            )
-            assert result is None
+        result = TestWorldModeling.world.add_location(
+            category="does_not_exist",
+            parent="bedroom",
+            pose=Pose(),
+        )
+        assert result is None
+        assert "Invalid location category: does_not_exist" in caplog.text
 
     @staticmethod
     @pytest.mark.dependency(
@@ -195,7 +196,7 @@ class TestWorldModeling:
             "TestWorldModeling::test_create_location",
         ]
     )
-    def test_create_object():
+    def test_create_object(caplog):
         """Tests adding objects to a location"""
 
         apple = TestWorldModeling.world.add_object(category="apple", parent="table0")
@@ -227,21 +228,22 @@ class TestWorldModeling:
         assert TestWorldModeling.world.get_object_names(category_list=["water"]) == []
 
         # Test missing parent
-        with pytest.warns(UserWarning):
-            result = TestWorldModeling.world.add_object(
-                category="apple",
-                pose=Pose(),
-            )
-            assert result is None
+        result = TestWorldModeling.world.add_object(
+            category="apple",
+            pose=Pose(),
+        )
+        assert result is None
+        assert "Object instance or parent must be specified." in caplog.text
+        caplog.clear()
 
         # Test invalid category
-        with pytest.warns(UserWarning):
-            result = TestWorldModeling.world.add_object(
-                category="does_not_exist",
-                parent="study_desk",
-                pose=Pose(),
-            )
-            assert result is None
+        result = TestWorldModeling.world.add_object(
+            category="does_not_exist",
+            parent="study_desk",
+            pose=Pose(),
+        )
+        assert result is None
+        assert "Invalid object category: does_not_exist" in caplog.text
 
     @staticmethod
     @pytest.mark.dependency(
@@ -253,7 +255,7 @@ class TestWorldModeling:
             "TestWorldModeling::test_create_object",
         ]
     )
-    def test_add_robot():
+    def test_add_robot(caplog):
         """Tests adding a robot to the world"""
         from pyrobosim.core import Robot
         from pyrobosim.navigation import RRTPlanner
@@ -283,10 +285,11 @@ class TestWorldModeling:
         assert world_robots[1].get_pose() == target_pose
 
         # Add a robot with the same name as an existing robot, which should fail gracefully
+        caplog.clear()
         robot = Robot(name="test_robot", radius=0.05, path_planner=path_planner)
-        with pytest.warns(UserWarning):
-            TestWorldModeling.world.add_robot(robot, loc="bedroom")
-            assert len(world_robots) == 2
+        TestWorldModeling.world.add_robot(robot, loc="bedroom")
+        assert len(world_robots) == 2
+        assert "Robot name test_robot already exists in world." in caplog.text
 
     #############################################
     # These tests utilize the fully built world #
@@ -386,7 +389,7 @@ class TestWorldModeling:
             "TestWorldModeling::test_is_connectable",
         ]
     )
-    def test_remove_robot():
+    def test_remove_robot(caplog):
         """Tests deleting robots from the world"""
 
         assert TestWorldModeling.world.remove_robot("test_robot") is True
@@ -395,8 +398,8 @@ class TestWorldModeling:
         assert TestWorldModeling.world.remove_robot("other_test_robot") is True
         assert len(TestWorldModeling.world.robots) == 0
 
-        with pytest.warns(UserWarning):
-            assert TestWorldModeling.world.remove_robot("does_not_exist") is False
+        assert TestWorldModeling.world.remove_robot("does_not_exist") is False
+        assert "Could not find robot does_not_exist to remove." in caplog.text
 
     @staticmethod
     @pytest.mark.dependency(depends=["TestWorldModeling::test_remove_robot"])
@@ -410,13 +413,13 @@ class TestWorldModeling:
 
     @staticmethod
     @pytest.mark.dependency(depends=["TestWorldModeling::test_create_location"])
-    def test_remove_location():
+    def test_remove_location(caplog):
         """Tests removing a location from the world"""
 
         assert TestWorldModeling.world.remove_location("study_desk") is True
         assert len(TestWorldModeling.world.locations) == 1
-        with pytest.warns(UserWarning):
-            assert TestWorldModeling.world.get_location_by_name("study_desk") is None
+        assert TestWorldModeling.world.get_location_by_name("study_desk") is None
+        assert "Location not found: study_desk" in caplog.text
 
     @staticmethod
     @pytest.mark.dependency(depends=["TestWorldModeling::test_create_hallway"])

@@ -31,7 +31,7 @@ def load_world():
     return WorldYamlLoader().from_yaml(world_file)
 
 
-def test_apply_resolution_strategy():
+def test_apply_resolution_strategy(caplog):
     # First, test all strategies with empty entity_list
     entity_list = []
     entity = apply_resolution_strategy(entity_list, "first")
@@ -43,9 +43,9 @@ def test_apply_resolution_strategy():
 
     # Test non-existent strategy
     entity_list = ["don't return this"]
-
-    with pytest.warns(UserWarning):
-        entity = apply_resolution_strategy(entity_list, "non-existent")
+    entity = apply_resolution_strategy(entity_list, "non-existent")
+    assert entity is None
+    assert "Invalid resolution strategy: non-existent" in caplog.text
 
 
 def test_apply_first_resolution_strategy():
@@ -66,12 +66,13 @@ def test_apply_first_resolution_strategy():
     assert entity == "Only"
 
 
-def test_apply_nearest_resolution_strategy():
+def test_apply_nearest_resolution_strategy(caplog):
     # Test 'nearest' strategy
     # Test that no robot warns
     entity_list = ["Only"]
-    with pytest.warns(UserWarning):
-        entity = apply_resolution_strategy(entity_list, "nearest", None)
+    entity = apply_resolution_strategy(entity_list, "nearest", None)
+    assert entity is None
+    assert "Cannot apply nearest resolution strategy without a robot" in caplog.text
 
     robot = Robot("test_robot")
 
@@ -91,7 +92,7 @@ def test_apply_nearest_resolution_strategy():
     assert entity == entity_list[2]
 
 
-def test_query_to_entity():
+def test_query_to_entity(caplog):
     test_world = load_world()
 
     # Query exactly named entities
@@ -132,6 +133,7 @@ def test_query_to_entity():
         and entity.parent.category == "table"
         and entity.parent.parent.parent.name == "kitchen"
     )
+    caplog.clear()
 
     # we want the nearest apple on the kitchen table, should no longer return the banana even though it is the nearest object
     query = "kitchen table apple"
@@ -142,17 +144,21 @@ def test_query_to_entity():
     query = "kitchen table fake"
     # search for nonexistent object in real location
     for mode in ["object", "location"]:
-        with pytest.warns(UserWarning):
-            entity = query_to_entity(test_world, query, mode)
+        entity = query_to_entity(test_world, query, mode)
+        assert entity is None
+        assert "Did not resolve query element fake. Returning None." in caplog.text
+        caplog.clear()
 
     # search for absolute garbage
     query = "fake fake fake"
     for mode in ["object", "location"]:
-        with pytest.warns(UserWarning):
-            entity = query_to_entity(test_world, query, mode)
+        entity = query_to_entity(test_world, query, mode)
+        assert entity is None
+        assert "Did not resolve query element fake. Returning None." in caplog.text
+        caplog.clear()
 
 
-def test_resolve_to_location():
+def test_resolve_to_location(caplog):
     test_world = load_world()
 
     # table0 is the first location in the test world
@@ -194,12 +200,21 @@ def test_resolve_to_location():
 
     # things that should warn
     # fake location category
-    with pytest.warns(UserWarning):
-        loc = resolve_to_location(test_world, category="fake")
+    loc = resolve_to_location(test_world, category="fake")
+    assert loc is None
+    assert (
+        "Could not resolve location query with category: fake, room: None."
+        in caplog.text
+    )
+    caplog.clear()
 
     # combination that doesn't exist
-    with pytest.warns(UserWarning):
-        loc = resolve_to_location(test_world, room="bedroom", category="trash_can")
+    loc = resolve_to_location(test_world, room="bedroom", category="trash_can")
+    assert loc is None
+    assert (
+        "Could not resolve location query with category: trash_can, room: bedroom."
+        in caplog.text
+    )
 
 
 def test_resolve_to_object():
@@ -257,32 +272,53 @@ def test_specific_resolve_to_object():
     assert not (obj.category == "apple" and obj.parent.parent.name == "my_desk")
 
 
-def test_resolve_to_object_warnings():
+def test_resolve_to_object_warnings(caplog):
     test_world = load_world()
     robot = Robot("test_robot")
     test_world.add_robot(robot)
+    caplog.clear()
+
     # things that should warn
     # fake object category
-    with pytest.warns(UserWarning):
-        obj = resolve_to_object(test_world, category="fake")
+    obj = resolve_to_object(test_world, category="fake")
+    assert obj is None
+    assert (
+        "Could not resolve object query with category: fake, location: None, room: None."
+        in caplog.text
+    )
+    caplog.clear()
 
     # fake location
-    with pytest.warns(UserWarning):
-        obj = resolve_to_object(test_world, location="fake")
+    obj = resolve_to_object(test_world, location="fake")
+    assert obj is None
+    assert (
+        "Could not resolve object query with category: None, location: fake, room: None."
+        in caplog.text
+    )
+    caplog.clear()
 
     # fake room
-    with pytest.warns(UserWarning):
-        obj = resolve_to_object(test_world, robot=robot, room="fake")
+    obj = resolve_to_object(test_world, robot=robot, room="fake")
+    assert obj is None
+    assert (
+        "Could not resolve object query with category: None, location: None, room: fake."
+        in caplog.text
+    )
+    caplog.clear()
 
     # combination that doesn't exist
-    with pytest.warns(UserWarning):
-        obj = resolve_to_object(
-            test_world,
-            robot=robot,
-            room="kitchen",
-            category="banana",
-            location="trash_can",
-        )
+    obj = resolve_to_object(
+        test_world,
+        robot=robot,
+        room="kitchen",
+        category="banana",
+        location="trash_can",
+    )
+    assert obj is None
+    assert (
+        "Could not resolve object query with category: banana, location: trash_can, room: kitchen."
+        in caplog.text
+    )
 
 
 def test_resolve_to_object_grasp():

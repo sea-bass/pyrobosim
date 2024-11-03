@@ -143,14 +143,14 @@ def test_step_collision_none_cmd():
     assert dynamics.pose == Pose()
 
 
-def test_step_collision_no_world():
+def test_step_collision_no_world(caplog):
     """Test that stepping dynamics with collision but no world returns with a warning."""
     dynamics = RobotDynamics2D()
     dt = 0.1
     cmd_vel = np.array([1.0, 0.0, 0.0])
 
-    with pytest.warns(UserWarning):
-        dynamics.step(cmd_vel, dt, check_collisions=True)
+    dynamics.step(cmd_vel, dt, check_collisions=True)
+    assert "Cannot check collisions without a world" in caplog.text
     assert dynamics.pose == Pose()
 
 

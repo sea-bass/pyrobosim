@@ -88,12 +88,16 @@ class WorldGazeboExporter:
             model_path_env = "GAZEBO_MODEL_PATH"
             command = "gazebo"
 
-        print(f"\nWorld file saved to {world_file_name}\n")
-        print(f"Ensure to update your Gazebo model path:")
         include_path_str = ":".join(self.include_model_paths)
-        print(f"    export {model_path_env}=${model_path_env}:{include_path_str}\n")
-        print(f"To start the world, enter")
-        print(f"    {command} {world_file_name}\n")
+        help_string = f"\nWorld file saved to {world_file_name}\n"
+        help_string += "Ensure to update your Gazebo model path:\n"
+        help_string += (
+            f"    export {model_path_env}=${model_path_env}:{include_path_str}\n"
+        )
+        help_string += "To start the world, enter:\n"
+        help_string += f"    {command} {world_file_name}\n"
+        self.world.logger.info(help_string)
+
         return self.out_folder
 
     def create_walls_for_export(self, walls_name="walls"):

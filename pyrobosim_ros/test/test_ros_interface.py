@@ -169,19 +169,18 @@ class TestRosInterface:
         )
 
         # Try to close the table, which should fail as it is locked.
-        with pytest.warns(UserWarning):
-            future = client.call_async(
-                SetLocationState.Request(
-                    location_name="table0",
-                    open=False,
-                    lock=False,
-                )
+        future = client.call_async(
+            SetLocationState.Request(
+                location_name="table0",
+                open=False,
+                lock=False,
             )
-            start_time = time.time()
-            while not future.done():
-                TestRosInterface.executor.spin_once(timeout_sec=0.1)
-                if time.time() - start_time > 2.0:
-                    break
+        )
+        start_time = time.time()
+        while not future.done():
+            TestRosInterface.executor.spin_once(timeout_sec=0.1)
+            if time.time() - start_time > 2.0:
+                break
 
         assert future.done()
         assert future.result().result.status == ExecutionResult.PRECONDITION_FAILURE
@@ -221,15 +220,12 @@ class TestRosInterface:
         goal = ExecuteTaskAction.Goal()
         goal.action = TaskAction(robot="robot0", type="nonexistent_action")
         goal_future = action_client.send_goal_async(goal)
-        with pytest.warns(UserWarning):
-            result_future = execute_ros_action(goal_future)
+        result_future = execute_ros_action(goal_future)
 
         assert result_future.done()
         exec_result = result_future.result().result.execution_result
         assert exec_result.status == ExecutionResult.INVALID_ACTION
-        assert (
-            exec_result.message == "[robot0] Invalid action type: nonexistent_action."
-        )
+        assert exec_result.message == "Invalid action type: nonexistent_action."
 
         # This action has bad parameters.
         goal = ExecuteTaskAction.Goal()
@@ -239,8 +235,7 @@ class TestRosInterface:
             target_location="counter42",
         )
         goal_future = action_client.send_goal_async(goal)
-        with pytest.warns(UserWarning):
-            result_future = execute_ros_action(goal_future)
+        result_future = execute_ros_action(goal_future)
 
         assert result_future.done()
         exec_result = result_future.result().result.execution_result

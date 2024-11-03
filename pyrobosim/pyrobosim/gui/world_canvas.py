@@ -4,7 +4,6 @@ import adjustText
 import numpy as np
 import time
 import threading
-import warnings
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
@@ -140,7 +139,7 @@ class WorldCanvas(FigureCanvasQTAgg):
     def toggle_collision_polygons(self):
         """Shows/hides collision polygons."""
         self.show_collision_polygons = not self.show_collision_polygons
-        print(
+        self.world.logger.info(
             "Enabling collision polygons"
             if self.show_collision_polygons
             else "Disabling collision polygons"
@@ -348,7 +347,7 @@ class WorldCanvas(FigureCanvasQTAgg):
         :type path: :class:`pyrobosim.utils.motion.Path`, optional
         """
         if not robot:
-            warnings.warn("No robot found")
+            self.world.logger.warning("No robot found")
             return
 
         # Since removing artists while drawing can cause issues,

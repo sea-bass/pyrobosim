@@ -26,7 +26,7 @@ class TestLocations:
         coords = [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)]
         self.test_room = self.test_world.add_room(name="test_room", footprint=coords)
 
-    def test_add_location_to_world_from_object(self):
+    def test_add_location_to_world_from_object(self, caplog):
         """Test adding a location from a Location object."""
         location = Location(
             category="table",
@@ -42,13 +42,12 @@ class TestLocations:
         assert not self.test_world.locations[0].is_locked
 
         # Adding the same location again should fail due to duplicate names.
-        with pytest.warns(UserWarning) as warn_info:
-            result = self.test_world.add_location(location=location)
+        result = self.test_world.add_location(location=location)
         assert result is None
         assert self.test_world.num_locations == 1
         assert (
-            warn_info[0].message.args[0]
-            == "Location test_table already exists in the world. Cannot add."
+            "Location test_table already exists in the world. Cannot add."
+            in caplog.text
         )
 
     def test_add_location_to_world_from_args(self):
@@ -82,8 +81,7 @@ class TestLocations:
         assert not location.is_locked
 
         # When trying to open the location, it should succeed and say it's already open.
-        with pytest.warns(UserWarning):
-            result = self.test_world.open_location(location)
+        result = self.test_world.open_location(location)
         assert result.is_success()
         assert result.message == "Location: test_table is already open."
         assert location.is_open
@@ -102,24 +100,21 @@ class TestLocations:
         assert location.is_locked
 
         # Opening should not work due to being locked
-        with pytest.warns(UserWarning):
-            result = self.test_world.open_location(location)
+        result = self.test_world.open_location(location)
         assert result.status == ExecutionStatus.PRECONDITION_FAILURE
         assert result.message == "Location: test_table is locked."
         assert not location.is_open
         assert location.is_locked
 
         # Closing should succeed due to already being closed
-        with pytest.warns(UserWarning):
-            result = self.test_world.close_location(location)
+        result = self.test_world.close_location(location)
         assert result.is_success()
         assert result.message == "Location: test_table is already closed."
         assert not location.is_open
         assert location.is_locked
 
         # Locking should succeed due to already being locked
-        with pytest.warns(UserWarning):
-            result = self.test_world.lock_location(location)
+        result = self.test_world.lock_location(location)
         assert result.is_success()
         assert result.message == "Location: test_table is already locked."
         assert not location.is_open
@@ -132,8 +127,7 @@ class TestLocations:
         assert not location.is_locked
 
         # Unlocking should succeed due to already being unlocked
-        with pytest.warns(UserWarning):
-            result = self.test_world.unlock_location(location)
+        result = self.test_world.unlock_location(location)
         assert result.is_success()
         assert result.message == "Location: test_table is already unlocked."
         assert not location.is_open

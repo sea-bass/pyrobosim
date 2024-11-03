@@ -29,7 +29,7 @@ def test_world_graph_default():
     assert path.poses[-1] == goal
 
 
-def test_world_graph_short_connection_distance():
+def test_world_graph_short_connection_distance(caplog):
     """Tests planning with short connection distance, which should fail."""
     world = WorldYamlLoader().from_yaml(
         os.path.join(get_data_folder(), "test_world.yaml")
@@ -43,6 +43,6 @@ def test_world_graph_short_connection_distance():
     start = Pose(x=-1.6, y=2.8)
     goal = Pose(x=2.5, y=3.0)
 
-    with pytest.warns(UserWarning):
-        path = planner.plan(start, goal)
-        assert len(path.poses) == 0
+    path = planner.plan(start, goal)
+    assert len(path.poses) == 0
+    assert "Could not find a path from start to goal." in caplog.text

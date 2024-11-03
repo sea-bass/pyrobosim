@@ -2,9 +2,9 @@
 
 import time
 import threading
-import warnings
 
 from ..planning.actions import ExecutionResult, ExecutionStatus
+from ..utils.logging import get_global_logger
 from ..utils.motion import Path
 from ..utils.trajectory import get_constant_speed_trajectory, interpolate_trajectory
 
@@ -79,14 +79,14 @@ class ConstantVelocityExecutor:
         """
         if self.robot is None:
             message = "No robot attached to execute the trajectory."
-            warnings.warn(message)
+            get_global_logger().warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE,
                 message=message,
             )
         elif path.num_poses < 2:
             message = "Not enough waypoints in path to execute."
-            warnings.warn(message)
+            self.robot.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE,
                 message=message,
@@ -128,13 +128,13 @@ class ConstantVelocityExecutor:
                 if self.validate_during_execution:
                     self.validation_timer.join()
                 message = "Trajectory execution aborted."
-                warnings.warn(message)
+                self.robot.logger.info(message)
                 status = ExecutionStatus.EXECUTION_FAILURE
                 break
             if self.cancel_execution:
                 self.cancel_execution = False
                 message = "Trajectory execution canceled by user."
-                warnings.warn(message)
+                self.robot.logger.info(message)
                 status = ExecutionStatus.CANCELED
                 break
 
@@ -144,8 +144,8 @@ class ConstantVelocityExecutor:
             )
             if self.robot.battery_level <= 0.0:
                 self.robot.battery_level = 0.0
-                message = f"[{self.robot.name}] Battery depleted while navigating."
-                warnings.warn(message)
+                message = "Battery depleted while navigating."
+                self.robot.logger.warning(message)
                 status = ExecutionStatus.EXECUTION_FAILURE
                 break
 
@@ -185,7 +185,9 @@ class ConstantVelocityExecutor:
                 if not remaining_path.is_collision_free(
                     self.robot.world, step_dist=self.validation_step_dist
                 ):
-                    warnings.warn("Remaining path is in collision. Aborting execution.")
+                    self.robot.logger.warning(
+                        "Remaining path is in collision. Aborting execution."
+                    )
                     self.abort_execution = True
 
             time.sleep(max(0, self.validation_dt - (time.time() - start_time)))
