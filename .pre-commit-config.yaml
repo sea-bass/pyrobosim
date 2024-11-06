@@ -2,7 +2,7 @@ repos:
 
   # Runs pre-commit hooks and other file format checks.
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: check-added-large-files
       - id: check-ast
@@ -30,7 +30,7 @@ repos:
 
   # Autoformats Python code.
   - repo: https://github.com/psf/black.git
-    rev: 24.4.2
+    rev: 24.10.0
     hooks:
       - id: black
 
@@ -56,6 +56,6 @@ repos:
 
   # Checks links in markdown files.
   - repo: https://github.com/tcort/markdown-link-check
-    rev: v3.12.2
+    rev: v3.13.6
     hooks:
       - id: markdown-link-check
