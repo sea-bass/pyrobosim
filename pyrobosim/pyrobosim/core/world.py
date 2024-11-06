@@ -165,9 +165,7 @@ class World:
         # Check if the room collides with any other rooms or hallways
         is_valid_pose = True
         for other_loc in self.rooms + self.hallways:
-            if room.external_collision_polygon.intersects(
-                other_loc.external_collision_polygon
-            ):
+            if room.polygon.intersects(other_loc.external_collision_polygon):
                 is_valid_pose = False
                 break
         if not is_valid_pose:
@@ -272,9 +270,7 @@ class World:
         for other_loc in self.rooms + self.hallways:
             if (other_loc == hallway.room_start) or (other_loc == hallway.room_end):
                 continue
-            if hallway.external_collision_polygon.intersects(
-                other_loc.external_collision_polygon
-            ):
+            if hallway.polygon.intersects(other_loc.external_collision_polygon):
                 is_valid_pose = False
                 break
         if not is_valid_pose:
