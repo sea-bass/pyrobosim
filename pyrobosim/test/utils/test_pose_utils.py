@@ -183,6 +183,29 @@ def test_pose_to_from_dict():
     assert quat["z"] == pytest.approx(0.0)
 
 
+def test_construct_pose():
+    """Test pose construct function that accepts various types."""
+    pose_from_list = Pose.construct([1.0, 2.0, 3.0, np.pi / 2.0])
+
+    pose_from_dict = Pose.construct({"position": {"x": 1.0, "y": 2.0, "z": 3.0}, "rotation_eul": {"yaw": np.pi / 2.0}})
+
+    tform = np.array(
+        [
+            [0.0, -1.0, 0.0, 1.0],
+            [1.0, 0.0, 0.0, 2.0],
+            [0.0, 0.0, 1.0, 3.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]
+    )
+    pose_from_tform = Pose.construct(tform)
+
+    assert pose_from_list.is_approx(pose_from_dict)
+    assert pose_from_dict.is_approx(pose_from_tform)
+
+    with pytest.raises(ValueError) as exc_info:
+        Pose.construct(42)
+    assert exc_info.value.args[0] == "Cannot construct pose from object of type int."
+
 def test_get_linear_distance():
     """Test linear distance calculation function."""
     pose1 = Pose(x=1.0, y=2.0, z=3.0)

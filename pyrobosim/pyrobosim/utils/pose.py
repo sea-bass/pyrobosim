@@ -168,7 +168,7 @@ class Pose:
             return Pose.from_transform(data)
         else:
             raise ValueError(
-                f"Cannot construct pose from object of type {type(data).__name__}"
+                f"Cannot construct pose from object of type {type(data).__name__}."
             )
 
     def to_dict(self):
