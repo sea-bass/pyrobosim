@@ -20,7 +20,10 @@ robots:
   - name: robot
     radius: 0.1
     location: kitchen
-    pose: [0, 0, 0]
+    pose:
+      position:
+        x: 0.0
+        y: 0.0
     path_planner:
       type: rrt
       collision_check_step_dist: 0.025
@@ -57,7 +60,9 @@ rooms:
         - [1.5, 1.5]
         - [0.5, 1.5]
     nav_poses:
-      - [0.75, 0.5, 0.0]
+      - position:
+          x: 0.75
+          y: 0.5
     wall_width: 0.2
     color: [1, 0, 0]
 
@@ -115,19 +120,32 @@ hallways:
 locations:
   - category: table
     parent: kitchen
-    pose: [0.85, -0.5, 0.0, -1.57]
+    pose:
+      position:
+        x: 0.85
+        y: -0.5
+      rotation_eul:
+        yaw: -1.57
     is_open: True
     is_locked: True
 
   - category: desk
     parent: bedroom
-    pose: [3.15, 3.65, 0.0, 0.0]
+    pose:
+      position:
+        x: 3.15
+        y: 3.65
     is_open: True
     is_locked: False
 
   - category: counter
     parent: bathroom
-    pose: [-2.45, 2.5, 0.0, 1.767]
+    pose:
+      position:
+        x: -2.45
+        y: 2.5
+      rotation_eul:
+        yaw: 1.767
     is_open: True
     is_locked: True
 
@@ -136,11 +154,19 @@ locations:
 objects:
   - category: banana
     parent: table0
-    pose: [1.0, -0.5, 0.0, 0.707]
+    pose:
+      position:
+        x: 1.0
+        y: -0.5
+      rotation_eul:
+        yaw: 0.707
 
   - category: apple
     parent: desk0
-    pose: [3.2, 3.5, 0.0, 0.0]
+    pose:
+      position:
+        x: 3.2
+        y: 3.5
 
   - category: apple
     parent: table0

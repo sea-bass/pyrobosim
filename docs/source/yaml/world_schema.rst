@@ -23,7 +23,12 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
        radius: <value>  # Robot radius
        height: <value>  # Robot height
        location: <loc_name>  # Initial location
-       pose: [<x>, <y>, <z>, <yaw>]  # Initial pose, if not specified will sample
+       pose:  # Initial pose, if not specified will sample
+         position:
+           x: <x>
+           y: <y>
+         rotation_eul:
+           yaw: <yaw>
        initial_battery_level: 50.0
        # Dynamics limits
        max_linear_velocity: <value>
@@ -89,7 +94,12 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
      - name: <loc_name>  # If not specified, will be automatic
        category: <loc_category>  # From location YAML file
        parent: <room_name>
-       pose: [<x>, <y>, <z>, <yaw>]  # If not specified, will sample
+       pose:  # If not specified, will sample
+        position:
+          x: <x>
+          y: <y>
+        rotation_eul:
+          yaw: <yaw>
        is_open: true  # Can only pick, place, and detect if open
        is_locked: true  # Can only open and close if unlocked
        is_charger: false  # Robots can charge at this location
@@ -101,4 +111,15 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
      - name: <obj_name>  # If not specified, will be automatic
        category: <obj_category>  # From object YAML file
        parent: <loc_name>
-       pose: [<x>, <y>, <z>, <yaw>]  # If not specified, will sample
+       pose:  # If not specified, will sample
+         position:
+           x: <x>
+           y: <z>
+         rotation_quat:
+           w: <w>
+           x: <x>
+           y: <y>
+           z: <z>
+
+Note that you can use both Euler angles and quaternions to specify poses.
+Any unspecified values will default to ``0.0``.

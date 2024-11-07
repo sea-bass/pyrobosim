@@ -122,6 +122,67 @@ def test_pose_from_transform():
     assert pose.q == pytest.approx([0.5, 0.5, 0.5, -0.5])
 
 
+def test_pose_to_from_dict():
+    """Test creating poses using a dictionary and saving them back out."""
+    pose_dict = {}
+    pose = Pose.from_dict(pose_dict)
+    assert pose.x == pytest.approx(0.0)
+    assert pose.y == pytest.approx(0.0)
+    assert pose.z == pytest.approx(0.0)
+    assert pose.eul == pytest.approx([0.0, 0.0, 0.0])
+    assert pose.q == pytest.approx([1.0, 0.0, 0.0, 0.0])
+
+    pose_dict = {
+        "position": {"x": 1.0, "y": 2.0, "z": 3.0},
+        "rotation_eul": {
+            "yaw": np.pi / 2.0,
+            "pitch": np.pi / 4.0,
+            "roll": -np.pi / 2.0,
+        },
+    }
+    pose = Pose.from_dict(pose_dict)
+    assert pose.x == pytest.approx(1.0)
+    assert pose.y == pytest.approx(2.0)
+    assert pose.z == pytest.approx(3.0)
+    assert pose.eul == pytest.approx([-np.pi / 2.0, np.pi / 4.0, np.pi / 2.0])
+
+    pose_dict = {
+        "position": {"x": 1.0, "y": 2.0, "z": 3.0},
+        "rotation_eul": {
+            "yaw": np.pi / 2.0,
+            "pitch": np.pi / 4.0,
+            "roll": -np.pi / 2.0,
+        },
+        "rotation_quat": {"w": 0.707107, "x": -0.707107, "y": 0.0, "z": 0.0},
+    }
+    pose = Pose.from_dict(pose_dict)
+    assert pose.x == pytest.approx(1.0)
+    assert pose.y == pytest.approx(2.0)
+    assert pose.z == pytest.approx(3.0)
+    assert pose.eul == pytest.approx([-np.pi / 2.0, 0.0, 0.0])
+    assert pose.q == pytest.approx([0.707107, -0.707107, 0.0, 0.0])
+
+    out_dict = pose.to_dict()
+    assert "position" in out_dict
+    pos = out_dict["position"]
+    assert "x" in pos
+    assert pos["x"] == pytest.approx(1.0)
+    assert "y" in pos
+    assert pos["y"] == pytest.approx(2.0)
+    assert "z" in pos
+    assert pos["z"] == pytest.approx(3.0)
+    assert "rotation_quat" in out_dict
+    quat = out_dict["rotation_quat"]
+    assert "w" in quat
+    assert quat["w"] == pytest.approx(0.707107)
+    assert "x" in quat
+    assert quat["x"] == pytest.approx(-0.707107)
+    assert "y" in quat
+    assert quat["y"] == pytest.approx(0.0)
+    assert "z" in quat
+    assert quat["z"] == pytest.approx(0.0)
+
+
 def test_get_linear_distance():
     """Test linear distance calculation function."""
     pose1 = Pose(x=1.0, y=2.0, z=3.0)

@@ -69,10 +69,9 @@ class WorldYamlLoader:
     def add_rooms(self):
         """Add rooms to the world."""
         for room_data in self.data.get("rooms", []):
-            # TODO: Find a way to parse poses as YAML.
             if "nav_poses" in room_data:
                 room_data["nav_poses"] = [
-                    Pose.from_list(p) for p in room_data["nav_poses"]
+                    Pose.construct(p) for p in room_data["nav_poses"]
                 ]
 
             self.world.add_room(**room_data)
@@ -85,8 +84,7 @@ class WorldYamlLoader:
     def add_locations(self):
         """Add locations for object spawning to the world."""
         for loc_data in self.data.get("locations", []):
-            # TODO: Find a way to parse poses as YAML.
-            loc_data["pose"] = Pose.from_list(loc_data["pose"])
+            loc_data["pose"] = Pose.construct(loc_data["pose"])
 
             self.world.add_location(**loc_data)
 
@@ -96,9 +94,8 @@ class WorldYamlLoader:
             return
 
         for obj_data in self.data.get("objects", []):
-            # TODO: Find a way to parse poses as YAML.
             if "pose" in obj_data:
-                obj_data["pose"] = Pose.from_list(obj_data["pose"])
+                obj_data["pose"] = Pose.construct(obj_data["pose"])
             self.world.add_object(**obj_data)
 
     def add_robots(self):
@@ -135,7 +132,7 @@ class WorldYamlLoader:
             if loc:
                 loc = self.world.get_entity_by_name(loc)
             if "pose" in robot_data:
-                pose = Pose.from_list(robot_data["pose"])
+                pose = Pose.construct(robot_data["pose"])
             else:
                 pose = None
             self.world.add_robot(robot, loc=loc, pose=pose)
