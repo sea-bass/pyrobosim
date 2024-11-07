@@ -114,7 +114,7 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
        pose:  # If not specified, will sample
          position:
            x: <x>
-           y: <z>
+           y: <y>
          rotation_quat:
            w: <w>
            x: <x>
