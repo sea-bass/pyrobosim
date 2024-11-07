@@ -187,7 +187,12 @@ def test_construct_pose():
     """Test pose construct function that accepts various types."""
     pose_from_list = Pose.construct([1.0, 2.0, 3.0, np.pi / 2.0])
 
-    pose_from_dict = Pose.construct({"position": {"x": 1.0, "y": 2.0, "z": 3.0}, "rotation_eul": {"yaw": np.pi / 2.0}})
+    pose_from_dict = Pose.construct(
+        {
+            "position": {"x": 1.0, "y": 2.0, "z": 3.0},
+            "rotation_eul": {"yaw": np.pi / 2.0},
+        }
+    )
 
     tform = np.array(
         [
@@ -205,6 +210,7 @@ def test_construct_pose():
     with pytest.raises(ValueError) as exc_info:
         Pose.construct(42)
     assert exc_info.value.args[0] == "Cannot construct pose from object of type int."
+
 
 def test_get_linear_distance():
     """Test linear distance calculation function."""
