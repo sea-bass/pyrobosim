@@ -1,7 +1,6 @@
 """ Main file containing the core world modeling tools. """
 
 import itertools
-import logging
 import numpy as np
 
 from .hallway import Hallway
@@ -43,6 +42,7 @@ class World:
         self.name = name
         self.wall_height = wall_height
         self.source_yaml = None
+        self.source_yaml_file = None
         self.logger = create_logger(self.name)
 
         # Connected apps

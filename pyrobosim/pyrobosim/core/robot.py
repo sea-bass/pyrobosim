@@ -1,6 +1,5 @@
 """ Defines a robot which operates in a world. """
 
-import logging
 import time
 import numpy as np
 
@@ -1020,6 +1019,8 @@ class Robot:
         robot_dict = {
             "name": self.name,
             "radius": self.radius,
+            "height": self.height,
+            "color": self.color,
             "pose": pose.to_dict(),
             "max_linear_velocity": float(self.dynamics.vel_limits[0]),
             "max_angular_velocity": float(self.dynamics.vel_limits[-1]),

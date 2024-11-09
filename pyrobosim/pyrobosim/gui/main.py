@@ -252,7 +252,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             self.cancel_action_button.setEnabled(False)
             self.open_button.setEnabled(True)
             self.close_button.setEnabled(True)
-            self.reset_world_button.setEnabled(has_source_file)
+            self.reset_world_button.setEnabled(True)
             self.reset_path_planner_button.setEnabled(False)
             self.rand_pose_button.setEnabled(False)
 
@@ -402,7 +402,10 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             for robot in self.world.robots:
                 ros_node.remove_robot_ros_interfaces(robot)
 
-        world = WorldYamlLoader().from_yaml(self.world.source_yaml)
+        if self.world.source_yaml_file is not None:
+            world = WorldYamlLoader().from_file(self.world.source_yaml_file)
+        else:
+            world = WorldYamlLoader().from_yaml(self.world.source_yaml)
         self.set_world(world)
 
         # Start up the new robots' ROS interfaces.
