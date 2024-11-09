@@ -143,7 +143,7 @@ class PlannerNode(Node):
         try:
             result = self.world_state_future_response.result()
             update_world_from_state_msg(self.world, result.state)
-        except Exception as e:
+        except Exception:
             self.get_logger().info("Failed to unpack world state.")
 
         # Once the world state is set, plan using the first robot.

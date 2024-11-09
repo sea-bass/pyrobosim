@@ -77,8 +77,6 @@ class EntityMetadata:
 class InvalidEntityCategoryException(Exception):
     """Raised when an invalid entity metadata category is used."""
 
-    pass
-
 
 def replace_special_yaml_tokens(in_text, root_dir=None):
     """
