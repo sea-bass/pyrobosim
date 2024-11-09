@@ -274,4 +274,10 @@ class WorldYamlWriter:
         """
         world_dict = self.to_dict(world)
         with open(filename, "w") as out_file:
-            yaml.dump(world_dict, out_file, default_flow_style=False)
+            yaml.dump(
+                world_dict,
+                out_file,
+                default_flow_style=False,
+                indent=2,
+                sort_keys=False,
+            )
