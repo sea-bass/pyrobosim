@@ -38,7 +38,7 @@ class TestWorldYamlLoading:
     def test_create_world_from_yaml():
         """Tests creating a world from YAML data."""
         loader = TestWorldYamlLoading.yaml_loader
-        loader.filename = "test_world.yaml"
+        loader.world_dir = get_data_folder()
 
         # If no parameters are provided, loader should load a default world
         loader.data = {}
@@ -74,7 +74,9 @@ class TestWorldYamlLoading:
         }
         loader.create_world()
         assert hasattr(Location, "metadata")
+        assert len(Location.metadata.data) > 0
         assert hasattr(Object, "metadata")
+        assert len(Object.metadata.data) > 0
 
     @staticmethod
     @pytest.mark.dependency(
