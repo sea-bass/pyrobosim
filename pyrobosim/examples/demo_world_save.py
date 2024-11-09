@@ -53,7 +53,7 @@ def main():
     # Load a test world from YAML file.
     data_folder = get_data_folder()
     loader = WorldYamlLoader()
-    world = loader.from_yaml(os.path.join(data_folder, args.world_file))
+    world = loader.from_file(os.path.join(data_folder, args.world_file))
 
     # Export a Gazebo world.
     exp = WorldGazeboExporter(world)

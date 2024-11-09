@@ -14,7 +14,7 @@ from pyrobosim.utils.pose import Pose
 
 def test_prm_default():
     """Tests planning with default world graph planner settings."""
-    world = WorldYamlLoader().from_yaml(
+    world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
     )
     planner_config = {"world": world}
@@ -32,7 +32,7 @@ def test_prm_default():
 
 def test_prm_default():
     """Tests planning with default world graph planner settings."""
-    world = WorldYamlLoader().from_yaml(
+    world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
     )
     planner_config = {"world": world}
@@ -50,7 +50,7 @@ def test_prm_default():
 
 def test_prm_no_path(caplog):
     """Test that PRM gracefully returns when there is no feasible path."""
-    world = WorldYamlLoader().from_yaml(
+    world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
     )
     planner_config = {"world": world}
@@ -66,7 +66,7 @@ def test_prm_no_path(caplog):
 
 def test_prm_compress_path():
     """Tests planning with path compression option."""
-    world = WorldYamlLoader().from_yaml(
+    world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
     )
     planner_config = {

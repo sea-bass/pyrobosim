@@ -384,3 +384,25 @@ class RRTPlanner:
         :rtype: list[:class:`pyrobosim.utils.motion.Path`]
         """
         return self.latest_path
+
+    def to_dict(self):
+        """
+        Serializes the planner to a dictionary.
+
+        :return: A dictionary containing the planner information.
+        :rtype: dict[str, Any]
+        """
+        from . import get_planner_string
+
+        return {
+            "type": get_planner_string(self),
+            "bidirectional": self.bidirectional,
+            "rrt_connect": self.rrt_connect,
+            "rrt_star": self.rrt_star,
+            "collision_check_step_dist": self.collision_check_step_dist,
+            "max_connection_dist": self.max_connection_dist,
+            "max_nodes_sampled": self.max_nodes_sampled,
+            "max_time": self.max_time,
+            "rewire_radius": self.rewire_radius,
+            "compress_path": self.compress_path,
+        }

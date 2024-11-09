@@ -137,3 +137,19 @@ class WorldGraphPlanner:
         :rtype: list[:class:`pyrobosim.utils.motion.Path`]
         """
         return self.latest_path
+
+    def to_dict(self):
+        """
+        Serializes the planner to a dictionary.
+
+        :return: A dictionary containing the planner information.
+        :rtype: dict[str, Any]
+        """
+        from . import get_planner_string
+
+        return {
+            "type": get_planner_string(self),
+            "collision_check_step_dist": self.collision_check_step_dist,
+            "max_connection_dist": self.max_connection_dist,
+            "compress_path": self.compress_path,
+        }

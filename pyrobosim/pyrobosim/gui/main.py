@@ -83,7 +83,11 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         :param world: World object to attach.
         :type world: :class:`pyrobosim.core.world.World`
         """
+        from ..core.yaml_utils import WorldYamlWriter
+
         self.world = world
+        if self.world.source_yaml is None:
+            self.world.source_yaml = WorldYamlWriter().to_dict(self.world)
         self.world.gui = self
         self.world.has_gui = True
         if self.canvas is not None:
@@ -191,7 +195,6 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.reset_world_button = QtWidgets.QPushButton("Reset world")
         self.reset_world_button.clicked.connect(self.on_reset_world_click)
         self.other_options_layout.addWidget(self.reset_world_button, 0, 1)
-        self.reset_world_button.setEnabled(self.world.source_file is not None)
         self.reset_path_planner_button = QtWidgets.QPushButton("Reset path planner")
         self.reset_path_planner_button.clicked.connect(self.on_reset_path_planner_click)
         self.other_options_layout.addWidget(self.reset_path_planner_button, 0, 2)
@@ -223,7 +226,6 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
     def update_button_state(self):
         """Update the state of buttons based on the state of the robot."""
         robot = self.get_current_robot()
-        has_source_file = self.world.source_file is not None
         if robot:
             is_moving = robot.is_moving()
             at_open_object_spawn = robot.at_object_spawn() and robot.location.is_open
@@ -237,7 +239,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             self.open_button.setEnabled(can_open_close and not robot.location.is_open)
             self.close_button.setEnabled(can_open_close and robot.location.is_open)
             self.cancel_action_button.setEnabled(is_moving)
-            self.reset_world_button.setEnabled(has_source_file and not is_moving)
+            self.reset_world_button.setEnabled(not is_moving)
             self.reset_path_planner_button.setEnabled(not is_moving)
             self.rand_pose_button.setEnabled(not is_moving)
 
@@ -273,9 +275,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             self.close_button.setEnabled(state)
             self.rand_pose_button.setEnabled(state)
             self.cancel_action_button.setEnabled(not state)
-            self.reset_world_button.setEnabled(
-                state and self.world.source_file is not None
-            )
+            self.reset_world_button.setEnabled(state)
             self.reset_path_planner_button.setEnabled(state)
 
     ####################
@@ -402,7 +402,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             for robot in self.world.robots:
                 ros_node.remove_robot_ros_interfaces(robot)
 
-        world = WorldYamlLoader().from_yaml(self.world.source_file)
+        world = WorldYamlLoader().from_yaml(self.world.source_yaml)
         self.set_world(world)
 
         # Start up the new robots' ROS interfaces.

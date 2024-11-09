@@ -42,7 +42,7 @@ class World:
         """
         self.name = name
         self.wall_height = wall_height
-        self.source_file = None
+        self.source_yaml = None
         self.logger = create_logger(self.name)
 
         # Connected apps
@@ -51,10 +51,8 @@ class World:
         self.has_ros_node = False
         self.ros_node = False
 
-        # Robots
+        # World entities (robots, locations, objects, etc.)
         self.robots = []
-
-        # World entities (rooms, locations, objects, etc.)
         self.name_to_entity = {}
         self.rooms = []
         self.hallways = []
@@ -103,18 +101,23 @@ class World:
         if objects is not None:
             Object.set_metadata(objects)
 
-    def set_inflation_radius(self, inflation_radius=0.0):
+    def get_location_metadata(self):
         """
-        Sets world inflation radius.
+        Returns the location metadata associated with this world.
 
-        :param inflation_radius: Inflation radius, in meters.
-        :type inflation_radius: float, optional
+        :return: The location metadata.
+        :rtype: :class:`pyrobosim.utils.general.EntityMetadata`
         """
-        self.inflation_radius = inflation_radius
-        for loc in self.locations:
-            loc.update_collision_polygon(self.inflation_radius)
-        for entity in itertools.chain(self.rooms, self.hallways):
-            entity.update_collision_polygons(self.inflation_radius)
+        return Location.metadata
+
+    def get_object_metadata(self):
+        """
+        Returns the object metadata associated with this world.
+
+        :return: The object metadata.
+        :rtype: :class:`pyrobosim.utils.general.EntityMetadata`
+        """
+        return Object.metadata
 
     ##########################
     # World Building Methods #
@@ -1054,6 +1057,19 @@ class World:
         else:
             self.logger.warning(f"Could not find robot {robot_name} to remove.")
             return False
+
+    def set_inflation_radius(self, inflation_radius=0.0):
+        """
+        Sets world inflation radius.
+
+        :param inflation_radius: Inflation radius, in meters.
+        :type inflation_radius: float, optional
+        """
+        self.inflation_radius = inflation_radius
+        for loc in self.locations:
+            loc.update_collision_polygon(self.inflation_radius)
+        for entity in itertools.chain(self.rooms, self.hallways):
+            entity.update_collision_polygons(self.inflation_radius)
 
     def update_bounds(self, entity, remove=False):
         """

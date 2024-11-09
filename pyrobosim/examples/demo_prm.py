@@ -9,7 +9,7 @@ from pyrobosim.utils.pose import Pose
 
 # Load a test world.
 world_file = os.path.join(get_data_folder(), "test_world.yaml")
-world = WorldYamlLoader().from_yaml(world_file)
+world = WorldYamlLoader().from_file(world_file)
 
 
 def test_prm():

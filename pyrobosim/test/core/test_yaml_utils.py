@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 
-"""Unit tests for world YAML loading utilities."""
+"""Unit tests for world YAML loading and writing utilities."""
 
 import numpy as np
+import os
 import pytest
+import tempfile
 
 from pyrobosim.core.locations import Location
 from pyrobosim.core.objects import Object
 from pyrobosim.core.world import World
-from pyrobosim.core.yaml_utils import WorldYamlLoader
+from pyrobosim.core.yaml_utils import WorldYamlLoader, WorldYamlWriter
+from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.polygon import polygon_and_height_from_footprint
 from pyrobosim.utils.pose import Pose
 
@@ -448,3 +451,37 @@ class TestWorldYamlLoading:
         assert place_options
         assert place_options.success_probability == 0.5
         assert place_options.rng_seed == 1234
+
+
+def test_yaml_load_and_write_dict():
+    """Tests round-trip loading from, and writing to, a YAML dictionary."""
+    world_file = os.path.join(get_data_folder(), "test_world_multirobot.yaml")
+    world = WorldYamlLoader().from_file(world_file)
+    world_dict = WorldYamlWriter().to_dict(world)
+
+    # TODO: Check more than just existence of data in the resulting file.
+    assert "params" in world_dict
+    assert "metadata" in world_dict
+    assert "robots" in world_dict
+    assert len(world_dict["robots"]) == 3
+    assert "rooms" in world_dict
+    assert len(world_dict["rooms"]) == 3
+    assert "hallways" in world_dict
+    assert len(world_dict["hallways"]) == 3
+    assert "locations" in world_dict
+    assert len(world_dict["locations"]) == 5
+    assert "objects" in world_dict
+    assert len(world_dict["objects"]) == 8
+
+
+def test_yaml_load_and_write_file():
+    """Tests round-trip loading from, and writing to, a YAML file."""
+    world_file = os.path.join(get_data_folder(), "test_world_multirobot.yaml")
+    world = WorldYamlLoader().from_file(world_file)
+
+    temp_file = os.path.join(tempfile.mkdtemp(), "test_world.yaml")
+    WorldYamlWriter().to_file(world, temp_file)
+
+    # TODO: Check more than just existence of the reloaded world.
+    reloaded_world = WorldYamlLoader().from_file(temp_file)
+    assert isinstance(reloaded_world, World)

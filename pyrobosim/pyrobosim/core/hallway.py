@@ -1,6 +1,6 @@
 """ Hallway representation for world modeling. """
 
-import numpy as np
+import math
 from shapely import intersects_xy
 from shapely.geometry import LineString, MultiLineString
 from shapely.plotting import patch_from_polygon
@@ -90,12 +90,12 @@ class Hallway:
         if conn_method == "auto" or conn_method == "angle":
             theta, length = get_bearing_range(room_start.centroid, room_end.centroid)
             if conn_method == "angle":
-                length = length * np.cos(theta - conn_angle)
+                length = length * math.cos(theta - conn_angle)
                 theta = conn_angle
 
             # Calculate start and end points for the hallway
-            c = np.cos(theta)
-            s = np.sin(theta)
+            c = math.cos(theta)
+            s = math.sin(theta)
             x, y = room_start.centroid
             pt_start = [x - offset * s, y + offset * c]
             pt_end = [pt_start[0] + length * c, pt_start[1] + length * s]
@@ -259,6 +259,26 @@ class Hallway:
         self.graph_nodes[-1].pose.set_euler_angles(yaw=door_pose_end_yaw)
 
         self.nav_poses = [self.graph_nodes[0].pose, self.graph_nodes[-1].pose]
+
+    def to_dict(self):
+        """
+        Serializes the hallway to a dictionary.
+
+        :return: A dictionary containing the hallway information.
+        :rtype: dict[str, Any]
+        """
+        return {
+            "name": self.name,
+            "room_start": self.room_start.name,
+            "room_end": self.room_end.name,
+            "width": self.width,
+            "wall_width": self.wall_width,
+            "conn_method": "points",
+            "conn_points": self.points,
+            "color": self.viz_color,
+            "is_open": self.is_open,
+            "is_locked": self.is_locked,
+        }
 
     def __repr__(self):
         """Returns printable string."""

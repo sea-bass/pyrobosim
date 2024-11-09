@@ -172,7 +172,7 @@ def create_world(multirobot=False):
 
 
 def create_world_from_yaml(world_file):
-    return WorldYamlLoader().from_yaml(os.path.join(data_folder, world_file))
+    return WorldYamlLoader().from_file(os.path.join(data_folder, world_file))
 
 
 def parse_args():

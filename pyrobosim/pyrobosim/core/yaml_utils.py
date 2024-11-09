@@ -16,18 +16,19 @@ from ..utils.pose import Pose
 class WorldYamlLoader:
     """Creates world models from YAML files."""
 
-    def from_yaml(self, filename):
+    def from_yaml(self, world_dict, world_dir=None):
         """
         Load a world from a YAML description.
 
-        :param filename: Path to YAML file describing the world.
-        :type filename: str
+        :param world_dict: Dictionary containing all the world information
+        :type world_dict: dict[str, Any]
+        :param world_dir: Root directory for basing some tokens, uses the current directory if not specified.
+        :type world_dir: str, optional
         :return: World model instance.
         :rtype: :class:`pyrobosim.core.world.World`
         """
-        self.filename = filename
-        with open(self.filename) as file:
-            self.data = yaml.load(file, Loader=yaml.FullLoader)
+        self.data = world_dict
+        self.world_dir = world_dir
 
         # Build and return the world
         self.create_world()
@@ -36,8 +37,23 @@ class WorldYamlLoader:
         self.add_locations()
         self.add_objects()
         self.add_robots()
-        self.world.source_file = filename
         return self.world
+
+    def from_file(self, filename):
+        """
+        Load a world from a YAML file.
+
+        :param filename: Path to YAML file describing the world.
+        :type filename: str
+        :return: World model instance.
+        :rtype: :class:`pyrobosim.core.world.World`
+        """
+        with open(filename) as file:
+            world_dict = yaml.load(file, Loader=yaml.FullLoader)
+        (world_dir, _) = os.path.split(filename)
+        world = self.from_yaml(world_dict, world_dir)
+        world.source_yaml = world_dict
+        return world
 
     def create_world(self):
         """Creates an initial world with the specified global parameters."""
@@ -53,15 +69,18 @@ class WorldYamlLoader:
             self.world = World()
 
         # Set the location/object metadata
-        (world_dir, _) = os.path.split(self.filename)
         metadata = self.data.get("metadata")
         if metadata:
             if "locations" in metadata:
-                loc_data = replace_special_yaml_tokens(metadata["locations"], world_dir)
+                loc_data = replace_special_yaml_tokens(
+                    metadata["locations"], self.world_dir
+                )
             else:
                 loc_data = None
             if "objects" in metadata:
-                obj_data = replace_special_yaml_tokens(metadata["objects"], world_dir)
+                obj_data = replace_special_yaml_tokens(
+                    metadata["objects"], self.world_dir
+                )
             else:
                 obj_data = None
             self.world.set_metadata(locations=loc_data, objects=obj_data)
@@ -198,3 +217,61 @@ class WorldYamlLoader:
             action_execution_options[action_name] = ExecutionOptions(**kwargs)
 
         return action_execution_options
+
+
+class WorldYamlWriter:
+    """Creates YAML files from world models."""
+
+    def to_dict(self, world):
+        """
+        Serializes a world to a dictionary.
+
+        :param world: The world model to serialize.
+        :type world: :class:`pyrobosim.core.world.World`
+        :return: The dictionary containing the world information.
+        :rtype: dict[str, Any]
+        """
+        # Extract the global world parameters to YAML.
+        world_dict = {
+            "params": {
+                "name": world.name,
+                "inflation_radius": world.inflation_radius,
+                "object_radius": world.object_radius,
+                "wall_height": world.wall_height,
+            }
+        }
+
+        # Extract the location and object metadata.
+        loc_metadata_file = world.get_location_metadata().filename or ""
+        obj_metadata_file = world.get_object_metadata().filename or ""
+        world_dict["metadata"] = {
+            "locations": loc_metadata_file,
+            "objects": obj_metadata_file,
+        }
+
+        # Go through all the entities in the world and similarly add them to the dictionary.
+        if len(world.robots) > 0:
+            world_dict["robots"] = [robot.to_dict() for robot in world.robots]
+        if len(world.rooms) > 0:
+            world_dict["rooms"] = [room.to_dict() for room in world.rooms]
+        if len(world.hallways) > 0:
+            world_dict["hallways"] = [hall.to_dict() for hall in world.hallways]
+        if len(world.locations) > 0:
+            world_dict["locations"] = [loc.to_dict() for loc in world.locations]
+        if len(world.objects) > 0:
+            world_dict["objects"] = [obj.to_dict() for obj in world.objects]
+
+        return world_dict
+
+    def to_file(self, world, filename):
+        """
+        Serializes a world to a YAML file.
+
+        :param world: The world model to serialize.
+        :type world: :class:`pyrobosim.core.world.World`
+        :param filename: The name of the file to write to.
+        :type filename: str
+        """
+        world_dict = self.to_dict(world)
+        with open(filename, "w") as out_file:
+            yaml.dump(world_dict, out_file, default_flow_style=False)

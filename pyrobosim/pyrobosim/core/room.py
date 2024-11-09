@@ -52,8 +52,12 @@ class Room:
         self.height = height
         if isinstance(footprint, list):
             self.polygon = Polygon(footprint)
+            self.footprint = {"type": "polygon", "coords": footprint}
         else:
-            self.polygon, _ = polygon_and_height_from_footprint(footprint)
+            self.polygon, height = polygon_and_height_from_footprint(footprint)
+            self.footprint = footprint
+            if height is not None:
+                self.height = height
         if self.polygon.is_empty:
             raise Exception("Room footprint cannot be empty.")
 
@@ -137,6 +141,22 @@ class Room:
     def add_graph_nodes(self):
         """Creates graph nodes for searching."""
         self.graph_nodes = [Node(p, parent=self) for p in self.nav_poses]
+
+    def to_dict(self):
+        """
+        Serializes the room to a dictionary.
+
+        :return: A dictionary containing the room information.
+        :rtype: dict[str, Any]
+        """
+        return {
+            "name": self.name,
+            "color": self.viz_color,
+            "wall_width": self.wall_width,
+            "footprint": self.footprint,
+            "height": self.height,
+            "nav_poses": [pose.to_dict() for pose in self.nav_poses],
+        }
 
     def __repr__(self):
         """Returns printable string."""

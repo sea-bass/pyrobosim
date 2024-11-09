@@ -33,12 +33,12 @@ def get_data_folder():
 class EntityMetadata:
     """Represents metadata about entities, such as locations or objects."""
 
-    def __init__(self, filename):
+    def __init__(self, filename=None):
         """
         Creates metadata from a YAML file.
 
         :param filename: Path to metadata YAML file.
-        :type filename: str
+        :type filename: str, optional
         """
         if filename:
             if not os.path.isfile(filename):

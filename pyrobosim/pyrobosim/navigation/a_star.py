@@ -188,3 +188,21 @@ class AStarPlanner(AStar):
         :rtype: list[:class:`pyrobosim.utils.motion.Path`]
         """
         return self.latest_path
+
+    def to_dict(self):
+        """
+        Serializes the planner to a dictionary.
+
+        :return: A dictionary containing the planner information.
+        :rtype: dict[str, Any]
+        """
+        from . import get_planner_string
+
+        return {
+            "type": get_planner_string(self),
+            "grid_resolution": self.grid_resolution,
+            "grid_inflation_radius": self.grid_inflation_radius,
+            "heuristic": self.heuristic,
+            "diagonal_motion": self.diagonal_motion,
+            "compress_path": self.compress_path,
+        }

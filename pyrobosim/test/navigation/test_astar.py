@@ -13,7 +13,7 @@ from pyrobosim.utils.pose import Pose
 def test_astar():
     """Test A* planner with and without path compression"""
 
-    world = WorldYamlLoader().from_yaml(
+    world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
     )
 

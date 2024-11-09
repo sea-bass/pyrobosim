@@ -17,6 +17,8 @@ class Location:
     """Representation of a location in the world."""
 
     # Default class attributes
+    metadata = EntityMetadata()
+    """ Metadata for location categories. """
     height = 1.0
     """ Vertical height of location. """
     viz_color = (0, 0, 0)
@@ -201,6 +203,24 @@ class Location:
         """Creates graph nodes for searching."""
         for spawn in self.children:
             spawn.add_graph_nodes()
+
+    def to_dict(self):
+        """
+        Serializes the location to a dictionary.
+
+        :return: A dictionary containing the location information.
+        :rtype: dict[str, Any]
+        """
+        return {
+            "name": self.name,
+            "category": self.category,
+            "parent": self.parent.name,
+            "pose": self.pose.to_dict(),
+            "color": self.viz_color,
+            "is_open": self.is_open,
+            "is_locked": self.is_locked,
+            "is_charger": self.is_charger,
+        }
 
     def __repr__(self):
         """Returns printable string."""
