@@ -92,6 +92,102 @@ class Pose:
             x=tform[0, 3], y=tform[1, 3], z=tform[2, 3], q=mat2quat(tform[:3, :3])
         )
 
+    @classmethod
+    def from_dict(cls, pose_dict):
+        """
+        Creates a pose from a dictionary.
+
+        The keys of this dictionary can be as follows:
+
+        .. code-block:: yaml
+
+           position:
+             x: 1.0
+             y: 2.0
+             z: 3.0
+           rotation_eul:
+             yaw: 0.5
+             pitch: 0.6
+             roll: 0.7
+           rotation_quat:
+             w: 0.7071
+             x: 0.0
+             y: -0.7071
+             z: 0.0
+
+        Note that the ``rotation_quat`` key overrides the `rotation_eul` key.
+
+        :param pose_dict: A pose dictionary.
+        :type pose_dict: dict[str, Any]
+        :return: Pose object
+        :rype: :class:`pyrobosim.utils.pose.Pose`
+        """
+
+        pos = pose_dict.get("position", {})
+        args = {"x": pos.get("x", 0.0), "y": pos.get("y", 0.0), "z": pos.get("z", 0.0)}
+
+        quat = pose_dict.get("rotation_quat")
+        eul = pose_dict.get("rotation_eul")
+        if quat is not None:
+            args.update(
+                {
+                    "q": [
+                        quat.get("w", 0.0),
+                        quat.get("x", 0.0),
+                        quat.get("y", 0.0),
+                        quat.get("z", 0.0),
+                    ]
+                }
+            )
+        elif eul is not None:
+            args.update(
+                {
+                    "yaw": eul.get("yaw", 0.0),
+                    "pitch": eul.get("pitch", 0.0),
+                    "roll": eul.get("roll", 0.0),
+                }
+            )
+        return cls(**args)
+
+    @classmethod
+    def construct(self, data):
+        """
+        Constructs a pose object from any of the allowable input types.
+
+        :param data: The input data describing the pose.
+        :type data: dict[str, Any] or list or :class:`numpy.ndarray`
+        :return: Pose object
+        :rype: :class:`pyrobosim.utils.pose.Pose`
+        raises ValueError: if the input data type is unsupported.
+        """
+        if isinstance(data, list):
+            return Pose.from_list(data)
+        elif isinstance(data, dict):
+            return Pose.from_dict(data)
+        elif isinstance(data, np.ndarray):
+            return Pose.from_transform(data)
+        else:
+            raise ValueError(
+                f"Cannot construct pose from object of type {type(data).__name__}."
+            )
+
+    def to_dict(self):
+        """
+        Converts the pose instance to a dictionary compatible with YAML.
+
+        :return: The output dictionary.
+        :type: dict[str, Any]
+        """
+        return {
+            "position": {"x": self.x, "y": self.y, "z": self.z},
+            "rotation_quat": {
+                "w": self.q[0],
+                "x": self.q[1],
+                "y": self.q[2],
+                "z": self.q[3],
+            },
+        }
+
     def get_linear_distance(self, other, ignore_z=False):
         """
         Gets the straight-line distance between two poses.
