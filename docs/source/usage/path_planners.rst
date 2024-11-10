@@ -128,5 +128,19 @@ For visualization, you can provide ``get_graphs()`` and ``get_latest_paths()`` m
         def get_latest_path(self):
             return self.latest_path
 
+To serialize to file, which is needed to reset the world, you should also implement the ``to_dict()`` method.
+Note the ``get_planner_string()`` helper function, which extracts the name of the planner you defined in ``PATH_PLANNERS_MAP`` earlier on.
+
+.. code-block:: python
+
+        def to_dict(self, start, goal):
+            from pyrobosim.navigation import get_planner_string
+
+            return {
+                "type": get_planner_string(self),
+                "grid_resolution": self.grid_resolution,
+                "grid_inflation_radius": self.grid_inflation_radius,
+            }
+
 If you would like to implement your own path planner, it is highly recommended to look at the existing planner implementations as a reference.
 You can also always ask the maintainers through a Git issue!
