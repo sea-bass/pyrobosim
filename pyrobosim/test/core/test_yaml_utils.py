@@ -461,19 +461,52 @@ def test_yaml_load_and_write_dict():
     world = WorldYamlLoader().from_file(world_file)
     world_dict = WorldYamlWriter().to_dict(world)
 
-    # TODO: Check more than just existence of data in the resulting file.
     assert "params" in world_dict
+    assert world_dict["params"].get("name") == "test_world_multirobot"
+    assert world_dict["params"].get("object_radius") == 0.0375
+    assert world_dict["params"].get("wall_height") == 2.0
+    assert world_dict["params"].get("inflation_radius") == 0.1  # From the largest robot
+
     assert "metadata" in world_dict
+    assert world_dict["metadata"].get("locations") == Location.metadata.filename
+    assert world_dict["metadata"].get("objects") == Object.metadata.filename
+
     assert "robots" in world_dict
     assert len(world_dict["robots"]) == 3
+    assert world_dict["robots"][0].get("name") == "robot0"
+    assert world_dict["robots"][1].get("name") == "robot1"
+    assert world_dict["robots"][2].get("name") == "robot2"
+
     assert "rooms" in world_dict
     assert len(world_dict["rooms"]) == 3
+    assert world_dict["rooms"][0].get("name") == "kitchen"
+    assert world_dict["rooms"][1].get("name") == "bedroom"
+    assert world_dict["rooms"][2].get("name") == "bathroom"
+
     assert "hallways" in world_dict
     assert len(world_dict["hallways"]) == 3
+    assert world_dict["hallways"][0]["name"] == "hall_bathroom_kitchen"
+    assert world_dict["hallways"][1]["name"] == "hall_bathroom_bedroom"
+    assert world_dict["hallways"][2]["name"] == "hall_bedroom_kitchen"
+
     assert "locations" in world_dict
     assert len(world_dict["locations"]) == 5
+    assert world_dict["locations"][0]["name"] == "table0"
+    assert world_dict["locations"][1]["name"] == "my_desk"
+    assert world_dict["locations"][2]["name"] == "counter0"
+    assert world_dict["locations"][3]["name"] == "trash"
+    assert world_dict["locations"][4]["name"] == "charger"
+
     assert "objects" in world_dict
     assert len(world_dict["objects"]) == 8
+    assert world_dict["objects"][0]["name"] == "banana0"
+    assert world_dict["objects"][1]["name"] == "apple0"
+    assert world_dict["objects"][2]["name"] == "gala"
+    assert world_dict["objects"][3]["name"] == "fuji"
+    assert world_dict["objects"][4]["name"] == "water0"
+    assert world_dict["objects"][5]["name"] == "banana1"
+    assert world_dict["objects"][6]["name"] == "water1"
+    assert world_dict["objects"][7]["name"] == "soda"
 
 
 def test_yaml_load_and_write_file():
@@ -484,6 +517,49 @@ def test_yaml_load_and_write_file():
     temp_file = os.path.join(tempfile.mkdtemp(), "test_world.yaml")
     WorldYamlWriter().to_file(world, temp_file)
 
-    # TODO: Check more than just existence of the reloaded world.
     reloaded_world = WorldYamlLoader().from_file(temp_file)
     assert isinstance(reloaded_world, World)
+    assert reloaded_world.name == "test_world_multirobot"
+    assert reloaded_world.object_radius == 0.0375
+    assert reloaded_world.wall_height == 2.0
+    assert reloaded_world.inflation_radius == 0.1
+
+    loc_metadata = reloaded_world.get_location_metadata()
+    for category in ["table", "desk", "counter", "trash_can", "charger"]:
+        assert loc_metadata.has_category(category)
+
+    obj_metadata = reloaded_world.get_object_metadata()
+    for category in ["apple", "banana", "water", "coke"]:
+        assert obj_metadata.has_category(category)
+
+    assert len(reloaded_world.robots) == 3
+    assert reloaded_world.robots[0].name == "robot0"
+    assert reloaded_world.robots[1].name == "robot1"
+    assert reloaded_world.robots[2].name == "robot2"
+
+    assert len(reloaded_world.rooms) == 3
+    assert reloaded_world.rooms[0].name == "kitchen"
+    assert reloaded_world.rooms[1].name == "bedroom"
+    assert reloaded_world.rooms[2].name == "bathroom"
+
+    assert len(reloaded_world.hallways) == 3
+    assert reloaded_world.hallways[0].name == "hall_bathroom_kitchen"
+    assert reloaded_world.hallways[1].name == "hall_bathroom_bedroom"
+    assert reloaded_world.hallways[2].name == "hall_bedroom_kitchen"
+
+    assert len(reloaded_world.locations) == 5
+    assert reloaded_world.locations[0].name == "table0"
+    assert reloaded_world.locations[1].name == "my_desk"
+    assert reloaded_world.locations[2].name == "counter0"
+    assert reloaded_world.locations[3].name == "trash"
+    assert reloaded_world.locations[4].name == "charger"
+
+    assert len(reloaded_world.objects) == 8
+    assert reloaded_world.objects[0].name == "banana0"
+    assert reloaded_world.objects[1].name == "apple0"
+    assert reloaded_world.objects[2].name == "gala"
+    assert reloaded_world.objects[3].name == "fuji"
+    assert reloaded_world.objects[4].name == "water0"
+    assert reloaded_world.objects[5].name == "banana1"
+    assert reloaded_world.objects[6].name == "water1"
+    assert reloaded_world.objects[7].name == "soda"

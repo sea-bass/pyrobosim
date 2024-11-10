@@ -4,7 +4,7 @@
 
 # WORLD PARAMETERS
 params:
-  name: test_world
+  name: test_world_multirobot
   object_radius: 0.0375  # Radius around objects
   wall_height: 2.0  # Wall height for exporting to Gazebo
 
