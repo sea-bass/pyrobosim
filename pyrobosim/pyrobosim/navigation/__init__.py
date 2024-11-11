@@ -37,3 +37,20 @@ def get_planner_class(planner_type):
         raise ValueError(f"{planner_type} is not a supported planner type.")
 
     return PATH_PLANNERS_MAP[planner_type]
+
+
+def get_planner_string(planner):
+    """
+    Helper function that returns the planner string from a planner instance.
+
+    :param planner: The path planner instance.
+    :type planner: PathPlanner
+    :return: The string corresponding to the entry in PLANNER_TYPE_MAP
+    :rtype: str
+    """
+    for planner_str, planner_type in PATH_PLANNERS_MAP.items():
+        if isinstance(planner, planner_type):
+            return planner_str
+    raise ValueError(
+        f"Could not find registered key for planner type: {type(planner).__name__}"
+    )

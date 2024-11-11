@@ -24,7 +24,7 @@ class TestSystem:
         # Load world from file.
         cur_path = os.path.dirname(os.path.realpath(__file__))
         world_file_path = os.path.join(cur_path, "test_system_world.yaml")
-        world = WorldYamlLoader().from_yaml(world_file_path)
+        world = WorldYamlLoader().from_file(world_file_path)
 
         # Create headless app.
         self.app = PyRoboSimGUI.instance()

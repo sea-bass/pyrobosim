@@ -2,6 +2,7 @@
 Pose representation utilities.
 """
 
+import math
 import numpy as np
 from transforms3d.euler import euler2quat, quat2euler
 from transforms3d.quaternions import mat2quat, nearly_equivalent, qnorm, quat2mat
@@ -181,10 +182,10 @@ class Pose:
         return {
             "position": {"x": self.x, "y": self.y, "z": self.z},
             "rotation_quat": {
-                "w": self.q[0],
-                "x": self.q[1],
-                "y": self.q[2],
-                "z": self.q[3],
+                "w": float(self.q[0]),
+                "x": float(self.q[1]),
+                "y": float(self.q[2]),
+                "z": float(self.q[3]),
             },
         }
 
@@ -353,7 +354,7 @@ def get_angle(p1, p2):
     :return: Angle of target pose with respect to reference pose.
     :rtype: float
     """
-    return wrap_angle(np.arctan2(p2[1] - p1[1], p2[0] - p1[0]))
+    return wrap_angle(math.atan2(p2[1] - p1[1], p2[0] - p1[0]))
 
 
 def get_distance(p1, p2):
@@ -368,7 +369,7 @@ def get_distance(p1, p2):
     :rtype: float
     """
     sqrs = [(i - j) ** 2 for i, j in zip(p1, p2)]
-    return np.sqrt(sum(sqrs))
+    return math.sqrt(sum(sqrs))
 
 
 def get_bearing_range(p1, p2):

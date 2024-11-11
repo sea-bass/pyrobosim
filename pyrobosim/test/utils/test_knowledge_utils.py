@@ -28,7 +28,7 @@ class MockEntity:
 def load_world():
     """Load a test world."""
     world_file = os.path.join(get_data_folder(), "test_world.yaml")
-    return WorldYamlLoader().from_yaml(world_file)
+    return WorldYamlLoader().from_file(world_file)
 
 
 def test_apply_resolution_strategy(caplog):

@@ -29,7 +29,7 @@ def load_world():
     loader = WorldYamlLoader()
     world_file = "pddlstream_simple_world.yaml"
     data_folder = get_data_folder()
-    return loader.from_yaml(os.path.join(data_folder, world_file))
+    return loader.from_file(os.path.join(data_folder, world_file))
 
 
 class PlannerNode(Node):
@@ -143,7 +143,7 @@ class PlannerNode(Node):
         try:
             result = self.world_state_future_response.result()
             update_world_from_state_msg(self.world, result.state)
-        except Exception as e:
+        except Exception:
             self.get_logger().info("Failed to unpack world state.")
 
         # Once the world state is set, plan using the first robot.

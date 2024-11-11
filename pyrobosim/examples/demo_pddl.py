@@ -36,7 +36,7 @@ def parse_args():
 def load_world():
     """Load a test world."""
     world_file = os.path.join(get_data_folder(), "pddlstream_simple_world.yaml")
-    return WorldYamlLoader().from_yaml(world_file)
+    return WorldYamlLoader().from_file(world_file)
 
 
 def start_planner(world, args):

@@ -237,7 +237,7 @@ def test_polygon_from_footprint(caplog):
     # Invalid type
     footprint = {"type": "invalid"}
     output = polygon_and_height_from_footprint(footprint, parent_polygon=parent_polygon)
-    assert output is None
+    assert output == (None, None)
     assert "Invalid footprint type: invalid" in caplog.text
 
 

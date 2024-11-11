@@ -191,3 +191,20 @@ class ConstantVelocityExecutor:
                     self.abort_execution = True
 
             time.sleep(max(0, self.validation_dt - (time.time() - start_time)))
+
+    def to_dict(self):
+        """
+        Serializes the path executor to a dictionary.
+
+        :return: A dictionary containing the path executor information.
+        :rtype: dict[str, Any]
+        """
+        return {
+            "type": "constant_velocity",
+            "dt": self.dt,
+            "linear_velocity": self.linear_velocity,
+            "max_angular_velocity": self.max_angular_velocity,
+            "validate_during_execution": self.validate_during_execution,
+            "validation_dt": self.validation_dt,
+            "validation_step_dist": self.validation_step_dist,
+        }

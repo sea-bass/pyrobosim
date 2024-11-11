@@ -13,7 +13,7 @@ from pyrobosim.utils.pose import Pose
 
 def test_world_graph_default():
     """Tests planning with default world graph planner settings."""
-    world = WorldYamlLoader().from_yaml(
+    world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
     )
     planner_config = {
@@ -31,7 +31,7 @@ def test_world_graph_default():
 
 def test_world_graph_short_connection_distance(caplog):
     """Tests planning with short connection distance, which should fail."""
-    world = WorldYamlLoader().from_yaml(
+    world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
     )
     planner_config = {

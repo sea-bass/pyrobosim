@@ -24,7 +24,7 @@ from pyrobosim.utils.motion import Path
 class TestRobot:
     @pytest.fixture(autouse=True)
     def create_test_world(self):
-        self.test_world = WorldYamlLoader().from_yaml(
+        self.test_world = WorldYamlLoader().from_file(
             os.path.join(get_data_folder(), "test_world.yaml")
         )
 

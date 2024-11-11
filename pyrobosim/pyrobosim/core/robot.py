@@ -1,6 +1,5 @@
 """ Defines a robot which operates in a world. """
 
-import logging
 import time
 import numpy as np
 
@@ -1007,6 +1006,40 @@ class Robot:
         self.executing_plan = False
         self.current_plan = None
         return result, num_completed
+
+    def to_dict(self):
+        """
+        Serializes the robot to a dictionary.
+
+        :return: A dictionary containing the robot information.
+        :rtype: dict[str, Any]
+        """
+        pose = self.get_pose()
+
+        robot_dict = {
+            "name": self.name,
+            "radius": self.radius,
+            "height": self.height,
+            "color": self.color,
+            "pose": pose.to_dict(),
+            "max_linear_velocity": float(self.dynamics.vel_limits[0]),
+            "max_angular_velocity": float(self.dynamics.vel_limits[-1]),
+            "max_linear_acceleration": float(self.dynamics.accel_limits[0]),
+            "max_angular_acceleration": float(self.dynamics.accel_limits[-1]),
+        }
+
+        if self.world:
+            location = self.world.get_location_from_pose(pose)
+            if location is not None:
+                robot_dict["location"] = location.name
+        if self.path_planner:
+            robot_dict["path_planner"] = self.path_planner.to_dict()
+        if self.path_executor:
+            robot_dict["path_executor"] = self.path_executor.to_dict()
+        if self.grasp_generator:
+            robot_dict["grasping"] = self.grasp_generator.to_dict()
+
+        return robot_dict
 
     def __repr__(self):
         """Returns printable string."""

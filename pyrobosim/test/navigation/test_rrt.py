@@ -14,7 +14,7 @@ from pyrobosim.utils.pose import Pose
 
 def test_rrt_long_distance():
     """Tests planning with default world graph planner settings."""
-    world = WorldYamlLoader().from_yaml(
+    world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
     )
     planner_config = {
@@ -35,7 +35,7 @@ def test_rrt_long_distance():
 
 def test_rrt_short_distance_connect():
     """Tests if direct connection works if goal is within max_connection_distance."""
-    world = WorldYamlLoader().from_yaml(
+    world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
     )
     planner_config = {
@@ -56,7 +56,7 @@ def test_rrt_short_distance_connect():
 
 def test_rrt_no_path(caplog):
     """Test that RRT gracefully returns when there is no feasible path."""
-    world = WorldYamlLoader().from_yaml(
+    world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
     )
     planner_config = {
@@ -75,7 +75,7 @@ def test_rrt_no_path(caplog):
 
 def test_rrt_bidirectional():
     """Tests bidirectional RRT planning."""
-    world = WorldYamlLoader().from_yaml(
+    world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
     )
     planner_config = {
@@ -96,7 +96,7 @@ def test_rrt_bidirectional():
 
 def test_rrt_connect():
     """Tests RRTConnect planning."""
-    world = WorldYamlLoader().from_yaml(
+    world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
     )
     planner_config = {
@@ -117,7 +117,7 @@ def test_rrt_connect():
 
 def test_rrt_star():
     """Tests RRT* planning."""
-    world = WorldYamlLoader().from_yaml(
+    world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
     )
     planner_config = {
@@ -138,7 +138,7 @@ def test_rrt_star():
 
 def test_rrt_compress_path():
     """Tests planning with path compression option."""
-    world = WorldYamlLoader().from_yaml(
+    world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
     )
     planner_config = {

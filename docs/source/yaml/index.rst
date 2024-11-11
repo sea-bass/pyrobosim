@@ -40,7 +40,7 @@ Then, the world can be loaded from file as follows.
 
    from pyrobosim.core import WorldYamlLoader
 
-   world = WorldYamlLoader().from_yaml("/path/to/world_file.yaml")
+   world = WorldYamlLoader().from_file("/path/to/world_file.yaml")
 
 Refer to the following sections for more details on the schemas.
 

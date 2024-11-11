@@ -20,10 +20,11 @@ def create_logger(name, level=logging.INFO):
     logger.setLevel(level)
 
     # TODO: Consider configuring console vs. file logging at some point.
-    log_formatter = logging.Formatter("[%(name)s] %(levelname)s: %(message)s")
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(log_formatter)
-    logger.addHandler(console_handler)
+    if not logger.hasHandlers():  # Prevents adding duplicate handlers
+        log_formatter = logging.Formatter("[%(name)s] %(levelname)s: %(message)s")
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(log_formatter)
+        logger.addHandler(console_handler)
 
     # Needed to propagate to unit tests via the caplog fixture.
     logger.propagate = True

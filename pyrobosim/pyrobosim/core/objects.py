@@ -18,6 +18,8 @@ class Object:
     """Represents an object in the world."""
 
     # Default class attributes
+    metadata = EntityMetadata()
+    """ Metadata for object categories. """
     height = 0.1
     """ Vertical height of object. """
     viz_color = (0, 0, 1)
@@ -187,6 +189,21 @@ class Object:
                 self.pose.get_transform_matrix(),
             )
         )
+
+    def to_dict(self):
+        """
+        Serializes the object to a dictionary.
+
+        :return: A dictionary containing the object information.
+        :rtype: dict[str, Any]
+        """
+        return {
+            "name": self.name,
+            "category": self.category,
+            "parent": self.parent.name,
+            "pose": self.pose.to_dict(),
+            "color": self.viz_color,
+        }
 
     def __repr__(self):
         """Returns printable string."""

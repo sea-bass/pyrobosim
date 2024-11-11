@@ -54,7 +54,7 @@ class TestRosInterface:
 
         # Load world from file.
         world_file_path = os.path.join(get_data_folder(), "test_world_multirobot.yaml")
-        world = WorldYamlLoader().from_yaml(world_file_path)
+        world = WorldYamlLoader().from_file(world_file_path)
 
         # Create ROS interface.
         TestRosInterface.ros_interface = WorldROSWrapper(

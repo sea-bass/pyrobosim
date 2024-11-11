@@ -639,3 +639,19 @@ class GraspGenerator:
         ax.axes.set_ylim3d(min_y, max_y)
         ax.axes.set_zlim3d(min_z, max_z)
         plt.show()
+
+    def to_dict(self):
+        """
+        Serializes the grasp generator to a dictionary.
+
+        :return: A dictionary containing the grasp generator information.
+        :rtype: dict[str, Any]
+        """
+        return {
+            "generator": "parallel_grasp",
+            "max_width": self.properties.max_width,
+            "depth": self.properties.depth,
+            "height": self.properties.height,
+            "width_clearance": self.properties.width_clearance,
+            "depth_clearance": self.properties.depth_clearance,
+        }

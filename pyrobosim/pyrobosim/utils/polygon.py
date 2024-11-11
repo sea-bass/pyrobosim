@@ -165,7 +165,7 @@ def polygon_and_height_from_footprint(footprint, pose=None, parent_polygon=None)
             polygon, height = polygon_and_height_from_mesh(footprint)
         else:
             get_global_logger().warning(f"Invalid footprint type: {ftype}")
-            return None
+            return (None, None)
 
     # Offset the polygon, if specified
     if "offset" in footprint:
@@ -209,7 +209,7 @@ def polygon_and_height_from_mesh(mesh_data):
     # Get the height as the max of the 3D points.
     height = max([p[2] for p in mesh.convex_hull.vertices]) * scale
 
-    return (Polygon(hull_pts), height)
+    return (Polygon(hull_pts), float(height))
 
 
 def sample_from_polygon(polygon, max_tries=100):
