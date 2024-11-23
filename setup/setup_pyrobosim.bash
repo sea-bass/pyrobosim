@@ -53,8 +53,8 @@ then
   echo "PYROBOSIM_ROS_WORKSPACE=${ROS_WORKSPACE}" >> ${ENV_FILE}
   echo "PYROBOSIM_ROS_DISTRO=${ROS_DISTRO,,}" >> ${ENV_FILE}
 
-  # Install packages needed to run colcon build from within our virtual environment.
-  pip3 install colcon-common-extensions
+  # Install packages needed to run colcon build and use rclpy from within our virtual environment.
+  pip3 install colcon-common-extensions typing_extensions
 
   # Install any ROS package dependencies that may be missing.
   pushd ${ROS_WORKSPACE} > /dev/null
