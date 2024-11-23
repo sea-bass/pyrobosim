@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>pyrobosim_ros</name>
-  <version>3.1.0</version>
+  <version>3.2.0</version>
   <description>ROS 2 wrapper around pyrobosim.</description>
   <maintainer email="sebas.a.castro@gmail.com">Sebastian Castro</maintainer>
   <license>MIT</license>
