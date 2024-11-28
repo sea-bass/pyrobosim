@@ -139,14 +139,15 @@ class Location:
             if "offset" in self.metadata["footprint"]:
                 p_off = self.metadata["footprint"]["offset"]
             else:
-                p_off = (0, 0)
+                p_off = (0.0, 0.0)
             for p in self.metadata["nav_poses"]:
-                rot_p = rot2d((p[0] + p_off[0], p[1] + p_off[1]), self.pose.get_yaw())
+                p = Pose.construct(p)
+                rot_p = rot2d((p.x + p_off[0], p.y + p_off[1]), self.pose.get_yaw())
                 nav_pose = Pose(
                     x=rot_p[0] + self.pose.x,
                     y=rot_p[1] + self.pose.y,
                     z=self.pose.z,
-                    yaw=p[2] + self.pose.get_yaw(),
+                    yaw=p.get_yaw() + self.pose.get_yaw(),
                 )
                 if self.parent.is_collision_free(nav_pose):
                     self.nav_poses.append(nav_pose)
@@ -285,16 +286,17 @@ class ObjectSpawn:
             if "offset" in self.metadata["footprint"]:
                 p_off = self.metadata["footprint"]["offset"]
             else:
-                p_off = (0, 0)
+                p_off = (0.0, 0.0)
             for p in self.metadata["nav_poses"]:
+                p = Pose.construct(p)
                 rot_p = rot2d(
-                    (p[0] + p_off[0], p[1] + p_off[1]), self.parent.pose.get_yaw()
+                    (p.x + p_off[0], p.x + p_off[1]), self.parent.pose.get_yaw()
                 )
                 nav_pose = Pose(
                     x=rot_p[0] + self.parent.pose.x,
                     y=rot_p[1] + self.parent.pose.y,
                     z=self.parent.pose.z,
-                    yaw=p[2] + self.parent.pose.get_yaw(),
+                    yaw=p.get_yaw() + self.parent.pose.get_yaw(),
                 )
                 if self.parent.parent.is_collision_free(nav_pose):
                     self.nav_poses.append(nav_pose)
