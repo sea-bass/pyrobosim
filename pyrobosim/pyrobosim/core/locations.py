@@ -286,7 +286,7 @@ class ObjectSpawn:
             if "offset" in self.metadata["footprint"]:
                 p_off = self.metadata["footprint"]["offset"]
             else:
-                p_off = (0, 0)
+                p_off = (0.0, 0.0)
             for p in self.metadata["nav_poses"]:
                 p = Pose.construct(p)
                 rot_p = rot2d(
