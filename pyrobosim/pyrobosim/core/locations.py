@@ -290,7 +290,7 @@ class ObjectSpawn:
             for p in self.metadata["nav_poses"]:
                 p = Pose.construct(p)
                 rot_p = rot2d(
-                    (p.x + p_off[0], p.x + p_off[1]), self.parent.pose.get_yaw()
+                    (p.x + p_off[0], p.y + p_off[1]), self.parent.pose.get_yaw()
                 )
                 nav_pose = Pose(
                     x=rot_p[0] + self.parent.pose.x,
