@@ -47,7 +47,7 @@ then
 
   rm -rf ${ROS_WORKSPACE}/build ${ROS_WORKSPACE}/install ${ROS_WORKSPACE}/log
 
-  read -p "What ROS distro are you using? (humble, iron, jazzy, rolling) : " ROS_DISTRO
+  read -p "What ROS distro are you using? (humble, jazzy, rolling) : " ROS_DISTRO
   echo ""
   echo "Installing additional packages for ROS ${ROS_DISTRO,,} setup"
   echo "PYROBOSIM_ROS_WORKSPACE=${ROS_WORKSPACE}" >> ${ENV_FILE}
