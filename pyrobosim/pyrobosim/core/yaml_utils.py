@@ -96,7 +96,8 @@ class WorldYamlLoader:
         """Add locations for object spawning to the world."""
         for loc_data in self.data.get("locations", []):
             loc_args = copy.deepcopy(loc_data)
-            loc_args["pose"] = Pose.construct(loc_args["pose"])
+            if "pose" in loc_args:
+                loc_args["pose"] = Pose.construct(loc_args["pose"])
             self.world.add_location(**loc_args)
 
     def add_objects(self):
