@@ -8,8 +8,14 @@ table:
     dims: [0.9, 1.2]
     height: 0.5
   nav_poses:
-    - [-0.75, 0, 0]
-    - [0.75, 0, 3.14]
+    - position:  # left
+        x: -0.75
+        y: 0.0
+    - position:  # right
+        x: 0.75
+        y: 0.0
+      rotation_eul:
+        yaw: 3.14
   locations:
     - name: "tabletop"
       footprint:
@@ -31,10 +37,24 @@ desk:
       footprint:
         type: parent
       nav_poses:
-        - [0, -0.5, 1.57]
-        - [-0.5, 0, 0]
-        - [0, 0.5, -1.57]
-        - [0.5, 0, 3.14]
+        - position:  # below
+            x: 0.0
+            y: -0.5
+          rotation_eul:
+            yaw: 1.57
+        - position:  # left
+            x: -0.5
+            y: 0.0
+        - position:  # above
+            x: 0.0
+            y: 0.5
+          rotation_eul:
+            yaw: -1.57
+        - position:  # right
+            x: 0.5
+            y: 0.0
+          rotation_eul:
+            yaw: 3.14
 
 counter:
   footprint:
@@ -52,8 +72,16 @@ counter:
           - [-0.25, 0.25]
         offset: [0.3, 0]
       nav_poses:
-        - [0, 0.5, -1.57]
-        - [0, -0.5, 1.57]
+        - position:  # below
+            x: 0.0
+            y: -0.5
+          rotation_eul:
+            yaw: 1.57
+        - position:  # above
+            x: 0.0
+            y: 0.5
+          rotation_eul:
+            yaw: -1.57
     - name: "right"
       footprint:
         type: polygon
@@ -64,8 +92,16 @@ counter:
           - [-0.25, 0.25]
         offset: [-0.3, 0]
       nav_poses:
-        - [0, 0.5, -1.57]
-        - [0, -0.5, 1.57]
+        - position:  # below
+            x: 0.0
+            y: -0.5
+          rotation_eul:
+            yaw: 1.57
+        - position:  # above
+            x: 0.0
+            y: 0.5
+          rotation_eul:
+            yaw: -1.57
   color: [0, 0.2, 0]
 
 trash_can:
@@ -79,8 +115,14 @@ trash_can:
         type: parent
         padding: 0.05
   nav_poses:
-    - [0.5, 0.0, 3.14]
-    - [-0.5, 0.0, 0.0]
+    - position:  # left
+        x: -0.5
+        y: 0.0
+    - position:  # right
+        x: 0.5
+        y: 0.0
+      rotation_eul:
+        yaw: 3.14
   color: [0, 0.35, 0.2]
 
 charger:
@@ -97,8 +139,22 @@ charger:
       footprint:
         type: parent
       nav_poses:
-        - [0, -0.35, 1.57]
-        - [-0.5, 0, 0]
-        - [0, 0.35, -1.57]
-        - [0.5, 0, 3.14]
+        - position:  # below
+            x: 0.0
+            y: -0.5
+          rotation_eul:
+            yaw: 1.57
+        - position:  # left
+            x: -0.35
+            y: 0.0
+        - position:  # above
+            x: 0.0
+            y: 0.5
+          rotation_eul:
+            yaw: -1.57
+        - position:  # right
+            x: 0.35
+            y: 0.0
+          rotation_eul:
+            yaw: 3.14
   color: [0.4, 0.4, 0]
