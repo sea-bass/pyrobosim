@@ -81,15 +81,15 @@ class Room:
         :param color: Input color as a list, string, or hexadecimal.
         :type color: list[float] | str
         :return: RGB tuple in range (0.0, 1.0).
-        :rtype: tuple[float]
+        :rtype: list[float]
         """
         if isinstance(color, list) and len(color) == 3:
-            return tuple(color)
+            return color
         elif isinstance(color, str):
             if color in CSS4_COLORS:
-                return to_rgb(CSS4_COLORS[color])
+                return list(to_rgb(CSS4_COLORS[color]))
             try:
-                return to_rgb(color)
+                return list(to_rgb(color))
             except ValueError:
                 raise ValueError(f"Invalid color string or hex: {color}")
         else:
