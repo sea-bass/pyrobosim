@@ -38,16 +38,28 @@ def create_world(multirobot=False):
     world.add_room(
         name="kitchen",
         footprint=r1coords,
-        color=[1, 0, 0],
+        color="red",
         nav_poses=[Pose(x=0.75, y=0.75, z=0.0, yaw=0.0)],
     )
     r2coords = [(1.75, 2.5), (3.5, 2.5), (3.5, 4), (1.75, 4)]
-    world.add_room(name="bedroom", footprint=r2coords, color=[0, 0.6, 0])
+    world.add_room(
+        name="bedroom",
+        footprint=r2coords,
+        color="#9ACD32",  # yellowgreen
+    )
     r3coords = [(-1, 1), (-1, 3.5), (-3.0, 3.5), (-2.5, 1)]
-    world.add_room(name="bathroom", footprint=r3coords, color=[0, 0, 0.6])
+    world.add_room(
+        name="bathroom",
+        footprint=r3coords,
+        color=[0.0, 0.0, 1.0],
+    )
 
     # Add hallways between the rooms
-    world.add_hallway(room_start="kitchen", room_end="bathroom", width=0.7)
+    world.add_hallway(
+        room_start="kitchen",
+        room_end="bathroom",
+        width=0.7,
+    )
     world.add_hallway(
         room_start="bathroom",
         room_end="bedroom",
