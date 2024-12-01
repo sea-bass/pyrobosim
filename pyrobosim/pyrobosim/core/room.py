@@ -6,6 +6,8 @@ from shapely import intersects_xy
 from shapely.geometry import Polygon
 from shapely.plotting import patch_from_polygon
 
+from matplotlib.colors import CSS4_COLORS, to_rgb
+
 from ..utils.pose import Pose
 from ..utils.polygon import inflate_polygon, polygon_and_height_from_footprint
 from ..utils.search_graph import Node
@@ -30,7 +32,8 @@ class Room:
         :type name: str, optional
         :param footprint: Point list or Shapely polygon describing the room 2D footprint (required).
         :type footprint: :class:`shapely.geometry.Polygon`/list[:class:`pyrobosim.utils.pose.Pose`]
-        :param color: Visualization color as an (R, G, B) tuple in the range (0.0, 1.0)
+        :param color: Visualization color as an (R, G, B) tuple in the range (0.0, 1.0),
+                      a string (e.g., "red"), or a hexadecimal (e.g., "#FF0000").
         :type color: (float, float, float), optional
         :param wall_width: Width of room walls, in meters.
         :type wall_width: float, optional
@@ -41,7 +44,7 @@ class Room:
         """
         self.name = name
         self.wall_width = wall_width
-        self.viz_color = color
+        self.viz_color = self._parse_color(color)
 
         # Entities associated with the room
         self.hallways = []
@@ -70,6 +73,29 @@ class Room:
             self.nav_poses = nav_poses
         else:
             self.nav_poses = [Pose.from_list(self.centroid)]
+
+    def _parse_color(self, color):
+        """
+        Parses a color input and returns an RGB tuple.
+
+        :param color: Input color as a list, string, or hexadecimal.
+        :type color: list[float] | str
+        :return: RGB tuple in range (0.0, 1.0).
+        :rtype: tuple[float]
+        """
+        if isinstance(color, list) and len(color) == 3:
+            return tuple(color)
+        elif isinstance(color, str):
+            if color in CSS4_COLORS:
+                return to_rgb(CSS4_COLORS[color])
+            try:
+                return to_rgb(color)
+            except ValueError:
+                raise ValueError(f"Invalid color string or hex: {color}")
+        else:
+            raise ValueError(
+                f"Unsupported color format. Supported types are list[float] and string"
+            )
 
     def update_collision_polygons(self, inflation_radius=0):
         """
