@@ -51,7 +51,7 @@ def create_world(multirobot=False):
     world.add_room(
         name="bathroom",
         footprint=r3coords,
-        color=[0.0, 0.0, 1.0],
+        color=[0.0, 0.0, 0.6],
     )
 
     # Add hallways between the rooms
