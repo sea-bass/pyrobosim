@@ -86,4 +86,4 @@ class TestRoom:
 
         # Invalid color string
         with pytest.raises(ValueError):
-            Room(name="room_inavlid_color", footprint=coords, color="notavalidcolor")
+            Room(name="room_invalid_color", footprint=coords, color="notavalidcolor")
