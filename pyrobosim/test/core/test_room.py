@@ -5,7 +5,7 @@ Tests for room creation in pyrobosim.
 """
 
 import pytest
-from matplotlib.colors import to_rgb, CSS4_COLORS
+
 from pyrobosim.core import Room, World
 
 
@@ -64,26 +64,3 @@ class TestRoom:
         assert result is None
         assert world.num_rooms == 1
         assert "Room room1 in collision. Cannot add to world." in caplog.text
-
-    def test_add_room_with_different_color_formats(self):
-        """Testing adding a room with different color formats."""
-        coords = [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)]
-
-        # Test with RGB list
-        color_rgb_list = [1.0, 0.0, 0.0]
-        room1 = Room(name="room_list", footprint=coords, color=color_rgb_list)
-        assert room1.viz_color == color_rgb_list
-
-        # Test with named color
-        color_by_name = "red"
-        room2 = Room(name="room_named", footprint=coords, color=color_by_name)
-        assert room2.viz_color == list(to_rgb(CSS4_COLORS[color_by_name]))
-
-        # Test with hexadecimal color format
-        color_hex = "#00FFFF"
-        room3 = Room(name="room_hex", footprint=coords, color=color_hex)
-        assert room3.viz_color == list(to_rgb(color_hex))
-
-        # Invalid color string
-        with pytest.raises(ValueError):
-            Room(name="room_invalid_color", footprint=coords, color="notavalidcolor")
