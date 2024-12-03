@@ -107,21 +107,21 @@ def parse_color(color):
     """
     Parses a color input and returns an RGB tuple.
 
-    :param color: Input color as a list, string, or hexadecimal.
-    :type color: list[float] | str
+    :param color: Input color as a list, tuple, string, or hexadecimal.
+    :type color: list[float] | tuple[float, float, float] | str
     :return: RGB tuple in range (0.0, 1.0).
-    :rtype: list[float]
+    :rtype: tuple[float, float, float]
     """
-    if isinstance(color, list) and len(color) == 3:
-        return color
+    if isinstance(color, (list, tuple)) and len(color) == 3:
+        return tuple(color)
 
     if isinstance(color, str):
         if color in CSS4_COLORS:
-            return list(to_rgb(CSS4_COLORS[color]))
+            return to_rgb(CSS4_COLORS[color])
 
         hex_pattern = r"^#(?:[0-9a-fA-F]{3}){1,2}$"
         if re.match(hex_pattern, color):
-            return list(to_rgb(color))
+            return to_rgb(color)
 
         raise ValueError(f"Invalid color string or hex: {color}")
 

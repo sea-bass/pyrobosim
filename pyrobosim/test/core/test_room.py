@@ -33,7 +33,7 @@ class TestRoom:
         world = World()
 
         coords = [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)]
-        color = [1.0, 0.0, 0.1]
+        color = (1.0, 0.0, 0.1)
         result = world.add_room(footprint=coords, color=color)
 
         assert isinstance(result, Room)

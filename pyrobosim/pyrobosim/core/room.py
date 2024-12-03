@@ -33,9 +33,11 @@ class Room:
         :type name: str, optional
         :param footprint: Point list or Shapely polygon describing the room 2D footprint (required).
         :type footprint: :class:`shapely.geometry.Polygon`/list[:class:`pyrobosim.utils.pose.Pose`]
-        :param color: Visualization color as an (R, G, B) tuple in the range (0.0, 1.0),
-                      a string (e.g., "red"), or a hexadecimal (e.g., "#FF0000").
-        :type color: (float, float, float), optional
+        :param color: Visualization color. Input can be
+                      - an (R, G, B) tuple, list in the range (0.0, 1.0),
+                      - a string (e.g., "red")
+                      - a hexadecimal (e.g., "#FF0000").
+        :type color: list[float] | tuple[float, float, float] | str
         :param wall_width: Width of room walls, in meters.
         :type wall_width: float, optional
         :param nav_poses: List of navigation poses in the room. If not specified, defaults to the centroid.
