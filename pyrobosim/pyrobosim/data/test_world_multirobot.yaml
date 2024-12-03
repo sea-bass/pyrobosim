@@ -106,7 +106,7 @@ rooms:
           x: 0.75
           y: 0.5
     wall_width: 0.2
-    color: [1, 0, 0]
+    color: "red"
 
   - name: bedroom
     footprint:
@@ -114,7 +114,7 @@ rooms:
       dims: [1.75, 1.5]
       offset: [2.625, 3.25]
     wall_width: 0.2
-    color: [0, 0.6, 0]
+    color: "#009900"
 
   - name: bathroom
     footprint:
