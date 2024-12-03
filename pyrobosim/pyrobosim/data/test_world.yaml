@@ -82,7 +82,7 @@ rooms:
       dims: [1.75, 1.5]
       offset: [2.625, 3.25]
     wall_width: 0.2
-    color: "#9ACD32" #yellowgreen
+    color: "#009900"
 
   - name: bathroom
     footprint:

@@ -45,7 +45,7 @@ def create_world(multirobot=False):
     world.add_room(
         name="bedroom",
         footprint=r2coords,
-        color="#9ACD32",  # yellowgreen
+        color="#009900"
     )
     r3coords = [(-1, 1), (-1, 3.5), (-3.0, 3.5), (-2.5, 1)]
     world.add_room(
