@@ -124,14 +124,14 @@ class TestWorldYamlLoading:
         poly, _ = polygon_and_height_from_footprint(rooms_dict["rooms"][0]["footprint"])
         assert loader.world.rooms[0].polygon == poly
         assert loader.world.rooms[0].wall_width == 0.2
-        assert loader.world.rooms[0].viz_color == [1, 0, 0]
+        assert loader.world.rooms[0].viz_color == (1, 0, 0)
         assert loader.world.rooms[0].nav_poses == [Pose.from_list([0.75, 0.5, 0.0])]
 
         assert loader.world.rooms[1].name == "bedroom"
         poly, _ = polygon_and_height_from_footprint(rooms_dict["rooms"][1]["footprint"])
         assert loader.world.rooms[1].polygon == poly
         assert loader.world.rooms[1].wall_width == 0.2
-        assert loader.world.rooms[1].viz_color == [0, 1, 0]
+        assert loader.world.rooms[1].viz_color == (0, 1, 0)
         assert loader.world.rooms[1].nav_poses == [
             Pose.from_list(loader.world.rooms[1].centroid)
         ]

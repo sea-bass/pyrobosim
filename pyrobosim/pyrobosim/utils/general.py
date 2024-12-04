@@ -2,6 +2,8 @@
 
 import os
 import yaml
+import re
+from matplotlib.colors import CSS4_COLORS, to_rgb
 
 
 def get_data_folder():
@@ -99,3 +101,30 @@ def replace_special_yaml_tokens(in_text, root_dir=None):
     out_text = out_text.replace("$PWD", root_dir)
 
     return out_text
+
+
+def parse_color(color):
+    """
+    Parses a color input and returns an RGB tuple.
+
+    :param color: Input color as a list, tuple, string, or hexadecimal.
+    :type color: list[float] | tuple[float, float, float] | str
+    :return: RGB tuple in range (0.0, 1.0).
+    :rtype: tuple[float, float, float]
+    """
+    if isinstance(color, (list, tuple)) and len(color) == 3:
+        return tuple(color)
+
+    if isinstance(color, str):
+        if color in CSS4_COLORS:
+            return to_rgb(CSS4_COLORS[color])
+
+        hex_pattern = r"^#(?:[0-9a-fA-F]{3}){1,2}$"
+        if re.match(hex_pattern, color):
+            return to_rgb(color)
+
+        raise ValueError(f"Invalid color string or hex: {color}")
+
+    raise ValueError(
+        f"Unsupported color format. Supported types are list[float] and string"
+    )
