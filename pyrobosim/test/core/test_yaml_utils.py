@@ -170,7 +170,7 @@ class TestWorldYamlLoading:
         assert loader.world.hallways[0].room_end.name == "bedroom"
         assert loader.world.hallways[0].width == 0.75
         assert loader.world.hallways[0].wall_width == 0.18
-        assert loader.world.hallways[0].viz_color == [0.5, 0.5, 0.5]
+        assert loader.world.hallways[0].viz_color == (0.5, 0.5, 0.5)
 
     @staticmethod
     @pytest.mark.dependency(

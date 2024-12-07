@@ -8,6 +8,7 @@ from shapely.plotting import patch_from_polygon
 from ..utils.pose import Pose, get_angle, get_bearing_range
 from ..utils.polygon import inflate_polygon
 from ..utils.search_graph import Node
+from ..utils.general import parse_color
 
 
 class Hallway:
@@ -54,8 +55,11 @@ class Hallway:
         :type conn_angle: float, optional
         :param conn_points: If using "points" connection method, specifies the hallway points.
         :type conn_points: list[(float, float)], optional
-        :param color: Visualization color as an (R, G, B) tuple in the range (0.0, 1.0)
-        :type color: (float, float, float), optional
+        :param color: Visualization color. Input can be
+                      - an (R, G, B) tuple, list in the range (0.0, 1.0),
+                      - a string (e.g., "red")
+                      - a hexadecimal (e.g., "#FF0000").
+        :type color: list[float] | tuple[float, float, float] | str
         :param wall_width: Width of hallway walls, in meters.
         :type wall_width: float, optional
         :param is_open: If True, the hallway is open, otherwise it is closed.
@@ -78,7 +82,7 @@ class Hallway:
         self.width = width
         self.wall_width = wall_width
         self.offset = offset
-        self.viz_color = color
+        self.viz_color = parse_color(color)
         self.graph_nodes = []
         self.nav_poses = []
         self.is_open = is_open

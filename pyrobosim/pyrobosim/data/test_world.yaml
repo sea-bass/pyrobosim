@@ -104,6 +104,7 @@ hallways:
     conn_method: auto
     is_open: True
     is_locked: False
+    color: "#666666"
 
   - room_start: bathroom
     room_end: bedroom
@@ -113,6 +114,7 @@ hallways:
     offset: 0.8
     is_open: True
     is_locked: False
+    color: "dimgray"
 
   - room_start: kitchen
     room_end: bedroom
