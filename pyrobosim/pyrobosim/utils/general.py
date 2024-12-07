@@ -116,7 +116,7 @@ def parse_color(color):
         if len(color) == 3:
             return tuple(color)
         raise ValueError(
-            "Insufficient elements. RGB color must have exactly 3 elements."
+            "Incorrect number of elements. RGB color must have exactly 3 elements."
         )
 
     if isinstance(color, str):
