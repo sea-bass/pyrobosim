@@ -27,7 +27,7 @@ def test_parse_color():
         parse_color([1.0, 0.0])
     assert (
         exc_info.value.args[0]
-        == "Insufficient elements. RGB color must have exactly 3 elements."
+        == "Incorrect number of elements. RGB color must have exactly 3 elements."
     )
 
     # Test with invalid RGB tuple
@@ -35,7 +35,7 @@ def test_parse_color():
         parse_color((1.0, 0.0))
     assert (
         exc_info.value.args[0]
-        == "Insufficient elements. RGB color must have exactly 3 elements."
+        == "Incorrect number of elements. RGB color must have exactly 3 elements."
     )
 
     # Test with invalid named color
