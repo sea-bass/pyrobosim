@@ -35,10 +35,12 @@ services:
       - QT_X11_NO_MITSHM=1
       - NVIDIA_DRIVER_CAPABILITIES=all
     volumes:
-      # Mount the source code and testing utilities.
+      # Mount the source code.
       - ./pyrobosim/:/pyrobosim_ws/src/pyrobosim/:rw
       - ./pyrobosim_msgs/:/pyrobosim_ws/src/pyrobosim_msgs/:rw
       - ./pyrobosim_ros/:/pyrobosim_ws/src/pyrobosim_ros/:rw
+      # Mount docs and testing utilities.
+      - ./docs/:/pyrobosim_ws/src/docs/:rw
       - ./test/:/pyrobosim_ws/src/test/:rw
       - ./pytest.ini:/pyrobosim_ws/pytest.ini:rw
       # Allows graphical programs in the container.
@@ -46,6 +48,9 @@ services:
       - ${XAUTHORITY:-$HOME/.Xauthority}:/root/.Xauthority
     command: sleep infinity
 
+  docs:
+    extends: base
+    command: src/docs/generate_docs.bash
   test:
     extends: base
     command: src/test/run_tests.bash ${ROS_DISTRO:-humble}

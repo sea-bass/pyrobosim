@@ -32,10 +32,12 @@ WORKDIR /opt/pyrobosim/
 COPY setup/configure_pddlstream.bash setup/
 RUN setup/configure_pddlstream.bash
 
-# Install pip dependencies for testing
+# Install pip dependencies for docs and testing
 ENV PIP_BREAK_SYSTEM_PACKAGES=1
+COPY docs/python_docs_requirements.txt docs/
 COPY test/python_test_requirements.txt test/
-RUN pip3 install -r test/python_test_requirements.txt
+RUN pip3 install -r docs/python_docs_requirements.txt && \
+    pip3 install -r test/python_test_requirements.txt
 
 # Copy the rest of the source directory and install pyrobosim
 COPY . /opt/pyrobosim/
@@ -61,23 +63,25 @@ RUN apt-get install -y \
     libegl1 libgl1-mesa-dev libglu1-mesa-dev '^libxcb.*-dev' libx11-xcb-dev \
     libxi-dev libxkbcommon-dev libxkbcommon-x11-dev libxrender-dev
 
-# Create a colcon workspace
+# Create a ROS 2 workspace
 RUN mkdir -p /pyrobosim_ws/src/pyrobosim
+WORKDIR /pyrobosim_ws/src
 
 # Install dependencies
 COPY setup/configure_pddlstream.bash /pyrobosim_ws/src/setup/
-WORKDIR /pyrobosim_ws/src/setup
-RUN ./configure_pddlstream.bash
+RUN setup/configure_pddlstream.bash
 
-COPY . /pyrobosim_ws/src/
-
-# Install pyrobosim and testing dependencies
+# Install pyrobosim, docs, and testing dependencies
 ENV PIP_BREAK_SYSTEM_PACKAGES=1
-WORKDIR /pyrobosim_ws/src
+COPY pyrobosim/setup.py pyrobosim/
+COPY docs/python_docs_requirements.txt docs/
+COPY test/python_test_requirements.txt test/
 RUN pip3 install -e ./pyrobosim && \
+    pip3 install -r docs/python_docs_requirements.txt && \
     pip3 install -r test/python_test_requirements.txt
 
-# Build the ROS workspace
+# Build the ROS workspace, which includes pyrobosim
+COPY . /pyrobosim_ws/src/
 WORKDIR /pyrobosim_ws
 RUN . /opt/ros/${ROS_DISTRO}/setup.bash && \
     colcon build
