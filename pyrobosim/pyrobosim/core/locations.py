@@ -56,11 +56,13 @@ class Location:
         :type pose: :class:`pyrobosim.utils.pose.Pose`
         :param parent: Parent of the location (typically a :class:`pyrobosim.core.room.Room`)
         :type parent: Entity
-        :param color: Visualization color. Input can be
-                      - an (R, G, B) tuple, list in the range (0.0, 1.0),
-                      - a string (e.g., "red")
-                      - a hexadecimal (e.g., "#FF0000").
-                      If using a category with a defined color, this parameter overrides the category color.
+        :param color: Visualization color.
+         Input can be:
+
+         - an (R, G, B) tuple or list in the range (0.0, 1.0).
+         - a string (e.g., "red").
+         - a hexadecimal string (e.g., "#FF0000").
+         If using a category with a defined color, this parameter overrides the category color.
         :type color: list[float] | tuple[float, float, float] | str
         :param is_open: If True, the location is open, otherwise it is closed.
         :type is_open: bool, optional

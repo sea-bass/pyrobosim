@@ -48,10 +48,12 @@ class Robot:
         :type radius: float, optional
         :param height: Robot height, in meters.
         :type height: float, optional
-        :param color: Visualization color. Input can be
-                      - an (R, G, B) tuple, list in the range (0.0, 1.0),
-                      - a string (e.g., "red")
-                      - a hexadecimal (e.g., "#FF0000").
+        :param color: Visualization color.
+         Input can be:
+
+         - an (R, G, B) tuple or list in the range (0.0, 1.0).
+         - a string (e.g., "red").
+         - a hexadecimal string (e.g., "#FF0000").
         :type color: list[float] | tuple[float, float, float] | str
         :param max_linear_velocity: The maximum linear velocity magnitude, in m/s.
         :type max_linear_velocity: float

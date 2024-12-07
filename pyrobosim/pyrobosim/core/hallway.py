@@ -55,10 +55,12 @@ class Hallway:
         :type conn_angle: float, optional
         :param conn_points: If using "points" connection method, specifies the hallway points.
         :type conn_points: list[(float, float)], optional
-        :param color: Visualization color. Input can be
-                      - an (R, G, B) tuple, list in the range (0.0, 1.0),
-                      - a string (e.g., "red")
-                      - a hexadecimal (e.g., "#FF0000").
+        :param color: Visualization color.
+         Input can be:
+
+         - an (R, G, B) tuple or list in the range (0.0, 1.0).
+         - a string (e.g., "red").
+         - a hexadecimal string (e.g., "#FF0000").
         :type color: list[float] | tuple[float, float, float] | str
         :param wall_width: Width of hallway walls, in meters.
         :type wall_width: float, optional
