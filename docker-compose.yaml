@@ -48,6 +48,9 @@ services:
       - ${XAUTHORITY:-$HOME/.Xauthority}:/root/.Xauthority
     command: sleep infinity
 
+  docs:
+    extends: base
+    command: src/docs/generate_docs.bash
   test:
     extends: base
     command: src/test/run_tests.bash ${ROS_DISTRO:-humble}

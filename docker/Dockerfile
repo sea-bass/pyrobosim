@@ -71,11 +71,13 @@ WORKDIR /pyrobosim_ws/src
 COPY setup/configure_pddlstream.bash /pyrobosim_ws/src/setup/
 RUN setup/configure_pddlstream.bash
 
-# Install docs and testing dependencies
+# Install pyrobosim, docs, and testing dependencies
 ENV PIP_BREAK_SYSTEM_PACKAGES=1
+COPY pyrobosim/setup.py pyrobosim/
 COPY docs/python_docs_requirements.txt docs/
 COPY test/python_test_requirements.txt test/
-RUN pip3 install -r docs/python_docs_requirements.txt && \
+RUN pip3 install -e ./pyrobosim && \
+    pip3 install -r docs/python_docs_requirements.txt && \
     pip3 install -r test/python_test_requirements.txt
 
 # Build the ROS workspace, which includes pyrobosim
