@@ -39,7 +39,7 @@ robots:
       dt: 0.1
 
   - radius: 0.08
-    color: [0.8, 0.8, 0.0]
+    color: "#CCCC00"
     location: bathroom
     grasping:
       generator: parallel_grasp

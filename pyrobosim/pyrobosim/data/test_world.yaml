@@ -20,6 +20,7 @@ robots:
   - name: robot
     radius: 0.1
     location: kitchen
+    color: "#CC00CC"
     pose:
       position:
         x: 0.0

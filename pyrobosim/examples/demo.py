@@ -121,6 +121,7 @@ def create_world(multirobot=False):
         ),
         grasp_generator=GraspGenerator(grasp_props),
         partial_observability=args.partial_observability,
+        color="#CC00CC",
     )
     planner_config_rrt = {
         "world": world,

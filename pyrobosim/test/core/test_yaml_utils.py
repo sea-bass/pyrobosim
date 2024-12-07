@@ -414,6 +414,7 @@ class TestWorldYamlLoading:
         assert robot1.name == "test_robot"
         assert robot1.radius == 0.09
         assert robot1.height == 0.05
+        assert robot1.color == (0.0, 0.8, 0.8)
         assert robot1.location.name == "bedroom"
         assert robot1.get_pose() == Pose.from_list([2.5, 3.0, 1.57])
         assert np.all(robot1.dynamics.vel_limits == np.array([1.0, 1.0, 3.0]))
