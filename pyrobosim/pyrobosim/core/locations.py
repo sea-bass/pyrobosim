@@ -3,7 +3,7 @@
 from shapely import intersects_xy
 from shapely.plotting import patch_from_polygon
 
-from ..utils.general import EntityMetadata, InvalidEntityCategoryException
+from ..utils.general import EntityMetadata, InvalidEntityCategoryException, parse_color
 from ..utils.pose import Pose, rot2d
 from ..utils.polygon import (
     inflate_polygon,
@@ -56,9 +56,12 @@ class Location:
         :type pose: :class:`pyrobosim.utils.pose.Pose`
         :param parent: Parent of the location (typically a :class:`pyrobosim.core.room.Room`)
         :type parent: Entity
-        :param color: Visualization color as an (R, G, B) tuple in the range (0.0, 1.0).
-            If using a category with a defined color, this parameter overrides the category color.
-        :type color: (float, float, float), optional
+        :param color: Visualization color. Input can be
+                      - an (R, G, B) tuple, list in the range (0.0, 1.0),
+                      - a string (e.g., "red")
+                      - a hexadecimal (e.g., "#FF0000").
+                      If using a category with a defined color, this parameter overrides the category color.
+        :type color: list[float] | tuple[float, float, float] | str
         :param is_open: If True, the location is open, otherwise it is closed.
         :type is_open: bool, optional
         :param is_locked: If True, the location is locked, meaning it cannot be opened or closed.
@@ -87,7 +90,7 @@ class Location:
             )
 
         if color is not None:
-            self.viz_color = color
+            self.viz_color = parse_color(color)
         elif "color" in self.metadata:
             self.viz_color = self.metadata["color"]
 
