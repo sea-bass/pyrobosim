@@ -23,21 +23,38 @@ def test_parse_color():
     assert parse_color("#00FFFF") == to_rgb(color_hex)
 
     # Test with invalid RGB list
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as exc_info:
         parse_color([1.0, 0.0])
+    assert (
+        exc_info.value.args[0]
+        == "Insufficient elements. RGB color must have exactly 3 elements."
+    )
 
     # Test with invalid RGB tuple
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as exc_info:
         parse_color((1.0, 0.0))
+    assert (
+        exc_info.value.args[0]
+        == "Insufficient elements. RGB color must have exactly 3 elements."
+    )
 
     # Test with invalid named color
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as exc_info:
         parse_color("notavalidcolor")
+    assert (
+        exc_info.value.args[0]
+        == "Invalid color name or hexadecimal value: notavalidcolor."
+    )
 
     # Test with invalid hexadecimal color format
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as exc_info:
         parse_color("#ZZZ")
+    assert exc_info.value.args[0] == "Invalid color name or hexadecimal value: #ZZZ."
 
     # Test with unsupported input type
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as exc_info:
         parse_color(12345)
+    assert (
+        exc_info.value.args[0]
+        == "Unsupported input type. Expected a list, tuple, or string representing a color."
+    )
