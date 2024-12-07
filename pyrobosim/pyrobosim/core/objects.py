@@ -4,7 +4,7 @@ import numpy as np
 from shapely.plotting import patch_from_polygon
 from scipy.spatial import ConvexHull
 
-from ..utils.general import EntityMetadata, InvalidEntityCategoryException
+from ..utils.general import EntityMetadata, InvalidEntityCategoryException, parse_color
 from ..utils.pose import Pose
 from ..utils.polygon import (
     convhull_to_rectangle,
@@ -57,9 +57,12 @@ class Object:
         :type pose: :class:`pyrobosim.utils.pose.Pose`
         :param inflation_radius: Inflation radius for polygon collision checks.
         :type inflation_radius: float, optional
-        :param color: Visualization color as an (R, G, B) tuple in the range (0.0, 1.0).
-            If using a category with a defined color, this parameter overrides the category color.
-        :type color: (float, float, float), optional
+        :param color: Visualization color. Input can be
+                      - an (R, G, B) tuple, list in the range (0.0, 1.0),
+                      - a string (e.g., "red")
+                      - a hexadecimal (e.g., "#FF0000").
+                      If using a category with a defined color, this parameter overrides the category color.
+        :type color: list[float] | tuple[float, float, float] | str
         """
         self.category = category
         self.name = name
@@ -77,7 +80,7 @@ class Object:
             )
 
         if color is not None:
-            self.viz_color = color
+            self.viz_color = parse_color(color)
         elif "color" in self.metadata:
             self.viz_color = self.metadata["color"]
 
