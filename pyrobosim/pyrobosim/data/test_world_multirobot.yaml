@@ -39,7 +39,7 @@ robots:
       dt: 0.1
 
   - radius: 0.08
-    color: [0.8, 0.8, 0.0]
+    color: "#CCCC00"
     location: bathroom
     grasping:
       generator: parallel_grasp
@@ -136,6 +136,7 @@ hallways:
     conn_method: auto
     is_open: True
     is_locked: False
+    color: "#666666"
 
   - room_start: bathroom
     room_end: bedroom
@@ -145,6 +146,7 @@ hallways:
     offset: 0.8
     is_open: True
     is_locked: False
+    color: "dimgray"
 
   - room_start: kitchen
     room_end: bedroom

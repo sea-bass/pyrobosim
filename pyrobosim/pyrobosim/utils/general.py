@@ -112,8 +112,12 @@ def parse_color(color):
     :return: RGB tuple in range (0.0, 1.0).
     :rtype: tuple[float, float, float]
     """
-    if isinstance(color, (list, tuple)) and len(color) == 3:
-        return tuple(color)
+    if isinstance(color, (list, tuple)):
+        if len(color) == 3:
+            return tuple(color)
+        raise ValueError(
+            "Incorrect number of elements. RGB color must have exactly 3 elements."
+        )
 
     if isinstance(color, str):
         if color in CSS4_COLORS:
@@ -123,8 +127,8 @@ def parse_color(color):
         if re.match(hex_pattern, color):
             return to_rgb(color)
 
-        raise ValueError(f"Invalid color string or hex: {color}")
+        raise ValueError(f"Invalid color name or hexadecimal value: {color}.")
 
     raise ValueError(
-        f"Unsupported color format. Supported types are list[float] and string"
+        "Unsupported input type. Expected a list, tuple, or string representing a color."
     )

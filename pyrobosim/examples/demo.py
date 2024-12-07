@@ -52,9 +52,7 @@ def create_world(multirobot=False):
 
     # Add hallways between the rooms
     world.add_hallway(
-        room_start="kitchen",
-        room_end="bathroom",
-        width=0.7,
+        room_start="kitchen", room_end="bathroom", width=0.7, color="#666666"
     )
     world.add_hallway(
         room_start="bathroom",
@@ -63,6 +61,7 @@ def create_world(multirobot=False):
         conn_method="angle",
         conn_angle=0,
         offset=0.8,
+        color="dimgray",
     )
     world.add_hallway(
         room_start="kitchen",
@@ -122,6 +121,7 @@ def create_world(multirobot=False):
         ),
         grasp_generator=GraspGenerator(grasp_props),
         partial_observability=args.partial_observability,
+        color="#CC00CC",
     )
     planner_config_rrt = {
         "world": world,

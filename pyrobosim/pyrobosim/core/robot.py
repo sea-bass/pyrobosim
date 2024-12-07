@@ -13,6 +13,7 @@ from ..utils.knowledge import query_to_entity
 from ..utils.logging import create_logger
 from ..utils.polygon import sample_from_polygon, transform_polygon
 from ..utils.pose import Pose
+from ..utils.general import parse_color
 
 
 class Robot:
@@ -47,8 +48,13 @@ class Robot:
         :type radius: float, optional
         :param height: Robot height, in meters.
         :type height: float, optional
-        :param color: Robot color, as an RGB tuple or string.
-        :type color: tuple[float] / str, optional
+        :param color: Visualization color.
+         Input can be:
+
+         - an (R, G, B) tuple or list in the range (0.0, 1.0).
+         - a string (e.g., "red").
+         - a hexadecimal string (e.g., "#FF0000").
+        :type color: list[float] | tuple[float, float, float] | str
         :param max_linear_velocity: The maximum linear velocity magnitude, in m/s.
         :type max_linear_velocity: float
         :param max_angular_velocity: The maximum angular velocity magnitude, in rad/s.
@@ -78,7 +84,7 @@ class Robot:
         self.name = name
         self.radius = radius
         self.height = height
-        self.color = color
+        self.color = parse_color(color)
 
         if name == "world":
             raise ValueError("Robots cannot be named 'world'.")
