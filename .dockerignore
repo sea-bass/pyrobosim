@@ -1,7 +1,6 @@
 # Files and folders that don't need to be in the Docker build context.
 dependencies/
 docker/Dockerfile
-docs/
 test/results/
 
 # Metadata that doesn't need to be in the Docker build context.
