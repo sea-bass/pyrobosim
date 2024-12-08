@@ -40,7 +40,7 @@ class Pose:
         :param q: Quaternion, specified at [qw, qx, qy, qz]
             If specified, will override roll/pitch/yaw values.
         :type q: list[float]
-        :param angle_units: Units for angle ('radians' or `degrees`). Default is 'radians'
+        :param angle_units: Units for angle (`radians` or `degrees`). Default is `radians`
         :type angle_units: str
         """
         if angle_units not in ("radians", "degrees"):
@@ -73,7 +73,7 @@ class Pose:
 
         :param plist: List containing the input pose (see format above).
         :type plist: list[float]
-        :param angle_units: Units for angle ('radians' or `degrees`). Default is 'radians'
+        :param angle_units: Units for angle (`radians` or `degrees`). Default is `radians`
         :type angle_units: str
         :return: Pose object
         :rtype: :class:`pyrobosim.utils.pose.Pose`
@@ -148,7 +148,7 @@ class Pose:
 
         :param pose_dict: A pose dictionary.
         :type pose_dict: dict[str, Any]
-        :param angle_units: Units for angle ('radians' or `degrees`). Default is 'radians'
+        :param angle_units: Units for angle (`radians` or `degrees`). Default is `radians`
         :type angle_units: str
         :return: Pose object
         :rype: :class:`pyrobosim.utils.pose.Pose`
@@ -188,7 +188,7 @@ class Pose:
 
         :param data: The input data describing the pose.
         :type data: dict[str, Any] or list or :class:`numpy.ndarray`
-        :param angle_units: Units for angle ('radians' or `degrees`). Default is 'radians'
+        :param angle_units: Units for angle (`radians` or `degrees`). Default is `radians`
         :type angle_units: str
         :return: Pose object
         :rype: :class:`pyrobosim.utils.pose.Pose`
