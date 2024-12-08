@@ -11,7 +11,17 @@ from transforms3d.quaternions import mat2quat, nearly_equivalent, qnorm, quat2ma
 class Pose:
     """Represents a 3D pose."""
 
-    def __init__(self, x=0.0, y=0.0, z=0.0, roll=0.0, pitch=0.0, yaw=0.0, q=None):
+    def __init__(
+        self,
+        x=0.0,
+        y=0.0,
+        z=0.0,
+        roll=0.0,
+        pitch=0.0,
+        yaw=0.0,
+        q=None,
+        angle_units="radians",
+    ):
         """
         Creates a new Pose object.
 
@@ -21,19 +31,28 @@ class Pose:
         :type y: float
         :param z: Z position
         :type z: float
-        :param roll: Roll angle (about X axis), in radians
+        :param roll: Roll angle (about X axis), in specified angle units
         :type roll: float
-        :param pitch: Pitch angle (about Y axis), in radians
+        :param pitch: Pitch angle (about Y axis), in specified angle units
         :type pitch: float
-        :param yaw: Yaw angle (about Z axis), in radians
+        :param yaw: Yaw angle (about Z axis), in specified angle units
         :type yaw: float
         :param q: Quaternion, specified at [qw, qx, qy, qz]
             If specified, will override roll/pitch/yaw values.
         :type q: list[float]
+        :param angle_units: Units for angle ('radians' or `degrees`). Default is 'radians'
+        :type angle_units: str
         """
+        if angle_units not in ("radians", "degrees"):
+            raise ValueError("Angles should be either in 'radians' or 'degrees'.")
+
         self.x = x
         self.y = y
         self.z = z
+        self.angle_units = angle_units
+
+        if self.angle_units == "degrees":
+            roll, pitch, yaw = map(math.radians, [roll, pitch, yaw])
 
         if q is not None:
             self.set_quaternion(q)
@@ -41,7 +60,7 @@ class Pose:
             self.set_euler_angles(roll, pitch, yaw)
 
     @classmethod
-    def from_list(cls, plist):
+    def from_list(cls, plist, angle_units="radians"):
         """
         Creates a pose from a list. The assumptions are:
 
@@ -54,6 +73,8 @@ class Pose:
 
         :param plist: List containing the input pose (see format above).
         :type plist: list[float]
+        :param angle_units: Units for angle ('radians' or `degrees`). Default is 'radians'
+        :type angle_units: str
         :return: Pose object
         :rtype: :class:`pyrobosim.utils.pose.Pose`
         """
@@ -64,7 +85,13 @@ class Pose:
         elif num_elems == 3:
             return cls(x=plist[0], y=plist[1], z=plist[2])
         elif num_elems == 4:
-            return cls(x=plist[0], y=plist[1], z=plist[2], yaw=plist[3])
+            return cls(
+                x=plist[0],
+                y=plist[1],
+                z=plist[2],
+                yaw=plist[3],
+                angle_units=angle_units,
+            )
         elif num_elems == 6:
             return cls(
                 x=plist[0],
@@ -73,6 +100,7 @@ class Pose:
                 roll=plist[3],
                 pitch=plist[4],
                 yaw=plist[5],
+                angle_units=angle_units,
             )
         elif num_elems == 7:
             return cls(x=plist[0], y=plist[1], z=plist[2], q=plist[3:])
@@ -94,7 +122,7 @@ class Pose:
         )
 
     @classmethod
-    def from_dict(cls, pose_dict):
+    def from_dict(cls, pose_dict, angle_units="radians"):
         """
         Creates a pose from a dictionary.
 
@@ -120,6 +148,8 @@ class Pose:
 
         :param pose_dict: A pose dictionary.
         :type pose_dict: dict[str, Any]
+        :param angle_units: Units for angle ('radians' or `degrees`). Default is 'radians'
+        :type angle_units: str
         :return: Pose object
         :rype: :class:`pyrobosim.utils.pose.Pose`
         """
@@ -148,23 +178,26 @@ class Pose:
                     "roll": eul.get("roll", 0.0),
                 }
             )
+        args["angle_units"] = angle_units
         return cls(**args)
 
     @classmethod
-    def construct(self, data):
+    def construct(self, data, angle_units="radians"):
         """
         Constructs a pose object from any of the allowable input types.
 
         :param data: The input data describing the pose.
         :type data: dict[str, Any] or list or :class:`numpy.ndarray`
+        :param angle_units: Units for angle ('radians' or `degrees`). Default is 'radians'
+        :type angle_units: str
         :return: Pose object
         :rype: :class:`pyrobosim.utils.pose.Pose`
         raises ValueError: if the input data type is unsupported.
         """
         if isinstance(data, list):
-            return Pose.from_list(data)
+            return Pose.from_list(data, angle_units)
         elif isinstance(data, dict):
-            return Pose.from_dict(data)
+            return Pose.from_dict(data, angle_units)
         elif isinstance(data, np.ndarray):
             return Pose.from_transform(data)
         else:
