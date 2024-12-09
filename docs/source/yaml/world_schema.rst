@@ -29,6 +29,7 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
            y: <y>
          rotation_eul:
            yaw: <yaw>
+         angle_units: <units> # Units can be Radians or Degrees
        initial_battery_level: 50.0
        # Dynamics limits
        max_linear_velocity: <value>
@@ -121,5 +122,5 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
            y: <y>
            z: <z>
 
-Note that you can use both Euler angles and quaternions to specify poses.
+Note that you can use both Euler angles and quaternions to specify poses. If using Euler angles, you can specify angle either in radians or degrees.
 Any unspecified values will default to ``0.0``.
