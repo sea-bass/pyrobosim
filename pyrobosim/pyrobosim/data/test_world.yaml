@@ -139,7 +139,8 @@ locations:
         x: 0.85
         y: -0.5
       rotation_eul:
-        yaw: -1.57
+        yaw: -90.0
+      angle_units: "degrees"
     is_open: True
     is_locked: True
 
@@ -161,7 +162,8 @@ locations:
         x: -2.45
         y: 2.5
       rotation_eul:
-        yaw: 1.767
+        yaw: 101.2
+      angle_units: "degrees"
     is_open: True
     is_locked: True
 
@@ -173,7 +175,9 @@ locations:
         x: 0.9
         y: 1.1
       rotation_eul:
-        yaw: 1.57
+        yaw: 90.0
+      angle_units: "degrees"
+
     is_open: False
     is_locked: False
 
@@ -187,7 +191,8 @@ objects:
         x: 1.0
         y: -0.5
       rotation_eul:
-        yaw: 0.707
+        yaw: 40.5
+      angle_units: "degrees"
 
   - category: apple
     parent: my_desk

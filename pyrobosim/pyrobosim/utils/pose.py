@@ -11,7 +11,17 @@ from transforms3d.quaternions import mat2quat, nearly_equivalent, qnorm, quat2ma
 class Pose:
     """Represents a 3D pose."""
 
-    def __init__(self, x=0.0, y=0.0, z=0.0, roll=0.0, pitch=0.0, yaw=0.0, q=None):
+    def __init__(
+        self,
+        x=0.0,
+        y=0.0,
+        z=0.0,
+        roll=0.0,
+        pitch=0.0,
+        yaw=0.0,
+        q=None,
+        angle_units="radians",
+    ):
         """
         Creates a new Pose object.
 
@@ -21,15 +31,17 @@ class Pose:
         :type y: float
         :param z: Z position
         :type z: float
-        :param roll: Roll angle (about X axis), in radians
+        :param roll: Roll angle (about X axis), in specified angle units
         :type roll: float
-        :param pitch: Pitch angle (about Y axis), in radians
+        :param pitch: Pitch angle (about Y axis), in specified angle units
         :type pitch: float
-        :param yaw: Yaw angle (about Z axis), in radians
+        :param yaw: Yaw angle (about Z axis), in specified angle units
         :type yaw: float
         :param q: Quaternion, specified at [qw, qx, qy, qz]
             If specified, will override roll/pitch/yaw values.
         :type q: list[float]
+        :param angle_units: Units for angle ('radians' or 'degrees'). Default is 'radians'
+        :type angle_units: str
         """
         self.x = x
         self.y = y
@@ -37,8 +49,20 @@ class Pose:
 
         if q is not None:
             self.set_quaternion(q)
-        else:
-            self.set_euler_angles(roll, pitch, yaw)
+            return
+
+        if angle_units not in ("radians", "degrees"):
+            raise ValueError(
+                "Invalid angle units provided. It should be either 'radians' or 'degrees'."
+                "Additionally, if 'q' is provided, angle units are ignored."
+            )
+
+        self.angle_units = angle_units
+
+        if self.angle_units == "degrees":
+            roll, pitch, yaw = map(math.radians, [roll, pitch, yaw])
+
+        self.set_euler_angles(roll, pitch, yaw)
 
     @classmethod
     def from_list(cls, plist):
@@ -64,7 +88,12 @@ class Pose:
         elif num_elems == 3:
             return cls(x=plist[0], y=plist[1], z=plist[2])
         elif num_elems == 4:
-            return cls(x=plist[0], y=plist[1], z=plist[2], yaw=plist[3])
+            return cls(
+                x=plist[0],
+                y=plist[1],
+                z=plist[2],
+                yaw=plist[3],
+            )
         elif num_elems == 6:
             return cls(
                 x=plist[0],
@@ -115,6 +144,7 @@ class Pose:
              x: 0.0
              y: -0.7071
              z: 0.0
+           angle_units: "radians"
 
         Note that the ``rotation_quat`` key overrides the `rotation_eul` key.
 
@@ -125,7 +155,12 @@ class Pose:
         """
 
         pos = pose_dict.get("position", {})
-        args = {"x": pos.get("x", 0.0), "y": pos.get("y", 0.0), "z": pos.get("z", 0.0)}
+        args = {
+            "x": pos.get("x", 0.0),
+            "y": pos.get("y", 0.0),
+            "z": pos.get("z", 0.0),
+        }
+        args["angle_units"] = pose_dict.get("angle_units", "radians")
 
         quat = pose_dict.get("rotation_quat")
         eul = pose_dict.get("rotation_eul")
