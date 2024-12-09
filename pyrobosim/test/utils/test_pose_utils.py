@@ -45,7 +45,7 @@ def test_pose_from_position():
     "angle_units, roll, pitch, yaw, expected_euler",
     [
         ("radians", np.pi / 2, 0.0, -np.pi / 2, [np.pi / 2, 0.0, -np.pi / 2]),
-        ("degrees", 90, 0, -90, [np.pi / 2, 0.0, -np.pi / 2]),
+        ("degrees", 90.0, 0.0, -90.0, [np.pi / 2, 0.0, -np.pi / 2]),
     ],
 )
 def test_pose_from_euler_angles(angle_units, roll, pitch, yaw, expected_euler):
@@ -81,8 +81,8 @@ def test_pose_from_lists():
     assert pose.y == pytest.approx(2.0)
     assert pose.z == pytest.approx(3.0)
 
-    # 4-element lists should be [x, y, z, yaw], angle_units in radians
-    pose = Pose.from_list([1.0, 2.0, 3.0, np.pi / 2], "radians")
+    # 4-element lists should be [x, y, z, yaw]
+    pose = Pose.from_list([1.0, 2.0, 3.0, np.pi / 2])
     assert pose.x == pytest.approx(1.0)
     assert pose.y == pytest.approx(2.0)
     assert pose.z == pytest.approx(3.0)
@@ -90,32 +90,14 @@ def test_pose_from_lists():
     assert pose.q == pytest.approx([np.sqrt(2) / 2, 0.0, 0.0, np.sqrt(2) / 2])
     assert pose.angle_units == "radians"
 
-    # 4-element lists should be [x, y, z, yaw], angle_units in degrees
-    pose = Pose.from_list([1.0, 2.0, 3.0, 90], "degrees")
-    assert pose.x == pytest.approx(1.0)
-    assert pose.y == pytest.approx(2.0)
-    assert pose.z == pytest.approx(3.0)
-    assert pose.eul == pytest.approx([0.0, 0.0, np.pi / 2])
-    assert pose.q == pytest.approx([np.sqrt(2) / 2, 0.0, 0.0, np.sqrt(2) / 2])
-    assert pose.angle_units == "degrees"
-
-    # 6-element lists should be [x, y, z, roll, pitch, yaw], angle_units in radians
-    pose = Pose.from_list([1.0, 2.0, 3.0, np.pi / 2, 0.0, -np.pi / 2], "radians")
+    # 6-element lists should be [x, y, z, roll, pitch, yaw]
+    pose = Pose.from_list([1.0, 2.0, 3.0, np.pi / 2, 0.0, -np.pi / 2])
     assert pose.x == pytest.approx(1.0)
     assert pose.y == pytest.approx(2.0)
     assert pose.z == pytest.approx(3.0)
     assert pose.eul == pytest.approx([np.pi / 2, 0.0, -np.pi / 2])
     assert pose.q == pytest.approx([0.5, 0.5, 0.5, -0.5])
     assert pose.angle_units == "radians"
-
-    # 6-element lists should be [x, y, z, roll, pitch, yaw], angle_units in degrees
-    pose = Pose.from_list([1.0, 2.0, 3.0, 90, 0.0, -90], "degrees")
-    assert pose.x == pytest.approx(1.0)
-    assert pose.y == pytest.approx(2.0)
-    assert pose.z == pytest.approx(3.0)
-    assert pose.eul == pytest.approx([np.pi / 2, 0.0, -np.pi / 2])
-    assert pose.q == pytest.approx([0.5, 0.5, 0.5, -0.5])
-    assert pose.angle_units == "degrees"
 
     # 7-element lists should be [x, y, z, qw, qx, qy, qz]
     pose = Pose.from_list([1.0, 2.0, 3.0, 0.5, 0.5, 0.5, -0.5])
@@ -133,8 +115,9 @@ def test_pose_from_lists():
     # Invalid angle_units raise an exception
     with pytest.raises(ValueError) as exc_info:
         Pose(angle_units="notavalidangle")
-    assert (
-        exc_info.value.args[0] == "Angles should be either in 'radians' or 'degrees'."
+    assert exc_info.value.args[0] == (
+        "Invalid angle units provided. It should be either 'radians' or 'degrees'."
+        "Additionally, if 'q' is provided, angle units are ignored."
     )
 
 
@@ -157,48 +140,56 @@ def test_pose_from_transform():
     assert pose.q == pytest.approx([0.5, 0.5, 0.5, -0.5])
 
 
-def test_pose_to_from_dict_angle_in_radians():
+@pytest.mark.parametrize(
+    "angle_units, angle_value, expected_eul, expected_q",
+    [
+        (
+            "radians",
+            np.pi / 2,
+            [-np.pi / 2, np.pi / 4, np.pi / 2],
+            [0.707107, -0.707107, 0.0, 0.0],
+        ),
+        (
+            "degrees",
+            90.0,
+            [-np.pi / 2, np.pi / 4, np.pi / 2],
+            [0.707107, -0.707107, 0.0, 0.0],
+        ),
+    ],
+)
+def test_pose_to_from_dict(angle_units, angle_value, expected_eul, expected_q):
     """Test creating poses using a dictionary and saving them back out."""
     pose_dict = {}
-    pose = Pose.from_dict(pose_dict, "radians")
+    pose = Pose.from_dict(pose_dict)
     assert pose.x == pytest.approx(0.0)
     assert pose.y == pytest.approx(0.0)
     assert pose.z == pytest.approx(0.0)
     assert pose.eul == pytest.approx([0.0, 0.0, 0.0])
     assert pose.q == pytest.approx([1.0, 0.0, 0.0, 0.0])
-    assert pose.angle_units == "radians"
 
     pose_dict = {
         "position": {"x": 1.0, "y": 2.0, "z": 3.0},
         "rotation_eul": {
-            "yaw": np.pi / 2.0,
-            "pitch": np.pi / 4.0,
-            "roll": -np.pi / 2.0,
+            "yaw": angle_value,
+            "pitch": angle_value / 2,
+            "roll": -angle_value,
         },
+        "angle_units": angle_units,
     }
-    pose = Pose.from_dict(pose_dict, angle_units="radians")
+    pose = Pose.from_dict(pose_dict)
     assert pose.x == pytest.approx(1.0)
     assert pose.y == pytest.approx(2.0)
     assert pose.z == pytest.approx(3.0)
-    assert pose.eul == pytest.approx([-np.pi / 2.0, np.pi / 4.0, np.pi / 2.0])
-    assert pose.angle_units == "radians"
+    assert pose.eul == pytest.approx(expected_eul)
+    assert pose.angle_units == angle_units
 
-    pose_dict = {
-        "position": {"x": 1.0, "y": 2.0, "z": 3.0},
-        "rotation_eul": {
-            "yaw": np.pi / 2.0,
-            "pitch": np.pi / 4.0,
-            "roll": -np.pi / 2.0,
-        },
-        "rotation_quat": {"w": 0.707107, "x": -0.707107, "y": 0.0, "z": 0.0},
-    }
-    pose = Pose.from_dict(pose_dict, angle_units="radians")
+    pose_dict["rotation_quat"] = {"w": 0.707107, "x": -0.707107, "y": 0.0, "z": 0.0}
+    pose = Pose.from_dict(pose_dict)
     assert pose.x == pytest.approx(1.0)
     assert pose.y == pytest.approx(2.0)
     assert pose.z == pytest.approx(3.0)
-    assert pose.eul == pytest.approx([-np.pi / 2.0, 0.0, 0.0])
-    assert pose.q == pytest.approx([0.707107, -0.707107, 0.0, 0.0])
-    assert pose.angle_units == "radians"
+    assert pose.eul == pytest.approx([-np.pi / 2, 0.0, 0.0])
+    assert pose.q == pytest.approx(expected_q)
 
     out_dict = pose.to_dict()
     assert "position" in out_dict
@@ -221,121 +212,47 @@ def test_pose_to_from_dict_angle_in_radians():
     assert quat["z"] == pytest.approx(0.0)
 
 
-def test_pose_to_from_dict_angle_in_degrees():
-    """Test creating poses using a dictionary and saving them back out."""
-    pose_dict = {}
-    pose = Pose.from_dict(pose_dict, angle_units="degrees")
-    assert pose.x == pytest.approx(0.0)
-    assert pose.y == pytest.approx(0.0)
-    assert pose.z == pytest.approx(0.0)
-    assert pose.eul == pytest.approx([0.0, 0.0, 0.0])
-    assert pose.q == pytest.approx([1.0, 0.0, 0.0, 0.0])
-    assert pose.angle_units == "degrees"
-
-    pose_dict = {
-        "position": {"x": 1.0, "y": 2.0, "z": 3.0},
-        "rotation_eul": {
-            "yaw": 90,
-            "pitch": 45,
-            "roll": -90,
-        },
-    }
-    pose = Pose.from_dict(pose_dict, angle_units="degrees")
-    assert pose.x == pytest.approx(1.0)
-    assert pose.y == pytest.approx(2.0)
-    assert pose.z == pytest.approx(3.0)
-    assert pose.eul == pytest.approx([-np.pi / 2.0, np.pi / 4.0, np.pi / 2.0])
-    assert pose.angle_units == "degrees"
-
-    pose_dict = {
-        "position": {"x": 1.0, "y": 2.0, "z": 3.0},
-        "rotation_eul": {
-            "yaw": 90,
-            "pitch": 45,
-            "roll": -90,
-        },
-        "rotation_quat": {"w": 0.707107, "x": -0.707107, "y": 0.0, "z": 0.0},
-    }
-    pose = Pose.from_dict(pose_dict, angle_units="degrees")
-    assert pose.x == pytest.approx(1.0)
-    assert pose.y == pytest.approx(2.0)
-    assert pose.z == pytest.approx(3.0)
-    assert pose.eul == pytest.approx([-np.pi / 2.0, 0.0, 0.0])
-    assert pose.q == pytest.approx([0.707107, -0.707107, 0.0, 0.0])
-    assert pose.angle_units == "degrees"
-
-    out_dict = pose.to_dict()
-    assert "position" in out_dict
-    pos = out_dict["position"]
-    assert "x" in pos
-    assert pos["x"] == pytest.approx(1.0)
-    assert "y" in pos
-    assert pos["y"] == pytest.approx(2.0)
-    assert "z" in pos
-    assert pos["z"] == pytest.approx(3.0)
-    assert "rotation_quat" in out_dict
-    quat = out_dict["rotation_quat"]
-    assert "w" in quat
-    assert quat["w"] == pytest.approx(0.707107)
-    assert "x" in quat
-    assert quat["x"] == pytest.approx(-0.707107)
-    assert "y" in quat
-    assert quat["y"] == pytest.approx(0.0)
-    assert "z" in quat
-    assert quat["z"] == pytest.approx(0.0)
-
-
-def test_construct_pose_angle_in_radians():
-    """Test pose construct function that accepts various types."""
-    pose_from_list = Pose.construct([1.0, 2.0, 3.0, np.pi / 2.0], "radians")
-
+@pytest.mark.parametrize(
+    "angle_units, angle_value, expected_tform",
+    [
+        (
+            "radians",
+            np.pi / 2,
+            np.array(
+                [
+                    [0.0, -1.0, 0.0, 1.0],
+                    [1.0, 0.0, 0.0, 2.0],
+                    [0.0, 0.0, 1.0, 3.0],
+                    [0.0, 0.0, 0.0, 1.0],
+                ]
+            ),
+        ),
+        (
+            "degrees",
+            90.0,
+            np.array(
+                [
+                    [0.0, -1.0, 0.0, 1.0],
+                    [1.0, 0.0, 0.0, 2.0],
+                    [0.0, 0.0, 1.0, 3.0],
+                    [0.0, 0.0, 0.0, 1.0],
+                ]
+            ),
+        ),
+    ],
+)
+def test_construct_pose(angle_units, angle_value, expected_tform):
+    """Test pose construct function that accepts various types"""
+    pose_from_list = Pose.construct([1.0, 2.0, 3.0, np.pi / 2])
     pose_from_dict = Pose.construct(
         {
             "position": {"x": 1.0, "y": 2.0, "z": 3.0},
-            "rotation_eul": {"yaw": np.pi / 2.0},
-        },
-        "radians",
+            "rotation_eul": {"yaw": angle_value},
+            "angle_units": angle_units,
+        }
     )
 
-    tform = np.array(
-        [
-            [0.0, -1.0, 0.0, 1.0],
-            [1.0, 0.0, 0.0, 2.0],
-            [0.0, 0.0, 1.0, 3.0],
-            [0.0, 0.0, 0.0, 1.0],
-        ]
-    )
-    pose_from_tform = Pose.construct(tform)
-
-    assert pose_from_list.is_approx(pose_from_dict)
-    assert pose_from_dict.is_approx(pose_from_tform)
-
-    with pytest.raises(ValueError) as exc_info:
-        Pose.construct(42)
-    assert exc_info.value.args[0] == "Cannot construct pose from object of type int."
-
-
-def test_construct_pose_angle_in_degrees():
-    """Test pose construct function that accepts various types."""
-    pose_from_list = Pose.construct([1.0, 2.0, 3.0, 90], "degrees")
-
-    pose_from_dict = Pose.construct(
-        {
-            "position": {"x": 1.0, "y": 2.0, "z": 3.0},
-            "rotation_eul": {"yaw": 90},
-        },
-        "degrees",
-    )
-
-    tform = np.array(
-        [
-            [0.0, -1.0, 0.0, 1.0],
-            [1.0, 0.0, 0.0, 2.0],
-            [0.0, 0.0, 1.0, 3.0],
-            [0.0, 0.0, 0.0, 1.0],
-        ]
-    )
-    pose_from_tform = Pose.construct(tform)
+    pose_from_tform = Pose.construct(expected_tform)
 
     assert pose_from_list.is_approx(pose_from_dict)
     assert pose_from_dict.is_approx(pose_from_tform)
@@ -396,9 +313,9 @@ def test_get_angular_distance():
             1.0,
             2.0,
             3.0,
-            90,
+            90.0,
             0.0,
-            -90,
+            -90.0,
             "degrees",
             np.array(
                 [
@@ -482,15 +399,21 @@ def test_get_matrices(x, y, z, roll, pitch, yaw, angle_units, expected_tform):
         ),
         (
             Pose(
-                x=1.0, y=2.0, z=3.0, roll=90, pitch=0.0, yaw=-90, angle_units="degrees"
+                x=1.0,
+                y=2.0,
+                z=3.0,
+                roll=90.0,
+                pitch=0.0,
+                yaw=-90.0,
+                angle_units="degrees",
             ),
             Pose(
                 x=1.0 + 1e-4,
                 y=2.0,
                 z=3.0,
-                roll=90,
+                roll=90.0,
                 pitch=1e-4,
-                yaw=-90,
+                yaw=-90.0,
                 angle_units="degrees",
             ),
             1e-3,
@@ -499,15 +422,21 @@ def test_get_matrices(x, y, z, roll, pitch, yaw, angle_units, expected_tform):
         ),
         (
             Pose(
-                x=1.0, y=2.0, z=3.0, roll=90, pitch=0.0, yaw=-90, angle_units="degrees"
+                x=1.0,
+                y=2.0,
+                z=3.0,
+                roll=90.0,
+                pitch=0.0,
+                yaw=-90.0,
+                angle_units="degrees",
             ),
             Pose(
                 x=1.0 + 1e-4,
                 y=2.0,
                 z=3.0,
-                roll=90,
+                roll=90.0,
                 pitch=1e-4,
-                yaw=-90,
+                yaw=-90.0,
                 angle_units="degrees",
             ),
             1e-5,
