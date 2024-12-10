@@ -57,9 +57,7 @@ class Pose:
                 "Additionally, if 'q' is provided, angle units are ignored."
             )
 
-        self.angle_units = angle_units
-
-        if self.angle_units == "degrees":
+        if angle_units == "degrees":
             roll, pitch, yaw = map(math.radians, [roll, pitch, yaw])
 
         self.set_euler_angles(roll, pitch, yaw)
@@ -160,7 +158,6 @@ class Pose:
             "y": pos.get("y", 0.0),
             "z": pos.get("z", 0.0),
         }
-        args["angle_units"] = pose_dict.get("angle_units", "radians")
 
         quat = pose_dict.get("rotation_quat")
         eul = pose_dict.get("rotation_eul")
@@ -181,6 +178,7 @@ class Pose:
                     "yaw": eul.get("yaw", 0.0),
                     "pitch": eul.get("pitch", 0.0),
                     "roll": eul.get("roll", 0.0),
+                    "angle_units": pose_dict.get("angle_units", "radians"),
                 }
             )
         return cls(**args)
