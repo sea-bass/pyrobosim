@@ -29,7 +29,7 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
            y: <y>
          rotation_eul:
            yaw: <yaw>
-         angle_units: <units> # Units can be Radians or Degrees
+           angle_units: <units>  # Can be "radians" (default) or "degrees"
        initial_battery_level: 50.0
        # Dynamics limits
        max_linear_velocity: <value>
@@ -74,7 +74,7 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
          - ...
          - [<xN>, <yN>, <zN>, <yawN>]
        wall_width: <value>
-       color: [<r>, <g>, <b>]
+       color: [<r>, <g>, <b>] or <"color_name"> or <"hexadecimalcode">
      - ...
      - ...
 
@@ -101,6 +101,7 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
           y: <y>
         rotation_eul:
           yaw: <yaw>
+          angle_units: <units>  # Can be "radians" (default) or "degrees"
        is_open: true  # Can only pick, place, and detect if open
        is_locked: true  # Can only open and close if unlocked
        is_charger: false  # Robots can charge at this location
@@ -122,5 +123,6 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
            y: <y>
            z: <z>
 
-Note that you can use both Euler angles and quaternions to specify poses. If using Euler angles, you can specify angle either in radians or degrees.
+Note that you can use both Euler angles and quaternions to specify poses.
+If specifying rotation using Euler angles, you can specify angle either in radians or degrees.
 Any unspecified values will default to ``0.0``.
