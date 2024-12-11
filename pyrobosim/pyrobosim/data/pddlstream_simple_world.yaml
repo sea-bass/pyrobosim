@@ -126,7 +126,7 @@ locations:
         y: -0.5
       rotation_eul:
         yaw: -90.0
-      angle_units: "degrees"
+        angle_units: "degrees"
     is_open: True
     is_locked: True
 
@@ -147,7 +147,7 @@ locations:
         y: 2.5
       rotation_eul:
         yaw: 101.2
-      angle_units: "degrees"
+        angle_units: "degrees"
     is_open: True
     is_locked: True
 
@@ -162,7 +162,7 @@ objects:
         y: -0.5
       rotation_eul:
         yaw: 40.5
-      angle_units: "degrees"
+        angle_units: "degrees"
 
   - category: apple
     parent: desk0
