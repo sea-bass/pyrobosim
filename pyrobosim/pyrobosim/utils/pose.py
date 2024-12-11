@@ -37,11 +37,11 @@ class Pose:
         :type pitch: float
         :param yaw: Yaw angle (about Z axis), in specified angle units
         :type yaw: float
+        :param angle_units: Units for angle ('radians' or 'degrees'). Default is 'radians'
+        :type angle_units: str
         :param q: Quaternion, specified at [qw, qx, qy, qz]
             If specified, will override roll/pitch/yaw values.
         :type q: list[float]
-        :param angle_units: Units for angle ('radians' or 'degrees'). Default is 'radians'
-        :type angle_units: str
         """
         self.x = x
         self.y = y
@@ -137,12 +137,12 @@ class Pose:
              yaw: 0.5
              pitch: 0.6
              roll: 0.7
+             angle_units: "radians"
            rotation_quat:
              w: 0.7071
              x: 0.0
              y: -0.7071
              z: 0.0
-           angle_units: "radians"
 
         Note that the ``rotation_quat`` key overrides the `rotation_eul` key.
 
@@ -178,7 +178,7 @@ class Pose:
                     "yaw": eul.get("yaw", 0.0),
                     "pitch": eul.get("pitch", 0.0),
                     "roll": eul.get("roll", 0.0),
-                    "angle_units": pose_dict.get("angle_units", "radians"),
+                    "angle_units": eul.get("angle_units", "radians"),
                 }
             )
         return cls(**args)

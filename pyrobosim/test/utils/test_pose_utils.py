@@ -167,8 +167,8 @@ def test_pose_to_from_dict(angle_units, angle_value):
             "yaw": angle_value,
             "pitch": angle_value / 2,
             "roll": -angle_value,
+            "angle_units": angle_units,
         },
-        "angle_units": angle_units,
     }
     pose = Pose.from_dict(pose_dict)
     assert pose.x == pytest.approx(1.0)
@@ -224,8 +224,7 @@ def test_construct_pose(angle_units, angle_value):
     pose_from_dict = Pose.construct(
         {
             "position": {"x": 1.0, "y": 2.0, "z": 3.0},
-            "rotation_eul": {"yaw": angle_value},
-            "angle_units": angle_units,
+            "rotation_eul": {"yaw": angle_value, "angle_units": angle_units},
         }
     )
 
