@@ -139,17 +139,7 @@ def test_pose_from_transform():
 
 
 @pytest.mark.parametrize(
-    "angle_units, angle_value",
-    [
-        (
-            "radians",
-            np.pi / 2,
-        ),
-        (
-            "degrees",
-            90.0,
-        ),
-    ],
+    "angle_units, angle_value", [("radians", np.pi / 2), ("degrees", 90.0)]
 )
 def test_pose_to_from_dict(angle_units, angle_value):
     """Test creating poses using a dictionary and saving them back out."""
@@ -206,17 +196,7 @@ def test_pose_to_from_dict(angle_units, angle_value):
 
 
 @pytest.mark.parametrize(
-    "angle_units, angle_value",
-    [
-        (
-            "radians",
-            np.pi / 2,
-        ),
-        (
-            "degrees",
-            90.0,
-        ),
-    ],
+    "angle_units, angle_value", [("radians", np.pi / 2), ("degrees", 90.0)]
 )
 def test_construct_pose(angle_units, angle_value):
     """Test pose construct function that accepts various types"""
