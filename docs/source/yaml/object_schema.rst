@@ -11,7 +11,7 @@ The generic object schema, where ``<angle brackets>`` are placeholders, is:
      footprint:
        type: <footprint_type>
        <property>: <footprint_property>
-     color: [<r>, <g>, <b>]
+     color: [<r>, <g>, <b>] or <"color_name"> or <"hexadecimalcode">
 
 Examples
 --------
@@ -35,7 +35,7 @@ A simple object with a box footprint.
        type: box            # Box footprint
        dims: [0.05, 0.2]    # 5 cm by 20 cm
        offset: [0.0, 0.1]   # 10 cm Y offset from origin
-     color: [0.7, 0.7, 0]   # Yellow
+     color: "yellow"   # Yellow
 
 An object with a generic polygon footprint.
 
@@ -64,4 +64,4 @@ Note that the literal ``$DATA`` resolves to the ``pyrobosim/data`` folder, but y
        type: mesh           # Geometry from mesh
        model_path: $DATA/sample_models/coke_can
        mesh_path: meshes/coke_can.dae
-     color: [0.8, 0, 0]     # Red color (for viewing in pyrobosim)
+     color: "#CC0000"     # Red color (for viewing in pyrobosim)
