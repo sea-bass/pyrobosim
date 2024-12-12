@@ -326,14 +326,14 @@ def test_is_approx_radians():
 def test_is_approx_degrees():
     """Test approximate equivalence functionality for pose in degrees"""
     pose1 = Pose(
-        x=1.0, y=2.0, z=3.0, roll=np.pi / 2, pitch=0.0, yaw=-90.0, angle_units="degrees"
+        x=1.0, y=2.0, z=3.0, roll=90.0, pitch=0.0, yaw=-90.0, angle_units="degrees"
     )
     pose2 = Pose(
         x=1.0 + 1e-4,
         y=2.0,
         z=3.0,
-        roll=np.pi / 2,
-        pitch=1e-4,
+        roll=90.0,
+        pitch=0.0057,
         yaw=-90.0,
         angle_units="degrees",
     )
