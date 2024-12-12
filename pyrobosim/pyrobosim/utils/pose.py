@@ -73,6 +73,7 @@ class Pose:
         * 6-element lists: ``[x, y, z, roll, pitch, yaw]``
         * 7-element lists: ``[x, y, z, qw, qx, qy, qz]``
         * other lengths: invalid
+        * angle units are always "radians"
 
         :param plist: List containing the input pose (see format above).
         :type plist: list[float]
