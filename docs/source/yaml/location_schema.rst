@@ -22,8 +22,8 @@ The generic location schema, where ``<angle brackets>`` are placeholders, is:
            x: <x2>
            y: <y2>
          rotation_quat:
-           w: 0.707
-           z: 0.707
+           w: <w1>
+           z: <z1>
        -  ...
        - position:
            x: <xN>
