@@ -12,9 +12,28 @@ The generic location schema, where ``<angle brackets>`` are placeholders, is:
        type: <footprint_type>
        <property>: <footprint_property>
      nav_poses:
-       - [<x1>, <y1>, <z1>, <yaw1>]
-       - ...
-       - [<xN>, <yN>, <zN>, <yawN>]
+       - position:
+           x: <x1>
+           y: <y1>
+         rotation_eul:
+           yaw: <yaw1>
+           angle_units: "degrees"
+       - position:
+           x: <x2>
+           y: <y2>
+         rotation_quat:
+           w: <w2>
+           x: <x2>
+           y: <y2>
+           z: <z2>
+       -  ...
+       - position:
+           x: <xN>
+           y: <yN>
+           z: <zN>
+         rotation_eul:
+           yaw: <yawN>
+           angle_units: <units>
      locations:
        - name: <location_name>
          footprint:
@@ -25,7 +44,7 @@ The generic location schema, where ``<angle brackets>`` are placeholders, is:
          footprint:
            type: <footprint_type>
            <property>: <footprint_property>
-     color: [<r>, <g>, <b>]
+     color: [<r>, <g>, <b>] or <"color_name"> or <"hexadecimalcode">
      is_open: True
      is_locked: False
      is_charger: False
@@ -87,7 +106,7 @@ A more complex object with a box footprint and two separate object spawns.
          nav_poses:
            - [0, 0.5, 0.0, -1.57]
            - [0, -0.5, 0.0, 1.57]
-     color: [0, 0.2, 0]        # Dark green
+     color: "#003300"        # Dark green
 
 A location with a footprint read from a mesh file.
 Note that the literal ``$DATA`` resolves to the ``pyrobosim/data`` folder, but you can specify an absolute path as well or create your own tokens.
