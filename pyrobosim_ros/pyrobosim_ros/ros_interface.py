@@ -421,7 +421,10 @@ class WorldROSWrapper(Node):
         )
 
         # Package up the result
-        goal_handle.succeed()
+        if goal_handle.is_cancel_requested:
+            goal_handle.canceled()
+        else:
+            goal_handle.succeed()
         return ExecuteTaskAction.Result(
             execution_result=execution_result_to_ros(execution_result)
         )
@@ -435,8 +438,14 @@ class WorldROSWrapper(Node):
         """
         robot = self.world.get_robot_by_name(goal_handle.request.action.robot)
         if robot is not None:
+            if not self.is_robot_busy(robot):
+                self.get_logger().info(
+                    f"Robot {robot.name} is not busy. Not canceling action."
+                )
+                return CancelResponse.REJECT
+
             self.get_logger().info(f"Canceling action for robot {robot.name}.")
-            robot.cancel_actions()
+            Thread(target=robot.cancel_actions).start()
         return CancelResponse.ACCEPT
 
     def plan_callback(self, goal_handle):
@@ -482,7 +491,10 @@ class WorldROSWrapper(Node):
         )
 
         # Package up the result
-        goal_handle.succeed()
+        if goal_handle.is_cancel_requested:
+            goal_handle.canceled()
+        else:
+            goal_handle.succeed()
         return ExecuteTaskPlan.Result(
             execution_result=execution_result_to_ros(execution_result),
             num_completed=num_completed,
@@ -498,8 +510,14 @@ class WorldROSWrapper(Node):
         """
         robot = self.world.get_robot_by_name(goal_handle.request.plan.robot)
         if robot is not None:
+            if not self.is_robot_busy(robot):
+                self.get_logger().info(
+                    f"Robot {robot.name} is not busy. Not canceling action."
+                )
+                return CancelResponse.REJECT
+
             self.get_logger().info(f"Canceling plan for robot {robot.name}.")
-            robot.cancel_actions()
+            Thread(target=robot.cancel_actions).start()
         return CancelResponse.ACCEPT
 
     def robot_path_plan_callback(self, goal_handle, robot=None):
@@ -652,7 +670,7 @@ class WorldROSWrapper(Node):
         :return: True if the robot is busy, else False.
         :rtype: bool
         """
-        return robot.executing_action or robot.executing_plan
+        return robot.executing_action or robot.executing_plan or robot.executing_nav
 
     def package_robot_state(self, robot):
         """
