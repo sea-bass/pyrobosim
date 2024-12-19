@@ -438,6 +438,12 @@ class WorldROSWrapper(Node):
         """
         robot = self.world.get_robot_by_name(goal_handle.request.action.robot)
         if robot is not None:
+            if not self.is_robot_busy(robot):
+                self.get_logger().info(
+                    f"Robot {robot.name} is not busy. Not canceling action."
+                )
+                return CancelResponse.REJECT
+
             self.get_logger().info(f"Canceling action for robot {robot.name}.")
             Thread(target=robot.cancel_actions).start()
         return CancelResponse.ACCEPT
@@ -504,6 +510,12 @@ class WorldROSWrapper(Node):
         """
         robot = self.world.get_robot_by_name(goal_handle.request.plan.robot)
         if robot is not None:
+            if not self.is_robot_busy(robot):
+                self.get_logger().info(
+                    f"Robot {robot.name} is not busy. Not canceling action."
+                )
+                return CancelResponse.REJECT
+
             self.get_logger().info(f"Canceling plan for robot {robot.name}.")
             Thread(target=robot.cancel_actions).start()
         return CancelResponse.ACCEPT
@@ -658,7 +670,7 @@ class WorldROSWrapper(Node):
         :return: True if the robot is busy, else False.
         :rtype: bool
         """
-        return robot.executing_action or robot.executing_plan
+        return robot.executing_action or robot.executing_plan or robot.executing_nav
 
     def package_robot_state(self, robot):
         """
