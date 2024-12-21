@@ -133,6 +133,7 @@ class AStarPlanner(AStar):
 
     def reset(self):
         """Resets the occupancy grid."""
+        self.latest_path = Path()
         self.grid = OccupancyGrid.from_world(
             self.world,
             resolution=self.grid_resolution,
