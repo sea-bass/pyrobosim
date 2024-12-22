@@ -340,12 +340,16 @@ def resolve_to_object(
             obj
             for obj in possible_objects
             if (
-                obj.parent == location
-                or obj.parent.name == location
-                or obj.parent.parent == location
-                or obj.parent.parent.name == location
-                or obj.parent.category == location
-                or obj.parent.parent.category == location
+                # Check whether the parent is a robot performing further checks
+                hasattr(obj.parent, "parent")
+                and (
+                    obj.parent == location
+                    or obj.parent.name == location
+                    or obj.parent.parent == location
+                    or obj.parent.parent.name == location
+                    or obj.parent.category == location
+                    or obj.parent.parent.category == location
+                )
             )
         ]
 
