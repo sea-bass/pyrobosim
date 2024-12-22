@@ -333,7 +333,7 @@ def resolve_to_object(
             obj
             for obj in possible_objects
             if (
-                # Check whether the parent is a robot before performing further checks
+                # Verify the object's parent is not a robot before performing further checks
                 hasattr(obj.parent, "parent")
                 and obj.parent.parent.parent.name == room_name
             )
@@ -344,7 +344,7 @@ def resolve_to_object(
             obj
             for obj in possible_objects
             if (
-                # Check whether the parent is a robot before performing further checks
+                # Verify the object's parent is not a robot before performing further checks
                 hasattr(obj.parent, "parent")
                 and (
                     obj.parent == location
