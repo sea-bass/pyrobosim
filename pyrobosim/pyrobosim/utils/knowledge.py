@@ -332,7 +332,11 @@ def resolve_to_object(
         possible_objects = [
             obj
             for obj in possible_objects
-            if obj.parent.parent.parent.name == room_name
+            if (
+                # Verify the object's parent is not a robot before performing further checks
+                hasattr(obj.parent, "parent")
+                and obj.parent.parent.parent.name == room_name
+            )
         ]
 
     if location is not None:
@@ -340,12 +344,16 @@ def resolve_to_object(
             obj
             for obj in possible_objects
             if (
-                obj.parent == location
-                or obj.parent.name == location
-                or obj.parent.parent == location
-                or obj.parent.parent.name == location
-                or obj.parent.category == location
-                or obj.parent.parent.category == location
+                # Verify the object's parent is not a robot before performing further checks
+                hasattr(obj.parent, "parent")
+                and (
+                    obj.parent == location
+                    or obj.parent.name == location
+                    or obj.parent.parent == location
+                    or obj.parent.parent.name == location
+                    or obj.parent.category == location
+                    or obj.parent.parent.category == location
+                )
             )
         ]
 
