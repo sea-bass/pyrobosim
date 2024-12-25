@@ -574,10 +574,10 @@ class TestRobot:
         # Run action and check that it failed due to being canceled.
         result = robot.execute_action(action)
         assert result.status == ExecutionStatus.CANCELED
-        
-        # We want to make sure the cancellation thread is finished 
-        # (cancel_actions has returned). 
-        # Consequently, we must give the thread some time to detect the 
+
+        # We want to make sure the cancellation thread is finished
+        # (cancel_actions has returned).
+        # Consequently, we must give the thread some time to detect the
         # correct lifetime status
         time.sleep(0.1)
         assert not cancel_thread.is_alive()
