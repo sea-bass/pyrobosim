@@ -946,12 +946,14 @@ class Robot:
             self.logger.warning("There is no running action or plan to cancel.")
             return
 
+        if self.executing_nav and self.path_executor is not None:
+            # Stop path executor
+            self.logger.info("Canceling path execution...")
+            self.path_executor.cancel_execution = True
+            while self.executing_nav:
+                time.sleep(0.1)
+
         if self.executing_action:
-            if self.executing_nav and self.path_executor is not None:
-                self.logger.info("Canceling path execution...")
-                self.path_executor.cancel_execution = True
-                while self.executing_nav:
-                    time.sleep(0.1)
             # Wait for execute_action to return
             while self.executing_action:
                 time.sleep(0.1)
