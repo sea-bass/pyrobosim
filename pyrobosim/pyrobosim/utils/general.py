@@ -35,23 +35,24 @@ def get_data_folder():
 class EntityMetadata:
     """Represents metadata about entities, such as locations or objects."""
 
-    def __init__(self, filename=None):
+    def __init__(self, filename=None, metadata_type=None):
         """
         Creates metadata from a YAML file.
 
         :param filename: Path to metadata YAML file.
         :type filename: str, optional
         """
+        self.sources = {"locations": [], "objects": []}
+        self.metadata_type = metadata_type
+        self.data = {}
+
         if filename:
             if not os.path.isfile(filename):
                 raise FileNotFoundError(f"Metadata filename not found: {filename}")
 
-            self.filename = filename
-            with open(self.filename) as file:
+            self.sources[self.metadata_type].append(filename)
+            with open(filename) as file:
                 self.data = yaml.load(file, Loader=yaml.FullLoader)
-        else:
-            self.filename = None
-            self.data = {}
 
     def has_category(self, category):
         """
@@ -75,32 +76,68 @@ class EntityMetadata:
         """
         return self.data.get(category, None)
 
+    def update(self, new_data, source=None):
+        """
+        Update the metadata with new data and add a source of this data.
+
+        :param new_data: New metadata to add.
+        :type new_data: dict
+        :param source: Source of new metadata
+        :type source: str, optional
+        """
+        if source is not None:
+            self.sources[self.metadata_type].append(source)
+
+        for key, value in new_data.items():
+            if key in self.data and self.data[key] != value:
+                raise MetadataConflictException(key, self.data[key], value, source)
+            self.data[key] = value
+
 
 class InvalidEntityCategoryException(Exception):
     """Raised when an invalid entity metadata category is used."""
 
 
+class MetadataConflictException(Exception):
+    """Raised when conflicts occurs in metadata"""
+
+    def __init__(self, key, old_value, new_value, source=None):
+        message = f"Conflict for key '{key}': existing value '{old_value}' conflicts with new value '{new_value}'"
+        if source:
+            message += f" from source '{source}'"
+        super().__init(message)
+
+
 def replace_special_yaml_tokens(in_text, root_dir=None):
     """
     Replaces special tokens permitted in our YAML specification.
-    If you want to add any other special tokens, you should do that here.
+    If you want to add any other special tokens, you should do that here
+    in process_text helper function.
 
-    :param in_text: Input YAML text.
-    :type in_text: str
+    :param in_text: Input YAML text or a list of YAML texts.
+    :type in_text: str or list[str]
     :param root_dir: Root directory for basing some tokens, uses the current directory if not specified.
     :type root_dir: str, optional
-    :return: YAML text with all special tokens substituted.
-    :rtype: str
+    :return: YAML text(s) with all special tokens substituted.
+    :rtype: str or list[str]
     """
-    out_text = in_text
-    out_text = out_text.replace("$HOME", os.environ["HOME"])
-    out_text = out_text.replace("$DATA", get_data_folder())
 
     if root_dir is None:
         root_dir = os.getcwd()
-    out_text = out_text.replace("$PWD", root_dir)
 
-    return out_text
+    def process_text(text):
+        """Helper function to replace tokens in a single metadata string."""
+        text = text.replace("$HOME", os.environ["HOME"])
+        text = text.replace("$DATA", get_data_folder())
+        text = text.replace("$PWD", root_dir)
+        return text
+
+    if isinstance(in_text, list):
+        out_text = [process_text(text) for text in in_text]
+        return out_text
+    if isinstance(in_text, str):
+        out_text = process_text(in_text)
+        return out_text
 
 
 def parse_color(color):

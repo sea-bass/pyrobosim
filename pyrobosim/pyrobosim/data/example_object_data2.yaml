@@ -1,0 +1,17 @@
+water:
+  footprint:
+    type: polygon
+    coords:
+      - [0.035, -0.075]
+      - [0.035, 0.075]
+      - [0.0, 0.1]
+      - [-0.035, 0.075]
+      - [-0.035, -0.075]
+  color: [0.0, 0.1, 0.7]
+
+coke:
+  footprint:
+    type: mesh
+    model_path: $DATA/sample_models/coke_can
+    mesh_path: meshes/coke_can.dae
+  color: [0.8, 0, 0]

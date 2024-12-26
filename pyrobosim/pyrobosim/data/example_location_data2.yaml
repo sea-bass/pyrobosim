@@ -1,0 +1,33 @@
+charger:
+  footprint:
+    type: polygon
+    coords:
+      - [-0.3, -0.15]
+      - [0.3, -0.15]
+      - [0.3, 0.15]
+      - [-0.3, 0.15]
+    height: 0.1
+  locations:
+    - name: "dock"
+      footprint:
+        type: parent
+      nav_poses:
+        - position:  # below
+            x: 0.0
+            y: -0.5
+          rotation_eul:
+            yaw: 1.57
+        - position:  # left
+            x: -0.35
+            y: 0.0
+        - position:  # above
+            x: 0.0
+            y: 0.5
+          rotation_eul:
+            yaw: -1.57
+        - position:  # right
+            x: 0.35
+            y: 0.0
+          rotation_eul:
+            yaw: 3.14
+  color: [0.4, 0.4, 0]

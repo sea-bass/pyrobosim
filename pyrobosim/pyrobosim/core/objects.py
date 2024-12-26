@@ -1,5 +1,6 @@
 """ Representations for objects that exist in the world. """
 
+import os
 import numpy as np
 from shapely.plotting import patch_from_polygon
 from scipy.spatial import ConvexHull
@@ -18,7 +19,7 @@ class Object:
     """Represents an object in the world."""
 
     # Default class attributes
-    metadata = EntityMetadata()
+    metadata = EntityMetadata(metadata_type="objects")
     """ Metadata for object categories. """
     height = 0.1
     """ Vertical height of object. """
@@ -34,6 +35,22 @@ class Object:
         :type filename: str
         """
         cls.metadata = EntityMetadata(filename)
+
+    @classmethod
+    def add_metadata(cls, filename):
+        """
+        Add metadata from a file to the :class:`pyrobosim.core.objects.Object` class.
+
+        :param filename: Path to object metadata YAML file.
+        :type filename: str
+        """
+        if not os.path.isfile(filename):
+            raise FileNotFoundError(f"Metadata file not found: {filename}")
+
+        new_metadata = EntityMetadata(filename=filename, metadata_type="objects")
+
+        # Update class-level metadata
+        cls.metadata.update(new_metadata.data, filename)
 
     def __init__(
         self,

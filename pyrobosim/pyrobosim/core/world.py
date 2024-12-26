@@ -58,7 +58,7 @@ class World:
         self.hallways = []
         self.locations = []
         self.objects = []
-        self.set_metadata()
+        self.add_metadata()
 
         # Counters
         self.num_rooms = 0
@@ -87,19 +87,20 @@ class World:
     ############
     # Metadata #
     ############
-    def set_metadata(self, locations=None, objects=None):
+    def add_metadata(self, locations=None, objects=None):
         """
-        Sets location and object metadata from the specified files.
+        Add location and object metadata from the specified files.
 
         :param locations: Path to location metadata YAML file.
         :type locations: str, optional
         :param objects: Path to object metadata YAML file.
         :type objects: str, optional
         """
+
         if locations is not None:
-            Location.set_metadata(locations)
+            Location.add_metadata(locations)
         if objects is not None:
-            Object.set_metadata(objects)
+            Object.add_metadata(objects)
 
     def get_location_metadata(self):
         """
