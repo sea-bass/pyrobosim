@@ -947,14 +947,21 @@ class Robot:
             return
 
         if self.executing_nav and self.path_executor is not None:
+            # Stop path executor
             self.logger.info("Canceling path execution...")
             self.path_executor.cancel_execution = True
             while self.executing_nav:
                 time.sleep(0.1)
 
-        if self.executing_action or self.executing_plan:
+        if self.executing_action:
+            # Wait for execute_action to return
+            while self.executing_action:
+                time.sleep(0.1)
+
+        if self.executing_plan:
             self.canceling_execution = True
-            while self.canceling_execution:
+            # Wait for execute_plan to return
+            while self.executing_plan:
                 time.sleep(0.1)
 
     def execute_plan(self, plan, delay=0.5):

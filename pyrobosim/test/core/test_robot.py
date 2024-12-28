@@ -568,11 +568,19 @@ class TestRobot:
         )
 
         # Start a thread that cancels the actions mid execution.
-        threading.Timer(1.0, robot.cancel_actions).start()
+        cancel_thread = threading.Timer(1.0, robot.cancel_actions)
+        cancel_thread.start()
 
         # Run action and check that it failed due to being canceled.
         result = robot.execute_action(action)
         assert result.status == ExecutionStatus.CANCELED
+
+        # We want to make sure the cancellation thread is finished
+        # (cancel_actions has returned).
+        # Consequently, we must give the thread some time to detect the
+        # correct lifetime status
+        time.sleep(0.1)
+        assert not cancel_thread.is_alive()
 
         # Retry the action, which should now succeed.
         assert robot.execute_action(action).is_success()
