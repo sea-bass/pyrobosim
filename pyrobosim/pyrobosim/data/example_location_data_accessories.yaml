@@ -1,35 +1,35 @@
-table:
+trash_can:
   footprint:
-    type: box
-    dims: [0.9, 1.2]
-    height: 0.5
+    type: mesh
+    model_path: $DATA/sample_models/first_2015_trash_can
+    mesh_path: meshes/trash_can.dae
+  locations:
+    - name: "top"
+      footprint:
+        type: parent
+        padding: 0.05
   nav_poses:
     - position:  # left
-        x: -0.75
+        x: -0.5
         y: 0.0
     - position:  # right
-        x: 0.75
+        x: 0.5
         y: 0.0
       rotation_eul:
         yaw: 3.14
-  locations:
-    - name: "tabletop"
-      footprint:
-        type: parent
-        padding: 0.1
-  color: [0.2, 0, 0]
+  color: [0, 0.35, 0.2]
 
-desk:
+charger:
   footprint:
     type: polygon
     coords:
-      - [-0.3, -0.3]
-      - [0.3, -0.3]
-      - [0.3, 0.3]
-      - [-0.3, 0.3]
-    height: 0.3
+      - [-0.3, -0.15]
+      - [0.3, -0.15]
+      - [0.3, 0.15]
+      - [-0.3, 0.15]
+    height: 0.1
   locations:
-    - name: "desktop"
+    - name: "dock"
       footprint:
         type: parent
       nav_poses:
@@ -39,7 +39,7 @@ desk:
           rotation_eul:
             yaw: 1.57
         - position:  # left
-            x: -0.5
+            x: -0.35
             y: 0.0
         - position:  # above
             x: 0.0
@@ -47,7 +47,8 @@ desk:
           rotation_eul:
             yaw: -1.57
         - position:  # right
-            x: 0.5
+            x: 0.35
             y: 0.0
           rotation_eul:
             yaw: 3.14
+  color: [0.4, 0.4, 0]

@@ -1,0 +1,101 @@
+table:
+  footprint:
+    type: box
+    dims: [0.9, 1.2]
+    height: 0.5
+  nav_poses:
+    - position:  # left
+        x: -0.75
+        y: 0.0
+    - position:  # right
+        x: 0.75
+        y: 0.0
+      rotation_eul:
+        yaw: 3.14
+  locations:
+    - name: "tabletop"
+      footprint:
+        type: parent
+        padding: 0.1
+  color: [0.2, 0, 0]
+
+desk:
+  footprint:
+    type: polygon
+    coords:
+      - [-0.3, -0.3]
+      - [0.3, -0.3]
+      - [0.3, 0.3]
+      - [-0.3, 0.3]
+    height: 0.3
+  locations:
+    - name: "desktop"
+      footprint:
+        type: parent
+      nav_poses:
+        - position:  # below
+            x: 0.0
+            y: -0.5
+          rotation_eul:
+            yaw: 1.57
+        - position:  # left
+            x: -0.5
+            y: 0.0
+        - position:  # above
+            x: 0.0
+            y: 0.5
+          rotation_eul:
+            yaw: -1.57
+        - position:  # right
+            x: 0.5
+            y: 0.0
+          rotation_eul:
+            yaw: 3.14
+
+counter:
+  footprint:
+    type: box
+    dims: [1.2, 0.6]
+    height: 0.75
+  locations:
+    - name: "left"
+      footprint:
+        type: polygon
+        coords:
+          - [-0.25, -0.25]
+          - [0.25, -0.25]
+          - [0.25, 0.25]
+          - [-0.25, 0.25]
+        offset: [0.3, 0]
+      nav_poses:
+        - position:  # below
+            x: 0.0
+            y: -0.5
+          rotation_eul:
+            yaw: 1.57
+        - position:  # above
+            x: 0.0
+            y: 0.5
+          rotation_eul:
+            yaw: -1.57
+    - name: "right"
+      footprint:
+        type: polygon
+        coords:
+          - [-0.25, -0.25]
+          - [0.25, -0.25]
+          - [0.25, 0.25]
+          - [-0.25, 0.25]
+        offset: [-0.3, 0]
+      nav_poses:
+        - position:  # below
+            x: 0.0
+            y: -0.5
+          rotation_eul:
+            yaw: 1.57
+        - position:  # above
+            x: 0.0
+            y: 0.5
+          rotation_eul:
+            yaw: -1.57
+  color: [0, 0.2, 0]
