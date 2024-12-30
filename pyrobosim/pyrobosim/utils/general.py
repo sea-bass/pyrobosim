@@ -35,24 +35,32 @@ def get_data_folder():
 class EntityMetadata:
     """Represents metadata about entities, such as locations or objects."""
 
-    def __init__(self, filename=None, metadata_type=None):
+    def __init__(self, filename=None):
         """
         Creates metadata from a YAML file.
 
         :param filename: Path to metadata YAML file.
         :type filename: str, optional
         """
-        self.sources = {"locations": [], "objects": []}
-        self.metadata_type = metadata_type
         self.data = {}
+        self.sources = []
 
         if filename:
-            if not os.path.isfile(filename):
-                raise FileNotFoundError(f"Metadata filename not found: {filename}")
+            self.data = self._load_metadata(filename)
+            self.sources = [filename]
 
-            self.sources[self.metadata_type].append(filename)
-            with open(filename) as file:
-                self.data = yaml.load(file, Loader=yaml.FullLoader)
+    def _load_metadata(self, filename):
+        """
+        Loads metadata from a YAML file
+
+        :param filename: Path to metadata YAML file.
+        :type filename: str
+        """
+        if not os.path.isfile(filename):
+            raise FileNotFoundError(f"Metadata filename not found: {filename}")
+
+        with open(filename) as file:
+            return yaml.load(file, Loader=yaml.FullLoader)
 
     def has_category(self, category):
         """
@@ -76,22 +84,20 @@ class EntityMetadata:
         """
         return self.data.get(category, None)
 
-    def update(self, new_data, source=None):
+    def add(self, filename):
         """
-        Update the metadata with new data and add a source of this data.
+        Add metadata from a new YAML file to existing data.
 
-        :param new_data: New metadata to add.
-        :type new_data: dict
-        :param source: Source of new metadata
-        :type source: str, optional
+        :param filename: Path to metadata YAML file.
+        :type filename: str
         """
-        if source is not None:
-            self.sources[self.metadata_type].append(source)
-
+        new_data = self._load_metadata(filename)
         for key, value in new_data.items():
             if key in self.data and self.data[key] != value:
-                raise MetadataConflictException(key, self.data[key], value, source)
+                raise MetadataConflictException(key, self.data[key], value, filename)
             self.data[key] = value
+
+        self.sources.append(filename)
 
 
 class InvalidEntityCategoryException(Exception):
@@ -99,7 +105,21 @@ class InvalidEntityCategoryException(Exception):
 
 
 class MetadataConflictException(Exception):
-    """Raised when conflicts occurs in metadata"""
+    """
+    Raised when a conflict occurs while adding metadata.
+
+    This exception is raised when a key in the metadata already exists
+    with a value that conflicts with the new value being added
+
+    :param key: Conflicting metadata key.
+    :type key: str
+    :param old_value: Existing value for key.
+    :type old_value: Any
+    :param new_value: New value for key.
+    :type new_value: Any
+    :param source: Source of new metadata.
+    :type source: str, Optional
+    """
 
     def __init__(self, key, old_value, new_value, source=None):
         message = f"Conflict for key '{key}': existing value '{old_value}' conflicts with new value '{new_value}'"

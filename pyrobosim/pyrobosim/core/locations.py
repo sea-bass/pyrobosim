@@ -1,6 +1,5 @@
 """ Representations for locations and their corresponding object spawns. """
 
-import os
 from shapely import intersects_xy
 from shapely.plotting import patch_from_polygon
 
@@ -18,26 +17,33 @@ class Location:
     """Representation of a location in the world."""
 
     # Default class attributes
-    metadata = EntityMetadata(metadata_type="locations")
+    metadata = EntityMetadata()
     """ Metadata for location categories. """
     height = 1.0
     """ Vertical height of location. """
     viz_color = (0, 0, 0)
     """ Visualization color (RGB tuple). """
+    counter = 0
 
     @classmethod
-    def add_metadata(cls, filename):
+    def set_metadata(cls, filename):
         """
-        Add metadata from a file to the :class:`pyrobosim.core.locations.Location` class.
+        Assign a metadata file to the :class:`pyrobosim.core.locations.Location` class.
 
         :param filename: Path to location metadata YAML file.
         :type filename: str
         """
-        if not os.path.isfile(filename):
-            raise FileNotFoundError(f"Metadata file not found: {filename}")
+        cls.metadata = EntityMetadata(filename)
 
-        new_metadata = EntityMetadata(filename=filename, metadata_type="locations")
-        cls.metadata.update(new_metadata.data, filename)
+    @classmethod
+    def add_metadata(cls, filename):
+        """
+        Add metadata from a new file to existing metadata
+
+        :param filename: Path to location metadata YAML file.
+        :type filename: str
+        """
+        cls.metadata.add(filename)
 
     def __init__(
         self,

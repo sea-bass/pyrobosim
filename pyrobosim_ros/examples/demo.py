@@ -25,7 +25,7 @@ def create_world():
     world = World()
 
     # Set the location and object metadata
-    world.add_metadata(
+    world.set_metadata(
         locations=os.path.join(data_folder, "example_location_data.yaml"),
         objects=os.path.join(data_folder, "example_object_data.yaml"),
     )

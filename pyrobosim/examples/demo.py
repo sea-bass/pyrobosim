@@ -27,18 +27,14 @@ def create_world(multirobot=False):
     """Create a test world"""
     world = World()
 
-    world.add_metadata(
-        locations=os.path.join(data_folder, "example_location_data1.yaml"),
-        objects=os.path.join(data_folder, "example_object_data1.yaml"),
+    world.set_metadata(
+        locations=os.path.join(data_folder, "example_location_data_furniture.yaml"),
+        objects=os.path.join(data_folder, "example_object_data_food.yaml"),
     )
 
     world.add_metadata(
-        locations=os.path.join(data_folder, "example_location_data2.yaml"),
-        objects=os.path.join(data_folder, "example_object_data2.yaml"),
-    )
-
-    world.add_metadata(
-        locations=os.path.join(data_folder, "example_location_data3.yaml"),
+        locations=os.path.join(data_folder, "example_location_data_accessories.yaml"),
+        objects=os.path.join(data_folder, "example_object_data_drink.yaml"),
     )
 
     # Add rooms
