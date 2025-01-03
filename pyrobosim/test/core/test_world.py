@@ -24,10 +24,18 @@ class TestWorldModeling:
 
         data_folder = get_data_folder()
         TestWorldModeling.world.set_metadata(
-            locations=os.path.join(data_folder, "example_location_data.yaml"),
-            objects=os.path.join(data_folder, "example_object_data.yaml"),
+            locations=os.path.join(data_folder, "example_location_data_furniture.yaml"),
+            objects=os.path.join(data_folder, "example_object_data_food.yaml"),
+        )
+        TestWorldModeling.world.add_metadata(
+            locations=[
+                os.path.join(data_folder, "example_location_data_accessories.yaml")
+            ],
+            objects=[os.path.join(data_folder, "example_object_data_drink.yaml")],
         )
         assert isinstance(TestWorldModeling.world, World)
+        assert len(TestWorldModeling.world.get_location_metadata().sources) == 2
+        assert len(TestWorldModeling.world.get_object_metadata().sources) == 2
 
     ##############################################
     # These tests incrementally build up a world #

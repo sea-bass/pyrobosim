@@ -77,6 +77,8 @@ class TestWorldYamlLoading:
         assert len(Location.metadata.data) > 0
         assert hasattr(Object, "metadata")
         assert len(Object.metadata.data) > 0
+        assert len(Location.metadata.sources) == 1
+        assert len(Object.metadata.sources) == 1
 
     @staticmethod
     @pytest.mark.dependency(
