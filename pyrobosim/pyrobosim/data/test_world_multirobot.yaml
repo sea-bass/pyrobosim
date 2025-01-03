@@ -11,8 +11,12 @@ params:
 
 # METADATA: Describes information about locations and objects
 metadata:
-  locations: $DATA/example_location_data.yaml
-  objects: $DATA/example_object_data.yaml
+  locations:
+    - $DATA/example_location_data_furniture.yaml
+    - $DATA/example_location_data_accessories.yaml
+  objects:
+    - $DATA/example_object_data_food.yaml
+    - $DATA/example_object_data_drink.yaml
 
 
 # ROBOTS

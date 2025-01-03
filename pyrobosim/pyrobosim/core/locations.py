@@ -34,6 +34,19 @@ class Location:
         """
         cls.metadata = EntityMetadata(filename)
 
+    @classmethod
+    def add_metadata(cls, filename):
+        """
+        Add location metadata from a new file to existing metadata.
+
+        :param filename: Path to location metadata YAML file.
+        :type filename: str
+        """
+        if not hasattr(cls, "metadata") or cls.metadata is None:
+            cls.metadata = EntityMetadata()
+
+        cls.metadata.add(filename)
+
     def __init__(
         self,
         name=None,

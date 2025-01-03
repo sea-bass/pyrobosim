@@ -101,6 +101,30 @@ class World:
         if objects is not None:
             Object.set_metadata(objects)
 
+    def add_metadata(self, locations=None, objects=None):
+        """
+        Add location and object metadata from the specified files, allowing
+        additional metadata to be incrementally merged with the existing data.
+
+        :param locations: Path(s) to location metadata YAML file(s).
+        :type locations: str | list[str] | None
+        :param objects: Path(s) to object metadata YAML file(s).
+        :type objects: str | list[str] | None
+        """
+
+        if locations is not None:
+            if isinstance(locations, list):
+                for location in locations:
+                    Location.add_metadata(location)
+            else:
+                Location.add_metadata(locations)
+        if objects is not None:
+            if isinstance(objects, list):
+                for object in objects:
+                    Object.add_metadata(object)
+            else:
+                Object.add_metadata(objects)
+
     def get_location_metadata(self):
         """
         Returns the location metadata associated with this world.

@@ -77,6 +77,8 @@ class TestWorldYamlLoading:
         assert len(Location.metadata.data) > 0
         assert hasattr(Object, "metadata")
         assert len(Object.metadata.data) > 0
+        assert len(Location.metadata.sources) == 1
+        assert len(Object.metadata.sources) == 1
 
     @staticmethod
     @pytest.mark.dependency(
@@ -469,8 +471,8 @@ def test_yaml_load_and_write_dict():
     assert world_dict["params"].get("inflation_radius") == 0.1  # From the largest robot
 
     assert "metadata" in world_dict
-    assert world_dict["metadata"].get("locations") == Location.metadata.filename
-    assert world_dict["metadata"].get("objects") == Object.metadata.filename
+    assert world_dict["metadata"].get("locations") == Location.metadata.sources
+    assert world_dict["metadata"].get("objects") == Object.metadata.sources
 
     assert "robots" in world_dict
     assert len(world_dict["robots"]) == 3
