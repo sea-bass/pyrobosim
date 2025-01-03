@@ -42,8 +42,8 @@ class EntityMetadata:
         :param filename: Path to metadata YAML file.
         :type filename: str, optional
         """
-        self.data = {}
-        self.sources = []
+        self.data = {}  # Holds metadata in the form of a dictionary.
+        self.sources = []  # List of file paths from which metadata has been loaded.
 
         if filename:
             self.data = self._load_metadata(filename)
@@ -110,18 +110,21 @@ class MetadataConflictException(Exception):
 
     This exception is raised when a key in the metadata already exists
     with a value that conflicts with the new value being added
-
-    :param key: Conflicting metadata key.
-    :type key: str
-    :param old_value: Existing value for key.
-    :type old_value: Any
-    :param new_value: New value for key.
-    :type new_value: Any
-    :param source: Source of new metadata.
-    :type source: str, Optional
     """
 
     def __init__(self, key, old_value, new_value, source=None):
+        """
+        Creates an MetadataConflictException instance.
+
+        :param key: Conflicting metadata key.
+        :type key: str
+        :param old_value: Existing value for key.
+        :type old_value: Any
+        :param new_value: New value for key.
+        :type new_value: Any
+        :param source: Source of new metadata.
+        :type source: str, Optional
+        """
         message = f"Conflict for key '{key}': existing value '{old_value}' conflicts with new value '{new_value}'"
         if source:
             message += f" from source '{source}'"
@@ -131,8 +134,7 @@ class MetadataConflictException(Exception):
 def replace_special_yaml_tokens(in_text, root_dir=None):
     """
     Replaces special tokens permitted in our YAML specification.
-    If you want to add any other special tokens, you should do that here
-    in process_text helper function.
+    If you want to add any other special tokens, you should do so in the process_text helper function.
 
     :param in_text: Input YAML text or a list of YAML texts.
     :type in_text: str or list[str]
