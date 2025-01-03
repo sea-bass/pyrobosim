@@ -38,11 +38,14 @@ class Object:
     @classmethod
     def add_metadata(cls, filename):
         """
-        Add metadata from a new file to existing metadata
+        Add object metadata from a new file to existing metadata.
 
-        :param filename: Path to location metadata YAML file.
+        :param filename: Path to object metadata YAML file.
         :type filename: str
         """
+        if not hasattr(cls, "metadata"):
+            cls.metadata = EntityMetadata()
+
         cls.metadata.add(filename)
 
     def __init__(

@@ -106,16 +106,24 @@ class World:
         Add location and object metadata from the specified files, allowing
         additional metadata to be incrementally merged with the existing data.
 
-        :param locations: Path to location metadata YAML file.
-        :type locations: str, optional
-        :param objects: Path to object metadata YAML file.
-        :type objects: str, optional
+        :param locations: Path(s) to location metadata YAML file(s).
+        :type locations: str | list[str] | None
+        :param objects: Path(s) to object metadata YAML file(s).
+        :type objects: str | list[str] | None
         """
 
         if locations is not None:
-            Location.add_metadata(locations)
+            if isinstance(locations, list):
+                for location in locations:
+                    Location.add_metadata(location)
+            else:
+                Location.add_metadata(locations)
         if objects is not None:
-            Object.add_metadata(objects)
+            if isinstance(objects, list):
+                for object in objects:
+                    Object.add_metadata(object)
+            else:
+                Object.add_metadata(objects)
 
     def get_location_metadata(self):
         """

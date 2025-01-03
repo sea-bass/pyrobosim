@@ -77,16 +77,7 @@ class WorldYamlLoader:
             else:
                 obj_data = None
 
-            loc_data = [loc_data] if isinstance(loc_data, str) else loc_data or []
-            obj_data = [obj_data] if isinstance(obj_data, str) else obj_data or []
-
-            self.world.set_metadata(locations=loc_data[0], objects=obj_data[0])
-
-            if len(loc_data) > 1 and len(obj_data) > 1:
-                for location, object in zip_longest(
-                    loc_data[1:], obj_data[1:], fillvalue=None
-                ):
-                    self.world.add_metadata(locations=location, objects=object)
+            self.world.add_metadata(locations=loc_data, objects=obj_data)
 
     def add_rooms(self):
         """Add rooms to the world."""
