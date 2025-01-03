@@ -14,8 +14,16 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
 
    # Metadata
    metadata:
-      locations: </path/to/location_data_file.yaml>
-      objects: </path/to/object_data_file.yaml>
+      locations:
+       - <path/to/location_data1_file.yaml>
+       - <path/to/location_data2_file.yaml>
+       - ...
+       - path/to/location_dataN_file.yaml
+      objects:
+       - </path/to/object_data1_file.yaml>
+       - </path/to/object_data2_file.yaml>
+       - ...
+       - </path/to/object_dataN_file.yaml>
 
    # Robots: Each robot contains basic properties, plus other add-ons such as path planners and grasp generators
    robots:

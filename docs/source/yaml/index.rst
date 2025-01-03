@@ -11,6 +11,8 @@ Worlds themselves can be created programmatically, or defined using world YAML f
 
 For the programmatic approach, you can create a world as follows.
 
+**Option 1** : Using ``set_metadata`` : Supports specifying metadata with a single YAML file for locations and one for objects.
+
 .. code-block:: python
 
    from pyrobosim.core import Robot, World
@@ -18,6 +20,29 @@ For the programmatic approach, you can create a world as follows.
    world = World()
    world.set_metadata(locations="/path/to/location_data.yaml",
                       objects="/path/to/object_data.yaml")
+
+   # Then, you can add the other entities
+   world.add_robot(...)
+   world.add_room(...)
+   world.add_hallway(...)
+   world.add_location(...)
+   world.add_object(...)
+
+**Option 2** : Using ``add_metadata`` : Supports specifying metadata with multiple YAML files for locations and for objects.
+
+.. code-block:: python
+
+   from pyrobosim.core import Robot, World
+
+   world = World()
+   world.add_metadata(locations="/path/to/location_data1.yaml",
+                      objects="/path/to/object_data1.yaml")
+
+   world.add_metadata(locations=["/path/to/location_data2.yaml"],
+                      objects=[
+                        "/path/to/object_data2.yaml",
+                        "/path/to/object_data3.yaml",
+                      ])
 
    # Then, you can add the other entities
    world.add_robot(...)
