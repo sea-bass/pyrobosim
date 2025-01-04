@@ -70,6 +70,7 @@ class Room:
             raise Exception("Room footprint cannot be empty.")
 
         self.centroid = list(self.polygon.centroid.coords)[0]
+        self.pose = Pose.from_list(self.centroid)
         self.update_collision_polygons()
         self.update_visualization_polygon()
 
@@ -77,7 +78,7 @@ class Room:
         if nav_poses is not None:
             self.nav_poses = nav_poses
         else:
-            self.nav_poses = [Pose.from_list(self.centroid)]
+            self.nav_poses = [self.pose]
 
     def update_collision_polygons(self, inflation_radius=0):
         """

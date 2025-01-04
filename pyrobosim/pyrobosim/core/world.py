@@ -1497,10 +1497,38 @@ class World:
         :type name: str
         :return: Entity object instance matching the input name, or ``None`` if not valid.
         """
-        if name in self.name_to_entity:
-            return self.name_to_entity[name]
-        else:
-            return None
+        return self.name_to_entity.get(name)
+
+    def get_pose_relative_to(self, pose, entity):
+        """
+        Given a relative pose to an entity, and the entity itself, gets the absolute pose.
+
+        :param pose: The pose specified with respect to the entity.
+        :type pose: TODO POSE
+        :param entity: The entity, or entity name:
+        :type entity: TODO ENTITY
+        :return: Absolute pose computed by transforming the input pose to the entity frame.
+        :rtype: TODO POSE
+        """
+        # Look for the target entity if specified by name.
+        if isinstance(entity, str):
+            grounded_entity = self.get_entity_by_name(entity)
+            if grounded_entity is None:
+                raise ValueError(f"Could not find entity by name: {entity}")
+
+            entity = grounded_entity
+
+        # Validate that the entity is of one of the supported types.
+        if not isinstance(entity, (Room, Location, ObjectSpawn, Object, Robot)):
+            raise ValueError(f"Invalid entity type: {type(entity)}")
+
+        # Extract the pose from the entity and transform it to the new frame.
+        # Note that the rotation is applied separately from the translation.
+        new_transform = (
+            pose.get_translation_matrix() @ entity.pose.get_transform_matrix()
+        )
+        new_transform[:3, :3] = pose.get_rotation_matrix() @ new_transform[:3, :3]
+        return Pose.from_transform(new_transform)
 
     #######################
     # Occupancy utilities #

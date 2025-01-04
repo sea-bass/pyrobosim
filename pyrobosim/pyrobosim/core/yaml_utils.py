@@ -97,7 +97,13 @@ class WorldYamlLoader:
         for loc_data in self.data.get("locations", []):
             loc_args = copy.deepcopy(loc_data)
             if "pose" in loc_args:
-                loc_args["pose"] = Pose.construct(loc_args["pose"])
+                pose_args = loc_args["pose"]
+                pose = Pose.construct(pose_args)
+                if "relative_to" in pose_args:
+                    pose = self.world.get_pose_relative_to(
+                        pose, pose_args["relative_to"]
+                    )
+                loc_args["pose"] = pose
             self.world.add_location(**loc_args)
 
     def add_objects(self):
@@ -108,7 +114,13 @@ class WorldYamlLoader:
         for obj_data in self.data.get("objects", []):
             obj_args = copy.deepcopy(obj_data)
             if "pose" in obj_args:
-                obj_args["pose"] = Pose.construct(obj_args["pose"])
+                pose_args = obj_args["pose"]
+                pose = Pose.construct(obj_args["pose"])
+                if "relative_to" in pose_args:
+                    pose = self.world.get_pose_relative_to(
+                        pose, pose_args["relative_to"]
+                    )
+                obj_args["pose"] = pose
             self.world.add_object(**obj_args)
 
     def add_robots(self):
