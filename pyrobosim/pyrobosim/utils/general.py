@@ -42,12 +42,13 @@ class EntityMetadata:
         :param filename: Path to metadata YAML file.
         :type filename: str, optional
         """
-        self.data = {}  # Holds metadata in the form of a dictionary.
-        self.sources = []  # List of file paths from which metadata has been loaded.
 
         if filename:
             self.data = self._load_metadata(filename)
             self.sources = [filename]
+        else:
+            self.data = {}  # Holds metadata in the form of a dictionary.
+            self.sources = []  # List of file paths from which metadata has been loaded.
 
     def _load_metadata(self, filename):
         """
