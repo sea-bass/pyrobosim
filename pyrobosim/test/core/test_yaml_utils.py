@@ -44,8 +44,8 @@ class TestWorldYamlLoading:
         loader.data = {}
         loader.create_world()
         assert isinstance(loader.world, World)
-        assert not hasattr(Location, "metadata")
-        assert not hasattr(Object, "metadata")
+        assert hasattr(Location, "metadata")
+        assert hasattr(Object, "metadata")
 
         # If parameters are provided, the loader should load a world using the specified parameters
         params_dict = {
@@ -60,8 +60,8 @@ class TestWorldYamlLoading:
         assert loader.world.inflation_radius == 0.125
         assert loader.world.object_radius == 0.03
         assert loader.world.wall_height == 1.6
-        assert not hasattr(Location, "metadata")
-        assert not hasattr(Object, "metadata")
+        assert hasattr(Location, "metadata")
+        assert hasattr(Object, "metadata")
 
         # Specifying Location and Object metadata should load it into the world.
         metadata_dict = {

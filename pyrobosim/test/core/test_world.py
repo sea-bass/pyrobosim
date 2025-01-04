@@ -17,13 +17,53 @@ class TestWorldModeling:
 
     @staticmethod
     @pytest.mark.dependency()
+    def test_clearing_old_metadata():
+        """Tests the creation of a world and clear out old metadata"""
+
+        TestWorldModeling.world = World()
+
+        data_folder = get_data_folder()
+        TestWorldModeling.world.add_metadata(
+            locations=[
+                os.path.join(data_folder, "example_location_data_furniture.yaml"),
+                os.path.join(data_folder, "example_location_data_accessories.yaml"),
+            ],
+            objects=[
+                os.path.join(data_folder, "example_object_data_food.yaml"),
+                os.path.join(data_folder, "example_object_data_drink.yaml"),
+            ],
+        )
+
+        assert isinstance(TestWorldModeling.world, World)
+        assert len(TestWorldModeling.world.get_location_metadata().sources) == 2
+        assert len(TestWorldModeling.world.get_object_metadata().sources) == 2
+
+        # Clear out previous metadata before setting new one
+        TestWorldModeling.world.set_metadata(
+            locations=os.path.join(data_folder, "example_location_data_furniture.yaml"),
+            objects=os.path.join(data_folder, "example_object_data_food.yaml"),
+        )
+
+        assert len(TestWorldModeling.world.get_location_metadata().sources) == 1
+        assert len(TestWorldModeling.world.get_object_metadata().sources) == 1
+
+        # Add more metadata
+        TestWorldModeling.world.add_metadata(
+            locations=[
+                os.path.join(data_folder, "example_location_data_accessories.yaml")
+            ],
+            objects=[os.path.join(data_folder, "example_object_data_drink.yaml")],
+        )
+
+        assert len(TestWorldModeling.world.get_location_metadata().sources) == 2
+        assert len(TestWorldModeling.world.get_object_metadata().sources) == 2
+
+    @staticmethod
+    @pytest.mark.dependency()
     def test_create_world_default():
         """Tests the creation of a world"""
 
         TestWorldModeling.world = World()
-        # to reset the sources from previous testcases
-        TestWorldModeling.world.get_location_metadata().sources = []
-        TestWorldModeling.world.get_object_metadata().sources = []
 
         data_folder = get_data_folder()
         TestWorldModeling.world.set_metadata(

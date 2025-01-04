@@ -17,8 +17,6 @@ metadata:
   objects:
     - $DATA/example_object_data_food.yaml
     - $DATA/example_object_data_drink.yaml
-
-
 # ROBOTS
 robots:
   - name: robot
