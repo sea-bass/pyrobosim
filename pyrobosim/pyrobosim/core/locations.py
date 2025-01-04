@@ -42,7 +42,7 @@ class Location:
         :param filename: Path to location metadata YAML file.
         :type filename: str
         """
-        if not hasattr(cls, "metadata") or cls.metadata is None:
+        if not hasattr(cls, "metadata"):
             cls.metadata = EntityMetadata()
 
         cls.metadata.add(filename)

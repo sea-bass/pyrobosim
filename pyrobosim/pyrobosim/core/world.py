@@ -91,15 +91,22 @@ class World:
         """
         Sets location and object metadata from the specified files.
 
-        :param locations: Path to location metadata YAML file.
-        :type locations: str, optional
-        :param objects: Path to object metadata YAML file.
-        :type objects: str, optional
+        :param locations: Path(s) to location metadata YAML file(s).
+        :type locations: str | list[str] | None
+        :param objects: Path(s) to object metadata YAML file(s).
+        :type objects: str | list[str] | None
         """
-        if locations is not None:
-            Location.set_metadata(locations)
-        if objects is not None:
-            Object.set_metadata(objects)
+        if isinstance(locations, list):
+            for location in locations:
+                Location.add_metadata(location)
+        elif isinstance(locations, str):
+            Location.add_metadata(locations)
+
+        if isinstance(objects, list):
+            for object in objects:
+                Object.add_metadata(object)
+        elif isinstance(objects, str):
+            Object.add_metadata(objects)
 
     def add_metadata(self, locations=None, objects=None):
         """
@@ -112,18 +119,17 @@ class World:
         :type objects: str | list[str] | None
         """
 
-        if locations is not None:
-            if isinstance(locations, list):
-                for location in locations:
-                    Location.add_metadata(location)
-            else:
-                Location.add_metadata(locations)
-        if objects is not None:
-            if isinstance(objects, list):
-                for object in objects:
-                    Object.add_metadata(object)
-            else:
-                Object.add_metadata(objects)
+        if isinstance(locations, list):
+            for location in locations:
+                Location.add_metadata(location)
+        elif isinstance(locations, str):
+            Location.add_metadata(locations)
+
+        if isinstance(objects, list):
+            for object in objects:
+                Object.add_metadata(object)
+        elif isinstance(objects, str):
+            Object.add_metadata(objects)
 
     def get_location_metadata(self):
         """
