@@ -18,7 +18,7 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
        - <path/to/location_data1_file.yaml>
        - <path/to/location_data2_file.yaml>
        - ...
-       - path/to/location_dataN_file.yaml
+       - <path/to/location_dataN_file.yaml>
       objects:
        - </path/to/object_data1_file.yaml>
        - </path/to/object_data2_file.yaml>
