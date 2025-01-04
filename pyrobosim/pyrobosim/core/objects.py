@@ -48,6 +48,16 @@ class Object:
 
         cls.metadata.add(filename)
 
+    @classmethod
+    def clearout_metadata(cls):
+        """
+        Clear out old object metadata.
+        """
+        if not hasattr(cls, "metadata"):
+            cls.metadata = EntityMetadata()
+        cls.metadata.data = {}
+        cls.metadata.sources = []
+
     def __init__(
         self,
         name=None,

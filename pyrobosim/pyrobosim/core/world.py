@@ -96,17 +96,11 @@ class World:
         :param objects: Path(s) to object metadata YAML file(s).
         :type objects: str | list[str] | None
         """
-        if isinstance(locations, list):
-            for location in locations:
-                Location.add_metadata(location)
-        elif isinstance(locations, str):
-            Location.add_metadata(locations)
+        # Clear out old metadata
+        Location.clearout_metadata()
+        Object.clearout_metadata()
 
-        if isinstance(objects, list):
-            for object in objects:
-                Object.add_metadata(object)
-        elif isinstance(objects, str):
-            Object.add_metadata(objects)
+        self.add_metadata(locations, objects)
 
     def add_metadata(self, locations=None, objects=None):
         """
