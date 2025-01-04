@@ -97,8 +97,8 @@ class World:
         :type objects: str | list[str] | None
         """
         # Clear out old metadata
-        Location.clearout_metadata()
-        Object.clearout_metadata()
+        Location.clear_metadata()
+        Object.clear_metadata()
 
         self.add_metadata(locations, objects)
 
