@@ -26,13 +26,14 @@ def create_world():
 
     # Set the location and object metadata
     world.add_metadata(
-        locations=os.path.join(data_folder, "example_location_data_furniture.yaml"),
-        objects=os.path.join(data_folder, "example_object_data_food.yaml"),
-    )
-
-    world.add_metadata(
-        locations=[os.path.join(data_folder, "example_location_data_accessories.yaml")],
-        objects=[os.path.join(data_folder, "example_object_data_drink.yaml")],
+        locations=[
+            os.path.join(data_folder, "example_location_data_furniture.yaml"),
+            os.path.join(data_folder, "example_location_data_accessories.yaml"),
+        ],
+        objects=[
+            os.path.join(data_folder, "example_object_data_food.yaml"),
+            os.path.join(data_folder, "example_object_data_drink.yaml"),
+        ],
     )
 
     # Add rooms

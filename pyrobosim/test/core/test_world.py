@@ -21,18 +21,22 @@ class TestWorldModeling:
         """Tests the creation of a world"""
 
         TestWorldModeling.world = World()
+        # to reset the sources from previous testcases
+        TestWorldModeling.world.get_location_metadata().sources = []
+        TestWorldModeling.world.get_object_metadata().sources = []
 
         data_folder = get_data_folder()
         TestWorldModeling.world.set_metadata(
-            locations=os.path.join(data_folder, "example_location_data_furniture.yaml"),
-            objects=os.path.join(data_folder, "example_object_data_food.yaml"),
-        )
-        TestWorldModeling.world.add_metadata(
             locations=[
-                os.path.join(data_folder, "example_location_data_accessories.yaml")
+                os.path.join(data_folder, "example_location_data_furniture.yaml"),
+                os.path.join(data_folder, "example_location_data_accessories.yaml"),
             ],
-            objects=[os.path.join(data_folder, "example_object_data_drink.yaml")],
+            objects=[
+                os.path.join(data_folder, "example_object_data_food.yaml"),
+                os.path.join(data_folder, "example_object_data_drink.yaml"),
+            ],
         )
+
         assert isinstance(TestWorldModeling.world, World)
         assert len(TestWorldModeling.world.get_location_metadata().sources) == 2
         assert len(TestWorldModeling.world.get_object_metadata().sources) == 2
