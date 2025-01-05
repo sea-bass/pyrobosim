@@ -175,7 +175,7 @@ objects:
       position:
         x: 0.05
         y: -0.15
-      relative_to: my_desk
+      relative_to: desk0
 
   - category: apple
     parent: table0
