@@ -81,17 +81,18 @@ class Room:
             self.polygon = transform_polygon(self.polygon, self.pose)
 
         self.centroid = list(self.polygon.centroid.coords)[0]
+        centroid_pose = Pose.from_list(self.centroid)
         if pose is None:
-            self.pose = Pose.from_list(self.centroid)
+            self.pose = centroid_pose
 
         self.update_collision_polygons()
         self.update_visualization_polygon()
 
-        # Create a navigation pose list -- if none specified, use the room centroid
+        # Create a navigation pose list -- if none specified, use the room centroid.
         if nav_poses is not None:
             self.nav_poses = nav_poses
         else:
-            self.nav_poses = [self.pose]
+            self.nav_poses = [centroid_pose]
 
     def update_collision_polygons(self, inflation_radius=0):
         """
