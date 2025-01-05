@@ -111,6 +111,7 @@ class TestWorldYamlLoading:
                         "dims": [1.75, 1.5],
                         "offset": [2.625, 3.25],
                     },
+                    # "pose": {"position": {"x": 2.625, "y": 3.5}},
                     "wall_width": 0.2,
                     "color": [0, 1, 0],
                 },

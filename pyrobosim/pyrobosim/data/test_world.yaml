@@ -191,7 +191,7 @@ objects:
         x: 0.15
         y: 0.0
       rotation_eul:
-        yaw: -40.5
+        yaw: -49.5
         angle_units: "degrees"
       relative_to: table0
 

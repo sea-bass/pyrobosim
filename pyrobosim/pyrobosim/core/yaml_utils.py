@@ -13,6 +13,25 @@ from ..utils.logging import get_global_logger
 from ..utils.pose import Pose
 
 
+def construct_pose_from_args(pose_args, world):
+    """
+    Constructs a PyRoboSim pose from a dictionary of YAML arguments.
+
+    This handles poses of different formats, as well as relative pose specification.
+
+    :param pose_args: A dictionary containing the pose arguments.
+    :type pose_args: dict
+    :param world: The world to use for looking up entities.
+    :type world: :class:`pyrobosim.core.world.World`
+    :return: Pose object
+    :rype: :class:`pyrobosim.utils.pose.Pose`
+    """
+    pose = Pose.construct(pose_args)
+    if "relative_to" in pose_args:
+        pose = world.get_pose_relative_to(pose, pose_args["relative_to"])
+    return pose
+
+
 class WorldYamlLoader:
     """Creates world models from YAML files."""
 
@@ -81,9 +100,14 @@ class WorldYamlLoader:
         """Add rooms to the world."""
         for room_data in self.data.get("rooms", []):
             room_args = copy.deepcopy(room_data)
+            if "pose" in room_args:
+                room_args["pose"] = construct_pose_from_args(
+                    room_args["pose"], self.world
+                )
             if "nav_poses" in room_args:
                 room_args["nav_poses"] = [
-                    Pose.construct(p) for p in room_args["nav_poses"]
+                    construct_pose_from_args(p, self.world)
+                    for p in room_args["nav_poses"]
                 ]
             self.world.add_room(**room_args)
 
@@ -97,13 +121,9 @@ class WorldYamlLoader:
         for loc_data in self.data.get("locations", []):
             loc_args = copy.deepcopy(loc_data)
             if "pose" in loc_args:
-                pose_args = loc_args["pose"]
-                pose = Pose.construct(pose_args)
-                if "relative_to" in pose_args:
-                    pose = self.world.get_pose_relative_to(
-                        pose, pose_args["relative_to"]
-                    )
-                loc_args["pose"] = pose
+                loc_args["pose"] = construct_pose_from_args(
+                    loc_args["pose"], self.world
+                )
             self.world.add_location(**loc_args)
 
     def add_objects(self):
@@ -114,13 +134,9 @@ class WorldYamlLoader:
         for obj_data in self.data.get("objects", []):
             obj_args = copy.deepcopy(obj_data)
             if "pose" in obj_args:
-                pose_args = obj_args["pose"]
-                pose = Pose.construct(obj_args["pose"])
-                if "relative_to" in pose_args:
-                    pose = self.world.get_pose_relative_to(
-                        pose, pose_args["relative_to"]
-                    )
-                obj_args["pose"] = pose
+                obj_args["pose"] = construct_pose_from_args(
+                    obj_args["pose"], self.world
+                )
             self.world.add_object(**obj_args)
 
     def add_robots(self):
@@ -143,7 +159,7 @@ class WorldYamlLoader:
             if loc is not None:
                 loc = self.world.get_entity_by_name(loc)
             if "pose" in robot_args:
-                pose = Pose.construct(robot_args["pose"])
+                pose = construct_pose_from_args(robot_args["pose"], self.world)
             else:
                 pose = None
             self.world.add_robot(robot, loc=loc, pose=pose)

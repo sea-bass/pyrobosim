@@ -134,8 +134,9 @@ locations:
     parent: bedroom
     pose:
       position:
-        x: 3.15
-        y: 3.65
+        x: 0.525
+        y: 0.4
+      relative_to: bedroom
     is_open: True
     is_locked: False
 
@@ -158,18 +159,20 @@ objects:
     parent: table0
     pose:
       position:
-        x: 1.0
-        y: -0.5
+        x: 0.15
+        y: 0.0
       rotation_eul:
-        yaw: 40.5
+        yaw: -49.5
         angle_units: "degrees"
+      relative_to: table0
 
   - category: apple
     parent: desk0
     pose:
       position:
-        x: 3.2
-        y: 3.5
+        x: 0.05
+        y: -0.15
+      relative_to: my_desk
 
   - category: apple
     parent: table0

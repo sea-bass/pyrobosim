@@ -36,12 +36,18 @@ def create_world(multirobot=False):
     r1coords = [(-1, -1), (1.5, -1), (1.5, 1.5), (0.5, 1.5)]
     world.add_room(
         name="kitchen",
+        pose=Pose(x=0.0, y=0.0, z=0.0, yaw=0.0),
         footprint=r1coords,
         color="red",
         nav_poses=[Pose(x=0.75, y=0.75, z=0.0, yaw=0.0)],
     )
-    r2coords = [(1.75, 2.5), (3.5, 2.5), (3.5, 4), (1.75, 4)]
-    world.add_room(name="bedroom", footprint=r2coords, color="#009900")
+    r2coords = [(-0.875, -0.75), (0.875, -0.75), (0.875, 0.75), (-0.875, 0.75)]
+    world.add_room(
+        name="bedroom",
+        pose=Pose(x=2.625, y=3.25, z=0.0, yaw=0.0),
+        footprint=r2coords,
+        color="#009900",
+    )
     r3coords = [(-1, 1), (-1, 3.5), (-3.0, 3.5), (-2.5, 1)]
     world.add_room(
         name="bathroom",

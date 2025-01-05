@@ -6,10 +6,12 @@ from shapely import intersects_xy
 from shapely.geometry import Polygon
 from shapely.plotting import patch_from_polygon
 
-from matplotlib.colors import CSS4_COLORS, to_rgb
-
 from ..utils.pose import Pose
-from ..utils.polygon import inflate_polygon, polygon_and_height_from_footprint
+from ..utils.polygon import (
+    inflate_polygon,
+    polygon_and_height_from_footprint,
+    transform_polygon,
+)
 from ..utils.search_graph import Node
 from ..utils.general import parse_color
 
@@ -23,6 +25,7 @@ class Room:
         footprint=[],
         color=[0.4, 0.4, 0.4],
         wall_width=0.2,
+        pose=None,
         nav_poses=None,
         height=0.0,
     ):
@@ -42,6 +45,9 @@ class Room:
         :type color: list[float] | tuple[float, float, float] | str
         :param wall_width: Width of room walls, in meters.
         :type wall_width: float, optional
+        :param pose: Pose of the room. This transforms the specified footprint.
+            If set to None, the pose will be the centroid of the room polygon.
+        :type pose: :class:`pyrobosim.utils.pose.Pose`, optional
         :param nav_poses: List of navigation poses in the room. If not specified, defaults to the centroid.
         :type nav_poses: list[:class:`pyrobosim.utils.pose.Pose`]
         :param height: Height of room.
@@ -69,8 +75,15 @@ class Room:
         if self.polygon.is_empty:
             raise Exception("Room footprint cannot be empty.")
 
+        self.original_pose = pose  # Needed to serialize the world properly.
+        if pose is not None:
+            self.pose = pose
+            self.polygon = transform_polygon(self.polygon, self.pose)
+
         self.centroid = list(self.polygon.centroid.coords)[0]
-        self.pose = Pose.from_list(self.centroid)
+        if pose is None:
+            self.pose = Pose.from_list(self.centroid)
+
         self.update_collision_polygons()
         self.update_visualization_polygon()
 
@@ -158,7 +171,7 @@ class Room:
         :return: A dictionary containing the room information.
         :rtype: dict[str, Any]
         """
-        return {
+        room_dict = {
             "name": self.name,
             "color": self.viz_color,
             "wall_width": self.wall_width,
@@ -166,6 +179,9 @@ class Room:
             "height": self.height,
             "nav_poses": [pose.to_dict() for pose in self.nav_poses],
         }
+        if self.original_pose is not None:
+            room_dict["pose"] = self.original_pose.to_dict()
+        return room_dict
 
     def __repr__(self):
         """Returns printable string."""

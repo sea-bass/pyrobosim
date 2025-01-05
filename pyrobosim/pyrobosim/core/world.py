@@ -1504,11 +1504,11 @@ class World:
         Given a relative pose to an entity, and the entity itself, gets the absolute pose.
 
         :param pose: The pose specified with respect to the entity.
-        :type pose: TODO POSE
+        :type pose: :class:`pyrobosim.utils.pose.Pose`
         :param entity: The entity, or entity name:
-        :type entity: TODO ENTITY
+        :type entity: Entity or str
         :return: Absolute pose computed by transforming the input pose to the entity frame.
-        :rtype: TODO POSE
+        :rtype: :class:`pyrobosim.utils.pose.Pose`
         """
         # Look for the target entity if specified by name.
         if isinstance(entity, str):
@@ -1520,7 +1520,7 @@ class World:
 
         # Validate that the entity is of one of the supported types.
         if not isinstance(entity, (Room, Location, ObjectSpawn, Object, Robot)):
-            raise ValueError(f"Invalid entity type: {type(entity)}")
+            raise TypeError(f"Invalid entity type: {type(entity)}")
 
         # Extract the pose from the entity and transform it to the new frame.
         # Note that the rotation is applied separately from the translation.
