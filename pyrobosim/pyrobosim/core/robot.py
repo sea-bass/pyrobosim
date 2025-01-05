@@ -225,9 +225,7 @@ class Robot:
         :return: True if the robot is at an openable location, else False.
         :type: bool
         """
-        return isinstance(self.location, Hallway) or isinstance(
-            self.location, ObjectSpawn
-        )
+        return isinstance(self.location, (Hallway, ObjectSpawn))
 
     def _attach_object(self, obj):
         """

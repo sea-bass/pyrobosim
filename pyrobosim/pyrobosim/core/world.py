@@ -530,7 +530,7 @@ class World:
         # Validate the input
         if isinstance(location, str):
             location = self.get_entity_by_name(location)
-        if not (isinstance(location, Location) or isinstance(location, Hallway)):
+        if not isinstance(location, (Location, Hallway)):
             message = message = (
                 f"Cannot open {location} since it is of type {type(location).__name__}."
             )
@@ -582,7 +582,7 @@ class World:
         # Validate the input
         if isinstance(location, str):
             location = self.get_entity_by_name(location)
-        if not (isinstance(location, Location) or isinstance(location, Hallway)):
+        if not isinstance(location, (Location, Hallway)):
             message = message = (
                 f"Cannot close {location} since it is of type {type(location).__name__}."
             )
@@ -642,7 +642,7 @@ class World:
         # Validate the input
         if isinstance(location, str):
             location = self.get_entity_by_name(location)
-        if not (isinstance(location, Location) or isinstance(location, Hallway)):
+        if not isinstance(location, (Location, Hallway)):
             message = message = (
                 f"Cannot lock {location} since it is of type {type(location).__name__}."
             )
@@ -678,7 +678,7 @@ class World:
         # Validate the input
         if isinstance(location, str):
             location = self.get_entity_by_name(location)
-        if not (isinstance(location, Location) or isinstance(location, Hallway)):
+        if not isinstance(location, (Location, Hallway)):
             message = message = (
                 f"Cannot unlock {location} since it is of type {type(location).__name__}."
             )
@@ -984,7 +984,7 @@ class World:
             if isinstance(loc, str):
                 loc = self.get_entity_by_name(loc)
 
-            if isinstance(loc, Room) or isinstance(loc, Hallway):
+            if isinstance(loc, (Room, Hallway)):
                 if pose is None:
                     # Sample a pose in the location
                     x_sample, y_sample = sample_from_polygon(
@@ -1002,7 +1002,7 @@ class World:
                         self.logger.warning(f"{pose} is occupied")
                         valid_pose = False
                     robot_pose = pose
-            elif isinstance(loc, Location) or isinstance(loc, ObjectSpawn):
+            elif isinstance(loc, (Location, ObjectSpawn)):
                 if isinstance(loc, Location):
                     # NOTE: If you don't want a random object spawn, use the object spawn as the input location.
                     loc = np.random.choice(loc.children)
@@ -1694,7 +1694,7 @@ class World:
         else:
             entity = entity_query
 
-        if isinstance(entity, ObjectSpawn) or isinstance(entity, Room):
+        if isinstance(entity, (ObjectSpawn, Room)):
             graph_nodes = entity.graph_nodes
         elif isinstance(entity, Hallway):
             graph_nodes = [entity.graph_nodes[0], entity.graph_nodes[-1]]
