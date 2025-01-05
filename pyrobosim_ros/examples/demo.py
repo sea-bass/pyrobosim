@@ -37,6 +37,7 @@ def create_world():
         pose=Pose(x=0.0, y=0.0, z=0.0, yaw=0.0),
         footprint=r1coords,
         color="red",
+        nav_poses=[Pose(x=0.75, y=0.75, z=0.0, yaw=0.0)],
     )
     r2coords = [(-0.875, -0.75), (0.875, -0.75), (0.875, 0.75), (-0.875, 0.75)]
     world.add_room(
@@ -46,10 +47,16 @@ def create_world():
         color="#009900",
     )
     r3coords = [(-1, 1), (-1, 3.5), (-3.0, 3.5), (-2.5, 1)]
-    world.add_room(name="bathroom", footprint=r3coords, color=[0, 0, 0.6])
+    world.add_room(
+        name="bathroom",
+        footprint=r3coords,
+        color=[0.0, 0.0, 0.6],
+    )
 
     # Add hallways between the rooms
-    world.add_hallway(room_start="kitchen", room_end="bathroom", width=0.7)
+    world.add_hallway(
+        room_start="kitchen", room_end="bathroom", width=0.7, color="#666666"
+    )
     world.add_hallway(
         room_start="bathroom",
         room_end="bedroom",
@@ -57,6 +64,7 @@ def create_world():
         conn_method="angle",
         conn_angle=0,
         offset=0.8,
+        color="dimgray",
     )
     world.add_hallway(
         room_start="kitchen",
@@ -68,7 +76,9 @@ def create_world():
 
     # Add locations
     table = world.add_location(
-        category="table", parent="kitchen", pose=Pose(x=0.85, y=-0.5, yaw=-np.pi / 2.0)
+        category="table",
+        parent="kitchen",
+        pose=Pose(x=0.85, y=-0.5, z=0.0, yaw=-90.0, angle_units="degrees"),
     )
     desk_pose = world.get_pose_relative_to(
         Pose(x=0.525, y=0.4, z=0.0, yaw=0.0), "bedroom"
@@ -77,7 +87,7 @@ def create_world():
     counter = world.add_location(
         category="counter",
         parent="bathroom",
-        pose=Pose(x=-2.45, y=2.5, yaw=np.pi / 2.0 + np.pi / 16.0),
+        pose=Pose(x=-2.45, y=2.5, z=0.0, q=[0.634411, 0.0, 0.0, 0.7729959]),
     )
 
     # Add objects
