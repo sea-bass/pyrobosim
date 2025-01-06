@@ -69,6 +69,12 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
        footprint:
          type: <footprint_type>
          <property>: <footprint_property>
+       pose:  # If not specified, will use the room's centroid
+         position:
+           x: <x>
+           y: <y>
+         rotation_eul:
+           yaw: <yaw>
        nav_poses:
          - [<x1>, <y1>, <z1>, <yaw1>]
          - ...
@@ -102,6 +108,7 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
         rotation_eul:
           yaw: <yaw>
           angle_units: <units>  # Can be "radians" (default) or "degrees"
+        relative_to: <room_name>  # If not specified, uses absolute pose
        is_open: true  # Can only pick, place, and detect if open
        is_locked: true  # Can only open and close if unlocked
        is_charger: false  # Robots can charge at this location
@@ -122,7 +129,71 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
            x: <x>
            y: <y>
            z: <z>
+         relative_to: <loc_name>  # If not specified, uses absolute pose
+
+
+Specifying Poses
+----------------
+
+There are a few ways to specify poses in PyRoboSim YAML files: lists and dictionaries.
+
+.. code-block:: yaml
+
+   # Valid list formats
+   pose: [<x>, <y>]
+   pose: [<x>, <y>, <z>]
+   pose: [<x>, <y>, <z>, <yaw>]  # Angle units always in radians
+
+If possible, you should use the dictionary format, as the list format is at this point only around for backward compatibility.
+Anything below this line is only supported in dictionary format.
 
 Note that you can use both Euler angles and quaternions to specify poses.
 If specifying rotation using Euler angles, you can specify angle either in radians or degrees.
 Any unspecified values will default to ``0.0``.
+
+.. code-block:: yaml
+
+   # Euler angles in radians (default), fully specified
+   pose:
+     position:
+       x: 1.0
+       y: 2.0
+       z: 3.0
+     rotation_eul:
+       yaw: 0.1
+       pitch: 0.2
+       roll: 0.3
+
+   # Euler angles in degrees, partially specified
+   pose:
+     position:
+       x: 1.0
+       y: 2.0
+     rotation_eul:
+       yaw: 45.0
+       angle_units: "degrees"
+
+   # Quaternion
+   pose:
+     position:
+       x: 1.0
+       y: 2.0
+     rotation_quat:
+       w: 0.707
+       x: 0.0
+       y: 0.0
+       z: -0.707
+
+You can also use the ``relative_to`` field when specifying poses.
+This makes it easier to specify poses relative to other entities in the world (rooms, locations, objects, etc.).
+
+.. code-block:: yaml
+
+   pose:
+     position:
+       x: 1.0
+       y: 2.0
+     rotation_eul:
+       yaw: 45.0
+       angle_units: "degrees"
+     relative_to: "table0"

@@ -12,7 +12,7 @@ from pyrobosim.core.objects import Object
 from pyrobosim.core.world import World
 from pyrobosim.core.yaml_utils import WorldYamlLoader, WorldYamlWriter
 from pyrobosim.utils.general import get_data_folder
-from pyrobosim.utils.polygon import polygon_and_height_from_footprint
+from pyrobosim.utils.polygon import polygon_and_height_from_footprint, transform_polygon
 from pyrobosim.utils.pose import Pose
 
 
@@ -109,8 +109,8 @@ class TestWorldYamlLoading:
                     "footprint": {
                         "type": "box",
                         "dims": [1.75, 1.5],
-                        "offset": [2.625, 3.25],
                     },
+                    "pose": {"position": {"x": 2.625, "y": 3.5}},
                     "wall_width": 0.2,
                     "color": [0, 1, 0],
                 },
@@ -129,7 +129,9 @@ class TestWorldYamlLoading:
 
         assert loader.world.rooms[1].name == "bedroom"
         poly, _ = polygon_and_height_from_footprint(rooms_dict["rooms"][1]["footprint"])
-        assert loader.world.rooms[1].polygon == poly
+        assert loader.world.rooms[1].polygon == transform_polygon(
+            poly, Pose(x=2.625, y=3.5)
+        )
         assert loader.world.rooms[1].wall_width == 0.2
         assert loader.world.rooms[1].viz_color == (0, 1, 0)
         assert loader.world.rooms[1].nav_poses == [

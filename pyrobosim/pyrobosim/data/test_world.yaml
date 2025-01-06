@@ -81,7 +81,10 @@ rooms:
     footprint:
       type: box
       dims: [1.75, 1.5]
-      offset: [2.625, 3.25]
+    pose:
+      position:
+        x: 2.625
+        y: 3.25
     wall_width: 0.2
     color: "#009900"
 
@@ -149,8 +152,9 @@ locations:
     parent: bedroom
     pose:
       position:
-        x: 3.15
-        y: 3.65
+        x: 0.525
+        y: 0.4
+      relative_to: bedroom
     is_open: True
     is_locked: False
 
@@ -177,7 +181,6 @@ locations:
       rotation_eul:
         yaw: 90.0
         angle_units: "degrees"
-
     is_open: False
     is_locked: False
 
@@ -188,18 +191,20 @@ objects:
     parent: table0
     pose:
       position:
-        x: 1.0
-        y: -0.5
+        x: 0.15
+        y: 0.0
       rotation_eul:
-        yaw: 40.5
+        yaw: -49.5
         angle_units: "degrees"
+      relative_to: table0
 
   - category: apple
     parent: my_desk
     pose:
       position:
-        x: 3.2
-        y: 3.5
+        x: 0.05
+        y: -0.15
+      relative_to: my_desk
 
   - name: gala
     category: apple

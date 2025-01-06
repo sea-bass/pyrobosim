@@ -7,6 +7,7 @@ Tests for room creation in pyrobosim.
 import pytest
 
 from pyrobosim.core import Room, World
+from pyrobosim.utils.pose import Pose
 
 
 class TestRoom:
@@ -21,6 +22,8 @@ class TestRoom:
         assert isinstance(result, Room)
         assert world.num_rooms == 1
         assert world.rooms[0].name == "test_room"
+        assert world.rooms[0].original_pose is None
+        assert world.rooms[0].pose.is_approx(Pose(x=0.0, y=0.0))  # Centroid
 
         # Adding the same room again should fail due to duplicate names.
         result = world.add_room(room=room)
@@ -34,19 +37,23 @@ class TestRoom:
 
         coords = [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)]
         color = (1.0, 0.0, 0.1)
-        result = world.add_room(footprint=coords, color=color)
+        pose = Pose(x=1.0, y=2.0)
+        result = world.add_room(footprint=coords, color=color, pose=pose)
 
         assert isinstance(result, Room)
         assert world.num_rooms == 1
         assert world.rooms[0].name == "room0"
         assert world.rooms[0].viz_color == color
+        assert world.rooms[0].original_pose == world.rooms[0].pose
+        assert world.rooms[0].pose.is_approx(Pose(x=1.0, y=2.0))  # Specified pose
 
     def test_add_room_to_world_empty_geometry(self):
         """Test adding a room with an empty footprint. Should raise an exception."""
         world = World()
 
-        with pytest.raises(Exception):
-            result = world.add_room(name="test_room")
+        with pytest.raises(Exception) as exc_info:
+            world.add_room(name="test_room")
+        assert exc_info.value.args[0] == "Room footprint cannot be empty."
 
     def test_add_room_to_world_in_collision(self, caplog):
         """Test adding a room in collision with another room."""
