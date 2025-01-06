@@ -3,6 +3,7 @@
 import copy
 import os
 import yaml
+from itertools import zip_longest
 
 from .robot import Robot
 from .world import World
@@ -94,7 +95,8 @@ class WorldYamlLoader:
                 )
             else:
                 obj_data = None
-            self.world.set_metadata(locations=loc_data, objects=obj_data)
+
+            self.world.add_metadata(locations=loc_data, objects=obj_data)
 
     def add_rooms(self):
         """Add rooms to the world."""
@@ -253,11 +255,12 @@ class WorldYamlWriter:
         }
 
         # Extract the location and object metadata.
-        loc_metadata_file = world.get_location_metadata().filename or ""
-        obj_metadata_file = world.get_object_metadata().filename or ""
+        loc_metadata_files = world.get_location_metadata().sources
+        obj_metadata_files = world.get_object_metadata().sources
+
         world_dict["metadata"] = {
-            "locations": loc_metadata_file,
-            "objects": obj_metadata_file,
+            "locations": loc_metadata_files,
+            "objects": obj_metadata_files,
         }
 
         # Go through all the entities in the world and similarly add them to the dictionary.

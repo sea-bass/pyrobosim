@@ -26,14 +26,24 @@ class Object:
     """ Visualization color (RGB tuple). """
 
     @classmethod
-    def set_metadata(cls, filename):
+    def add_metadata(cls, filename):
         """
-        Assign a metadata file to the :class:`pyrobosim.core.objects.Object` class.
+        Add object metadata from a new file to existing metadata.
 
         :param filename: Path to object metadata YAML file.
         :type filename: str
         """
-        cls.metadata = EntityMetadata(filename)
+        if not hasattr(cls, "metadata"):
+            cls.metadata = EntityMetadata()
+
+        cls.metadata.add(filename)
+
+    @classmethod
+    def clear_metadata(cls):
+        """
+        Clear out old object metadata.
+        """
+        cls.metadata = EntityMetadata()
 
     def __init__(
         self,

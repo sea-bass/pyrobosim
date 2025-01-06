@@ -25,14 +25,24 @@ class Location:
     """ Visualization color (RGB tuple). """
 
     @classmethod
-    def set_metadata(cls, filename):
+    def add_metadata(cls, filename):
         """
-        Assign a metadata file to the :class:`pyrobosim.core.locations.Location` class.
+        Add location metadata from a new file to existing metadata.
 
         :param filename: Path to location metadata YAML file.
         :type filename: str
         """
-        cls.metadata = EntityMetadata(filename)
+        if not hasattr(cls, "metadata"):
+            cls.metadata = EntityMetadata()
+
+        cls.metadata.add(filename)
+
+    @classmethod
+    def clear_metadata(cls):
+        """
+        Clear out old location metadata.
+        """
+        cls.metadata = EntityMetadata()
 
     def __init__(
         self,

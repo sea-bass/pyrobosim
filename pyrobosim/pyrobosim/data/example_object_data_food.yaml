@@ -1,0 +1,11 @@
+apple:
+  footprint:
+    type: circle
+    radius: 0.06
+  color: [1, 0, 0]
+
+banana:
+  footprint:
+    type: box
+    dims: [0.05, 0.2]
+  color: [0.7, 0.7, 0]

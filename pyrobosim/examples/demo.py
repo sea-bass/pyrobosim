@@ -27,9 +27,15 @@ def create_world(multirobot=False):
     world = World()
 
     # Set the location and object metadata
-    world.set_metadata(
-        locations=os.path.join(data_folder, "example_location_data.yaml"),
-        objects=os.path.join(data_folder, "example_object_data.yaml"),
+    world.add_metadata(
+        locations=[
+            os.path.join(data_folder, "example_location_data_furniture.yaml"),
+            os.path.join(data_folder, "example_location_data_accessories.yaml"),
+        ],
+        objects=[
+            os.path.join(data_folder, "example_object_data_food.yaml"),
+            os.path.join(data_folder, "example_object_data_drink.yaml"),
+        ],
     )
 
     # Add rooms
