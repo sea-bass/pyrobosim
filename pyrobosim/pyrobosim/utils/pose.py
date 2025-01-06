@@ -214,7 +214,7 @@ class Pose:
         :type: dict[str, Any]
         """
         return {
-            "position": {"x": self.x, "y": self.y, "z": self.z},
+            "position": {"x": float(self.x), "y": float(self.y), "z": float(self.z)},
             "rotation_quat": {
                 "w": float(self.q[0]),
                 "x": float(self.q[1]),

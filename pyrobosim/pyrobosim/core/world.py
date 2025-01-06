@@ -554,7 +554,7 @@ class World:
         # Validate the input
         if isinstance(location, str):
             location = self.get_entity_by_name(location)
-        if not (isinstance(location, Location) or isinstance(location, Hallway)):
+        if not isinstance(location, (Location, Hallway)):
             message = message = (
                 f"Cannot open {location} since it is of type {type(location).__name__}."
             )
@@ -606,7 +606,7 @@ class World:
         # Validate the input
         if isinstance(location, str):
             location = self.get_entity_by_name(location)
-        if not (isinstance(location, Location) or isinstance(location, Hallway)):
+        if not isinstance(location, (Location, Hallway)):
             message = message = (
                 f"Cannot close {location} since it is of type {type(location).__name__}."
             )
@@ -666,7 +666,7 @@ class World:
         # Validate the input
         if isinstance(location, str):
             location = self.get_entity_by_name(location)
-        if not (isinstance(location, Location) or isinstance(location, Hallway)):
+        if not isinstance(location, (Location, Hallway)):
             message = message = (
                 f"Cannot lock {location} since it is of type {type(location).__name__}."
             )
@@ -702,7 +702,7 @@ class World:
         # Validate the input
         if isinstance(location, str):
             location = self.get_entity_by_name(location)
-        if not (isinstance(location, Location) or isinstance(location, Hallway)):
+        if not isinstance(location, (Location, Hallway)):
             message = message = (
                 f"Cannot unlock {location} since it is of type {type(location).__name__}."
             )
@@ -1008,7 +1008,7 @@ class World:
             if isinstance(loc, str):
                 loc = self.get_entity_by_name(loc)
 
-            if isinstance(loc, Room) or isinstance(loc, Hallway):
+            if isinstance(loc, (Room, Hallway)):
                 if pose is None:
                     # Sample a pose in the location
                     x_sample, y_sample = sample_from_polygon(
@@ -1026,7 +1026,7 @@ class World:
                         self.logger.warning(f"{pose} is occupied")
                         valid_pose = False
                     robot_pose = pose
-            elif isinstance(loc, Location) or isinstance(loc, ObjectSpawn):
+            elif isinstance(loc, (Location, ObjectSpawn)):
                 if isinstance(loc, Location):
                     # NOTE: If you don't want a random object spawn, use the object spawn as the input location.
                     loc = np.random.choice(loc.children)
@@ -1521,10 +1521,39 @@ class World:
         :type name: str
         :return: Entity object instance matching the input name, or ``None`` if not valid.
         """
-        if name in self.name_to_entity:
-            return self.name_to_entity[name]
-        else:
-            return None
+        return self.name_to_entity.get(name)
+
+    def get_pose_relative_to(self, pose, entity):
+        """
+        Given a relative pose to an entity, and the entity itself, gets the absolute pose.
+
+        :param pose: The pose specified with respect to the entity.
+        :type pose: :class:`pyrobosim.utils.pose.Pose`
+        :param entity: The entity, or entity name:
+        :type entity: Entity or str
+        :return: Absolute pose computed by transforming the input pose to the entity frame.
+        :rtype: :class:`pyrobosim.utils.pose.Pose`
+        """
+        # Look for the target entity if specified by name.
+        if isinstance(entity, str):
+            grounded_entity = self.get_entity_by_name(entity)
+            if grounded_entity is None:
+                raise ValueError(f"Could not find entity by name: {entity}")
+
+            entity = grounded_entity
+
+        # Validate that the entity is of one of the supported types.
+        if not isinstance(entity, (Room, Location, ObjectSpawn, Object, Robot)):
+            raise TypeError(f"Invalid entity type: {type(entity)}")
+
+        # Extract the pose from the entity and use it to transform the given pose
+        # to the entity frame.
+        # Note that the rotation is applied separately from the translation.
+        new_transform = (
+            pose.get_translation_matrix() @ entity.pose.get_transform_matrix()
+        )
+        new_transform[:3, :3] = pose.get_rotation_matrix() @ new_transform[:3, :3]
+        return Pose.from_transform(new_transform)
 
     #######################
     # Occupancy utilities #
@@ -1690,7 +1719,7 @@ class World:
         else:
             entity = entity_query
 
-        if isinstance(entity, ObjectSpawn) or isinstance(entity, Room):
+        if isinstance(entity, (ObjectSpawn, Room)):
             graph_nodes = entity.graph_nodes
         elif isinstance(entity, Hallway):
             graph_nodes = [entity.graph_nodes[0], entity.graph_nodes[-1]]
