@@ -108,6 +108,7 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
         rotation_eul:
           yaw: <yaw>
           angle_units: <units>  # Can be "radians" (default) or "degrees"
+        relative_to: <room_name>  # If not specified, uses absolute pose
        is_open: true  # Can only pick, place, and detect if open
        is_locked: true  # Can only open and close if unlocked
        is_charger: false  # Robots can charge at this location
@@ -128,7 +129,7 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
            x: <x>
            y: <y>
            z: <z>
-         relative_to: <loc_name>
+         relative_to: <loc_name>  # If not specified, uses absolute pose
 
 
 Specifying Poses
@@ -141,7 +142,7 @@ There are a few ways to specify poses in PyRoboSim YAML files: lists and diction
    # Valid list formats
    pose: [<x>, <y>]
    pose: [<x>, <y>, <z>]
-   pose: [<x>, <y>, <z>, <yaw>]
+   pose: [<x>, <y>, <z>, <yaw>]  # Angle units always in radians
 
 If possible, you should use the dictionary format, as the list format is at this point only around for backward compatibility.
 Anything below this line is only supported in dictionary format.

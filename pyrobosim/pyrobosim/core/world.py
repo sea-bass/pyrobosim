@@ -1522,7 +1522,8 @@ class World:
         if not isinstance(entity, (Room, Location, ObjectSpawn, Object, Robot)):
             raise TypeError(f"Invalid entity type: {type(entity)}")
 
-        # Extract the pose from the entity and transform it to the new frame.
+        # Extract the pose from the entity and use it to transform the given pose
+        # to the entity frame.
         # Note that the rotation is applied separately from the translation.
         new_transform = (
             pose.get_translation_matrix() @ entity.pose.get_transform_matrix()
