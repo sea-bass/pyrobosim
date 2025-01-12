@@ -9,7 +9,7 @@ install_requires = [
 
 setup(
     name=project_name,
-    version="3.2.1",
+    version="3.3.0",
     url="https://github.com/sea-bass/pyrobosim",
     author="Sebastian Castro",
     author_email="sebas.a.castro@gmail.com",
