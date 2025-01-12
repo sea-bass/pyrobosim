@@ -18,11 +18,11 @@
 # -- Project information -----------------------------------------------------
 
 project = "pyrobosim"
-copyright = "2022-2024, Sebastian Castro"
+copyright = "2022-2025, Sebastian Castro"
 author = "Sebastian Castro"
 
 # The full version, including alpha/beta/rc tags
-version = release = "3.2.1"
+version = release = "3.3.0"
 
 
 # -- General configuration ---------------------------------------------------
