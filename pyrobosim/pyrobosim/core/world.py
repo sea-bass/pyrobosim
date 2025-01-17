@@ -1140,6 +1140,33 @@ class World:
                 f"Updating bounds with unsupported entity type {type(entity)}"
             )
 
+    def reset(self):
+        """Reset the world"""
+        from .yaml_utils import WorldYamlLoader
+
+        # Shut down all the old robots' ROS interfaces.
+        self.ros_node = self.ros_node if self.has_ros_node else None
+        if self.ros_node is not None:
+            for robot in self.robots:
+                self.ros_node.remove_robot_ros_interfaces(robot)
+
+        if self.source_yaml_file is not None:
+            new_world = WorldYamlLoader().from_file(self.source_yaml_file)
+        else:
+            new_world = WorldYamlLoader().from_yaml(self.source_yaml)
+
+        self.gui.set_world(new_world)
+
+        # Start up the new robots' ROS interfaces.
+        if self.ros_node is not None:
+            self.ros_node.set_world(self)
+            for robot in self.robots:
+                self.ros_node.add_robot_ros_interfaces(robot)
+
+        self.gui.canvas.show()
+        self.gui.canvas.draw_signal.emit()
+        self.gui.on_robot_changed()
+
     ################################
     # Lookup Functionality Methods #
     ################################
