@@ -30,7 +30,7 @@ from pyrobosim_msgs.msg import (
     ObjectState,
     RobotState,
 )
-from pyrobosim_msgs.srv import RequestWorldState, SetLocationState
+from pyrobosim_msgs.srv import RequestWorldState, SetLocationState, ResetWorld
 from std_srvs.srv import Trigger
 
 from .ros_conversions import (
@@ -69,6 +69,8 @@ class WorldROSWrapper(Node):
             * Allow path planner reset on a ``<robot_name>/reset_path_planner`` service server.
             * Allow object detection for each robot on a ``<robot_name>/detect_objects`` action server.
             * Serve a ``request_world_state`` service to retrieve the world state for planning.
+            * Serve a ``set_location_state`` service to set the state of the location.
+            * Serve a ``reset_world`` service to reset the world.
             * Serve a ``execute_action`` action server to run single actions on a robot.
             * Serve a ``execute_task_plan`` action server to run entire task plans on a robot.
 
@@ -135,6 +137,13 @@ class WorldROSWrapper(Node):
             SetLocationState,
             "set_location_state",
             self.set_location_state_callback,
+            callback_group=ReentrantCallbackGroup(),
+        )
+
+        self.reset_world_srv = self.create_service(
+            ResetWorld,
+            "reset_world",
+            self.reset_world_callback,
             callback_group=ReentrantCallbackGroup(),
         )
 
@@ -818,6 +827,29 @@ class WorldROSWrapper(Node):
         # If we made it here, return the latest result.
         if result is not None:
             response.result = execution_result_to_ros(result)
+        return response
+
+    def reset_world_callback(self, request, response):
+        """
+        Reset the world as a response to a service request.
+
+        :param request: The service request.
+        :type request: :class:`pyrobosim_msgs.srv.ResetWorld.Request`
+        :param response: The service response indicating success or failure.
+        :type response: :class:`pyrobosim_msgs.srv.ResetWorld.Response`
+        :return: The modified service response containing the result of the reset operation.
+        :rtype: :class:`pyrobosim_msgs.srv.ResetWorld.Response`
+        """
+        self.get_logger().info("Received reset world request.")
+
+        try:
+            self.world.reset()
+            response.success = True
+            self.get_logger().info("World reset successfully")
+        except Exception as e:
+            self.get_logger().error(f"Failed to reset the world: {e}")
+            response.success = False
+
         return response
 
 
