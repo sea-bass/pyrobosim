@@ -1,4 +1,4 @@
-""" Hallway representation for world modeling. """
+"""Hallway representation for world modeling."""
 
 import math
 from shapely import intersects_xy

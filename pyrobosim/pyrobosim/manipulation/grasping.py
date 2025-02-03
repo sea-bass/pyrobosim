@@ -1,4 +1,4 @@
-""" Grasping utilities. """
+"""Grasping utilities."""
 
 from ..utils.pose import Pose
 

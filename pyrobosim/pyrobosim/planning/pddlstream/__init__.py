@@ -1,4 +1,4 @@
-""" Tools for PDDLStream based task and motion planning.
+"""Tools for PDDLStream based task and motion planning.
 
 This module contains tools associated with task and motion planning (TAMP)
 using the PDDLStream package. This includes a wrapper around PDDLStream

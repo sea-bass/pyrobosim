@@ -1,4 +1,4 @@
-""" Utilities for displaying a pyrobosim world in a figure canvas. """
+"""Utilities for displaying a pyrobosim world in a figure canvas."""
 
 import adjustText
 import numpy as np

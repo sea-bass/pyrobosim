@@ -1,4 +1,4 @@
-""" Occupancy grid utilities. """
+"""Occupancy grid utilities."""
 
 import math
 import numpy as np

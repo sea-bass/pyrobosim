@@ -1,4 +1,4 @@
-""" Task and Motion Planning tools using PDDLStream. """
+"""Task and Motion Planning tools using PDDLStream."""
 
 import os
 from pddlstream.algorithms.focused import solve_adaptive

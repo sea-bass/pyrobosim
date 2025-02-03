@@ -1,4 +1,4 @@
-""" Main utilities for pyrobosim GUI. """
+"""Main utilities for pyrobosim GUI."""
 
 import numpy as np
 import signal

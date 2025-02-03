@@ -1,4 +1,4 @@
-""" Defines a robot which operates in a world. """
+"""Defines a robot which operates in a world."""
 
 import time
 import numpy as np

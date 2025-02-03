@@ -1,4 +1,4 @@
-""" Representations for locations and their corresponding object spawns. """
+"""Representations for locations and their corresponding object spawns."""
 
 from shapely import intersects_xy
 from shapely.plotting import patch_from_polygon

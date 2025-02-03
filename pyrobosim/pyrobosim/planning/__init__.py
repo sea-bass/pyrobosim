@@ -1,4 +1,4 @@
-""" Task and motion planning utilities.
+"""Task and motion planning utilities.
 
 This module contains tools associated with task and motion planning
 (TAMP). This includes representations for parametric actions that comprise

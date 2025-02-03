@@ -1,4 +1,4 @@
-""" Defines actions for task and motion planning. """
+"""Defines actions for task and motion planning."""
 
 from enum import IntEnum
 import numpy as np

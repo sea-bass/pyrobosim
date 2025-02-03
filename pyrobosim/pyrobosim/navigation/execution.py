@@ -1,4 +1,4 @@
-""" Path execution utilities. """
+"""Path execution utilities."""
 
 import time
 import threading

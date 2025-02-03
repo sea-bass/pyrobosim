@@ -1,4 +1,4 @@
-""" Utilities to create worlds from YAML files. """
+"""Utilities to create worlds from YAML files."""
 
 import copy
 import os

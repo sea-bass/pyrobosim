@@ -1,4 +1,4 @@
-""" Trajectory generation and interpolation utilities. """
+"""Trajectory generation and interpolation utilities."""
 
 import copy
 import numpy as np

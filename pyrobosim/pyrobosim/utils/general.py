@@ -1,4 +1,4 @@
-""" General package utilities. """
+"""General package utilities."""
 
 import os
 import yaml

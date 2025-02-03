@@ -1,4 +1,4 @@
-""" Utilities to export worlds to Gazebo. """
+"""Utilities to export worlds to Gazebo."""
 
 import os
 import shutil
