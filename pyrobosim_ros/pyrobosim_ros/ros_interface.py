@@ -1,4 +1,4 @@
-""" ROS interfaces to world model. """
+"""ROS interfaces to world model."""
 
 from functools import partial
 import numpy as np

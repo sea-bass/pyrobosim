@@ -1,4 +1,4 @@
-""" Graph search utilities. """
+"""Graph search utilities."""
 
 from astar import AStar
 import numpy as np

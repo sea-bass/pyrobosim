@@ -1,4 +1,4 @@
-""" GUI utilities.
+"""GUI utilities.
 
 This module contains the main pyrobosim UI, which is based on PySide6,
 as well as the tools to embed the world model as a matplotlib canvas.

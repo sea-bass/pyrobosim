@@ -1,4 +1,4 @@
-""" Probabilistic Roadmap (PRM) implementation. """
+"""Probabilistic Roadmap (PRM) implementation."""
 
 import time
 

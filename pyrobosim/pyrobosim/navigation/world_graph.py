@@ -1,4 +1,4 @@
-""" World graph planner implementation. """
+"""World graph planner implementation."""
 
 import time
 import itertools

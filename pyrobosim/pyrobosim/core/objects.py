@@ -1,4 +1,4 @@
-""" Representations for objects that exist in the world. """
+"""Representations for objects that exist in the world."""
 
 import numpy as np
 from shapely.plotting import patch_from_polygon

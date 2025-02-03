@@ -1,4 +1,4 @@
-""" Implementation of the A* path planner. """
+"""Implementation of the A* path planner."""
 
 import math
 import time

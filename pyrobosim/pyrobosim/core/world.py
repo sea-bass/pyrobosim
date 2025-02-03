@@ -1,4 +1,4 @@
-""" Main file containing the core world modeling tools. """
+"""Main file containing the core world modeling tools."""
 
 import itertools
 import numpy as np

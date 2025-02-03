@@ -1,4 +1,4 @@
-""" Rapidly-exploring Random Tree (RRT) implementation. """
+"""Rapidly-exploring Random Tree (RRT) implementation."""
 
 import copy
 import time

@@ -1,4 +1,4 @@
-""" Utilities for executing actions from the UI in separate QThreads. """
+"""Utilities for executing actions from the UI in separate QThreads."""
 
 from PySide6.QtCore import QRunnable
 

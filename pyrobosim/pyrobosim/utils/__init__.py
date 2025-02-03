@@ -1,4 +1,4 @@
-""" General utilities.
+"""General utilities.
 
 This module contains general utilities used throughout pyrobosim,
 such as pose/polygon representations, or tracking knowledge about objects
