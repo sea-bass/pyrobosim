@@ -2,7 +2,7 @@
 
 import math
 from shapely import intersects_xy
-from shapely.geometry import LineString, MultiLineString, Polygon
+from shapely.geometry import LineString, MultiLineString
 from shapely.plotting import patch_from_polygon
 
 from ..utils.pose import Pose, get_angle, get_bearing_range
@@ -130,13 +130,10 @@ class Hallway:
         :type inflation_radius: float, optional
         """
         # Internal collision polygon:
-        # Deflate the resulting difference polygon, protecting against inflation radius greater than the half-width of the hallway.
-        if inflation_radius >= self.width / 2.0:
-            self.internal_collision_polygon = Polygon()
-        else:
-            self.internal_collision_polygon = inflate_polygon(
-                self.polygon, -inflation_radius
-            )
+        # Deflate the resulting difference polygon
+        self.internal_collision_polygon = inflate_polygon(
+            self.polygon, -inflation_radius
+        )
         # Subtract deflated room polygons from the hallway polygon
         self.internal_collision_polygon = self.internal_collision_polygon.difference(
             inflate_polygon(self.room_start.polygon, -inflation_radius)
