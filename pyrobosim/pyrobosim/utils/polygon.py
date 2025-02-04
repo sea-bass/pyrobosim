@@ -95,6 +95,8 @@ def inflate_polygon(poly, radius):
     inflated_poly = poly.buffer(
         radius, cap_style=CAP_STYLE.flat, join_style=JOIN_STYLE.mitre
     )
+    if inflated_poly.is_empty:
+        return inflated_poly
     return orient(inflated_poly)
 
 

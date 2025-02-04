@@ -75,7 +75,12 @@ def test_get_polygon_centroid():
 
 
 def test_inflate_polygon():
+    empty_poly = Polygon()
     square_poly = Polygon(square_coords)
+
+    # Empty polygon
+    inflated_poly = inflate_polygon(empty_poly, 0.0)
+    assert inflated_poly == empty_poly
 
     # Zero inflation radius
     inflated_poly = inflate_polygon(square_poly, 0.0)
@@ -108,7 +113,12 @@ def test_inflate_polygon():
 
 
 def test_transform_polygon():
+    empty_poly = Polygon()
     square_poly = Polygon(box_to_coords(dims=[1.0, 2.0]))
+
+    # Empty polygon
+    transformed_poly = transform_polygon(empty_poly, None)
+    assert transformed_poly == empty_poly
 
     # No transformation, using None as pose
     transformed_poly = transform_polygon(square_poly, None)
