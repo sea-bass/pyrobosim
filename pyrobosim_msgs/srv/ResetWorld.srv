@@ -1,0 +1,10 @@
+# ROS service to reset the world state.
+
+---
+
+# Response
+# bool success
+# Indicates whether the world reset operation was successful:
+# - true: The world was successfully reset.
+# - false: The reset operation failed due to some error.
+bool success
