@@ -92,6 +92,9 @@ def inflate_polygon(poly, radius):
     :return: The inflated Shapely polygon.
     :rtype: :class:`shapely.geometry.Polygon`
     """
+    if poly.is_empty:
+        return poly
+
     inflated_poly = poly.buffer(
         radius, cap_style=CAP_STYLE.flat, join_style=JOIN_STYLE.mitre
     )
@@ -111,6 +114,9 @@ def transform_polygon(polygon, pose):
     :return: The transformed Shapely polygon.
     :rtype: :class:`shapely.geometry.Polygon`
     """
+    if polygon.is_empty:
+        return polygon
+
     if pose is not None:
         polygon = translate(polygon, xoff=pose.x, yoff=pose.y)
         polygon = rotate(
