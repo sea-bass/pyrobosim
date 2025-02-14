@@ -13,7 +13,9 @@ from pyrobosim.core import WorldYamlLoader
 from pyrobosim.gui import start_gui
 from pyrobosim.planning.pddlstream import PDDLStreamPlanner, get_default_domains_folder
 from pyrobosim.utils.general import get_data_folder
-
+from pddlstream.language.constants import Exists, And
+PARAM1 = "?o"
+PARAM2 = "?o"
 
 def parse_args():
     """Parse command-line arguments"""
@@ -74,6 +76,16 @@ def start_planner(world, args):
         # If using the open/close/detect example, close the desk location.
         if args.example == "06_open_close_detect":
             world.close_location(world.get_location_by_name("desk0"))
+            goal_literals=[
+                Exists(
+                    [PARAM1],
+                    And(
+                        ("Has", PARAM1, "banana"),
+                        ("Has", PARAM1, "apple1"),
+                        ("Has", PARAM1, "water1"),
+                    ),
+                ),
+            ]
     else:
         print(f"Invalid example: {args.example}")
         return
