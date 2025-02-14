@@ -185,6 +185,14 @@ class Robot:
         """
         return self.executing_nav or np.count_nonzero(self.dynamics.velocity) > 0
 
+    def is_busy(self) -> bool:
+        """
+        Checks whether the robot is currently executing an action or plan.
+
+        :return: True if the robot is busy, else False.
+        """
+        return self.executing_action or self.executing_plan or self.executing_nav
+
     def is_in_collision(self):
         """
         Checks whether the last step of dynamics put the robot in collision.
