@@ -4,30 +4,11 @@
 
 import os
 import numpy as np
-import pytest
 
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.navigation import PRMPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
-
-
-def test_prm_default():
-    """Tests planning with default world graph planner settings."""
-    world = WorldYamlLoader().from_file(
-        os.path.join(get_data_folder(), "test_world.yaml")
-    )
-    planner_config = {"world": world}
-
-    np.random.seed(1234)  # Fix seed for reproducibility
-    prm = PRMPlanner(**planner_config)
-    start = Pose(x=-1.6, y=2.8)
-    goal = Pose(x=2.5, y=3.0)
-
-    path = prm.plan(start, goal)
-    assert len(path.poses) >= 2
-    assert path.poses[0] == start
-    assert path.poses[-1] == goal
 
 
 def test_prm_default():

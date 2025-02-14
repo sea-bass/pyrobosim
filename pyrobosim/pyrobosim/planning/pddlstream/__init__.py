@@ -7,9 +7,9 @@ stream definition files, along with their mappings to Python functions with
 the actual implementations.
 """
 
-import importlib
+from importlib.util import find_spec
 
-if importlib.util.find_spec("pddlstream") is None:
+if find_spec("pddlstream") is None:
     raise ModuleNotFoundError("PDDLStream is not available. Cannot import planner.")
 
 from .default_mappings import *

@@ -8,8 +8,8 @@ import rclpy
 from rclpy.node import Node
 import time
 
-from pyrobosim_msgs.msg import GoalPredicate, GoalSpecification
-from pyrobosim_msgs.srv import SetLocationState
+from pyrobosim_msgs.msg import GoalPredicate, GoalSpecification  # type: ignore
+from pyrobosim_msgs.srv import SetLocationState  # type: ignore
 
 
 class GoalPublisher(Node):

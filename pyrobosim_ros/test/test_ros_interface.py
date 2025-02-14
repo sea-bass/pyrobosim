@@ -12,15 +12,15 @@ from rclpy.node import Node
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.utils.general import get_data_folder
 
-from pyrobosim_msgs.action import (
+from pyrobosim_msgs.action import (  # type: ignore
     DetectObjects,
     ExecuteTaskAction,
     ExecuteTaskPlan,
     FollowPath,
     PlanPath,
 )
-from pyrobosim_msgs.msg import ExecutionResult, RobotState, TaskAction, TaskPlan
-from pyrobosim_msgs.srv import RequestWorldState, SetLocationState
+from pyrobosim_msgs.msg import ExecutionResult, RobotState, TaskAction, TaskPlan  # type: ignore
+from pyrobosim_msgs.srv import RequestWorldState, SetLocationState  # type: ignore
 from pyrobosim_ros.ros_interface import WorldROSWrapper
 
 

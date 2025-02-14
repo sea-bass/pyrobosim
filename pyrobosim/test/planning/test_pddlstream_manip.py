@@ -3,13 +3,13 @@
 """
 Tests for PDDLStream planning with manipulation streams.
 """
-import importlib
+from importlib.util import find_spec
 import numpy as np
 import os
 import pytest
 import threading
 
-if importlib.util.find_spec("pddlstream") is None:
+if find_spec("pddlstream") is None:
     pytest.skip(allow_module_level=True, reason="PDDLStream not available")
 
 from pyrobosim.core import Robot, World

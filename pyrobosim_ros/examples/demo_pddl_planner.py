@@ -19,9 +19,9 @@ from pyrobosim_ros.ros_conversions import (
     goal_specification_from_ros,
     task_plan_to_ros,
 )
-from pyrobosim_msgs.action import ExecuteTaskPlan
-from pyrobosim_msgs.msg import GoalSpecification
-from pyrobosim_msgs.srv import RequestWorldState
+from pyrobosim_msgs.action import ExecuteTaskPlan  # type: ignore
+from pyrobosim_msgs.msg import GoalSpecification  # type: ignore
+from pyrobosim_msgs.srv import RequestWorldState  # type: ignore
 
 
 def load_world():

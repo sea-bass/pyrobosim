@@ -16,21 +16,21 @@ from rclpy.node import Node
 
 from geometry_msgs.msg import Twist
 from pyrobosim.utils.logging import set_global_logger
-from pyrobosim_msgs.action import (
+from pyrobosim_msgs.action import (  # type: ignore
     DetectObjects,
     ExecuteTaskAction,
     ExecuteTaskPlan,
     FollowPath,
     PlanPath,
 )
-from pyrobosim_msgs.msg import (
+from pyrobosim_msgs.msg import (  # type: ignore
     ExecutionResult,
     HallwayState,
     LocationState,
     ObjectState,
     RobotState,
 )
-from pyrobosim_msgs.srv import RequestWorldState, SetLocationState
+from pyrobosim_msgs.srv import RequestWorldState, SetLocationState  # type: ignore
 from std_srvs.srv import Trigger
 
 from .ros_conversions import (

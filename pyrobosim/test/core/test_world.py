@@ -15,12 +15,12 @@ from pyrobosim.utils.general import get_data_folder
 class TestWorldModeling:
     """Tests for the world modeling tools"""
 
+    world = World()
+
     @staticmethod
     @pytest.mark.dependency()
     def test_clearing_old_metadata():
         """Tests the creation of a world and clear out old metadata"""
-
-        TestWorldModeling.world = World()
 
         data_folder = get_data_folder()
         TestWorldModeling.world.add_metadata(

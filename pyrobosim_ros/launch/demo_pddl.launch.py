@@ -1,12 +1,16 @@
+from typing import Any
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.conditions import IfCondition
+from launch.launch_context import LaunchContext
 from launch.substitutions import LaunchConfiguration
 from launch.substitutions import TextSubstitution
 from launch_ros.actions import Node
 
 
-def launch_planner_node(context, *args, **kwargs):
+def launch_planner_node(
+    context: LaunchContext, *args: Any, **kwargs: Any
+) -> list[Node]:
     verbose_bool = LaunchConfiguration("verbose").perform(context).lower() == "true"
     planner_node = Node(
         package="pyrobosim_ros",
@@ -26,7 +30,7 @@ def launch_planner_node(context, *args, **kwargs):
     return [planner_node]
 
 
-def generate_launch_description():
+def generate_launch_description() -> LaunchDescription:
     # Arguments
     example_arg = DeclareLaunchArgument(
         "example",
