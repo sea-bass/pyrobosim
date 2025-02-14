@@ -132,12 +132,15 @@ def process_goal_specification(goal_literals, world):
     :param goal_literals: List of literals describing a goal specification.
     :type goal_literals: list[tuple]
     """
+
     def process_element(elem):
         """Helper function to process individual elements recursively"""
         if isinstance(elem, (list, tuple)):
             # Recursively process each element in the list/tuple
             return type(elem)(process_element(e) for e in elem)
-        elif isinstance(elem, str) and not elem.startswith('?'):  # Skip variables (starting with ?)
+        elif isinstance(elem, str) and not elem.startswith(
+            "?"
+        ):  # Skip variables (starting with ?)
             # Check if string corresponds to a named entity
             entity = world.get_entity_by_name(elem)
             return entity if entity else elem
