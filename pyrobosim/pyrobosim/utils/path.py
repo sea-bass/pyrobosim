@@ -2,7 +2,7 @@
 Path representation for motion planning.
 """
 
-from typing_extensions import Self
+from typing_extensions import Self  # For compatibility with Python <= 3.10
 
 from .pose import Pose
 

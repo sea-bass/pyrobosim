@@ -22,7 +22,7 @@ from pyrobosim.utils.pose import Pose
 data_folder = get_data_folder()
 
 
-def create_world(multirobot=False):
+def create_world(multirobot: bool = False) -> World:
     """Create a test world"""
     world = World()
 
@@ -191,11 +191,11 @@ def create_world(multirobot=False):
     return world
 
 
-def create_world_from_yaml(world_file):
+def create_world_from_yaml(world_file: str) -> World:
     return WorldYamlLoader().from_file(os.path.join(data_folder, world_file))
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     """Parse command-line arguments"""
     parser = argparse.ArgumentParser(description="Main pyrobosim demo.")
     parser.add_argument(

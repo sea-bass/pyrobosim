@@ -16,35 +16,27 @@ class Pose:
 
     def __init__(
         self,
-        x=0.0,
-        y=0.0,
-        z=0.0,
-        roll=0.0,
-        pitch=0.0,
-        yaw=0.0,
-        q=None,
-        angle_units="radians",
-    ):
+        x: float = 0.0,
+        y: float = 0.0,
+        z: float = 0.0,
+        roll: float = 0.0,
+        pitch: float = 0.0,
+        yaw: float = 0.0,
+        q: list[float] | None = None,
+        angle_units: str = "radians",
+    ) -> None:
         """
         Creates a new Pose object.
 
         :param x: X position
-        :type x: float
         :param y: Y position
-        :type y: float
         :param z: Z position
-        :type z: float
         :param roll: Roll angle (about X axis), in specified angle units
-        :type roll: float
         :param pitch: Pitch angle (about Y axis), in specified angle units
-        :type pitch: float
         :param yaw: Yaw angle (about Z axis), in specified angle units
-        :type yaw: float
         :param angle_units: Units for angle ('radians' or 'degrees'). Default is 'radians'
-        :type angle_units: str
         :param q: Quaternion, specified at [qw, qx, qy, qz]
             If specified, will override roll/pitch/yaw values.
-        :type q: list[float]
         """
         self.x = x
         self.y = y
@@ -199,22 +191,21 @@ class Pose:
         raises ValueError: if the input data type is unsupported.
         """
         if isinstance(data, list):
-            return Pose.from_list(data)
+            return self.from_list(data)
         elif isinstance(data, dict):
-            return Pose.from_dict(data)
+            return self.from_dict(data)
         elif isinstance(data, np.ndarray):
-            return Pose.from_transform(data)
+            return self.from_transform(data)
         else:
             raise ValueError(
                 f"Cannot construct pose from object of type {type(data).__name__}."
             )
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
         """
         Converts the pose instance to a dictionary compatible with YAML.
 
         :return: The output dictionary.
-        :type: dict[str, Any]
         """
         return {
             "position": {"x": float(self.x), "y": float(self.y), "z": float(self.z)},
@@ -237,9 +228,9 @@ class Pose:
         sum_squares = (other.x - self.x) ** 2 + (other.y - self.y) ** 2
         if not ignore_z:
             sum_squares += (other.z - self.z) ** 2
-        return np.sqrt(sum_squares)
+        return math.sqrt(sum_squares)
 
-    def get_angular_distance(self, other):
+    def get_angular_distance(self, other: Self) -> float:
         """
         Gets the angular distance between two poses, wrapped in the range [-pi, pi].
 
@@ -248,125 +239,117 @@ class Pose:
         :return: Angular distance between this and the other pose.
         :rtype: float
         """
-        return np.arctan2(other.y - self.y, other.x - self.x)
+        return float(np.arctan2(other.y - self.y, other.x - self.x))
 
-    def get_yaw(self):
+    def get_yaw(self) -> float:
         """
         Gets the yaw angle, in radians.
         This is a handy utility for 2D (or 2.5D) calculations.
 
         :return: Yaw angle (about Z axis), in radians
-        :rtype: float
         """
         return self.eul[2]
 
-    def set_euler_angles(self, roll=0.0, pitch=0.0, yaw=0.0):
+    def set_euler_angles(
+        self, roll: float = 0.0, pitch: float = 0.0, yaw: float = 0.0
+    ) -> None:
         """
         Sets the orientation component as Euler angles.
 
         :param roll: Roll angle (about X axis), in radians
-        :type roll: float
         :param pitch: Pitch angle (about Y axis), in radians
-        :type pitch: float
         :param yaw: Yaw angle (about Z axis), in radians
-        :type yaw: float
         """
         self.eul = [roll, pitch, yaw]
         self.q = euler2quat(roll, pitch, yaw, "rxyz")
 
-    def set_quaternion(self, q):
+    def set_quaternion(self, q: list[float]) -> None:
         """
         Sets the orientation component as a quaternion.
 
         :param q: Quaternion, specified at [qw, qx, qy, qz]
             If specified, will override roll/pitch/yaw values.
-        :type q: list[float]
         """
         self.q = q / qnorm(q)
         self.eul = quat2euler(self.q, "rxyz")
 
-    def get_translation_matrix(self):
+    def get_translation_matrix(self) -> np.ndarray:
         """
         Gets a translation matrix from the pose representation.
 
         :return: 4-by-4 translation matrix
-        :rtype: :class:`numpy.ndarray`
         """
         trans_mat = np.eye(4)
         trans_mat[:3, 3] = [self.x, self.y, self.z]
         return trans_mat
 
-    def get_rotation_matrix(self):
+    def get_rotation_matrix(self) -> np.ndarray:
         """
         Gets a rotation matrix from the pose representation.
 
         :return: 3-by-3 rotation matrix
-        :rtype: :class:`numpy.ndarray`
         """
         return quat2mat(self.q)
 
-    def get_transform_matrix(self):
+    def get_transform_matrix(self) -> np.ndarray:
         """
         Gets a homogeneous transformation matrix from the pose representation.
 
         :return: 4-by-4 transformation matrix
-        :rtype: :class:`numpy.ndarray`
         """
         tf_mat = self.get_translation_matrix()
         tf_mat[:3, :3] = self.get_rotation_matrix()
         return tf_mat
 
-    def get_translation(self):
+    def get_translation(self) -> np.ndarray:
         """
         Gets the pose x y and z of the pose as an array.
 
         :return: Pose x y and z as an array
-        :rtype: :class: numpy.ndarray
         """
         return np.array([self.x, self.y, self.z])
 
-    def is_approx(self, other, rel_tol=1e-06, abs_tol=1e-06):
+    def is_approx(
+        self, other: Self, rel_tol: float = 1e-06, abs_tol: float = 1e-06
+    ) -> bool:
         """
         Check if two poses are approximately equal with a tolerance.
 
         :param other: Pose with which to check approximate equality.
-        :type other: :class:`pyrobosim.utils.pose.Pose`
         :param rel_tol: Relative tolerance
-        :type rel_tol: float
         :param abs_tol: Absolute tolerance
-        :type abs_tol: float
         :return: True if the Poses are approximately equal, else False
-        :rtype: bool
         """
         if not (isinstance(other, Pose)):
             raise TypeError("Expected a Pose object.")
 
-        return np.allclose(
-            self.get_translation(), other.get_translation(), rel_tol, abs_tol
-        ) and nearly_equivalent(self.q, other.q, rel_tol, abs_tol)
+        return bool(
+            np.allclose(
+                self.get_translation(), other.get_translation(), rel_tol, abs_tol
+            )
+            and nearly_equivalent(self.q, other.q, rel_tol, abs_tol)
+        )
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         """
         Check if two poses are exactly equal.
 
         :param other: Pose with which to check equality.
-        :type other: :class:`pyrobosim.utils.pose.Pose`
         :return: True if the poses are equal, else False
-        :rtype: bool
         """
         if not (isinstance(other, Pose)):
             raise TypeError("Expected a Pose object.")
 
-        return np.all(self.get_translation() == other.get_translation()) and np.all(
-            self.q == other.q
+        return bool(
+            np.all(self.get_translation() == other.get_translation())
+            and np.all(self.q == other.q)
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Representation for printing a Pose object.
 
         :return: Printable string.
-        :rtype: str
         """
         pos_str = f"x={self.x:.2f}, y={self.y:.2f}, z={self.z:.2f}"
         quat_str = (
@@ -376,85 +359,71 @@ class Pose:
         return f"Pose: [{pos_str}, {quat_str}]"
 
 
-def get_angle(p1, p2):
+def get_angle(p1: list[float], p2: list[float]) -> float:
     """
     Basic utility for getting angle between 2D points.
     The convention is the angle ``p2`` with reference to ``p1``.
 
     :param p1: Reference point
-    :type p1: list[float]
     :param p2: Target point
-    :type p2: list[float]
     :return: Angle of target pose with respect to reference pose.
-    :rtype: float
     """
     return wrap_angle(math.atan2(p2[1] - p1[1], p2[0] - p1[0]))
 
 
-def get_distance(p1, p2):
+def get_distance(p1: list[float], p2: list[float]) -> float:
     """
     Basic utility for getting distance between points.
 
     :param p1: Reference point
-    :type p1: list[float]
     :param p2: Target point
-    :type p2: list[float]
     :return: Distance between target pose and reference pose.
-    :rtype: float
     """
     sqrs = [(i - j) ** 2 for i, j in zip(p1, p2)]
     return math.sqrt(sum(sqrs))
 
 
-def get_bearing_range(p1, p2):
+def get_bearing_range(p1: list[float], p2: list[float]) -> tuple[float, float]:
     """
     Gets bearing and range between 2 points ``p1`` and ``p2``.
     The convention is the bearing of ``p2`` with reference to ``p1``.
 
     :param p1: Reference point
-    :type p1: list[float]
     :param p2: Target point
-    :type p2: list[float]
     :return: Bearing and range of target pose with respect to reference pose.
-    :rtype: (float, float)
     """
     rng = get_distance(p1, p2)
     bear = get_angle(p1, p2)
     return (bear, rng)
 
 
-def rot2d(vec, ang):
+def rot2d(vec: list[float], ang: float) -> list[float]:
     """
     Rotates a 2-element vector by an angle.
 
     :param vec: Vector to rotate.
-    :type vec: (float, float)
     :param ang: Rotation angle, in radians.
-    :type ang: float
     :return: Rotated vector.
-    :type: (float, float)
     """
     v = np.array([[vec[0]], [vec[1]]])
     M = np.array([[np.cos(ang), -np.sin(ang)], [np.sin(ang), np.cos(ang)]])
     v_tf = np.matmul(M, v)
-    return v_tf.flatten().tolist()
+    return list(v_tf.flatten())
 
 
-def wrap_angle(ang):
+def wrap_angle(ang: float) -> float:
     """
     Wraps an angle in the range [-pi, pi].
 
     :param ang: Original angle.
-    :type ang: float
     :return: Wrapped angle.
-    :rtype: float
     """
-    if ang is None or (ang >= -np.pi and ang <= np.pi):
+    if (ang is None) or (ang >= -math.pi and ang <= math.pi):
         # If the angle is none or within range, return it as is.
         return ang
     else:
         # Otherwise, add pi, wrap it in the range [0..2pi], and then subtract pi.
-        divided_ang = (ang + np.pi) / (2 * np.pi)
-        remainder = divided_ang - np.floor(divided_ang)
-        wrapped_ang = remainder * (2 * np.pi) - np.pi
+        divided_ang = (ang + math.pi) / (2 * math.pi)
+        remainder = divided_ang - math.floor(divided_ang)
+        wrapped_ang = remainder * (2 * math.pi) - math.pi
         return wrapped_ang

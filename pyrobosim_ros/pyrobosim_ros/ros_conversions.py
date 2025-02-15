@@ -3,22 +3,36 @@ Utilities to convert between standalone pyrobosim objects and
 ROS representations (messages, services, etc.).
 """
 
-import geometry_msgs.msg
+from geometry_msgs.msg import (
+    Pose as RosPose,
+)
+from rclpy.duration import Duration
 
-import pyrobosim_msgs.msg as ros_msgs
-import pyrobosim.planning.actions as acts
+from pyrobosim_msgs.msg import (
+    ExecutionResult as RosExecutionResult,
+    GoalSpecification,
+    Path as RosPath,
+    TaskAction as RosTaskAction,
+    TaskPlan as RosTaskPlan,
+)
+from pyrobosim.core.world import World
+from pyrobosim.planning.actions import (
+    ExecutionResult,
+    ExecutionStatus,
+    TaskAction,
+    TaskPlan,
+)
 from pyrobosim.utils.path import Path
 from pyrobosim.utils.pose import Pose
+from pyrobosim.types import Entity
 
 
-def pose_from_ros(msg):
+def pose_from_ros(msg: RosPose) -> Pose:
     """
     Converts ROS pose message to a pyrobosim pose.
 
-    :param act: ROS message.
-    :type act: :class:`geometry_msgs.msg.Pose`
-    :return: Pose object
-    :rtype: :class:`pyrobosim.utils.pose.Pose`
+    :param msg: ROS message.
+    :return: Pose object.
     """
     return Pose.from_list(
         [
@@ -33,14 +47,12 @@ def pose_from_ros(msg):
     )
 
 
-def pose_to_ros(pose):
+def pose_to_ros(pose: Pose | None) -> RosPose:
     """
     Converts a pyrobosim Pose to a ROS message.
 
     :param act: Pose object.
-    :type act: :class:`pyrobosim.utils.pose.Pose`
     :return: ROS message.
-    :rtype: :class:`geometry_msgs.msg.Pose`
     """
     pose_msg = geometry_msgs.msg.Pose()
     if pose is not None:
@@ -54,61 +66,58 @@ def pose_to_ros(pose):
     return pose_msg
 
 
-def path_from_ros(msg):
+def path_from_ros(msg: RosPath) -> Path:
     """
     Converts ROS path message to a pyrobosim motion Path.
 
-    :param act: ROS message.
-    :type act: :class:`pyrobosim_msgs.msg.Path`
-    :return: Path object
+    :param msg: ROS message.
+    :return: Path object.
     """
     return Path(poses=[pose_from_ros(p) for p in msg.poses])
 
 
-def path_to_ros(path):
+def path_to_ros(path: Path) -> RosPath:
     """
     Converts a pyrobosim motion Path to a ROS message.
 
-    :param act: Path object.
+    :param path: Path object.
     :return: ROS message.
-    :rtype: :class:`pyrobosim_msgs.msg.Path`
     """
-    path_msg = ros_msgs.Path()
-    path_msg.poses = [pose_to_ros(p) for p in path.poses]
-    path_msg.length = path.length
-    return path_msg
+    return ros_msgs.Path(
+        poses=[pose_to_ros(p) for p in path.poses],
+        length=path.length,
+    )
 
 
-def get_entity_name(entity):
+def get_entity_name(entity: Entity | str | None) -> str:
     """
     Gets the name of an entity, or if a string is specified, gets the string itself.
 
     :param entity: Entity from which to extract the name
-    :type entity: Entity, or str
     :return: Entity name.
-    :rtype: str
     """
     if entity is None:
         return ""
     elif isinstance(entity, str):
         return entity
-    else:
+    elif isinstance(entity, Entity):
         return entity.name
+    else:
+        raise TypeError(f"Invalid entity type: {type(entity)}")
 
 
-def goal_specification_from_ros(msg, world):
+def goal_specification_from_ros(
+    msg: GoalSpecification, world: World
+) -> list[tuple[str, ...]]:
     """
     Uses a world object to resolve a GoalSpecification message to a
     list of goal literals for task and motion planning.
 
     :param msg: ROS message.
-    :type msg: :class:`pyrobosim_msgs.msg.GoalSpecification`
     :param world: World object to use to resolve literals.
-    :type world: :class:`pyrobosim.core.world.World`
     :return: List of literals describing a goal specification.
-    :rtype: list[tuple]
     """
-    goal_literals = []
+    goal_literals: list[tuple[str, ...]] = []
     for pred_msg in msg.predicates:
         pred = [pred_msg.type]
 
@@ -126,18 +135,16 @@ def goal_specification_from_ros(msg, world):
     return goal_literals
 
 
-def task_action_from_ros(msg):
+def task_action_from_ros(msg: RosTaskAction) -> TaskAction:
     """
     Converts a TaskAction ROS message to a TaskAction object.
 
     :param msg: ROS message.
-    :type msg: :class:`pyrobosim_msgs.msg.TaskAction`
     :return: Task action object.
-    :rtype: :class:`pyrobosim.planning.actions.TaskAction`
     """
-    if not isinstance(msg, ros_msgs.TaskAction):
+    if not isinstance(msg, RosTaskAction):
         raise Exception("Input is not a TaskAction ROS message")
-    return acts.TaskAction(
+    return TaskAction(
         msg.type,
         robot=msg.robot if msg.robot else None,
         object=msg.object if msg.object else None,
@@ -150,19 +157,17 @@ def task_action_from_ros(msg):
     )
 
 
-def task_action_to_ros(act):
+def task_action_to_ros(act: TaskAction) -> RosTaskAction:
     """
     Converts a TaskAction object to a TaskAction ROS message.
 
     :param act: Task action object.
-    :type act: :class:`pyrobosim.planning.actions.TaskAction`
     :return: ROS message.
-    :rtype: :class:`pyrobosim_msgs.msg.TaskAction`
     """
-    if not isinstance(act, acts.TaskAction):
+    if not isinstance(act, TaskAction):
         raise Exception("Input is not a TaskAction object")
 
-    act_msg = ros_msgs.TaskAction(type=act.type)
+    act_msg = RosTaskAction(type=act.type)
     act_msg.robot = get_entity_name(act.robot)
     act_msg.object = get_entity_name(act.object)
     act_msg.room = get_entity_name(act.room)
@@ -178,73 +183,63 @@ def task_action_to_ros(act):
     return act_msg
 
 
-def task_plan_from_ros(msg):
+def task_plan_from_ros(msg: RosTaskPlan) -> TaskPlan:
     """
     Converts a TaskPlan ROS message to a TaskPlan object.
 
     :param msg: ROS message.
-    :type msg: :class:`pyrobosim_msgs.msg.TaskPlan`
     :return: Task plan object.
-    :rtype: :class:`pyrobosim.planning.actions.TaskPlan`
     """
-    if not isinstance(msg, ros_msgs.TaskPlan):
+    if not isinstance(msg, RosTaskPlan):
         raise Exception("Input is not a TaskPlan ROS message")
     actions = [task_action_from_ros(act_msg) for act_msg in msg.actions]
-    return acts.TaskPlan(robot=msg.robot, actions=actions)
+    return TaskPlan(robot=msg.robot, actions=actions)
 
 
-def task_plan_to_ros(plan):
+def task_plan_to_ros(plan: TaskPlan) -> RosTaskPlan:
     """
     Converts a TaskPlan object to a TaskPlan ROS message.
 
     :param plan: Task plan object.
-    :type plan: :class:`pyrobosim.planning.actions.TaskPlan`
     :return: ROS message.
-    :rtype: :class:`pyrobosim_msgs.msg.TaskPlan`
     """
-    if not isinstance(plan, acts.TaskPlan):
+    if not isinstance(plan, TaskPlan):
         raise Exception("Input is not a TaskPlan object")
     act_msgs = [task_action_to_ros(act) for act in plan.actions]
-    return ros_msgs.TaskPlan(robot=plan.robot, actions=act_msgs, cost=plan.total_cost)
+    return RosTaskPlan(robot=plan.robot, actions=act_msgs, cost=plan.total_cost)
 
 
-def ros_duration_to_float(ros_duration):
+def ros_duration_to_float(ros_duration: Duration) -> float:
     """
     Converts an rclpy Duration object to a floating-point time value, in seconds.
 
     :param ros_time: rclpy Duration object.
-    :type ros_time: :class:`rclpy.duration.Duration`
     :return: The duration time, in seconds.
-    :type: float
     """
     return 1.0e-9 * ros_duration.nanoseconds
 
 
-def execution_result_to_ros(result):
+def execution_result_to_ros(result: ExecutionResult) -> RosExecutionResult:
     """
     Converts an execution result object to its corresponding ROS message.
 
     :param result: The execution result object.
-    :type result: :class:`pyrobosim.planning.actions.ExecutionResult`
     :return: The equivalent ROS message.
-    :rtype: :class:`pyrobosim_msgs.msg.ExecutionResult`
     """
-    return ros_msgs.ExecutionResult(
-        status=getattr(acts.ExecutionStatus, result.status.name),
+    return RosExecutionResult(
+        status=getattr(ExecutionStatus, result.status.name),
         message=result.message or "",
     )
 
 
-def execution_result_from_ros(msg):
+def execution_result_from_ros(msg: RosExecutionResult) -> ExecutionResult:
     """
     Converts an execution result ROS message to its corresponding object.
 
-    :param result: The execution result ROS message.
-    :type result: :class:`pyrobosim_msgs.msg.ExecutionResult`
+    :param msg: The execution result ROS message.
     :return: The equivalent native PyRoboSim object.
-    :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
     """
-    return acts.ExecutionResult(
-        status=getattr(ros_msgs.ExecutionResult, msg.status.name),
+    return ExecutionResult(
+        status=getattr(RosExecutionResult, msg.status.name),
         message=msg.message or None,
     )

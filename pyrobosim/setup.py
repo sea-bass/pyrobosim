@@ -27,6 +27,7 @@ install_requires = [
     "scipy",
     "transforms3d",
     "trimesh",
+    "typing_extensions",  # For compatibility with Python <= 3.10
 ]
 
 # This will gracefully fall back to an empty string if the README.md cannot be read.
