@@ -3,7 +3,7 @@
 """Unit tests for the World Graph planner"""
 
 import os
-import pytest
+from pytest import LogCaptureFixture
 
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.navigation import WorldGraphPlanner
@@ -11,7 +11,7 @@ from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
 
-def test_world_graph_default():
+def test_world_graph_default() -> None:
     """Tests planning with default world graph planner settings."""
     world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
@@ -29,7 +29,7 @@ def test_world_graph_default():
     assert path.poses[-1] == goal
 
 
-def test_world_graph_short_connection_distance(caplog):
+def test_world_graph_short_connection_distance(caplog: LogCaptureFixture) -> None:
     """Tests planning with short connection distance, which should fail."""
     world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")

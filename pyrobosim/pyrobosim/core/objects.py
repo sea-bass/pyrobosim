@@ -7,8 +7,8 @@ from shapely.geometry import Polygon
 from shapely.plotting import patch_from_polygon
 from scipy.spatial import ConvexHull
 
-from .types import Entity
-from ..utils.general import EntityMetadata, InvalidEntityCategoryException, parse_color
+from .types import Entity, EntityMetadata, InvalidEntityCategoryException
+from ..utils.general import parse_color
 from ..utils.pose import Pose
 from ..utils.polygon import (
     convhull_to_rectangle,

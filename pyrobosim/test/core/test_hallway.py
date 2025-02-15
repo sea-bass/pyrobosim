@@ -5,14 +5,15 @@ Tests for hallway creation in pyrobosim.
 """
 
 import pytest
+from pytest import LogCaptureFixture
 
 from pyrobosim.core import Hallway, World
 from pyrobosim.planning.actions import ExecutionStatus
 
 
 class TestHallway:
-    @pytest.fixture(autouse=True)
-    def create_test_world(self):
+    @pytest.fixture(autouse=True)  # type: ignore[misc]
+    def create_test_world(self) -> None:
         self.test_world = World()
 
         coords_start = [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)]
@@ -23,7 +24,7 @@ class TestHallway:
         coords_end = [(3.0, 5.0), (5.0, 3.0), (5.0, 5.0), (3.0, 5.0)]
         self.room_end = self.test_world.add_room(name="room_end", footprint=coords_end)
 
-    def test_add_hallway_to_world_from_object(self, caplog):
+    def test_add_hallway_to_world_from_object(self, caplog: LogCaptureFixture) -> None:
         """Test adding a hallway from a Hallway object."""
 
         hallway = Hallway(
@@ -50,7 +51,7 @@ class TestHallway:
             in caplog.text
         )
 
-    def test_add_hallway_to_world_from_args(self):
+    def test_add_hallway_to_world_from_args(self) -> None:
         """Test adding a hallway from a list of named keyword arguments."""
         result = self.test_world.add_hallway(
             room_start=self.room_start,
@@ -83,7 +84,7 @@ class TestHallway:
         assert self.test_world.hallways[1].reversed_name == "hall_room_start_room_end_1"
         assert self.test_world.hallways[1].width == 0.08
 
-    def test_add_hallway_fail_validation(self, caplog):
+    def test_add_hallway_fail_validation(self, caplog: LogCaptureFixture) -> None:
         """Test that all the hallway validation checks work."""
         with pytest.raises(ValueError) as exc_info:
             self.test_world.add_hallway(
@@ -115,7 +116,9 @@ class TestHallway:
             )
         assert exc_info.value.args[0] == "No valid connection method: bad_conn_method."
 
-    def test_add_hallway_open_close_lock_unlock(self, caplog):
+    def test_add_hallway_open_close_lock_unlock(
+        self, caplog: LogCaptureFixture
+    ) -> None:
         """Test the open, close, lock, and unlock capabilities of hallways."""
         result = self.test_world.add_hallway(
             room_start="room_start",

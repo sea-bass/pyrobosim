@@ -4,6 +4,7 @@
 
 import os
 import numpy as np
+from pytest import LogCaptureFixture
 
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.navigation import PRMPlanner
@@ -11,7 +12,7 @@ from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
 
-def test_prm_default():
+def test_prm_default() -> None:
     """Tests planning with default world graph planner settings."""
     world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
@@ -29,7 +30,7 @@ def test_prm_default():
     assert path.poses[-1] == goal
 
 
-def test_prm_no_path(caplog):
+def test_prm_no_path(caplog: LogCaptureFixture) -> None:
     """Test that PRM gracefully returns when there is no feasible path."""
     world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
@@ -45,7 +46,7 @@ def test_prm_no_path(caplog):
     assert "Could not find a path from start to goal." in caplog.text
 
 
-def test_prm_compress_path():
+def test_prm_compress_path() -> None:
     """Tests planning with path compression option."""
     world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")

@@ -132,7 +132,7 @@ def get_path_length(path):
     Simple wrapper to get the length of a path.
 
     :param path: Path from start to goal.
-    :type path: :class:`pyrobosim.utils.motion.Path`
+    :type path: :class:`pyrobosim.utils.path.Path`
     :return: Length of the path.
     :rtype: float
     """
@@ -150,7 +150,7 @@ def sample_motion(planner, p1, p2):
     :param goal: Goal pose.
     :type goal: :class:`pyrobosim.utils.pose.Pose`
     :return: Generator yielding tuple containing a path from start to goal
-    :rtype: generator[tuple[:class:`pyrobosim.utils.motion.Path`]]
+    :rtype: generator[tuple[:class:`pyrobosim.utils.path.Path`]]
     """
     while True:
         path = planner.plan(p1, p2)

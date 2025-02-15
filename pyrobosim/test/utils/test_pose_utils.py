@@ -6,6 +6,7 @@ Unit tests for pose utilities class.
 
 import numpy as np
 import pytest
+from typing import Any
 
 from pyrobosim.core import Pose
 from pyrobosim.utils.pose import (
@@ -20,7 +21,7 @@ from pyrobosim.utils.pose import (
 ########################
 # Tests for Pose class #
 ########################
-def test_pose_default_args():
+def test_pose_default_args() -> None:
     """Test creating a pose with default arguments."""
     pose = Pose()
     assert pose.x == pytest.approx(0.0)
@@ -30,7 +31,7 @@ def test_pose_default_args():
     assert pose.q == pytest.approx([1.0, 0.0, 0.0, 0.0])
 
 
-def test_pose_from_position():
+def test_pose_from_position() -> None:
     """Test creating a pose with nondefault position arguments."""
     pose = Pose(x=1.0, y=2.0, z=3.0)
     assert pose.x == pytest.approx(1.0)
@@ -40,14 +41,16 @@ def test_pose_from_position():
     assert pose.q == pytest.approx([1.0, 0.0, 0.0, 0.0])
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parametrize(  # type: ignore[misc]
     "angle_units, roll, pitch, yaw",
     [
         ("radians", np.pi / 2, 0.0, -np.pi / 2),
         ("degrees", 90.0, 0.0, -90.0),
     ],
 )
-def test_pose_from_euler_angles(angle_units, roll, pitch, yaw):
+def test_pose_from_euler_angles(
+    angle_units: str, roll: float, pitch: float, yaw: float
+) -> None:
     """Test creating a pose using Euler angles specified in different units."""
     pose = Pose(roll=roll, pitch=pitch, yaw=yaw, angle_units=angle_units)
 
@@ -58,7 +61,7 @@ def test_pose_from_euler_angles(angle_units, roll, pitch, yaw):
     assert pose.q == pytest.approx([0.5, 0.5, 0.5, -0.5])
 
 
-def test_pose_from_quaternion():
+def test_pose_from_quaternion() -> None:
     """Test creating a pose using quaternions."""
     pose = Pose(q=[1.0, 1.0, 1.0, -1.0])  # Unnormalized
     assert pose.x == pytest.approx(0.0)
@@ -68,7 +71,7 @@ def test_pose_from_quaternion():
     assert pose.q == pytest.approx([0.5, 0.5, 0.5, -0.5])
 
 
-def test_pose_from_lists():
+def test_pose_from_lists() -> None:
     """Test creating a pose using lists."""
     # 2-element lists should be [x, y]
     pose = Pose.from_list([1.0, 2.0])
@@ -119,7 +122,7 @@ def test_pose_from_lists():
     )
 
 
-def test_pose_from_transform():
+def test_pose_from_transform() -> None:
     """Test creating a pose using a transform."""
     tform = np.array(
         [
@@ -138,12 +141,12 @@ def test_pose_from_transform():
     assert pose.q == pytest.approx([0.5, 0.5, 0.5, -0.5])
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parametrize(  # type: ignore[misc]
     "angle_units, angle_value", [("radians", np.pi / 2), ("degrees", 90.0)]
 )
-def test_pose_to_from_dict(angle_units, angle_value):
+def test_pose_to_from_dict(angle_units: str, angle_value: float) -> None:
     """Test creating poses using a dictionary and saving them back out."""
-    pose_dict = {}
+    pose_dict: dict[str, Any] = {}
     pose = Pose.from_dict(pose_dict)
     assert pose.x == pytest.approx(0.0)
     assert pose.y == pytest.approx(0.0)
@@ -195,10 +198,10 @@ def test_pose_to_from_dict(angle_units, angle_value):
     assert quat["z"] == pytest.approx(0.0)
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parametrize(  # type: ignore[misc]
     "angle_units, angle_value", [("radians", np.pi / 2), ("degrees", 90.0)]
 )
-def test_construct_pose(angle_units, angle_value):
+def test_construct_pose(angle_units: str, angle_value: float) -> None:
     """Test pose construct function that accepts various types"""
     pose_from_list = Pose.construct([1.0, 2.0, 3.0, np.pi / 2])
     pose_from_dict = Pose.construct(
@@ -227,7 +230,7 @@ def test_construct_pose(angle_units, angle_value):
     assert exc_info.value.args[0] == "Cannot construct pose from object of type int."
 
 
-def test_get_linear_distance():
+def test_get_linear_distance() -> None:
     """Test linear distance calculation function."""
     pose1 = Pose(x=1.0, y=2.0, z=3.0)
     pose2 = Pose(x=4.0, y=-2.0, z=5.0)
@@ -237,7 +240,7 @@ def test_get_linear_distance():
     assert pose1.get_linear_distance(pose2, ignore_z=False) == pytest.approx(5.3851648)
 
 
-def test_get_angular_distance():
+def test_get_angular_distance() -> None:
     """Test angular distance calculation function."""
     pose1 = Pose(x=1.0, y=2.0)
 
@@ -254,14 +257,22 @@ def test_get_angular_distance():
     assert pose1.get_angular_distance(pose2) == pytest.approx(-3 * np.pi / 4)
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parametrize(  # type: ignore[misc]
     "x, y, z, roll, pitch, yaw, angle_units",
     [
         (1.0, 2.0, 3.0, np.pi / 2, 0.0, -np.pi / 2, "radians"),
         (1.0, 2.0, 3.0, 90.0, 0.0, -90.0, "degrees"),
     ],
 )
-def test_get_matrices(x, y, z, roll, pitch, yaw, angle_units):
+def test_get_matrices(
+    x: float,
+    y: float,
+    z: float,
+    roll: float,
+    pitch: float,
+    yaw: float,
+    angle_units: str,
+) -> None:
     """Test getting matrices from a pose with different angle units"""
     pose = Pose(
         x=x,
@@ -290,7 +301,7 @@ def test_get_matrices(x, y, z, roll, pitch, yaw, angle_units):
     assert pose.get_translation_matrix() == pytest.approx(expected_translation_matrix)
 
 
-def test_is_approx_radians():
+def test_is_approx_radians() -> None:
     """Test approximate equivalence functionality for pose in radians"""
     pose1 = Pose(
         x=1.0,
@@ -323,7 +334,7 @@ def test_is_approx_radians():
     assert exc_info.value.args[0] == "Expected a Pose object."
 
 
-def test_is_approx_degrees():
+def test_is_approx_degrees() -> None:
     """Test approximate equivalence functionality for pose in degrees"""
     pose1 = Pose(
         x=1.0, y=2.0, z=3.0, roll=90.0, pitch=0.0, yaw=-90.0, angle_units="degrees"
@@ -345,7 +356,7 @@ def test_is_approx_degrees():
     assert pose1.is_approx(pose2, rel_tol=1e-3, abs_tol=1e-3)
 
 
-def test_equality():
+def test_equality() -> None:
     """Test pose equality operator."""
     # Original pose
     pose1 = Pose(x=1.0, y=2.0, z=3.0, roll=np.pi / 2, pitch=0.0, yaw=-np.pi / 2)
@@ -367,7 +378,7 @@ def test_equality():
 ###############################
 # Tests for utility functions #
 ###############################
-def test_get_angle():
+def test_get_angle() -> None:
     """Test the utility function for getting 2D angle between points."""
     # Straight ahead in the X direction
     assert get_angle([1.0, 2.0], [3.0, 2.0]) == pytest.approx(0.0)
@@ -379,20 +390,20 @@ def test_get_angle():
     assert get_angle([1.0, 2.0], [0.0, 1.0]) == pytest.approx(-3 * np.pi / 4)
 
 
-def test_get_distance():
+def test_get_distance() -> None:
     """Test the utility function for getting 2D distance between points."""
     assert get_distance([1.0, 2.0], [1.0, 2.0]) == pytest.approx(0.0)
     assert get_distance([1.0, 2.0], [4.0, -2.0]) == pytest.approx(5.0)
 
 
-def test_get_bearing_range():
+def test_get_bearing_range() -> None:
     """Test the utility function for getting bearing and range between two points."""
     bear, rng = get_bearing_range([1.0, 2.0], [4.0, -2.0])
     assert bear == pytest.approx(-np.arctan2(4.0, 3.0))
     assert rng == pytest.approx(5.0)
 
 
-def test_rot2d():
+def test_rot2d() -> None:
     """Test the utility to rotate a 2-element position vector by an angle."""
     orig_vec = [1.0, 0.0]
 
@@ -404,7 +415,7 @@ def test_rot2d():
     )
 
 
-def test_wrap_angle():
+def test_wrap_angle() -> None:
     """Test the angle wrapping utility function."""
     # Angles that do not wrap
     assert wrap_angle(0.0) == pytest.approx(0.0)

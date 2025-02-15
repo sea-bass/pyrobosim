@@ -5,7 +5,7 @@ import threading
 
 from ..planning.actions import ExecutionResult, ExecutionStatus
 from ..utils.logging import get_global_logger
-from ..utils.motion import Path
+from ..utils.path import Path
 from ..utils.trajectory import get_constant_speed_trajectory, interpolate_trajectory
 
 
@@ -68,7 +68,6 @@ class ConstantVelocityExecutor:
         Generates and executes a trajectory on the robot.
 
         :param path: Path to execute on the robot.
-        :type path: :class:`pyrobosim.utils.motion.Path`
         :param realtime_factor: A multiplier on the execution time relative to
             real time, defaults to 1.0.
         :type realtime_factor: float, optional
@@ -182,8 +181,8 @@ class ConstantVelocityExecutor:
             poses.extend(self.traj.poses[idx:])
             if len(poses) > 2:
                 remaining_path = Path(poses=poses)
-                if not remaining_path.is_collision_free(
-                    self.robot.world, step_dist=self.validation_step_dist
+                if not self.robot.world.is_path_collision_free(
+                    remaining_path, step_dist=self.validation_step_dist
                 ):
                     self.robot.logger.warning(
                         "Remaining path is in collision. Aborting execution."

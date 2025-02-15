@@ -5,7 +5,7 @@ from pyrobosim.manipulation import GraspGenerator, ParallelGraspProperties
 from pyrobosim.utils.pose import Pose
 
 
-def create_test_object(object_pose):
+def create_test_object(object_pose: Pose) -> Object:
     """Helper function to create a test object."""
     obj_footprint_coords = [
         [0.05, 0.0],

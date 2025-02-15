@@ -260,7 +260,6 @@ class Robot(Entity):
             If not specified, returns None.
         :type goal: :class:`pyrobosim.utils.pose.Pose` / str, optional
         :return: The path, if one was found, otherwise None.
-        :rtype: :class:`pyrobosim.utils.motion.Path` or None
         """
         from ..utils.knowledge import graph_node_from_entity, query_to_entity
 
@@ -321,7 +320,6 @@ class Robot(Entity):
         Follows a specified path using the attached path executor.
 
         :param path: The path to follow.
-        :type path: :class:`pyrobosim.utils.motion.Path`
         :param realtime_factor: A real-time multiplier on execution speed,
             defaults to 1.0.
         :type realtime_factor: float
@@ -403,7 +401,6 @@ class Robot(Entity):
             If not specified, returns None.
         :type goal: :class:`pyrobosim.utils.pose.Pose` / str, optional
         :param path: The path to follow.
-        :type path: :class:`pyrobosim.utils.motion.Path`
         :param realtime_factor: A real-time multiplier on execution speed,
             defaults to 1.0.
         :type realtime_factor: float

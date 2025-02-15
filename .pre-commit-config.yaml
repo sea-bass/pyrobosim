@@ -61,10 +61,10 @@ repos:
         files: \.(yml|yaml)$
 
   # Checks links in markdown files.
-  # - repo: https://github.com/tcort/markdown-link-check
-  #   rev: v3.13.6
-  #   hooks:
-  #     - id: markdown-link-check
+  - repo: https://github.com/tcort/markdown-link-check
+    rev: v3.13.6
+    hooks:
+      - id: markdown-link-check
 
   # Type checking -- see mypy.ini for configuration
   - repo: https://github.com/pre-commit/mirrors-mypy

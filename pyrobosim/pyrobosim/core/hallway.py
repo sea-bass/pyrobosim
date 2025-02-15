@@ -8,8 +8,8 @@ from shapely.plotting import patch_from_polygon
 from .types import Entity
 from ..utils.pose import Pose, get_angle, get_bearing_range
 from ..utils.polygon import inflate_polygon
-from ..utils.search_graph import Node
 from ..utils.general import parse_color
+from ..utils.graph_types import Node
 
 
 class Hallway(Entity):

@@ -5,13 +5,14 @@ Tests for room creation in pyrobosim.
 """
 
 import pytest
+from pytest import LogCaptureFixture
 
 from pyrobosim.core import Room, World
 from pyrobosim.utils.pose import Pose
 
 
 class TestRoom:
-    def test_add_room_to_world_from_object(self, caplog):
+    def test_add_room_to_world_from_object(self, caplog: LogCaptureFixture) -> None:
         """Test adding a room from a Room object."""
         world = World()
 
@@ -31,7 +32,7 @@ class TestRoom:
         assert world.num_rooms == 1
         assert "Room test_room already exists in the world. Cannot add." in caplog.text
 
-    def test_add_room_to_world_from_args(self):
+    def test_add_room_to_world_from_args(self) -> None:
         """Test adding a room from a list of named keyword arguments."""
         world = World()
 
@@ -47,7 +48,7 @@ class TestRoom:
         assert world.rooms[0].original_pose == world.rooms[0].pose
         assert world.rooms[0].pose.is_approx(Pose(x=1.0, y=2.0))  # Specified pose
 
-    def test_add_room_to_world_empty_geometry(self):
+    def test_add_room_to_world_empty_geometry(self) -> None:
         """Test adding a room with an empty footprint. Should raise an exception."""
         world = World()
 
@@ -55,7 +56,7 @@ class TestRoom:
             world.add_room(name="test_room")
         assert exc_info.value.args[0] == "Room footprint cannot be empty."
 
-    def test_add_room_to_world_in_collision(self, caplog):
+    def test_add_room_to_world_in_collision(self, caplog: LogCaptureFixture) -> None:
         """Test adding a room in collision with another room."""
         world = World()
 

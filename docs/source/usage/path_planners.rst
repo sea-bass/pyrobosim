@@ -94,7 +94,7 @@ This is done using a ``plan()`` method that accepts a start and goal pose and re
 .. code-block:: python
 
     import time
-    from pyrobosim.utils.motion import Path
+    from pyrobosim.utils.path import Path
 
         def plan(self, start, goal):
             t_start = time.time()

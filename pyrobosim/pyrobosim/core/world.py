@@ -8,13 +8,12 @@ from .locations import Location, ObjectSpawn
 from .objects import Object
 from .room import Room
 from .robot import Robot
-from .types import Entity
+from .types import Entity, InvalidEntityCategoryException
 from ..planning.actions import ExecutionResult, ExecutionStatus
-from ..utils.general import InvalidEntityCategoryException
 from ..utils.logging import create_logger
+from ..utils.path import Path
 from ..utils.pose import Pose
 from ..utils.polygon import sample_from_polygon, transform_polygon
-from ..utils.search_graph import Node
 
 
 class World:
@@ -1630,6 +1629,21 @@ class World:
             if pose.get_linear_distance(other_robot.get_pose()) < min_distance:
                 return True
         return False
+
+    def is_path_collision_free(self, path: Path, step_dist: float = 0.01) -> bool:
+        """
+        Check whether a path is collision free in this world.
+
+        :param path: The path to use for collision checking.
+        :param step_dist: The step size for discretizing a straight line to check collisions.
+        :return: True if the path is collision free, else False.
+        """
+        for idx in range(len(path.poses) - 1):
+            if not self.is_connectable(
+                path.poses[idx], path.poses[idx + 1], step_dist=step_dist
+            ):
+                return False
+        return True
 
     def sample_free_robot_pose_uniform(self, robot=None, ignore_robots=True):
         """

@@ -2,35 +2,39 @@
 
 from PySide6.QtCore import QRunnable
 
+from ..core.robot import Robot
+from ..core.world import World
+from ..utils.pose import Pose
 
-class NavRunner(QRunnable):
+
+class NavRunner(QRunnable):  # type: ignore[misc]
     """
     Helper class that wraps navigation execution in a QThread.
     """
 
-    def __init__(self, canvas, robot, goal, path):
+    def __init__(
+        self, world: World, robot: Robot, goal: str, path, realtime_factor: float
+    ) -> None:
         """
         Creates a navigation execution thread.
 
-        :param canvas: A world canvas object linked to this thread.
-        :type canvas: :class:`pyrobosim.gui.world_canvas.WorldCanvas`
+        :param world: A world object linked to this thread.
         :param robot: Robot instance or name to execute action.
-        :type robot: :class:`pyrobosim.core.robot.Robot` or str
         :param goal: Name of goal location (resolved by the world model).
-        :type goal: str
-        :param path: Path to goal location, defaults to None.
-        :type path: :class:`pyrobosim.utils.motion.Path`, optional
+        :param path: Path to goal location.
+        :param realtime_factor: Scaling factor for animating the path execution.
         """
         super(NavRunner, self).__init__()
-        self.canvas = canvas
+        self.world = world
         self.robot = robot
         self.goal = goal
         self.path = path
+        self.realtime_factor = realtime_factor
 
-    def run(self):
+    def run(self) -> None:
         """Runs the navigation execution thread."""
         robot = self.robot
-        world = self.canvas.world
+        world = self.world
 
         if isinstance(robot, str):
             robot = world.get_robot_by_name(robot)
@@ -41,177 +45,165 @@ class NavRunner(QRunnable):
         robot.navigate(
             goal=self.goal,
             path=self.path,
-            realtime_factor=self.canvas.realtime_factor,
+            realtime_factor=self.realtime_factor,
         )
 
 
-class PickRunner(QRunnable):
+class PickRunner(QRunnable):  # type: ignore[misc]
     """
     Helper class that wraps object picking execution in a QThread.
     """
 
-    def __init__(self, canvas, robot, obj_query, grasp_pose):
+    def __init__(
+        self, world: World, robot: Robot, obj_query: str, grasp_pose: Pose
+    ) -> None:
         """
         Creates an object picking execution thread.
 
-        :param canvas: A world canvas object linked to this thread.
-        :type canvas: :class:`pyrobosim.gui.world_canvas.WorldCanvas`
+        :param world: A world object linked to this thread.
         :param robot: Robot instance or name to execute action.
-        :type robot: :class:`pyrobosim.core.robot.Robot` or str
         :param obj_query: The object query (name, category, etc.).
-        :type obj_query: str
         :param grasp_pose: A pose describing how to manipulate the object.
-        :type grasp_pose: :class:`pyrobosim.utils.pose.Pose`, optional
         """
         super(PickRunner, self).__init__()
-        self.canvas = canvas
+        self.world = world
         self.robot = robot
         self.obj_query = obj_query
         self.grasp_pose = grasp_pose
 
-    def run(self):
+    def run(self) -> None:
         """Runs the object picking execution thread."""
         robot = self.robot
-        world = self.canvas.world
+        world = self.world
 
         if isinstance(robot, str):
             robot = world.get_robot_by_name(robot)
         if robot is None:
-            self.world.logger.warning("Robot is not specified. Cannot pick objects.")
+            world.logger.warning("Robot is not specified. Cannot pick objects.")
             return
 
         robot.pick_object(self.obj_query, self.grasp_pose)
 
 
-class PlaceRunner(QRunnable):
+class PlaceRunner(QRunnable):  # type: ignore[misc]
     """
     Helper class that wraps object placement execution in a QThread.
     """
 
-    def __init__(self, canvas, robot, pose):
+    def __init__(self, world: World, robot: Robot, pose: Pose) -> None:
         """
         Creates an object placement execution thread.
 
-        :param canvas: A world canvas object linked to this thread.
-        :type canvas: :class:`pyrobosim.gui.world_canvas.WorldCanvas`
+        :param world: A world object linked to this thread.
         :param robot: Robot instance or name to execute action.
-        :type robot: :class:`pyrobosim.core.robot.Robot` or str
         :param pose: Optional pose describing how to place the object.
-        :type pose: :class:`pyrobosim.utils.pose.Pose`, optional
         """
         super(PlaceRunner, self).__init__()
-        self.canvas = canvas
+        self.world = world
         self.robot = robot
         self.pose = pose
 
-    def run(self):
+    def run(self) -> None:
         """Runs the object picking execution thread."""
         robot = self.robot
-        world = self.canvas.world
+        world = self.world
 
         if isinstance(robot, str):
             robot = world.get_robot_by_name(robot)
         if robot is None:
-            self.world.logger.warning("Robot is not specified. Cannot place objects.")
+            world.logger.warning("Robot is not specified. Cannot place objects.")
             return
 
         robot.place_object(pose=self.pose)
 
 
-class DetectRunner(QRunnable):
+class DetectRunner(QRunnable):  # type: ignore[misc]
     """
     Helper class that wraps object detection execution in a QThread.
     """
 
-    def __init__(self, canvas, robot, query):
+    def __init__(self, world: World, robot: Robot, query: str | None) -> None:
         """
         Creates an object detection execution thread.
 
-        :param canvas: A world canvas object linked to this thread.
-        :type canvas: :class:`pyrobosim.gui.world_canvas.WorldCanvas`
+        :param world: A world object linked to this thread.
         :param robot: Robot instance or name to execute action.
-        :type robot: :class:`pyrobosim.core.robot.Robot` or str
         :param query: Query for object detection.
-        :type query: str, optional
         """
         super(DetectRunner, self).__init__()
-        self.canvas = canvas
+        self.world = world
         self.robot = robot
         self.query = query
 
     def run(self):
         """Runs the object detection execution thread."""
         robot = self.robot
-        world = self.canvas.world
+        world = self.world
 
         if isinstance(robot, str):
             robot = world.get_robot_by_name(robot)
         if robot is None:
-            self.world.logger.warning("Robot is not specified. Cannot detect objects.")
+            world.logger.warning("Robot is not specified. Cannot detect objects.")
             return
 
         robot.detect_objects(self.query)
 
 
-class OpenRunner(QRunnable):
+class OpenRunner(QRunnable):  # type: ignore[misc]
     """
     Helper class that wraps location opening execution in a QThread.
     """
 
-    def __init__(self, canvas, robot):
+    def __init__(self, world: World, robot: Robot) -> None:
         """
         Creates a location opening execution thread.
 
-        :param canvas: A world canvas object linked to this thread.
-        :type canvas: :class:`pyrobosim.gui.world_canvas.WorldCanvas`
+        :param world: A world object linked to this thread.
         :param robot: Robot instance or name to execute action.
-        :type robot: :class:`pyrobosim.core.robot.Robot` or str
         """
         super(OpenRunner, self).__init__()
-        self.canvas = canvas
+        self.world = world
         self.robot = robot
 
-    def run(self):
+    def run(self) -> None:
         """Runs the location opening execution thread."""
         robot = self.robot
-        world = self.canvas.world
+        world = self.world
 
         if isinstance(robot, str):
             robot = world.get_robot_by_name(robot)
         if robot is None:
-            self.world.logger.warning("Robot is not specified. Cannot open locations.")
+            world.logger.warning("Robot is not specified. Cannot open locations.")
             return
 
         robot.open_location()
 
 
-class CloseRunner(QRunnable):
+class CloseRunner(QRunnable):  # type: ignore[misc]
     """
     Helper class that wraps location closing execution in a QThread.
     """
 
-    def __init__(self, canvas, robot):
+    def __init__(self, world: World, robot: Robot) -> None:
         """
         Creates a location closing execution thread.
 
-        :param canvas: A world canvas object linked to this thread.
-        :type canvas: :class:`pyrobosim.gui.world_canvas.WorldCanvas`
+        :param world: A world object linked to this thread.
         :param robot: Robot instance or name to execute action.
-        :type robot: :class:`pyrobosim.core.robot.Robot` or str
         """
         super(CloseRunner, self).__init__()
-        self.canvas = canvas
+        self.world = world
         self.robot = robot
 
-    def run(self):
+    def run(self) -> None:
         """Runs the location closing execution thread."""
         robot = self.robot
-        world = self.canvas.world
+        world = self.world
 
         if isinstance(robot, str):
             robot = world.get_robot_by_name(robot)
         if robot is None:
-            self.world.logger.warning("Robot is not specified. Cannot close locations.")
+            world.logger.warning("Robot is not specified. Cannot close locations.")
             return
 
         robot.close_location()

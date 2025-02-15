@@ -7,7 +7,7 @@ import os
 from ..actions import TaskAction, TaskPlan
 from ...manipulation.grasping import Grasp
 from ...utils.general import get_data_folder
-from ...utils.motion import Path
+from ...utils.path import Path
 from ...utils.pose import Pose
 
 

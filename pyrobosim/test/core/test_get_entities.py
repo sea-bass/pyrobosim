@@ -5,6 +5,7 @@ Unit tests for entity getting with world models.
 """
 import os
 import pytest
+from pytest import LogCaptureFixture
 import numpy as np
 
 from pyrobosim.core import Robot, Room, Location, ObjectSpawn, Object, World
@@ -14,8 +15,8 @@ from pyrobosim.utils.pose import Pose
 
 
 class TestGetEntities:
-    @pytest.fixture(autouse=True)
-    def create_world(self):
+    @pytest.fixture(autouse=True)  # type: ignore[misc]
+    def create_world(self) -> None:
         world = World()
 
         # Set the location and object metadata
@@ -96,18 +97,18 @@ class TestGetEntities:
     #####################
     # ACTUAL UNIT TESTS #
     #####################
-    def test_valid_room(self):
+    def test_valid_room(self) -> None:
         """Checks for existence of valid room."""
         result = self.world.get_room_by_name("kitchen")
         assert isinstance(result, Room) and result.name == "kitchen"
 
-    def test_invalid_room(self, caplog):
+    def test_invalid_room(self, caplog: LogCaptureFixture) -> None:
         """Checks for existence of invalid room."""
         result = self.world.get_room_by_name("living room")
         assert result is None
         assert "Room not found: living room" in caplog.text
 
-    def test_add_remove_room(self, caplog):
+    def test_add_remove_room(self, caplog: LogCaptureFixture) -> None:
         """Checks adding a room and removing it cleanly."""
         room_name = "test_room"
         coords = [(9, 9), (11, 9), (11, 11), (9, 11)]
@@ -119,28 +120,28 @@ class TestGetEntities:
         assert result is None
         assert "Room not found: test_room" in caplog.text
 
-    def test_valid_location(self):
+    def test_valid_location(self) -> None:
         """Checks for existence of valid location."""
         result = self.world.get_location_by_name("counter0")
         assert isinstance(result, Location) and result.name == "counter0"
 
-    def test_invalid_location(self, caplog):
+    def test_invalid_location(self, caplog: LogCaptureFixture) -> None:
         """Checks for existence of invalid location."""
         result = self.world.get_location_by_name("table42")
         assert result is None
         assert "Location not found: table42" in caplog.text
 
-    def test_valid_spawn(self):
+    def test_valid_spawn(self) -> None:
         """Checks for existence of valid object spawn."""
         result = self.world.get_entity_by_name("counter0_left")
         assert isinstance(result, ObjectSpawn) and result.name == "counter0_left"
 
-    def test_invalid_spawn(self):
+    def test_invalid_spawn(self) -> None:
         """Checks for existence of invalid object spawn."""
         result = self.world.get_entity_by_name("counter0_middle")
         assert result is None
 
-    def test_add_remove_location(self, caplog):
+    def test_add_remove_location(self, caplog: LogCaptureFixture) -> None:
         """
         Checks adding a location and removing it cleanly.
         This also includes any object spawns created for the location.
@@ -163,17 +164,17 @@ class TestGetEntities:
         result = self.world.get_entity_by_name(loc_name + "_desktop")
         assert result is None
 
-    def test_valid_object(self):
+    def test_valid_object(self) -> None:
         """Checks for existence of valid object."""
         result = self.world.get_object_by_name("apple1")
         assert isinstance(result, Object) and result.name == "apple1"
 
-    def test_invalid_object(self):
+    def test_invalid_object(self) -> None:
         """Checks for existence of invalid object."""
         result = self.world.get_object_by_name("apple42")
         assert result is None
 
-    def test_invalid_object_valid_name(self, caplog):
+    def test_invalid_object_valid_name(self, caplog: LogCaptureFixture) -> None:
         """
         Checks for existence of invalid object, but whose name is a valid name
         for another entity type.
@@ -185,7 +186,7 @@ class TestGetEntities:
         result = self.world.get_entity_by_name("counter0")
         assert isinstance(result, Location) and result.name == "counter0"
 
-    def test_add_remove_object(self):
+    def test_add_remove_object(self) -> None:
         """Checks adding an object and removing it cleanly."""
         obj_name = "banana13"
         table = self.world.get_location_by_name("table0")
@@ -195,17 +196,17 @@ class TestGetEntities:
         result = self.world.get_object_by_name(obj_name)
         assert result is None
 
-    def test_valid_robot(self):
+    def test_valid_robot(self) -> None:
         """Checks for existence of a valid robot."""
         result = self.world.get_robot_by_name("robby")
         assert isinstance(result, Robot) and result.name == "robby"
 
-    def test_invalid_robot(self):
+    def test_invalid_robot(self) -> None:
         """Checks for existence of an invalid robot."""
         result = self.world.get_robot_by_name("robot0")
         assert result is None
 
-    def test_get_graph_node_from_entity(self, caplog):
+    def test_get_graph_node_from_entity(self, caplog: LogCaptureFixture) -> None:
         """Checks whether graph nodes can be found from various entities."""
         robot = self.world.robots[0]
 

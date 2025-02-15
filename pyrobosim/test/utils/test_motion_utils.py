@@ -6,15 +6,20 @@ Unit tests for motion planning utilities.
 
 import numpy as np
 import pytest
+from pytest import CaptureFixture
 
 from pyrobosim.core import Pose
-from pyrobosim.utils.motion import Path, reduce_waypoints_grid, reduce_waypoints_polygon
+from pyrobosim.utils.path import Path
+from pyrobosim.utils.path_reduction import (
+    reduce_waypoints_grid,
+    reduce_waypoints_polygon,
+)
 
 
 ########################
 # Tests for Path class #
 ########################
-def test_path_default_args():
+def test_path_default_args() -> None:
     """Test creating a path with default arguments."""
     path = Path()
     assert len(path.poses) == 0
@@ -22,7 +27,7 @@ def test_path_default_args():
     assert path.length == 0.0
 
 
-def test_path_pose_list(capsys):
+def test_path_pose_list(capsys: CaptureFixture) -> None:
     """Test creating a path with a list of poses."""
     path = Path(
         poses=[
@@ -47,7 +52,7 @@ def test_path_pose_list(capsys):
     assert out == expected_str
 
 
-def test_path_fill_yaws():
+def test_path_fill_yaws() -> None:
     """Test the utility to fill yaws to point along a path."""
     path = Path(
         poses=[
@@ -66,7 +71,7 @@ def test_path_fill_yaws():
         assert pose.get_yaw() == pytest.approx(expected_yaw)
 
 
-def test_path_equality():
+def test_path_equality() -> None:
     """Tests for equality of Path objects."""
     test_poses = [
         Pose(x=0.0, y=0.0),
@@ -94,7 +99,7 @@ def test_path_equality():
 ##########################################
 # Tests for waypoint reduction utilities #
 ##########################################
-def test_reduce_waypoints_occupancy_grid():
+def test_reduce_waypoints_occupancy_grid() -> None:
     """Test utility to reduce waypoints using an occupancy grid."""
     from pyrobosim.navigation.occupancy_grid import OccupancyGrid
 
@@ -116,7 +121,7 @@ def test_reduce_waypoints_occupancy_grid():
     assert reduced_points == [[0, 0], [3, 9], [9, 9]]
 
 
-def test_reduce_waypoints_polygon():
+def test_reduce_waypoints_polygon() -> None:
     """Test utility to reduce waypoints using polygons from a world model."""
     from pyrobosim.core import World
 

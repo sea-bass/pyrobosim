@@ -4,7 +4,7 @@
 
 import os
 import numpy as np
-import pytest
+from pytest import LogCaptureFixture
 
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.navigation import RRTPlanner
@@ -12,7 +12,7 @@ from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
 
-def test_rrt_long_distance():
+def test_rrt_long_distance() -> None:
     """Tests planning with default world graph planner settings."""
     world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
@@ -33,7 +33,7 @@ def test_rrt_long_distance():
     assert path.poses[-1] == goal
 
 
-def test_rrt_short_distance_connect():
+def test_rrt_short_distance_connect() -> None:
     """Tests if direct connection works if goal is within max_connection_distance."""
     world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
@@ -54,7 +54,7 @@ def test_rrt_short_distance_connect():
     assert path.poses[1] == goal
 
 
-def test_rrt_no_path(caplog):
+def test_rrt_no_path(caplog: LogCaptureFixture) -> None:
     """Test that RRT gracefully returns when there is no feasible path."""
     world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
@@ -73,7 +73,7 @@ def test_rrt_no_path(caplog):
     assert "Could not find a path from start to goal." in caplog.text
 
 
-def test_rrt_bidirectional():
+def test_rrt_bidirectional() -> None:
     """Tests bidirectional RRT planning."""
     world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
@@ -94,7 +94,7 @@ def test_rrt_bidirectional():
     assert path.poses[-1] == goal
 
 
-def test_rrt_connect():
+def test_rrt_connect() -> None:
     """Tests RRTConnect planning."""
     world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
@@ -115,7 +115,7 @@ def test_rrt_connect():
     assert path.poses[-1] == goal
 
 
-def test_rrt_star():
+def test_rrt_star() -> None:
     """Tests RRT* planning."""
     world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
@@ -136,7 +136,7 @@ def test_rrt_star():
     assert path.poses[-1] == goal
 
 
-def test_rrt_compress_path():
+def test_rrt_compress_path() -> None:
     """Tests planning with path compression option."""
     world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")

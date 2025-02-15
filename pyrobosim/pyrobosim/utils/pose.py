@@ -4,7 +4,8 @@ Pose representation utilities.
 
 import math
 import numpy as np
-from typing import Any, Self
+from typing import Any
+from typing_extensions import Self  # For compatibility with Python < 3.11
 
 from transforms3d.euler import euler2quat, quat2euler
 from transforms3d.quaternions import mat2quat, nearly_equivalent, qnorm, quat2mat

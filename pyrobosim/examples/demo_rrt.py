@@ -12,7 +12,7 @@ world_file = os.path.join(get_data_folder(), "test_world.yaml")
 world = WorldYamlLoader().from_file(world_file)
 
 
-def test_rrt():
+def test_rrt() -> None:
     """Creates an RRT planner and plans"""
     planner_config = {
         "world": world,

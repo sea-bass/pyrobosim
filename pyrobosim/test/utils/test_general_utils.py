@@ -4,7 +4,7 @@ from matplotlib.colors import CSS4_COLORS, to_rgb
 from pyrobosim.utils.general import parse_color
 
 
-def test_parse_color():
+def test_parse_color() -> None:
     """Testing parse color with different input color formats"""
     # Test with RGB list
     color_rgb_list = (1.0, 0.0, 0.0)

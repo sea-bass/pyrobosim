@@ -6,11 +6,12 @@ Unit tests for robot dynamics capabilities.
 
 import numpy as np
 import pytest
+from pytest import LogCaptureFixture
 
 from pyrobosim.core import Pose, Robot, RobotDynamics2D, World
 
 
-def test_create_robot_dynamics_2d_default():
+def test_create_robot_dynamics_2d_default() -> None:
     """Checks creation of RobotDynamics2D object with default parameters."""
     dynamics = RobotDynamics2D()
 
@@ -22,7 +23,7 @@ def test_create_robot_dynamics_2d_default():
     assert np.all(dynamics.accel_limits == np.array([np.inf, np.inf, np.inf]))
 
 
-def test_create_robot_dynamics_2d_nondefault():
+def test_create_robot_dynamics_2d_nondefault() -> None:
     """Checks creation of RobotDynamics2D object with nondefault parameters."""
     robot = Robot()
     dynamics = RobotDynamics2D(
@@ -45,7 +46,7 @@ def test_create_robot_dynamics_2d_nondefault():
     assert np.all(dynamics.accel_limits == np.array([2.0, 2.0, 6.0]))
 
 
-def test_enforce_dynamics_limits():
+def test_enforce_dynamics_limits() -> None:
     """Tests functionality to saturate velocity commands given velocity and acceleration limits."""
     dynamics = RobotDynamics2D(
         max_linear_velocity=1.0,
@@ -73,7 +74,7 @@ def test_enforce_dynamics_limits():
     assert np.allclose(sat_cmd_vel, np.array([0.2, 0.0, -0.6]))
 
 
-def test_reset_default_args():
+def test_reset_default_args() -> None:
     """Test resetting the dynamics with default arguments."""
     start_pose = Pose(x=1.0, y=2.0, yaw=3.0)
     start_vel = np.array([0.1, 0.0, -0.1])
@@ -84,7 +85,7 @@ def test_reset_default_args():
     assert np.all(dynamics.velocity == np.array([0.0, 0.0, 0.0]))
 
 
-def test_reset_nondefault_args():
+def test_reset_nondefault_args() -> None:
     """Test resetting the dynamics with nondefault arguments."""
     start_pose = Pose(x=1.0, y=2.0, yaw=3.0)
     start_vel = np.array([0.1, 0.0, -0.1])
@@ -98,7 +99,7 @@ def test_reset_nondefault_args():
     assert np.all(dynamics.velocity == target_velocity)
 
 
-def test_step_no_collision():
+def test_step_no_collision() -> None:
     """Test stepping dynamics without collision checks."""
     dynamics = RobotDynamics2D()
     dt = 0.1
@@ -125,7 +126,7 @@ def test_step_no_collision():
     assert dynamics.pose.eul[2] == pytest.approx(np.pi / 10.0)
 
 
-def test_step_collision_zero_cmd():
+def test_step_collision_zero_cmd() -> None:
     """Test that stepping dynamics with zero velocities does nothing."""
     dynamics = RobotDynamics2D()
     dt = 0.1
@@ -134,7 +135,7 @@ def test_step_collision_zero_cmd():
     assert dynamics.pose == Pose()
 
 
-def test_step_collision_none_cmd():
+def test_step_collision_none_cmd() -> None:
     """Test that stepping dynamics with a None command does nothing."""
     dynamics = RobotDynamics2D()
     dt = 0.1
@@ -143,7 +144,7 @@ def test_step_collision_none_cmd():
     assert dynamics.pose == Pose()
 
 
-def test_step_collision_no_world(caplog):
+def test_step_collision_no_world(caplog: LogCaptureFixture) -> None:
     """Test that stepping dynamics with collision but no world returns with a warning."""
     dynamics = RobotDynamics2D()
     dt = 0.1
@@ -154,7 +155,7 @@ def test_step_collision_no_world(caplog):
     assert dynamics.pose == Pose()
 
 
-def test_step_collision_world():
+def test_step_collision_world() -> None:
     """Test that stepping dynamics with collision in a world with walls works."""
     world = World()
     world.add_room(
@@ -183,7 +184,7 @@ def test_step_collision_world():
     assert not robot.is_moving()
 
 
-def test_step_collision_robot():
+def test_step_collision_robot() -> None:
     """Test that stepping dynamics with collision between robots works."""
     world = World()
     world.add_room(

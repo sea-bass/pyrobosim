@@ -18,7 +18,7 @@ from pyrobosim.planning.actions import (
     TaskPlan,
 )
 from pyrobosim.utils.general import get_data_folder
-from pyrobosim.utils.motion import Path
+from pyrobosim.utils.path import Path
 
 
 class TestRobot:

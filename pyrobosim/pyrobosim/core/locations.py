@@ -3,15 +3,15 @@
 from shapely import intersects_xy
 from shapely.plotting import patch_from_polygon
 
-from .types import Entity
-from ..utils.general import EntityMetadata, InvalidEntityCategoryException, parse_color
+from .types import Entity, EntityMetadata, InvalidEntityCategoryException
+from ..utils.general import parse_color
+from ..utils.graph_types import Node
 from ..utils.pose import Pose, rot2d
 from ..utils.polygon import (
     inflate_polygon,
     polygon_and_height_from_footprint,
     transform_polygon,
 )
-from ..utils.search_graph import Node
 
 
 class Location(Entity):

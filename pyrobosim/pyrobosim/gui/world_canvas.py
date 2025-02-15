@@ -24,12 +24,11 @@ from .action_runners import (
     CloseRunner,
 )
 from .main import PyRoboSimMainWindow
-from ..core.locations import ObjectSpawn
 from ..core.objects import Object
 from ..core.robot import Robot
 from ..core.world import World
 from ..navigation.visualization import plot_path_planner
-from ..utils.motion import Path
+from ..utils.path import Path
 from ..utils.pose import Pose
 
 
@@ -355,7 +354,6 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         :param show_graphs: If True, shows the path planner's latest graph(s).
         :type show_graphs: bool
         :param path: Path to goal location, defaults to None.
-        :type path: :class:`pyrobosim.utils.motion.Path`, optional
         """
         if not robot:
             self.world.logger.warning("No robot found")
@@ -478,7 +476,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         :param goal: Name of goal location (resolved by the world model).
         :param path: Path to goal location, defaults to None.
         """
-        nav_thread = NavRunner(self, robot, goal, path)
+        nav_thread = NavRunner(self.world, robot, goal, path, self.realtime_factor)
         self.thread_pool.start(nav_thread)
 
     def pick_object(
@@ -491,7 +489,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         :param obj_name: The name of the object.
         :param grasp_pose: A pose describing how to manipulate the object.
         """
-        pick_thread = PickRunner(self, robot, obj_name, grasp_pose)
+        pick_thread = PickRunner(self.world, robot, obj_name, grasp_pose)
         self.thread_pool.start(pick_thread)
 
     def place_object(self, robot: Robot, pose: Pose | None = None) -> None:
@@ -501,7 +499,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         :param robot: Robot instance to execute action.
         :param pose: Optional pose describing how to place the object.
         """
-        place_thread = PlaceRunner(self, robot, pose)
+        place_thread = PlaceRunner(self.world, robot, pose)
         self.thread_pool.start(place_thread)
 
     def detect_objects(self, robot: Robot, query: str | None = None) -> None:
@@ -511,7 +509,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         :param robot: Robot instance to execute action.
         :param query: Query for object detection.
         """
-        detect_thread = DetectRunner(self, robot, query)
+        detect_thread = DetectRunner(self.world, robot, query)
         self.thread_pool.start(detect_thread)
 
     def open_location(self, robot: Robot) -> None:
@@ -520,10 +518,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
 
         :param robot: Robot instance to execute action.
         """
-        open_thread = OpenRunner(
-            self,
-            robot,
-        )
+        open_thread = OpenRunner(self.world, robot)
         self.thread_pool.start(open_thread)
 
     def close_location(self, robot: Robot) -> None:
@@ -532,8 +527,5 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
 
         :param robot: Robot instance to execute action.
         """
-        close_thread = CloseRunner(
-            self,
-            robot,
-        )
+        close_thread = CloseRunner(self.world, robot)
         self.thread_pool.start(close_thread)

@@ -3,67 +3,35 @@
 from astar import AStar
 import numpy as np
 
-from .motion import Path
+from .graph_types import Edge, Node
+from .path import Path
 from ..utils.logging import get_global_logger
-
-
-class Node:
-    """Graph node representation."""
-
-    def __init__(self, pose, parent=None, cost=0.0):
-        """
-        Creates a graph node.
-
-        :param pose: Pose of the node.
-        :type pose: :class:`pyrobosim.utils.pose.Pose`
-        :param parent: Parent node, if any.
-        :type parent: :class:`Node`, optional
-        :param cost: Cost of the node, defaults to zero.
-        :type cost: float, optional
-        """
-        self.pose = pose
-        self.parent = parent
-        self.cost = cost
-        self.neighbors = set()  # used in graph based planners
-
-
-class Edge:
-    """Graph edge representation."""
-
-    def __init__(self, nodeA, nodeB):
-        """
-        Creates a graph edge.
-        :param nodeA: First node
-        :type nodeA: :class:`Node`
-        :param nodeB: Second node
-        :type nodeB: :class:`Node`
-        """
-        self.nodeA = nodeA
-        self.nodeB = nodeB
-        self.cost = nodeA.pose.get_linear_distance(nodeB.pose, ignore_z=True)
 
 
 class SearchGraph:
     """Graph representation class."""
 
-    def __init__(self, color=[0, 0, 0], color_alpha=0.5, use_planner=False):
+    def __init__(
+        self,
+        color: list[float] = [0, 0, 0],
+        color_alpha: float = 0.5,
+        use_planner: bool = False,
+    ) -> None:
         """
         Creates an instance of SearchGraph.
+
         :param color: The display color for the graph.
-        :type param: Integer List [R, G, B]
         :param color_alpha: The intensity of the color.
-        :type color_alpha: float
         :param use_planner: If true, the graph will create a planner for path finding.
-        :type use_planner: bool
         """
 
-        self.nodes = set()
-        self.edges = set()
+        self.nodes: set[Node] = set()
+        self.edges: set[Edge] = set()
         self.color = color
         self.color_alpha = color_alpha
-        self.use_planner = use_planner
-        if self.use_planner:
-            self.path_finder = SearchGraphPlanner()
+        self.path_finder: SearchGraphPlanner | None = (
+            SearchGraphPlanner() if use_planner else None
+        )
 
     def add_node(self, node):
         """
@@ -158,11 +126,10 @@ class SearchGraph:
         :param nodeB: The end node.
         :type nodeB: :class: `pyrobosim.utils.search_graph.Node`
         :return: The path from nodeA to nodeB, if one exists.
-        :rtype: :class: `pyrobosim.utils.motion.Path`
         """
         path = Path()
 
-        if not self.use_planner:
+        if self.path_finder is None:
             get_global_logger().warning(
                 "Graph should be created with `use_planner = True` to use planner."
             )

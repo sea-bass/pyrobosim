@@ -79,7 +79,6 @@ def get_constant_speed_trajectory(path, linear_velocity=0.2, max_angular_velocit
     time points based on constant velocity and maximum angular velocity.
 
     :param path: Path object from which to compute a trajectory.
-    :type path: :class:`pyrobosim.utils.motion.Path`
     :param linear_velocity: Constant linear velocity in m/s, defaults to 0.2.
     :type linear_velocity: float
     :param max_angular_velocity: Maximum angular velocity in rad/s,

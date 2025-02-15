@@ -4,7 +4,7 @@ from enum import IntEnum
 import numpy as np
 import time
 
-from ..utils.motion import Path
+from ..utils.path import Path
 
 
 class ExecutionOptions:
@@ -136,7 +136,7 @@ class TaskAction:
         :param pose: Optional pose parameter for the action.
         :type pose: :class:`pyrobosim.utils.pose.Pose`, optional
         :param path: A specific path to follow, if provided.
-        :type path: :class:`pyrobosim.utils.motion.Path`, optional
+        :type path: :class:`pyrobosim.utils.path.Path`, optional
         :param cost: Optional action cost.
         :type cost: float
         """

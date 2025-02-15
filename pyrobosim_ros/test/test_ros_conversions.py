@@ -4,7 +4,7 @@ import pytest
 from rclpy.duration import Duration
 
 import pyrobosim.planning.actions as acts
-from pyrobosim.utils.motion import Path
+from pyrobosim.utils.path import Path
 from pyrobosim.utils.pose import Pose
 import pyrobosim_msgs.msg as ros_msgs
 from pyrobosim_ros.ros_conversions import (

@@ -7,7 +7,7 @@ import geometry_msgs.msg
 
 import pyrobosim_msgs.msg as ros_msgs
 import pyrobosim.planning.actions as acts
-from pyrobosim.utils.motion import Path
+from pyrobosim.utils.path import Path
 from pyrobosim.utils.pose import Pose
 
 
@@ -61,7 +61,6 @@ def path_from_ros(msg):
     :param act: ROS message.
     :type act: :class:`pyrobosim_msgs.msg.Path`
     :return: Path object
-    :rtype: :class:`pyrobosim.utils.motion.Path`
     """
     return Path(poses=[pose_from_ros(p) for p in msg.poses])
 
@@ -71,7 +70,6 @@ def path_to_ros(path):
     Converts a pyrobosim motion Path to a ROS message.
 
     :param act: Path object.
-    :type act: :class:`pyrobosim.utils.motion.Path`
     :return: ROS message.
     :rtype: :class:`pyrobosim_msgs.msg.Path`
     """
