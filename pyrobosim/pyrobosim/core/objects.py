@@ -1,9 +1,13 @@
 """Representations for objects that exist in the world."""
 
 import numpy as np
+from matplotlib.patches import PathPatch
+from matplotlib.text import Text
+from shapely.geometry import Polygon
 from shapely.plotting import patch_from_polygon
 from scipy.spatial import ConvexHull
 
+from .types import Entity
 from ..utils.general import EntityMetadata, InvalidEntityCategoryException, parse_color
 from ..utils.pose import Pose
 from ..utils.polygon import (
@@ -14,7 +18,7 @@ from ..utils.polygon import (
 )
 
 
-class Object:
+class Object(Entity):
     """Represents an object in the world."""
 
     # Default class attributes
@@ -81,9 +85,9 @@ class Object:
         self.parent = parent
 
         self.inflation_radius = inflation_radius
-        self.collision_polygon = None
-        self.viz_patch = None
-        self.viz_text = None
+        self.collision_polygon = Polygon()
+        self.viz_patch: PathPatch | None = None
+        self.viz_text: Text | None = None
 
         self.metadata = Object.metadata.get(self.category)
         if not self.metadata:

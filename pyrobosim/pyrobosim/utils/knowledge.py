@@ -3,13 +3,25 @@ Utilities to reason about entities using world knowledge
 (that is, metadata about locations and objects).
 """
 
+import random
 import sys
-import numpy as np
 
+from ..core.hallway import Hallway
+from ..core.locations import Location, ObjectSpawn
+from ..core.robot import Robot
+from ..core.room import Room
+from ..core.types import Entity
+from ..core.objects import Object
+from ..core.world import World
 from ..utils.logging import get_global_logger
+from ..utils.search_graph import Node
 
 
-def apply_resolution_strategy(entity_list, resolution_strategy, robot=None):
+def apply_resolution_strategy(
+    entity_list: list[Entity | Node],
+    resolution_strategy: str,
+    robot: Robot | None = None,
+) -> Entity | Node | None:
     """
     Accepts a list of entities in the world (e.g. rooms, objects, etc.) and
     applies a resolution strategy to get a single entity from that list that best
@@ -19,24 +31,18 @@ def apply_resolution_strategy(entity_list, resolution_strategy, robot=None):
     - ``"random"`` : Return a random entity from all possible options
     - ``"nearest"`` : Return the nearest entity based on robot pose (So, a robot must exist in the world)
 
-    :param world: World model.
-    :type world: :class:`pyrobosim.core.world.World`
     :param entity_list: List of entities (e.g., rooms or objects)
-    :type entity_list: list[Entity]
     :param resolution_strategy: Resolution strategy to apply
-    :type resolution_strategy: str
     :param robot: If set to a Robot instance, uses that robot for resolution strategy.
-    :type robot: :class:`pyrobosim.core.robot.Robot`, optional
     :return: The entity that meets the resolution strategy, or None.
-    :rtype: Entity
     """
-    if entity_list is None or len(entity_list) == 0:
+    if (entity_list is None) or len(entity_list) == 0:
         return None
 
     if resolution_strategy == "first":
         return entity_list[0]
     elif resolution_strategy == "random":
-        return np.random.choice(entity_list)
+        return random.choice(entity_list)
     elif resolution_strategy == "nearest":
         if not robot:
             get_global_logger().warning(
@@ -59,32 +65,29 @@ def apply_resolution_strategy(entity_list, resolution_strategy, robot=None):
         return None
 
 
-def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=None):
+def query_to_entity(
+    world: World,
+    query_list: str | list[str],
+    mode: str,
+    resolution_strategy: str = "first",
+    robot: Robot | None = None,
+) -> Entity | None:
     """
     Resolves a generic query list of strings to an entity
     mode can be "location" or "object"
 
     :param world: World model.
-    :type world: :class:`pyrobosim.core.world.World`
     :param query_list: List of query terms (e.g., "kitchen table apple").
         These can be specified as a list of strings, or as a single space-separated string.
-    :type query_list: str or list[str]
     :param mode: Can be either "location" or "object".
-    :type mode: str
     :param resolution_strategy: Resolution strategy to apply (see :func:`apply_resolution_strategy`)
-    :type resolution_strategy: str
     :param robot: If set to a Robot instance, uses that robot for resolution strategy.
-    :type robot: :class:`pyrobosim.core.robot.Robot`, optional
     :return: The entity that meets the mode and resolution strategy, or None.
-    :rtype: Entity
     """
-    from ..core.locations import Location, ObjectSpawn
-    from ..core.objects import Object
-
-    room = None
-    named_location = None
-    loc_category = None
-    obj_category = None
+    named_room: Room | None = None
+    named_location: Entity | None = None
+    loc_category: str | None = None
+    obj_category: str | None = None
 
     # Process the input and convert it to a list.
     if query_list is None:
@@ -92,16 +95,21 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
     elif isinstance(query_list, str):
         query_list = [elem for elem in query_list.split(" ") if elem]
 
+    possible_objects: list[Object] = []
     if robot is None:
         possible_objects = world.get_objects()
     else:
         possible_objects = robot.get_known_objects()
 
     # Direct name search
-    entity_list = []
+    entity_list: list[Entity | Node] = []
     resolved_queries = set()
     for elem in query_list:
-        # First, directly search for location/object spawn names
+        # Directly search for entity names
+        for room in world.rooms:
+            if elem == room.name:
+                named_room = room
+                resolved_queries.add(elem)
         for loc in world.locations:
             if elem == loc.name:
                 named_location = loc
@@ -110,11 +118,11 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
                 if elem == spawn.name:
                     named_location = spawn
                     resolved_queries.add(elem)
-        # Also search for hallway names
         for hall in world.hallways:
             if (elem == hall.name) or (elem == hall.reversed_name):
                 named_location = hall
                 resolved_queries.add(elem)
+
         # Then, directly search for object names and get the location
         for obj in possible_objects:
             if elem == obj.name:
@@ -123,11 +131,8 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
                 elif mode == "object":
                     return obj
 
-    # Resolution search: Build a list of possible query terms
+    # Build a list of possible query terms
     for elem in query_list:
-        if elem in world.get_room_names() and not room:
-            room = elem
-            resolved_queries.add(elem)
         if Location.metadata.has_category(elem) and not loc_category:
             loc_category = elem
             resolved_queries.add(elem)
@@ -147,12 +152,12 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
     # Special case: A room is selected purely by name
     if (
         mode == "location"
-        and room
+        and named_room
         and not named_location
         and not loc_category
         and not obj_category
     ):
-        return world.get_room_by_name(room)
+        return named_room
 
     # If a named location is given, check that have an object category and filter by that.
     # Otherwise, just use the named location itself.
@@ -161,32 +166,42 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
             return named_location
         else:
             if isinstance(named_location, ObjectSpawn):
-                entity_list = named_location.children
+                entity_list = [child for child in named_location.children]
             elif isinstance(named_location, Location):
                 entity_list = []
                 for spawn in named_location.children:
                     entity_list.extend(spawn.children)
 
-        entity_list = [obj for obj in entity_list if obj.category == obj_category]
+        entity_list = [
+            obj
+            for obj in entity_list
+            if (isinstance(obj, Entity) and (obj.category == obj_category))
+        ]
         obj_candidate = apply_resolution_strategy(
             entity_list, resolution_strategy=resolution_strategy, robot=robot
         )
+        assert not isinstance(obj_candidate, Node)
         if obj_candidate is not None:
             if mode == "object":
                 return obj_candidate
             elif mode == "location":
                 return obj_candidate.parent
 
-    if mode == "object" and loc_category is None and robot:
+    if (
+        (mode == "object")
+        and (loc_category is None)
+        and (robot is not None)
+        and (robot.location is not None)
+    ):
         loc_category = robot.location.name
 
     # Resolve a location from any other query
-    if obj_category or mode == "object":
+    if (obj_category is not None) or (mode == "object"):
         obj_candidate = resolve_to_object(
             world,
             category=obj_category,
             location=loc_category,
-            room=room,
+            room=named_room,
             resolution_strategy=resolution_strategy,
             robot=robot,
         )
@@ -199,7 +214,7 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
         loc_candidate = resolve_to_location(
             world,
             category=loc_category,
-            room=room,
+            room=named_room,
             resolution_strategy=resolution_strategy,
             robot=robot,
         )
@@ -211,33 +226,24 @@ def query_to_entity(world, query_list, mode, resolution_strategy="first", robot=
 
 
 def resolve_to_location(
-    world,
-    category=None,
-    room=None,
-    resolution_strategy="first",
-    robot=None,
-    expand_locations=False,
-):
+    world: World,
+    category: str | None = None,
+    room: Room | str | None = None,
+    resolution_strategy: str = "first",
+    robot: Robot | None = None,
+    expand_locations: bool = False,
+) -> Location | ObjectSpawn | None:
     """
     Resolves a category/room query combination to a single specific location.
 
     :param world: World model.
-    :type world: :class:`pyrobosim.core.world.World`
     :param category: Location category (e.g. "table")
-    :type category: str, optional
-    :param room: Room name to search in (e.g. "kitchen")
-    :type room: str, optional
+    :param room: Room or room name to search in (e.g. "kitchen")
     :param resolution_strategy: Resolution strategy to apply (see :func:`apply_resolution_strategy`)
-    :type resolution_strategy: str
     :param robot: If set to a Robot instance, uses that robot for resolution strategy.
-    :type robot: :class:`pyrobosim.core.robot.Robot`, optional
     :param expand_locations: If True, expands location to individual object spawns.
-    :type expand_locations: bool
     :return: The location or object spawn that meets the category and/or room filters, or None.
-    :rtype: :class:`pyrobosim.core.locations.Location`/:class:`pyrobosim.core.locations.ObjectSpawn`
     """
-    from ..core.locations import Location
-
     if room is None:
         room_name = None
         if category is None:
@@ -251,6 +257,9 @@ def resolve_to_location(
         else:
             room_name = room.name
 
+        if not isinstance(room, Room):
+            return None
+
         if category is None:
             possible_locations = [loc for loc in room.locations]
         else:
@@ -260,7 +269,7 @@ def resolve_to_location(
 
     # Optionally expand locations to their individual object spawns
     if expand_locations:
-        expanded_locations = []
+        expanded_locations: list[Entity | Node] = []
         for loc in possible_locations:
             if isinstance(loc, Location):
                 expanded_locations.extend(loc.children)
@@ -272,42 +281,35 @@ def resolve_to_location(
     loc = apply_resolution_strategy(
         expanded_locations, resolution_strategy, robot=robot
     )
-    if not loc:
+    if loc is None:
         get_global_logger().warning(
             f"Could not resolve location query with category: {category}, room: {room_name}."
         )
         return None
+    assert isinstance(loc, (Location, ObjectSpawn))
     return loc
 
 
 def resolve_to_object(
-    world,
-    category=None,
-    location=None,
-    room=None,
-    resolution_strategy="first",
-    robot=None,
-    ignore_grasped=True,
-):
+    world: World,
+    category: str | None = None,
+    location: Location | ObjectSpawn | str | None = None,
+    room: Room | str | None = None,
+    resolution_strategy: str = "first",
+    robot: Robot | None = None,
+    ignore_grasped: bool = True,
+) -> Object | None:
     """
     Resolves a category/location/room query to an object.
 
     :param world: World model.
-    :type world: :class:`pyrobosim.core.world.World`
     :param category: Object category (e.g. "apple")
-    :type category: str, optional
     :param location: Location category search in (e.g. "table")
-    :type location: str, optional
-    :param room: Room name to search in (e.g. "kitchen")
-    :type room: str, optional
+    :param room: Room or room name to search in (e.g. "kitchen")
     :param resolution_strategy: Resolution strategy to apply (see :func:`apply_resolution_strategy`)
-    :type resolution_strategy: str
     :param robot: If set to a Robot instance, uses that robot for resolution strategy.
-    :type robot: :class:`pyrobosim.core.robot.Robot`, optional
     :param ignore_grasped: If True, ignores the current manipulated object.
-    :type ignore_grasped: bool
     :return: The object that meets the category, location, and/or room filters, or None.
-    :rtype: :class:`pyrobosim.core.objects.Object`
     """
     # If a robot is not specified, start with the full list of objects.
     # Otherwise, remove any objects manipulated or unobserved by the robot.
@@ -358,9 +360,99 @@ def resolve_to_object(
         ]
 
     obj = apply_resolution_strategy(possible_objects, resolution_strategy, robot=robot)
-    if not obj:
+    if obj is None:
         get_global_logger().warning(
             f"Could not resolve object query with category: {category}, location: {location}, room: {room}."
         )
         return None
+    assert isinstance(obj, Object)
     return obj
+
+
+def graph_node_from_entity(
+    world: World,
+    entity_query: list[Entity | str],
+    resolution_strategy: str = "nearest",
+    robot: Robot | None = None,
+) -> Node | None:
+    """
+    Gets a graph node from an entity query, which could be any combination of
+    room, hallway, location, object spawn, or object in the world, as well as
+    their respective categories.
+    For more information on the inputs, refer to the :func:`pyrobosim.utils.knowledge.query_to_entity` function.
+    :param entity_query: List of entities (e.g., rooms or objects) or names/categories.
+    :param resolution_strategy: Resolution strategy to apply
+    :param robot: If set to a Robot instance, uses that robot for resolution strategy.
+    :return: A graph node for the entity that meets the resolution strategy, or None.
+    """
+    graph_nodes: list[Entity | Node] = []
+
+    if isinstance(entity_query, Node):
+        return entity_query
+    elif isinstance(entity_query, str):
+        # Try resolve an entity based on its name. If that fails, we assume it must be a category,
+        # so try resolve it to a location or to an object by category.
+        entity = world.get_entity_by_name(entity_query)
+        if entity is None:
+            entity = resolve_to_location(
+                world,
+                category=entity_query,
+                expand_locations=True,
+                resolution_strategy=resolution_strategy,
+                robot=robot,
+            )
+        if entity is None:
+            entity = resolve_to_object(
+                world,
+                category=entity_query,
+                resolution_strategy=resolution_strategy,
+                robot=robot,
+                ignore_grasped=True,
+            )
+    else:
+        entity = entity_query
+
+    if isinstance(entity, (ObjectSpawn, Room)):
+        graph_nodes = [node for node in entity.graph_nodes]
+    elif isinstance(entity, Hallway):
+        graph_nodes = [entity.graph_nodes[0], entity.graph_nodes[-1]]
+
+        # Special rule: If all the hallways connected to the room are closed, and the robot is not in the room or at the hallway,
+        # remove the graph node from consideration.
+        if (robot is not None) and (robot.location != entity):
+            robot_in_start_room = entity.room_start.is_collision_free(robot.get_pose())
+            if not robot_in_start_room:
+                room_accessible = False
+                for hall in world.get_hallways_attached_to_room(entity.room_start):
+                    if hall.is_open:
+                        room_accessible = True
+                        break
+                if not room_accessible:
+                    graph_nodes.remove(entity.graph_nodes[0])
+
+            robot_in_end_room = entity.room_end.is_collision_free(robot.get_pose())
+            if not robot_in_end_room:
+                room_accessible = False
+                for hall in world.get_hallways_attached_to_room(entity.room_end):
+                    if hall.is_open:
+                        room_accessible = True
+                        break
+                if not room_accessible:
+                    graph_nodes.remove(entity.graph_nodes[-1])
+
+    elif isinstance(entity, Object) and (entity.parent is not None):
+        graph_nodes = [node for node in entity.parent.graph_nodes]
+    elif isinstance(entity, Location):
+        graph_nodes = [node for node in entity.children[0].graph_nodes]
+    else:
+        world.logger.warning(f"Cannot get graph node from {entity}")
+        return None
+
+    # Select a graph node using the same resolution strategy.
+    graph_node = apply_resolution_strategy(
+        graph_nodes, resolution_strategy, robot=robot
+    )
+    if graph_node is None:
+        return None
+    assert isinstance(graph_node, Node)
+    return graph_node

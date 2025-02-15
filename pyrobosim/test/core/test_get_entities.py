@@ -9,6 +9,7 @@ import numpy as np
 
 from pyrobosim.core import Robot, Room, Location, ObjectSpawn, Object, World
 from pyrobosim.utils.general import get_data_folder
+from pyrobosim.utils.knowledge import graph_node_from_entity
 from pyrobosim.utils.pose import Pose
 
 
@@ -211,7 +212,7 @@ class TestGetEntities:
         # Querying directly for a graph node returns the node itself
         tabletop = self.world.get_entity_by_name("table0_tabletop")
         tabletop_node = tabletop.graph_nodes[0]
-        assert self.world.graph_node_from_entity(tabletop_node) == tabletop_node
+        assert graph_node_from_entity(self.world, tabletop_node) == tabletop_node
 
         # Querying for an object spawn, room, or hallway returns itself
         entity_names = [
@@ -221,22 +222,22 @@ class TestGetEntities:
         ]
         for entity_name in entity_names:
             entity = self.world.get_entity_by_name(entity_name)
-            graph_node = self.world.graph_node_from_entity(entity_name, robot=robot)
+            graph_node = graph_node_from_entity(self.world, entity_name, robot=robot)
             assert graph_node in entity.graph_nodes
 
         # Querying for an object will give a graph node from its parent
         desktop = self.world.get_entity_by_name("desk0_desktop")
         assert (
-            self.world.graph_node_from_entity("apple0", robot=robot)
+            graph_node_from_entity(self.world, "apple0", robot=robot)
             in desktop.graph_nodes
         )
 
         # Querying for a location will give a graph node from its child location
         assert (
-            self.world.graph_node_from_entity("desk", robot=robot)
+            graph_node_from_entity(self.world, "desk", robot=robot)
             in desktop.graph_nodes
         )
 
         # Querying for a type of entity that does not have graph nodes will fail
-        assert not self.world.graph_node_from_entity("robot0", robot=robot)
+        assert not graph_node_from_entity(self.world, "robot0", robot=robot)
         assert "Could not resolve location query with category: robot0" in caplog.text

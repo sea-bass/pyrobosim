@@ -167,7 +167,6 @@ class WorldROSWrapper(Node):
         """
         self.world = world
         self.world.ros_node = self
-        self.world.has_ros_node = True
 
         set_global_logger(get_logger("pyrobosim"))
         self.world.logger = get_logger(self.world.name)
@@ -198,7 +197,7 @@ class WorldROSWrapper(Node):
             self.dynamics_rate, self.dynamics_callback
         )
 
-        while wait_for_gui and not self.world.has_gui:
+        while wait_for_gui and not self.world.gui is not None:
             self.get_logger().info("Waiting for GUI...")
             time.sleep(1.0)
         self.get_logger().info("PyRoboSim ROS node ready!")
@@ -558,7 +557,7 @@ class WorldROSWrapper(Node):
         path = path_from_ros(goal_handle.request.path)
         Thread(target=robot.follow_path, args=(path,)).start()
 
-        if self.world.has_gui:
+        if self.world.gui is not None:
             self.world.gui.set_buttons_during_action(False)
 
         while robot.executing_nav and goal_handle.status != GoalStatus.STATUS_CANCELED:
@@ -568,7 +567,7 @@ class WorldROSWrapper(Node):
                 break
             time.sleep(0.1)
 
-        if self.world.has_gui:
+        if self.world.gui is not None:
             self.world.gui.set_buttons_during_action(True)
 
         if goal_handle.status == GoalStatus.STATUS_CANCELED:
@@ -625,7 +624,7 @@ class WorldROSWrapper(Node):
         :param robot: The robot instance corresponding to this request.
         :return: The object detection action result.
         """
-        if self.world.has_gui:
+        if self.world.gui is not None:
             execution_result = self.world.gui.canvas.detect_objects(
                 robot, goal_handle.request.target_object
             )

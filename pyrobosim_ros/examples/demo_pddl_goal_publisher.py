@@ -13,7 +13,7 @@ from pyrobosim_msgs.srv import SetLocationState  # type: ignore
 
 
 class GoalPublisher(Node):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("demo_pddlstream_goal_publisher")
 
         # Declare parameters
@@ -90,7 +90,7 @@ class GoalPublisher(Node):
         self.goalspec_pub.publish(goal_msg)
 
 
-def main():
+def main() -> None:
     rclpy.init()
     goal_node = GoalPublisher()
 

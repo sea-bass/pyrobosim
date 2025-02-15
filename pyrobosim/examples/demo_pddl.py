@@ -45,7 +45,7 @@ def start_planner(world, args):
     planner = PDDLStreamPlanner(world, domain_folder)
 
     # Wait for the GUI to load
-    while not world.has_gui:
+    while world.gui is None:
         time.sleep(1.0)
     time.sleep(0.5)  # Extra time for log messages to not interfere with prompt
 

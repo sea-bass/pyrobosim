@@ -6,6 +6,7 @@ from shapely import intersects_xy
 from shapely.geometry import Polygon
 from shapely.plotting import patch_from_polygon
 
+from .types import Entity
 from ..utils.pose import Pose
 from ..utils.polygon import (
     inflate_polygon,
@@ -16,7 +17,7 @@ from ..utils.search_graph import Node
 from ..utils.general import parse_color
 
 
-class Room:
+class Room(Entity):
     """Representation of a room in a world."""
 
     def __init__(
@@ -56,6 +57,7 @@ class Room:
         self.name = name
         self.wall_width = wall_width
         self.viz_color = parse_color(color)
+        self.is_open = True  # For compatibility
 
         # Entities associated with the room
         self.hallways = []

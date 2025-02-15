@@ -3,6 +3,7 @@
 from shapely import intersects_xy
 from shapely.plotting import patch_from_polygon
 
+from .types import Entity
 from ..utils.general import EntityMetadata, InvalidEntityCategoryException, parse_color
 from ..utils.pose import Pose, rot2d
 from ..utils.polygon import (
@@ -13,7 +14,7 @@ from ..utils.polygon import (
 from ..utils.search_graph import Node
 
 
-class Location:
+class Location(Entity):
     """Representation of a location in the world."""
 
     # Default class attributes
@@ -247,7 +248,7 @@ class Location:
         print(f"Location: {self.name} in {self.parent}\n\t{self.pose}")
 
 
-class ObjectSpawn:
+class ObjectSpawn(Entity):
     """Representation of an object spawn in the world."""
 
     def __init__(self, name, metadata, parent=None):

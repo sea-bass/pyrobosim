@@ -2,21 +2,22 @@
 
 import time
 import numpy as np
+from matplotlib.text import Text
 
 from .dynamics import RobotDynamics2D
 from .hallway import Hallway
 from .locations import ObjectSpawn
 from .objects import Object
+from .types import Entity
 from ..manipulation.grasping import Grasp
 from ..planning.actions import ExecutionResult, ExecutionStatus
-from ..utils.knowledge import query_to_entity
 from ..utils.logging import create_logger
 from ..utils.polygon import sample_from_polygon, transform_polygon
 from ..utils.pose import Pose
 from ..utils.general import parse_color
 
 
-class Robot:
+class Robot(Entity):
     """Representation of a robot in the world."""
 
     def __init__(
@@ -128,15 +129,15 @@ class Robot:
         self.partial_observability = partial_observability
         self.known_objects = set()
         self.last_detected_objects = []
+        self.viz_text: Text | None = None
 
         self.logger.info("Created robot.")
 
-    def get_pose(self):
+    def get_pose(self) -> Pose:
         """
         Gets the robot pose.
 
         :return: The robot pose.
-        :rtype: :class:`pyrobosim.utils.pose.Pose`
         """
         return self.dynamics.pose
 
@@ -211,12 +212,11 @@ class Robot:
         """
         return isinstance(self.location, ObjectSpawn)
 
-    def get_known_objects(self):
+    def get_known_objects(self) -> list[Object]:
         """
         Returns a list of objects known by the robot.
 
         :return: The list of known objects.
-        :rtype: list[Object]
         """
         if self.world is None:
             return []
@@ -262,6 +262,8 @@ class Robot:
         :return: The path, if one was found, otherwise None.
         :rtype: :class:`pyrobosim.utils.motion.Path` or None
         """
+        from ..utils.knowledge import graph_node_from_entity, query_to_entity
+
         if self.path_planner is None:
             self.logger.warning(f"No path planner attached to robot.")
             return None
@@ -296,14 +298,14 @@ class Robot:
                     )
                     return None
 
-            goal_node = self.world.graph_node_from_entity(goal, robot=self)
+            goal_node = graph_node_from_entity(self.world, goal, robot=self)
             if goal_node is None:
                 self.logger.warning(f"Could not find graph node associated with goal.")
                 return None
             goal = goal_node.pose
 
         path = self.path_planner.plan(start, goal)
-        if self.world and self.world.has_gui:
+        if (self.world is not None) and (self.world.gui is not None):
             show_graphs = True
             self.world.gui.canvas.show_planner_and_path_signal.emit(
                 self, show_graphs, path
@@ -379,7 +381,7 @@ class Robot:
                 self.logger.info(f"Battery charged at {self.location.name}!")
                 self.battery_level = 100.0
 
-            if self.world.has_gui:
+            if self.world.gui is not None:
                 self.world.gui.canvas.show_world_state(robot=self)
                 self.world.gui.update_buttons_signal.emit()
         return result
@@ -428,7 +430,7 @@ class Robot:
                 )
                 self.executing_nav = False
                 return self.last_nav_result
-        elif self.world and self.world.has_gui:
+        elif (self.world is not None) and (self.world.gui is not None):
             show_graphs = False
             self.world.gui.canvas.show_planner_and_path_signal.emit(
                 self, show_graphs, path
@@ -461,7 +463,7 @@ class Robot:
             return
 
         self.path_planner.reset()
-        if self.world.has_gui:
+        if self.world.gui is not None:
             show_graphs = True
             path = None
             self.world.gui.canvas.show_planner_and_path_signal.emit(
@@ -497,6 +499,8 @@ class Robot:
         else:
             obj = self.world.get_object_by_name(obj_query)
             if not obj and isinstance(obj_query, str):
+                from ..utils.knowledge import query_to_entity
+
                 obj = query_to_entity(
                     self.world,
                     obj_query,
@@ -582,7 +586,7 @@ class Robot:
 
         # Denote the target object as the manipulated object
         self._attach_object(obj)
-        if self.world.has_gui:
+        if self.world.gui is not None:
             self.world.gui.canvas.update_object_plot(self.manipulated_object)
             self.world.gui.canvas.show_world_state(self)
             self.world.gui.update_buttons_signal.emit()
@@ -681,7 +685,7 @@ class Robot:
                 )
 
         obj = self.manipulated_object
-        if self.world.has_gui:
+        if self.world.gui is not None:
             self.world.gui.canvas.obj_patches.remove(obj.viz_patch)
             obj.viz_patch.remove()
 
@@ -690,7 +694,7 @@ class Robot:
         self.manipulated_object.create_polygons()
         loc.children.append(self.manipulated_object)
 
-        if self.world.has_gui:
+        if self.world.gui is not None:
             self.world.gui.canvas.axes.add_patch(obj.viz_patch)
             self.world.gui.canvas.obj_patches.append(obj.viz_patch)
             self.world.gui.canvas.update_object_plot(obj)
@@ -752,7 +756,7 @@ class Robot:
 
         # If a target object was specified, look for a matching instance.
         # We should only return SUCCESS if one such instance was found.
-        if self.world.has_gui:
+        if self.world.gui is not None:
             self.world.gui.canvas.show_objects()
             self.world.gui.update_buttons_signal.emit()
         if not target_object:
@@ -892,13 +896,13 @@ class Robot:
         """
         self.executing_action = True
         self.current_action = action
-        if self.world.has_gui:
+        if self.world.gui is not None:
             self.world.gui.set_buttons_during_action(False)
 
         if action.type == "navigate":
             self.executing_nav = True
             path = action.path if action.path.num_poses > 0 else None
-            if self.world.has_gui:
+            if self.world.gui is not None:
                 if action.target_location and not isinstance(
                     action.target_location, str
                 ):
@@ -994,7 +998,7 @@ class Robot:
         self.current_plan = plan
 
         self.logger.info("Executing task plan...")
-        if self.world.has_gui:
+        if self.world.gui is not None:
             self.world.gui.set_buttons_during_action(False)
 
         result = ExecutionResult(status=ExecutionStatus.SUCCESS)

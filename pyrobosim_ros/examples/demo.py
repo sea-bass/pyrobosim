@@ -20,7 +20,7 @@ from pyrobosim_ros.ros_interface import WorldROSWrapper
 data_folder = get_data_folder()
 
 
-def create_world():
+def create_world() -> World:
     """Create a test world"""
     world = World()
 
@@ -135,11 +135,11 @@ def create_world():
     return world
 
 
-def create_world_from_yaml(world_file):
+def create_world_from_yaml(world_file: str) -> World:
     return WorldYamlLoader().from_file(os.path.join(data_folder, world_file))
 
 
-def create_ros_node():
+def create_ros_node() -> WorldROSWrapper:
     """Initializes ROS node"""
     rclpy.init()
     node = WorldROSWrapper(state_pub_rate=0.1, dynamics_rate=0.01)

@@ -4,6 +4,8 @@ Pose representation utilities.
 
 import math
 import numpy as np
+from typing import Any, Self
+
 from transforms3d.euler import euler2quat, quat2euler
 from transforms3d.quaternions import mat2quat, nearly_equivalent, qnorm, quat2mat
 
@@ -63,7 +65,7 @@ class Pose:
         self.set_euler_angles(roll, pitch, yaw)
 
     @classmethod
-    def from_list(cls, plist):
+    def from_list(cls, plist: list[float]) -> Self:
         """
         Creates a pose from a list. The assumptions are:
 
@@ -108,7 +110,7 @@ class Pose:
             raise ValueError("List must contain 2, 3, 4, 6, or 7 elements.")
 
     @classmethod
-    def from_transform(cls, tform):
+    def from_transform(cls, tform: np.array) -> Self:
         """
         Creates a pose from a transformation matrix.
 
@@ -122,7 +124,7 @@ class Pose:
         )
 
     @classmethod
-    def from_dict(cls, pose_dict):
+    def from_dict(cls, pose_dict: dict[str, Any]) -> Self:
         """
         Creates a pose from a dictionary.
 
@@ -185,7 +187,7 @@ class Pose:
         return cls(**args)
 
     @classmethod
-    def construct(self, data):
+    def construct(self, data: dict[str, Any]) -> Self:
         """
         Constructs a pose object from any of the allowable input types.
 
@@ -223,16 +225,13 @@ class Pose:
             },
         }
 
-    def get_linear_distance(self, other, ignore_z=False):
+    def get_linear_distance(self, other: Self, ignore_z: bool = False) -> float:
         """
         Gets the straight-line distance between two poses.
 
         :param other: Pose from which to get the linear distance.
-        :type other: :class:`pyrobosim.utils.pose.Pose`
         :param ignore_z: If True, ignores the Z component of the distance.
-        :type ignore_z: bool
         :return: Linear distance between this and the other pose.
-        :rtype: float
         """
         sum_squares = (other.x - self.x) ** 2 + (other.y - self.y) ** 2
         if not ignore_z:

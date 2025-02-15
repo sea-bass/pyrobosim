@@ -8,6 +8,7 @@ from geometry_msgs.msg import Twist
 import rclpy
 from rclpy.action.client import ActionClient
 from rclpy.executors import MultiThreadedExecutor
+from rclpy.future import Future
 from rclpy.node import Node
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.utils.general import get_data_folder
@@ -25,8 +26,11 @@ from pyrobosim_ros.ros_interface import WorldROSWrapper
 
 
 def execute_ros_action(
-    goal_future, spin_timeout=0.1, goal_timeout=1.0, result_timeout=30.0
-):
+    goal_future: Future,
+    spin_timeout: float = 0.1,
+    goal_timeout: float = 1.0,
+    result_timeout: float = 30.0,
+) -> Future:
     """Helper function to execute a ROS action and wait for a result."""
     start_time = time.time()
     while not goal_future.done():
@@ -47,9 +51,14 @@ def execute_ros_action(
 
 
 class TestRosInterface:
+
+    ros_interface = WorldROSWrapper()
+    node = Node("test_ros_interface")
+    executor = MultiThreadedExecutor()
+
     @staticmethod
-    @pytest.mark.dependency(name="test_start_ros_interface")
-    def test_start_ros_interface():
+    @pytest.mark.dependency(name="test_start_ros_interface")  # type: ignore[misc]
+    def test_start_ros_interface() -> None:
         rclpy.init()
 
         # Load world from file.
@@ -63,23 +72,20 @@ class TestRosInterface:
         TestRosInterface.ros_interface.set_world(world)
         TestRosInterface.ros_interface.start(auto_spin=False)
 
-        TestRosInterface.node = Node("test_ros_interface")
-
-        TestRosInterface.executor = MultiThreadedExecutor()
         TestRosInterface.executor.add_node(TestRosInterface.ros_interface)
         TestRosInterface.executor.add_node(TestRosInterface.node)
         time.sleep(1.0)
 
     @staticmethod
-    @pytest.mark.dependency(
+    @pytest.mark.dependency(  # type: ignore[misc]
         name="test_robot_pub_sub", depends=["test_start_ros_interface"]
     )
-    def test_robot_pub_sub():
+    def test_robot_pub_sub() -> None:
         """Test that we can publish and subscribe to the robots."""
 
         data = {"latest_state": None}
 
-        def state_cb(msg):
+        def state_cb(msg: RobotState) -> None:
             data["latest_state"] = msg
 
         state_sub = TestRosInterface.node.create_subscription(
@@ -110,8 +116,10 @@ class TestRosInterface:
         TestRosInterface.node.destroy_publisher(vel_pub)
 
     @staticmethod
-    @pytest.mark.dependency(name="test_get_world_state", depends=["test_robot_pub_sub"])
-    def test_get_world_state():
+    @pytest.mark.dependency(  # type: ignore[misc]
+        name="test_get_world_state", depends=["test_robot_pub_sub"]
+    )
+    def test_get_world_state() -> None:
         """Test that we can retrieve the world state via service call."""
 
         client = TestRosInterface.node.create_client(
@@ -159,10 +167,10 @@ class TestRosInterface:
         TestRosInterface.node.destroy_client(client)
 
     @staticmethod
-    @pytest.mark.dependency(
+    @pytest.mark.dependency(  # type: ignore[misc]
         name="test_set_location_state", depends=["test_get_world_state"]
     )
-    def test_set_location_state():
+    def test_set_location_state() -> None:
         """Test that we can set location states."""
         client = TestRosInterface.node.create_client(
             SetLocationState, "set_location_state"
@@ -206,10 +214,10 @@ class TestRosInterface:
         TestRosInterface.node.destroy_client(client)
 
     @staticmethod
-    @pytest.mark.dependency(
+    @pytest.mark.dependency(  # type: ignore[misc]
         name="test_execute_action", depends=["test_set_location_state"]
     )
-    def test_execute_action():
+    def test_execute_action() -> None:
         """Test that we can execute a single action on a robot."""
 
         action_client = ActionClient(
@@ -263,10 +271,10 @@ class TestRosInterface:
         assert robot.location == world.get_entity_by_name("my_desk_desktop")
 
     @staticmethod
-    @pytest.mark.dependency(
+    @pytest.mark.dependency(  # type: ignore[misc]
         name="test_execute_task_plan", depends=["test_execute_action"]
     )
-    def test_execute_task_plan():
+    def test_execute_task_plan() -> None:
         """Test that we can execute a task plan on a robot."""
 
         action_client = ActionClient(
@@ -296,10 +304,10 @@ class TestRosInterface:
         assert world.get_entity_by_name("water1").parent == robot.location
 
     @staticmethod
-    @pytest.mark.dependency(
+    @pytest.mark.dependency(  # type: ignore[misc]
         name="test_specialized_actions", depends=["test_execute_task_plan"]
     )
-    def test_specialized_actions():
+    def test_specialized_actions() -> None:
         """
         Test that we can run the specialized path planning, path following,
         and object detection actions.
@@ -365,9 +373,9 @@ class TestRosInterface:
         )
         assert len(action_result.detected_objects) == 0
 
-    @pytest.mark.dependency(
+    @pytest.mark.dependency(  # type: ignore[misc]
         name="test_shutdown_ros_interface", depends=["test_specialized_actions"]
     )
-    def test_shutdown_ros_interface(self):
+    def test_shutdown_ros_interface(self) -> None:
         """Shuts down the interface node and rclpy at the end of all other tests."""
         TestRosInterface.ros_interface.shutdown()

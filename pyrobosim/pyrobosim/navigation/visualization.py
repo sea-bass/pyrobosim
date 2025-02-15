@@ -1,10 +1,13 @@
 """Visualization utilities for path planners."""
 
 import matplotlib.pyplot as plt
+from matplotlib.artist import Artist
 from matplotlib.collections import LineCollection
 
 
-def plot_path_planner(axes, graphs=[], path=None, path_color="m"):
+def plot_path_planner(
+    axes, graphs=[], path=None, path_color: str = "m"
+) -> dict[str, list[Artist]]:
     """
     Plots the planned path on a specified set of axes.
 

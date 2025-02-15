@@ -5,13 +5,14 @@ from shapely import intersects_xy
 from shapely.geometry import LineString, MultiLineString
 from shapely.plotting import patch_from_polygon
 
+from .types import Entity
 from ..utils.pose import Pose, get_angle, get_bearing_range
 from ..utils.polygon import inflate_polygon
 from ..utils.search_graph import Node
 from ..utils.general import parse_color
 
 
-class Hallway:
+class Hallway(Entity):
     """Representation of a hallway connecting two rooms in a world."""
 
     def __init__(

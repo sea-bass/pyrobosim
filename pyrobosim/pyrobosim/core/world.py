@@ -8,15 +8,11 @@ from .locations import Location, ObjectSpawn
 from .objects import Object
 from .room import Room
 from .robot import Robot
+from .types import Entity
 from ..planning.actions import ExecutionResult, ExecutionStatus
 from ..utils.general import InvalidEntityCategoryException
 from ..utils.logging import create_logger
 from ..utils.pose import Pose
-from ..utils.knowledge import (
-    apply_resolution_strategy,
-    resolve_to_location,
-    resolve_to_object,
-)
 from ..utils.polygon import sample_from_polygon, transform_polygon
 from ..utils.search_graph import Node
 
@@ -39,6 +35,8 @@ class World:
         :param wall_height: Height of walls, in meters, for 3D model generation.
         :type wall_height: float, optional
         """
+        from ..gui.main import PyRoboSimGUI
+
         self.name = name
         self.wall_height = wall_height
         self.source_yaml = None
@@ -46,18 +44,16 @@ class World:
         self.logger = create_logger(self.name)
 
         # Connected apps
-        self.has_gui = False
-        self.gui = None
-        self.has_ros_node = False
-        self.ros_node = False
+        self.gui: PyRoboSimGUI | None = None
+        self.ros_node = None
 
         # World entities (robots, locations, objects, etc.)
-        self.robots = []
-        self.name_to_entity = {}
-        self.rooms = []
-        self.hallways = []
-        self.locations = []
-        self.objects = []
+        self.name_to_entity: dict[str, Entity] = {}
+        self.robots: list[Robot] = []
+        self.rooms: list[Room] = []
+        self.hallways: list[Hallway] = []
+        self.locations: list[Location] = []
+        self.objects: list[Object] = []
         self.set_metadata()
 
         # Counters
@@ -431,7 +427,7 @@ class World:
             self.name_to_entity[spawn.name] = spawn
 
         loc.add_graph_nodes()
-        if self.has_gui:
+        if self.gui is not None:
             self.gui.canvas.show_locations_signal.emit()
             self.gui.canvas.show_objects_signal.emit()
             self.gui.canvas.draw_signal.emit()
@@ -498,7 +494,7 @@ class World:
         loc.create_polygons(self.inflation_radius)
         for spawn in loc.children:
             spawn.set_pose_from_parent()
-        if self.has_gui:
+        if self.gui is not None:
             self.gui.canvas.show_locations_signal.emit()
             self.gui.canvas.show_objects_signal.emit()
             self.gui.canvas.draw_signal.emit()
@@ -536,7 +532,7 @@ class World:
         self.name_to_entity.pop(loc.name)
         for spawn in loc.children:
             self.name_to_entity.pop(spawn.name)
-        if self.has_gui:
+        if self.gui is not None:
             self.gui.canvas.show_locations_signal.emit()
             self.gui.canvas.show_objects_signal.emit()
             self.gui.canvas.draw_signal.emit()
@@ -584,7 +580,7 @@ class World:
 
         location.is_open = True
         location.update_visualization_polygon()
-        if self.has_gui:
+        if self.gui is not None:
             if isinstance(location, Hallway):
                 self.gui.canvas.show_hallways_signal.emit()
             else:
@@ -646,7 +642,7 @@ class World:
 
         location.is_open = False
         location.update_visualization_polygon()
-        if self.has_gui:
+        if self.gui is not None:
             if is_hallway:
                 self.gui.canvas.show_hallways_signal.emit()
             else:
@@ -863,7 +859,7 @@ class World:
         self.objects.append(obj)
         self.name_to_entity[obj.name] = obj
         self.num_objects += 1
-        if self.has_gui:
+        if self.gui is not None:
             self.gui.canvas.show_objects_signal.emit()
         return obj
 
@@ -941,7 +937,7 @@ class World:
         self.name_to_entity.pop(obj.name)
         self.num_objects -= 1
         obj.parent.children.remove(obj)
-        if self.has_gui:
+        if self.gui is not None:
             self.gui.canvas.show_objects_signal.emit()
         return True
 
@@ -1050,9 +1046,9 @@ class World:
             self.logger.warning("Could not add robot.")
             self.set_inflation_radius(old_inflation_radius)
 
-        if self.has_gui:
+        if self.gui is not None:
             self.gui.canvas.show_robots_signal.emit()
-        if self.has_ros_node:
+        if self.ros_node is not None:
             self.ros_node.add_robot_ros_interfaces()
 
     def remove_robot(self, robot_name):
@@ -1066,9 +1062,9 @@ class World:
         if robot:
             self.robots.remove(robot)
             self.name_to_entity.pop(robot_name)
-            if self.has_gui:
+            if self.gui is not None:
                 self.gui.canvas.show_robots_signal.emit()
-            if self.has_ros_node:
+            if self.ros_node is not None:
                 self.ros_node.remove_robot_ros_interfaces(robot)
 
             # Find the new max inflation radius and revert it.
@@ -1143,23 +1139,20 @@ class World:
     ################################
     # Lookup Functionality Methods #
     ################################
-    def get_room_names(self):
+    def get_room_names(self) -> list[str]:
         """
         Gets all room names in the world.
 
         :return: List of all room names.
-        :rtype: list[str]
         """
         return [room.name for room in self.rooms]
 
-    def get_room_by_name(self, name):
+    def get_room_by_name(self, name: str) -> Room | None:
         """
         Gets a room object by its name.
 
         :param name: Name of room.
-        :type name: str
         :return: Room instance matching the input name, or ``None`` if not valid.
-        :rtype: :class:`pyrobosim.core.room.Room`
         """
         if name not in self.name_to_entity:
             self.logger.warning(f"Room not found: {name}")
@@ -1438,14 +1431,13 @@ class World:
                 spawn_name_list.extend([spawn.name for spawn in loc.children])
         return spawn_name_list
 
-    def get_objects(self, category_list=None):
+    def get_objects(self, category_list: list[str] | None = None):
         """
         Gets all objects in the world, optionally filtered by category.
 
         :param name: Name of location.
-        :type name: str
+        :param category_list: Optional list of category names to filter by.
         :return: List of object that match the input category list, if specified.
-        :rtype: list[:class:`pyrobosim.core.objects.Object`]
         """
         if not category_list:
             return self.objects
@@ -1494,7 +1486,7 @@ class World:
         """
         return [robot.name for robot in self.robots]
 
-    def get_robot_by_name(self, name):
+    def get_robot_by_name(self, name: str) -> Robot | None:
         """
         Gets a robot by its name.
 
@@ -1513,26 +1505,22 @@ class World:
 
         return entity
 
-    def get_entity_by_name(self, name):
+    def get_entity_by_name(self, name: str) -> Entity | None:
         """
         Gets any world entity by its name.
 
         :param name: Name of entity.
-        :type name: str
         :return: Entity object instance matching the input name, or ``None`` if not valid.
         """
         return self.name_to_entity.get(name)
 
-    def get_pose_relative_to(self, pose, entity):
+    def get_pose_relative_to(self, pose: Pose, entity: Entity | str) -> Pose:
         """
         Given a relative pose to an entity, and the entity itself, gets the absolute pose.
 
         :param pose: The pose specified with respect to the entity.
-        :type pose: :class:`pyrobosim.utils.pose.Pose`
         :param entity: The entity, or entity name:
-        :type entity: Entity or str
         :return: Absolute pose computed by transforming the input pose to the entity frame.
-        :rtype: :class:`pyrobosim.utils.pose.Pose`
         """
         # Look for the target entity if specified by name.
         if isinstance(entity, str):
@@ -1672,93 +1660,3 @@ class World:
                 return pose
         self.logger.warning("Could not sample pose.")
         return None
-
-    ###################
-    # Graph Utilities #
-    ###################
-
-    def graph_node_from_entity(
-        self, entity_query, resolution_strategy="nearest", robot=None
-    ):
-        """
-        Gets a graph node from an entity query, which could be any combination of
-        room, hallway, location, object spawn, or object in the world, as well as
-        their respective categories.
-        For more information on the inputs, refer to the :func:`pyrobosim.utils.knowledge.query_to_entity` function.
-        :param entity_query: List of entities (e.g., rooms or objects) or names/categories.
-        :type entity_query: list[Entity/str]
-        :param resolution_strategy: Resolution strategy to apply
-        :type resolution_strategy: str
-        :param robot: If set to a Robot instance, uses that robot for resolution strategy.
-        :type robot: :class:`pyrobosim.core.robot.Robot`, optional
-        :return: A graph node for the entity that meets the resolution strategy, or None.
-        :rtype: :class:`pyrobosim.utils.search_graph.Node`
-        """
-        if isinstance(entity_query, Node):
-            return entity_query
-        elif isinstance(entity_query, str):
-            # Try resolve an entity based on its name. If that fails, we assume it must be a category,
-            # so try resolve it to a location or to an object by category.
-            entity = self.get_entity_by_name(entity_query)
-            if entity is None:
-                entity = resolve_to_location(
-                    self,
-                    category=entity_query,
-                    expand_locations=True,
-                    resolution_strategy=resolution_strategy,
-                    robot=robot,
-                )
-            if entity is None:
-                entity = resolve_to_object(
-                    self,
-                    category=entity_query,
-                    resolution_strategy=resolution_strategy,
-                    robot=robot,
-                    ignore_grasped=True,
-                )
-        else:
-            entity = entity_query
-
-        if isinstance(entity, (ObjectSpawn, Room)):
-            graph_nodes = entity.graph_nodes
-        elif isinstance(entity, Hallway):
-            graph_nodes = [entity.graph_nodes[0], entity.graph_nodes[-1]]
-
-            # Special rule: If all the hallways connected to the room are closed, and the robot is not in the room or at the hallway,
-            # remove the graph node from consideration.
-            if (robot is not None) and (robot.location != entity):
-                robot_in_start_room = entity.room_start.is_collision_free(
-                    robot.get_pose()
-                )
-                if not robot_in_start_room:
-                    room_accessible = False
-                    for hall in self.get_hallways_attached_to_room(entity.room_start):
-                        if hall.is_open:
-                            room_accessible = True
-                            break
-                    if not room_accessible:
-                        graph_nodes.remove(entity.graph_nodes[0])
-
-                robot_in_end_room = entity.room_end.is_collision_free(robot.get_pose())
-                if not robot_in_end_room:
-                    room_accessible = False
-                    for hall in self.get_hallways_attached_to_room(entity.room_end):
-                        if hall.is_open:
-                            room_accessible = True
-                            break
-                    if not room_accessible:
-                        graph_nodes.remove(entity.graph_nodes[-1])
-
-        elif isinstance(entity, Object):
-            graph_nodes = entity.parent.graph_nodes
-        elif isinstance(entity, Location):
-            graph_nodes = entity.children[0].graph_nodes
-        else:
-            self.logger.warning(f"Cannot get graph node from {entity}")
-            return None
-
-        # Select a graph node using the same resolution strategy.
-        graph_node = apply_resolution_strategy(
-            graph_nodes, resolution_strategy, robot=robot
-        )
-        return graph_node
