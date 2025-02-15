@@ -65,27 +65,26 @@ def test_apply_first_resolution_strategy() -> None:
 
 def test_apply_nearest_resolution_strategy(caplog: LogCaptureFixture) -> None:
     # Test 'nearest' strategy
+    entity_list = [Entity(), Entity(), Entity()]
+    entity_list[0].pose = Pose(x=1.0, y=0.0)
+    entity_list[1].pose = Pose(x=2.0, y=0.0)
+    entity_list[2].pose = Pose(x=3.0, y=0.0)
+    robot = Robot("test_robot")
+
     # Test that no robot warns
-    entity_list = ["Only"]
     entity = apply_resolution_strategy(entity_list, "nearest", None)
     assert entity is None
     assert "Cannot apply nearest resolution strategy without a robot" in caplog.text
 
-    robot = Robot("test_robot")
-
-    new_entity_list = [Entity(), Entity(), Entity()]
-    new_entity_list[0].pose = Pose(x=1.0, y=0.0)
-    new_entity_list[1].pose = Pose(x=2.0, y=0.0)
-    new_entity_list[2].pose = Pose(x=3.0, y=0.0)
-    entity = apply_resolution_strategy(new_entity_list, "nearest", robot)
+    entity = apply_resolution_strategy(entity_list, "nearest", robot)
     assert entity == entity_list[0]
 
     robot.set_pose(Pose(x=2.0, y=1.0))
-    entity = apply_resolution_strategy(new_entity_list, "nearest", robot)
+    entity = apply_resolution_strategy(entity_list, "nearest", robot)
     assert entity == entity_list[1]
 
     robot.set_pose(Pose(x=1000.0, y=-1000.0))
-    entity = apply_resolution_strategy(new_entity_list, "nearest", robot)
+    entity = apply_resolution_strategy(entity_list, "nearest", robot)
     assert entity == entity_list[2]
 
 
