@@ -1,5 +1,6 @@
 """Basic types for graphs."""
 
+from typing import Any
 from typing_extensions import Self  # For compatibility with Python <= 3.10
 
 from .pose import Pose
@@ -8,9 +9,7 @@ from .pose import Pose
 class Node:
     """Graph node representation."""
 
-    def __init__(
-        self, pose: Pose, parent: Self | None = None, cost: float = 0.0
-    ) -> None:
+    def __init__(self, pose: Pose, parent: Any = None, cost: float = 0.0) -> None:
         """
         Creates a graph node.
 

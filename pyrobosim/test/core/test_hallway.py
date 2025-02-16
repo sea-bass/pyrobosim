@@ -91,7 +91,9 @@ class TestHallway:
                 room_start="bad_start_room", room_end="room_end", width=0.1
             )
         assert "Room not found: bad_start_room" in caplog.text
-        assert str(exc_info.value) == "room_start must be a valid Room object."
+        assert (
+            str(exc_info.value) == "bad_start_room must be a valid start Room object."
+        )
 
         caplog.clear()
         with pytest.raises(ValueError) as exc_info:
@@ -99,7 +101,7 @@ class TestHallway:
                 room_start="room_start", room_end="bad_end_room", width=0.1
             )
         assert "Room not found: bad_end_room" in caplog.text
-        assert str(exc_info.value) == "room_end must be a valid Room object."
+        assert str(exc_info.value) == "bad_end_room must be a valid end Room object."
 
         with pytest.raises(ValueError) as exc_info:
             self.test_world.add_hallway(

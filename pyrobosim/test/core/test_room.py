@@ -52,7 +52,7 @@ class TestRoom:
         """Test adding a room with an empty footprint. Should raise an exception."""
         world = World()
 
-        with pytest.raises(Exception) as exc_info:
+        with pytest.raises(RuntimeError) as exc_info:
             world.add_room(name="test_room")
         assert str(exc_info.value) == "Room footprint cannot be empty."
 

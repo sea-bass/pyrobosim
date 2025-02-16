@@ -76,6 +76,7 @@ class Object(Entity):
         self.category = category
         self.name = name
         self.parent = parent
+        self.children = []
 
         self.inflation_radius = inflation_radius
         self.collision_polygon = Polygon()

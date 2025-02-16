@@ -359,7 +359,7 @@ class Pose:
         return f"Pose: [{pos_str}, {quat_str}]"
 
 
-def get_angle(p1: list[float], p2: list[float]) -> float:
+def get_angle(p1: Sequence[float], p2: Sequence[float]) -> float:
     """
     Basic utility for getting angle between 2D points.
     The convention is the angle ``p2`` with reference to ``p1``.
@@ -371,7 +371,7 @@ def get_angle(p1: list[float], p2: list[float]) -> float:
     return wrap_angle(math.atan2(p2[1] - p1[1], p2[0] - p1[0]))
 
 
-def get_distance(p1: list[float], p2: list[float]) -> float:
+def get_distance(p1: Sequence[float], p2: Sequence[float]) -> float:
     """
     Basic utility for getting distance between points.
 
@@ -383,7 +383,7 @@ def get_distance(p1: list[float], p2: list[float]) -> float:
     return math.sqrt(sum(sqrs))
 
 
-def get_bearing_range(p1: list[float], p2: list[float]) -> tuple[float, float]:
+def get_bearing_range(p1: Sequence[float], p2: Sequence[float]) -> tuple[float, float]:
     """
     Gets bearing and range between 2 points ``p1`` and ``p2``.
     The convention is the bearing of ``p2`` with reference to ``p1``.

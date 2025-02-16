@@ -247,7 +247,6 @@ class World:
             and they will be resolved to actual room objects, if they exist in the world.
 
         :return: Hallway object if successfully created, else None.
-        :rtype: :class:`pyrobosim.core.hallway.Hallway`
         """
         # If it's a hallway object, get it from the "hallway" named argument.
         # Else, create a hallway directly from the specified arguments.
@@ -255,15 +254,46 @@ class World:
             hallway = hallway_config["hallway"]
         else:
             if isinstance(hallway_config["room_start"], str):
-                hallway_config["room_start"] = self.get_room_by_name(
-                    hallway_config["room_start"]
-                )
+                room_start = self.get_room_by_name(hallway_config["room_start"])
+                if room_start is None:
+                    raise ValueError(
+                        f"{hallway_config['room_start']} must be a valid start Room object."
+                    )
+                hallway_config["room_start"] = room_start
+
             if isinstance(hallway_config["room_end"], str):
-                hallway_config["room_end"] = self.get_room_by_name(
-                    hallway_config["room_end"]
+                room_end = self.get_room_by_name(hallway_config["room_end"])
+                if room_end is None:
+                    raise ValueError(
+                        f"{hallway_config['room_end']} must be a valid end Room object."
+                    )
+                hallway_config["room_end"] = room_end
+
+            # If the hallway name is empty, automatically name it.
+            reversed_name: str | None = None
+            if "name" not in hallway_config:
+                ordered_rooms = tuple(
+                    sorted(
+                        [
+                            hallway_config["room_start"].name,
+                            hallway_config["room_end"].name,
+                        ]
+                    )
                 )
+                if ordered_rooms not in self.hallway_instance_counts:
+                    self.hallway_instance_counts[ordered_rooms] = 0
+                    suffix = ""
+                else:
+                    suffix = f"_{self.hallway_instance_counts[ordered_rooms]}"
+
+                hallway_config["name"] = (
+                    f"hall_{ordered_rooms[0]}_{ordered_rooms[1]}{suffix}"
+                )
+                reversed_name = f"hall_{ordered_rooms[1]}_{ordered_rooms[0]}{suffix}"
 
             hallway = Hallway(**hallway_config)
+            if reversed_name is not None:
+                hallway.reversed_name = reversed_name
 
         # Check for duplicate names.
         if hallway.name in self.get_hallway_names():
@@ -271,20 +301,6 @@ class World:
                 f"Hallway {hallway.name} already exists in the world. Cannot add."
             )
             return None
-
-        # If the hallway name is empty, automatically name it.
-        ordered_rooms = tuple(sorted([hallway.room_start.name, hallway.room_end.name]))
-        if ordered_rooms not in self.hallway_instance_counts:
-            self.hallway_instance_counts[ordered_rooms] = 0
-            suffix = ""
-        else:
-            suffix = f"_{self.hallway_instance_counts[ordered_rooms]}"
-
-        if hallway.name is None:
-            hallway.name = f"hall_{ordered_rooms[0]}_{ordered_rooms[1]}{suffix}"
-            hallway.reversed_name = (
-                f"hall_{ordered_rooms[1]}_{ordered_rooms[0]}{suffix}"
-            )
 
         # Check if the hallway collides with any other rooms or hallways
         is_valid_pose = True
@@ -308,6 +324,9 @@ class World:
         hallway.room_start.update_visualization_polygon()
         hallway.room_end.hallways.append(hallway)
         hallway.room_end.update_visualization_polygon()
+        ordered_rooms = tuple(sorted([hallway.room_start.name, hallway.room_end.name]))
+        if not ordered_rooms in self.hallway_instance_counts:
+            self.hallway_instance_counts[ordered_rooms] = 0
         self.hallway_instance_counts[ordered_rooms] += 1
         self.num_hallways += 1
         hallway.update_collision_polygons(self.inflation_radius)

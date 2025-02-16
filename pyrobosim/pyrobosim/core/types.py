@@ -4,6 +4,7 @@ Core types for PyRoboSim.
 
 import os
 from typing import Any, Sequence
+from typing_extensions import Self  # For compatibility with Python <= 3.10
 
 from matplotlib.patches import PathPatch
 from shapely import intersects_xy, Polygon
@@ -20,23 +21,34 @@ class Entity:
     Several classes in PyRoboSim (such as robots, rooms, etc.) subclass from this.
     """
 
-    def __init__(self) -> None:
-        """Constructs an Entity instance."""
-        self.name = ""
-        self.category: str | None = None
-        self.pose = Pose()
-        self.height = 0.0
-        self.polygon = Polygon()
+    name = ""
+    """The name of the entity."""
+    category: str | None = None
+    """The category of the entity."""
+    pose = Pose()
+    """The pose of the entity."""
+    height = 0.0
+    """The height (in the Z direction) of the entity."""
+    polygon = Polygon()
+    """The main polygon representing the entity."""
 
+    nav_poses: list[Pose] = []
+    """The (optional) list of navigation poses for this entity."""
+    graph_nodes: list[Node] = []
+    """The (optional) list of search graph nodes for this entity."""
+
+    is_open = True
+    """Whether the entity is open or not."""
+
+    viz_patch: PathPatch | None = None
+    """The visualization polygon patch for the entity."""
+    viz_color: Sequence[float]
+    """The color of the visualization polygon patch and text."""
+
+    def __init__(self) -> None:
+        """Construct a new Entity instance."""
         self.parent: Entity | None = None
         self.children: list[Entity] = []
-        self.nav_poses: list[Pose] = []
-        self.graph_nodes: list[Node] = []
-
-        self.is_open = True
-
-        self.viz_patch: PathPatch | None = None
-        self.viz_color: Sequence[float]
 
     def get_room_name(self) -> str | None:
         """

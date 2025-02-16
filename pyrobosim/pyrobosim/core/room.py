@@ -9,7 +9,6 @@ from shapely import intersects_xy
 from shapely.geometry import Polygon
 from shapely.plotting import patch_from_polygon
 
-from .hallway import Hallway
 from .locations import Location
 from .types import Entity
 from ..utils.graph_types import Node
@@ -29,12 +28,12 @@ class Room(Entity):
     def __init__(
         self,
         *,
-        name,
+        name: str,
         footprint: Sequence[Sequence[float]] | dict[str, Any] = [],
         color: str | Sequence[float] = [0.4, 0.4, 0.4],
         wall_width: float = 0.2,
         pose: Pose | None = None,
-        nav_poses: Sequence[Pose] | None = None,
+        nav_poses: list[Pose] | None = None,
         height: float = 0.0,
     ) -> None:
         """
@@ -54,10 +53,11 @@ class Room(Entity):
         :param nav_poses: List of navigation poses in the room. If not specified, defaults to the centroid.
         :param height: Height of room.
         """
+        from .hallway import Hallway  # Avoids circular import
+
         self.name = name
         self.wall_width = wall_width
         self.viz_color = parse_color(color)
-        self.is_open = True
 
         # Entities associated with the room
         self.hallways: list[Hallway] = []
@@ -69,13 +69,14 @@ class Room(Entity):
         if isinstance(footprint, list):
             self.polygon = Polygon(footprint)
             self.footprint = {"type": "polygon", "coords": footprint}
-        else:
-            self.polygon, height = polygon_and_height_from_footprint(footprint)
+        elif isinstance(footprint, dict):
+            self.polygon, out_height = polygon_and_height_from_footprint(footprint)
             self.footprint = footprint
-            if height is not None:
-                self.height = height
+            if out_height is not None:
+                self.height = out_height
+
         if self.polygon.is_empty:
-            raise Exception("Room footprint cannot be empty.")
+            raise RuntimeError("Room footprint cannot be empty.")
 
         self.original_pose = pose  # Needed to serialize the world properly.
         if pose is not None:
