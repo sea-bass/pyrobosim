@@ -6,8 +6,8 @@ Example showing how to request task actions and plans.
 
 import rclpy
 from rclpy.action import ActionClient
-from rclpy.future import Future
 from rclpy.node import Node
+from rclpy.task import Future
 import time
 
 from pyrobosim_msgs.action import ExecuteTaskAction, ExecuteTaskPlan  # type: ignore

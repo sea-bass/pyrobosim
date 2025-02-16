@@ -8,11 +8,11 @@ from geometry_msgs.msg import Twist
 import rclpy
 from rclpy.action.client import ActionClient
 from rclpy.executors import MultiThreadedExecutor
-from rclpy.future import Future
 from rclpy.node import Node
+from rclpy.task import Future
+
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.utils.general import get_data_folder
-
 from pyrobosim_msgs.action import (  # type: ignore
     DetectObjects,
     ExecuteTaskAction,
@@ -52,9 +52,9 @@ def execute_ros_action(
 
 class TestRosInterface:
 
-    ros_interface = WorldROSWrapper()
-    node = Node("test_ros_interface")
-    executor = MultiThreadedExecutor()
+    ros_interface: WorldROSWrapper | None = None
+    node: Node | None = None
+    executor: MultiThreadedExecutor | None = None
 
     @staticmethod
     @pytest.mark.dependency(name="test_start_ros_interface")  # type: ignore[misc]
@@ -72,6 +72,9 @@ class TestRosInterface:
         TestRosInterface.ros_interface.set_world(world)
         TestRosInterface.ros_interface.start(auto_spin=False)
 
+        TestRosInterface.node = Node("test_ros_interface")
+
+        TestRosInterface.executor = MultiThreadedExecutor()
         TestRosInterface.executor.add_node(TestRosInterface.ros_interface)
         TestRosInterface.executor.add_node(TestRosInterface.node)
         time.sleep(1.0)
@@ -82,6 +85,8 @@ class TestRosInterface:
     )
     def test_robot_pub_sub() -> None:
         """Test that we can publish and subscribe to the robots."""
+        assert TestRosInterface.node is not None
+        assert TestRosInterface.ros_interface is not None
 
         data = {"latest_state": None}
 
@@ -121,6 +126,8 @@ class TestRosInterface:
     )
     def test_get_world_state() -> None:
         """Test that we can retrieve the world state via service call."""
+        assert TestRosInterface.node is not None
+        assert TestRosInterface.ros_interface is not None
 
         client = TestRosInterface.node.create_client(
             RequestWorldState, "request_world_state"
@@ -172,6 +179,9 @@ class TestRosInterface:
     )
     def test_set_location_state() -> None:
         """Test that we can set location states."""
+        assert TestRosInterface.node is not None
+        assert TestRosInterface.ros_interface is not None
+
         client = TestRosInterface.node.create_client(
             SetLocationState, "set_location_state"
         )
@@ -219,6 +229,8 @@ class TestRosInterface:
     )
     def test_execute_action() -> None:
         """Test that we can execute a single action on a robot."""
+        assert TestRosInterface.node is not None
+        assert TestRosInterface.ros_interface is not None
 
         action_client = ActionClient(
             TestRosInterface.node, ExecuteTaskAction, "execute_action"
@@ -276,6 +288,8 @@ class TestRosInterface:
     )
     def test_execute_task_plan() -> None:
         """Test that we can execute a task plan on a robot."""
+        assert TestRosInterface.node is not None
+        assert TestRosInterface.ros_interface is not None
 
         action_client = ActionClient(
             TestRosInterface.node, ExecuteTaskPlan, "execute_task_plan"
@@ -312,6 +326,8 @@ class TestRosInterface:
         Test that we can run the specialized path planning, path following,
         and object detection actions.
         """
+        assert TestRosInterface.node is not None
+        assert TestRosInterface.ros_interface is not None
 
         path_plan_action_client = ActionClient(
             TestRosInterface.node, PlanPath, "robot0/plan_path"
@@ -378,4 +394,5 @@ class TestRosInterface:
     )
     def test_shutdown_ros_interface(self) -> None:
         """Shuts down the interface node and rclpy at the end of all other tests."""
+        assert TestRosInterface.ros_interface is not None
         TestRosInterface.ros_interface.shutdown()

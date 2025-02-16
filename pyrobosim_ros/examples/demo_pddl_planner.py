@@ -8,8 +8,8 @@ import os
 import time
 import rclpy
 from rclpy.action import ActionClient
-from rclpy.future import Future
 from rclpy.node import Node
+from rclpy.task import Future
 
 from pyrobosim.core import World, WorldYamlLoader
 from pyrobosim.planning.pddlstream import PDDLStreamPlanner, get_default_domains_folder
