@@ -9,11 +9,9 @@ import pytest
 from pytest import CaptureFixture
 
 from pyrobosim.core import Pose
+from pyrobosim.navigation.occupancy_grid import OccupancyGrid, reduce_waypoints_grid
 from pyrobosim.utils.path import Path
-from pyrobosim.utils.path_reduction import (
-    reduce_waypoints_grid,
-    reduce_waypoints_polygon,
-)
+from pyrobosim.utils.world_motion_planning import reduce_waypoints_polygon
 
 
 ########################
@@ -93,7 +91,7 @@ def test_path_equality() -> None:
     # Check datatype exception.
     with pytest.raises(TypeError) as exc_info:
         path1 == 42.0
-    assert exc_info.value.args[0] == "Expected a Path object."
+    assert str(exc_info.value) == "Expected a Path object."
 
 
 ##########################################
@@ -101,7 +99,6 @@ def test_path_equality() -> None:
 ##########################################
 def test_reduce_waypoints_occupancy_grid() -> None:
     """Test utility to reduce waypoints using an occupancy grid."""
-    from pyrobosim.navigation.occupancy_grid import OccupancyGrid
 
     grid_data = np.zeros((10, 10))
     grid_data[5, :8] = 1  # Creates a wall

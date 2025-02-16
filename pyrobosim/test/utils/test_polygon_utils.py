@@ -249,9 +249,9 @@ def test_polygon_from_footprint(caplog: LogCaptureFixture) -> None:
 
     # Invalid type
     footprint = {"type": "invalid"}
-    output = polygon_and_height_from_footprint(footprint, parent_polygon=parent_polygon)
-    assert output == (None, None)
-    assert "Invalid footprint type: invalid" in caplog.text
+    with pytest.raises(ValueError) as exc_info:
+        polygon_and_height_from_footprint(footprint, parent_polygon=parent_polygon)
+    assert str(exc_info.value) == "Invalid footprint type: invalid"
 
 
 def test_convhull_to_rectangle(display: bool = False) -> None:

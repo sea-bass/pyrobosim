@@ -5,8 +5,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from PIL import Image
+from typing import Sequence
+from typing_extensions import Self  # For compatibility with Python <= 3.10
 import yaml
 
+from ..core.world import World
 from ..utils.logging import get_global_logger
 
 
@@ -14,24 +17,24 @@ class OccupancyGrid:
     """Lightweight wrapper containing occupancy grid information."""
 
     def __init__(
-        self, data, resolution, origin=(0.0, 0.0), occ_thresh=0.65, free_thresh=0.2
-    ):
+        self,
+        data: np.ndarray,
+        resolution: float,
+        origin: Sequence[float] = (0.0, 0.0),
+        occ_thresh: float = 0.65,
+        free_thresh: float = 0.2,
+    ) -> None:
         """
         Creates an occupancy grid.
 
         :param data: 2D numeric array containing the occupancy data.
-        :type data: :class:`numpy.ndarray`
         :param resolution: Grid resolution, in meters.
-        :type resolution: float
         :param origin: XY position of the grid origin, in meters,
             defaults to (0, 0).
-        :type origin: (float, float)
         :param occ_thresh: Probability threshold for a cell being occupied
             (0 to 1), defaults to 0.65.
-        :type occ_thresh: float
         :param free_thresh: Probability threshold for a cell being free
             (0 to 1), defaults to 0.2.
-        :type free_thresh: float
         """
         self.data = data
         self.width, self.height = self.data.shape
@@ -40,7 +43,7 @@ class OccupancyGrid:
         self.occ_thresh = occ_thresh
         self.free_thresh = free_thresh
 
-    def show(self):
+    def show(self) -> None:
         """Displays the occupancy grid as an image."""
         rot_img = np.logical_not(np.rot90(self.data))
         plt.imshow(rot_img, cmap="gray", interpolation="nearest")
@@ -56,21 +59,19 @@ class OccupancyGrid:
         )
         plt.show()
 
-    def is_in_bounds(self, pos):
+    def is_in_bounds(self, pos: tuple[int, int]) -> bool:
         """
         Check if a given (x,y) position is within grid limits
 
         :param pos: The position to be validated.
-        :type pos: (int, int)
-        :return: True if the given coordinates are within bounds, else False
-        :rtype: bool
+        :return: True if the given coordinates are within bounds, else False.
         """
         x, y = pos
         x_bounds = (x >= 0) and (x < self.width)
         y_bounds = (y >= 0) and (y < self.height)
         return x_bounds and y_bounds
 
-    def world_to_grid(self, pos):
+    def world_to_grid(self, pos: tuple[float, float]) -> tuple[int, int]:
         """
         Convert a given world position in world frame to grid frame.
 
@@ -83,45 +84,39 @@ class OccupancyGrid:
         y_grid = math.floor((pos[1] - self.origin[1]) / self.resolution)
         return (x_grid, y_grid)
 
-    def grid_to_world(self, pos):
+    def grid_to_world(self, pos: tuple[int, int]) -> tuple[float, float]:
         """
         Convert a given world position in grid frame to world frame.
 
         :param pos: The position to be transformed.
-        :type pos: (int, int)
         :return: The coordinates in world frame
-        :rtype: (float, float)
         """
         x_world = (pos[0] * self.resolution) + self.origin[0]
         y_world = (pos[1] * self.resolution) + self.origin[1]
         return (x_world, y_world)
 
-    def is_occupied(self, pos):
+    def is_occupied(self, pos: tuple[int, int]) -> bool:
         """
         Check if a given position in the grid is occupied
 
         :param pos: The position to be checked.
-        :type pos: (int, int)
         :return: True if the position is occupied, else False
-        :rtype: bool
         """
-        return (not self.is_in_bounds(pos)) or self.data[pos[0], pos[1]] == 1
+        return (not self.is_in_bounds(pos)) or (self.data[pos[0], pos[1]] == 1)
 
-    def has_straight_line_connection(self, pointA, pointB):
+    def has_straight_line_connection(
+        self, pointA: tuple[int, int], pointB: tuple[int, int]
+    ) -> tuple[bool, tuple[int, int]]:
         """
         Checks if 2 points can be connected in a straight line.
 
         :param pointA: The source point in the grid
-        :type pointA: (int, int)
         :param pointB: The destination point in the grid
-        :type pointB: (int, int)
         :return: (True, last_point) if pointA can be connected to pointB, else (False, last_point),
                  last_point is the last point that can be reached from the source in a straight line
                  towards the destination.
                  If pointA and pointB are connectable last_point will be pointB.
-        :rtype: (bool, (int, int))
         """
-
         # Note: Left shift operator `<<` is used as an optimization for multiplying by 2.
 
         x0, y0 = pointA
@@ -164,14 +159,12 @@ class OccupancyGrid:
                 decision += (dy << 1) - (dx << 1)
         return can_connect, last_point
 
-    def save_to_file(self, folder, filename="world_map"):
+    def save_to_file(self, folder: str, filename: str = "world_map") -> None:
         """
         Save occupancy grid to PGM and YAML files compatible with ROS tools.
 
         :param folder: Path to output folder.
-        :type folder: str
         :param filename: Name of PGM/YAML file, defaults to "world_map".
-        :type filename: str
         """
         # Write the PGM file.
         pgm_file = os.path.join(folder, filename + ".pgm")
@@ -210,15 +203,13 @@ class OccupancyGrid:
             yaml.dump(yaml_dict, f, sort_keys=False, default_flow_style=None)
 
     @classmethod
-    def from_file(cls, folder, filename=None):
+    def from_file(cls, folder: str, filename: str | None = None) -> Self:
         """
         Loads an occupancy grid from a folder containing a PGM image file and a YAML file.
 
         :param folder: Path to folder.
-        :type folder: str
         :param filename: Name of YAML file, defaults to None.
             If None is specified, this function will try to find the file using the .yaml extension.
-        :type filename: str
         """
         all_files = os.listdir(folder)
 
@@ -262,13 +253,13 @@ class OccupancyGrid:
     @classmethod
     def from_world(
         cls,
-        world,
-        resolution,
-        inflation_radius=0.0,
-        xlim=None,
-        ylim=None,
-        auto_lim_padding_ratio=0.05,
-    ):
+        world: World,
+        resolution: float,
+        inflation_radius: float = 0.0,
+        xlim: float | None = None,
+        ylim: float | None = None,
+        auto_lim_padding_ratio: float = 0.05,
+    ) -> None:
         """
         Generates an occupancy grid of a world at a given resolution.
 
@@ -276,20 +267,13 @@ class OccupancyGrid:
         left unspecified, the extents will be calculated automatically.
 
         :param world: World object from which to create an occupancy grid.
-        :type world: :class:`pyrobosim.core.world.World`
         :param resolution: Grid resolution, in meters.
-        :type resolution: float
         :param inflation_radius: Inflation radius, in meters.
-        :type inflation_radius: float
         :param xlim: X coordinate limits, in meters.
-        :type xlim: (float, float), optional
         :param ylim: Y coordinate limits, in meters.
-        :type ylim: (float, float), optional
         :param auto_lim_padding_ratio: Additional padding ratio outside world
             limits if automatically computed, defaults to 0.05.
-        :type auto_lim_padding_ratio: float
         :return: Occupancy grid of the world.
-        :rtype: :class:`pyrobosim.navigation.occupancy_grid.OccupancyGrid`
         """
         # Use the world limits if not specified, but slightly padded
         if xlim is None:
@@ -320,3 +304,31 @@ class OccupancyGrid:
         world.set_inflation_radius(orig_inflation_radius)
 
         return OccupancyGrid(occupancy_grid_data, resolution, origin)
+
+
+def reduce_waypoints_grid(
+    grid: OccupancyGrid, positions: list[tuple[int, int]]
+) -> list[tuple[int, int]]:
+    """
+    Reduces the number of waypoints in a generated path from a grid-based planner.
+
+    :param grid: The occupancy grid associated with the generated path.
+    :param positions: The list of positions that make up the path.
+    :return: The optimized list of waypoints.
+    """
+
+    waypoints = []
+    start = positions[0]
+    waypoints.append(start)
+    positions = positions[1:]
+    i = len(positions) - 1
+    while positions and i >= 0:
+        current = positions[i]
+        if grid.has_straight_line_connection(start, current)[0]:
+            waypoints.append(current)
+            start = current
+            positions = positions[i + 1 :]
+            i = len(positions) - 1
+        else:
+            i -= 1
+    return waypoints

@@ -12,6 +12,7 @@ from .utils import (
     world_to_pddlstream_init,
     pddlstream_solution_to_plan,
 )
+from ..actions import TaskPlan
 
 
 class PDDLStreamPlanner:
@@ -58,7 +59,7 @@ class PDDLStreamPlanner:
         max_attempts=1,
         verbose=False,
         **planner_config,
-    ):
+    ) -> TaskPlan:
         r"""
         Searches for a set of actions that completes a goal specification
         given an initial state of the world.

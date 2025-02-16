@@ -4,8 +4,8 @@ Pose representation utilities.
 
 import math
 import numpy as np
-from typing import Any
-from typing_extensions import Self  # For compatibility with Python < 3.11
+from typing import Any, Sequence
+from typing_extensions import Self  # For compatibility with Python <= 3.10
 
 from transforms3d.euler import euler2quat, quat2euler
 from transforms3d.quaternions import mat2quat, nearly_equivalent, qnorm, quat2mat
@@ -397,7 +397,7 @@ def get_bearing_range(p1: list[float], p2: list[float]) -> tuple[float, float]:
     return (bear, rng)
 
 
-def rot2d(vec: list[float], ang: float) -> list[float]:
+def rot2d(vec: Sequence[float], ang: float) -> Sequence[float]:
     """
     Rotates a 2-element vector by an angle.
 

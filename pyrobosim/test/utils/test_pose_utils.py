@@ -111,12 +111,12 @@ def test_pose_from_lists() -> None:
     # Invalid list lengths should raise an exception.
     with pytest.raises(ValueError) as exc_info:
         Pose.from_list([1.0, 2.0, 3.0, 4.0, 5.0])
-    assert exc_info.value.args[0] == "List must contain 2, 3, 4, 6, or 7 elements."
+    assert str(exc_info.value) == "List must contain 2, 3, 4, 6, or 7 elements."
 
     # Invalid angle_units raise an exception
     with pytest.raises(ValueError) as exc_info:
         Pose(angle_units="notavalidangle")
-    assert exc_info.value.args[0] == (
+    assert str(exc_info.value) == (
         "Invalid angle units provided. It should be either 'radians' or 'degrees'."
         "Additionally, if 'q' is provided, angle units are ignored."
     )
@@ -227,7 +227,7 @@ def test_construct_pose(angle_units: str, angle_value: float) -> None:
 
     with pytest.raises(ValueError) as exc_info:
         Pose.construct(42)
-    assert exc_info.value.args[0] == "Cannot construct pose from object of type int."
+    assert str(exc_info.value) == "Cannot construct pose from object of type int."
 
 
 def test_get_linear_distance() -> None:
@@ -331,7 +331,7 @@ def test_is_approx_radians() -> None:
     # Check datatype exception.
     with pytest.raises(TypeError) as exc_info:
         pose1.is_approx(42.0)
-    assert exc_info.value.args[0] == "Expected a Pose object."
+    assert str(exc_info.value) == "Expected a Pose object."
 
 
 def test_is_approx_degrees() -> None:
@@ -372,7 +372,7 @@ def test_equality() -> None:
     # Check datatype exception.
     with pytest.raises(TypeError) as exc_info:
         pose1 == 42.0
-    assert exc_info.value.args[0] == "Expected a Pose object."
+    assert str(exc_info.value) == "Expected a Pose object."
 
 
 ###############################

@@ -10,7 +10,7 @@ from .locations import ObjectSpawn
 from .objects import Object
 from .types import Entity
 from ..manipulation.grasping import Grasp
-from ..planning.actions import ExecutionResult, ExecutionStatus
+from ..planning.actions import ExecutionResult, ExecutionStatus, TaskPlan
 from ..utils.logging import create_logger
 from ..utils.polygon import sample_from_polygon, transform_polygon
 from ..utils.pose import Pose
@@ -95,7 +95,6 @@ class Robot(Entity):
 
         # Dynamics properties
         self.dynamics = RobotDynamics2D(
-            robot=self,
             init_pose=pose,
             max_linear_velocity=max_linear_velocity,
             max_angular_velocity=max_angular_velocity,
@@ -971,17 +970,16 @@ class Robot(Entity):
             while self.executing_plan:
                 time.sleep(0.1)
 
-    def execute_plan(self, plan, delay=0.5):
+    def execute_plan(
+        self, plan: TaskPlan, delay: float = 0.5
+    ) -> tuple[ExecutionResult, int]:
         """
         Executes a task plan, specified as a
         :class:`pyrobosim.planning.actions.TaskPlan` object.
 
         :param plan: Task plan to execute.
-        :type plan: :class:`pyrobosim.planning.actions.TaskPlan`
         :param delay: Artificial delay between actions for visualization.
-        :type delay: float, optional
         :return: A tuple containing an execution result and the number of actions completed.
-        :rtype: tuple[:class:`pyrobosim.planning.actions.ExecutionResult`, int]
         """
         if plan is None:
             message = "Plan is None. Returning."

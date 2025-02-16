@@ -50,7 +50,7 @@ class Path:
             yaw = prev_pose.get_angular_distance(cur_pose)
             cur_pose.set_euler_angles(yaw=yaw)
 
-    def __eq__(self, other: Self) -> bool:
+    def __eq__(self, other: object) -> bool:
         """
         Check if two paths are exactly equal.
 

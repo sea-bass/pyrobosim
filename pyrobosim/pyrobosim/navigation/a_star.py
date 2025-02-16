@@ -4,10 +4,9 @@ import math
 import time
 from astar import AStar
 
-from .occupancy_grid import OccupancyGrid
+from .occupancy_grid import OccupancyGrid, reduce_waypoints_grid
 from ..utils.pose import Pose
 from ..utils.path import Path
-from ..utils.path_reduction import reduce_waypoints_grid
 
 
 class AStarPlanner(AStar):

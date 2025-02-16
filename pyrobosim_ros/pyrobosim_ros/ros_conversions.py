@@ -3,18 +3,17 @@ Utilities to convert between standalone pyrobosim objects and
 ROS representations (messages, services, etc.).
 """
 
-from geometry_msgs.msg import (
-    Pose as RosPose,
-)
+from geometry_msgs.msg import Pose as RosPose
 from rclpy.duration import Duration
 
-from pyrobosim_msgs.msg import (
+from pyrobosim_msgs.msg import (  # type: ignore[attr-defined]
     ExecutionResult as RosExecutionResult,
     GoalSpecification,
     Path as RosPath,
     TaskAction as RosTaskAction,
     TaskPlan as RosTaskPlan,
 )
+from pyrobosim.core.types import Entity
 from pyrobosim.core.world import World
 from pyrobosim.planning.actions import (
     ExecutionResult,
@@ -24,7 +23,6 @@ from pyrobosim.planning.actions import (
 )
 from pyrobosim.utils.path import Path
 from pyrobosim.utils.pose import Pose
-from pyrobosim.types import Entity
 
 
 def pose_from_ros(msg: RosPose) -> Pose:
@@ -54,7 +52,7 @@ def pose_to_ros(pose: Pose | None) -> RosPose:
     :param act: Pose object.
     :return: ROS message.
     """
-    pose_msg = geometry_msgs.msg.Pose()
+    pose_msg = RosPose()
     if pose is not None:
         pose_msg.position.x = pose.x
         pose_msg.position.y = pose.y
@@ -83,7 +81,7 @@ def path_to_ros(path: Path) -> RosPath:
     :param path: Path object.
     :return: ROS message.
     """
-    return ros_msgs.Path(
+    return RosPath(
         poses=[pose_to_ros(p) for p in path.poses],
         length=path.length,
     )
@@ -101,9 +99,9 @@ def get_entity_name(entity: Entity | str | None) -> str:
     elif isinstance(entity, str):
         return entity
     elif isinstance(entity, Entity):
-        return entity.name
-    else:
-        raise TypeError(f"Invalid entity type: {type(entity)}")
+        return entity.name  # type: ignore[no-any-return]  # Always a string
+
+    raise TypeError(f"Invalid entity type: {type(entity)}")
 
 
 def goal_specification_from_ros(

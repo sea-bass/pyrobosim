@@ -2,6 +2,7 @@
 
 import itertools
 import numpy as np
+from typing import Any
 
 from .hallway import Hallway
 from .locations import Location, ObjectSpawn
@@ -141,7 +142,7 @@ class World:
     ##########################
     # World Building Methods #
     ##########################
-    def add_room(self, **room_config):
+    def add_room(self, **room_config: dict[str, Any]) -> Room:
         r"""
         Adds a room to the world.
 
@@ -158,12 +159,14 @@ class World:
         :return: room object if successfully created, else None.
         :rtype: :class:`pyrobosim.core.room.room`
         """
-
         # If it's a room object, get it from the "room" named argument.
         # Else, create a room directly from the specified arguments.
         if "room" in room_config:
             room = room_config["room"]
         else:
+            # If the room name is empty, automatically name it.
+            if "name" not in room_config:
+                room_config["name"] = f"room{self.num_rooms}"
             room = Room(**room_config)
 
         # Check for duplicate names.
@@ -172,10 +175,6 @@ class World:
                 f"Room {room.name} already exists in the world. Cannot add."
             )
             return None
-
-        # If the room name is empty, automatically name it.
-        if room.name is None:
-            room.name = f"room{self.num_rooms}"
 
         # If the room geometry is empty, do not allow it
         if room.polygon.is_empty:
@@ -363,6 +362,11 @@ class World:
         :return: Location object if successfully created, else None.
         :rtype: :class:`pyrobosim.core.locations.Location`
         """
+        # If the category name is empty, use "location" as the base name.
+        category = location_config.get("category", "location")
+        if category not in self.location_instance_counts:
+            self.location_instance_counts[category] = 0
+
         # If it's a location object, get it from the "location" named argument.
         # Else, create a location directly from the specified arguments.
         if "location" in location_config:
@@ -371,6 +375,12 @@ class World:
             if isinstance(location_config["parent"], str):
                 location_config["parent"] = self.get_room_by_name(
                     location_config["parent"]
+                )
+
+            # If no name is specified, create one automatically.
+            if "name" not in location_config:
+                location_config["name"] = (
+                    f"{category}{self.location_instance_counts[category]}"
                 )
 
             try:
@@ -389,17 +399,6 @@ class World:
             )
             return None
 
-        # If the category name is empty, use "location" as the base name.
-        category = loc.category
-        if category is None:
-            category = "location"
-        # If the location name is empty, automatically name it.
-        if category not in self.location_instance_counts:
-            self.location_instance_counts[category] = 0
-        if loc.name is None:
-            loc.name = f"{category}{self.location_instance_counts[category]}"
-            loc.create_spawn_locations()
-
         # Check that the location fits within the room and is not in collision with
         # other locations already in the room. Else, warn and do not add it.
         is_valid_pose = loc.polygon.within(loc.parent.polygon)
@@ -416,16 +415,17 @@ class World:
 
         # Do all the necessary bookkeeping
         loc.update_collision_polygon(self.inflation_radius)
+        loc.create_spawn_locations()
+        loc.add_graph_nodes()
         loc.parent.locations.append(loc)
         loc.parent.update_collision_polygons(self.inflation_radius)
         self.locations.append(loc)
-        self.location_instance_counts[loc.category] += 1
+        self.location_instance_counts[category] += 1
         self.num_locations += 1
         self.name_to_entity[loc.name] = loc
         for spawn in loc.children:
             self.name_to_entity[spawn.name] = spawn
 
-        loc.add_graph_nodes()
         if self.gui is not None:
             self.gui.canvas.show_locations_signal.emit()
             self.gui.canvas.show_objects_signal.emit()
@@ -466,7 +466,7 @@ class World:
                 return False
 
         if is_open is not None:
-            loc.is_open = is_open
+            loc.set_open(is_open, recursive=True)
         if is_locked is not None:
             loc.is_locked = is_locked
 
@@ -577,7 +577,7 @@ class World:
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
 
-        location.is_open = True
+        location.set_open(True, recursive=True)
         location.update_visualization_polygon()
         if self.gui is not None:
             if isinstance(location, Hallway):
@@ -639,7 +639,7 @@ class World:
                         status=ExecutionStatus.PRECONDITION_FAILURE, message=message
                     )
 
-        location.is_open = False
+        location.set_open(False, recursive=True)
         location.update_visualization_polygon()
         if self.gui is not None:
             if is_hallway:
@@ -772,12 +772,18 @@ class World:
         :return: Object instance if successfully created, else None.
         :rtype: :class:`pyrobosim.core.objects.Object`
         """
+        # If the category name is empty, use "object" as the base name.
+        category = object_config.get("category", "object")
+        if category not in self.object_instance_counts:
+            self.object_instance_counts[category] = 0
+
         # If it's an Object instance, get it from the "object" named argument.
         # Else, create an object directly from the specified arguments.
         if "object" in object_config:
             obj = object_config["object"]
         elif "parent" in object_config:
-            parent = object_config.get("parent", None)
+            parent = object_config.get("parent")
+
             if isinstance(parent, str):
                 parent = self.get_entity_by_name(parent)
 
@@ -792,6 +798,12 @@ class World:
                     f"Parent location {parent_arg} did not resolve to a valid location for an object."
                 )
                 return None
+
+            # If no name is specified, create one automatically.
+            if "name" not in object_config:
+                object_config["name"] = (
+                    f"{category}{self.object_instance_counts[category]}"
+                )
 
             object_config["parent"] = parent
             object_config["inflation_radius"] = self.object_radius
@@ -811,25 +823,14 @@ class World:
             )
             return None
 
-        # If the category name is empty, use "object" as the base name.
-        category = obj.category
-        if category is None:
-            category = "object"
-        # If no name is specified, create one automatically.
-        if category not in self.object_instance_counts:
-            self.object_instance_counts[category] = 0
-        if obj.name is None:
-            obj.name = f"{category}{self.object_instance_counts[category]}"
-        self.object_instance_counts[category] += 1
-
         # If no pose is specified, sample a valid one.
         obj_spawn = obj.parent
-        if obj.pose is None:
+        if "pose" not in object_config:
             pose_sample = self.sample_object_spawn_pose(
                 obj, obj_spawn, self.max_object_sample_tries
             )
 
-            if pose_sample:
+            if pose_sample is not None:
                 obj.parent = obj_spawn
                 obj.set_pose(pose_sample)
                 obj.create_polygons()
@@ -858,6 +859,7 @@ class World:
         self.objects.append(obj)
         self.name_to_entity[obj.name] = obj
         self.num_objects += 1
+        self.object_instance_counts[category] += 1
         if self.gui is not None:
             self.gui.canvas.show_objects_signal.emit()
         return obj

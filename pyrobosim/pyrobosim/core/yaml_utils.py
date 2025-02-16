@@ -7,7 +7,6 @@ import yaml
 
 from .robot import Robot
 from .world import World
-from ..navigation import ConstantVelocityExecutor, get_planner_class
 from ..planning.actions import ExecutionOptions
 from ..utils.general import replace_special_yaml_tokens
 from ..utils.logging import get_global_logger
@@ -162,6 +161,8 @@ class WorldYamlLoader:
 
     def get_path_planner(self, robot_data: dict[str, Any]) -> Any:
         """Gets path planner to add to a robot."""
+        from ..navigation import get_planner_class
+
         if "path_planner" not in robot_data:
             return None
 
@@ -177,6 +178,8 @@ class WorldYamlLoader:
 
     def get_path_executor(self, robot_data: dict[str, Any]) -> Any:
         """Gets a path executor to add to a robot."""
+        from ..navigation import ConstantVelocityExecutor
+
         if "path_executor" not in robot_data:
             return ConstantVelocityExecutor()
 

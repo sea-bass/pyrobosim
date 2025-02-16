@@ -13,8 +13,8 @@ from ..core.room import Room
 from ..core.types import Entity
 from ..core.objects import Object
 from ..core.world import World
+from ..utils.graph_types import Node
 from ..utils.logging import get_global_logger
-from ..utils.search_graph import Node
 
 
 def apply_resolution_strategy(

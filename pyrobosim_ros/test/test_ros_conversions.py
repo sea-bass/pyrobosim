@@ -3,10 +3,16 @@
 import pytest
 from rclpy.duration import Duration
 
-import pyrobosim.planning.actions as acts
+from pyrobosim.planning.actions import (
+    ExecutionResult,
+    ExecutionStatus,
+    TaskAction,
+    TaskPlan,
+)
 from pyrobosim.utils.path import Path
 from pyrobosim.utils.pose import Pose
-import pyrobosim_msgs.msg as ros_msgs
+from pyrobosim_msgs.msg import ExecutionResult as RosExecutionResult  # type: ignore[attr-defined]
+
 from pyrobosim_ros.ros_conversions import (
     execution_result_from_ros,
     execution_result_to_ros,
@@ -22,7 +28,7 @@ from pyrobosim_ros.ros_conversions import (
 )
 
 
-def test_pose_conversion():
+def test_pose_conversion() -> None:
     """Tests round-trip conversion of pose objects."""
     # Create a pyrobosim pose
     orig_pose = Pose(x=1.0, y=2.0, z=3.0, q=[0.707, 0.0, 0.707, 0.0])  # wxyz
@@ -42,7 +48,7 @@ def test_pose_conversion():
     assert new_pose.is_approx(orig_pose)
 
 
-def test_path_conversion():
+def test_path_conversion() -> None:
     """Tests round-trip conversion of path objects."""
 
     # Create a pyrobosim path
@@ -74,11 +80,11 @@ def test_path_conversion():
         assert orig_pose.is_approx(new_pose)
 
 
-def test_task_action_conversion():
+def test_task_action_conversion() -> None:
     """Tests round-trip conversion of task action objects."""
 
     # Create a pyrobosim task action
-    orig_action = acts.TaskAction(
+    orig_action = TaskAction(
         "pick",
         robot="robot0",
         object="apple",
@@ -126,7 +132,7 @@ def test_task_action_conversion():
     assert new_action.path.num_poses == orig_action.path.num_poses
 
 
-def test_task_plan_conversion():
+def test_task_plan_conversion() -> None:
     """Tests round-trip conversion of task plan objects."""
 
     # Create a pyrobosim task plan
@@ -139,19 +145,19 @@ def test_task_plan_conversion():
     )
     place_pose = Pose(x=0.8, y=1.0, z=0.5, q=[1.0, 0.0, 0.0, 0.0])
     actions = [
-        acts.TaskAction("pick", object="apple", source_location="table0", cost=0.5),
-        acts.TaskAction(
+        TaskAction("pick", object="apple", source_location="table0", cost=0.5),
+        TaskAction(
             "move",
             source_location="table0",
             target_location="desk0",
             path=nav_path,
             cost=0.75,
         ),
-        acts.TaskAction(
+        TaskAction(
             "place", object="apple", target_location="desk0", pose=place_pose, cost=0.5
         ),
     ]
-    orig_plan = acts.TaskPlan(robot="robot0", actions=actions)
+    orig_plan = TaskPlan(robot="robot0", actions=actions)
 
     # Convert to a ROS message
     ros_plan = task_plan_to_ros(orig_plan)
@@ -170,29 +176,29 @@ def test_task_plan_conversion():
     assert new_plan.total_cost == pytest.approx(orig_plan.total_cost)
 
 
-def test_ros_duration_to_float():
+def test_ros_duration_to_float() -> None:
     """Tests conversion of rclpy Duration objects to floating-point time."""
     ros_duration = Duration(seconds=1.0, nanoseconds=500000000)
     float_duration = ros_duration_to_float(ros_duration)
     assert float_duration == pytest.approx(1.5)
 
 
-def test_execution_result_conversion():
+def test_execution_result_conversion() -> None:
     """Tests round-trip conversion of execution result objects."""
-    code_names = [e.name for e in acts.ExecutionStatus]
+    code_names = [e.name for e in ExecutionStatus]
 
     for code in code_names:
         expected_message = f"Action completed with status {code}."
 
         # Create a pyrobosim execution result
-        orig_result = acts.ExecutionResult(
-            status=getattr(acts.ExecutionStatus, code),
+        orig_result = ExecutionResult(
+            status=getattr(ExecutionStatus, code),
             message=expected_message,
         )
 
         # Convert to a ROS Message
         ros_result = execution_result_to_ros(orig_result)
-        assert ros_result.status == getattr(ros_msgs.ExecutionResult, code)
+        assert ros_result.status == getattr(RosExecutionResult, code)
         assert ros_result.message == expected_message
 
         # Convert back to a pyrobosim object

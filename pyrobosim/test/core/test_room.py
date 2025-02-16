@@ -54,7 +54,7 @@ class TestRoom:
 
         with pytest.raises(Exception) as exc_info:
             world.add_room(name="test_room")
-        assert exc_info.value.args[0] == "Room footprint cannot be empty."
+        assert str(exc_info.value) == "Room footprint cannot be empty."
 
     def test_add_room_to_world_in_collision(self, caplog: LogCaptureFixture) -> None:
         """Test adding a room in collision with another room."""

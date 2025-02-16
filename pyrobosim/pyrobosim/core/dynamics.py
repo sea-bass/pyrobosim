@@ -4,6 +4,7 @@ Robot dynamics utilities.
 
 import copy
 import numpy as np
+from typing import Sequence
 
 from ..utils.logging import get_global_logger
 from ..utils.pose import Pose
@@ -14,34 +15,23 @@ class RobotDynamics2D:
 
     def __init__(
         self,
-        robot=None,
-        init_pose=Pose(),
-        init_vel=np.array([0.0, 0.0, 0.0]),
-        max_linear_velocity=np.inf,
-        max_angular_velocity=np.inf,
-        max_linear_acceleration=np.inf,
-        max_angular_acceleration=np.inf,
-    ):
+        init_pose: Pose = Pose(),
+        init_vel: np.ndarray = np.array([0.0, 0.0, 0.0]),
+        max_linear_velocity: float = np.inf,
+        max_angular_velocity: float = np.inf,
+        max_linear_acceleration: float = np.inf,
+        max_angular_acceleration: float = np.inf,
+    ) -> None:
         """
         Creates an instance of a 2D robot dynamics object.
 
-        :param robot: The robot corresponding to this dynamics object.
-        :type robot: :class:`pyrobosim.core.robot.Robot`
         :param init_pose: The initial pose of the robot.
-        :type init_pose: :class:`pyrobosim.utils.pose.Pose`
         :param init_vel: The initial velocity of the robot, as a [vx, vy, vtheta] array.
-        :type init_vel: :class:`numpy.array`
         :param max_linear_velocity: The maximum linear velocity magnitude, in m/s.
-        :type max_linear_velocity: float
         :param max_angular_velocity: The maximum angular velocity magnitude, in rad/s.
-        :type max_angular_velocity: float
         :param max_linear_acceleration: The maximum linear acceleration magnitude, in m/s^2.
-        :type max_linear_acceleration: float
         :param max_angular_acceleration: The maximum angular acceleration magnitude, in rad/s^2.
-        :type max_linear_acceleration: float
         """
-        self.robot = robot
-
         # Initial state
         self.pose = init_pose
         self.velocity = np.array(init_vel)
@@ -55,14 +45,12 @@ class RobotDynamics2D:
             [max_linear_acceleration, max_linear_acceleration, max_angular_acceleration]
         )
 
-    def step(self, cmd_vel, dt, world=None, check_collisions=False):
+    def step(self, cmd_vel: Sequence[float], dt: float) -> None:
         """
         Perform a single dynamics step.
 
         :param cmd_vel: Velocity command array, in the form [vx, vy, vtheta].
-        :type cmd_vel: :class:`numpy.array`
         :param dt: Time step, in seconds.
-        :type dt: float
         """
         # Trivial case of zero or None command velocities.
         if np.count_nonzero(cmd_vel) == 0 or cmd_vel is None:
@@ -84,37 +72,34 @@ class RobotDynamics2D:
         target_pose.set_euler_angles(roll, pitch, yaw + self.velocity[2] * dt)
 
         # Check collisions
-        if check_collisions:
-            if world is None:
-                warn_msg = "Cannot check collisions without a world."
-                logger = self.robot.logger if self.robot else get_global_logger()
-                logger.warning(warn_msg)
-                return
+        # TODO: Move this out
+        # if check_collisions:
+        #     if world is None:
+        #         warn_msg = "Cannot check collisions without a world."
+        #         logger = self.robot.logger if self.robot else get_global_logger()
+        #         logger.warning(warn_msg)
+        #         return
 
-            if world.collides_with_robots(
-                target_pose, robot=self.robot
-            ) or world.check_occupancy(target_pose):
-                self.velocity = np.array([0.0, 0.0, 0.0])
-                self.collision = True
-                return
+        #     if world.collides_with_robots(
+        #         target_pose, robot=self.robot
+        #     ) or world.check_occupancy(target_pose):
+        #         self.velocity = np.array([0.0, 0.0, 0.0])
+        #         self.collision = True
+        #         return
 
         # If we made it, we succeeded
         self.collision = False
-        if self.robot:
-            self.robot.set_pose(target_pose)
-        else:
-            self.pose = target_pose
+        self.pose = target_pose
 
-    def enforce_dynamics_limits(self, cmd_vel, dt):
+    def enforce_dynamics_limits(
+        self, cmd_vel: Sequence[float], dt: float
+    ) -> np.ndarray:
         """
         Enforces velocity and acceleration limits by saturating a velocity command.
 
         :param cmd_vel: Velocity command array, in the form [vx, vy, vtheta].
-        :type cmd_vel: :class:`numpy.array`
         :param dt: Time step, in seconds.
-        :type dt: float
         :return: The saturated velocity command array.
-        :rtype: :class:`numpy.array`
         """
         # First saturate to velocity limits
         cmd_vel = np.clip(cmd_vel, -self.vel_limits, self.vel_limits)
@@ -128,18 +113,15 @@ class RobotDynamics2D:
 
         return cmd_vel
 
-    def reset(self, pose=None, velocity=np.array([0.0, 0.0, 0.0])):
+    def reset(
+        self, pose: Pose | None = None, velocity: np.ndarray = np.array([0.0, 0.0, 0.0])
+    ) -> None:
         """
         Reset all the dynamics of the robot to provided values.
 
         :param pose: The pose to reset to. If None, will keep the current pose.
-        :type pose: :class:`pyrobosim.utils.pose.Pose`, optional
         :param velocity: The velocity to reset to. Defaults to zero velocities.
-        :type velocity: :class:`numpy.array`, optional
         """
         if pose is not None:
-            if self.robot:
-                self.robot.set_pose(pose)
-            else:
-                self.pose = pose
+            self.pose = pose
         self.velocity = velocity

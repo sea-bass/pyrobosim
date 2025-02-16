@@ -6,6 +6,7 @@ Unit tests for robot class.
 import os
 import numpy as np
 import pytest
+from pytest import CaptureFixture, LogCaptureFixture
 import time
 import threading
 
@@ -22,13 +23,13 @@ from pyrobosim.utils.path import Path
 
 
 class TestRobot:
-    @pytest.fixture(autouse=True)
-    def create_test_world(self):
+    @pytest.fixture(autouse=True)  # type: ignore[misc]
+    def create_test_world(self) -> None:
         self.test_world = WorldYamlLoader().from_file(
             os.path.join(get_data_folder(), "test_world.yaml")
         )
 
-    def create_test_plan(self):
+    def create_test_plan(self) -> TaskPlan:
         actions = [
             TaskAction(
                 "navigate",
@@ -48,7 +49,7 @@ class TestRobot:
         ]
         return TaskPlan(actions=actions)
 
-    def test_create_robot_default_args(self, capsys):
+    def test_create_robot_default_args(self, capsys: CaptureFixture) -> None:
         """Check that a robot can be created with all default arguments."""
         robot = Robot()
 
@@ -77,7 +78,7 @@ class TestRobot:
         )
         assert out == expected_details_str
 
-    def test_create_robot_nondefault_args(self, capsys):
+    def test_create_robot_nondefault_args(self, capsys: CaptureFixture) -> None:
         """Check that a robot can be created with nondefault arguments."""
         robot = Robot(
             name="test_robot",
@@ -111,13 +112,13 @@ class TestRobot:
         )
         assert out == expected_details_str
 
-    def test_robot_bad_name(self):
+    def test_robot_bad_name(self) -> None:
         """Check that a robot with an invalid name raises an exception."""
         with pytest.raises(ValueError) as exc_info:
             Robot(name="world")
-        assert exc_info.value.args[0] == "Robots cannot be named 'world'."
+        assert str(exc_info.value) == "Robots cannot be named 'world'."
 
-    def test_robot_path_planner(self, caplog):
+    def test_robot_path_planner(self, caplog: LogCaptureFixture) -> None:
         """Check that path planners can be used from a robot."""
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
         goal_pose = Pose(x=2.5, y=3.0, yaw=np.pi / 2.0)
@@ -160,7 +161,7 @@ class TestRobot:
         robot.path_planner = path_planner
         robot.reset_path_planner()
 
-    def test_robot_path_executor(self):
+    def test_robot_path_executor(self) -> None:
         """Check that path executors can be used from a robot."""
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
         goal_pose = Pose(x=2.5, y=3.0, yaw=np.pi / 2.0)
@@ -196,7 +197,7 @@ class TestRobot:
         assert result.status == ExecutionStatus.PRECONDITION_FAILURE
         assert result.message == "No path executor. Cannot follow path."
 
-    def test_robot_nav_validation(self, caplog):
+    def test_robot_nav_validation(self, caplog: LogCaptureFixture) -> None:
         """Check that the robot can abort execution with runtime collision validation."""
         init_pose = Pose(x=1.0, y=0.75, yaw=0.0)
         goal_pose = Pose(x=2.5, y=3.0, yaw=np.pi / 2.0)
@@ -217,7 +218,7 @@ class TestRobot:
         path = robot.plan_path(goal=goal_pose)
 
         # Schedule a thread that closes all hallways after a slight delay.
-        def close_all_hallways():
+        def close_all_hallways() -> None:
             time.sleep(0.5)
             for hallway in self.test_world.hallways:
                 self.test_world.close_location(hallway, ignore_robots=[robot])
@@ -237,7 +238,7 @@ class TestRobot:
         result = robot.follow_path(path)
         assert result.status == ExecutionStatus.SUCCESS
 
-    def test_robot_manipulation(self):
+    def test_robot_manipulation(self) -> None:
         """Check that the robot can manipulate objects."""
         # Spawn the robot near the kitchen table
         robot = Robot(
@@ -332,7 +333,7 @@ class TestRobot:
         assert result.status == ExecutionStatus.PRECONDITION_FAILURE
         assert result.message == "table0 is not open. Cannot pick object."
 
-    def test_robot_object_detection(self):
+    def test_robot_object_detection(self) -> None:
         """Check that the robot can detect objects."""
         # Spawn the robot near the kitchen table
         robot = Robot(
@@ -384,7 +385,7 @@ class TestRobot:
         assert result.status == ExecutionStatus.PRECONDITION_FAILURE
         assert result.message == "table0 is not open. Cannot detect objects."
 
-    def test_robot_open_close_hallway(self):
+    def test_robot_open_close_hallway(self) -> None:
         """Check that the robot can open or close hallways."""
         robot = Robot(
             pose=Pose(x=1.0, y=0.5, yaw=0.0),
@@ -462,7 +463,7 @@ class TestRobot:
             == "Robot blocker is in Hallway: hall_bedroom_kitchen. Cannot close."
         )
 
-    def test_execute_action(self):
+    def test_execute_action(self) -> None:
         """Tests execution of a single action."""
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
         robot = Robot(
@@ -497,7 +498,7 @@ class TestRobot:
         assert result.message == "Battery depleted while navigating."
         assert robot.battery_level == 0.0
 
-    def test_execute_invalid_action(self):
+    def test_execute_invalid_action(self) -> None:
         """Tests execution of an action that is not recognized as a valid type."""
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
         robot = Robot(name="test_robot", pose=init_pose)
@@ -508,7 +509,7 @@ class TestRobot:
         assert result.status == ExecutionStatus.INVALID_ACTION
         assert result.message == "Invalid action type: bad_action."
 
-    def test_execute_action_simulated_options(self):
+    def test_execute_action_simulated_options(self) -> None:
         """Test execution of an action that has simulated options."""
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
         action_execution_options = {
@@ -551,7 +552,7 @@ class TestRobot:
         assert result.status == ExecutionStatus.PRECONDITION_FAILURE
         assert result.message == "Out of battery. Cannot navigate."
 
-    def test_execute_action_cancel(self, caplog):
+    def test_execute_action_cancel(self, caplog: LogCaptureFixture) -> None:
         """Tests that actions can be canceled during execution."""
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
         robot = Robot(
@@ -589,7 +590,7 @@ class TestRobot:
         robot.cancel_actions()
         assert "There is no running action or plan to cancel." in caplog.text
 
-    def test_execute_plan(self):
+    def test_execute_plan(self) -> None:
         """Tests execution of a plan consisting of multiple actions."""
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
         robot = Robot(
@@ -605,7 +606,7 @@ class TestRobot:
         assert result.is_success()
         assert num_completed == 7
 
-    def test_execute_blank_plan(self):
+    def test_execute_blank_plan(self) -> None:
         """Tests a trivial case of executing a plan that is None."""
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
         robot = Robot(name="test_robot", pose=init_pose)
@@ -616,7 +617,7 @@ class TestRobot:
         assert num_completed == 0
         assert result.message == "Plan is None. Returning."
 
-    def test_execute_plan_cancel(self):
+    def test_execute_plan_cancel(self) -> None:
         """Tests that task plans can be canceled during execution."""
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
         robot = Robot(
@@ -643,7 +644,7 @@ class TestRobot:
         assert result.is_success()
         assert num_completed + remaining_num_completed == plan.size()
 
-    def test_at_object_spawn(self):
+    def test_at_object_spawn(self) -> None:
         """Tests check for robot being at an object spawn."""
         robot = Robot()
         robot.world = self.test_world
@@ -655,7 +656,7 @@ class TestRobot:
         robot.location = self.test_world.get_entity_by_name("table0_tabletop")
         assert robot.at_object_spawn()
 
-    def test_partial_observability(self):
+    def test_partial_observability(self) -> None:
         """Tests partial observability capabilities."""
         robot = Robot(partial_observability=True)
 

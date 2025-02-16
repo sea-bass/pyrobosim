@@ -4,23 +4,22 @@ Helper primitives for PDDLStream based planning.
 
 import numpy as np
 
+from ...core.locations import ObjectSpawn
+from ...core.objects import Object
 from ...manipulation.grasping import GraspFace
 from ...utils.pose import Pose
 from ...utils.polygon import sample_from_polygon, transform_polygon
 
 
-def get_pick_place_cost(loc, obj):
+def get_pick_place_cost(loc: ObjectSpawn, obj: Object) -> float:
     """
     Estimates a dummy pick / place cost for a specific location / object
     combination, which a constant value plus the height of the location and
     half height of the object.
 
     :param loc: Location where pick / place action occurs.
-    :type loc: Location
     :param obj: Object that is manipulated.
-    :type obj: Object
     :return: Cost of performing action.
-    :rtype: float
     """
     return 0.5 + loc.height + (0.5 * obj.height)
 

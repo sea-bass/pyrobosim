@@ -16,12 +16,13 @@ from pyrobosim.core import Robot, World
 from pyrobosim.gui import start_gui
 from pyrobosim.manipulation import GraspGenerator, ParallelGraspProperties
 from pyrobosim.navigation import ConstantVelocityExecutor, RRTPlanner
+from pyrobosim.planning.actions import TaskPlan
 from pyrobosim.planning.pddlstream import PDDLStreamPlanner, get_default_domains_folder
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
 
-def create_test_world(add_alt_desk=True):
+def create_test_world(add_alt_desk: bool = True) -> World:
     world = World(object_radius=0.0375)
 
     # Set the location and object metadata
@@ -95,8 +96,12 @@ def create_test_world(add_alt_desk=True):
 
 
 def start_planner(
-    world, domain_name, interactive=False, max_attempts=1, search_sample_ratio=0.5
-):
+    world: World,
+    domain_name: str,
+    interactive: bool = False,
+    max_attempts: int = 1,
+    search_sample_ratio: float = 0.5,
+) -> TaskPlan:
     domain_folder = os.path.join(get_default_domains_folder(), domain_name)
     planner = PDDLStreamPlanner(world, domain_folder)
 
@@ -125,8 +130,8 @@ def start_planner(
 domains_to_test = ["04_nav_manip_stream", "05_nav_grasp_stream"]
 
 
-@pytest.mark.parametrize("domain_name", domains_to_test)
-def test_manip_single_desk(domain_name):
+@pytest.mark.parametrize("domain_name", domains_to_test)  # type: ignore[misc]
+def test_manip_single_desk(domain_name: str) -> None:
     world = create_test_world(add_alt_desk=False)
     plan = start_planner(
         world, domain_name=domain_name, max_attempts=3, search_sample_ratio=0.5
@@ -134,8 +139,8 @@ def test_manip_single_desk(domain_name):
     assert plan is not None
 
 
-@pytest.mark.parametrize("domain_name", domains_to_test)
-def test_manip_double_desk(domain_name):
+@pytest.mark.parametrize("domain_name", domains_to_test)  # type: ignore[misc]
+def test_manip_double_desk(domain_name: str) -> None:
     world = create_test_world(add_alt_desk=True)
     plan = start_planner(
         world, domain_name=domain_name, max_attempts=3, search_sample_ratio=0.2

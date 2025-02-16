@@ -3,6 +3,7 @@
 import time
 import threading
 
+from ..core.robot import Robot
 from ..planning.actions import ExecutionResult, ExecutionStatus
 from ..utils.logging import get_global_logger
 from ..utils.path import Path
@@ -18,30 +19,24 @@ class ConstantVelocityExecutor:
 
     def __init__(
         self,
-        dt=0.1,
-        linear_velocity=1.0,
-        max_angular_velocity=None,
-        validate_during_execution=False,
-        validation_dt=0.5,
-        validation_step_dist=0.025,
-    ):
+        dt: float = 0.1,
+        linear_velocity: float = 1.0,
+        max_angular_velocity: float | None = None,
+        validate_during_execution: bool = False,
+        validation_dt: float = 0.5,
+        validation_step_dist: float = 0.025,
+    ) -> None:
         """
         Creates a constant velocity path executor.
 
         :param dt: Time step for creating a trajectory, in seconds.
-        :type dt: float
         :param linear_velocity: Linear velocity, in m/s.
-        :type linear_velocity: float
         :param max_angular_velocity: Maximum angular velocity, in rad/s.
-        :type max_angular_velocity: float, optional
         :param validate_during_execution: If True, runs a separate thread that validates the remaining path at a regular rate.
-        :type validate_during_execution: bool
         :param validation_dt: Time step for validating the remaining path, in seconds.
-        :type validation_dt: float
         :param validation_step_dist: The step size for discretizing a straight line to check collisions.
-        :type validation_step_dist: float
         """
-        self.robot = None
+        self.robot: Robot | None = None
         self.dt = dt
         self.linear_velocity = linear_velocity
         self.max_angular_velocity = max_angular_velocity
@@ -54,7 +49,7 @@ class ConstantVelocityExecutor:
         # Execution state
         self.reset_state()
 
-    def reset_state(self):
+    def reset_state(self) -> None:
         """
         Resets all the states for tracking the status of path execution.
         """
@@ -63,18 +58,17 @@ class ConstantVelocityExecutor:
         self.abort_execution = False  # Flag to abort internally
         self.cancel_execution = False  # Flag to cancel from user
 
-    def execute(self, path, realtime_factor=1.0, battery_usage=0.0):
+    def execute(
+        self, path: Path, realtime_factor: float = 1.0, battery_usage: float = 0.0
+    ) -> None:
         """
         Generates and executes a trajectory on the robot.
 
         :param path: Path to execute on the robot.
         :param realtime_factor: A multiplier on the execution time relative to
             real time, defaults to 1.0.
-        :type realtime_factor: float, optional
         :param battery_usage: Robot battery usage per unit distance.
-        :type battery_usage: float, optional
         :return: An object describing the execution result.
-        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
         if self.robot is None:
             message = "No robot attached to execute the trajectory."
@@ -157,7 +151,7 @@ class ConstantVelocityExecutor:
         self.robot.last_nav_result = ExecutionResult(status=status, message=message)
         return self.robot.last_nav_result
 
-    def validate_remaining_path(self):
+    def validate_remaining_path(self) -> None:
         """
         Validates the remaining path by checking collisions against the world.
 
@@ -191,7 +185,7 @@ class ConstantVelocityExecutor:
 
             time.sleep(max(0, self.validation_dt - (time.time() - start_time)))
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, str | float]:
         """
         Serializes the path executor to a dictionary.
 

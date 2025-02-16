@@ -2,6 +2,7 @@
 
 import os
 import re
+from typing import Sequence
 
 from matplotlib.colors import CSS4_COLORS, to_rgb
 
@@ -60,7 +61,7 @@ def replace_special_yaml_tokens(
         raise TypeError(f"Could not replace text for input type: {type(in_text)}.")
 
 
-def parse_color(color: list[float] | tuple[float, ...] | str) -> tuple[float, ...]:
+def parse_color(color: Sequence[float] | str) -> Sequence[float]:
     """
     Parses a color input and returns an RGB tuple.
 

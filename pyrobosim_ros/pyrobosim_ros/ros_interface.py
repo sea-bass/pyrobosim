@@ -23,14 +23,14 @@ from rclpy.timer import Timer
 from geometry_msgs.msg import Twist
 from pyrobosim.core import Robot, World
 from pyrobosim.utils.logging import set_global_logger
-from pyrobosim_msgs.action import (  # type: ignore
+from pyrobosim_msgs.action import (  # type: ignore[attr-defined]
     DetectObjects,
     ExecuteTaskAction,
     ExecuteTaskPlan,
     FollowPath,
     PlanPath,
 )
-from pyrobosim_msgs.msg import (  # type: ignore
+from pyrobosim_msgs.msg import (  # type: ignore[attr-defined]
     ExecutionResult,
     HallwayState,
     LocationState,
@@ -38,7 +38,7 @@ from pyrobosim_msgs.msg import (  # type: ignore
     RobotState,
     WorldState,
 )
-from pyrobosim_msgs.srv import RequestWorldState, SetLocationState  # type: ignore
+from pyrobosim_msgs.srv import RequestWorldState, SetLocationState  # type: ignore[attr-defined]
 from std_srvs.srv import Trigger
 
 from .ros_conversions import (

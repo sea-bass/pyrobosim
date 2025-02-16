@@ -25,10 +25,9 @@ def plot_path_planner(
     :return: List of Matplotlib artists containing what was drawn,
         used for bookkeeping.
     """
-
-    graph_artists = []
-    path_artists = []
-    artists = {}
+    graph_artists: list[Artist] = []
+    path_artists: list[Artist] = []
+    artists: dict[str, list[Artist]] = {}
 
     for graph in graphs:
         # Plot the markers

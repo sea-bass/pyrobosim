@@ -17,7 +17,7 @@ from pyrobosim.utils.pose import Pose
 data_folder = get_data_folder()
 
 
-def create_world():
+def create_world() -> World:
     """Create a test world"""
     world = World()
 
@@ -95,7 +95,7 @@ def create_world():
     return world
 
 
-def command_robots(world):
+def command_robots(world: World) -> None:
     """Demonstrates robot dynamics by commanding robots."""
     dt = 0.1
     vel_commands = [

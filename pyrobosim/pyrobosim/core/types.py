@@ -3,9 +3,10 @@ Core types for PyRoboSim.
 """
 
 import os
-from typing import Any
+from typing import Any, Sequence
 
 from matplotlib.patches import PathPatch
+from shapely import intersects_xy, Polygon
 import yaml
 
 from ..utils.pose import Pose
@@ -20,15 +21,65 @@ class Entity:
     """
 
     def __init__(self) -> None:
+        """Constructs an Entity instance."""
         self.name = ""
         self.category: str | None = None
         self.pose = Pose()
+        self.height = 0.0
+        self.polygon = Polygon()
 
         self.parent: Entity | None = None
         self.children: list[Entity] = []
+        self.nav_poses: list[Pose] = []
         self.graph_nodes: list[Node] = []
 
+        self.is_open = True
+
         self.viz_patch: PathPatch | None = None
+        self.viz_color: Sequence[float]
+
+    def get_room_name(self) -> str | None:
+        """
+        Returns the name of the room containing the object.
+
+        :return: The room name, if one exists, else None.
+        """
+        if self.parent is None:
+            return None
+        return self.parent.get_room_name()
+
+    def is_collision_free(self, pose: Pose) -> bool:
+        """
+        Checks whether a pose is collision free in this entity.
+
+        :return: True if collision free, else False.
+        """
+        return True
+
+    def is_inside(self, pose: Pose | Sequence[float]) -> bool:
+        """
+        Checks if a pose is inside the entity polygon.
+
+        :param pose: Pose to check.
+        :return: True if pose is inside the polygon, else False.
+        """
+        if isinstance(pose, Pose):
+            x, y = pose.x, pose.y
+        else:
+            x, y = pose[0], pose[1]
+        return bool(intersects_xy(self.polygon, x, y))
+
+    def set_open(self, state: bool, recursive: bool = True) -> None:
+        """
+        Helper function that sets the entity open or closed, including children.
+
+        :param state: True if the location should be open, else false.
+        :param recursive: If True (default), sets the state of all children recursively.
+        """
+        self.is_open = state
+        if recursive:
+            for child in self.children:
+                child.set_open(state)
 
 
 class EntityMetadata:
@@ -60,7 +111,9 @@ class EntityMetadata:
             raise FileNotFoundError(f"Metadata filename not found: {filename}")
 
         with open(filename) as file:
-            return yaml.load(file, Loader=yaml.FullLoader)
+            metadata = yaml.load(file, Loader=yaml.FullLoader)
+            assert isinstance(metadata, dict)
+            return metadata
 
     def has_category(self, category: str) -> bool:
         """
@@ -71,14 +124,16 @@ class EntityMetadata:
         """
         return category in self.data
 
-    def get(self, category: str) -> dict[str, Any]:
+    def get(self, category: str) -> dict[str, Any] | None:
         """
         Get metadata about a specific category.
 
         :param category: Query category name.
         :return: Category metadata dictionary if it exists, else None.
         """
-        return self.data.get(category)
+        data = self.data.get(category)
+        assert data is None or isinstance(data, dict)
+        return data
 
     def add(self, filename: str) -> None:
         """
@@ -121,4 +176,4 @@ class MetadataConflictException(Exception):
         message = f"Conflict for key '{key}': existing value '{old_value}' conflicts with new value '{new_value}'"
         if source:
             message += f" from source '{source}'"
-        super().__init(message)
+        super().__init__(message)

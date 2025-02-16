@@ -5,9 +5,9 @@ import time
 import numpy as np
 
 from ..utils.path import Path
-from ..utils.path_reduction import reduce_waypoints_polygon
 from ..utils.pose import Pose
 from ..utils.search_graph import SearchGraph, Node
+from ..utils.world_motion_planning import reduce_waypoints_polygon
 
 
 class RRTPlanner:
