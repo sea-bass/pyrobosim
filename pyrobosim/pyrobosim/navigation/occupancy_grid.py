@@ -248,7 +248,7 @@ class OccupancyGrid:
         grid_data[grid_data == 205] = 0.5 * (occ_thresh + free_thresh)
 
         # Create and return an Occupancy grid from the data above
-        return OccupancyGrid(grid_data, resolution, origin, occ_thresh, free_thresh)
+        return OccupancyGrid(grid_data, resolution, origin, occ_thresh, free_thresh)  # type: ignore[return-value]
 
     @classmethod
     def from_world(
@@ -256,10 +256,10 @@ class OccupancyGrid:
         world: World,
         resolution: float,
         inflation_radius: float = 0.0,
-        xlim: float | None = None,
-        ylim: float | None = None,
+        xlim: tuple[float, float] | None = None,
+        ylim: tuple[float, float] | None = None,
         auto_lim_padding_ratio: float = 0.05,
-    ) -> None:
+    ) -> Self:
         """
         Generates an occupancy grid of a world at a given resolution.
 
@@ -275,21 +275,30 @@ class OccupancyGrid:
             limits if automatically computed, defaults to 0.05.
         :return: Occupancy grid of the world.
         """
-        # Use the world limits if not specified, but slightly padded
+        # If limits are not specified, use the world limits, but slightly padded.
         if xlim is None:
+            if world.x_bounds is None:
+                raise RuntimeError("World bounds are not yet set.")
             x_padding = (world.x_bounds[1] - world.x_bounds[0]) * auto_lim_padding_ratio
-            xlim = (world.x_bounds[0] - x_padding, world.x_bounds[1] + x_padding)
+            x_limits = (world.x_bounds[0] - x_padding, world.x_bounds[1] + x_padding)
+        else:
+            x_limits = xlim
+
         if ylim is None:
+            if world.y_bounds is None:
+                raise RuntimeError("World bounds are not yet set.")
             y_padding = (world.y_bounds[1] - world.y_bounds[0]) * auto_lim_padding_ratio
-            ylim = (world.y_bounds[0] - y_padding, world.y_bounds[1] + y_padding)
+            y_limits = (world.y_bounds[0] - y_padding, world.y_bounds[1] + y_padding)
+        else:
+            y_limits = ylim
 
         # Temporarily change collision polygons to specified inflation radius
         orig_inflation_radius = world.inflation_radius
         world.set_inflation_radius(inflation_radius)
 
         # Generate the occupancy grid
-        xrange = np.arange(xlim[0], xlim[1] + resolution, resolution)
-        yrange = np.arange(ylim[0], ylim[1] + resolution, resolution)
+        xrange = np.arange(x_limits[0], x_limits[1] + resolution, resolution)
+        yrange = np.arange(y_limits[0], y_limits[1] + resolution, resolution)
         nx = xrange.shape[0]
         ny = yrange.shape[0]
         occupancy_grid_data = np.zeros((nx, ny))
@@ -298,12 +307,12 @@ class OccupancyGrid:
             for j in range(ny):
                 y = yrange[j]
                 occupancy_grid_data[i, j] = world.check_occupancy((x, y))
-        origin = (xlim[0], ylim[0])
+        origin = (x_limits[0], y_limits[0])
 
         # Reset collision polygons to original inflation radius
         world.set_inflation_radius(orig_inflation_radius)
 
-        return OccupancyGrid(occupancy_grid_data, resolution, origin)
+        return OccupancyGrid(occupancy_grid_data, resolution, origin)  # type: ignore[return-value]
 
 
 def reduce_waypoints_grid(
@@ -316,13 +325,12 @@ def reduce_waypoints_grid(
     :param positions: The list of positions that make up the path.
     :return: The optimized list of waypoints.
     """
-
     waypoints = []
     start = positions[0]
     waypoints.append(start)
     positions = positions[1:]
     i = len(positions) - 1
-    while positions and i >= 0:
+    while positions and (i >= 0):
         current = positions[i]
         if grid.has_straight_line_connection(start, current)[0]:
             waypoints.append(current)

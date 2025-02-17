@@ -276,18 +276,18 @@ def resolve_to_location(
             else:
                 expanded_locations.append(loc)
     else:
-        expanded_locations = possible_locations
+        expanded_locations = [loc for loc in possible_locations]
 
-    loc = apply_resolution_strategy(
+    resolved_loc = apply_resolution_strategy(
         expanded_locations, resolution_strategy, robot=robot
     )
-    if loc is None:
+    if resolved_loc is None:
         get_global_logger().warning(
             f"Could not resolve location query with category: {category}, room: {room_name}."
         )
         return None
-    assert isinstance(loc, (Location, ObjectSpawn))
-    return loc
+    assert isinstance(resolved_loc, (Location, ObjectSpawn))
+    return resolved_loc
 
 
 def resolve_to_object(
@@ -323,7 +323,7 @@ def resolve_to_object(
 
     # Filter by category
     if category is not None:
-        possible_objects = [obj for obj in possible_objects if obj.category in category]
+        possible_objects = [obj for obj in possible_objects if obj.category == category]
 
     # Filter by room and/or location
     if room is not None:
@@ -332,13 +332,7 @@ def resolve_to_object(
         else:
             room_name = room.name
         possible_objects = [
-            obj
-            for obj in possible_objects
-            if (
-                # Verify the object's parent is not a robot before performing further checks
-                hasattr(obj.parent, "parent")
-                and obj.parent.parent.parent.name == room_name
-            )
+            obj for obj in possible_objects if obj.get_room_name() == room_name
         ]
 
     if location is not None:
@@ -347,26 +341,33 @@ def resolve_to_object(
             for obj in possible_objects
             if (
                 # Verify the object's parent is not a robot before performing further checks
-                hasattr(obj.parent, "parent")
+                obj.parent is not None
                 and (
                     obj.parent == location
                     or obj.parent.name == location
                     or obj.parent.parent == location
-                    or obj.parent.parent.name == location
                     or obj.parent.category == location
-                    or obj.parent.parent.category == location
+                    or (
+                        (obj.parent.parent is not None)
+                        and (
+                            (obj.parent.parent.name == location)
+                            or (obj.parent.parent.category == location)
+                        )
+                    )
                 )
             )
         ]
 
-    obj = apply_resolution_strategy(possible_objects, resolution_strategy, robot=robot)
-    if obj is None:
+    resolved_obj = apply_resolution_strategy(
+        [obj for obj in possible_objects], resolution_strategy, robot=robot
+    )
+    if resolved_obj is None:
         get_global_logger().warning(
             f"Could not resolve object query with category: {category}, location: {location}, room: {room}."
         )
         return None
-    assert isinstance(obj, Object)
-    return obj
+    assert isinstance(resolved_obj, Object)
+    return resolved_obj
 
 
 def graph_node_from_entity(
@@ -380,6 +381,7 @@ def graph_node_from_entity(
     room, hallway, location, object spawn, or object in the world, as well as
     their respective categories.
     For more information on the inputs, refer to the :func:`pyrobosim.utils.knowledge.query_to_entity` function.
+
     :param entity_query: The entity from which to get a graph node.
     :param resolution_strategy: Resolution strategy to apply
     :param robot: If set to a Robot instance, uses that robot for resolution strategy.

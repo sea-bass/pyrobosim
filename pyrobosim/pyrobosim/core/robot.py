@@ -10,7 +10,7 @@ from .dynamics import RobotDynamics2D
 from .hallway import Hallway
 from .locations import ObjectSpawn
 from .objects import Object
-from .types import Entity
+from .types import Entity, set_parent
 from ..manipulation.grasping import Grasp, GraspGenerator
 from ..navigation.types import PathExecutor, PathPlanner
 from ..planning.actions import (
@@ -79,6 +79,7 @@ class Robot(Entity):
         from .world import World
 
         # Basic properties
+        super().__init__()
         self.name = name
         self.radius = radius
         self.height = height
@@ -232,9 +233,7 @@ class Robot(Entity):
         :param obj: Object to attach.
         """
         self.manipulated_object = obj
-        if obj.parent is not None:
-            obj.parent.children.remove(obj)
-        obj.parent = self
+        set_parent(obj, self)
         obj.set_pose(self.get_pose())
 
     def plan_path(
@@ -482,9 +481,11 @@ class Robot(Entity):
 
         if isinstance(self.location, str):
             loc = self.world.get_entity_by_name(self.location)
-        else:
-            obj = self.world.get_object_by_name(obj_query)
-            if (obj is None) and isinstance(obj_query, str):
+        elif isinstance(obj_query, str):
+            if obj_query is not None:
+                obj = self.world.get_object_by_name(obj_query)
+
+            if obj is None:
                 from ..utils.knowledge import query_to_entity
 
                 entity = query_to_entity(
@@ -497,12 +498,12 @@ class Robot(Entity):
                 assert (entity is None) or (isinstance(entity, Object))
                 obj = entity
 
-            if obj is None:
-                message = f"Found no object {obj_query} to pick."
-                self.logger.warning(message)
-                return ExecutionResult(
-                    status=ExecutionStatus.PRECONDITION_FAILURE, message=message
-                )
+        if obj is None:
+            message = f"Found no object {obj_query} to pick."
+            self.logger.warning(message)
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+            )
 
         # Validate the robot location
         if (obj.parent is not None) and (loc is not None) and (obj.parent != loc):
@@ -681,10 +682,9 @@ class Robot(Entity):
                 obj.viz_patch.remove()
 
         assert pose is not None
-        self.manipulated_object.parent = loc
+        set_parent(self.manipulated_object, loc)
         self.manipulated_object.set_pose(pose)
         self.manipulated_object.create_polygons()
-        loc.children.append(self.manipulated_object)
 
         if (self.world is not None) and (self.world.gui is not None):
             self.world.gui.canvas.axes.add_patch(obj.viz_patch)

@@ -31,6 +31,8 @@ class Entity:
     """The height (in the Z direction) of the entity."""
     polygon = Polygon()
     """The main polygon representing the entity."""
+    collision_polygon = Polygon()
+    """The collision polygon representing the entity."""
 
     nav_poses: list[Pose] = []
     """The (optional) list of navigation poses for this entity."""
@@ -64,7 +66,7 @@ class Entity:
             return None
         return self.parent.get_room_name()
 
-    def is_collision_free(self, pose: Pose) -> bool:
+    def is_collision_free(self, pose: Pose | Sequence[float]) -> bool:
         """
         Checks whether a pose is collision free in this entity.
 
@@ -193,3 +195,17 @@ class MetadataConflictException(Exception):
         if source:
             message += f" from source '{source}'"
         super().__init__(message)
+
+
+def set_parent(this: Entity, other: Entity) -> None:
+    """
+    Helper function to cleanly set the parent of an entity.
+
+    :param this: The entity whose parent to modify.
+    :param other: The new parent of the entity.
+    """
+    if (this.parent is not None) and (this in this.parent.children):
+        this.parent.children.remove(this)
+
+    this.parent = other
+    other.children.append(this)

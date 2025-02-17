@@ -4,7 +4,6 @@ import math
 import time
 from astar import AStar
 
-from .occupancy_grid import OccupancyGrid, reduce_waypoints_grid
 from .types import PathPlanner
 from ..utils.pose import Pose
 from ..utils.path import Path
@@ -134,6 +133,8 @@ class AStarPlanner(PathPlanner, AStar):
 
     def reset(self):
         """Resets the occupancy grid."""
+        from .occupancy_grid import OccupancyGrid
+
         self.latest_path = Path()
         self.grid = OccupancyGrid.from_world(
             self.world,
@@ -157,6 +158,8 @@ class AStarPlanner(PathPlanner, AStar):
 
         # Apply waypoint reduction if enabled.
         if self.compress_path:
+            from .occupancy_grid import reduce_waypoints_grid
+
             path = reduce_waypoints_grid(self.grid, list(path))
 
         world_path = []
