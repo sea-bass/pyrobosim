@@ -1,6 +1,8 @@
 """Task and Motion Planning tools using PDDLStream."""
 
 import os
+from typing import Any, Callable
+
 from pddlstream.algorithms.focused import solve_adaptive
 from pddlstream.language.constants import And, PDDLProblem
 from pddlstream.utils import read
@@ -13,6 +15,9 @@ from .utils import (
     pddlstream_solution_to_plan,
 )
 from ..actions import TaskPlan
+from ...core.robot import Robot
+from ...core.types import Entity
+from ...core.world import World
 
 
 class PDDLStreamPlanner:
@@ -20,22 +25,20 @@ class PDDLStreamPlanner:
 
     def __init__(
         self,
-        world,
-        domain_folder,
-        stream_map_fn=get_default_stream_map_fn(),
-        stream_info_fn=get_default_stream_info_fn(),
-    ):
+        world: World,
+        domain_folder: str,
+        stream_map_fn: Callable[
+            [World, Robot], dict[str, Any]
+        ] = get_default_stream_map_fn(),
+        stream_info_fn: Callable[[], dict[str, Any]] = get_default_stream_info_fn(),
+    ) -> None:
         """
         Creates a new PDDLStream based planner.
 
         :param world: World object to use for planning.
-        :type world: :class:`pyrobosim.core.world.World`
         :param domain_folder: Path to folder containing PDDL domain and streams
-        :type domain_folder: str
         :param stream_map_fn: Function that accepts a World and Robot object and returns a dictionary of stream mappings.
-        :type stream_map_fn: function
         :param stream_info_fn: Function that returns a dictionary of stream information.
-        :type stream_info_fn: function
         """
         # Set the world model
         self.world = world
@@ -49,17 +52,17 @@ class PDDLStreamPlanner:
         self.stream_info_fn = stream_info_fn
 
         # Bookkeeping variables
-        self.latest_specification = None
-        self.latest_plan = None
+        self.latest_specification: list[tuple[str | Entity, ...]] | None = None
+        self.latest_plan: TaskPlan | None = None
 
     def plan(
         self,
-        robot,
-        goal_literals,
-        max_attempts=1,
-        verbose=False,
-        **planner_config,
-    ) -> TaskPlan:
+        robot: Robot,
+        goal_literals: list[tuple[str | Entity, ...]],
+        max_attempts: int = 1,
+        verbose: bool = False,
+        **planner_config: Any,
+    ) -> TaskPlan | None:
         r"""
         Searches for a set of actions that completes a goal specification
         given an initial state of the world.
@@ -67,16 +70,11 @@ class PDDLStreamPlanner:
         for most problems.
 
         :param robot: Robot to use for planning.
-        :type robot: :class:`pyrobosim.core.robot.Robot`
         :param goal_literals: List of literals describing a goal specification.
-        :type goal_literals: list[tuple]
         :param max_attempts: Maximum planning attempts.
-        :type max_attempts: int, optional
         :param verbose: If True, prints additional information. Defaults to False.
-        :type verbose: bool, optional
         :param \*\*planner_config: Additional keyword arguments to pass to the PDDLStream planner.
         :return: A task plan object ready to use with ``pyrobosim``.
-        :rtype: :class:`pyrobosim.planning.actions.TaskPlan`
         """
         # Set the initial and goal states for PDDLStream
         init = world_to_pddlstream_init(self.world, robot)
@@ -88,17 +86,16 @@ class PDDLStreamPlanner:
         # The ``get_stream_map()`` function comes from the ``mappings.py``
         # file, so as you add new functionality you should fill it out there.
         external_pddl = [self.stream_pddl]
-        constant_map = {}
         prob = PDDLProblem(
             self.domain_pddl,
-            constant_map,
+            {},  # constant_map
             external_pddl,
             self.stream_map_fn(self.world, robot),
             init,
             goal,
         )
 
-        for i in range(max_attempts):
+        for _ in range(max_attempts):
             # Solve the problem using the "adaptive" PDDLStream algorithm.
             solution = solve_adaptive(
                 prob,
@@ -110,12 +107,11 @@ class PDDLStreamPlanner:
             # If the solution is valid, no need to try again
             # TODO: Could later consider an option to execute all the attempts
             # and take the minimum-cost plan from that batch.
-            plan_out = pddlstream_solution_to_plan(solution, robot.name)
-            if plan_out is not None:
+            self.latest_plan = pddlstream_solution_to_plan(solution, robot.name)
+            if self.latest_plan is not None:
                 break
 
         # Convert the solution to a TaskPlan object.
-        self.latest_plan = plan_out
         if verbose:
             verbose_str = "\nInitial conditions:\n"
             for i in init:

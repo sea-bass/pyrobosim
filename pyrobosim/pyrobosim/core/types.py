@@ -56,6 +56,10 @@ class Entity:
         self.parent: Entity | None = None
         self.children: list[Entity] = []
 
+    def add_graph_nodes(self) -> None:
+        """Creates graph nodes for searching."""
+        self.graph_nodes = []
+
     def get_room_name(self) -> str | None:
         """
         Returns the name of the room containing the object.

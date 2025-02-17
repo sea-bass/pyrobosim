@@ -3,10 +3,13 @@ Utilities to connect world models with PDDLStream.
 """
 
 import os
-from typing import Any, Callable, Sequence
+from typing import Any, Callable
+
+from pddlstream.language.constants import Solution
 
 from ..actions import TaskAction, TaskPlan
 from ...core.robot import Robot
+from ...core.types import Entity
 from ...core.world import World
 from ...manipulation.grasping import Grasp
 from ...utils.general import get_data_folder
@@ -23,7 +26,7 @@ def get_default_domains_folder() -> str:
     return os.path.join(get_data_folder(), "pddlstream", "domains")
 
 
-def get_default_stream_info_fn() -> dict[str, Callable[[Any], Any]]:
+def get_default_stream_info_fn() -> Callable[[], dict[str, Any]]:
     """
     Gets a function that creates the default PDDLStream stream information dictionary.
 
@@ -35,7 +38,7 @@ def get_default_stream_info_fn() -> dict[str, Callable[[Any], Any]]:
     return get_stream_info
 
 
-def get_default_stream_map_fn() -> dict[str, Callable[[Any], Any]]:
+def get_default_stream_map_fn() -> Callable[[World, Robot], dict[str, Any]]:
     """
     Gets a function that creates the default PDDLStream stream mappings dictionary
     given a `pyrobosim.core.world.World` object and a `pyrobosim.core.robot.Robot` object.
@@ -47,7 +50,9 @@ def get_default_stream_map_fn() -> dict[str, Callable[[Any], Any]]:
     return get_stream_map
 
 
-def world_to_pddlstream_init(world: World, robot: Robot) -> Sequence[Sequence[str]]:
+def world_to_pddlstream_init(
+    world: World, robot: Robot
+) -> list[tuple[str | Pose | Entity | None, ...]]:
     """
     Converts a world representation object to a PDDLStream compatible
     initial condition specification.
@@ -124,13 +129,12 @@ def world_to_pddlstream_init(world: World, robot: Robot) -> Sequence[Sequence[st
 
 
 def process_goal_specification(
-    goal_literals: Sequence[Sequence[str]], world: World
+    goal_literals: list[tuple[str | Entity, ...]], world: World
 ) -> None:
     """
     Processes and validates a goal specification for planning.
 
     :param goal_literals: List of literals describing a goal specification.
-    :type goal_literals: list[tuple]
     """
     for i, literal in enumerate(goal_literals):
         # If any predicate has a string argument, check whether it corresponds
@@ -138,15 +142,15 @@ def process_goal_specification(
         for j, elem in enumerate(literal):
             if j > 0 and isinstance(elem, str):
                 entity = world.get_entity_by_name(elem)
-                if entity:
+                if entity is not None:
                     replace_goal_literal_tuple(goal_literals, i, j, entity)
 
 
 def replace_goal_literal_tuple(
-    goal_literals: Sequence[Sequence[str]],
+    goal_literals: list[tuple[str | Entity, ...]],
     literal_idx: int,
     arg_idx: int,
-    new_val: Sequence[str],
+    new_val: Entity,
 ) -> None:
     """
     Utility function to replace the element of a goal literal tuple in place.
@@ -161,25 +165,23 @@ def replace_goal_literal_tuple(
     goal_literals[literal_idx] = tuple(literal_copy)
 
 
-def pddlstream_solution_to_plan(
-    solution: Sequence[Sequence[str]], robot: str
-) -> TaskPlan:
+def pddlstream_solution_to_plan(solution: Solution, robot: str) -> TaskPlan | None:
     """
     Converts the output plan of a PDDLStream solution to a plan
     list compatible with plan execution infrastructure.
 
     :param solution: PDDLStream compatible initial state representation.
     :param robot: Name of robot to execute plan.
-    :return: Task plan object.
+    :return: Task plan object if successful, else ``None``.
     """
-    # Unpack the PDDLStream solution and handle the None case
+    # Unpack the PDDLStream solution and handle the None case.
     plan, total_cost, _ = solution
     if plan is None or len(plan) == 0:
         return None
 
     plan_out = TaskPlan(robot=robot, actions=[])
     for act_pddl in plan:
-        # Convert the PDDL action to a TaskAction
+        # Convert the PDDL action to a TaskAction.
         act = TaskAction(act_pddl.name)
         act.robot = robot
         if act.type == "navigate":
@@ -210,7 +212,7 @@ def pddlstream_solution_to_plan(
         else:
             raise ValueError(f"No known action type: {act.type}")
 
-        # Add the action to the task plan
+        # Add the action to the task plan.
         plan_out.actions.append(act)
 
     # TODO: Find a way to get the individual action costs from PDDLStream.

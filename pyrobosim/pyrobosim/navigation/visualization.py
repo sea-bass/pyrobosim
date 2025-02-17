@@ -1,5 +1,7 @@
 """Visualization utilities for path planners."""
 
+from typing import Sequence
+
 import matplotlib.pyplot as plt
 from matplotlib.artist import Artist
 from matplotlib.axes import Axes
@@ -13,7 +15,7 @@ def plot_path_planner(
     axes: Axes,
     graphs: list[SearchGraph] = [],
     path: Path | None = None,
-    path_color: tuple[float, ...] | str = "m",
+    path_color: Sequence[float] | str = "m",
 ) -> dict[str, list[Artist]]:
     """
     Plots the planned path on a specified set of axes.

@@ -4,6 +4,7 @@ from PySide6.QtCore import QRunnable
 
 from ..core.robot import Robot
 from ..core.world import World
+from ..utils.path import Path
 from ..utils.pose import Pose
 
 
@@ -13,7 +14,12 @@ class NavRunner(QRunnable):  # type: ignore[misc]
     """
 
     def __init__(
-        self, world: World, robot: Robot, goal: str, path, realtime_factor: float
+        self,
+        world: World,
+        robot: Robot | str | None,
+        goal: str,
+        path: Path | None,
+        realtime_factor: float,
     ) -> None:
         """
         Creates a navigation execution thread.
@@ -55,7 +61,11 @@ class PickRunner(QRunnable):  # type: ignore[misc]
     """
 
     def __init__(
-        self, world: World, robot: Robot, obj_query: str, grasp_pose: Pose
+        self,
+        world: World,
+        robot: Robot | str | None,
+        obj_query: str,
+        grasp_pose: Pose | None,
     ) -> None:
         """
         Creates an object picking execution thread.
@@ -90,7 +100,9 @@ class PlaceRunner(QRunnable):  # type: ignore[misc]
     Helper class that wraps object placement execution in a QThread.
     """
 
-    def __init__(self, world: World, robot: Robot, pose: Pose) -> None:
+    def __init__(
+        self, world: World, robot: Robot | str | None, pose: Pose | None
+    ) -> None:
         """
         Creates an object placement execution thread.
 
@@ -122,7 +134,9 @@ class DetectRunner(QRunnable):  # type: ignore[misc]
     Helper class that wraps object detection execution in a QThread.
     """
 
-    def __init__(self, world: World, robot: Robot, query: str | None) -> None:
+    def __init__(
+        self, world: World, robot: Robot | str | None, query: str | None
+    ) -> None:
         """
         Creates an object detection execution thread.
 
@@ -135,7 +149,7 @@ class DetectRunner(QRunnable):  # type: ignore[misc]
         self.robot = robot
         self.query = query
 
-    def run(self):
+    def run(self) -> None:
         """Runs the object detection execution thread."""
         robot = self.robot
         world = self.world
@@ -154,7 +168,7 @@ class OpenRunner(QRunnable):  # type: ignore[misc]
     Helper class that wraps location opening execution in a QThread.
     """
 
-    def __init__(self, world: World, robot: Robot) -> None:
+    def __init__(self, world: World, robot: Robot | str | None) -> None:
         """
         Creates a location opening execution thread.
 
@@ -184,7 +198,7 @@ class CloseRunner(QRunnable):  # type: ignore[misc]
     Helper class that wraps location closing execution in a QThread.
     """
 
-    def __init__(self, world: World, robot: Robot) -> None:
+    def __init__(self, world: World, robot: Robot | str | None) -> None:
         """
         Creates a location closing execution thread.
 

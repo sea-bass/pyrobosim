@@ -433,7 +433,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
             title_bits = []
             if robot.location is not None:
                 if isinstance(robot.location, str):
-                    robot_loc = robot.location
+                    robot_loc: str = robot.location
                 else:
                     robot_loc = robot.location.name
                 title_bits.append(f"Location: {robot_loc}")

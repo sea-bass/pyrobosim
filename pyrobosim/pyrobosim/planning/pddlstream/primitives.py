@@ -3,12 +3,13 @@ Helper primitives for PDDLStream based planning.
 """
 
 import numpy as np
-from typing import Any, Generator
+from typing import Generator
 
 from ...core.locations import ObjectSpawn
 from ...core.objects import Object
 from ...core.types import Entity
 from ...manipulation.grasping import Grasp, GraspFace, GraspGenerator
+from ...navigation.types import PathPlanner
 from ...utils.path import Path
 from ...utils.pose import Pose
 from ...utils.polygon import sample_from_polygon, transform_polygon
@@ -126,7 +127,7 @@ def get_path_length(path: Path) -> float:
 
 
 def sample_motion(
-    planner: Any, p1: Pose, p2: Pose
+    planner: PathPlanner, p1: Pose, p2: Pose
 ) -> Generator[tuple[Path], None, None]:
     """
     Samples a feasible motion plan from a start to a goal pose.

@@ -6,6 +6,10 @@ import itertools
 from shapely.geometry import LineString, Polygon, MultiPolygon
 from shapely.ops import split
 
+from .hallway import Hallway
+from .locations import Location
+from .objects import Object
+from .room import Room
 from .types import Entity
 from .world import World
 from ..utils.general import get_data_folder, replace_special_yaml_tokens
@@ -26,9 +30,11 @@ class WorldGazeboExporter:
         :param world: World object to export.
         """
         self.world = world
+        self.data_folder = get_data_folder()
+        self.default_out_folder = os.path.join(self.data_folder, "worlds")
+        self.out_folder = ""
 
         # Set up template text for string replacement.
-        self.data_folder = get_data_folder()
         self.template_folder = os.path.join(self.data_folder, "templates")
         self.model_template_text = self.read_template_file("model_template.sdf")
         self.model_config_template_text = self.read_template_file(
@@ -58,11 +64,9 @@ class WorldGazeboExporter:
         self.model_include_text = ""
 
         # Define output folder
-        if not out_folder:
-            self.out_folder = os.path.join(self.data_folder, "worlds")
-        else:
-            self.out_folder = out_folder
-        self.out_folder = os.path.join(self.out_folder, world_name)
+        self.out_folder = os.path.join(
+            out_folder or self.default_out_folder, world_name
+        )
         self.include_model_paths = set([self.out_folder])
 
         # Convert all the world entities for export
@@ -153,6 +157,8 @@ class WorldGazeboExporter:
         """
         for entity in itertools.chain(self.world.locations, self.world.objects):
             # If the object category does not have meshes, create a new model and extrude a polyline.
+            assert isinstance(entity, (Location, Object))
+            assert entity.category is not None
             if entity.category_metadata["footprint"]["type"] != "mesh":
                 folder = os.path.join(self.out_folder, entity.category)
                 if not os.path.isdir(folder):
@@ -187,6 +193,7 @@ class WorldGazeboExporter:
                 model_path = replace_special_yaml_tokens(
                     entity.category_metadata["footprint"]["model_path"]
                 )
+                assert isinstance(model_path, str)
                 model_path_split = os.path.split(model_path)
                 self.include_model_paths.add(os.path.normpath(model_path_split[0]))
                 model_name = model_path_split[-1]
@@ -220,9 +227,11 @@ class WorldGazeboExporter:
 
         # Check the height
         if entity_type == "walls":
+            assert isinstance(entity, (Room, Hallway))
             height = self.world.wall_height
             poly = entity.viz_polygon
         elif entity_type == "object":
+            assert isinstance(entity, (Location, Object))
             height = entity.height
             poly = entity.raw_polygon
         else:
