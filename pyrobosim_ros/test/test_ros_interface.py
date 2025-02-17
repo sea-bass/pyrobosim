@@ -26,7 +26,12 @@ from pyrobosim_ros.ros_interface import WorldROSWrapper
 
 
 def execute_ros_action(
-    goal_future: Future,
+    goal_future: Future[
+        ExecuteTaskAction.Goal
+        | ExecuteTaskPlan.Goal
+        | FollowPath.Goal
+        | DetectObjects.Goal
+    ],
     spin_timeout: float = 0.1,
     goal_timeout: float = 1.0,
     result_timeout: float = 30.0,

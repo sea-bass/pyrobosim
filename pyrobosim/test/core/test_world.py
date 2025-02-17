@@ -311,7 +311,7 @@ class TestWorldModeling:
     def test_add_robot(caplog: LogCaptureFixture) -> None:
         """Tests adding a robot to the world"""
         from pyrobosim.core import Robot
-        from pyrobosim.navigation import RRTPlanner
+        from pyrobosim.navigation.rrt import RRTPlanner
 
         world_robots = TestWorldModeling.world.robots
         path_planner_config = {"world": TestWorldModeling.world}

@@ -38,7 +38,7 @@ For example, you can create a simulation loop as follows:
 
         while True:
             for robot, cmd_vel in zip(world.robots, vel_commands):
-                robot.dynamics.step(cmd_vel, dt, world=world, check_collisions=True)
+                robot.dynamics.step(cmd_vel, dt)
             time.sleep(dt)
 
 Note that the ability to pass in a world and check collisions is optional.

@@ -371,7 +371,7 @@ def resolve_to_object(
 
 def graph_node_from_entity(
     world: World,
-    entity_query: list[Entity | str],
+    entity_query: Entity | Node | str,
     resolution_strategy: str = "nearest",
     robot: Robot | None = None,
 ) -> Node | None:
@@ -380,7 +380,7 @@ def graph_node_from_entity(
     room, hallway, location, object spawn, or object in the world, as well as
     their respective categories.
     For more information on the inputs, refer to the :func:`pyrobosim.utils.knowledge.query_to_entity` function.
-    :param entity_query: List of entities (e.g., rooms or objects) or names/categories.
+    :param entity_query: The entity from which to get a graph node.
     :param resolution_strategy: Resolution strategy to apply
     :param robot: If set to a Robot instance, uses that robot for resolution strategy.
     :return: A graph node for the entity that meets the resolution strategy, or None.

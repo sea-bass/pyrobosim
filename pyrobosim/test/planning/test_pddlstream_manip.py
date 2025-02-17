@@ -15,7 +15,8 @@ if find_spec("pddlstream") is None:
 from pyrobosim.core import Robot, World
 from pyrobosim.gui import start_gui
 from pyrobosim.manipulation import GraspGenerator, ParallelGraspProperties
-from pyrobosim.navigation import ConstantVelocityExecutor, RRTPlanner
+from pyrobosim.navigation.execution import ConstantVelocityExecutor
+from pyrobosim.navigation.rrt import RRTPlanner
 from pyrobosim.planning.actions import TaskPlan
 from pyrobosim.planning.pddlstream import PDDLStreamPlanner, get_default_domains_folder
 from pyrobosim.utils.general import get_data_folder

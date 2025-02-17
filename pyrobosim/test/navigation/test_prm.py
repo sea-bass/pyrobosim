@@ -7,7 +7,7 @@ import numpy as np
 from pytest import LogCaptureFixture
 
 from pyrobosim.core import WorldYamlLoader
-from pyrobosim.navigation import PRMPlanner
+from pyrobosim.navigation.prm import PRMPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 

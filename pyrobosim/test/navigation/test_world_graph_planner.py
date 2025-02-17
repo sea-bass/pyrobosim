@@ -6,7 +6,7 @@ import os
 from pytest import LogCaptureFixture
 
 from pyrobosim.core import WorldYamlLoader
-from pyrobosim.navigation import WorldGraphPlanner
+from pyrobosim.navigation.world_graph import WorldGraphPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 

@@ -2,13 +2,14 @@
 
 import time
 
+from .types import PathPlanner
 from ..utils.path import Path
 from ..utils.pose import Pose
 from ..utils.search_graph import SearchGraph, Node
 from ..utils.world_motion_planning import reduce_waypoints_polygon
 
 
-class PRMPlanner:
+class PRMPlanner(PathPlanner):
     """
     Implements a Probabilistic Roadmap (PRM) path planner.
     """
@@ -151,9 +152,8 @@ class PRMPlanner:
         Serializes the planner to a dictionary.
 
         :return: A dictionary containing the planner information.
-        :rtype: dict[str, Any]
         """
-        from . import get_planner_string
+        from .planner_registry import get_planner_string
 
         return {
             "type": get_planner_string(self),

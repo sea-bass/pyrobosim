@@ -5,11 +5,12 @@ import time
 from astar import AStar
 
 from .occupancy_grid import OccupancyGrid, reduce_waypoints_grid
+from .types import PathPlanner
 from ..utils.pose import Pose
 from ..utils.path import Path
 
 
-class AStarPlanner(AStar):
+class AStarPlanner(PathPlanner, AStar):
     """Occupancy grid based implementation of the A* path planning algorithm."""
 
     def __init__(
@@ -38,7 +39,7 @@ class AStarPlanner(AStar):
         :param compress_path: If true, waypoint reduction will be applied to generated path, else full path is returned.
         :type compress_path: bool
         """
-        super().__init__()
+        super(AStar).__init__()
         self.world = world
         self.grid_resolution = grid_resolution
         self.grid_inflation_radius = grid_inflation_radius
@@ -196,7 +197,7 @@ class AStarPlanner(AStar):
         :return: A dictionary containing the planner information.
         :rtype: dict[str, Any]
         """
-        from . import get_planner_string
+        from .planner_registry import get_planner_string
 
         return {
             "type": get_planner_string(self),

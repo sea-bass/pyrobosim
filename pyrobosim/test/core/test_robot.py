@@ -11,7 +11,8 @@ import time
 import threading
 
 from pyrobosim.core import Pose, Robot, WorldYamlLoader
-from pyrobosim.navigation import ConstantVelocityExecutor, WorldGraphPlanner
+from pyrobosim.navigation.execution import ConstantVelocityExecutor
+from pyrobosim.navigation.world_graph import WorldGraphPlanner
 from pyrobosim.planning.actions import (
     ExecutionStatus,
     ExecutionOptions,

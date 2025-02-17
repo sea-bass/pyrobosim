@@ -14,5 +14,6 @@ from .locations import *
 from .objects import *
 from .robot import *
 from .room import *
+from .types import *
 from .world import *
 from .yaml_utils import *

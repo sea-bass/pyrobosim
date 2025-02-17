@@ -59,12 +59,15 @@ class Commander(Node):
             )
 
     def goal_response_callback(
-        self, goal_future: Future, cancel_delay: float = 2.0
+        self, goal_future: Future[ExecuteTaskPlan.Result], cancel_delay: float = 2.0
     ) -> None:
         """Starts a timer to cancel the goal handle, upon receiving an accepted goal."""
         goal_handle = goal_future.result()
+        if goal_handle is None:
+            self.get_logger().error("Goal handle is None.")
+            return
         if not goal_handle.accepted:
-            self.get_logger().info("Goal was rejected.")
+            self.get_logger().error("Goal was rejected.")
             return
 
         self.cancel_timer = self.create_timer(

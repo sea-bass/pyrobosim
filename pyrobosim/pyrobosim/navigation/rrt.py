@@ -2,15 +2,17 @@
 
 import copy
 import time
+from typing import Any
 import numpy as np
 
+from .types import PathPlanner
 from ..utils.path import Path
 from ..utils.pose import Pose
 from ..utils.search_graph import SearchGraph, Node
 from ..utils.world_motion_planning import reduce_waypoints_polygon
 
 
-class RRTPlanner:
+class RRTPlanner(PathPlanner):
     """
     Implements a Rapidly-exploring Random Tree (RRT) path planner.
     """
@@ -92,9 +94,7 @@ class RRTPlanner:
         Plans a path from start to goal.
 
         :param start: Start pose.
-        :type start: :class:`pyrobosim.utils.pose.Pose`
         :param goal: Goal pose.
-        :type goal: :class:`pyrobosim.utils.pose.Pose`
         :return: Path from start to goal.
         """
         self.reset()
@@ -384,14 +384,13 @@ class RRTPlanner:
         """
         return self.latest_path
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
         """
         Serializes the planner to a dictionary.
 
         :return: A dictionary containing the planner information.
-        :rtype: dict[str, Any]
         """
-        from . import get_planner_string
+        from .planner_registry import get_planner_string
 
         return {
             "type": get_planner_string(self),

@@ -444,11 +444,11 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
             title_str = f"[{robot.name}] " + battery_str + "\n" + ", ".join(title_bits)
             self.axes.set_title(title_str)
 
-    def update_object_plot(self, obj: Object) -> None:
+    def update_object_plot(self, obj: Object | None) -> None:
         """
         Updates an object visualization based on its pose.
 
-        :param obj: pyrobosim object to update.
+        :param obj: Object instance to update.
         """
         if obj is None:
             return

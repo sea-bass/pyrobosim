@@ -3,14 +3,14 @@
 import time
 import threading
 
-from ..core.robot import Robot
+from .types import PathExecutor
 from ..planning.actions import ExecutionResult, ExecutionStatus
 from ..utils.logging import get_global_logger
 from ..utils.path import Path
 from ..utils.trajectory import get_constant_speed_trajectory, interpolate_trajectory
 
 
-class ConstantVelocityExecutor:
+class ConstantVelocityExecutor(PathExecutor):
     """
     Executes a path with a linear trajectory assuming constant
     linear and angular velocity, and that the robot can perfectly
@@ -36,7 +36,7 @@ class ConstantVelocityExecutor:
         :param validation_dt: Time step for validating the remaining path, in seconds.
         :param validation_step_dist: The step size for discretizing a straight line to check collisions.
         """
-        self.robot: Robot | None = None
+        super().__init__()
         self.dt = dt
         self.linear_velocity = linear_velocity
         self.max_angular_velocity = max_angular_velocity

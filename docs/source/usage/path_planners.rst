@@ -134,7 +134,7 @@ Note the ``get_planner_string()`` helper function, which extracts the name of th
 .. code-block:: python
 
         def to_dict(self, start, goal):
-            from pyrobosim.navigation import get_planner_string
+            from pyrobosim.navigation.planner_registry import get_planner_string
 
             return {
                 "type": get_planner_string(self),

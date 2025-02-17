@@ -327,8 +327,8 @@ class TestWorldYamlLoading:
             GraspGenerator,
             ParallelGraspProperties,
         )
-        from pyrobosim.navigation import RRTPlanner
         from pyrobosim.navigation.execution import ConstantVelocityExecutor
+        from pyrobosim.navigation.rrt import RRTPlanner
 
         loader = TestWorldYamlLoading.yaml_loader
 

@@ -3,6 +3,7 @@
 import time
 import itertools
 
+from .types import PathPlanner
 from ..core.locations import Location
 from ..utils.path import Path
 from ..utils.pose import Pose
@@ -10,7 +11,7 @@ from ..utils.search_graph import SearchGraph, Node
 from ..utils.world_motion_planning import reduce_waypoints_polygon
 
 
-class WorldGraphPlanner:
+class WorldGraphPlanner(PathPlanner):
     """
     Implementation of a path planner which creates a visibility-based roadmap using the polygons in the world.
     """
@@ -146,7 +147,7 @@ class WorldGraphPlanner:
         :return: A dictionary containing the planner information.
         :rtype: dict[str, Any]
         """
-        from . import get_planner_string
+        from .planner_registry import get_planner_string
 
         return {
             "type": get_planner_string(self),

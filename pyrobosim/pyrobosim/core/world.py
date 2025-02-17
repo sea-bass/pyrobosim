@@ -27,15 +27,11 @@ class World:
         Creates a new world model instance.
 
         :param name: Name of world model.
-        :type name: str
         :param inflation_radius: Inflation radius around entities (locations, walls, etc.), in meters.
-        :type inflation_radius: float, optional
         :param object_radius: Buffer radius around objects for collision checking, in meters.
-        :type object_radius: float, optional
         :param wall_height: Height of walls, in meters, for 3D model generation.
-        :type wall_height: float, optional
         """
-        from ..gui.main import PyRoboSimGUI
+        from ..gui.main import PyRoboSimMainWindow
 
         self.name = name
         self.wall_height = wall_height
@@ -44,7 +40,7 @@ class World:
         self.logger = create_logger(self.name)
 
         # Connected apps
-        self.gui: PyRoboSimGUI | None = None
+        self.gui: PyRoboSimMainWindow | None = None
         self.ros_node = None
 
         # World entities (robots, locations, objects, etc.)
@@ -61,18 +57,17 @@ class World:
         self.num_hallways = 0
         self.num_locations = 0
         self.num_objects = 0
-        self.hallway_instance_counts = {}
-        self.location_instance_counts = {}
-        self.object_instance_counts = {}
+        self.hallway_instance_counts: dict[str, int] = {}
+        self.location_instance_counts: dict[str, int] = {}
+        self.object_instance_counts: dict[str, int] = {}
 
         # World bounds, will be set by update_bounds()
         self.x_bounds = None
         self.y_bounds = None
 
         # Other parameters
-        self.max_object_sample_tries = (
-            1000  # Max number of tries to sample object locations
-        )
+        # Max number of tries to sample object locations
+        self.max_object_sample_tries = 1000
 
         # Distances for collision-aware navigation and sampling
         self.object_radius = object_radius
@@ -556,14 +551,12 @@ class World:
             self.gui.canvas.draw_signal.emit()
         return True
 
-    def open_location(self, location):
+    def open_location(self, location: Entity | str | None) -> ExecutionResult:
         """
         Opens a storage location or hallway between two rooms..
 
         :param location: Location or Hallway object to open, or its name.
-        :type location: :class:`pyrobosim.core.locations.Location`, :class:`pyrobosim.core.hallway.Hallway`, or str
         :return: An object describing the execution result.
-        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
         # Validate the input
         if isinstance(location, str):
@@ -606,16 +599,15 @@ class World:
             self.gui.update_buttons_signal.emit()
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
-    def close_location(self, location, ignore_robots=[]):
+    def close_location(
+        self, location: Entity | str | None, ignore_robots: list[Robot] = []
+    ) -> ExecutionResult:
         """
         Close a storage location or hallway.
 
         :param location: Location or Hallway object to close, or its name.
-        :type location: :class:`pyrobosim.core.locations.Location`, :class:`pyrobosim.core.hallway.Hallway`, or str
         :param ignore_robots: List of robots to ignore, for example the robot closing the hallway.
-        :type ignore_robots: list[:class:`pyrobosim.core.robot.Robot`]
         :return: An object describing the execution result.
-        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
         # Validate the input
         if isinstance(location, str):

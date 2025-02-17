@@ -39,6 +39,10 @@ class Entity:
 
     is_open = True
     """Whether the entity is open or not."""
+    is_locked = False
+    """Whether the entity is locked or not."""
+    is_charger = False
+    """Whether the entity is a charger or not."""
 
     viz_patch: PathPatch | None = None
     """The visualization polygon patch for the entity."""

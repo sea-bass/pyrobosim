@@ -52,7 +52,9 @@ class PlannerNode(Node):
         self.world_state_client = self.create_client(
             RequestWorldState, "request_world_state"
         )
-        self.world_state_future_response: Future | None = None
+        self.world_state_future_response: Future[RequestWorldState.Response] | None = (
+            None
+        )
         while rclpy.ok() and not self.world_state_client.wait_for_service(
             timeout_sec=1.0
         ):
@@ -144,6 +146,8 @@ class PlannerNode(Node):
         try:
             if self.world_state_future_response is not None:
                 result = self.world_state_future_response.result()
+                if result is None:
+                    raise RuntimeError("Result was none -- this should not happen.")
                 update_world_from_state_msg(self.world, result.state)
         except Exception:
             self.get_logger().info("Failed to unpack world state.")

@@ -6,15 +6,15 @@ Test script showing how to build a world and use it with pyrobosim
 import os
 import argparse
 
-from pyrobosim.core import Robot, World, WorldYamlLoader
+from pyrobosim.core.robot import Robot
+from pyrobosim.core.world import World
+from pyrobosim.core.yaml_utils import WorldYamlLoader
 from pyrobosim.gui import start_gui
 from pyrobosim.manipulation import GraspGenerator, ParallelGraspProperties
-from pyrobosim.navigation import (
-    ConstantVelocityExecutor,
-    AStarPlanner,
-    PRMPlanner,
-    RRTPlanner,
-)
+from pyrobosim.navigation.execution import ConstantVelocityExecutor
+from pyrobosim.navigation.a_star import AStarPlanner
+from pyrobosim.navigation.prm import PRMPlanner
+from pyrobosim.navigation.rrt import RRTPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 

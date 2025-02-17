@@ -8,7 +8,7 @@ import argparse
 import os
 
 from pyrobosim.core import WorldGazeboExporter, WorldYamlLoader
-from pyrobosim.navigation import OccupancyGrid
+from pyrobosim.navigation.occupancy_grid import OccupancyGrid
 from pyrobosim.utils.general import get_data_folder
 
 
