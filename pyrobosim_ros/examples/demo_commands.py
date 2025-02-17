@@ -15,7 +15,7 @@ from pyrobosim_msgs.msg import TaskAction, TaskPlan  # type: ignore
 from pyrobosim_msgs.srv import RequestWorldState  # type: ignore
 
 
-class Commander(Node):
+class Commander(Node):  # type: ignore[misc]
     def __init__(self) -> None:
         super().__init__("demo_commander")
 

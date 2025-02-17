@@ -54,7 +54,7 @@ from .ros_conversions import (
 )
 
 
-class WorldROSWrapper(Node):
+class WorldROSWrapper(Node):  # type: ignore[misc]
     """ROS 2 wrapper node for pyrobosim worlds."""
 
     def __init__(

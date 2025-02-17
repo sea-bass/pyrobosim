@@ -33,7 +33,7 @@ def load_world() -> World:
     return loader.from_file(os.path.join(data_folder, world_file))
 
 
-class PlannerNode(Node):
+class PlannerNode(Node):  # type: ignore[misc]
     def __init__(self) -> None:
         self.latest_goal = None
         self.planning = False

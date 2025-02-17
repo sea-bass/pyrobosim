@@ -11,7 +11,7 @@ import time
 from geometry_msgs.msg import Twist
 
 
-class VelocityPublisher(Node):
+class VelocityPublisher(Node):  # type: ignore[misc]
     def __init__(self) -> None:
         super().__init__("demo_velocity_publisher")
 

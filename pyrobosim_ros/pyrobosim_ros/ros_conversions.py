@@ -214,7 +214,7 @@ def ros_duration_to_float(ros_duration: Duration) -> float:
     :param ros_time: rclpy Duration object.
     :return: The duration time, in seconds.
     """
-    return 1.0e-9 * ros_duration.nanoseconds
+    return float(1.0e-9 * ros_duration.nanoseconds)
 
 
 def execution_result_to_ros(result: ExecutionResult) -> RosExecutionResult:

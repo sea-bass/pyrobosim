@@ -12,7 +12,7 @@ from pyrobosim_msgs.msg import GoalPredicate, GoalSpecification  # type: ignore
 from pyrobosim_msgs.srv import SetLocationState  # type: ignore
 
 
-class GoalPublisher(Node):
+class GoalPublisher(Node):  # type: ignore[misc]
     def __init__(self) -> None:
         super().__init__("demo_pddlstream_goal_publisher")
 
