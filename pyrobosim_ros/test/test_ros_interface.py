@@ -3,13 +3,14 @@
 import os
 import pytest
 import time
+from typing import Any
+from rclpy.task import Future
 
 from geometry_msgs.msg import Twist
 import rclpy
 from rclpy.action.client import ActionClient
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
-from rclpy.task import Future
 
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.utils.general import get_data_folder
@@ -26,28 +27,26 @@ from pyrobosim_ros.ros_interface import WorldROSWrapper
 
 
 def execute_ros_action(
-    goal_future: Future[
-        ExecuteTaskAction.Goal
-        | ExecuteTaskPlan.Goal
-        | FollowPath.Goal
-        | DetectObjects.Goal
-    ],
+    goal_future: Future[Any],
     spin_timeout: float = 0.1,
     goal_timeout: float = 1.0,
     result_timeout: float = 30.0,
-) -> Future:
+) -> Future[Any]:
     """Helper function to execute a ROS action and wait for a result."""
     start_time = time.time()
     while not goal_future.done():
-        TestRosInterface.executor.spin_once(timeout_sec=spin_timeout)
+        if TestRosInterface.executor is not None:
+            TestRosInterface.executor.spin_once(timeout_sec=spin_timeout)
         if time.time() - start_time > goal_timeout:
             print("Timed out waiting for goal to be accepted.")
             break
     assert goal_future.done()
+    assert goal_future is not None
 
-    result_future = goal_future.result().get_result_async()
+    result_future: Future[Any] = goal_future.result().get_result_async()  # type: ignore[union-attr]
     while not result_future.done():
-        TestRosInterface.executor.spin_once(timeout_sec=spin_timeout)
+        if TestRosInterface.executor is not None:
+            TestRosInterface.executor.spin_once(timeout_sec=spin_timeout)
         if time.time() - start_time > result_timeout:
             print("Timed out waiting for result to be received.")
             break
@@ -105,7 +104,8 @@ class TestRosInterface:
 
         start_time = time.time()
         while not data["latest_state"]:
-            TestRosInterface.executor.spin_once(timeout_sec=0.1)
+            if TestRosInterface.executor is not None:
+                TestRosInterface.executor.spin_once(timeout_sec=0.1)
             if time.time() - start_time > 2.0:
                 break
 
@@ -117,7 +117,8 @@ class TestRosInterface:
         vel_msg.angular.z = 0.5
         for _ in range(25):
             vel_pub.publish(vel_msg)
-            TestRosInterface.executor.spin_once(timeout_sec=0.1)
+            if TestRosInterface.executor is not None:
+                TestRosInterface.executor.spin_once(timeout_sec=0.1)
             time.sleep(0.01)  # Give the publisher a break
 
         assert data["latest_state"] != init_state
@@ -142,12 +143,14 @@ class TestRosInterface:
         future = client.call_async(RequestWorldState.Request())
         start_time = time.time()
         while not future.done():
-            TestRosInterface.executor.spin_once(timeout_sec=0.1)
+            if TestRosInterface.executor is not None:
+                TestRosInterface.executor.spin_once(timeout_sec=0.1)
             if time.time() - start_time > 2.0:
                 break
 
         assert future.done()
         result = future.result()
+        assert isinstance(result, RequestWorldState.Result)
         assert len(result.state.robots) == 3
         assert len(result.state.locations) == 5
         assert len(result.state.hallways) == 3
@@ -165,12 +168,14 @@ class TestRosInterface:
         future = client.call_async(RequestWorldState.Request(robot="robot1"))
         start_time = time.time()
         while not future.done():
-            TestRosInterface.executor.spin_once(timeout_sec=0.1)
+            if TestRosInterface.executor is not None:
+                TestRosInterface.executor.spin_once(timeout_sec=0.1)
             if time.time() - start_time > 2.0:
                 break
 
         assert future.done()
         result = future.result()
+        assert isinstance(result, RequestWorldState.Result)
         assert len(result.state.robots) == 3
         assert len(result.state.locations) == 5
         assert len(result.state.hallways) == 3
@@ -201,13 +206,16 @@ class TestRosInterface:
         )
         start_time = time.time()
         while not future.done():
-            TestRosInterface.executor.spin_once(timeout_sec=0.1)
+            if TestRosInterface.executor is not None:
+                TestRosInterface.executor.spin_once(timeout_sec=0.1)
             if time.time() - start_time > 2.0:
                 break
 
         assert future.done()
-        assert future.result().result.status == ExecutionResult.PRECONDITION_FAILURE
-        assert future.result().result.message == "Location: table0 is locked."
+        result = future.result()
+        assert isinstance(result, SetLocationState.Result)
+        assert result.result.status == ExecutionResult.PRECONDITION_FAILURE
+        assert result.result.message == "Location: table0 is locked."
 
         # Try to only unlock the table, which should succeed.
         future = client.call_async(
@@ -219,12 +227,15 @@ class TestRosInterface:
         )
         start_time = time.time()
         while not future.done():
-            TestRosInterface.executor.spin_once(timeout_sec=0.1)
+            if TestRosInterface.executor is not None:
+                TestRosInterface.executor.spin_once(timeout_sec=0.1)
             if time.time() - start_time > 2.0:
                 break
 
         assert future.done()
-        assert future.result().result.status == ExecutionResult.SUCCESS
+        result = future.result()
+        assert isinstance(result, SetLocationState.Result)
+        assert result.result.status == ExecutionResult.SUCCESS
 
         TestRosInterface.node.destroy_client(client)
 
@@ -248,7 +259,9 @@ class TestRosInterface:
         result_future = execute_ros_action(goal_future)
 
         assert result_future.done()
-        exec_result = result_future.result().result.execution_result
+        result = result_future.result()
+        assert isinstance(result, ExecuteTaskAction.Result)
+        exec_result = result.result.execution_result
         assert exec_result.status == ExecutionResult.INVALID_ACTION
         assert exec_result.message == "Invalid action type: nonexistent_action."
 
@@ -263,7 +276,9 @@ class TestRosInterface:
         result_future = execute_ros_action(goal_future)
 
         assert result_future.done()
-        exec_result = result_future.result().result.execution_result
+        result = result_future.result()
+        assert isinstance(result, ExecuteTaskAction.Result)
+        exec_result = result.result.execution_result
         assert exec_result.status == ExecutionResult.PLANNING_FAILURE
         assert exec_result.message == "Failed to plan a path."
 
@@ -278,10 +293,9 @@ class TestRosInterface:
         result_future = execute_ros_action(goal_future)
 
         assert result_future.done()
-        assert (
-            result_future.result().result.execution_result.status
-            == ExecutionResult.SUCCESS
-        )
+        result = result_future.result()
+        assert isinstance(result, ExecuteTaskAction.Result)
+        assert result.result.execution_result.status == ExecutionResult.SUCCESS
 
         world = TestRosInterface.ros_interface.world
         robot = world.get_robot_by_name("robot0")
@@ -310,12 +324,11 @@ class TestRosInterface:
         result_future = execute_ros_action(goal_future)
 
         assert result_future.done()
-        assert (
-            result_future.result().result.execution_result.status
-            == ExecutionResult.SUCCESS
-        )
-        assert result_future.result().result.num_completed == 3
-        assert result_future.result().result.num_total == 3
+        result = result_future.result()
+        assert isinstance(result, ExecuteTaskPlan.Result)
+        assert result.result.execution_result.status == ExecutionResult.SUCCESS
+        assert result.result.num_completed == 3
+        assert result.result.num_total == 3
 
         world = TestRosInterface.ros_interface.world
         robot = world.get_robot_by_name("robot0")
@@ -350,18 +363,20 @@ class TestRosInterface:
         result_future = execute_ros_action(goal_future)
 
         assert result_future.done()
-        action_result = result_future.result().result
-        assert action_result.execution_result.status == ExecutionResult.SUCCESS
-        assert len(action_result.path.poses) >= 2
+        result = result_future.result()
+        assert isinstance(result, PlanPath.Result)
+        assert result.result.execution_result.status == ExecutionResult.SUCCESS
+        assert len(result.result.path.poses) >= 2
 
         # Verify that path following succeeds.
-        goal = FollowPath.Goal(path=action_result.path)
+        goal = FollowPath.Goal(path=result.result.path)
         goal_future = path_follow_action_client.send_goal_async(goal)
         result_future = execute_ros_action(goal_future)
 
         assert result_future.done()
-        action_result = result_future.result().result
-        assert action_result.execution_result.status == ExecutionResult.SUCCESS
+        result = result_future.result()
+        assert isinstance(result, FollowPath.Result)
+        assert result.result.execution_result.status == ExecutionResult.SUCCESS
 
         # Check that the robot actually reached its destination.
         world = TestRosInterface.ros_interface.world
@@ -374,9 +389,10 @@ class TestRosInterface:
         result_future = execute_ros_action(goal_future)
 
         assert result_future.done()
-        action_result = result_future.result().result
-        assert action_result.execution_result.status == ExecutionResult.SUCCESS
-        assert len(action_result.detected_objects) == 2
+        result = result_future.result()
+        assert isinstance(result, DetectObjects.Result)
+        assert result.result.execution_result.status == ExecutionResult.SUCCESS
+        assert len(result.result.detected_objects) == 2
 
         # Verify that object detection works with filtering.
         goal = DetectObjects.Goal(target_object="water")
@@ -384,15 +400,16 @@ class TestRosInterface:
         result_future = execute_ros_action(goal_future)
 
         assert result_future.done()
-        action_result = result_future.result().result
+        result = result_future.result()
+        assert isinstance(result, DetectObjects.Result)
         assert (
-            action_result.execution_result.status == ExecutionResult.EXECUTION_FAILURE
+            result.result.execution_result.status == ExecutionResult.EXECUTION_FAILURE
         )
         assert (
-            action_result.execution_result.message
+            result.result.execution_result.message
             == "Failed to detect any objects matching the query 'water'."
         )
-        assert len(action_result.detected_objects) == 0
+        assert len(result.result.detected_objects) == 0
 
     @pytest.mark.dependency(  # type: ignore[misc]
         name="test_shutdown_ros_interface", depends=["test_specialized_actions"]

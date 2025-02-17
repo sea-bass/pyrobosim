@@ -4,7 +4,7 @@ ROS representations (messages, services, etc.).
 """
 
 from geometry_msgs.msg import Pose as RosPose
-from rclpy.duration import Duration
+from rclpy.time import Duration
 
 from pyrobosim_msgs.msg import (  # type: ignore[attr-defined]
     ExecutionResult as RosExecutionResult,

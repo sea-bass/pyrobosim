@@ -2,6 +2,7 @@
 
 from functools import partial
 import numpy as np
+import numpy.typing as npt
 import os
 import time
 from threading import Thread
@@ -139,14 +140,27 @@ class WorldROSWrapper(Node):
         )
 
         # Initialize robot specific interface dictionaries
-        self.robot_command_subs: dict[str, Subscription] = {}
-        self.robot_state_pubs: dict[str, Publisher] = {}
+        self.robot_command_subs: dict[str, Subscription[Twist]] = {}
+        self.robot_state_pubs: dict[str, Publisher[RobotState]] = {}
         self.robot_state_pub_timers: dict[str, Timer] = {}
-        self.robot_plan_path_servers: dict[str, ActionServer] = {}
-        self.robot_follow_path_servers: dict[str, ActionServer] = {}
-        self.robot_object_detection_servers: dict[str, ActionServer] = {}
-        self.robot_reset_path_planner_servers: dict[str, Service] = {}
-        self.latest_robot_cmds: dict[str, tuple[Time, np.array] | None] = {}
+        self.robot_plan_path_servers: dict[
+            str, ActionServer[PlanPath.Goal, PlanPath.Result, PlanPath.Feedback]
+        ] = {}
+        self.robot_follow_path_servers: dict[
+            str, ActionServer[FollowPath.Goal, FollowPath.Result, FollowPath.Feedback]
+        ] = {}
+        self.robot_object_detection_servers: dict[
+            str,
+            ActionServer[
+                DetectObjects.Goal, DetectObjects.Result, DetectObjects.Feedback
+            ],
+        ] = {}
+        self.robot_reset_path_planner_servers: dict[
+            str, Service[Trigger.Request, Trigger.Response]
+        ] = {}
+        self.latest_robot_cmds: dict[
+            str, tuple[Time, npt.NDArray[np.float32]] | None
+        ] = {}
 
         # Start a dynamics timer
         self.dynamics_rate = dynamics_rate
@@ -417,7 +431,12 @@ class WorldROSWrapper(Node):
             execution_result=execution_result_to_ros(execution_result)
         )
 
-    def action_cancel_callback(self, goal_handle: ServerGoalHandle) -> CancelResponse:
+    def action_cancel_callback(
+        self,
+        goal_handle: ServerGoalHandle[
+            ExecuteTaskAction.Goal, ExecuteTaskAction.Result, ExecuteTaskAction.Feedback
+        ],
+    ) -> CancelResponse:
         """
         Handle cancellation for single action goals.
 
@@ -489,7 +508,12 @@ class WorldROSWrapper(Node):
             num_total=robot_plan.size(),
         )
 
-    def plan_cancel_callback(self, goal_handle: ServerGoalHandle) -> CancelResponse:
+    def plan_cancel_callback(
+        self,
+        goal_handle: ServerGoalHandle[
+            ExecuteTaskPlan.Goal, ExecuteTaskPlan.Result, ExecuteTaskPlan.Feedback
+        ],
+    ) -> CancelResponse:
         """
         Handle cancellation for task plans.
 
@@ -509,7 +533,11 @@ class WorldROSWrapper(Node):
         return CancelResponse.ACCEPT
 
     def robot_path_plan_callback(
-        self, goal_handle: ServerGoalHandle, robot: Robot
+        self,
+        goal_handle: ServerGoalHandle[
+            PlanPath.Goal, PlanPath.Result, PlanPath.Feedback
+        ],
+        robot: Robot,
     ) -> PlanPath.Result:
         """
         Handle path planning action callback for a specific robot.
@@ -539,7 +567,11 @@ class WorldROSWrapper(Node):
         )
 
     def robot_path_follow_callback(
-        self, goal_handle: ServerGoalHandle, robot: Robot
+        self,
+        goal_handle: ServerGoalHandle[
+            FollowPath.Goal, FollowPath.Result, FollowPath.Feedback
+        ],
+        robot: Robot,
     ) -> FollowPath.Result:
         """
         Handle path following action callback for a specific robot.
@@ -577,7 +609,11 @@ class WorldROSWrapper(Node):
         )
 
     def robot_path_cancel_callback(
-        self, goal_handle: ServerGoalHandle, robot: Robot
+        self,
+        goal_handle: ServerGoalHandle[
+            FollowPath.Goal, FollowPath.Result, FollowPath.Feedback
+        ],
+        robot: Robot,
     ) -> CancelResponse:
         """
         Handle a cancel request for the robot path following action.
@@ -611,7 +647,11 @@ class WorldROSWrapper(Node):
         return Trigger.Response(success=True)
 
     def robot_detect_objects_callback(
-        self, goal_handle: ServerGoalHandle, robot: Robot
+        self,
+        goal_handle: ServerGoalHandle[
+            DetectObjects.Goal, DetectObjects.Result, DetectObjects.Feedback
+        ],
+        robot: Robot,
     ) -> DetectObjects.Result:
         """
         Handle object detection action callback for a specific robot.
@@ -668,7 +708,7 @@ class WorldROSWrapper(Node):
                 state_msg.last_visited_location = robot.location.name
         return state_msg
 
-    def publish_robot_state(self, pub: Publisher, robot: Robot) -> None:
+    def publish_robot_state(self, pub: Publisher[RobotState], robot: Robot) -> None:
         """
         Helper function to publish robot state.
 
