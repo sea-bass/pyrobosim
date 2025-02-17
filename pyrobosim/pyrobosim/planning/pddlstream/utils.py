@@ -30,8 +30,7 @@ def get_default_stream_info_fn() -> Callable[[], dict[str, Any]]:
     """
     Gets a function that creates the default PDDLStream stream information dictionary.
 
-    :return: PDDLStream stream information function
-    :rtype: function
+    :return: PDDLStream stream information function.
     """
     from .default_mappings import get_stream_info
 
@@ -43,7 +42,7 @@ def get_default_stream_map_fn() -> Callable[[World, Robot], dict[str, Any]]:
     Gets a function that creates the default PDDLStream stream mappings dictionary
     given a `pyrobosim.core.world.World` object and a `pyrobosim.core.robot.Robot` object.
 
-    :return: PDDLStream stream mappings function
+    :return: PDDLStream stream mappings function.
     """
     from .default_mappings import get_stream_map
 

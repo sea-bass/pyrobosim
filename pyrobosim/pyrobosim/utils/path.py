@@ -29,7 +29,6 @@ class Path:
         rather than directly assigning the `poses` attribute.
 
         :param poses: List of poses representing a path.
-        :type poses: list[:class:`pyrobosim.utils.pose.Pose`], optional
         """
         self.poses = poses
         self.num_poses = len(self.poses)

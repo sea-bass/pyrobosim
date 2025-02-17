@@ -255,7 +255,6 @@ class Hallway(Entity):
         Serializes the hallway to a dictionary.
 
         :return: A dictionary containing the hallway information.
-        :rtype: dict[str, Any]
         """
         return {
             "name": self.name,

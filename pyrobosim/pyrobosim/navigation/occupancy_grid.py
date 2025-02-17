@@ -76,9 +76,7 @@ class OccupancyGrid:
         Convert a given world position in world frame to grid frame.
 
         :param pos: The position to be transformed.
-        :type pos: (float, float)
         :return: The coordinates in grid frame.
-        :rtype: (int, int)
         """
         x_grid = math.floor((pos[0] - self.origin[0]) / self.resolution)
         y_grid = math.floor((pos[1] - self.origin[1]) / self.resolution)

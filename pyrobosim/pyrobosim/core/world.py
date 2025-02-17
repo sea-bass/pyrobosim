@@ -1107,7 +1107,6 @@ class World:
         Sets world inflation radius.
 
         :param inflation_radius: Inflation radius, in meters.
-        :type inflation_radius: float, optional
         """
         self.inflation_radius = inflation_radius
         for loc in self.locations:

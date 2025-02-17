@@ -208,7 +208,6 @@ class ConstantVelocityExecutor(PathExecutor):
         Serializes the path executor to a dictionary.
 
         :return: A dictionary containing the path executor information.
-        :rtype: dict[str, Any]
         """
         return {
             "type": "constant_velocity",

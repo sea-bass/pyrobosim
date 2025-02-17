@@ -44,7 +44,6 @@ class Trajectory:
         Checks whether a trajectory is empty.
 
         :return: True if the trajectory is empty, otherwise False.
-        :rtype: bool
         """
         return self.num_points() == 0
 

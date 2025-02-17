@@ -132,7 +132,6 @@ class PlannerNode(Node):  # type: ignore[misc]
         Handle goal specification callback.
 
         :param msg: Goal specification message to process.
-        :type msg: :class:`pyrobosim_msgs.msg.TaskPlan`
         """
         print("Received new goal specification!")
         self.latest_goal = goal_specification_from_ros(msg, self.world)

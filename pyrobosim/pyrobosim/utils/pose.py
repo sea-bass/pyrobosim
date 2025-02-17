@@ -71,9 +71,7 @@ class Pose:
         * angle units are always "radians"
 
         :param plist: List containing the input pose (see format above).
-        :type plist: list[float]
         :return: Pose object
-        :rtype: :class:`pyrobosim.utils.pose.Pose`
         """
         num_elems = len(plist)
         plist = [float(elem) for elem in plist]
@@ -108,9 +106,7 @@ class Pose:
         Creates a pose from a transformation matrix.
 
         :param tform: 4-by-4 transformation matrix
-        :type tform: :class:`numpy.ndarray`
         :return: Pose object
-        :rtype: :class:`pyrobosim.utils.pose.Pose`
         """
         return cls(
             x=tform[0, 3], y=tform[1, 3], z=tform[2, 3], q=mat2quat(tform[:3, :3])
@@ -143,9 +139,7 @@ class Pose:
         Note that the ``rotation_quat`` key overrides the `rotation_eul` key.
 
         :param pose_dict: A pose dictionary.
-        :type pose_dict: dict[str, Any]
         :return: Pose object
-        :rype: :class:`pyrobosim.utils.pose.Pose`
         """
 
         pos = pose_dict.get("position", {})
@@ -185,9 +179,7 @@ class Pose:
         Constructs a pose object from any of the allowable input types.
 
         :param data: The input data describing the pose.
-        :type data: dict[str, Any] or list or :class:`numpy.ndarray`
         :return: Pose object
-        :rype: :class:`pyrobosim.utils.pose.Pose`
         raises ValueError: if the input data type is unsupported.
         """
         if isinstance(data, list):
@@ -235,9 +227,7 @@ class Pose:
         Gets the angular distance between two poses, wrapped in the range [-pi, pi].
 
         :param other: Pose from which to get the linear distance.
-        :type other: :class:`pyrobosim.utils.pose.Pose`
         :return: Angular distance between this and the other pose.
-        :rtype: float
         """
         return float(np.arctan2(other.y - self.y, other.x - self.x))
 

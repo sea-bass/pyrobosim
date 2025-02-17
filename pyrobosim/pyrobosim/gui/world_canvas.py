@@ -350,10 +350,8 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         or local (property of the robot).
 
         :param robot: If set to a Robot instance, uses that robot for display.
-        :type robot: :class:`pyrobosim.core.robot.Robot`, optional
         :param show_graphs: If True, shows the path planner's latest graph(s).
-        :type show_graphs: bool
-        :param path: Path to goal location, defaults to None.
+        :param path: An optional path to display.
         """
         if not robot:
             self.world.logger.warning("No robot found")
@@ -427,7 +425,6 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         Shows the world state in the figure title.
 
         :param robot: If set to a Robot instance, uses that robot for showing state.
-        :type robot: :class:`pyrobosim.core.robot.Robot`, optional
         """
         if robot is not None:
             title_bits = []
