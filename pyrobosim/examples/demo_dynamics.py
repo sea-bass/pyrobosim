@@ -111,8 +111,8 @@ def command_robots(world: World) -> None:
             if robot.is_in_collision():
                 cmd_vel = backup_vel
 
-            robot.dynamics.step(cmd_vel, dt)
-            # TODO add collisions
+            new_pose = robot.dynamics.step(cmd_vel, dt)
+            robot.set_pose(new_pose)
 
         t_elapsed = time.time() - t_start
         time.sleep(max(0, dt - t_elapsed))

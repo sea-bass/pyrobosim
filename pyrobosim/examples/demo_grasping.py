@@ -17,7 +17,7 @@ def create_test_object(object_pose: Pose) -> Object:
         [0.05, 0.0],
     ]
     obj_data = {}
-    obj_data["test_object"] = {
+    obj_data["object"] = {
         "footprint": {
             "type": "polygon",
             "coords": obj_footprint_coords,
@@ -26,7 +26,7 @@ def create_test_object(object_pose: Pose) -> Object:
     }
     Object.metadata = obj_data
 
-    return Object(category="test_object", pose=object_pose)
+    return Object(name="test_object", category="object", pose=object_pose)
 
 
 if __name__ == "__main__":

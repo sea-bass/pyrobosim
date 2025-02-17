@@ -6,7 +6,6 @@ import copy
 import numpy as np
 from typing import Sequence
 
-from ..utils.logging import get_global_logger
 from ..utils.pose import Pose
 
 
@@ -35,7 +34,6 @@ class RobotDynamics2D:
         # Initial state
         self.pose = init_pose
         self.velocity = np.array(init_vel)
-        self.collision = False
 
         # Velocity and acceleration limits
         self.vel_limits = np.array(
@@ -45,16 +43,17 @@ class RobotDynamics2D:
             [max_linear_acceleration, max_linear_acceleration, max_angular_acceleration]
         )
 
-    def step(self, cmd_vel: Sequence[float], dt: float) -> None:
+    def step(self, cmd_vel: Sequence[float], dt: float) -> Pose:
         """
         Perform a single dynamics step.
 
         :param cmd_vel: Velocity command array, in the form [vx, vy, vtheta].
         :param dt: Time step, in seconds.
+        :return: The new pose after applying the dynamics.
         """
         # Trivial case of zero or None command velocities.
-        if np.count_nonzero(cmd_vel) == 0 or cmd_vel is None:
-            return
+        if (np.count_nonzero(cmd_vel) == 0) or (cmd_vel is None):
+            return self.pose
 
         self.velocity = self.enforce_dynamics_limits(cmd_vel, dt)
 
@@ -70,26 +69,7 @@ class RobotDynamics2D:
         target_pose.x += vx * dt
         target_pose.y += vy * dt
         target_pose.set_euler_angles(roll, pitch, yaw + self.velocity[2] * dt)
-
-        # Check collisions
-        # TODO: Move this out
-        # if check_collisions:
-        #     if world is None:
-        #         warn_msg = "Cannot check collisions without a world."
-        #         logger = self.robot.logger if self.robot else get_global_logger()
-        #         logger.warning(warn_msg)
-        #         return
-
-        #     if world.collides_with_robots(
-        #         target_pose, robot=self.robot
-        #     ) or world.check_occupancy(target_pose):
-        #         self.velocity = np.array([0.0, 0.0, 0.0])
-        #         self.collision = True
-        #         return
-
-        # If we made it, we succeeded
-        self.collision = False
-        self.pose = target_pose
+        return target_pose
 
     def enforce_dynamics_limits(
         self, cmd_vel: Sequence[float], dt: float

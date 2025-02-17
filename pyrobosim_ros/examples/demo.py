@@ -11,7 +11,7 @@ import threading
 from pyrobosim.core import Robot, World, WorldYamlLoader
 from pyrobosim.gui import start_gui
 from pyrobosim.navigation.execution import ConstantVelocityExecutor
-from pyrobosim.naviation.rrt import RRTPlanner
+from pyrobosim.navigation.rrt import RRTPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 from pyrobosim_ros.ros_interface import WorldROSWrapper

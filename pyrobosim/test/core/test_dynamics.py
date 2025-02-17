@@ -6,9 +6,8 @@ Unit tests for robot dynamics capabilities.
 
 import numpy as np
 import pytest
-from pytest import LogCaptureFixture
 
-from pyrobosim.core import Pose, RobotDynamics2D, World
+from pyrobosim.core import Pose, RobotDynamics2D
 
 
 def test_create_robot_dynamics_2d_default() -> None:
@@ -16,7 +15,6 @@ def test_create_robot_dynamics_2d_default() -> None:
     dynamics = RobotDynamics2D()
 
     assert dynamics.pose == Pose()
-    assert not dynamics.collision
     assert np.all(dynamics.velocity == np.array([0.0, 0.0, 0.0]))
     assert np.all(dynamics.vel_limits == np.array([np.inf, np.inf, np.inf]))
     assert np.all(dynamics.accel_limits == np.array([np.inf, np.inf, np.inf]))
@@ -36,7 +34,6 @@ def test_create_robot_dynamics_2d_nondefault() -> None:
     assert dynamics.pose.x == 1.0
     assert dynamics.pose.y == 2.0
     assert dynamics.pose.eul[2] == pytest.approx(np.pi / 2.0)
-    assert not dynamics.collision
     assert np.all(dynamics.velocity == np.array([-0.1, 0.0, 0.1]))
     assert np.all(dynamics.vel_limits == np.array([1.0, 1.0, 3.0]))
     assert np.all(dynamics.accel_limits == np.array([2.0, 2.0, 6.0]))
@@ -95,107 +92,48 @@ def test_reset_nondefault_args() -> None:
     assert np.all(dynamics.velocity == target_velocity)
 
 
-def test_step_no_collision() -> None:
+def test_step() -> None:
     """Test stepping dynamics without collision checks."""
     dynamics = RobotDynamics2D()
     dt = 0.1
 
     # Linear velocity only
     cmd_vel = np.array([1.0, 0.0, 0.0])
-    dynamics.step(cmd_vel, dt)
-    assert dynamics.pose.x == pytest.approx(0.1)
-    assert dynamics.pose.y == pytest.approx(0.0)
-    assert dynamics.pose.eul[2] == pytest.approx(0.0)
+    new_pose = dynamics.step(cmd_vel, dt)
+    assert new_pose.x == pytest.approx(0.1)
+    assert new_pose.y == pytest.approx(0.0)
+    assert new_pose.eul[2] == pytest.approx(0.0)
+    dynamics.reset(new_pose)
 
     # Angular velocity only
     cmd_vel = np.array([0.0, 0.0, np.pi / 2.0])
-    dynamics.step(cmd_vel, dt)
-    assert dynamics.pose.x == pytest.approx(0.1)
-    assert dynamics.pose.y == pytest.approx(0.0)
-    assert dynamics.pose.eul[2] == pytest.approx(np.pi / 20.0)
+    new_pose = dynamics.step(cmd_vel, dt)
+    assert new_pose.x == pytest.approx(0.1)
+    assert new_pose.y == pytest.approx(0.0)
+    assert new_pose.eul[2] == pytest.approx(np.pi / 20.0)
+    dynamics.reset(new_pose)
 
     # Linear and angular velocity
     cmd_vel = np.array([1.0, 0.0, np.pi / 2.0])
-    dynamics.step(cmd_vel, dt)
-    assert dynamics.pose.x == pytest.approx(0.1 * (1 + np.cos(np.pi / 20.0)))
-    assert dynamics.pose.y == pytest.approx(0.1 * np.sin(np.pi / 20.0))
-    assert dynamics.pose.eul[2] == pytest.approx(np.pi / 10.0)
+    new_pose = dynamics.step(cmd_vel, dt)
+    assert new_pose.x == pytest.approx(0.1 * (1 + np.cos(np.pi / 20.0)))
+    assert new_pose.y == pytest.approx(0.1 * np.sin(np.pi / 20.0))
+    assert new_pose.eul[2] == pytest.approx(np.pi / 10.0)
 
 
-def test_step_collision_zero_cmd() -> None:
+def test_step_zero_cmd() -> None:
     """Test that stepping dynamics with zero velocities does nothing."""
     dynamics = RobotDynamics2D()
     dt = 0.1
     cmd_vel = np.array([0.0, 0.0, 0.0])
-    dynamics.step(cmd_vel, dt)
-    assert dynamics.pose == Pose()
+    new_pose = dynamics.step(cmd_vel, dt)
+    assert new_pose == Pose()
 
 
-def test_step_collision_none_cmd() -> None:
+def test_step_none_cmd() -> None:
     """Test that stepping dynamics with a None command does nothing."""
     dynamics = RobotDynamics2D()
     dt = 0.1
     cmd_vel = None
-    dynamics.step(cmd_vel, dt)
-    assert dynamics.pose == Pose()
-
-
-# TODO: Needs to be disentangled
-# def test_step_collision_world() -> None:
-#     """Test that stepping dynamics with collision in a world with walls works."""
-#     world = World()
-#     world.add_room(
-#         name="test_room", footprint=[(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]
-#     )
-#     robot = Robot(name="test_robot", radius=0.1)
-#     world.add_robot(robot)
-
-#     dt = 0.1
-#     cmd_vel = np.array([1.0, 0.0, 0.0])
-
-#     # Try a safe pose
-#     start_pose = Pose(x=0.5, y=0.5)
-#     robot.set_pose(start_pose)
-#     robot.dynamics.step(cmd_vel, dt, world=world, check_collisions=True)
-#     assert robot.get_pose().is_approx(Pose(x=0.6, y=0.5))
-#     assert not robot.is_in_collision()
-#     assert robot.is_moving()
-
-#     # Try an unsafe pose (robot will collide with room wall)
-#     start_pose = Pose(x=0.89, y=0.5)
-#     robot.set_pose(start_pose)
-#     robot.dynamics.step(cmd_vel, dt, world=world, check_collisions=True)
-#     assert robot.get_pose() == start_pose
-#     assert robot.is_in_collision()
-#     assert not robot.is_moving()
-
-
-# def test_step_collision_robot() -> None:
-#     """Test that stepping dynamics with collision between robots works."""
-#     world = World()
-#     world.add_room(
-#         name="test_room", footprint=[(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]
-#     )
-#     robot0 = Robot(name="test_robot0", radius=0.1)
-#     world.add_robot(robot0)
-#     robot1 = Robot(name="test_robot1", radius=0.1)
-#     world.add_robot(robot1)
-
-#     cmd_vel = np.array([1.0, 0.0, 0.0])
-#     dt = 0.1
-
-#     # Try safe poses
-#     robot0.set_pose(Pose(x=0.5, y=0.5))
-#     robot1.set_pose(Pose(x=0.5, y=0.8))
-#     robot0.dynamics.step(cmd_vel, dt, world=world, check_collisions=True)
-#     assert robot0.get_pose().is_approx(Pose(x=0.6, y=0.5))
-#     assert not robot0.is_in_collision()
-#     assert robot0.is_moving()
-
-#     # Try an unsafe pose (robot will collide into the other robot)
-#     robot0.set_pose(Pose(x=0.5, y=0.5))
-#     robot1.set_pose(Pose(x=0.55, y=0.5))
-#     robot0.dynamics.step(cmd_vel, dt, world=world, check_collisions=True)
-#     assert robot0.get_pose() == Pose(x=0.5, y=0.5)
-#     assert robot0.is_in_collision()
-#     assert not robot0.is_moving()
+    new_pose = dynamics.step(cmd_vel, dt)
+    assert new_pose == Pose()

@@ -186,13 +186,21 @@ class Robot(Entity):
         """
         return self.executing_action or self.executing_plan or self.executing_nav
 
-    def is_in_collision(self) -> bool:
+    def is_in_collision(self, pose: Pose | None = None) -> bool:
         """
         Checks whether the last step of dynamics put the robot in collision.
 
+        :pose: Optional pose to use for collision checking.
+            If not specified, uses the robot's current pose.
         :return: True if the robot is in collision, False otherwise.
         """
-        return self.dynamics.collision
+        if self.world is None:
+            return False
+
+        pose = pose or self.dynamics.pose
+        return self.world.check_occupancy(pose) or self.world.collides_with_robots(
+            pose, robot=self
+        )
 
     def at_object_spawn(self) -> bool:
         """

@@ -368,8 +368,11 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
                 # The "else" case is implicit and means the latest velocity command is used as is.
 
                 # Step the dynamics
-                robot.dynamics.step(cmd_vel, self.dynamics_rate)
-                # TODO: Add collisions
+                target_pose = robot.dynamics.step(cmd_vel, self.dynamics_rate)
+                if robot.is_in_collision(pose=target_pose):
+                    robot.dynamics.velocity = np.array([0.0, 0.0, 0.0])
+                    continue
+                robot.set_pose(target_pose)
 
     def velocity_command_callback(self, msg: Twist, robot: Robot) -> None:
         """
