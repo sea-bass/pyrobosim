@@ -1,7 +1,8 @@
 """Path execution utilities."""
 
 import time
-import threading
+from threading import Thread
+from typing import Any
 
 from .types import PathExecutor
 from ..planning.actions import ExecutionResult, ExecutionStatus
@@ -41,7 +42,7 @@ class ConstantVelocityExecutor(PathExecutor):
         self.linear_velocity = linear_velocity
         self.max_angular_velocity = max_angular_velocity
 
-        self.validation_timer = None
+        self.validation_timer: Thread | None = None
         self.validate_during_execution = validate_during_execution
         self.validation_dt = validation_dt
         self.validation_step_dist = validation_step_dist
@@ -60,7 +61,7 @@ class ConstantVelocityExecutor(PathExecutor):
 
     def execute(
         self, path: Path, realtime_factor: float = 1.0, battery_usage: float = 0.0
-    ) -> None:
+    ) -> ExecutionResult:
         """
         Generates and executes a trajectory on the robot.
 
@@ -85,40 +86,52 @@ class ConstantVelocityExecutor(PathExecutor):
                 message=message,
             )
 
-        self.reset_state()
-        self.following_path = True
-
         # Convert the path to an interpolated trajectory.
         self.traj = get_constant_speed_trajectory(
             path,
             linear_velocity=self.linear_velocity,
             max_angular_velocity=self.max_angular_velocity,
         )
+        if self.traj is None:
+            self.robot.logger.warning("Failed to get trajectory from path.")
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE,
+                message=message,
+            )
+
         traj_interp = interpolate_trajectory(self.traj, self.dt)
+        if traj_interp is None:
+            self.robot.logger.warning("Failed to interpolate trajectory.")
+            return ExecutionResult(
+                status=ExecutionStatus.PRECONDITION_FAILURE,
+                message=message,
+            )
+
+        self.reset_state()
+        self.following_path = True
 
         # Optionally, kick off the path validation timer.
         if self.validate_during_execution and self.robot.world is not None:
-            self.validation_timer = threading.Thread(
-                target=self.validate_remaining_path
-            )
+            self.validation_timer = Thread(target=self.validate_remaining_path)
             self.validation_timer.start()
 
         # Execute the trajectory.
         status = ExecutionStatus.SUCCESS
         message = ""
         sleep_time = self.dt / realtime_factor
-        is_holding_object = self.robot.manipulated_object is not None
         prev_pose = traj_interp.poses[0]
         for i in range(traj_interp.num_points()):
             start_time = time.time()
             cur_pose = traj_interp.poses[i]
             self.current_traj_time = traj_interp.t_pts[i]
             self.robot.set_pose(cur_pose)
-            if is_holding_object:
+            if self.robot.manipulated_object is not None:
                 self.robot.manipulated_object.set_pose(cur_pose)
 
             if self.abort_execution:
-                if self.validate_during_execution:
+                if self.validate_during_execution and (
+                    self.validation_timer is not None
+                ):
                     self.validation_timer.join()
                 message = "Trajectory execution aborted."
                 self.robot.logger.info(message)
@@ -158,7 +171,10 @@ class ConstantVelocityExecutor(PathExecutor):
         This function will set the `abort_execution` attribute to `True`,
         which cancels the main trajectory execution loop.
         """
-        while self.following_path and not self.abort_execution:
+        if (self.robot is None) or (self.traj is None):
+            return
+
+        while self.following_path and (not self.abort_execution):
             start_time = time.time()
             cur_pose = self.robot.get_pose()
             cur_time = self.current_traj_time
@@ -175,8 +191,10 @@ class ConstantVelocityExecutor(PathExecutor):
             poses.extend(self.traj.poses[idx:])
             if len(poses) > 2:
                 remaining_path = Path(poses=poses)
-                if not self.robot.world.is_path_collision_free(
-                    remaining_path, step_dist=self.validation_step_dist
+                if (self.robot.world is not None) and (
+                    not self.robot.world.is_path_collision_free(
+                        remaining_path, step_dist=self.validation_step_dist
+                    )
                 ):
                     self.robot.logger.warning(
                         "Remaining path is in collision. Aborting execution."
@@ -185,7 +203,7 @@ class ConstantVelocityExecutor(PathExecutor):
 
             time.sleep(max(0, self.validation_dt - (time.time() - start_time)))
 
-    def to_dict(self) -> dict[str, str | float]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serializes the path executor to a dictionary.
 
