@@ -434,12 +434,7 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
             execution_result=execution_result_to_ros(execution_result)
         )
 
-    def action_cancel_callback(
-        self,
-        goal_handle: ServerGoalHandle[
-            ExecuteTaskAction.Goal, ExecuteTaskAction.Result, ExecuteTaskAction.Feedback
-        ],
-    ) -> CancelResponse:
+    def action_cancel_callback(self, goal_handle: ServerGoalHandle) -> CancelResponse:  # type: ignore[type-arg] # Cannot add args in Humble
         """
         Handle cancellation for single action goals.
 
@@ -511,12 +506,7 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
             num_total=robot_plan.size(),
         )
 
-    def plan_cancel_callback(
-        self,
-        goal_handle: ServerGoalHandle[
-            ExecuteTaskPlan.Goal, ExecuteTaskPlan.Result, ExecuteTaskPlan.Feedback
-        ],
-    ) -> CancelResponse:
+    def plan_cancel_callback(self, goal_handle: ServerGoalHandle) -> CancelResponse:  # type: ignore[type-arg] # Cannot add args in Humble
         """
         Handle cancellation for task plans.
 
@@ -535,13 +525,7 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
             Thread(target=robot.cancel_actions).start()
         return CancelResponse.ACCEPT
 
-    def robot_path_plan_callback(
-        self,
-        goal_handle: ServerGoalHandle[
-            PlanPath.Goal, PlanPath.Result, PlanPath.Feedback
-        ],
-        robot: Robot,
-    ) -> PlanPath.Result:
+    def robot_path_plan_callback(self, goal_handle: ServerGoalHandle, robot: Robot) -> PlanPath.Result:  # type: ignore[type-arg] # Cannot add args in Humble
         """
         Handle path planning action callback for a specific robot.
 
@@ -569,13 +553,7 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
             path=path_to_ros(path),
         )
 
-    def robot_path_follow_callback(
-        self,
-        goal_handle: ServerGoalHandle[
-            FollowPath.Goal, FollowPath.Result, FollowPath.Feedback
-        ],
-        robot: Robot,
-    ) -> FollowPath.Result:
+    def robot_path_follow_callback(self, goal_handle: ServerGoalHandle, robot: Robot) -> FollowPath.Result:  # type: ignore[type-arg] # Cannot add args in Humble
         """
         Handle path following action callback for a specific robot.
 
@@ -611,13 +589,7 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
             execution_result=execution_result_to_ros(robot.last_nav_result)
         )
 
-    def robot_path_cancel_callback(
-        self,
-        goal_handle: ServerGoalHandle[
-            FollowPath.Goal, FollowPath.Result, FollowPath.Feedback
-        ],
-        robot: Robot,
-    ) -> CancelResponse:
+    def robot_path_cancel_callback(self, goal_handle: ServerGoalHandle, robot: Robot) -> CancelResponse:  # type: ignore[type-arg] # Cannot add args in Humble
         """
         Handle a cancel request for the robot path following action.
 
@@ -649,13 +621,7 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
         robot.reset_path_planner()
         return Trigger.Response(success=True)
 
-    def robot_detect_objects_callback(
-        self,
-        goal_handle: ServerGoalHandle[
-            DetectObjects.Goal, DetectObjects.Result, DetectObjects.Feedback
-        ],
-        robot: Robot,
-    ) -> DetectObjects.Result:
+    def robot_detect_objects_callback(self, goal_handle: ServerGoalHandle, robot: Robot) -> DetectObjects.Result:  # type: ignore[type-arg] # Cannot add args in Humble
         """
         Handle object detection action callback for a specific robot.
 
@@ -711,7 +677,7 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
                 state_msg.last_visited_location = robot.location.name
         return state_msg
 
-    def publish_robot_state(self, pub: Publisher[RobotState], robot: Robot) -> None:
+    def publish_robot_state(self, pub: Publisher, robot: Robot) -> None:  # type: ignore[type-arg] # Cannot add args in Humble
         """
         Helper function to publish robot state.
 
