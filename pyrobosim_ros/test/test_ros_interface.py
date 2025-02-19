@@ -27,11 +27,11 @@ from pyrobosim_ros.ros_interface import WorldROSWrapper
 
 
 def execute_ros_action(
-    goal_future: Future,  # type: ignore[type-arg] # Cannot add args in Humble
+    goal_future: Future,  # type: ignore[type-arg] # Cannot add type args in Humble and Jazzy
     spin_timeout: float = 0.1,
     goal_timeout: float = 1.0,
     result_timeout: float = 30.0,
-) -> Future:  # type: ignore[type-arg] # Cannot add args in Humble
+) -> Future:  # type: ignore[type-arg] # Cannot add type args in Humble and Jazzy
     """Helper function to execute a ROS action and wait for a result."""
     start_time = time.time()
     while not goal_future.done():
