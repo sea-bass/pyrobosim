@@ -27,11 +27,11 @@ from pyrobosim_ros.ros_interface import WorldROSWrapper
 
 
 def execute_ros_action(
-    goal_future: Future[Any],
+    goal_future: Future,  # type: ignore[type-arg] # Cannot add args in Humble
     spin_timeout: float = 0.1,
     goal_timeout: float = 1.0,
     result_timeout: float = 30.0,
-) -> Future[Any]:
+) -> Future:  # type: ignore[type-arg] # Cannot add args in Humble
     """Helper function to execute a ROS action and wait for a result."""
     start_time = time.time()
     while not goal_future.done():
@@ -150,7 +150,7 @@ class TestRosInterface:
 
         assert future.done()
         result = future.result()
-        assert isinstance(result, RequestWorldState.Result)
+        assert isinstance(result, RequestWorldState.Response)
         assert len(result.state.robots) == 3
         assert len(result.state.locations) == 5
         assert len(result.state.hallways) == 3
@@ -175,7 +175,7 @@ class TestRosInterface:
 
         assert future.done()
         result = future.result()
-        assert isinstance(result, RequestWorldState.Result)
+        assert isinstance(result, RequestWorldState.Response)
         assert len(result.state.robots) == 3
         assert len(result.state.locations) == 5
         assert len(result.state.hallways) == 3
@@ -213,7 +213,7 @@ class TestRosInterface:
 
         assert future.done()
         result = future.result()
-        assert isinstance(result, SetLocationState.Result)
+        assert isinstance(result, SetLocationState.Response)
         assert result.result.status == ExecutionResult.PRECONDITION_FAILURE
         assert result.result.message == "Location: table0 is locked."
 
@@ -234,7 +234,7 @@ class TestRosInterface:
 
         assert future.done()
         result = future.result()
-        assert isinstance(result, SetLocationState.Result)
+        assert isinstance(result, SetLocationState.Response)
         assert result.result.status == ExecutionResult.SUCCESS
 
         TestRosInterface.node.destroy_client(client)
@@ -260,7 +260,8 @@ class TestRosInterface:
 
         assert result_future.done()
         result = result_future.result()
-        assert isinstance(result, ExecuteTaskAction.Result)
+        assert result is not None
+        assert isinstance(result.result, ExecuteTaskAction.Result)
         exec_result = result.result.execution_result
         assert exec_result.status == ExecutionResult.INVALID_ACTION
         assert exec_result.message == "Invalid action type: nonexistent_action."
@@ -277,7 +278,8 @@ class TestRosInterface:
 
         assert result_future.done()
         result = result_future.result()
-        assert isinstance(result, ExecuteTaskAction.Result)
+        assert result is not None
+        assert isinstance(result.result, ExecuteTaskAction.Result)
         exec_result = result.result.execution_result
         assert exec_result.status == ExecutionResult.PLANNING_FAILURE
         assert exec_result.message == "Failed to plan a path."
@@ -294,7 +296,8 @@ class TestRosInterface:
 
         assert result_future.done()
         result = result_future.result()
-        assert isinstance(result, ExecuteTaskAction.Result)
+        assert result is not None
+        assert isinstance(result.result, ExecuteTaskAction.Result)
         assert result.result.execution_result.status == ExecutionResult.SUCCESS
 
         world = TestRosInterface.ros_interface.world
@@ -325,7 +328,8 @@ class TestRosInterface:
 
         assert result_future.done()
         result = result_future.result()
-        assert isinstance(result, ExecuteTaskPlan.Result)
+        assert result is not None
+        assert isinstance(result.result, ExecuteTaskPlan.Result)
         assert result.result.execution_result.status == ExecutionResult.SUCCESS
         assert result.result.num_completed == 3
         assert result.result.num_total == 3
@@ -364,7 +368,8 @@ class TestRosInterface:
 
         assert result_future.done()
         result = result_future.result()
-        assert isinstance(result, PlanPath.Result)
+        assert result is not None
+        assert isinstance(result.result, PlanPath.Result)
         assert result.result.execution_result.status == ExecutionResult.SUCCESS
         assert len(result.result.path.poses) >= 2
 
@@ -375,7 +380,8 @@ class TestRosInterface:
 
         assert result_future.done()
         result = result_future.result()
-        assert isinstance(result, FollowPath.Result)
+        assert result is not None
+        assert isinstance(result.result, FollowPath.Result)
         assert result.result.execution_result.status == ExecutionResult.SUCCESS
 
         # Check that the robot actually reached its destination.
@@ -390,7 +396,8 @@ class TestRosInterface:
 
         assert result_future.done()
         result = result_future.result()
-        assert isinstance(result, DetectObjects.Result)
+        assert result is not None
+        assert isinstance(result.result, DetectObjects.Result)
         assert result.result.execution_result.status == ExecutionResult.SUCCESS
         assert len(result.result.detected_objects) == 2
 
@@ -401,7 +408,8 @@ class TestRosInterface:
 
         assert result_future.done()
         result = result_future.result()
-        assert isinstance(result, DetectObjects.Result)
+        assert result is not None
+        assert isinstance(result.result, DetectObjects.Result)
         assert (
             result.result.execution_result.status == ExecutionResult.EXECUTION_FAILURE
         )
