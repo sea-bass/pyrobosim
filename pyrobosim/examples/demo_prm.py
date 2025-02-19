@@ -3,7 +3,7 @@ import os
 
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.gui import start_gui
-from pyrobosim.navigation import PRMPlanner
+from pyrobosim.navigation.prm import PRMPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
@@ -12,7 +12,7 @@ world_file = os.path.join(get_data_folder(), "test_world.yaml")
 world = WorldYamlLoader().from_file(world_file)
 
 
-def test_prm():
+def test_prm() -> None:
     """Creates a PRM planner and plans"""
     planner_config = {
         "world": world,

@@ -4,30 +4,31 @@ from enum import IntEnum
 import numpy as np
 import time
 
-from ..utils.motion import Path
+from ..utils.path import Path
+from ..utils.pose import Pose
 
 
 class ExecutionOptions:
     """Options for executing actions in simulation."""
 
     def __init__(
-        self, delay=0.0, success_probability=1.0, rng_seed=None, battery_usage=0.0
-    ):
+        self,
+        delay: float = 0.0,
+        success_probability: float = 1.0,
+        rng_seed: int | None = None,
+        battery_usage: float = 0.0,
+    ) -> None:
         """
         Creates a new set of action execution options.
 
         :param delay: The simulated delay time, in seconds.
-        :type delay: float
         :param success_probability: The simulated success probability, in the range (0, 1).
-        :type success_probability: float
         :param rng_seed: The seed to use for random number generation.
             Defaults to None, but can be changed for determinism.
-        :type rng_seed: int, optional
         :param battery_usage: Amount of battery reduction from running the action.
             Note that some actions apply this as a fixed reductions, and others apply it
             per some unit of measure (for example, battery per distance moved).
             Must be greater than 0.
-        :type battery_usage: float
         """
         self.delay = delay
         self.success_probability = success_probability
@@ -35,15 +36,14 @@ class ExecutionOptions:
         self.rng = np.random.default_rng(seed=rng_seed)
         self.battery_usage = battery_usage
 
-    def should_succeed(self):
+    def should_succeed(self) -> bool:
         """
         Determines whether the action should succeed, while simulating other aspects such as delays.
 
         :return: True if the action should succeed, or False otherwise.
-        :rtype: bool
         """
         time.sleep(self.delay)
-        return self.rng.random() <= self.success_probability
+        return float(self.rng.random()) <= self.success_probability
 
 
 class ExecutionStatus(IntEnum):
@@ -77,28 +77,29 @@ class ExecutionStatus(IntEnum):
 class ExecutionResult:
     """Contains the result of executing actions or plans."""
 
-    def __init__(self, status=ExecutionStatus.UNKNOWN, message=None):
+    def __init__(
+        self,
+        status: ExecutionStatus = ExecutionStatus.UNKNOWN,
+        message: str | None = None,
+    ) -> None:
         """
         Creates a new execution result instance.
 
         :param status: The resulting status code. Defaults to UNKNOWN.
-        :type status: :class:`pyrobosim.planning.actions.ExecutionStatus`
         :param message: An optional message describing the result.
-        :type message: str
         """
         self.status = status
         self.message = message
 
-    def is_success(self):
+    def is_success(self) -> bool:
         """
         Helper function to determine if an execution result is successful.
 
         :return: True if successful, otherwise False.
-        :rtype: bool
         """
         return self.status == ExecutionStatus.SUCCESS
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Returns printable string."""
         return f"Execution result with status: {self.status.name}"
 
@@ -108,37 +109,28 @@ class TaskAction:
 
     def __init__(
         self,
-        type,
-        robot=None,
-        object=None,
-        room=None,
-        source_location=None,
-        target_location=None,
-        pose=None,
-        path=Path(),
-        cost=None,
-    ):
+        type: str,
+        robot: str | None = None,
+        object: str | None = None,
+        room: str | None = None,
+        source_location: str | None = None,
+        target_location: str | None = None,
+        pose: Pose | None = None,
+        path: Path = Path(),
+        cost: float | None = None,
+    ) -> None:
         """
         Creates a new task action representation.
 
         :param type: Action type.
-        :type type: str
         :param robot: Name of robot to execute the action.
-        :type robot: str, optional
         :param object: Target object type or name.
-        :type object: str, optional
         :param room: Target room name.
-        :type room: str, optional
         :param source_location: Source location type or name.
-        :type source_location: str, optional
         :param target_location: Target location type or name.
-        :type target_location: str, optional
         :param pose: Optional pose parameter for the action.
-        :type pose: :class:`pyrobosim.utils.pose.Pose`, optional
         :param path: A specific path to follow, if provided.
-        :type path: :class:`pyrobosim.utils.motion.Path`, optional
         :param cost: Optional action cost.
-        :type cost: float
         """
         # Action-agnostic parameters
         self.type = type.lower()
@@ -153,7 +145,7 @@ class TaskAction:
         self.pose = pose  # Target pose
         self.path = path  # Path object containing a list of poses
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Returns printable string describing an action."""
         # Include the robot name if any.
         if self.robot is not None:
@@ -233,39 +225,37 @@ class TaskPlan:
     (:class:`pyrobosim.planning.actions.TaskAction`).
     """
 
-    def __init__(self, robot=None, actions=[]):
+    def __init__(
+        self, robot: str | None = None, actions: list[TaskAction] = []
+    ) -> None:
         """
         Creates a new task plan.
 
         :param robot: Name of robot to execute the plan.
-        :type robot: str, optional
         :param actions: List of actions.
-        :type actions: list[:class:`pyrobosim.planning.actions.TaskAction`], optional
         """
         self.robot = robot
         self.set_actions(actions)
 
-    def set_actions(self, actions):
+    def set_actions(self, actions: list[TaskAction]) -> None:
         """
         Sets actions and updates the total cost over all the actions.
         Use this method rather than directly setting the actions variable.
 
         :param actions: List of actions.
-        :type actions: list[:class:`pyrobosim.planning.actions.TaskAction`]
         """
         self.actions = actions
         self.total_cost = sum([a.cost for a in self.actions if a.cost is not None])
 
-    def size(self):
+    def size(self) -> int:
         """
         Get the total number of actions comprising this task plan.
 
         :return: Size of plan.
-        :rtype: int
         """
         return len(self.actions)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Returns printable string describing a task plan."""
         # Check for empty plan
         if len(self.actions) == 0:

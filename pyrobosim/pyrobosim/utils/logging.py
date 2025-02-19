@@ -3,18 +3,16 @@ Logging utilities for PyRoboSim.
 """
 
 import logging
+from logging import Logger
 
 
-def create_logger(name, level=logging.INFO):
+def create_logger(name: str, level: int = logging.INFO) -> Logger:
     """
     Defines a general logger for use with PyRoboSim.
 
     :param name: The name of the logger.
-    :type name: str
     :param level: The level of the logger.
-    :type level: int
     :return: A logger instance.
-    :rtype: :class:`logging.Logger`.
     """
     logger = logging.getLogger(name)
     logger.setLevel(level)
@@ -35,22 +33,20 @@ def create_logger(name, level=logging.INFO):
 PYROBOSIM_GLOBAL_LOGGER = create_logger("pyrobosim")
 
 
-def get_global_logger():
+def get_global_logger() -> Logger:
     """
     Returns the global logger for PyRoboSim.
 
     :return: The PyRoboSim global logger instance.
-    :rtype: :class:`logging.Logger`.
     """
     return PYROBOSIM_GLOBAL_LOGGER
 
 
-def set_global_logger(logger):
+def set_global_logger(logger: Logger) -> None:
     """
     Sets the global PyRoboSim logger to another specified logger.
 
     :param logger: The logger to use as the new global logger.
-    :type logger: :class:`logging.Logger`
     """
     global PYROBOSIM_GLOBAL_LOGGER
     PYROBOSIM_GLOBAL_LOGGER = logger

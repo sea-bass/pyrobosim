@@ -9,13 +9,13 @@ import argparse
 import threading
 import time
 
-from pyrobosim.core import WorldYamlLoader
+from pyrobosim.core import World, WorldYamlLoader
 from pyrobosim.gui import start_gui
 from pyrobosim.planning.pddlstream import PDDLStreamPlanner, get_default_domains_folder
 from pyrobosim.utils.general import get_data_folder
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     """Parse command-line arguments"""
     parser = argparse.ArgumentParser(description="PDDLStream planning demo.")
     parser.add_argument(
@@ -33,19 +33,19 @@ def parse_args():
     return parser.parse_args()
 
 
-def load_world():
+def load_world() -> World:
     """Load a test world."""
     world_file = os.path.join(get_data_folder(), "pddlstream_simple_world.yaml")
     return WorldYamlLoader().from_file(world_file)
 
 
-def start_planner(world, args):
+def start_planner(world: World, args: argparse.Namespace) -> None:
     """Test PDDLStream planner under various scenarios."""
     domain_folder = os.path.join(get_default_domains_folder(), args.example)
     planner = PDDLStreamPlanner(world, domain_folder)
 
     # Wait for the GUI to load
-    while not world.has_gui:
+    while world.gui is None:
         time.sleep(1.0)
     time.sleep(0.5)  # Extra time for log messages to not interfere with prompt
 

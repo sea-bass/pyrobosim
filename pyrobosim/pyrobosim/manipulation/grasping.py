@@ -1,12 +1,14 @@
 """Grasping utilities."""
 
-from ..utils.pose import Pose
+from enum import Enum
+from typing import Sequence
 
 import numpy as np
+from matplotlib.axes import Axes
 import matplotlib.pyplot as plt
-
-from enum import Enum
 from transforms3d.quaternions import rotate_vector, qinverse
+
+from ..utils.pose import Pose
 
 
 class GraspFace(Enum):
@@ -55,6 +57,54 @@ vec_from_direction = {
 }
 
 
+class ParallelGraspProperties:
+    """
+    Representation of a parallel-jaw gripper.
+
+    .. code-block::
+
+            SIDE VIEW               TOP VIEW
+                      |            _________
+            _____     v           |              ^
+        ===|_____|  height     ===|          max_width
+                      ^           |_________     v
+                      |
+                                  |<-depth->|
+               depth_clearance -->||<--
+    """
+
+    def __init__(
+        self,
+        max_width: float,
+        depth: float,
+        height: float,
+        width_clearance: float = 0.0,
+        depth_clearance: float = 0.0,
+    ) -> None:
+        """
+        Creates a parallel gripper grasp properties instance.
+
+        :param max_width: Maximum gripper opening width
+        :param depth: Distance from end effector base to finger tips (or equivalent)
+        :param height: Height of end effector finger tips (or equivalent)
+        :param width_clearance: Width clearance so grasps are not flush with gripper fingers
+        :param depth_clearance: Depth clearance so grasps are not flush with gripper base
+        """
+        self.max_width = max_width
+        self.depth = depth
+        self.height = height
+        self.width_clearance = width_clearance
+        self.depth_clearance = depth_clearance
+
+    def __repr__(self) -> str:
+        """Printable string representation"""
+        display_str = "Parallel jaw gripper properties:\n"
+        display_str += (
+            f"\tMax width: {self.max_width}, depth: {self.depth}, height: {self.height}"
+        )
+        return display_str
+
+
 class Grasp:
     """
     Representation of an object grasp.
@@ -62,40 +112,33 @@ class Grasp:
 
     def __init__(
         self,
-        properties,
-        origin_wrt_object,
-        origin_wrt_world=None,
-        face=GraspFace.UNKNOWN,
-        direction=GraspDirection.UNKNOWN,
-    ):
+        properties: ParallelGraspProperties,
+        origin_wrt_object: Pose,
+        origin_wrt_world: Pose | None = None,
+        face: GraspFace = GraspFace.UNKNOWN,
+        direction: GraspDirection = GraspDirection.UNKNOWN,
+    ) -> None:
         """
         Creates a grasp object instance.
 
+        :param properties: The parallel grasp properties to use.
         :param origin_wrt_object: Grasp origin pose, expressed with respect to the object
-        :type origin_wrt_object: :class:`pyrobosim.utils.pose.Pose`
         :param origin_wrt_world: Grasp origin pose, expressed with respect to the world
-        :type origin_wrt_world: :class:`pyrobosim.utils.pose.Pose`, optional
-        :param properties: Grasping properties object
-        :type properties: :class:`pyrobosim.manipulation.grasping.ParallelGraspProperties`, optional
         :param face: Enumeration denoting grasp face relative to object.
-        :type face: :class:`pyrobosim.manipulation.grasping.GraspFace`, optional
         :param direction: Enumeration denoting grasp direction relative to object.
-        :type direction: :class:`pyrobosim.manipulation.grasping.GraspDirection`, optional
         """
+        self.properties = properties
         self.origin_wrt_object = origin_wrt_object
         self.origin_wrt_world = origin_wrt_world
-        self.properties = properties
         self.face = face
         self.direction = direction
 
-    def translate_origin(self, vec):
+    def translate_origin(self, vec: list[float]) -> list[float]:
         """
         Adds the origin position to a specified position vector.
 
         :param vec: Original position vector
-        :type vec: list[float]
         :return: Translated position vector
-        :rype: list[float]
         """
         return [
             self.origin_wrt_object.x + vec[0],
@@ -103,8 +146,16 @@ class Grasp:
             self.origin_wrt_object.z + vec[2],
         ]
 
-    def plot(self, ax, color, alpha=0.8):
-        """Displays the grasp on an existing set of axes."""
+    def plot(
+        self, ax: Axes, color: tuple[float, ...] | str, alpha: float = 0.8
+    ) -> None:
+        """
+        Displays the grasp on an existing set of axes.
+
+        :param ax: The axes to use for displaying the result.
+        :param color: The color of the grasp, as an RGB tuple or string.
+        :param alpha: The alpha channel (transparency) of the grasp.
+        """
         from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
         d = self.properties.depth
@@ -131,7 +182,7 @@ class Grasp:
         ]
         ax.add_collection3d(Poly3DCollection(gripper_verts, color=color, alpha=alpha))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Printable string representation"""
         display_str = f"Grasp:\n"
         display_str += f"\tOrigin w.r.t. object:{self.origin_wrt_object}\n"
@@ -143,69 +194,22 @@ class Grasp:
         return display_str
 
 
-class ParallelGraspProperties:
-    """
-    Representation of a parallel-jaw gripper.
-
-    .. code-block::
-
-            SIDE VIEW               TOP VIEW
-                      |            _________
-            _____     v           |              ^
-        ===|_____|  height     ===|          max_width
-                      ^           |_________     v
-                      |
-                                  |<-depth->|
-               depth_clearance -->||<--
-    """
-
-    def __init__(
-        self, max_width, depth, height, width_clearance=0.0, depth_clearance=0.0
-    ):
-        """
-        Creates a parallel gripper grasp properties instance.
-
-        :param max_width: Maximum gripper opening width
-        :type max_width: float
-        :param depth: Distance from end effector base to finger tips (or equivalent)
-        :type depth: float
-        :param height: Height of end effector finger tips (or equivalent)
-        :type height: float
-        :param width_clearance: Width clearance so grasps are not flush with gripper fingers
-        :type width_clearance: float, optional
-        :param depth_clearance: Depth clearance so grasps are not flush with gripper base
-        :type depth_clearance: float, optional
-        """
-        self.max_width = max_width
-        self.depth = depth
-        self.height = height
-        self.width_clearance = width_clearance
-        self.depth_clearance = depth_clearance
-
-    def __repr__(self):
-        """Printable string representation"""
-        display_str = "Parallel jaw gripper properties:\n"
-        display_str += (
-            f"\tMax width: {self.max_width}, depth: {self.depth}, height: {self.height}"
-        )
-        return display_str
-
-
 class GraspGenerator:
     """
     Generates grasps given object dimensions and pose relative to a robot.
     """
 
-    def __init__(self, properties):
+    def __init__(self, properties: ParallelGraspProperties) -> None:
         """
         Creates a grasp generator instance given grasping properties.
 
         :param properties: Grasping properties object
-        :type properties: :class:`pyrobosim.manipulation.grasping.ParallelGraspProperties`
         """
         self.properties = properties
 
-    def compute_robot_facing_rot(self, object_pose=Pose(), robot_pose=None):
+    def compute_robot_facing_rot(
+        self, object_pose: Pose = Pose(), robot_pose: Pose | None = None
+    ) -> np.ndarray:
         """
         Computes the rotation matrix to convert from nominal cuboid orientation to robot-facing orientation.
 
@@ -226,11 +230,8 @@ class GraspGenerator:
         of the robot.
 
         :param object_pose: The pose of the object center, defaults to identity transform
-        :type object_pose: :class:`pyrobosim.utils.pose.Pose`, optional
         :param robot_pose: The pose of the robot. If none specified, it is not used in calculations.
-        :type robot_pose: :class:`pyrobosim.utils.pose.Pose`, optional
         :return: Rotation matrix transforming the nominal cuboid orientation to a robot-facing orientation
-        :rtype: :class:`numpy.ndarray`
         """
         rot_matrix = np.eye(3)
         if robot_pose is None:
@@ -284,7 +285,12 @@ class GraspGenerator:
         rot_matrix[:, 2] = z_vec
         return rot_matrix
 
-    def should_try_grasp(self, faces_enabled, face_normals, face_vec):
+    def should_try_grasp(
+        self,
+        faces_enabled: Sequence[bool],
+        face_normals: Sequence[np.ndarray],
+        face_vec: np.ndarray,
+    ) -> tuple[bool, GraspFace]:
         """
         Helper function to validate whether to compute grasps on a specific face.
 
@@ -303,13 +309,9 @@ class GraspGenerator:
             - Disallow a grasp along the vector [1, 0, 0] because this would be a back grasp which is not supported
 
         :param faces_enabled: Faces for which grasp generation is enabled, in the form (front, top, side)
-        :type faces_enabled: list[bool]
         :param face_normals: Face normals in the canonical directions, in the form (front, top, left, right)
-        :type face_normals: list[:class:`numpy.ndarray`]
         :param face_vec: Normal vector of the cuboid face to check.
-        :type face_vec: :class:`numpy.ndarray`
         :return: A tuple determining whether the grasp should be attempted, and what face that corresponds to
-        :type face_vec: (bool, :class:`pyrobosim.manipulation.grasping.GraspFace`)
         """
         try_grasp = False
         grasp_face = GraspFace.UNKNOWN
@@ -333,20 +335,21 @@ class GraspGenerator:
 
         return (try_grasp, grasp_face)
 
-    def _create_grasp(self, grasp_center, grasp_face, grasp_dir, object_pose):
+    def _create_grasp(
+        self,
+        grasp_center: Pose,
+        grasp_face: GraspFace,
+        grasp_dir: GraspDirection,
+        object_pose: Pose,
+    ) -> Grasp:
         """
         Helper function to create a grasp object.
 
         :param grasp_center: The grasp origin pose with respect to the object.
-        :type grasp_center: :class:`pyrobosim.utils.pose.Pose`
         :param grasp_face: The grasp face
-        :type grasp_face: :class:`pyrobosim.manipulation.grasping.GraspFace`
         :param grasp_dir: The grasp direction
-        :type grasp_dir: :class:`pyrobosim.manipulation.grasping.GraspDirection`
         :param object_pose: The object pose in world coordinates.
-        :type object_pose: :class:`pyrobosim.utils.pose.Pose`
         :return: Grasp object
-        :rtype: :class:`pyrobosim.manipulation.grasping.Grasp`
         """
         grasp_wrt_world = Pose.from_transform(
             np.matmul(
@@ -364,30 +367,23 @@ class GraspGenerator:
 
     def generate(
         self,
-        object_dims,
-        object_pose=Pose(),
-        robot_pose=None,
-        top_grasps=True,
-        front_grasps=True,
-        side_grasps=True,
-    ):
+        object_dims: list[float],
+        object_pose: Pose = Pose(),
+        robot_pose: Pose | None = None,
+        top_grasps: bool = True,
+        front_grasps: bool = True,
+        side_grasps: bool = True,
+    ) -> list[Grasp]:
         """
         Generates a set of axis-aligned grasps for a cuboid object.
 
         :param object_dims: List containing the object [x, y, z] dimensions
-        :type object_dims: list[float]
         :param object_pose: The pose of the object center, defaults to identity transform
-        :type object_pose: :class:`pyrobosim.utils.pose.Pose`, optional
         :param robot_pose: The pose of the robot. If none specified, it is not used in calculations.
-        :type robot_pose: :class:`pyrobosim.utils.pose.Pose`, optional
         :param top_grasps: Enable top grasp generation, defaults to True
-        :type top_grasps: bool, optional
         :param front_grasps: Enable front grasp generation, defaults to True
-        :type front_grasps: bool, optional
         :param side_grasps: Enable side grasp generation, defaults to True
-        :type side_grasps: bool, optional
         :return: A list of generated grasps
-        :rtype: list[:class:`pyrobosim.manipulation.grasping.Grasp`]
         """
         grasps = []
         rot_matrix = self.compute_robot_facing_rot(object_pose, robot_pose)
@@ -411,7 +407,7 @@ class GraspGenerator:
         # -X face grasp #
         #################
         grasp_dir = GraspDirection.X_NEG
-        (try_grasp, grasp_face) = self.should_try_grasp(
+        try_grasp, grasp_face = self.should_try_grasp(
             directions_enabled, face_normals, vec_from_direction[grasp_dir]
         )
         if try_grasp:
@@ -433,7 +429,7 @@ class GraspGenerator:
         # +X face grasp #
         #################
         grasp_dir = GraspDirection.X_POS
-        (try_grasp, grasp_face) = self.should_try_grasp(
+        try_grasp, grasp_face = self.should_try_grasp(
             directions_enabled, face_normals, vec_from_direction[grasp_dir]
         )
         if try_grasp:
@@ -455,7 +451,7 @@ class GraspGenerator:
         # -Z face grasp #
         #################
         grasp_dir = GraspDirection.Z_NEG
-        (try_grasp, grasp_face) = self.should_try_grasp(
+        try_grasp, grasp_face = self.should_try_grasp(
             directions_enabled, face_normals, vec_from_direction[grasp_dir]
         )
         if try_grasp:
@@ -477,7 +473,7 @@ class GraspGenerator:
         # +Z face grasp #
         #################
         grasp_dir = GraspDirection.Z_POS
-        (try_grasp, grasp_face) = self.should_try_grasp(
+        try_grasp, grasp_face = self.should_try_grasp(
             directions_enabled, face_normals, vec_from_direction[grasp_dir]
         )
         if try_grasp:
@@ -499,7 +495,7 @@ class GraspGenerator:
         # -Y face grasp #
         #################
         grasp_dir = GraspDirection.Y_NEG
-        (try_grasp, grasp_face) = self.should_try_grasp(
+        try_grasp, grasp_face = self.should_try_grasp(
             directions_enabled, face_normals, vec_from_direction[grasp_dir]
         )
         if try_grasp:
@@ -521,7 +517,7 @@ class GraspGenerator:
         # +Y face grasp #
         #################
         grasp_dir = GraspDirection.Y_POS
-        (try_grasp, grasp_face) = self.should_try_grasp(
+        try_grasp, grasp_face = self.should_try_grasp(
             directions_enabled, face_normals, vec_from_direction[grasp_dir]
         )
         if try_grasp:
@@ -543,25 +539,20 @@ class GraspGenerator:
 
     def show_grasps(
         self,
-        object_dims,
-        grasps,
-        object_pose=Pose(),
-        robot_pose=None,
-        object_footprint=None,
-    ):
+        object_dims: list[float],
+        grasps: list[Grasp],
+        object_pose: Pose = Pose(),
+        robot_pose: Pose | None = None,
+        object_footprint: np.ndarray | None = None,
+    ) -> None:
         """
         Display the grasps on top of an object.
 
         :param object_dims: List containing the object [x, y, z] dimensions
-        :type object_dims: list[float]
         :param grasps: A list of grasps
-        :type grasps: list[:class:`pyrobosim.manipulation.grasping.Grasp`]
         :param object_pose: The pose of the object center, defaults to identity transform
-        :type object_pose: :class:`pyrobosim.utils.pose.Pose`, optional
         :param robot_pose: The pose of the robot. If none specified, it is not used in calculations.
-        :type robot_pose: :class:`pyrobosim.utils.pose.Pose`, optional
         :param object_footprint: Optional N-by-2 array of the object footprint points to overlay
-        :type object_footprint: :class:`numpy.ndarray`, optional
         """
         from mpl_toolkits.mplot3d import Axes3D
         from mpl_toolkits.mplot3d.art3d import Poly3DCollection
@@ -640,12 +631,11 @@ class GraspGenerator:
         ax.axes.set_zlim3d(min_z, max_z)
         plt.show()
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, str | float]:
         """
         Serializes the grasp generator to a dictionary.
 
         :return: A dictionary containing the grasp generator information.
-        :rtype: dict[str, Any]
         """
         return {
             "generator": "parallel_grasp",

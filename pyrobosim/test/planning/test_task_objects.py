@@ -3,6 +3,7 @@
 """Unit tests for task action and plan objects."""
 
 import pytest
+from pytest import CaptureFixture
 
 from pyrobosim.planning.actions import (
     ExecutionResult,
@@ -10,11 +11,11 @@ from pyrobosim.planning.actions import (
     TaskAction,
     TaskPlan,
 )
-from pyrobosim.utils.motion import Path
+from pyrobosim.utils.path import Path
 from pyrobosim.utils.pose import Pose
 
 
-def test_task_action_default_args():
+def test_task_action_default_args() -> None:
     """Create TaskAction object with default arguments and validate results."""
     action = TaskAction("pick")
 
@@ -30,7 +31,7 @@ def test_task_action_default_args():
     assert action.path.num_poses == 0
 
 
-def test_task_action_nondefault_args():
+def test_task_action_nondefault_args() -> None:
     """Create TaskAction object with nondefault arguments and validate results."""
     test_poses = [
         Pose(x=0.0, y=0.0, yaw=0.0),
@@ -60,7 +61,7 @@ def test_task_action_nondefault_args():
     assert action.path == Path(poses=test_poses)
 
 
-def test_print_task_action(capsys):
+def test_print_task_action(capsys: CaptureFixture) -> None:
     """Create various TaskAction objects to test printing capabilities."""
     print(TaskAction("navigate"))
     out, _ = capsys.readouterr()
@@ -153,7 +154,7 @@ def test_print_task_action(capsys):
     assert out == "Invalid action type: spin\n"
 
 
-def test_task_plan_default_args():
+def test_task_plan_default_args() -> None:
     """Create TaskPlan object with default arguments and validate results."""
     plan = TaskPlan()
 
@@ -163,7 +164,7 @@ def test_task_plan_default_args():
     assert plan.size() == 0
 
 
-def test_task_plan_nondefault_args():
+def test_task_plan_nondefault_args() -> None:
     """Create TaskAction object with nondefault arguments and validate results."""
     nav_path = Path(
         poses=[
@@ -200,7 +201,7 @@ def test_task_plan_nondefault_args():
     assert plan.total_cost == pytest.approx(1.875)
 
 
-def test_print_task_plan(capsys):
+def test_print_task_plan(capsys: CaptureFixture) -> None:
     """Create various TaskPlan objects to test printing capabilities."""
     print(TaskPlan())
     out, _ = capsys.readouterr()
@@ -227,7 +228,7 @@ def test_print_task_plan(capsys):
     assert out == expected_str
 
 
-def test_print_execution_result(capsys):
+def test_print_execution_result(capsys: CaptureFixture) -> None:
     """Create ExecutionResult object and test printing it."""
     print(ExecutionResult(status=ExecutionStatus.SUCCESS))
     out, _ = capsys.readouterr()

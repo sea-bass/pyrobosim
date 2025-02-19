@@ -2,62 +2,58 @@
 
 import itertools
 import numpy as np
+from typing import Any, Sequence
 
 from .hallway import Hallway
 from .locations import Location, ObjectSpawn
 from .objects import Object
 from .room import Room
 from .robot import Robot
+from .types import Entity, EntityMetadata, InvalidEntityCategoryException, set_parent
 from ..planning.actions import ExecutionResult, ExecutionStatus
-from ..utils.general import InvalidEntityCategoryException
 from ..utils.logging import create_logger
+from ..utils.path import Path
 from ..utils.pose import Pose
-from ..utils.knowledge import (
-    apply_resolution_strategy,
-    resolve_to_location,
-    resolve_to_object,
-)
 from ..utils.polygon import sample_from_polygon, transform_polygon
-from ..utils.search_graph import Node
 
 
 class World:
     """Core world modeling class."""
 
     def __init__(
-        self, name="world", inflation_radius=0.0, object_radius=0.0375, wall_height=2.0
-    ):
+        self,
+        name: str = "world",
+        inflation_radius: float = 0.0,
+        object_radius: float = 0.0375,
+        wall_height: float = 2.0,
+    ) -> None:
         """
         Creates a new world model instance.
 
         :param name: Name of world model.
-        :type name: str
         :param inflation_radius: Inflation radius around entities (locations, walls, etc.), in meters.
-        :type inflation_radius: float, optional
         :param object_radius: Buffer radius around objects for collision checking, in meters.
-        :type object_radius: float, optional
         :param wall_height: Height of walls, in meters, for 3D model generation.
-        :type wall_height: float, optional
         """
+        from ..gui.main import PyRoboSimMainWindow
+
         self.name = name
         self.wall_height = wall_height
-        self.source_yaml = None
-        self.source_yaml_file = None
+        self.source_yaml: dict[str, Any] | None = None
+        self.source_yaml_file: str | None = None
         self.logger = create_logger(self.name)
 
         # Connected apps
-        self.has_gui = False
-        self.gui = None
-        self.has_ros_node = False
-        self.ros_node = False
+        self.gui: PyRoboSimMainWindow | None = None
+        self.ros_node = None
 
         # World entities (robots, locations, objects, etc.)
-        self.robots = []
-        self.name_to_entity = {}
-        self.rooms = []
-        self.hallways = []
-        self.locations = []
-        self.objects = []
+        self.name_to_entity: dict[str, Entity] = {}
+        self.robots: list[Robot] = []
+        self.rooms: list[Room] = []
+        self.hallways: list[Hallway] = []
+        self.locations: list[Location] = []
+        self.objects: list[Object] = []
         self.set_metadata()
 
         # Counters
@@ -65,18 +61,17 @@ class World:
         self.num_hallways = 0
         self.num_locations = 0
         self.num_objects = 0
-        self.hallway_instance_counts = {}
-        self.location_instance_counts = {}
-        self.object_instance_counts = {}
+        self.hallway_instance_counts: dict[tuple[str, ...], int] = {}
+        self.location_instance_counts: dict[str, int] = {}
+        self.object_instance_counts: dict[str, int] = {}
 
         # World bounds, will be set by update_bounds()
         self.x_bounds = None
         self.y_bounds = None
 
         # Other parameters
-        self.max_object_sample_tries = (
-            1000  # Max number of tries to sample object locations
-        )
+        # Max number of tries to sample object locations
+        self.max_object_sample_tries = 1000
 
         # Distances for collision-aware navigation and sampling
         self.object_radius = object_radius
@@ -87,14 +82,16 @@ class World:
     ############
     # Metadata #
     ############
-    def set_metadata(self, locations=None, objects=None):
+    def set_metadata(
+        self,
+        locations: str | list[str] | None = None,
+        objects: str | list[str] | None = None,
+    ) -> None:
         """
         Sets location and object metadata from the specified files.
 
         :param locations: Path(s) to location metadata YAML file(s).
-        :type locations: str | list[str] | None
         :param objects: Path(s) to object metadata YAML file(s).
-        :type objects: str | list[str] | None
         """
         # Clear out old metadata
         Location.clear_metadata()
@@ -102,17 +99,18 @@ class World:
 
         self.add_metadata(locations, objects)
 
-    def add_metadata(self, locations=None, objects=None):
+    def add_metadata(
+        self,
+        locations: str | list[str] | None = None,
+        objects: str | list[str] | None = None,
+    ) -> None:
         """
         Add location and object metadata from the specified files, allowing
         additional metadata to be incrementally merged with the existing data.
 
         :param locations: Path(s) to location metadata YAML file(s).
-        :type locations: str | list[str] | None
         :param objects: Path(s) to object metadata YAML file(s).
-        :type objects: str | list[str] | None
         """
-
         if isinstance(locations, list):
             for location in locations:
                 Location.add_metadata(location)
@@ -125,28 +123,26 @@ class World:
         elif isinstance(objects, str):
             Object.add_metadata(objects)
 
-    def get_location_metadata(self):
+    def get_location_metadata(self) -> EntityMetadata:
         """
         Returns the location metadata associated with this world.
 
         :return: The location metadata.
-        :rtype: :class:`pyrobosim.utils.general.EntityMetadata`
         """
         return Location.metadata
 
-    def get_object_metadata(self):
+    def get_object_metadata(self) -> EntityMetadata:
         """
         Returns the object metadata associated with this world.
 
         :return: The object metadata.
-        :rtype: :class:`pyrobosim.utils.general.EntityMetadata`
         """
         return Object.metadata
 
     ##########################
     # World Building Methods #
     ##########################
-    def add_room(self, **room_config):
+    def add_room(self, **room_config: Any) -> Room | None:
         r"""
         Adds a room to the world.
 
@@ -161,14 +157,15 @@ class World:
             You can use ``room=Room(...)`` to directly pass in a :class:`pyrobosim.core.room.Room` object,
             or alternatively use the same keyword arguments you would use to create a Room object.
         :return: room object if successfully created, else None.
-        :rtype: :class:`pyrobosim.core.room.room`
         """
-
         # If it's a room object, get it from the "room" named argument.
         # Else, create a room directly from the specified arguments.
         if "room" in room_config:
-            room = room_config["room"]
+            room: Room = room_config["room"]
         else:
+            # If the room name is empty, automatically name it.
+            if "name" not in room_config:
+                room_config["name"] = f"room{self.num_rooms}"
             room = Room(**room_config)
 
         # Check for duplicate names.
@@ -177,10 +174,6 @@ class World:
                 f"Room {room.name} already exists in the world. Cannot add."
             )
             return None
-
-        # If the room name is empty, automatically name it.
-        if room.name is None:
-            room.name = f"room{self.num_rooms}"
 
         # If the room geometry is empty, do not allow it
         if room.polygon.is_empty:
@@ -210,14 +203,12 @@ class World:
         room.add_graph_nodes()
         return room
 
-    def remove_room(self, room_name):
+    def remove_room(self, room_name: str) -> bool:
         """
         Removes a room from the world by name.
 
         :param room_name: Name of room to remove.
-        :type room_name: str
         :return: True if the room was successfully removed, else False.
-        :rtype: bool
         """
         room = self.get_room_by_name(room_name)
         if room is None:
@@ -240,7 +231,7 @@ class World:
 
         return True
 
-    def add_hallway(self, **hallway_config):
+    def add_hallway(self, **hallway_config: Any) -> Hallway | None:
         r"""
         Adds a hallway from with specified parameters related to the :class:`pyrobosim.core.hallway.Hallway` class.
 
@@ -253,23 +244,53 @@ class World:
             and they will be resolved to actual room objects, if they exist in the world.
 
         :return: Hallway object if successfully created, else None.
-        :rtype: :class:`pyrobosim.core.hallway.Hallway`
         """
         # If it's a hallway object, get it from the "hallway" named argument.
         # Else, create a hallway directly from the specified arguments.
         if "hallway" in hallway_config:
-            hallway = hallway_config["hallway"]
+            hallway: Hallway = hallway_config["hallway"]
         else:
             if isinstance(hallway_config["room_start"], str):
-                hallway_config["room_start"] = self.get_room_by_name(
-                    hallway_config["room_start"]
-                )
+                room_start = self.get_room_by_name(hallway_config["room_start"])
+                if room_start is None:
+                    raise ValueError(
+                        f"{hallway_config['room_start']} must be a valid start Room object."
+                    )
+                hallway_config["room_start"] = room_start
+
             if isinstance(hallway_config["room_end"], str):
-                hallway_config["room_end"] = self.get_room_by_name(
-                    hallway_config["room_end"]
+                room_end = self.get_room_by_name(hallway_config["room_end"])
+                if room_end is None:
+                    raise ValueError(
+                        f"{hallway_config['room_end']} must be a valid end Room object."
+                    )
+                hallway_config["room_end"] = room_end
+
+            # If the hallway name is empty, automatically name it.
+            reversed_name: str | None = None
+            if "name" not in hallway_config:
+                ordered_rooms = tuple(
+                    sorted(
+                        [
+                            hallway_config["room_start"].name,
+                            hallway_config["room_end"].name,
+                        ]
+                    )
                 )
+                if ordered_rooms not in self.hallway_instance_counts:
+                    self.hallway_instance_counts[ordered_rooms] = 0
+                    suffix = ""
+                else:
+                    suffix = f"_{self.hallway_instance_counts[ordered_rooms]}"
+
+                hallway_config["name"] = (
+                    f"hall_{ordered_rooms[0]}_{ordered_rooms[1]}{suffix}"
+                )
+                reversed_name = f"hall_{ordered_rooms[1]}_{ordered_rooms[0]}{suffix}"
 
             hallway = Hallway(**hallway_config)
+            if reversed_name is not None:
+                hallway.reversed_name = reversed_name
 
         # Check for duplicate names.
         if hallway.name in self.get_hallway_names():
@@ -277,20 +298,6 @@ class World:
                 f"Hallway {hallway.name} already exists in the world. Cannot add."
             )
             return None
-
-        # If the hallway name is empty, automatically name it.
-        ordered_rooms = tuple(sorted([hallway.room_start.name, hallway.room_end.name]))
-        if ordered_rooms not in self.hallway_instance_counts:
-            self.hallway_instance_counts[ordered_rooms] = 0
-            suffix = ""
-        else:
-            suffix = f"_{self.hallway_instance_counts[ordered_rooms]}"
-
-        if hallway.name is None:
-            hallway.name = f"hall_{ordered_rooms[0]}_{ordered_rooms[1]}{suffix}"
-            hallway.reversed_name = (
-                f"hall_{ordered_rooms[1]}_{ordered_rooms[0]}{suffix}"
-            )
 
         # Check if the hallway collides with any other rooms or hallways
         is_valid_pose = True
@@ -314,6 +321,9 @@ class World:
         hallway.room_start.update_visualization_polygon()
         hallway.room_end.hallways.append(hallway)
         hallway.room_end.update_visualization_polygon()
+        ordered_rooms = tuple(sorted([hallway.room_start.name, hallway.room_end.name]))
+        if not ordered_rooms in self.hallway_instance_counts:
+            self.hallway_instance_counts[ordered_rooms] = 0
         self.hallway_instance_counts[ordered_rooms] += 1
         self.num_hallways += 1
         hallway.update_collision_polygons(self.inflation_radius)
@@ -323,14 +333,12 @@ class World:
         # Finally, return the Hallway object
         return hallway
 
-    def remove_hallway(self, hallway):
+    def remove_hallway(self, hallway: Hallway) -> bool:
         """
         Removes a hallway between two rooms.
 
         :param hallway: Hallway object to remove.
-        :type hallway: :class:`pyrobosim.core.hallway.Hallway`
         :return: True if the hallway was successfully removed, else False.
-        :rtype: bool
         """
         # Validate the input
         if not hallway in self.hallways:
@@ -351,7 +359,7 @@ class World:
             self.update_bounds(entity=hallway, remove=True)
         return True
 
-    def add_location(self, **location_config):
+    def add_location(self, **location_config: Any) -> Location | None:
         r"""
         Adds a location at the specified parent entity, usually a room.
 
@@ -366,16 +374,26 @@ class World:
             You can also pass in the room name as the ``parent`` argument, and it will be resolved to an actual room object, if it exists in the world.
 
         :return: Location object if successfully created, else None.
-        :rtype: :class:`pyrobosim.core.locations.Location`
         """
+        # If the category name is empty, use "location" as the base name.
+        category = location_config.get("category", "location")
+        if category not in self.location_instance_counts:
+            self.location_instance_counts[category] = 0
+
         # If it's a location object, get it from the "location" named argument.
         # Else, create a location directly from the specified arguments.
         if "location" in location_config:
-            loc = location_config["location"]
+            loc: Location = location_config["location"]
         elif "parent" in location_config:
             if isinstance(location_config["parent"], str):
                 location_config["parent"] = self.get_room_by_name(
                     location_config["parent"]
+                )
+
+            # If no name is specified, create one automatically.
+            if "name" not in location_config:
+                location_config["name"] = (
+                    f"{category}{self.location_instance_counts[category]}"
                 )
 
             try:
@@ -387,23 +405,14 @@ class World:
             self.logger.warning("Location instance or parent must be specified.")
             return None
 
+        assert isinstance(loc.parent, Room)
+
         # Check for duplicate names.
         if loc.name in self.get_location_names():
             self.logger.warning(
                 f"Location {loc.name} already exists in the world. Cannot add."
             )
             return None
-
-        # If the category name is empty, use "location" as the base name.
-        category = loc.category
-        if category is None:
-            category = "location"
-        # If the location name is empty, automatically name it.
-        if category not in self.location_instance_counts:
-            self.location_instance_counts[category] = 0
-        if loc.name is None:
-            loc.name = f"{category}{self.location_instance_counts[category]}"
-            loc.create_spawn_locations()
 
         # Check that the location fits within the room and is not in collision with
         # other locations already in the room. Else, warn and do not add it.
@@ -421,135 +430,148 @@ class World:
 
         # Do all the necessary bookkeeping
         loc.update_collision_polygon(self.inflation_radius)
+        loc.create_spawn_locations()
+        loc.add_graph_nodes()
         loc.parent.locations.append(loc)
         loc.parent.update_collision_polygons(self.inflation_radius)
         self.locations.append(loc)
-        self.location_instance_counts[loc.category] += 1
+        self.location_instance_counts[category] += 1
         self.num_locations += 1
         self.name_to_entity[loc.name] = loc
         for spawn in loc.children:
             self.name_to_entity[spawn.name] = spawn
 
-        loc.add_graph_nodes()
-        if self.has_gui:
+        if self.gui is not None:
             self.gui.canvas.show_locations_signal.emit()
             self.gui.canvas.show_objects_signal.emit()
             self.gui.canvas.draw_signal.emit()
         return loc
 
-    def update_location(self, loc, pose, room=None, is_open=None, is_locked=None):
+    def update_location(
+        self,
+        location: Location | str,
+        pose: Pose,
+        room: Room | str | None = None,
+        is_open: bool | None = None,
+        is_locked: bool | None = None,
+    ) -> bool:
         """
         Updates an existing location in the world.
 
-        :param loc: Location instance or name to update.
-        :type loc: :class:`pyrobosim.core.locations.Location`/str
+        :param location: Location instance or name to update.
         :param pose: Pose of the location.
-        :type pose: :class:`pyrobosim.utils.pose.Pose`
-        :param room: Room instance or name. If none, uses the previous room.
-        :type room: :class:`pyrobosim.core.room.Room`/str, optional
+        :param room: Room instance or name. If None, uses the previous room.
         :param is_open: Whether the location should be open. If None, keeps the current state.
-        :type is_open: bool, optional
         :param is_locked: Whether the location should be locked. If None, keeps the current state.
-        :type is_locked: bool, optional
         :return: True if the update was successful, else False.
-        :rtype: bool
         """
-        if isinstance(loc, str):
-            loc = self.get_location_by_name(loc)
-        if not isinstance(loc, Location):
+        if isinstance(location, str):
+            resolved_location = self.get_location_by_name(location)
+        elif isinstance(location, Location):
+            resolved_location = location
+
+        if resolved_location is None:
             self.logger.warning("Could not find location. Not updating.")
             return False
 
-        if room is not None:
+        assert isinstance(resolved_location.parent, Room)
+        if room is None:
+            room = resolved_location.parent
+        else:
             if isinstance(room, str):
                 room = self.get_room_by_name(room)
 
             if not isinstance(room, Room):
                 self.logger.warning(
-                    f"Room {loc} did not resolve to a valid room for a location."
+                    f"{room} did not resolve to a valid room for a location."
                 )
                 return False
 
         if is_open is not None:
-            loc.is_open = is_open
+            resolved_location.set_open(is_open, recursive=True)
         if is_locked is not None:
-            loc.is_locked = is_locked
+            resolved_location.is_locked = is_locked
 
         # Check that the location fits within the room and is not in collision with
         # other locations already in the room. Else, warn and do not add it.
-        new_polygon = transform_polygon(loc.raw_polygon, pose)
+        new_polygon = transform_polygon(resolved_location.raw_polygon, pose)
         is_valid_pose = new_polygon.within(room.polygon)
         for other_loc in room.locations:
-            if loc != other_loc:
+            if resolved_location != other_loc:
                 is_valid_pose = is_valid_pose and not new_polygon.intersects(
                     other_loc.polygon
                 )
         if not is_valid_pose:
             self.logger.warning(
-                f"Location {loc.name} in collision. Cannot add to world."
+                f"Location {resolved_location.name} in collision. Cannot add to world."
             )
             return False
 
         # If we passed all checks, update the polygon.
-        loc.parent.locations.remove(loc)
-        loc.parent = room
-        room.locations.append(loc)
-        loc.set_pose(pose)
-        loc.create_polygons(self.inflation_radius)
-        for spawn in loc.children:
+        set_parent(resolved_location, room)
+        resolved_location.set_pose(pose)
+        resolved_location.create_polygons(self.inflation_radius)
+        for spawn in resolved_location.children:
+            assert isinstance(spawn, ObjectSpawn)
             spawn.set_pose_from_parent()
-        if self.has_gui:
+        if self.gui is not None:
             self.gui.canvas.show_locations_signal.emit()
             self.gui.canvas.show_objects_signal.emit()
             self.gui.canvas.draw_signal.emit()
         return True
 
-    def remove_location(self, loc):
+    def remove_location(self, location: Location | str) -> bool:
         """
         Cleanly removes a location from the world.
 
-        :param loc: Location instance of name to remove.
-        :type loc: :class:`pyrobosim.core.locations.Location`/str
+        :param location: Location instance of name to remove.
         :return: True if the location was successfully removed, else False.
-        :rtype: bool
         """
         # Parse inputs
-        if isinstance(loc, str):
-            loc = self.get_location_by_name(loc)
+        if isinstance(location, str):
+            resolved_location = self.get_location_by_name(location)
+        if isinstance(location, Location):
+            resolved_location = location
 
-        if loc not in self.locations:
-            self.logger.warning(f"{loc} not found in world. Cannot remove.")
+        if resolved_location is None:
+            return False
+
+        if resolved_location not in self.locations:
+            self.logger.warning(
+                f"{resolved_location} not found in world. Cannot remove."
+            )
             return False
 
         # Remove objects at the location before removing the location.
-        for spawn in loc.children:
+        for spawn in resolved_location.children:
             while len(spawn.children) > 0:
-                self.remove_object(spawn.children[-1])
+                object_to_remove = spawn.children[-1]
+                assert isinstance(object_to_remove, Object)
+                self.remove_object(object_to_remove)
 
         # Remove the location.
-        self.locations.remove(loc)
+        self.locations.remove(resolved_location)
         self.num_locations -= 1
-        self.location_instance_counts[loc.category] -= 1
-        room = loc.parent
-        room.locations.remove(loc)
-        room.update_collision_polygons(self.inflation_radius)
-        self.name_to_entity.pop(loc.name)
-        for spawn in loc.children:
+        self.location_instance_counts[resolved_location.category or "location"] -= 1
+        room = resolved_location.parent
+        if isinstance(room, Room):
+            room.locations.remove(resolved_location)
+            room.update_collision_polygons(self.inflation_radius)
+        self.name_to_entity.pop(resolved_location.name)
+        for spawn in resolved_location.children:
             self.name_to_entity.pop(spawn.name)
-        if self.has_gui:
+        if self.gui is not None:
             self.gui.canvas.show_locations_signal.emit()
             self.gui.canvas.show_objects_signal.emit()
             self.gui.canvas.draw_signal.emit()
         return True
 
-    def open_location(self, location):
+    def open_location(self, location: Entity | str | None) -> ExecutionResult:
         """
         Opens a storage location or hallway between two rooms..
 
         :param location: Location or Hallway object to open, or its name.
-        :type location: :class:`pyrobosim.core.locations.Location`, :class:`pyrobosim.core.hallway.Hallway`, or str
         :return: An object describing the execution result.
-        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
         # Validate the input
         if isinstance(location, str):
@@ -582,9 +604,9 @@ class World:
                 status=ExecutionStatus.PRECONDITION_FAILURE, message=message
             )
 
-        location.is_open = True
+        location.set_open(True, recursive=True)
         location.update_visualization_polygon()
-        if self.has_gui:
+        if self.gui is not None:
             if isinstance(location, Hallway):
                 self.gui.canvas.show_hallways_signal.emit()
             else:
@@ -592,16 +614,15 @@ class World:
             self.gui.update_buttons_signal.emit()
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
-    def close_location(self, location, ignore_robots=[]):
+    def close_location(
+        self, location: Entity | str | None, ignore_robots: list[Robot] = []
+    ) -> ExecutionResult:
         """
         Close a storage location or hallway.
 
         :param location: Location or Hallway object to close, or its name.
-        :type location: :class:`pyrobosim.core.locations.Location`, :class:`pyrobosim.core.hallway.Hallway`, or str
         :param ignore_robots: List of robots to ignore, for example the robot closing the hallway.
-        :type ignore_robots: list[:class:`pyrobosim.core.robot.Robot`]
         :return: An object describing the execution result.
-        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
         # Validate the input
         if isinstance(location, str):
@@ -644,9 +665,9 @@ class World:
                         status=ExecutionStatus.PRECONDITION_FAILURE, message=message
                     )
 
-        location.is_open = False
+        location.set_open(False, recursive=True)
         location.update_visualization_polygon()
-        if self.has_gui:
+        if self.gui is not None:
             if is_hallway:
                 self.gui.canvas.show_hallways_signal.emit()
             else:
@@ -654,14 +675,12 @@ class World:
             self.gui.update_buttons_signal.emit()
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
-    def lock_location(self, location):
+    def lock_location(self, location: Entity | str | None) -> ExecutionResult:
         """
         Locks a storage location or hallway.
 
         :param location: Location or Hallway object to lock, or its name.
-        :type location: :class:`pyrobosim.core.locations.Location`, :class:`pyrobosim.core.hallway.Hallway`, or str
         :return: An object describing the execution result.
-        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
         # Validate the input
         if isinstance(location, str):
@@ -690,14 +709,12 @@ class World:
         location.is_locked = True
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
-    def unlock_location(self, location):
+    def unlock_location(self, location: Entity | str | None) -> ExecutionResult:
         """
         Unlocks a storage location or hallway.
 
         :param location: Location or Hallway object to unlock, or its name.
-        :type location: :class:`pyrobosim.core.locations.Location`, :class:`pyrobosim.core.hallway.Hallway`, or str
         :return: An object describing the execution result.
-        :rtype: :class:`pyrobosim.planning.actions.ExecutionResult`
         """
         # Validate the input
         if isinstance(location, str):
@@ -726,21 +743,21 @@ class World:
         location.is_locked = False
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
-    def sample_object_spawn_pose(self, obj, obj_spawn, max_tries):
+    def sample_object_spawn_pose(
+        self, obj: Object, obj_spawn: ObjectSpawn, max_tries: int
+    ) -> Pose | None:
         """
         Samples an object pose in a specific object spawn.
 
         :param obj: Object instance.
-        :type obj: :class:`pyrobosim.core.objects.Object`
         :param obj_spawn: Object spawn instance.
-        :type obj_spawn: :class:`pyrobosim.core.locations.ObjectSpawn`
         :param max_tries: The maximum number of tries to sample.
-        :type max_tries: int
         :return: A sampled spawn pose, if one was found. Otherwise returns None.
-        :rtype: :class:`pyrobosim.utils.pose.Pose` / None
         """
         for _ in range(max_tries):
             x_sample, y_sample = sample_from_polygon(obj_spawn.polygon)
+            if (x_sample is None) or (y_sample is None):
+                continue
             yaw_sample = np.random.uniform(-np.pi, np.pi)
             pose_sample = Pose(x=x_sample, y=y_sample, z=0.0, yaw=yaw_sample)
             poly = transform_polygon(obj.raw_collision_polygon, pose_sample)
@@ -758,7 +775,7 @@ class World:
                 return pose_sample
         return None
 
-    def add_object(self, **object_config):
+    def add_object(self, **object_config: Any) -> Object | None:
         r"""
         Adds an object to a specific location.
 
@@ -775,14 +792,19 @@ class World:
             You can also pass in the parent entity name as the ``parent`` argument, and it will be resolved to an actual entity, if it exists in the world.
 
         :return: Object instance if successfully created, else None.
-        :rtype: :class:`pyrobosim.core.objects.Object`
         """
+        # If the category name is empty, use "object" as the base name.
+        category = object_config.get("category", "object")
+        if category not in self.object_instance_counts:
+            self.object_instance_counts[category] = 0
+
         # If it's an Object instance, get it from the "object" named argument.
         # Else, create an object directly from the specified arguments.
         if "object" in object_config:
-            obj = object_config["object"]
+            obj: Object = object_config["object"]
         elif "parent" in object_config:
-            parent = object_config.get("parent", None)
+            parent = object_config.get("parent")
+
             if isinstance(parent, str):
                 parent = self.get_entity_by_name(parent)
 
@@ -797,6 +819,12 @@ class World:
                     f"Parent location {parent_arg} did not resolve to a valid location for an object."
                 )
                 return None
+
+            # If no name is specified, create one automatically.
+            if "name" not in object_config:
+                object_config["name"] = (
+                    f"{category}{self.object_instance_counts[category]}"
+                )
 
             object_config["parent"] = parent
             object_config["inflation_radius"] = self.object_radius
@@ -816,26 +844,15 @@ class World:
             )
             return None
 
-        # If the category name is empty, use "object" as the base name.
-        category = obj.category
-        if category is None:
-            category = "object"
-        # If no name is specified, create one automatically.
-        if category not in self.object_instance_counts:
-            self.object_instance_counts[category] = 0
-        if obj.name is None:
-            obj.name = f"{category}{self.object_instance_counts[category]}"
-        self.object_instance_counts[category] += 1
-
         # If no pose is specified, sample a valid one.
         obj_spawn = obj.parent
-        if obj.pose is None:
+        assert isinstance(obj_spawn, ObjectSpawn)
+        if "pose" not in object_config:
             pose_sample = self.sample_object_spawn_pose(
                 obj, obj_spawn, self.max_object_sample_tries
             )
 
-            if pose_sample:
-                obj.parent = obj_spawn
+            if pose_sample is not None:
                 obj.set_pose(pose_sample)
                 obj.create_polygons()
             else:
@@ -844,7 +861,7 @@ class World:
                 )
                 return None
 
-        # If a pose was specified, collision check it
+        # If a pose was specified, collision check it.
         else:
             poly = obj.collision_polygon
             is_valid_pose = poly.within(obj_spawn.polygon)
@@ -863,26 +880,31 @@ class World:
         self.objects.append(obj)
         self.name_to_entity[obj.name] = obj
         self.num_objects += 1
-        if self.has_gui:
+        self.object_instance_counts[category] += 1
+        if self.gui is not None:
             self.gui.canvas.show_objects_signal.emit()
         return obj
 
-    def update_object(self, obj, loc=None, pose=None):
+    def update_object(
+        self,
+        obj: Object | str,
+        loc: Location | ObjectSpawn | str | None = None,
+        pose: Pose | None = None,
+    ) -> bool:
         """
         Updates an existing object in the world.
 
         :param obj: Object instance or name to update.
-        :type obj: :class:`pyrobosim.core.objects.Object`/str
         :param loc: Location or object spawn instance or name. If none, uses the previous location.
-        :type loc: :class:`pyrobosim.core.locations.Location`/:class:`pyrobosim.core.locations.ObjectSpawn`/str, optional
         :param pose: Pose of the object. If none is specified, it will be sampled.
-        :type pose: :class:`pyrobosim.utils.pose.Pose`, optional
         :return: True if the update was successful, else False.
-        :rtype: bool
         """
         if isinstance(obj, str):
-            obj = self.get_object_by_name(obj)
-        if not isinstance(obj, Object):
+            resolved_object = self.get_object_by_name(obj)
+        elif isinstance(obj, Object):
+            resolved_object = obj
+
+        if resolved_object is None:
             self.logger.warning("Could not find object. Not updating.")
             return False
 
@@ -890,7 +912,10 @@ class World:
             # Find an object spawn that matches the specified location.
             # If it's a string, get the location name.
             if isinstance(loc, str):
-                loc = self.get_entity_by_name(loc)
+                entity = self.get_entity_by_name(loc)
+                if isinstance(entity, (Location, ObjectSpawn)):
+                    loc = entity
+
             # If it's a location object, pick an object spawn at random.
             # Otherwise, if it's an object spawn, use that entity as is.
             if isinstance(loc, Location):
@@ -906,52 +931,50 @@ class World:
             # Next, sample a pose within the new object spawn, if one was not specified.
             if pose is None:
                 pose = self.sample_object_spawn_pose(
-                    obj, obj_spawn, self.max_object_sample_tries
+                    resolved_object, obj_spawn, self.max_object_sample_tries
                 )
             if pose is None:
                 self.logger.warning("Cannot sample a valid spawn pose.")
                 return False
 
-            obj.parent.children.remove(obj)
-            obj.parent = obj_spawn
-            obj_spawn.children.append(obj)
+            set_parent(resolved_object, obj_spawn)
 
         if pose is not None:
-            obj.set_pose(pose)
-            obj.create_polygons()
+            resolved_object.set_pose(pose)
+            resolved_object.create_polygons()
 
         return True
 
-    def remove_object(self, obj):
+    def remove_object(self, obj: Object | str) -> bool:
         """
         Cleanly removes an object from the world.
 
         :param loc: Object instance of name to remove.
-        :type loc: :class:`pyrobosim.core.objects.Object`/str
         :return: True if the object was successfully removed, else False.
-        :rtype: bool
         """
         if isinstance(obj, str):
-            obj = self.get_object_by_name(obj)
+            resolved_object = self.get_object_by_name(obj)
+        elif isinstance(obj, Object):
+            resolved_object = obj
 
-        if obj not in self.objects:
+        if resolved_object not in self.objects:
+            self.logger.warning("Could not find object. Not removing.")
             return False
 
-        self.objects.remove(obj)
-        self.name_to_entity.pop(obj.name)
+        self.objects.remove(resolved_object)
+        self.name_to_entity.pop(resolved_object.name)
         self.num_objects -= 1
-        obj.parent.children.remove(obj)
-        if self.has_gui:
+        if resolved_object.parent is not None:
+            resolved_object.parent.children.remove(resolved_object)
+        if self.gui is not None:
             self.gui.canvas.show_objects_signal.emit()
         return True
 
-    def remove_all_objects(self, restart_numbering=True):
+    def remove_all_objects(self, restart_numbering: bool = True) -> None:
         """
         Cleanly removes all objects from the world.
 
-        :param restart_numbering: If True, restarts numbering of all
-            categories to zero, defaults to True.
-        :type restart_numbering: bool, optional
+        :param restart_numbering: If True, restarts numbering of all categories to zero.
         """
         for obj in reversed(self.objects):
             self.remove_object(obj)
@@ -959,16 +982,15 @@ class World:
         if restart_numbering:
             self.object_instance_counts = {}
 
-    def add_robot(self, robot, loc=None, pose=None):
+    def add_robot(
+        self, robot: Robot, loc: Entity | None = None, pose: Pose | None = None
+    ) -> None:
         """
         Adds a robot to the world given either a world entity and/or pose.
 
         :param robot: Robot instance to add to the world.
-        :type robot: :class:`pyrobosim.core.robot.Robot`
         :param loc: World entity instance or name to place the robot.
-        :type loc: Entity, optional
         :param pose: Pose at which to add the robot. If not specified, will be sampled.
-        :type pose: :class:`pyrobosim.utils.pose.Pose`
         """
         # Check that the robot name doesn't already exist.
         if robot.name in self.get_robot_names():
@@ -984,7 +1006,7 @@ class World:
         if new_inflation_radius > old_inflation_radius:
             self.set_inflation_radius(new_inflation_radius)
 
-        valid_pose = True
+        robot_pose: Pose | None = None
         if loc is None:
             if pose is None:
                 # If nothing is specified, sample any valid location in the world
@@ -993,15 +1015,14 @@ class World:
                 )
                 if robot_pose is None:
                     self.logger.warning("Unable to sample free pose.")
-                    valid_pose = False
             else:
                 # Validate that the pose is unoccupied
                 if self.check_occupancy((pose.x, pose.y)):
                     self.logger.warning(f"{pose} is occupied.")
-                    valid_pose = False
                 robot_pose = pose
             # If we have a valid pose, extract its location
-            loc = self.get_location_from_pose(robot_pose)
+            if robot_pose is not None:
+                loc = self.get_location_from_pose(robot_pose)
 
         else:
             # First, validate that the location is valid for a robot
@@ -1015,32 +1036,32 @@ class World:
                         loc.internal_collision_polygon,
                         max_tries=self.max_object_sample_tries,
                     )
-                    if x_sample is None:
+                    if (x_sample is None) or (y_sample is None):
                         self.logger.warning(f"Could not sample pose in {loc.name}.")
-                        valid_pose = False
-                    yaw_sample = np.random.uniform(-np.pi, np.pi)
-                    robot_pose = Pose(x=x_sample, y=y_sample, z=0.0, yaw=yaw_sample)
+                    else:
+                        yaw_sample = np.random.uniform(-np.pi, np.pi)
+                        robot_pose = Pose(x=x_sample, y=y_sample, z=0.0, yaw=yaw_sample)
                 else:
                     # Validate that the pose is unoccupied and in the right location
                     if not loc.is_collision_free(pose):
                         self.logger.warning(f"{pose} is occupied")
-                        valid_pose = False
                     robot_pose = pose
+
             elif isinstance(loc, (Location, ObjectSpawn)):
                 if isinstance(loc, Location):
                     # NOTE: If you don't want a random object spawn, use the object spawn as the input location.
                     loc = np.random.choice(loc.children)
 
+                assert isinstance(loc, ObjectSpawn)
                 if pose in loc.nav_poses:  # Slim chance of this happening lol
                     robot_pose = pose
                 else:
                     robot_pose = np.random.choice(loc.nav_poses)
             else:
                 self.logger.warning("Invalid location specified.")
-                valid_pose = False
 
         # If we got a valid location / pose combination, add the robot
-        if valid_pose:
+        if robot_pose is not None:
             robot.location = loc
             robot.set_pose(robot_pose)
             robot.world = self
@@ -1050,25 +1071,24 @@ class World:
             self.logger.warning("Could not add robot.")
             self.set_inflation_radius(old_inflation_radius)
 
-        if self.has_gui:
+        if self.gui is not None:
             self.gui.canvas.show_robots_signal.emit()
-        if self.has_ros_node:
+        if self.ros_node is not None:
             self.ros_node.add_robot_ros_interfaces()
 
-    def remove_robot(self, robot_name):
+    def remove_robot(self, robot_name: str) -> bool:
         """
         Removes a robot from the world.
 
         :return: True if the robot was successfully removed, else False.
-        :rtype: bool
         """
         robot = self.get_robot_by_name(robot_name)
         if robot:
             self.robots.remove(robot)
             self.name_to_entity.pop(robot_name)
-            if self.has_gui:
+            if self.gui is not None:
                 self.gui.canvas.show_robots_signal.emit()
-            if self.has_ros_node:
+            if self.ros_node is not None:
                 self.ros_node.remove_robot_ros_interfaces(robot)
 
             # Find the new max inflation radius and revert it.
@@ -1082,35 +1102,34 @@ class World:
             self.logger.warning(f"Could not find robot {robot_name} to remove.")
             return False
 
-    def set_inflation_radius(self, inflation_radius=0.0):
+    def set_inflation_radius(self, inflation_radius: float = 0.0) -> None:
         """
         Sets world inflation radius.
 
         :param inflation_radius: Inflation radius, in meters.
-        :type inflation_radius: float, optional
         """
         self.inflation_radius = inflation_radius
         for loc in self.locations:
             loc.update_collision_polygon(self.inflation_radius)
-        for entity in itertools.chain(self.rooms, self.hallways):
-            entity.update_collision_polygons(self.inflation_radius)
+        for room in self.rooms:
+            room.update_collision_polygons(self.inflation_radius)
+        for hallway in self.hallways:
+            hallway.update_collision_polygons(self.inflation_radius)
 
-    def update_bounds(self, entity, remove=False):
+    def update_bounds(self, entity: Entity, remove: bool = False) -> None:
         """
         Updates the X and Y bounds of the world.
 
         :param entity: The entity that is being added or removed
-        :type entity: :class:`pyrobosim.core.room.Room`/:class:`pyrobosim.core.hallway.Hallway`
         :param remove: Specifies if the update is due to removal of an entity.
-        :type remove: bool
         """
         if isinstance(entity, (Room, Hallway)):
             (xmin, ymin, xmax, ymax) = entity.polygon.bounds
 
-            if not self.x_bounds:
-                # When adding the first room
-                self.x_bounds = [xmin, xmax]
-                self.y_bounds = [ymin, ymax]
+            # Simply assign the bounds when adding the first entity.
+            if (self.x_bounds is None) or (self.y_bounds is None):
+                self.x_bounds = [xmin, xmax]  # type: ignore[assignment]
+                self.y_bounds = [ymin, ymax]  # type: ignore[assignment]
                 return
 
             if remove:
@@ -1143,23 +1162,20 @@ class World:
     ################################
     # Lookup Functionality Methods #
     ################################
-    def get_room_names(self):
+    def get_room_names(self) -> list[str]:
         """
         Gets all room names in the world.
 
         :return: List of all room names.
-        :rtype: list[str]
         """
         return [room.name for room in self.rooms]
 
-    def get_room_by_name(self, name):
+    def get_room_by_name(self, name: str) -> Room | None:
         """
         Gets a room object by its name.
 
         :param name: Name of room.
-        :type name: str
         :return: Room instance matching the input name, or ``None`` if not valid.
-        :rtype: :class:`pyrobosim.core.room.Room`
         """
         if name not in self.name_to_entity:
             self.logger.warning(f"Room not found: {name}")
@@ -1172,23 +1188,20 @@ class World:
 
         return entity
 
-    def get_hallway_names(self):
+    def get_hallway_names(self) -> list[str]:
         """
         Gets all hallway names.
 
         :return: List of all hallway names.
-        :rtype: list[str]
         """
         return [hall.name for hall in self.hallways]
 
-    def get_hallway_by_name(self, name):
+    def get_hallway_by_name(self, name: str) -> Hallway | None:
         """
         Gets a hallway object by its name.
 
         :param name: Name of hallway.
-        :type name: str
         :return: Hallway instance matching the input name, or ``None`` if not valid.
-        :rtype: :class:`pyrobosim.core.hallway.Hallway`
         """
         if name not in self.name_to_entity:
             self.logger.warning(f"Hallway not found: {name}")
@@ -1201,99 +1214,106 @@ class World:
 
         return entity
 
-    def get_hallways_from_rooms(self, room1, room2):
+    def get_hallways_from_rooms(
+        self, room1: Room | str, room2: Room | str
+    ) -> list[Hallway]:
         """
         Returns a list of hallways between two rooms.
 
         :param room1: Instance or name of first room.
-        :type room1: :class:`pyrobosim.core.room.Room`/str
         :param room2: Instance or name of second room.
-        :type room2: :class:`pyrobosim.core.room.Room`/str
         :return: List of hallways.
-        :rtype: list[:class:`pyrobosim.core.hallway.Hallway`]
         """
         # Validate room input
+        resolved_room1: Room | None = None
         if isinstance(room1, str):
-            room1 = self.get_room_by_name(room1)
-        if not isinstance(room1, Room):
-            self.logger.warning("Invalid room1 specified.")
+            resolved_room1 = self.get_room_by_name(room1)
+        else:
+            resolved_room1 = room1
+        if resolved_room1 is None:
+            self.logger.warning(f"Invalid room1 specified: {room1}.")
             return []
+
+        resolved_room2: Room | None = None
         if isinstance(room2, str):
-            room2 = self.get_room_by_name(room2)
-        if not isinstance(room2, Room):
-            self.logger.warning("Invalid room2 specified.")
+            resolved_room2 = self.get_room_by_name(room2)
+        else:
+            resolved_room2 = room2
+        if resolved_room2 is None:
+            self.logger.warning(f"Invalid room2 specified: {room2}.")
             return []
 
         # Now search through the hallways and add any valid ones to the list
         hallways = []
-        for hall in room1.hallways:
+        for hall in resolved_room1.hallways:
             is_valid_hallway = (
-                (hall.room_start == room1) and (hall.room_end == room2)
-            ) or ((hall.room_start == room2) and (hall.room_end == room1))
+                (hall.room_start == resolved_room1)
+                and (hall.room_end == resolved_room2)
+            ) or (
+                (hall.room_start == resolved_room2)
+                and (hall.room_end == resolved_room1)
+            )
             if is_valid_hallway:
                 hallways.append(hall)
         return hallways
 
-    def get_hallways_attached_to_room(self, room):
+    def get_hallways_attached_to_room(self, room: Room | str) -> list[Hallway]:
         """
         Returns a list of hallways attached to a specific room.
 
         :param room: Instance or name of room.
-        :type room: :class:`pyrobosim.core.room.Room`/str
         :return: List of hallways.
-        :rtype: list[:class:`pyrobosim.core.hallway.Hallway`]
         """
         # Validate room input
+        resolved_room: Room | None = None
         if isinstance(room, str):
-            room = self.get_room_by_name(room)
-        if not isinstance(room, Room):
-            self.logger.warning("Invalid room specified.")
+            resolved_room = self.get_room_by_name(room)
+        else:
+            resolved_room = room
+        if resolved_room is None:
+            self.logger.warning(f"Invalid room specified: {room}.")
             return []
 
         # Now search through the hallways and add any valid ones to the list
         hallways = []
-        for hall in room.hallways:
-            is_valid_hallway = (hall.room_start == room) or (hall.room_end == room)
+        for hall in resolved_room.hallways:
+            is_valid_hallway = (hall.room_start == resolved_room) or (
+                hall.room_end == resolved_room
+            )
             if is_valid_hallway:
                 hallways.append(hall)
         return hallways
 
-    def get_locations(self, category_list=None):
+    def get_locations(self, category_list: list[str] | None = None) -> list[Location]:
         """
         Gets all locations, optionally filtered by category.
 
         :param category_list: Optional list of categories to filter by.
-        :type category_list: list[str]
         :return: List of locations that match the input category list, if specified.
-        :rtype: list[:class:`pyrobosim.core.locations.Location`]
         """
         if not category_list:
             return [loc for loc in self.locations]
         else:
             return [loc for loc in self.locations if loc.category in category_list]
 
-    def get_location_names(self, category_list=None):
+    def get_location_names(self, category_list: list[str] | None = None) -> list[str]:
         """
         Gets all location names, optionally filtered by category.
 
         :param category_list: Optional list of categories to filter by.
-        :type category_list: list[str]
         :return: List of location names that match the input category list, if specified.
-        :rtype: list[str]
         """
         if not category_list:
             return [loc.name for loc in self.locations]
         else:
             return [loc.name for loc in self.locations if loc.category in category_list]
 
-    def get_location_by_name(self, name):
+    def get_location_by_name(self, name: str) -> Location | None:
         """
         Gets a location object by its name.
 
         :param name: Name of location.
-        :type name: str
         :return: Location instance matching the input name, or ``None`` if not valid.
-        :rtype: :class:`pyrobosim.core.locations.Location`
         """
         if name not in self.name_to_entity:
             self.logger.warning(f"Location not found: {name}")
@@ -1306,17 +1326,14 @@ class World:
 
         return entity
 
-    def get_location_in_room(self, pose, room):
+    def get_location_in_room(self, pose: Pose, room: Room) -> Entity | None:
         """
         Gets a location in a room given an input pose.
 
         :param pose: Input pose.
-        :type pose: :class:`pyrobosim.utils.pose.Pose`
         :param room: The reference room object.
-        :type room: :class:`pyrobosim.core.room.Room`
         :return: Entity matching the input pose and room, or ``None`` if not valid.
-            This could either be the Room itself, an object spawn, or ``None``.
-        :rtype: :class:`pyrobosim.core.room.Room` / :class:`pyrobosim.core.locations.ObjectSpawn` / None
+            If valid, this could be the Room itself, a location, or an object spawn.
         """
         if room.is_collision_free(pose):
             for location in room.locations:
@@ -1330,17 +1347,14 @@ class World:
             return room
         return None
 
-    def get_location_in_hallway(self, pose, hallway):
+    def get_location_in_hallway(self, pose: Pose, hallway: Hallway) -> Hallway | None:
         """
         Gets a location in a hallway given an input pose.
 
         :param pose: Input pose.
-        :type pose: :class:`pyrobosim.utils.pose.Pose`
         :param hallway: The reference hallway object.
-        :type hallway: :class:`pyrobosim.core.hallway.Hallway`
         :return: Entity matching the input pose and hallway, or ``None`` if not valid.
             This could either be the Hallway itself, or ``None``.
-        :rtype: :class:`pyrobosim.core.hallway.Hallway` / None
         """
         for nav_pose in hallway.nav_poses:
             if pose.is_approx(nav_pose):
@@ -1349,25 +1363,26 @@ class World:
             return hallway
         return None
 
-    def get_location_from_pose(self, pose, prev_location=None):
+    def get_location_from_pose(
+        self, pose: Pose, prev_location: Entity | None = None
+    ) -> Entity | None:
         """
         Gets the name of a location given a pose.
 
         :param pose: Input pose.
-        :type pose: :class:`pyrobosim.utils.pose.Pose`
         :param prev_location: The robot's previous location.
             This helps optimize this function by first checking the robot's previous location.
-        :type prev_location: :class:`pyrobosim.core.room.Room`/:class:`pyrobosim.core.hallway.Hallway`/:class:`pyrobosim.core.locations.ObjectSpawn`
         :return: Entity matching the input pose, or ``None`` if not valid.
-            This could be a room, hallway, or object spawn.
-        :rtype: :class:`pyrobosim.core.room.Room`/:class:`pyrobosim.core.hallway.Hallway`/:class:`pyrobosim.core.locations.ObjectSpawn`
+            If valid, this could be a room, hallway, or object spawn.
         """
         # Check the previous location.
-        prev_room = None
-        prev_hallways = []
+        prev_room: Room | None = None
+        prev_hallways: list[Hallway] = []
         if prev_location is not None:
-            if isinstance(prev_location, ObjectSpawn):
-                prev_location = prev_location.get_room_name()
+            if isinstance(prev_location, ObjectSpawn) and (
+                prev_location.parent is not None
+            ):
+                prev_location = prev_location.parent.parent
 
             if isinstance(prev_location, Room):
                 loc = self.get_location_in_room(pose, prev_location)
@@ -1383,10 +1398,9 @@ class World:
                     return loc
                 prev_room = loc
             elif isinstance(prev_location, Hallway):
-                loc = self.get_location_in_hallway(pose, prev_location)
-                if loc is not None:
-                    return loc
-                prev_hallways.append(loc)
+                hall_loc = self.get_location_in_hallway(pose, prev_location)
+                if hall_loc is not None:
+                    return hall_loc
 
         # Check remaining hallways and their nav poses.
         for hallway in self.hallways:
@@ -1406,31 +1420,33 @@ class World:
         # No valid location was found.
         return None
 
-    def get_object_spawns(self, category_list=None):
+    def get_object_spawns(
+        self, category_list: list[str] | None = None
+    ) -> list[ObjectSpawn]:
         """
         Gets all object spawn locations, optionally filtered by category.
 
         :param category_list: Optional list of categories to filter by.
-        :type category_list: list[str]
         :return: List of object spawn locations that match the input category
             list, if specified.
-        :rtype: list[:class:`pyrobosim.core.locations.ObjectSpawn`]
         """
         spawn_list = []
         for loc in self.locations:
-            if not category_list or loc.category in category_list:
-                spawn_list.extend(loc.children)
+            if (category_list is None) or (loc.category in category_list):
+                spawn_list.extend(
+                    [child for child in loc.children if isinstance(child, ObjectSpawn)]
+                )
         return spawn_list
 
-    def get_object_spawn_names(self, category_list=None):
+    def get_object_spawn_names(
+        self, category_list: list[str] | None = None
+    ) -> list[str]:
         """
         Gets all object spawn location names, optionally filtered by category.
 
         :param category_list: Optional list of categories to filter by.
-        :type category_list: list[str]
         :return: List of object spawn location names that match the input
             category list, if specified.
-        :rtype: list[str]
         """
         spawn_name_list = []
         for loc in self.locations:
@@ -1438,42 +1454,37 @@ class World:
                 spawn_name_list.extend([spawn.name for spawn in loc.children])
         return spawn_name_list
 
-    def get_objects(self, category_list=None):
+    def get_objects(self, category_list: list[str] | None = None) -> list[Object]:
         """
         Gets all objects in the world, optionally filtered by category.
 
         :param name: Name of location.
-        :type name: str
+        :param category_list: Optional list of category names to filter by.
         :return: List of object that match the input category list, if specified.
-        :rtype: list[:class:`pyrobosim.core.objects.Object`]
         """
         if not category_list:
             return self.objects
         else:
             return [o for o in self.objects if o.category in category_list]
 
-    def get_object_names(self, category_list=None):
+    def get_object_names(self, category_list: list[str] | None = None) -> list[str]:
         """
         Gets all object names in the world, optionally filtered by category.
 
         :param category_list: Optional list of categories to filter by.
-        :type category_list: list[str]
         :return: List of object names that match the input category list, if specified.
-        :rtype: list[str]
         """
         if not category_list:
             return [o.name for o in self.objects]
         else:
             return [o.name for o in self.objects if o.category in category_list]
 
-    def get_object_by_name(self, name):
+    def get_object_by_name(self, name: str) -> Object | None:
         """
         Gets an object by its name.
 
         :param name: Name of object.
-        :type name: str
         :return: Object instance matching the input name, or ``None`` if not valid.
-        :rtype: :class:`pyrobosim.core.object.Object`
         """
         if name not in self.name_to_entity:
             return None
@@ -1485,23 +1496,20 @@ class World:
 
         return entity
 
-    def get_robot_names(self):
+    def get_robot_names(self) -> list[str]:
         """
         Gets all robot names in the world.
 
         :return: List of robot names.
-        :rtype: list[str]
         """
         return [robot.name for robot in self.robots]
 
-    def get_robot_by_name(self, name):
+    def get_robot_by_name(self, name: str) -> Robot | None:
         """
         Gets a robot by its name.
 
         :param name: Name of robot.
-        :type name: str
         :return: Robot instance matching the input name, or ``None`` if not valid.
-        :rtype: :class:`pyrobosim.core.robot.Robot`
         """
         if name not in self.name_to_entity:
             return None
@@ -1513,26 +1521,22 @@ class World:
 
         return entity
 
-    def get_entity_by_name(self, name):
+    def get_entity_by_name(self, name: str) -> Entity | None:
         """
         Gets any world entity by its name.
 
         :param name: Name of entity.
-        :type name: str
         :return: Entity object instance matching the input name, or ``None`` if not valid.
         """
         return self.name_to_entity.get(name)
 
-    def get_pose_relative_to(self, pose, entity):
+    def get_pose_relative_to(self, pose: Pose, entity: Entity | str) -> Pose:
         """
         Given a relative pose to an entity, and the entity itself, gets the absolute pose.
 
         :param pose: The pose specified with respect to the entity.
-        :type pose: :class:`pyrobosim.utils.pose.Pose`
         :param entity: The entity, or entity name:
-        :type entity: Entity or str
         :return: Absolute pose computed by transforming the input pose to the entity frame.
-        :rtype: :class:`pyrobosim.utils.pose.Pose`
         """
         # Look for the target entity if specified by name.
         if isinstance(entity, str):
@@ -1559,21 +1563,23 @@ class World:
     # Occupancy utilities #
     #######################
 
-    def is_connectable(self, start, goal, step_dist=0.01, max_dist=None):
+    def is_connectable(
+        self,
+        start: Pose,
+        goal: Pose,
+        step_dist: float = 0.01,
+        max_dist: float | None = None,
+    ) -> bool:
         """
         Checks connectivity between two poses `start` and `goal` in the world
         by sampling points spaced by the `self.collision_check_dist` parameter
         and verifying that every point is in the free configuration space.
-        :param start: Start node
-        :type start: :class:`Pose`
-        :param goal: Goal node
-        :type goal: :class:`Pose`
+
+        :param start: Start pose
+        :param goal: Goal pose
         :param step_dist: The step size for discretizing a straight line to check collisions.
-        :type step_dist: float
         :param max_dist: The maximum allowed connection distance.
-        :type max_dist: float, optional
-        :return: True if nodes can be connected, else False.
-        :rtype: bool
+        :return: True if poses can be connected, else False.
         """
         # Trivial case where nodes are identical.
         if start == goal:
@@ -1605,13 +1611,12 @@ class World:
         # connect the points.
         return True
 
-    def check_occupancy(self, pose):
+    def check_occupancy(self, pose: Pose | Sequence[float]) -> bool:
         """
         Check if a pose in the world is occupied.
-        :param pose: Pose for checking occupancy.
-        :type pose: :class:`pyrobosim.utils.pose.Pose`
-        :return: True if the pose is occupied, else False if free.
-        :rtype: bool
+
+        :param pose: The pose to check.
+        :return: True if the pose is occupied, else False.
         """
         # Loop through all the rooms and hallways and check if the pose
         # is deemed collision-free in any of them.
@@ -1621,17 +1626,15 @@ class World:
         # If we made it through, the pose is occupied.
         return True
 
-    def collides_with_robots(self, pose, robot=None):
+    def collides_with_robots(self, pose: Pose, robot: Robot | None = None) -> bool:
         """
         Checks if a pose collides with robots in the world.
         Currently assumes that robots are circles, so we can do simple checks.
         If this changes, should account for polygon collisions.
+
         :param pose: Candidate pose to check.
-        :type pose: :class:`pyrobosim.utils.pose.Pose`
         :param robot: Robot instance, if specified.
-        :type robot: :class:`pyrobosim.core.robot.Robot`, optional
         :return: True if the pose collides with a robot besides the input.
-        :rtype: bool
         """
         radius = self.inflation_radius if robot is None else robot.radius
         robot_list = [
@@ -1643,20 +1646,39 @@ class World:
                 return True
         return False
 
-    def sample_free_robot_pose_uniform(self, robot=None, ignore_robots=True):
+    def is_path_collision_free(self, path: Path, step_dist: float = 0.01) -> bool:
+        """
+        Check whether a path is collision free in this world.
+
+        :param path: The path to use for collision checking.
+        :param step_dist: The step size for discretizing a straight line to check collisions.
+        :return: True if the path is collision free, else False.
+        """
+        for idx in range(len(path.poses) - 1):
+            if not self.is_connectable(
+                path.poses[idx], path.poses[idx + 1], step_dist=step_dist
+            ):
+                return False
+        return True
+
+    def sample_free_robot_pose_uniform(
+        self, robot: Robot | None = None, ignore_robots: bool = True
+    ) -> Pose | None:
         """
         Sample an unoccupied robot pose in the world.
         This is done using uniform sampling within the world X-Y bounds and rejecting
         any samples that are in collision with entities in the world.
         If no valid samples could be found within the `max_object_sample_tries` instance
         attribute, this will return ``None``.
+
         :param robot: Robot instance, if specified.
-        :type robot: :class:`pyrobosim.core.robot.Robot`, optional
         :param ignore_robots: If True, ignore collisions with other robots.
-        :type ignore_robots: bool
         :return: Collision-free pose if found, else ``None``.
-        :rtype: :class:`pyrobosim.utils.pose.Pose`
         """
+        if (self.x_bounds is None) or (self.y_bounds is None):
+            self.logger.error("Cannot sample poses if world bounds are not set.")
+            return None
+
         xmin, xmax = self.x_bounds
         ymin, ymax = self.y_bounds
         r = self.inflation_radius if robot is None else robot.radius
@@ -1672,93 +1694,3 @@ class World:
                 return pose
         self.logger.warning("Could not sample pose.")
         return None
-
-    ###################
-    # Graph Utilities #
-    ###################
-
-    def graph_node_from_entity(
-        self, entity_query, resolution_strategy="nearest", robot=None
-    ):
-        """
-        Gets a graph node from an entity query, which could be any combination of
-        room, hallway, location, object spawn, or object in the world, as well as
-        their respective categories.
-        For more information on the inputs, refer to the :func:`pyrobosim.utils.knowledge.query_to_entity` function.
-        :param entity_query: List of entities (e.g., rooms or objects) or names/categories.
-        :type entity_query: list[Entity/str]
-        :param resolution_strategy: Resolution strategy to apply
-        :type resolution_strategy: str
-        :param robot: If set to a Robot instance, uses that robot for resolution strategy.
-        :type robot: :class:`pyrobosim.core.robot.Robot`, optional
-        :return: A graph node for the entity that meets the resolution strategy, or None.
-        :rtype: :class:`pyrobosim.utils.search_graph.Node`
-        """
-        if isinstance(entity_query, Node):
-            return entity_query
-        elif isinstance(entity_query, str):
-            # Try resolve an entity based on its name. If that fails, we assume it must be a category,
-            # so try resolve it to a location or to an object by category.
-            entity = self.get_entity_by_name(entity_query)
-            if entity is None:
-                entity = resolve_to_location(
-                    self,
-                    category=entity_query,
-                    expand_locations=True,
-                    resolution_strategy=resolution_strategy,
-                    robot=robot,
-                )
-            if entity is None:
-                entity = resolve_to_object(
-                    self,
-                    category=entity_query,
-                    resolution_strategy=resolution_strategy,
-                    robot=robot,
-                    ignore_grasped=True,
-                )
-        else:
-            entity = entity_query
-
-        if isinstance(entity, (ObjectSpawn, Room)):
-            graph_nodes = entity.graph_nodes
-        elif isinstance(entity, Hallway):
-            graph_nodes = [entity.graph_nodes[0], entity.graph_nodes[-1]]
-
-            # Special rule: If all the hallways connected to the room are closed, and the robot is not in the room or at the hallway,
-            # remove the graph node from consideration.
-            if (robot is not None) and (robot.location != entity):
-                robot_in_start_room = entity.room_start.is_collision_free(
-                    robot.get_pose()
-                )
-                if not robot_in_start_room:
-                    room_accessible = False
-                    for hall in self.get_hallways_attached_to_room(entity.room_start):
-                        if hall.is_open:
-                            room_accessible = True
-                            break
-                    if not room_accessible:
-                        graph_nodes.remove(entity.graph_nodes[0])
-
-                robot_in_end_room = entity.room_end.is_collision_free(robot.get_pose())
-                if not robot_in_end_room:
-                    room_accessible = False
-                    for hall in self.get_hallways_attached_to_room(entity.room_end):
-                        if hall.is_open:
-                            room_accessible = True
-                            break
-                    if not room_accessible:
-                        graph_nodes.remove(entity.graph_nodes[-1])
-
-        elif isinstance(entity, Object):
-            graph_nodes = entity.parent.graph_nodes
-        elif isinstance(entity, Location):
-            graph_nodes = entity.children[0].graph_nodes
-        else:
-            self.logger.warning(f"Cannot get graph node from {entity}")
-            return None
-
-        # Select a graph node using the same resolution strategy.
-        graph_node = apply_resolution_strategy(
-            graph_nodes, resolution_strategy, robot=robot
-        )
-        return graph_node

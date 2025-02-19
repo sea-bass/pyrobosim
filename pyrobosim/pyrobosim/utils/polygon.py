@@ -8,6 +8,7 @@ import os
 import collada
 import numpy as np
 import trimesh
+from typing import Any, Sequence
 
 from scipy.spatial import ConvexHull
 from shapely.affinity import rotate, translate
@@ -19,35 +20,34 @@ from .pose import Pose, rot2d
 from ..utils.logging import get_global_logger
 
 
-def add_coords(coords, offset):
+def add_coords(
+    coords: Sequence[Sequence[float]], offset: tuple[float, float]
+) -> list[Sequence[float]]:
     """
     Adds an offset (x,y) vector to a Shapely compatible list
     of coordinate tuples.
 
     :param coords: A list of 2D coordinates representing the polygon.
-    :type coords: list[(float, float)]
     :param offset: The (x,y) offset vector.
-    :type offset: (float, float)
     :return: The offset list of 2D coordinates representing the new polygon.
-    :rtype: list[(float, float)]
     """
     x, y = offset
     return [(c[0] + x, c[1] + y) for c in coords]
 
 
-def box_to_coords(dims, origin=[0, 0], ang=0):
+def box_to_coords(
+    dims: Sequence[float],
+    origin: Sequence[float] = (0.0, 0.0),
+    ang: float = 0.0,
+) -> list[Sequence[float]]:
     """
     Converts box dimensions and origin to a Shapely compatible
     list of coordinate tuples.
 
     :param dims: The box dimensions (width, height).
-    :type dims: (float, float)
     :param origin: The box (x,y) origin
-    :type origin: (float, float), optional
     :param ang: The angle to rotate the box, in radians.
-    :type ang: float, optional
     :return: A list of 2D coordinate representing the polygon.
-    :rtype: list[(float, float)]
 
     Example:
 
@@ -68,50 +68,50 @@ def box_to_coords(dims, origin=[0, 0], ang=0):
     return coords
 
 
-def get_polygon_centroid(poly):
+def get_polygon_centroid(poly: Polygon) -> list[float]:
     """
     Gets a Shapely polygon centroid as a list.
 
     :param poly: Shapely polygon.
-    :type poly: :class:`shapely.geometry.Polygon`
     :return: The centroid (x, y) coordinates.
-    :rtype: [float, float]
     """
-    return list(poly.centroid.coords)[0]
+    centroid_coords = list(poly.centroid.coords)
+    if len(centroid_coords) == 0:
+        return [0.0, 0.0]
+
+    return centroid_coords[0]  # type: ignore[no-any-return]
 
 
-def inflate_polygon(poly, radius):
+def inflate_polygon(poly: Polygon, radius: float) -> Polygon:
     """
     Inflates a Shapely polygon with options preconfigured for
     this world modeling framework.
 
     :param poly: Shapely polygon.
-    :type poly: :class:`shapely.geometry.Polygon`
     :param radius: Inflation radius, in meters.
-    :type radius: float
     :return: The inflated Shapely polygon.
-    :rtype: :class:`shapely.geometry.Polygon`
     """
     inflated_poly = poly.buffer(
         radius, cap_style=CAP_STYLE.flat, join_style=JOIN_STYLE.mitre
     )
     if inflated_poly.is_empty:
+        # NOTE: I fixed this case in Shapely, but it's not yet released.
+        # See https://github.com/shapely/shapely/pull/2214
+        # Keeping this around until a release containing this fix is out.
         return inflated_poly
+
     return orient(inflated_poly)
 
 
-def transform_polygon(polygon, pose):
+def transform_polygon(polygon: Polygon, pose: Pose) -> Polygon:
     """
     Transforms a Shapely polygon by a Pose object.
     The order of operations is first translation, and then rotation
     about the new translated position.
 
     :param poly: Shapely polygon.
-    :type poly: :class:`shapely.geometry.Polygon`
     :param pose: Pose to transform the polygon.
-    :type pose: :class:`pyrobosim.utils.pose.Pose`
     :return: The transformed Shapely polygon.
-    :rtype: :class:`shapely.geometry.Polygon`
     """
     if pose is not None:
         polygon = translate(polygon, xoff=pose.x, yoff=pose.y)
@@ -121,7 +121,11 @@ def transform_polygon(polygon, pose):
     return polygon
 
 
-def polygon_and_height_from_footprint(footprint, pose=None, parent_polygon=None):
+def polygon_and_height_from_footprint(
+    footprint: dict[str, Any],
+    pose: Pose | None = None,
+    parent_polygon: Polygon | None = None,
+) -> tuple[Polygon, float | None]:
     """
     Returns a Shapely polygon and vertical (Z) height given footprint metadata.
     Valid footprint metadata comes from YAML files, and can include:
@@ -141,13 +145,9 @@ def polygon_and_height_from_footprint(footprint, pose=None, parent_polygon=None)
     * ``"offset"``: Offset (x, y) or (x, y, yaw) from the specified geometry above
 
     :param footprint: Footprint metadata from YAML file
-    :type footprint: dict
     :param pose: Pose with which to transform the resulting polygon
-    :type pose: :class:`pyrobosim.utils.pose.Pose`
     :param parent_polygon: Shapely polygon representing the parent geometry, if applicable
-    :type parent_polygon: :class:`shapely.geometry.Polygon`
-    :return: Shapely polygon representing the loaded polygon, plus the vertical (Z) height.
-    :rtype: (class:`shapely.geometry.Polygon`, float)
+    :return: Shapely polygon representing the loaded polygon, plus the vertical (Z) height (which could be None if unset).
     """
     # Parse through the footprint type and corresponding properties
     height = None
@@ -166,8 +166,7 @@ def polygon_and_height_from_footprint(footprint, pose=None, parent_polygon=None)
         elif ftype == "mesh":
             polygon, height = polygon_and_height_from_mesh(footprint)
         else:
-            get_global_logger().warning(f"Invalid footprint type: {ftype}")
-            return (None, None)
+            raise ValueError(f"Invalid footprint type: {ftype}")
 
     # Offset the polygon, if specified
     if "offset" in footprint:
@@ -180,19 +179,19 @@ def polygon_and_height_from_footprint(footprint, pose=None, parent_polygon=None)
     # This will override the height calculated from the mesh.
     if "height" in footprint:
         height = footprint["height"]
+
+    assert isinstance(polygon, Polygon)
     return (polygon, height)
 
 
-def polygon_and_height_from_mesh(mesh_data):
+def polygon_and_height_from_mesh(mesh_data: dict[str, str]) -> tuple[Polygon, float]:
     """
     Returns the 2D footprint and the max height from a mesh
     NOTE: Right now this supports only DAE files, which is a
     commonly used format for Gazebo models.
 
     :param mesh_data: Mesh geometry metadata from YAML file
-    :type footprint: dict
     :return: Shapely polygon representing the 2D convex hull of the mesh, plus the vertical (Z) height.
-    :rtype: (class:`shapely.geometry.Polygon`, float)
     """
     mesh_filename = replace_special_yaml_tokens(
         os.path.join(mesh_data["model_path"], mesh_data["mesh_path"])
@@ -214,7 +213,9 @@ def polygon_and_height_from_mesh(mesh_data):
     return (Polygon(hull_pts), float(height))
 
 
-def sample_from_polygon(polygon, max_tries=100):
+def sample_from_polygon(
+    polygon: Polygon, max_tries: int = 100
+) -> tuple[float | None, float | None]:
     """
     Samples a valid (x, y) tuple that is inside a Shapely polygon.
     This is done using rejection sampling, in which we sample from the
@@ -222,11 +223,8 @@ def sample_from_polygon(polygon, max_tries=100):
     (potentially more complex) polygon geometry.
 
     :param polygon: Shapely polygon from which to sample
-    :type polygon: :class:`shapely.geometry.Polygon`
     :param max_tries: Maximum tries for sampling.
-    :type max_tries: float
     :return: Sampled pose contained within the polygon. If no pose could be found, returns (None, None)
-    :rtype: (float, float)
     """
     xmin, ymin, xmax, ymax = polygon.bounds
     for _ in range(max_tries):
@@ -239,17 +237,14 @@ def sample_from_polygon(polygon, max_tries=100):
     return None, None
 
 
-def convhull_to_rectangle(points):
+def convhull_to_rectangle(points: np.ndarray) -> tuple[Pose, list[float], np.ndarray]:
     """
     Find the smallest bounding rectangle for a set of points.
     Returns a set of points representing the corners of the bounding box.
 
     :param points: an Nx2 matrix of convex hull XY coordinates
-    :type points: :class:`numpy.ndarray`
-    :return: A tuple of rectangle origin pose and XY dimensions
-    :rtype: (:class:`pyrobosim.utils.pose.Pose`, list[float])
+    :return: A tuple of rectangle origin pose, XY dimensions, and the rectangle points.
     """
-
     # calculate edge angles
     edges = np.zeros((len(points) - 1, 2))
     edges = points[1:] - points[:-1]

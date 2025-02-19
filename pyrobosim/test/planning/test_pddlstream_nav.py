@@ -3,24 +3,26 @@
 """
 Tests for PDDLStream planning with navigation streams.
 """
-import importlib
+from importlib.util import find_spec
 import os
 import pytest
 import threading
 
-if importlib.util.find_spec("pddlstream") is None:
+if find_spec("pddlstream") is None:
     pytest.skip(allow_module_level=True, reason="PDDLStream not available")
 
 from pyrobosim.core import Robot, World
 from pyrobosim.gui import start_gui
-from pyrobosim.navigation import ConstantVelocityExecutor, RRTPlanner
+from pyrobosim.navigation.execution import ConstantVelocityExecutor
+from pyrobosim.navigation.rrt import RRTPlanner
+from pyrobosim.planning.actions import TaskPlan
 from pyrobosim.planning.pddlstream.planner import PDDLStreamPlanner
 from pyrobosim.planning.pddlstream.utils import get_default_domains_folder
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
 
-def create_test_world(add_hallway=True):
+def create_test_world(add_hallway: bool = True) -> World:
     world = World()
 
     # Set the location and object metadata
@@ -78,7 +80,9 @@ def create_test_world(add_hallway=True):
     return world
 
 
-def start_planner(world, domain_name="03_nav_stream", interactive=False):
+def start_planner(
+    world: World, domain_name: str = "03_nav_stream", interactive: bool = False
+) -> TaskPlan:
     domain_folder = os.path.join(get_default_domains_folder(), domain_name)
     planner = PDDLStreamPlanner(world, domain_folder)
     goal_literals = [("Has", "robot", "apple")]
@@ -102,19 +106,19 @@ def start_planner(world, domain_name="03_nav_stream", interactive=False):
 #####################
 # ACTUAL UNIT TESTS #
 #####################
-def test_symbolic_plan():
+def test_symbolic_plan() -> None:
     world = create_test_world()
     plan = start_planner(world, domain_name="02_derived")
     assert plan is not None
 
 
-def test_stream_plan_no_hallway():
+def test_stream_plan_no_hallway() -> None:
     world = create_test_world(add_hallway=False)
     plan = start_planner(world, domain_name="03_nav_stream")
     assert plan is None
 
 
-def test_stream_plan_with_hallway():
+def test_stream_plan_with_hallway() -> None:
     world = create_test_world(add_hallway=True)
     plan = start_planner(world, domain_name="03_nav_stream")
     assert plan is not None

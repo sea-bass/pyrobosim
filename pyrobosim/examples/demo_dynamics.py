@@ -17,7 +17,7 @@ from pyrobosim.utils.pose import Pose
 data_folder = get_data_folder()
 
 
-def create_world():
+def create_world() -> World:
     """Create a test world"""
     world = World()
 
@@ -95,7 +95,7 @@ def create_world():
     return world
 
 
-def command_robots(world):
+def command_robots(world: World) -> None:
     """Demonstrates robot dynamics by commanding robots."""
     dt = 0.1
     vel_commands = [
@@ -111,7 +111,8 @@ def command_robots(world):
             if robot.is_in_collision():
                 cmd_vel = backup_vel
 
-            robot.dynamics.step(cmd_vel, dt, world=world, check_collisions=True)
+            new_pose = robot.dynamics.step(cmd_vel, dt)
+            robot.set_pose(new_pose)
 
         t_elapsed = time.time() - t_start
         time.sleep(max(0, dt - t_elapsed))

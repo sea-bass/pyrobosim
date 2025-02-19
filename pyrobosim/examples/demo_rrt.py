@@ -3,7 +3,7 @@ import os
 
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.gui import start_gui
-from pyrobosim.navigation import RRTPlanner
+from pyrobosim.navigation.rrt import RRTPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
@@ -12,7 +12,7 @@ world_file = os.path.join(get_data_folder(), "test_world.yaml")
 world = WorldYamlLoader().from_file(world_file)
 
 
-def test_rrt():
+def test_rrt() -> None:
     """Creates an RRT planner and plans"""
     planner_config = {
         "world": world,

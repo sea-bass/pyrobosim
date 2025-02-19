@@ -6,6 +6,7 @@ Unit tests for search graph utilities.
 
 import numpy as np
 import pytest
+from pytest import LogCaptureFixture
 
 from pyrobosim.core import Pose
 from pyrobosim.utils.search_graph import Node, SearchGraph, SearchGraphPlanner
@@ -16,7 +17,7 @@ from pyrobosim.utils.search_graph import Node, SearchGraph, SearchGraphPlanner
 ####################
 
 
-def create_test_graph(use_planner=False):
+def create_test_graph(use_planner: bool = False) -> tuple[SearchGraph, list[Node]]:
     """Creates a test graph with multiple nodes and edges."""
     graph = SearchGraph(use_planner=use_planner)
 
@@ -42,28 +43,27 @@ def create_test_graph(use_planner=False):
 ##############
 
 
-def test_search_graph_default_args():
+def test_search_graph_default_args() -> None:
     graph = SearchGraph()
 
     assert len(graph.nodes) == 0
     assert len(graph.edges) == 0
     assert graph.color == [0, 0, 0]
     assert graph.color_alpha == 0.5
-    assert not graph.use_planner
+    assert graph.path_finder is None
 
 
-def test_search_graph_nondefault_args():
+def test_search_graph_nondefault_args() -> None:
     graph = SearchGraph(color=[0.6, 0.7, 0.8], color_alpha=0.9, use_planner=True)
 
     assert len(graph.nodes) == 0
     assert len(graph.edges) == 0
     assert graph.color == [0.6, 0.7, 0.8]
     assert graph.color_alpha == 0.9
-    assert graph.use_planner
     assert isinstance(graph.path_finder, SearchGraphPlanner)
 
 
-def test_search_graph_add_remove_nodes():
+def test_search_graph_add_remove_nodes() -> None:
     graph = SearchGraph()
 
     # Add a node
@@ -106,7 +106,7 @@ def test_search_graph_add_remove_nodes():
     assert len(graph.edges) == 0
 
 
-def test_search_graph_get_nearest_node():
+def test_search_graph_get_nearest_node() -> None:
     # If the graph is empty, there is no nearest node.
     graph = SearchGraph()
     query_pose = Pose(x=0.0, y=0.0)
@@ -124,7 +124,7 @@ def test_search_graph_get_nearest_node():
     assert graph.nearest(query_pose) == nodes[2]
 
 
-def test_search_graph_find_path_no_planner(caplog):
+def test_search_graph_find_path_no_planner(caplog: LogCaptureFixture) -> None:
     """Checks that path finding fails if no planner is specified in the graph."""
     graph, nodes = create_test_graph()
     path = graph.find_path(nodes[0], nodes[2])
@@ -135,7 +135,7 @@ def test_search_graph_find_path_no_planner(caplog):
     )
 
 
-def test_search_graph_find_path_no_nodes(caplog):
+def test_search_graph_find_path_no_nodes(caplog: LogCaptureFixture) -> None:
     """Checks that path finding fails with missing nodes."""
     graph, nodes = create_test_graph(use_planner=True)
 
@@ -150,7 +150,7 @@ def test_search_graph_find_path_no_nodes(caplog):
     assert "Node `nodeA` is not in the search graph." in caplog.text
 
 
-def test_search_graph_find_path(caplog):
+def test_search_graph_find_path(caplog: LogCaptureFixture) -> None:
     """Checks successful path planning."""
     graph, nodes = create_test_graph(use_planner=True)
 

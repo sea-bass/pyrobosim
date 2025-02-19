@@ -19,7 +19,7 @@ properties = ParallelGraspProperties(
 gen = GraspGenerator(properties)
 
 
-def test_cube_no_grasps():
+def test_cube_no_grasps() -> None:
     """
     If no grasps are specified, we should return no grasps.
     """
@@ -30,7 +30,7 @@ def test_cube_no_grasps():
     assert len(grasps) == 0
 
 
-def test_cube_front_grasps():
+def test_cube_front_grasps() -> None:
     """
     Front grasps only for a cube object.
     Should return two perpendicular front grasps in the -X face
@@ -45,7 +45,7 @@ def test_cube_front_grasps():
         assert grasp.direction == GraspDirection.X_NEG
 
 
-def test_cube_top_grasps():
+def test_cube_top_grasps() -> None:
     """
     Top grasps only for a cube object.
     Should return two perpendicular front grasps in the -+Z face
@@ -60,7 +60,7 @@ def test_cube_top_grasps():
         assert grasp.direction == GraspDirection.Z_POS
 
 
-def test_cube_side_grasps():
+def test_cube_side_grasps() -> None:
     """
     Side grasps only for a cube object.
     Should return two perpendicular front grasps on each side
@@ -80,7 +80,7 @@ def test_cube_side_grasps():
     assert grasps[3].direction == GraspDirection.Y_POS
 
 
-def test_cube_all_grasps():
+def test_cube_all_grasps() -> None:
     """
     All grasps for a cube object.
     Should return 8 total grasps
@@ -108,7 +108,7 @@ def test_cube_all_grasps():
     assert grasps[7].direction == GraspDirection.Y_POS
 
 
-def test_deep_cube_all_grasps():
+def test_deep_cube_all_grasps() -> None:
     """
     All grasps for a deep object (large X dimension)
     Should return 5 grasps: 2 front, 1 top, 1 left, 1 right
@@ -130,7 +130,7 @@ def test_deep_cube_all_grasps():
     assert grasps[4].direction == GraspDirection.Y_POS
 
 
-def test_wide_cube_all_grasps():
+def test_wide_cube_all_grasps() -> None:
     """
     All grasps for a wide object (large Z dimension)
     Should return 5 grasps: 1 front, 1 top, 2 left, 2 right
@@ -154,7 +154,7 @@ def test_wide_cube_all_grasps():
     assert grasps[5].direction == GraspDirection.Y_POS
 
 
-def test_tall_cube_all_grasps():
+def test_tall_cube_all_grasps() -> None:
     """
     All grasps for a tall object (large Z dimension)
     Should return 5 grasps: 1 front, 2 top, 1 left, 1 right
@@ -176,7 +176,7 @@ def test_tall_cube_all_grasps():
     assert grasps[4].direction == GraspDirection.Y_POS
 
 
-def test_large_cube_all_grasps():
+def test_large_cube_all_grasps() -> None:
     """
     All grasps enabled, but object is too large on all dimensions.
     Should return no grasps.
@@ -188,7 +188,7 @@ def test_large_cube_all_grasps():
     assert len(grasps) == 0
 
 
-def test_all_grasps_robot_in_front():
+def test_all_grasps_robot_in_front() -> None:
     """
     All grasps enabled and robot facing from the front.
     """
@@ -216,7 +216,7 @@ def test_all_grasps_robot_in_front():
             assert grasp.direction == GraspDirection.Y_NEG
 
 
-def test_all_grasps_robot_in_right():
+def test_all_grasps_robot_in_right() -> None:
     """
     All grasps enabled and robot facing from the right.
     """
@@ -244,7 +244,7 @@ def test_all_grasps_robot_in_right():
             assert grasp.direction == GraspDirection.X_POS
 
 
-def test_all_grasps_robot_in_left():
+def test_all_grasps_robot_in_left() -> None:
     """
     All grasps enabled and robot facing from the left.
     """
@@ -272,7 +272,7 @@ def test_all_grasps_robot_in_left():
             assert grasp.direction == GraspDirection.X_NEG
 
 
-def test_all_grasps_robot_in_back():
+def test_all_grasps_robot_in_back() -> None:
     """
     All grasps enabled and robot facing from the back.
     """

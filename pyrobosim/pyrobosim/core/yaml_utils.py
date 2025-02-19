@@ -2,30 +2,27 @@
 
 import copy
 import os
+from typing import Any
 import yaml
-from itertools import zip_longest
 
 from .robot import Robot
 from .world import World
-from ..navigation import ConstantVelocityExecutor, get_planner_class
+from ..navigation.planner_registry import get_planner_class
 from ..planning.actions import ExecutionOptions
 from ..utils.general import replace_special_yaml_tokens
 from ..utils.logging import get_global_logger
 from ..utils.pose import Pose
 
 
-def construct_pose_from_args(pose_args, world):
+def construct_pose_from_args(pose_args: dict[str, Any], world: World) -> Pose:
     """
     Constructs a PyRoboSim pose from a dictionary of YAML arguments.
 
     This handles poses of different formats, as well as relative pose specification.
 
     :param pose_args: A dictionary containing the pose arguments.
-    :type pose_args: dict
     :param world: The world to use for looking up entities.
-    :type world: :class:`pyrobosim.core.world.World`
     :return: Pose object
-    :rype: :class:`pyrobosim.utils.pose.Pose`
     """
     pose = Pose.construct(pose_args)
     if "relative_to" in pose_args:
@@ -36,16 +33,15 @@ def construct_pose_from_args(pose_args, world):
 class WorldYamlLoader:
     """Creates world models from YAML files."""
 
-    def from_yaml(self, world_dict, world_dir=None):
+    def from_yaml(
+        self, world_dict: dict[str, Any], world_dir: str | None = None
+    ) -> World:
         """
         Load a world from a YAML description.
 
         :param world_dict: Dictionary containing all the world information
-        :type world_dict: dict[str, Any]
         :param world_dir: Root directory for basing some tokens, uses the current directory if not specified.
-        :type world_dir: str, optional
         :return: World model instance.
-        :rtype: :class:`pyrobosim.core.world.World`
         """
         self.data = world_dict
         self.world_dir = world_dir
@@ -59,14 +55,12 @@ class WorldYamlLoader:
         self.add_robots()
         return self.world
 
-    def from_file(self, filename):
+    def from_file(self, filename: str) -> World:
         """
         Load a world from a YAML file.
 
         :param filename: Path to YAML file describing the world.
-        :type filename: str
         :return: World model instance.
-        :rtype: :class:`pyrobosim.core.world.World`
         """
         with open(filename) as file:
             world_dict = yaml.load(file, Loader=yaml.FullLoader)
@@ -75,7 +69,7 @@ class WorldYamlLoader:
         world.source_yaml_file = filename
         return world
 
-    def create_world(self):
+    def create_world(self) -> None:
         """Creates an initial world with the specified global parameters."""
         params = self.data.get("params", {})
         self.world = World(**params)
@@ -98,7 +92,7 @@ class WorldYamlLoader:
 
             self.world.add_metadata(locations=loc_data, objects=obj_data)
 
-    def add_rooms(self):
+    def add_rooms(self) -> None:
         """Add rooms to the world."""
         for room_data in self.data.get("rooms", []):
             room_args = copy.deepcopy(room_data)
@@ -113,12 +107,12 @@ class WorldYamlLoader:
                 ]
             self.world.add_room(**room_args)
 
-    def add_hallways(self):
+    def add_hallways(self) -> None:
         """Add hallways connecting rooms to the world."""
         for hall_data in self.data.get("hallways", []):
             self.world.add_hallway(**hall_data)
 
-    def add_locations(self):
+    def add_locations(self) -> None:
         """Add locations for object spawning to the world."""
         for loc_data in self.data.get("locations", []):
             loc_args = copy.deepcopy(loc_data)
@@ -128,7 +122,7 @@ class WorldYamlLoader:
                 )
             self.world.add_location(**loc_args)
 
-    def add_objects(self):
+    def add_objects(self) -> None:
         """Add objects to the world."""
         if "objects" not in self.data:
             return
@@ -141,7 +135,7 @@ class WorldYamlLoader:
                 )
             self.world.add_object(**obj_args)
 
-    def add_robots(self):
+    def add_robots(self) -> None:
         """Add robots to the world."""
         for id, robot_data in enumerate(self.data.get("robots", [])):
             # Create the robot
@@ -166,8 +160,9 @@ class WorldYamlLoader:
                 pose = None
             self.world.add_robot(robot, loc=loc, pose=pose)
 
-    def get_path_planner(self, robot_data):
+    def get_path_planner(self, robot_data: dict[str, Any]) -> Any:
         """Gets path planner to add to a robot."""
+
         if "path_planner" not in robot_data:
             return None
 
@@ -181,8 +176,10 @@ class WorldYamlLoader:
         del robot_data["path_planner"]
         return path_planner
 
-    def get_path_executor(self, robot_data):
+    def get_path_executor(self, robot_data: dict[str, Any]) -> Any:
         """Gets a path executor to add to a robot."""
+        from ..navigation.execution import ConstantVelocityExecutor
+
         if "path_executor" not in robot_data:
             return ConstantVelocityExecutor()
 
@@ -198,7 +195,7 @@ class WorldYamlLoader:
             )
             return None
 
-    def get_grasp_generator(self, robot_data):
+    def get_grasp_generator(self, robot_data: dict[str, Any]) -> Any:
         """Gets a grasp generator to add to a robot."""
         from pyrobosim.manipulation.grasping import (
             GraspGenerator,
@@ -221,7 +218,9 @@ class WorldYamlLoader:
             )
             return None
 
-    def get_action_execution_options(self, robot_data):
+    def get_action_execution_options(
+        self, robot_data: dict[str, Any]
+    ) -> dict[str, ExecutionOptions]:
         """Gets action execution information to add to a robot."""
         action_execution_options = {}
         exec_data = robot_data.get("action_execution_options", {})
@@ -235,17 +234,15 @@ class WorldYamlLoader:
 class WorldYamlWriter:
     """Creates YAML files from world models."""
 
-    def to_dict(self, world):
+    def to_dict(self, world: World) -> dict[str, Any]:
         """
         Serializes a world to a dictionary.
 
         :param world: The world model to serialize.
-        :type world: :class:`pyrobosim.core.world.World`
         :return: The dictionary containing the world information.
-        :rtype: dict[str, Any]
         """
         # Extract the global world parameters to YAML.
-        world_dict = {
+        world_dict: dict[str, Any] = {
             "params": {
                 "name": world.name,
                 "inflation_radius": world.inflation_radius,
@@ -277,14 +274,12 @@ class WorldYamlWriter:
 
         return world_dict
 
-    def to_file(self, world, filename):
+    def to_file(self, world: World, filename: str) -> None:
         """
         Serializes a world to a YAML file.
 
         :param world: The world model to serialize.
-        :type world: :class:`pyrobosim.core.world.World`
         :param filename: The name of the file to write to.
-        :type filename: str
         """
         world_dict = self.to_dict(world)
         with open(filename, "w") as out_file:

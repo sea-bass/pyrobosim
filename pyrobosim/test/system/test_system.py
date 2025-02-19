@@ -19,8 +19,8 @@ os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 
 class TestSystem:
-    @pytest.fixture(autouse=True)
-    def setup_and_teardown(self):
+    @pytest.fixture(autouse=True)  # type: ignore[misc]
+    def setup_and_teardown(self) -> None:
         # Load world from file.
         cur_path = os.path.dirname(os.path.realpath(__file__))
         world_file_path = os.path.join(cur_path, "test_system_world.yaml")
@@ -32,12 +32,11 @@ class TestSystem:
             self.app = PyRoboSimGUI(world, sys.argv, show=False)
             time.sleep(0.5)
 
-    def nav_helper(self, nav_query):
+    def nav_helper(self, nav_query: str) -> None:
         """
         Helper function to test navigation UI action.
 
         :param nav_query: Query for navigation goal.
-        :type nav_query: str
         """
         window = self.app.main_window
         world = self.app.world
@@ -65,8 +64,8 @@ class TestSystem:
             or robot.location in expected_location.children
         )
 
-    @pytest.mark.dependency(name="test_nav")
-    def test_nav(self):
+    @pytest.mark.dependency(name="test_nav")  # type: ignore[misc]
+    def test_nav(self) -> None:
         """
         Test navigation UI action.
         """
@@ -80,8 +79,8 @@ class TestSystem:
         for nav_query in nav_queries:
             self.nav_helper(nav_query)
 
-    @pytest.mark.dependency(name="test_pick_detect_place", depends=["test_nav"])
-    def test_pick_detect_place(self):
+    @pytest.mark.dependency(name="test_pick_detect_place", depends=["test_nav"])  # type: ignore[misc]
+    def test_pick_detect_place(self) -> None:
         """
         Test pick, detect, and place UI actions.
         """
@@ -120,8 +119,8 @@ class TestSystem:
             window.on_place_click()
             assert robot.manipulated_object is None
 
-    @pytest.mark.dependency(name="test_open_close", depends=["test_pick_detect_place"])
-    def test_open_close(self):
+    @pytest.mark.dependency(name="test_open_close", depends=["test_pick_detect_place"])  # type: ignore[misc]
+    def test_open_close(self) -> None:
         """
         Test open and close UI actions.
         """
@@ -143,8 +142,8 @@ class TestSystem:
             window.on_open_click()
             assert location.is_open
 
-    @pytest.mark.dependency(name="test_nav_cancel", depends=["test_open_close"])
-    def test_nav_cancel(self):
+    @pytest.mark.dependency(name="test_nav_cancel", depends=["test_open_close"])  # type: ignore[misc]
+    def test_nav_cancel(self) -> None:
         """
         Test canceling navigation UI action.
         """

@@ -4,9 +4,10 @@
 
 import numpy as np
 import pytest
+from pytest import LogCaptureFixture
 
 from pyrobosim.core import Pose
-from pyrobosim.utils.motion import Path
+from pyrobosim.utils.path import Path
 from pyrobosim.utils.trajectory import (
     Trajectory,
     get_constant_speed_trajectory,
@@ -14,13 +15,13 @@ from pyrobosim.utils.trajectory import (
 )
 
 
-def test_create_empty_trajectory():
+def test_create_empty_trajectory() -> None:
     traj = Trajectory()
     assert traj.num_points() == 0
     assert traj.is_empty()
 
 
-def test_create_trajectory():
+def test_create_trajectory() -> None:
     poses = [
         Pose(x=0.1, y=1.1, yaw=0.0),
         Pose(x=0.2, y=1.2, yaw=np.pi / 4),
@@ -43,13 +44,13 @@ def test_create_trajectory():
     assert traj.poses[2].get_yaw() == np.pi / 2
 
 
-def test_delete_empty_trajectory(caplog):
+def test_delete_empty_trajectory(caplog: LogCaptureFixture) -> None:
     traj = Trajectory()
     assert not traj.delete(0)
     assert "Trajectory is empty. Cannot delete point." in caplog.text
 
 
-def test_delete_at_invalid_indices(caplog):
+def test_delete_at_invalid_indices(caplog: LogCaptureFixture) -> None:
     poses = [
         Pose(x=0.1, y=1.1, yaw=0.0),
         Pose(x=0.2, y=1.2, yaw=np.pi / 4),
@@ -67,7 +68,7 @@ def test_delete_at_invalid_indices(caplog):
     assert traj.num_points() == 3
 
 
-def test_delete():
+def test_delete() -> None:
     poses = [
         Pose(x=0.1, y=1.1, yaw=0.0),
         Pose(x=0.2, y=1.2, yaw=np.pi / 4),
@@ -87,7 +88,7 @@ def test_delete():
     assert traj.poses[1].get_yaw() == np.pi / 2
 
 
-def test_create_invalid_trajectory():
+def test_create_invalid_trajectory() -> None:
     with pytest.raises(ValueError):
         poses = [
             Pose(x=0.1, y=1.1, yaw=0.0),
@@ -97,19 +98,21 @@ def test_create_invalid_trajectory():
         Trajectory([0.0, 10.0], poses)
 
 
-def test_get_constant_speed_trajectory_empty_path(caplog):
+def test_get_constant_speed_trajectory_empty_path(caplog: LogCaptureFixture) -> None:
     path = Path(poses=[])
     assert get_constant_speed_trajectory(path) is None
     assert "Insufficient points to generate trajectory." in caplog.text
 
 
-def test_get_constant_speed_trajectory_insufficient_points(caplog):
+def test_get_constant_speed_trajectory_insufficient_points(
+    caplog: LogCaptureFixture,
+) -> None:
     path = Path(poses=[Pose(x=1.0, y=1.0)])
     assert get_constant_speed_trajectory(path) is None
     assert "Insufficient points to generate trajectory." in caplog.text
 
 
-def test_get_constant_speed_trajectory_unlimited_ang_vel():
+def test_get_constant_speed_trajectory_unlimited_ang_vel() -> None:
     path = Path(
         poses=[
             Pose(x=0.0, y=0.0),
@@ -125,7 +128,7 @@ def test_get_constant_speed_trajectory_unlimited_ang_vel():
     assert np.all(traj.poses == path.poses)
 
 
-def test_get_constant_speed_trajectory_limited_ang_vel():
+def test_get_constant_speed_trajectory_limited_ang_vel() -> None:
     path = Path(
         poses=[
             Pose(x=0.0, y=0.0),
@@ -143,7 +146,7 @@ def test_get_constant_speed_trajectory_limited_ang_vel():
     assert np.all(traj.poses == path.poses)
 
 
-def test_interpolate_trajectory():
+def test_interpolate_trajectory() -> None:
     path = Path(
         poses=[
             Pose(x=0.0, y=0.0),
@@ -158,7 +161,7 @@ def test_interpolate_trajectory():
     assert interpolated_traj.num_points() == 31
 
 
-def test_interpolate_trajectory_duplicate_points(caplog):
+def test_interpolate_trajectory_duplicate_points(caplog: LogCaptureFixture) -> None:
     path = Path(
         poses=[
             Pose(x=0.0, y=0.0),
@@ -176,7 +179,7 @@ def test_interpolate_trajectory_duplicate_points(caplog):
     assert interpolated_traj.num_points() == 31
 
 
-def test_interpolate_trajectory_insufficient_points(caplog):
+def test_interpolate_trajectory_insufficient_points(caplog: LogCaptureFixture) -> None:
     traj = Trajectory([1.0], [Pose()])
     interpolated_traj = interpolate_trajectory(traj, dt=0.1)
     assert interpolated_traj is None

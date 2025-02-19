@@ -4,7 +4,7 @@ import os
 
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.gui import start_gui
-from pyrobosim.navigation import AStarPlanner
+from pyrobosim.navigation.a_star import AStarPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
@@ -13,7 +13,7 @@ world_file = os.path.join(get_data_folder(), "test_world.yaml")
 world = WorldYamlLoader().from_file(world_file)
 
 
-def demo_astar():
+def demo_astar() -> None:
     """Creates an occupancy grid based A* planner and plans a path."""
     robot = world.robots[0]
     planner_config = {

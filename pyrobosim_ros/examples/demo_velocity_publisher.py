@@ -11,8 +11,8 @@ import time
 from geometry_msgs.msg import Twist
 
 
-class VelocityPublisher(Node):
-    def __init__(self):
+class VelocityPublisher(Node):  # type: ignore[misc]
+    def __init__(self) -> None:
         super().__init__("demo_velocity_publisher")
 
         # Declare parameters
@@ -37,7 +37,7 @@ class VelocityPublisher(Node):
         pub_period = self.get_parameter("pub_period").value
         self.timer = self.create_timer(pub_period, self.vel_pub_callback)
 
-    def vel_pub_callback(self):
+    def vel_pub_callback(self) -> None:
         """Publisher callback for velocity commands."""
         lin_vel = self.get_parameter("lin_vel").value
         ang_vel = self.get_parameter("ang_vel").value
@@ -48,7 +48,7 @@ class VelocityPublisher(Node):
         self.vel_pub.publish(pub_cmd)
 
 
-def main():
+def main() -> None:
     rclpy.init()
     pub_node = VelocityPublisher()
     rclpy.spin(pub_node)

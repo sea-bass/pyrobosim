@@ -8,12 +8,12 @@ import rclpy
 from rclpy.node import Node
 import time
 
-from pyrobosim_msgs.msg import GoalPredicate, GoalSpecification
-from pyrobosim_msgs.srv import SetLocationState
+from pyrobosim_msgs.msg import GoalPredicate, GoalSpecification  # type: ignore
+from pyrobosim_msgs.srv import SetLocationState  # type: ignore
 
 
-class GoalPublisher(Node):
-    def __init__(self):
+class GoalPublisher(Node):  # type: ignore[misc]
+    def __init__(self) -> None:
         super().__init__("demo_pddlstream_goal_publisher")
 
         # Declare parameters
@@ -90,7 +90,7 @@ class GoalPublisher(Node):
         self.goalspec_pub.publish(goal_msg)
 
 
-def main():
+def main() -> None:
     rclpy.init()
     goal_node = GoalPublisher()
 

@@ -3,60 +3,62 @@ Utilities to connect world models with PDDLStream.
 """
 
 import os
+from typing import Any, Callable
+
+from pddlstream.language.constants import Solution
 
 from ..actions import TaskAction, TaskPlan
+from ...core.robot import Robot
+from ...core.types import Entity
+from ...core.world import World
 from ...manipulation.grasping import Grasp
 from ...utils.general import get_data_folder
-from ...utils.motion import Path
+from ...utils.path import Path
 from ...utils.pose import Pose
 
 
-def get_default_domains_folder():
+def get_default_domains_folder() -> str:
     """
     Returns the default path to the folder containing PDDLStream domains.
 
     :return: Path to domains folder.
-    :rtype: str
     """
     return os.path.join(get_data_folder(), "pddlstream", "domains")
 
 
-def get_default_stream_info_fn():
+def get_default_stream_info_fn() -> Callable[[], dict[str, Any]]:
     """
     Gets a function that creates the default PDDLStream stream information dictionary.
 
-    :return: PDDLStream stream information function
-    :rtype: function
+    :return: PDDLStream stream information function.
     """
     from .default_mappings import get_stream_info
 
     return get_stream_info
 
 
-def get_default_stream_map_fn():
+def get_default_stream_map_fn() -> Callable[[World, Robot], dict[str, Any]]:
     """
     Gets a function that creates the default PDDLStream stream mappings dictionary
     given a `pyrobosim.core.world.World` object and a `pyrobosim.core.robot.Robot` object.
 
-    :return: PDDLStream stream mappings function
-    :rtype: function
+    :return: PDDLStream stream mappings function.
     """
     from .default_mappings import get_stream_map
 
     return get_stream_map
 
 
-def world_to_pddlstream_init(world, robot):
+def world_to_pddlstream_init(
+    world: World, robot: Robot
+) -> list[tuple[str | Pose | Entity | None, ...]]:
     """
     Converts a world representation object to a PDDLStream compatible
     initial condition specification.
 
     :param world: World model.
-    :type world: :class:`pyrobosim.core.world.World`
     :param robot: Robot to use for planning.
-    :type robot: :class:`pyrobosim.core.robot.Robot`
     :return: PDDLStream compatible initial state representation.
-    :rtype: list[tuple]
     """
 
     # Start with the robot initial conditions
@@ -125,12 +127,13 @@ def world_to_pddlstream_init(world, robot):
     return init
 
 
-def process_goal_specification(goal_literals, world):
+def process_goal_specification(
+    goal_literals: list[tuple[str | Entity, ...]], world: World
+) -> None:
     """
     Processes and validates a goal specification for planning.
 
     :param goal_literals: List of literals describing a goal specification.
-    :type goal_literals: list[tuple]
     """
     for i, literal in enumerate(goal_literals):
         # If any predicate has a string argument, check whether it corresponds
@@ -138,48 +141,46 @@ def process_goal_specification(goal_literals, world):
         for j, elem in enumerate(literal):
             if j > 0 and isinstance(elem, str):
                 entity = world.get_entity_by_name(elem)
-                if entity:
+                if entity is not None:
                     replace_goal_literal_tuple(goal_literals, i, j, entity)
 
 
-def replace_goal_literal_tuple(goal_literals, literal_idx, arg_idx, new_val):
+def replace_goal_literal_tuple(
+    goal_literals: list[tuple[str | Entity, ...]],
+    literal_idx: int,
+    arg_idx: int,
+    new_val: Entity,
+) -> None:
     """
     Utility function to replace the element of a goal literal tuple in place.
 
     :param goal_literals: List of literals describing a goal specification.
-    :type goal_literals: list[tuple]
     :param literal_idx: Index of goal literal in list to replace.
-    :type literal_idx: int
     :param arg_idx: Index of argument in goal literal to replace.
-    :type arg_idx: int
     :param new_val: New value to replace inside the goal literal tuple.
-    :type new_val: Any
     """
     literal_copy = list(goal_literals[literal_idx])
     literal_copy[arg_idx] = new_val
     goal_literals[literal_idx] = tuple(literal_copy)
 
 
-def pddlstream_solution_to_plan(solution, robot):
+def pddlstream_solution_to_plan(solution: Solution, robot: str) -> TaskPlan | None:
     """
     Converts the output plan of a PDDLStream solution to a plan
     list compatible with plan execution infrastructure.
 
     :param solution: PDDLStream compatible initial state representation.
-    :type solution: list[tuple]
     :param robot: Name of robot to execute plan.
-    :type robot: str
-    :return: Task plan object.
-    :rtype: :class:`pyrobosim.planning.actions.TaskPlan`
+    :return: Task plan object if successful, else ``None``.
     """
-    # Unpack the PDDLStream solution and handle the None case
+    # Unpack the PDDLStream solution and handle the None case.
     plan, total_cost, _ = solution
     if plan is None or len(plan) == 0:
         return None
 
     plan_out = TaskPlan(robot=robot, actions=[])
     for act_pddl in plan:
-        # Convert the PDDL action to a TaskAction
+        # Convert the PDDL action to a TaskAction.
         act = TaskAction(act_pddl.name)
         act.robot = robot
         if act.type == "navigate":
@@ -210,7 +211,7 @@ def pddlstream_solution_to_plan(solution, robot):
         else:
             raise ValueError(f"No known action type: {act.type}")
 
-        # Add the action to the task plan
+        # Add the action to the task plan.
         plan_out.actions.append(act)
 
     # TODO: Find a way to get the individual action costs from PDDLStream.

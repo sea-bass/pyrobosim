@@ -3,41 +3,39 @@
 import numpy as np
 import signal
 import sys
+from typing import Any
 
 from PySide6 import QtWidgets
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Signal, QEvent
 from PySide6.QtGui import QFont, QScreen
 from matplotlib.backends.qt_compat import QtCore
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
 
-from .world_canvas import WorldCanvas
+from ..core.robot import Robot
+from ..core.world import World
 
 
-def start_gui(world):
+def start_gui(world: World) -> None:
     """
     Helper function to start a pyrobosim GUI for a world model.
 
     :param world: World object to attach to the GUI.
-    :type world: :class:`pyrobosim.core.world.World`
     """
     app = PyRoboSimGUI(world, sys.argv)
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     sys.exit(app.exec_())
 
 
-class PyRoboSimGUI(QtWidgets.QApplication):
+class PyRoboSimGUI(QtWidgets.QApplication):  # type: ignore [misc]
     """Main pyrobosim GUI class."""
 
-    def __init__(self, world, args, show=True):
+    def __init__(self, world: World, args: Any, show: bool = True) -> None:
         """
         Creates an instance of the pyrobosim GUI.
 
         :param world: World object to attach to the GUI.
-        :type world: :class:`pyrobosim.core.world.World`
         :param args: System arguments, needed by the QApplication constructor.
-        :type args: list[str]
         :param show: If true (default), shows the GUI. Otherwise runs headless for testing.
-        :type show: bool, optional
         """
         super(PyRoboSimGUI, self).__init__(args)
         self.world = world
@@ -46,42 +44,42 @@ class PyRoboSimGUI(QtWidgets.QApplication):
             self.main_window.show()
 
 
-class PyRoboSimMainWindow(QtWidgets.QMainWindow):
+class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
     """Main application window for the pyrobosim GUI."""
 
     update_buttons_signal = Signal()
     """Signal for updating UI button state."""
 
-    def __init__(self, world, show=True, *args, **kwargs):
+    def __init__(
+        self, world: World, show: bool = True, *args: Any, **kwargs: Any
+    ) -> None:
         """
         Creates an instance of the pyrobosim application main window.
 
         :param world: World object to attach.
-        :type world: :class:`pyrobosim.core.world.World`
         :param show: If true (default), shows the GUI. Otherwise runs headless for testing.
-        :type show: bool, optional
         """
+        from .world_canvas import WorldCanvas
+
         super(PyRoboSimMainWindow, self).__init__(*args, **kwargs)
-        self.canvas = None
         self.layout_created = False
 
         self.setWindowTitle("pyrobosim")
         self.set_window_dims()
 
+        self.canvas = WorldCanvas(self, world, show)
         self.set_world(world)
 
-        self.canvas = WorldCanvas(self, self.world, show)
         self.create_layout()
         self.canvas.show()
         self.on_robot_changed()
         self.world.logger.info(f"Initialized PyRoboSim GUI.")
 
-    def set_world(self, world):
+    def set_world(self, world: World) -> None:
         """
         Sets the world for the GUI.
 
         :param world: World object to attach.
-        :type world: :class:`pyrobosim.core.world.World`
         """
         from ..core.yaml_utils import WorldYamlWriter
 
@@ -89,23 +87,20 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         if self.world.source_yaml is None:
             self.world.source_yaml = WorldYamlWriter().to_dict(self.world)
         self.world.gui = self
-        self.world.has_gui = True
-        if self.canvas is not None:
-            self.canvas.world = world
+        self.canvas.world = world
 
-    def closeEvent(self, _):
+    def closeEvent(self, _: QEvent) -> None:
         """Cleans up running threads on closing the window."""
         self.canvas.nav_animator.stop()
         self.canvas.thread_pool.waitForDone()
-        if self.world and self.world.has_ros_node:
+        if self.world and (self.world.ros_node is not None):
             self.world.ros_node.shutdown()
 
-    def set_window_dims(self, screen_fraction=0.8):
+    def set_window_dims(self, screen_fraction: float = 0.8) -> None:
         """
         Set window dimensions.
 
         :param screen_fraction: Fraction of screen (0.0 to 1.0) used by window.
-        :type screen_fraction: float
         """
         screen = QScreen.availableGeometry(QtWidgets.QApplication.primaryScreen())
         window_width = int(screen.width() * screen_fraction)
@@ -114,7 +109,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         window_y = int(screen.top() + 0.5 * (screen.height() - window_height))
         self.setGeometry(window_x, window_y, window_width, window_height)
 
-    def create_layout(self):
+    def create_layout(self) -> None:
         """Creates the main GUI layout."""
         self.main_widget = QtWidgets.QWidget()
 
@@ -216,19 +211,21 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self.main_widget)
         self.layout_created = True
 
-    def get_current_robot(self):
+    def get_current_robot(self) -> Robot | None:
         robot_name = self.robot_textbox.currentText()
         return self.world.get_robot_by_name(robot_name)
 
     ####################
     # State Management #
     ####################
-    def update_button_state(self):
+    def update_button_state(self) -> None:
         """Update the state of buttons based on the state of the robot."""
         robot = self.get_current_robot()
-        if robot:
+        if robot is not None:
             is_moving = robot.is_moving()
-            at_open_object_spawn = robot.at_object_spawn() and robot.location.is_open
+            is_location_open = (robot.location is not None) and (robot.location.is_open)
+
+            at_open_object_spawn = robot.at_object_spawn() and is_location_open
             can_pick = robot.manipulated_object is None
             can_open_close = robot.at_openable_location() and can_pick
 
@@ -236,8 +233,8 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             self.pick_button.setEnabled(can_pick and at_open_object_spawn)
             self.place_button.setEnabled((not can_pick) and at_open_object_spawn)
             self.detect_button.setEnabled(at_open_object_spawn)
-            self.open_button.setEnabled(can_open_close and not robot.location.is_open)
-            self.close_button.setEnabled(can_open_close and robot.location.is_open)
+            self.open_button.setEnabled(can_open_close and not is_location_open)
+            self.close_button.setEnabled(can_open_close and is_location_open)
             self.cancel_action_button.setEnabled(is_moving)
             self.reset_world_button.setEnabled(not is_moving)
             self.reset_path_planner_button.setEnabled(not is_moving)
@@ -258,15 +255,14 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
 
         self.canvas.draw_signal.emit()
 
-    def set_buttons_during_action(self, state):
+    def set_buttons_during_action(self, state: bool) -> None:
         """
         Enables or disables buttons that should not be pressed while
         the robot is executing an action.
 
         :param state: Desired button state (True to enable, False to disable)
-        :type state: bool
         """
-        if self.get_current_robot():
+        if self.get_current_robot() is not None:
             self.nav_button.setEnabled(state)
             self.pick_button.setEnabled(state)
             self.place_button.setEnabled(state)
@@ -281,10 +277,10 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
     ####################
     # Button Callbacks #
     ####################
-    def rand_pose_cb(self):
+    def rand_pose_cb(self) -> None:
         """Callback to randomize robot pose."""
         robot = self.get_current_robot()
-        if not robot:
+        if robot is None:
             self.world.logger.warning("No robot available.")
             return None
 
@@ -295,11 +291,12 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             robot.set_pose(sampled_pose)
             if robot.manipulated_object is not None:
                 robot.manipulated_object.pose = sampled_pose
+
         self.canvas.update_robots_plot()
         self.canvas.show_world_state()
         self.canvas.draw()
 
-    def rand_goal_cb(self):
+    def rand_goal_cb(self) -> None:
         """Callback to randomize robot goal."""
         all_entities = (
             self.world.get_location_names()
@@ -309,48 +306,48 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         entity_name = np.random.choice(all_entities)
         self.goal_textbox.setText(entity_name)
 
-    def rand_obj_cb(self):
+    def rand_obj_cb(self) -> None:
         """Callback to randomize manipulation object goal."""
         obj_name = np.random.choice(self.world.get_object_names())
         self.goal_textbox.setText(obj_name)
 
-    def on_robot_changed(self):
+    def on_robot_changed(self) -> None:
         """Callback when the currently selected robot changes."""
         self.canvas.show_objects_signal.emit()
         self.update_buttons_signal.emit()
 
-    def on_navigate_click(self):
+    def on_navigate_click(self) -> None:
         """Callback to navigate to a goal location."""
         robot = self.get_current_robot()
-        if robot and robot.executing_action:
+        if (robot is None) or robot.executing_action:
             return
 
         loc = self.goal_textbox.text()
-        if loc:
+        if loc is not None:
             robot.logger.info(f"Navigating to {loc}")
             self.canvas.navigate_signal.emit(robot, loc, None)
 
-    def on_pick_click(self):
+    def on_pick_click(self) -> None:
         """Callback to pick an object."""
         robot = self.get_current_robot()
-        if robot:
+        if robot is not None:
             obj = self.goal_textbox.text()
             robot.logger.info(f"Picking {obj}")
             self.canvas.pick_object(robot, obj)
             self.update_buttons_signal.emit()
 
-    def on_place_click(self):
+    def on_place_click(self) -> None:
         """Callback to place an object."""
         robot = self.get_current_robot()
-        if robot and robot.manipulated_object is not None:
+        if (robot is not None) and (robot.manipulated_object is not None):
             robot.logger.info(f"Placing {robot.manipulated_object.name}")
             self.canvas.place_object(robot)
             self.update_buttons_signal.emit()
 
-    def on_detect_click(self):
+    def on_detect_click(self) -> None:
         """Callback to detect objects."""
         robot = self.get_current_robot()
-        if robot:
+        if robot is not None:
             obj_query = self.goal_textbox.text() or None
             log_message = "Detecting objects"
             if obj_query is not None:
@@ -359,53 +356,55 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
             self.canvas.detect_objects(robot, obj_query)
             self.update_buttons_signal.emit()
 
-    def on_open_click(self):
+    def on_open_click(self) -> None:
         """Callback to open a location."""
         robot = self.get_current_robot()
-        if robot and robot.location:
+        if (robot is not None) and (robot.location is not None):
             robot.logger.info(f"Opening {robot.location}")
             self.canvas.open_location(robot)
             self.update_buttons_signal.emit()
-        elif not robot and self.goal_textbox.text():
+        elif (robot is None) and self.goal_textbox.text():
             self.world.open_location(self.goal_textbox.text())
 
-    def on_close_click(self):
+    def on_close_click(self) -> None:
         """Callback to close a location."""
         robot = self.get_current_robot()
-        if robot and robot.location:
+        if (robot is not None) and (robot.location is not None):
             robot.logger.info(f"Closing {robot.location}")
             self.canvas.close_location(robot)
             self.update_buttons_signal.emit()
-        elif not robot and self.goal_textbox.text():
+        elif (robot is None) and self.goal_textbox.text():
             self.world.close_location(self.goal_textbox.text())
 
-    def on_collision_polygon_toggle_click(self):
+    def on_collision_polygon_toggle_click(self) -> None:
         """Callback to toggle collision polygons."""
         self.canvas.toggle_collision_polygons()
         self.canvas.draw_signal.emit()
 
-    def on_cancel_action_click(self):
+    def on_cancel_action_click(self) -> None:
         """Callback to cancel any running action for the current robot."""
         robot = self.get_current_robot()
-        if robot:
+        if robot is not None:
             robot.cancel_actions()
             self.update_buttons_signal.emit()
             self.canvas.draw_signal.emit()
 
-    def on_reset_world_click(self):
+    def on_reset_world_click(self) -> None:
         """Callback to reset the entire world."""
         from ..core.yaml_utils import WorldYamlLoader
 
         # Shut down all the old robots' ROS interfaces.
-        ros_node = self.world.ros_node if self.world.has_ros_node else None
+        ros_node = self.world.ros_node
         if ros_node is not None:
             for robot in self.world.robots:
                 ros_node.remove_robot_ros_interfaces(robot)
 
         if self.world.source_yaml_file is not None:
             world = WorldYamlLoader().from_file(self.world.source_yaml_file)
-        else:
+        elif self.world.source_yaml is not None:
             world = WorldYamlLoader().from_yaml(self.world.source_yaml)
+        else:
+            raise RuntimeError("Could not find source YAML representation!")
         self.set_world(world)
 
         # Start up the new robots' ROS interfaces.
@@ -418,9 +417,9 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):
         self.canvas.draw_signal.emit()
         self.on_robot_changed()
 
-    def on_reset_path_planner_click(self):
+    def on_reset_path_planner_click(self) -> None:
         """Callback to reset the path planner for the current robot."""
         robot = self.get_current_robot()
-        if robot:
+        if robot is not None:
             robot.reset_path_planner()
             self.canvas.draw_signal.emit()

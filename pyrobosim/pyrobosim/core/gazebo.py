@@ -6,6 +6,12 @@ import itertools
 from shapely.geometry import LineString, Polygon, MultiPolygon
 from shapely.ops import split
 
+from .hallway import Hallway
+from .locations import Location
+from .objects import Object
+from .room import Room
+from .types import Entity
+from .world import World
 from ..utils.general import get_data_folder, replace_special_yaml_tokens
 
 
@@ -17,17 +23,18 @@ TWELVE_SPACES = " " * 12
 class WorldGazeboExporter:
     """Exports world models to Gazebo."""
 
-    def __init__(self, world):
+    def __init__(self, world: World) -> None:
         """
         Creates a new Gazebo exporter from a world.
 
         :param world: World object to export.
-        :type world: :class:`pyrobosim.core.world.World`
         """
         self.world = world
+        self.data_folder = get_data_folder()
+        self.default_out_folder = os.path.join(self.data_folder, "worlds")
+        self.out_folder = ""
 
         # Set up template text for string replacement.
-        self.data_folder = get_data_folder()
         self.template_folder = os.path.join(self.data_folder, "templates")
         self.model_template_text = self.read_template_file("model_template.sdf")
         self.model_config_template_text = self.read_template_file(
@@ -35,7 +42,7 @@ class WorldGazeboExporter:
         )
         self.link_template_text = self.read_template_file("link_template_polyline.sdf")
 
-    def export(self, classic=False, out_folder=None):
+    def export(self, classic: bool = False, out_folder: str | None = None) -> str:
         """
         Exports the world to an SDF file to use with Gazebo, including
         all other necessary models for locations and/or objects.
@@ -44,11 +51,8 @@ class WorldGazeboExporter:
         are printed to the Terminal.
 
         :param classic: If True, exports to Gazebo Classic, else to Gazebo Sim.
-        :type classic: bool, optional
         :param out_folder: The output folder. If not specified, defaults to the pyrobosim `data/worlds` folder.
-        :type out_folder: bool, optional
         :return: Path to output folder with generated world.
-        :rtype: str
         """
         world_name = self.world.name
         if world_name is None:
@@ -60,11 +64,9 @@ class WorldGazeboExporter:
         self.model_include_text = ""
 
         # Define output folder
-        if not out_folder:
-            self.out_folder = os.path.join(self.data_folder, "worlds")
-        else:
-            self.out_folder = out_folder
-        self.out_folder = os.path.join(self.out_folder, world_name)
+        self.out_folder = os.path.join(
+            out_folder or self.default_out_folder, world_name
+        )
         self.include_model_paths = set([self.out_folder])
 
         # Convert all the world entities for export
@@ -100,7 +102,7 @@ class WorldGazeboExporter:
 
         return self.out_folder
 
-    def create_walls_for_export(self, walls_name="walls"):
+    def create_walls_for_export(self, walls_name: str = "walls") -> None:
         """
         Convert all room / hallway polygons to Gazebo representations.
 
@@ -108,7 +110,6 @@ class WorldGazeboExporter:
         creates a model with the "polyline" geometry.
 
         :param walls_name: The name of the Gazebo model containing walls.
-        :type walls_name: str, optional
         """
         # Build up a list of links representing each wall segment in the world.
         full_links_text = ""
@@ -140,7 +141,7 @@ class WorldGazeboExporter:
         self.model_include_text += EIGHT_SPACES + f"<uri>model://{walls_name}</uri>\n"
         self.model_include_text += FOUR_SPACES + "</include>\n"
 
-    def create_locations_and_objects_for_export(self):
+    def create_locations_and_objects_for_export(self) -> None:
         """
         Export locations and objects to Gazebo representations.
 
@@ -156,7 +157,9 @@ class WorldGazeboExporter:
         """
         for entity in itertools.chain(self.world.locations, self.world.objects):
             # If the object category does not have meshes, create a new model and extrude a polyline.
-            if entity.metadata["footprint"]["type"] != "mesh":
+            assert isinstance(entity, (Location, Object))
+            assert entity.category is not None
+            if entity.category_metadata["footprint"]["type"] != "mesh":
                 folder = os.path.join(self.out_folder, entity.category)
                 if not os.path.isdir(folder):
                     os.makedirs(folder)
@@ -186,10 +189,11 @@ class WorldGazeboExporter:
                         f.write(config_text)
 
             # If the entity is based on a Gazebo model, the model can be included as is.
-            if entity.metadata["footprint"]["type"] == "mesh":
+            if entity.category_metadata["footprint"]["type"] == "mesh":
                 model_path = replace_special_yaml_tokens(
-                    entity.metadata["footprint"]["model_path"]
+                    entity.category_metadata["footprint"]["model_path"]
                 )
+                assert isinstance(model_path, str)
                 model_path_split = os.path.split(model_path)
                 self.include_model_paths.add(os.path.normpath(model_path_split[0]))
                 model_name = model_path_split[-1]
@@ -209,25 +213,25 @@ class WorldGazeboExporter:
             self.model_include_text += EIGHT_SPACES + f"<pose>{pose_str}</pose>\n"
             self.model_include_text += FOUR_SPACES + "</include>\n"
 
-    def create_sdf_link_text(self, template_text, entity, entity_type):
+    def create_sdf_link_text(
+        self, template_text: str, entity: Entity, entity_type: str
+    ) -> str:
         """
         Creates SDF link text from a world entity.
 
         :param template_text: Link template SDF text to modify.
-        :type template_text: str
         :param entity: Entity object (e.g. Room, Hallway, Location, Object)
-        :type entity: Entity
         :param entity_type: The type of entity, either ``"walls"`` or ``"object"``.
-        :type entity_type: str
         :return: The modified template SDF text containing the entity model.
-        :rtype: str
         """
 
         # Check the height
         if entity_type == "walls":
+            assert isinstance(entity, (Room, Hallway))
             height = self.world.wall_height
             poly = entity.viz_polygon
         elif entity_type == "object":
+            assert isinstance(entity, (Location, Object))
             height = entity.height
             poly = entity.raw_polygon
         else:
@@ -276,14 +280,12 @@ class WorldGazeboExporter:
 
         return full_text
 
-    def read_template_file(self, filename):
+    def read_template_file(self, filename: str) -> str:
         """
         Simple wrapper utility to read a file from the template folder.
 
         :param filename: Filename, relative to the template folder.
-        :type filename: str
         :return: Raw template text.
-        :rtype: str
         """
         fullfile = os.path.join(self.template_folder, filename)
         with open(fullfile, "r") as f:

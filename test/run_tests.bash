@@ -43,6 +43,7 @@ then
     colcon test \
         --packages-select pyrobosim_ros \
         --event-handlers console_cohesion+ \
+        --return-code-on-test-failure \
         --pytest-with-coverage || SUCCESS=$?
     echo ""
     colcon test-result --verbose \

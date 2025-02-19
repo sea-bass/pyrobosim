@@ -6,6 +6,7 @@ Tests for location and object spawn creation in pyrobosim.
 
 import os
 import pytest
+from pytest import LogCaptureFixture
 
 from pyrobosim.core import Location, World
 from pyrobosim.planning.actions import ExecutionStatus
@@ -14,8 +15,8 @@ from pyrobosim.utils.pose import Pose
 
 
 class TestLocations:
-    @pytest.fixture(autouse=True)
-    def create_test_world(self):
+    @pytest.fixture(autouse=True)  # type: ignore[misc]
+    def create_test_world(self) -> None:
         data_folder = get_data_folder()
         self.test_world = World()
         self.test_world.set_metadata(
@@ -26,7 +27,7 @@ class TestLocations:
         coords = [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)]
         self.test_room = self.test_world.add_room(name="test_room", footprint=coords)
 
-    def test_add_location_to_world_from_object(self, caplog):
+    def test_add_location_to_world_from_object(self, caplog: LogCaptureFixture) -> None:
         """Test adding a location from a Location object."""
         location = Location(
             category="table",
@@ -50,7 +51,7 @@ class TestLocations:
             in caplog.text
         )
 
-    def test_add_location_to_world_from_args(self):
+    def test_add_location_to_world_from_args(self) -> None:
         """Test adding a location from a list of named keyword arguments."""
         result = self.test_world.add_location(
             category="table",
@@ -65,7 +66,7 @@ class TestLocations:
         assert not self.test_world.locations[0].is_open
         assert self.test_world.locations[0].is_locked
 
-    def test_add_location_open_close_lock_unlock(self):
+    def test_add_location_open_close_lock_unlock(self) -> None:
         """Test the open, close, lock, and unlock capabilities of locations."""
         result = self.test_world.add_location(
             name="test_table",
