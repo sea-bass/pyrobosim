@@ -38,6 +38,7 @@ Below is a list of known projects that use ``pyrobosim``.
 * `Hierarchically Decentralized Heterogeneous Multi-Robot Task Allocation System <https://arxiv.org/abs/2405.02484>`_, by Sujeet Kashid and Ashwin D. Kumat (2024)
 * `Hands-On with ROS 2 Deliberation Technologies <https://github.com/ros-wg-delib/roscon24-workshop>`_ workshop at `ROSCon 2024 <https://roscon.ros.org/2024/>`_, by Christian Henkel, Sebastian Castro, Davide Faconti, David Oberacker, David Conner, and Matthias Mayr (2024)
 * `AutoAPMS: A unified software framework for creating behavior-based robotic applications <https://github.com/robin-mueller/auto-apms>`_, by Robin Müller (2025)
+* `Collaborative Large Language Models for Task Allocation in Construction Robots <https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5097309>`_, by Samuel A. Prieto and Borja García de Soto (2025)
 
 If you have something to add, please submit a pull request!
 
