@@ -58,7 +58,7 @@ class Commander(Node):  # type: ignore[misc]
                 )
             )
 
-    def goal_response_callback(self, goal_future, cancel_delay = 2.0) -> None:  # type: ignore[type-arg] # Cannot add args in Humble and Jazzy
+    def goal_response_callback(self, goal_future, cancel_delay=2.0) -> None:  # type: ignore[type-arg] # Cannot add args in Humble and Jazzy
         """Starts a timer to cancel the goal handle, upon receiving an accepted goal."""
         goal_handle = goal_future.result()
         if goal_handle is None:
