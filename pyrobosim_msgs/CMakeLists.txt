@@ -30,6 +30,7 @@ set(msg_files
 set(srv_files
   "srv/RequestWorldState.srv"
   "srv/SetLocationState.srv"
+  "srv/ResetWorld.srv"
 )
 
 set(action_files
