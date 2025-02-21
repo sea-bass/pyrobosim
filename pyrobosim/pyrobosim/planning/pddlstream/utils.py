@@ -132,14 +132,23 @@ def process_goal_specification(goal_literals, world):
     :param goal_literals: List of literals describing a goal specification.
     :type goal_literals: list[tuple]
     """
+
+    def process_element(elem):
+        """Helper function to process individual elements recursively"""
+        if isinstance(elem, (list, tuple)):
+            # Recursively process each element in the list/tuple
+            return type(elem)(process_element(e) for e in elem)
+        elif isinstance(elem, str) and not elem.startswith(
+            "?"
+        ):  # Skip variables (starting with ?)
+            # Check if string corresponds to a named entity
+            entity = world.get_entity_by_name(elem)
+            return entity if entity else elem
+        return elem
+
+    # Process each literal in the goal specification
     for i, literal in enumerate(goal_literals):
-        # If any predicate has a string argument, check whether it corresponds
-        # to a named entity in the world. If it does, replace it.
-        for j, elem in enumerate(literal):
-            if j > 0 and isinstance(elem, str):
-                entity = world.get_entity_by_name(elem)
-                if entity:
-                    replace_goal_literal_tuple(goal_literals, i, j, entity)
+        goal_literals[i] = process_element(literal)
 
 
 def replace_goal_literal_tuple(goal_literals, literal_idx, arg_idx, new_val):
