@@ -3,9 +3,9 @@ from pathlib import Path
 from setuptools import setup, find_packages
 
 
-def get_files_in_folder(directory):
+def get_files_in_folder(directory: str) -> list[str]:
     """Helper function to get all files in a specific directory."""
-    file_list = []
+    file_list: list[str] = []
     for path, _, fnames in os.walk(directory):
         for filename in fnames:
             file_list.append(os.path.join("..", path, filename))
@@ -27,6 +27,7 @@ install_requires = [
     "scipy",
     "transforms3d",
     "trimesh",
+    "typing_extensions",  # For compatibility with Python <= 3.10
 ]
 
 # This will gracefully fall back to an empty string if the README.md cannot be read.

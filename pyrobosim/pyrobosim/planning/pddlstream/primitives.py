@@ -3,60 +3,58 @@ Helper primitives for PDDLStream based planning.
 """
 
 import numpy as np
+from typing import Generator
 
-from ...manipulation.grasping import GraspFace
+from ...core.locations import ObjectSpawn
+from ...core.objects import Object
+from ...core.types import Entity
+from ...manipulation.grasping import Grasp, GraspFace, GraspGenerator
+from ...navigation.types import PathPlanner
+from ...utils.path import Path
 from ...utils.pose import Pose
 from ...utils.polygon import sample_from_polygon, transform_polygon
 
 
-def get_pick_place_cost(loc, obj):
+def get_pick_place_cost(loc: ObjectSpawn, obj: Object) -> float:
     """
     Estimates a dummy pick / place cost for a specific location / object
     combination, which a constant value plus the height of the location and
     half height of the object.
 
     :param loc: Location where pick / place action occurs.
-    :type loc: Location
     :param obj: Object that is manipulated.
-    :type obj: Object
     :return: Cost of performing action.
-    :rtype: float
     """
     return 0.5 + loc.height + (0.5 * obj.height)
 
 
-def get_pick_place_at_pose_cost(loc, obj, p, pr):
+def get_pick_place_at_pose_cost(
+    loc: ObjectSpawn, obj: Object, p: Pose, pr: Pose
+) -> float:
     """
     Estimates a dummy pick / place cost for a specific location / object
     combination, given the pose of the object and the robot.
 
     :param loc: Location where pick / place action occurs.
-    :type loc: Location
     :param obj: Object that is manipulated.
-    :type obj: Object
     :param p: Object pose.
-    :type p: :class:`pyrobosim.utils.pose.Pose`
     :param pr: Robot pose.
-    :type pr: :class:`pyrobosim.utils.pose.Pose`
     :return: Cost of performing action.
-    :rtype: float
     """
     return p.get_linear_distance(pr) + get_pick_place_cost(loc, obj)
 
 
-def get_grasp_at_pose_cost(g, pr):
+def get_grasp_at_pose_cost(g: Grasp, pr: Pose) -> float:
     """
     Estimates the cost of grasping a specific object,
     given the grasp properties and the pose of the robot.
 
     :param g: Object grasp.
-    :type g: :class:`pyrobosim.manipulation.grasping.Grasp`
     :param pr: Robot pose.
-    :type pr: :class:`pyrobosim.utils.pose.Pose`
     :return: Cost of performing action.
-    :rtype: float
     """
     # Define cost for distance between robot and grasp pose
+    assert isinstance(g.origin_wrt_world, Pose)
     distance_cost = g.origin_wrt_world.get_linear_distance(pr)
 
     # Define dummy costs for types of grasps
@@ -70,43 +68,36 @@ def get_grasp_at_pose_cost(g, pr):
     return distance_cost + face_cost
 
 
-def get_detect_cost(loc):
+def get_detect_cost(loc: ObjectSpawn) -> float:
     """
     Estimates the cost of detecting objects at a location.
 
     :param loc: Location where the detect action occurs.
-    :type loc: Location
     :return: Cost of performing action.
-    :rtype: float
     """
     return 0.5
 
 
-def get_open_close_cost(loc):
+def get_open_close_cost(loc: ObjectSpawn) -> float:
     """
     Estimates the detection cost of opening or closing a location.
 
     :param loc: Location where the open or close action occurs.
-    :type loc: Location
     :return: Cost of performing action.
-    :rtype: float
     """
     return 1.0
 
 
-def get_straight_line_distance(l1, l2):
+def get_straight_line_distance(l1: Entity, l2: Entity) -> float:
     """
     Optimistically estimate the distance between two locations by getting the
     minimum straight-line distance between any two navigation poses.
 
     :param l1: First location.
-    :type l1: Location
     :param l2: Second location.
-    :type l2: Location
     :return: Straight-line distance between locations.
-    :rtype: float
     """
-    min_dist = np.inf
+    min_dist = float(np.inf)
     for p1 in l1.nav_poses:
         for p2 in l2.nav_poses:
             dist = p1.get_linear_distance(p2)
@@ -115,79 +106,64 @@ def get_straight_line_distance(l1, l2):
     return min_dist
 
 
-def get_nav_poses(loc):
+def get_nav_poses(loc: Entity) -> list[tuple[Pose]]:
     """
     Gets a finite list of navigation poses for a specific location.
 
     :param loc: Location from which get navigation poses.
-    :type loc: Location
     :return: List of tuples containing navigation poses.
-    :rtype: list[tuple]
     """
     return [(p,) for p in loc.nav_poses]
 
 
-def get_path_length(path):
+def get_path_length(path: Path) -> float:
     """
     Simple wrapper to get the length of a path.
 
     :param path: Path from start to goal.
-    :type path: :class:`pyrobosim.utils.motion.Path`
     :return: Length of the path.
-    :rtype: float
     """
     return path.length
 
 
-def sample_motion(planner, p1, p2):
+def sample_motion(
+    planner: PathPlanner, p1: Pose, p2: Pose
+) -> Generator[tuple[Path], None, None]:
     """
     Samples a feasible motion plan from a start to a goal pose.
 
     :param planner: Motion planner object.
-    :type planner: Planner
     :param start: Start pose.
-    :type start: :class:`pyrobosim.utils.pose.Pose`
     :param goal: Goal pose.
-    :type goal: :class:`pyrobosim.utils.pose.Pose`
-    :return: Generator yielding tuple containing a path from start to goal
-    :rtype: generator[tuple[:class:`pyrobosim.utils.motion.Path`]]
+    :return: Generator yielding tuple containing a path from start to goal.
     """
     while True:
         path = planner.plan(p1, p2)
-        if path is None or path.num_poses == 0:
+        if (path is None) or (path.num_poses == 0):
             break
         yield (path,)
 
 
 def sample_grasp_pose(
-    grasp_gen,
-    obj,
-    p_obj,
-    p_robot,
-    front_grasps=True,
-    top_grasps=True,
-    side_grasps=False,
-):
+    grasp_gen: GraspGenerator,
+    obj: Object,
+    p_obj: Pose,
+    p_robot: Pose,
+    front_grasps: bool = True,
+    top_grasps: bool = True,
+    side_grasps: bool = False,
+) -> Generator[tuple[Grasp], None, None]:
     """
     Samples feasible grasps for an object given its pose and the relative robot pose.
 
     :param grasp_gen: Grasp generator object
-    :type grasp_gen: Planner
     :param obj: Target object
-    :type obj: :class:`pyrobosim.core.objects.Object`
     :param p_obj: Object pose.
-    :type p_obj: :class:`pyrobosim.utils.pose.Pose`
     :param p_robot: Robot pose.
-    :type p_robot: :class:`pyrobosim.utils.pose.Pose`
     :param front_grasps: Enable front grasps
-    :type front_grasps: bool, optional
     :param top_grasps: Enable top grasps
-    :type top_grasps: bool, optional
     :param side_grasps: Enable side grasps
-    :type side_grasps: bool, optional
     :return: Generator yielding tuple containing a grasp
-    :rtype: generator[tuple[:class:`pyrobosim.manipulation.grasping.Grasp`]]
-
     """
     # Get the object cuboid pose assuming the object is at pose p_obj
     cuboid_pose = Pose.from_transform(
@@ -210,18 +186,16 @@ def sample_grasp_pose(
         yield (g,)
 
 
-def sample_place_pose(loc, obj, max_tries=100):
+def sample_place_pose(
+    loc: Entity, obj: Object, max_tries: int = 100
+) -> Generator[tuple[Pose], None, None]:
     """
     Samples a feasible placement pose for an object at a specific location.
 
     :param loc: Location at which to place object.
-    :type loc: Location
     :param obj: Object to place.
-    :type obj: Object
     :param max_tries: Maximum samples to try before giving up.
-    :type max_tries: int, optional
     :return: Generator yielding tuple containing a placement pose
-    :rtype: generator[tuple[:class:`pyrobosim.utils.pose.Pose`]]
     """
     while True:
         is_valid_pose = False
@@ -244,20 +218,15 @@ def sample_place_pose(loc, obj, max_tries=100):
         yield (pose_sample,)
 
 
-def test_collision_free(o1, p1, o2, p2):
+def test_collision_free(o1: Object, p1: Pose, o2: Object, p2: Pose) -> bool:
     """
     Test for collisions between two objects at specified poses.
 
     :param o1: First object
-    :type o1: :class:`pyrobosim.core.objects.Object`
     :param p1: Pose of first object
-    :type p1: :class:`pyrobosim.utils.pose.Pose`
     :param o2: Second object
-    :type o2: :class:`pyrobosim.core.objects.Object`
     :param p2: Pose of second object
-    :type p2: :class:`pyrobosim.utils.pose.Pose`
     :return: True if the two objects are collision free.
-    :rtype: bool
     """
     o1_poly = transform_polygon(o1.raw_collision_polygon, p1)
     o2_poly = transform_polygon(o2.raw_collision_polygon, p2)

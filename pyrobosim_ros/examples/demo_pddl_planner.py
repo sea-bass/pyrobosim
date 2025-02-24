@@ -9,8 +9,9 @@ import time
 import rclpy
 from rclpy.action import ActionClient
 from rclpy.node import Node
+from rclpy.task import Future
 
-from pyrobosim.core import WorldYamlLoader
+from pyrobosim.core import World, WorldYamlLoader
 from pyrobosim.planning.pddlstream import PDDLStreamPlanner, get_default_domains_folder
 from pyrobosim.utils.general import get_data_folder
 
@@ -19,12 +20,12 @@ from pyrobosim_ros.ros_conversions import (
     goal_specification_from_ros,
     task_plan_to_ros,
 )
-from pyrobosim_msgs.action import ExecuteTaskPlan
-from pyrobosim_msgs.msg import GoalSpecification
-from pyrobosim_msgs.srv import RequestWorldState
+from pyrobosim_msgs.action import ExecuteTaskPlan  # type: ignore
+from pyrobosim_msgs.msg import GoalSpecification, TaskPlan  # type: ignore
+from pyrobosim_msgs.srv import RequestWorldState  # type: ignore
 
 
-def load_world():
+def load_world() -> World:
     """Load a test world."""
     loader = WorldYamlLoader()
     world_file = "pddlstream_simple_world.yaml"
@@ -32,8 +33,8 @@ def load_world():
     return loader.from_file(os.path.join(data_folder, world_file))
 
 
-class PlannerNode(Node):
-    def __init__(self):
+class PlannerNode(Node):  # type: ignore[misc]
+    def __init__(self) -> None:
         self.latest_goal = None
         self.planning = False
         super().__init__("demo_pddlstream_planner")
@@ -51,7 +52,9 @@ class PlannerNode(Node):
         self.world_state_client = self.create_client(
             RequestWorldState, "request_world_state"
         )
-        self.world_state_future_response = None
+        self.world_state_future_response: Future[RequestWorldState.Response] | None = (
+            None
+        )
         while rclpy.ok() and not self.world_state_client.wait_for_service(
             timeout_sec=1.0
         ):
@@ -105,7 +108,7 @@ class PlannerNode(Node):
         timer_period = 0.01  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
-    def timer_callback(self):
+    def timer_callback(self) -> None:
         """
         Timer callback to wait for a goal specification and send a goal.
         TODO: This should probably be refactored to fully use services/actions.
@@ -116,7 +119,7 @@ class PlannerNode(Node):
         if self.world_state_future_response and self.world_state_future_response.done():
             self.do_plan()
 
-    def request_world_state(self):
+    def request_world_state(self) -> None:
         """Requests a world state from the world."""
         self.planning = True
         self.get_logger().info("Requesting world state...")
@@ -124,25 +127,27 @@ class PlannerNode(Node):
             RequestWorldState.Request()
         )
 
-    def goalspec_callback(self, msg):
+    def goalspec_callback(self, msg: TaskPlan) -> None:
         """
         Handle goal specification callback.
 
         :param msg: Goal specification message to process.
-        :type msg: :class:`pyrobosim_msgs.msg.TaskPlan`
         """
         print("Received new goal specification!")
         self.latest_goal = goal_specification_from_ros(msg, self.world)
 
-    def do_plan(self):
+    def do_plan(self) -> None:
         """Search for a plan and send it to the appropriate robot(s)."""
         if not self.latest_goal:
             return
 
         # Unpack the latest world state.
         try:
-            result = self.world_state_future_response.result()
-            update_world_from_state_msg(self.world, result.state)
+            if self.world_state_future_response is not None:
+                result = self.world_state_future_response.result()
+                if result is None:
+                    raise RuntimeError("Result was none -- this should not happen.")
+                update_world_from_state_msg(self.world, result.state)
         except Exception:
             self.get_logger().info("Failed to unpack world state.")
 
@@ -171,7 +176,7 @@ class PlannerNode(Node):
         self.planning = False
 
 
-def main():
+def main() -> None:
     rclpy.init()
     planner_node = PlannerNode()
 

@@ -4,7 +4,7 @@ from matplotlib.colors import CSS4_COLORS, to_rgb
 from pyrobosim.utils.general import parse_color
 
 
-def test_parse_color():
+def test_parse_color() -> None:
     """Testing parse color with different input color formats"""
     # Test with RGB list
     color_rgb_list = (1.0, 0.0, 0.0)
@@ -26,7 +26,7 @@ def test_parse_color():
     with pytest.raises(ValueError) as exc_info:
         parse_color([1.0, 0.0])
     assert (
-        exc_info.value.args[0]
+        str(exc_info.value)
         == "Incorrect number of elements. RGB color must have exactly 3 elements."
     )
 
@@ -34,7 +34,7 @@ def test_parse_color():
     with pytest.raises(ValueError) as exc_info:
         parse_color((1.0, 0.0))
     assert (
-        exc_info.value.args[0]
+        str(exc_info.value)
         == "Incorrect number of elements. RGB color must have exactly 3 elements."
     )
 
@@ -42,19 +42,19 @@ def test_parse_color():
     with pytest.raises(ValueError) as exc_info:
         parse_color("notavalidcolor")
     assert (
-        exc_info.value.args[0]
+        str(exc_info.value)
         == "Invalid color name or hexadecimal value: notavalidcolor."
     )
 
     # Test with invalid hexadecimal color format
     with pytest.raises(ValueError) as exc_info:
         parse_color("#ZZZ")
-    assert exc_info.value.args[0] == "Invalid color name or hexadecimal value: #ZZZ."
+    assert str(exc_info.value) == "Invalid color name or hexadecimal value: #ZZZ."
 
     # Test with unsupported input type
     with pytest.raises(ValueError) as exc_info:
         parse_color(12345)
     assert (
-        exc_info.value.args[0]
+        str(exc_info.value)
         == "Unsupported input type. Expected a list, tuple, or string representing a color."
     )

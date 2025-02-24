@@ -5,7 +5,7 @@ Tests for object creation in pyrobosim.
 """
 
 import os
-import pytest
+from pytest import LogCaptureFixture
 
 from pyrobosim.core import Object, World
 from pyrobosim.utils.general import get_data_folder
@@ -16,7 +16,7 @@ data_folder = get_data_folder()
 
 
 class TestObjects:
-    def test_add_object_to_world_from_object(self, caplog):
+    def test_add_object_to_world_from_object(self, caplog: LogCaptureFixture) -> None:
         """Test adding an object from an Object instance."""
         world = World()
         world.set_metadata(
@@ -56,7 +56,7 @@ class TestObjects:
             "Object test_banana already exists in the world. Cannot add." in caplog.text
         )
 
-    def test_add_object_to_world_from_args(self):
+    def test_add_object_to_world_from_args(self) -> None:
         """Test adding an object from a list of named keyword arguments."""
         world = World()
         world.set_metadata(

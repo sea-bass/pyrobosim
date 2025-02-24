@@ -1,11 +1,10 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
-from launch.substitutions import TextSubstitution
 from launch_ros.actions import Node
 
 
-def generate_launch_description():
+def generate_launch_description() -> LaunchDescription:
     # Arguments
     world_file_arg = DeclareLaunchArgument(
         "world_file",

@@ -9,19 +9,19 @@ import os
 import rclpy
 import threading
 
-from pyrobosim.core import WorldYamlLoader
+from pyrobosim.core import World, WorldYamlLoader
 from pyrobosim.gui import start_gui
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim_ros.ros_interface import WorldROSWrapper
 
 
-def load_world():
+def load_world() -> World:
     """Load a test world."""
     world_file = os.path.join(get_data_folder(), "pddlstream_simple_world.yaml")
     return WorldYamlLoader().from_file(world_file)
 
 
-def create_ros_node():
+def create_ros_node() -> WorldROSWrapper:
     """Initializes ROS node"""
     rclpy.init()
     world = load_world()

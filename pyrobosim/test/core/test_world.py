@@ -4,6 +4,7 @@ Unit tests for core world modeling.
 
 import os
 import pytest
+from pytest import LogCaptureFixture
 import numpy as np
 
 from pyrobosim.core import Hallway, Object, World
@@ -15,12 +16,12 @@ from pyrobosim.utils.general import get_data_folder
 class TestWorldModeling:
     """Tests for the world modeling tools"""
 
-    @staticmethod
-    @pytest.mark.dependency()
-    def test_clearing_old_metadata():
-        """Tests the creation of a world and clear out old metadata"""
+    world = World()
 
-        TestWorldModeling.world = World()
+    @staticmethod
+    @pytest.mark.dependency()  # type: ignore[misc]
+    def test_clearing_old_metadata() -> None:
+        """Tests the creation of a world and clear out old metadata"""
 
         data_folder = get_data_folder()
         TestWorldModeling.world.add_metadata(
@@ -59,8 +60,8 @@ class TestWorldModeling:
         assert len(TestWorldModeling.world.get_object_metadata().sources) == 2
 
     @staticmethod
-    @pytest.mark.dependency()
-    def test_create_world_default():
+    @pytest.mark.dependency()  # type: ignore[misc]
+    def test_create_world_default() -> None:
         """Tests the creation of a world"""
 
         TestWorldModeling.world = World()
@@ -86,8 +87,8 @@ class TestWorldModeling:
     ##############################################
 
     @staticmethod
-    @pytest.mark.dependency(depends=["TestWorldModeling::test_create_world_default"])
-    def test_create_room():
+    @pytest.mark.dependency(depends=["TestWorldModeling::test_create_world_default"])  # type: ignore[misc]
+    def test_create_room() -> None:
         """Tests the creation of a room"""
 
         room1_name = "kitchen"
@@ -111,13 +112,13 @@ class TestWorldModeling:
         assert TestWorldModeling.world.get_room_by_name(room2_name) is not None
 
     @staticmethod
-    @pytest.mark.dependency(
+    @pytest.mark.dependency(  # type: ignore[misc]
         depends=[
             "TestWorldModeling::test_create_world_default",
             "TestWorldModeling::test_create_room",
         ]
     )
-    def test_create_hallway():
+    def test_create_hallway() -> None:
         """Tests the creation of a hallway between 2 rooms"""
 
         hallway = TestWorldModeling.world.add_hallway(
@@ -151,14 +152,14 @@ class TestWorldModeling:
         ]
 
     @staticmethod
-    @pytest.mark.dependency(
+    @pytest.mark.dependency(  # type: ignore[misc]
         depends=[
             "TestWorldModeling::test_create_world_default",
             "TestWorldModeling::test_create_room",
             "TestWorldModeling::test_create_hallway",
         ]
     )
-    def test_create_location(caplog):
+    def test_create_location(caplog: LogCaptureFixture) -> None:
         """Tests the creation of locations"""
         table = TestWorldModeling.world.add_location(
             category="table",
@@ -240,7 +241,7 @@ class TestWorldModeling:
         assert "Invalid location category: does_not_exist" in caplog.text
 
     @staticmethod
-    @pytest.mark.dependency(
+    @pytest.mark.dependency(  # type: ignore[misc]
         depends=[
             "TestWorldModeling::test_create_world_default",
             "TestWorldModeling::test_create_room",
@@ -248,7 +249,7 @@ class TestWorldModeling:
             "TestWorldModeling::test_create_location",
         ]
     )
-    def test_create_object(caplog):
+    def test_create_object(caplog: LogCaptureFixture) -> None:
         """Tests adding objects to a location"""
 
         apple = TestWorldModeling.world.add_object(category="apple", parent="table0")
@@ -298,7 +299,7 @@ class TestWorldModeling:
         assert "Invalid object category: does_not_exist" in caplog.text
 
     @staticmethod
-    @pytest.mark.dependency(
+    @pytest.mark.dependency(  # type: ignore[misc]
         depends=[
             "TestWorldModeling::test_create_world_default",
             "TestWorldModeling::test_create_room",
@@ -307,10 +308,10 @@ class TestWorldModeling:
             "TestWorldModeling::test_create_object",
         ]
     )
-    def test_add_robot(caplog):
+    def test_add_robot(caplog: LogCaptureFixture) -> None:
         """Tests adding a robot to the world"""
         from pyrobosim.core import Robot
-        from pyrobosim.navigation import RRTPlanner
+        from pyrobosim.navigation.rrt import RRTPlanner
 
         world_robots = TestWorldModeling.world.robots
         path_planner_config = {"world": TestWorldModeling.world}
@@ -348,8 +349,8 @@ class TestWorldModeling:
     #############################################
 
     @staticmethod
-    @pytest.mark.dependency(depends=["TestWorldModeling::test_add_robot"])
-    def test_check_occupancy():
+    @pytest.mark.dependency(depends=["TestWorldModeling::test_add_robot"])  # type: ignore[misc]
+    def test_check_occupancy() -> None:
         """Tests occupancy using the entity polygons."""
 
         # Free pose in a room
@@ -369,8 +370,8 @@ class TestWorldModeling:
         assert TestWorldModeling.world.check_occupancy(occupied_pose_outside_walls)
 
     @staticmethod
-    @pytest.mark.dependency(depends=["TestWorldModeling::test_add_robot"])
-    def test_collides_with_robots():
+    @pytest.mark.dependency(depends=["TestWorldModeling::test_add_robot"])  # type: ignore[misc]
+    def test_collides_with_robots() -> None:
         """Tests if poses are colliding with robots."""
 
         robot_0 = TestWorldModeling.world.robots[0]
@@ -399,8 +400,8 @@ class TestWorldModeling:
         )
 
     @staticmethod
-    @pytest.mark.dependency(depends=["TestWorldModeling::test_add_robot"])
-    def test_is_connectable():
+    @pytest.mark.dependency(depends=["TestWorldModeling::test_add_robot"])  # type: ignore[misc]
+    def test_is_connectable() -> None:
         """Tests if poses are connectable in a straight line."""
 
         ## Test with a simple straight line in free space
@@ -434,14 +435,14 @@ class TestWorldModeling:
     ##############################################
 
     @staticmethod
-    @pytest.mark.dependency(
+    @pytest.mark.dependency(  # type: ignore[misc]
         depends=[
             "TestWorldModeling::test_check_occupancy",
             "TestWorldModeling::test_collides_with_robots",
             "TestWorldModeling::test_is_connectable",
         ]
     )
-    def test_remove_robot(caplog):
+    def test_remove_robot(caplog: LogCaptureFixture) -> None:
         """Tests deleting robots from the world"""
 
         assert TestWorldModeling.world.remove_robot("test_robot") is True
@@ -454,8 +455,8 @@ class TestWorldModeling:
         assert "Could not find robot does_not_exist to remove." in caplog.text
 
     @staticmethod
-    @pytest.mark.dependency(depends=["TestWorldModeling::test_remove_robot"])
-    def test_remove_object():
+    @pytest.mark.dependency(depends=["TestWorldModeling::test_remove_robot"])  # type: ignore[misc]
+    def test_remove_object() -> None:
         """Tests deleting objects from the world"""
 
         assert TestWorldModeling.world.remove_object("ripe_banana") is True
@@ -464,8 +465,8 @@ class TestWorldModeling:
         assert TestWorldModeling.world.objects[0].name == "apple0"
 
     @staticmethod
-    @pytest.mark.dependency(depends=["TestWorldModeling::test_create_location"])
-    def test_remove_location(caplog):
+    @pytest.mark.dependency(depends=["TestWorldModeling::test_create_location"])  # type: ignore[misc]
+    def test_remove_location(caplog: LogCaptureFixture) -> None:
         """Tests removing a location from the world"""
 
         assert TestWorldModeling.world.remove_location("study_desk") is True
@@ -474,8 +475,8 @@ class TestWorldModeling:
         assert "Location not found: study_desk" in caplog.text
 
     @staticmethod
-    @pytest.mark.dependency(depends=["TestWorldModeling::test_create_hallway"])
-    def test_remove_hallway():
+    @pytest.mark.dependency(depends=["TestWorldModeling::test_create_hallway"])  # type: ignore[misc]
+    def test_remove_hallway() -> None:
         """Tests removing a hallway"""
 
         hallways = TestWorldModeling.world.get_hallways_from_rooms("kitchen", "bedroom")
@@ -487,8 +488,8 @@ class TestWorldModeling:
         assert len(hallways) == 0
 
     @staticmethod
-    @pytest.mark.dependency(depends=["TestWorldModeling::test_create_room"])
-    def test_remove_room():
+    @pytest.mark.dependency(depends=["TestWorldModeling::test_create_room"])  # type: ignore[misc]
+    def test_remove_room() -> None:
         """Tests deleting rooms"""
 
         assert TestWorldModeling.world.remove_room("bedroom") is True
@@ -496,7 +497,7 @@ class TestWorldModeling:
         assert TestWorldModeling.world.rooms[0].name == "kitchen"
 
     @staticmethod
-    @pytest.mark.dependency(
+    @pytest.mark.dependency(  # type: ignore[misc]
         depends=[
             "TestWorldModeling::test_remove_room",
             "TestWorldModeling::test_remove_hallway",
@@ -504,7 +505,7 @@ class TestWorldModeling:
             "TestWorldModeling::test_remove_object",
         ]
     )
-    def test_hierarchical_cleanup():
+    def test_hierarchical_cleanup() -> None:
         """Tests if an entity is automatically deleted on parent deletion"""
 
         TestWorldModeling.world.add_object(category="apple", parent="table0")

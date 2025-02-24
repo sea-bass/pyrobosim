@@ -6,9 +6,10 @@ Unit tests for world knowledge utilities.
 
 import os
 import pytest
+from pytest import LogCaptureFixture
 
-from pyrobosim.core import WorldYamlLoader
-from pyrobosim.core import Robot
+from pyrobosim.core import Robot, World, WorldYamlLoader
+from pyrobosim.core.types import Entity
 
 # import functions to test
 from pyrobosim.utils.knowledge import (
@@ -21,19 +22,15 @@ from pyrobosim.utils.pose import Pose
 from pyrobosim.utils.general import get_data_folder
 
 
-class MockEntity:
-    pose = Pose()
-
-
-def load_world():
+def load_world() -> World:
     """Load a test world."""
     world_file = os.path.join(get_data_folder(), "test_world.yaml")
     return WorldYamlLoader().from_file(world_file)
 
 
-def test_apply_resolution_strategy(caplog):
+def test_apply_resolution_strategy(caplog: LogCaptureFixture) -> None:
     # First, test all strategies with empty entity_list
-    entity_list = []
+    entity_list: list[Entity] = []
     entity = apply_resolution_strategy(entity_list, "first")
     assert entity is None
     entity = apply_resolution_strategy(entity_list, "random")
@@ -48,7 +45,7 @@ def test_apply_resolution_strategy(caplog):
     assert "Invalid resolution strategy: non-existent" in caplog.text
 
 
-def test_apply_first_resolution_strategy():
+def test_apply_first_resolution_strategy() -> None:
     # Test 'first' strategy
     entity_list = ["First", "Second"]
     entity = apply_resolution_strategy(entity_list, "first")
@@ -66,20 +63,19 @@ def test_apply_first_resolution_strategy():
     assert entity == "Only"
 
 
-def test_apply_nearest_resolution_strategy(caplog):
+def test_apply_nearest_resolution_strategy(caplog: LogCaptureFixture) -> None:
     # Test 'nearest' strategy
+    entity_list = [Entity(), Entity(), Entity()]
+    entity_list[0].pose = Pose(x=1.0, y=0.0)
+    entity_list[1].pose = Pose(x=2.0, y=0.0)
+    entity_list[2].pose = Pose(x=3.0, y=0.0)
+    robot = Robot("test_robot")
+
     # Test that no robot warns
-    entity_list = ["Only"]
     entity = apply_resolution_strategy(entity_list, "nearest", None)
     assert entity is None
     assert "Cannot apply nearest resolution strategy without a robot" in caplog.text
 
-    robot = Robot("test_robot")
-
-    entity_list = [MockEntity(), MockEntity(), MockEntity()]
-    entity_list[0].pose = Pose(x=1.0, y=0.0)
-    entity_list[1].pose = Pose(x=2.0, y=0.0)
-    entity_list[2].pose = Pose(x=3.0, y=0.0)
     entity = apply_resolution_strategy(entity_list, "nearest", robot)
     assert entity == entity_list[0]
 
@@ -92,7 +88,7 @@ def test_apply_nearest_resolution_strategy(caplog):
     assert entity == entity_list[2]
 
 
-def test_query_to_entity(caplog):
+def test_query_to_entity(caplog: LogCaptureFixture) -> None:
     test_world = load_world()
 
     # Query exactly named entities
@@ -158,7 +154,7 @@ def test_query_to_entity(caplog):
         caplog.clear()
 
 
-def test_resolve_to_location(caplog):
+def test_resolve_to_location(caplog: LogCaptureFixture) -> None:
     test_world = load_world()
 
     # table0 is the first location in the test world
@@ -217,7 +213,7 @@ def test_resolve_to_location(caplog):
     )
 
 
-def test_resolve_to_object():
+def test_resolve_to_object() -> None:
     test_world = load_world()
 
     # test that we can get the first object added to the world
@@ -240,7 +236,7 @@ def test_resolve_to_object():
         assert obj.parent.parent.parent.name == room
 
 
-def test_specific_resolve_to_object():
+def test_specific_resolve_to_object() -> None:
     test_world = load_world()
     # now test specific objects
 
@@ -272,7 +268,7 @@ def test_specific_resolve_to_object():
     assert not (obj.category == "apple" and obj.parent.parent.name == "my_desk")
 
 
-def test_resolve_to_object_warnings(caplog):
+def test_resolve_to_object_warnings(caplog: LogCaptureFixture) -> None:
     test_world = load_world()
     robot = Robot("test_robot")
     test_world.add_robot(robot)
@@ -321,7 +317,7 @@ def test_resolve_to_object_warnings(caplog):
     )
 
 
-def test_resolve_to_object_grasp():
+def test_resolve_to_object_grasp() -> None:
     test_world = load_world()
     robot = Robot("test_robot")
     test_world.add_robot(robot, pose=Pose(x=2.5, y=3.5))
@@ -340,7 +336,3 @@ def test_resolve_to_object_grasp():
         test_world, resolution_strategy="nearest", ignore_grasped=True, robot=robot
     )
     assert obj != obj_nearest
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-s"])

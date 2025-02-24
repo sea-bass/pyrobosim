@@ -8,11 +8,11 @@ import argparse
 import os
 
 from pyrobosim.core import WorldGazeboExporter, WorldYamlLoader
-from pyrobosim.navigation import OccupancyGrid
+from pyrobosim.navigation.occupancy_grid import OccupancyGrid
 from pyrobosim.utils.general import get_data_folder
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Test Gazebo world saving and occupancy grid export."
     )
@@ -47,7 +47,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def main():
+def main() -> None:
     args = parse_args()
 
     # Load a test world from YAML file.

@@ -7,11 +7,11 @@ additionally starting up a ROS interface.
 import os
 import rclpy
 import threading
-import numpy as np
 
 from pyrobosim.core import Robot, World, WorldYamlLoader
 from pyrobosim.gui import start_gui
-from pyrobosim.navigation import ConstantVelocityExecutor, RRTPlanner
+from pyrobosim.navigation.execution import ConstantVelocityExecutor
+from pyrobosim.navigation.rrt import RRTPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 from pyrobosim_ros.ros_interface import WorldROSWrapper
@@ -20,7 +20,7 @@ from pyrobosim_ros.ros_interface import WorldROSWrapper
 data_folder = get_data_folder()
 
 
-def create_world():
+def create_world() -> World:
     """Create a test world"""
     world = World()
 
@@ -135,11 +135,11 @@ def create_world():
     return world
 
 
-def create_world_from_yaml(world_file):
+def create_world_from_yaml(world_file: str) -> World:
     return WorldYamlLoader().from_file(os.path.join(data_folder, world_file))
 
 
-def create_ros_node():
+def create_ros_node() -> WorldROSWrapper:
     """Initializes ROS node"""
     rclpy.init()
     node = WorldROSWrapper(state_pub_rate=0.1, dynamics_rate=0.01)

@@ -38,19 +38,39 @@ For example, you can create a simulation loop as follows:
 
         while True:
             for robot, cmd_vel in zip(world.robots, vel_commands):
-                robot.dynamics.step(cmd_vel, dt, world=world, check_collisions=True)
+                new_pose = robot.dynamics.step(cmd_vel, dt)
+                robot.set_pose(new_pose)
             time.sleep(dt)
 
 Note that the ability to pass in a world and check collisions is optional.
 If you want to optimize for speed and do not need collision checking, you can disable this.
 
-Also, you can check whether a robot's previous velocity command caused a collision and the robot did not move.
+You can check whether a robot's previous velocity command caused a collision.
 
 .. code-block:: python
+
+    new_pose = robot.dynamics.step(cmd_vel, dt)
+    robot.set_pose(new_pose)
 
     # Robot collided, let's command it to back up!
     if robot.is_in_collision():
         cmd_vel = np.array([-0.5, 0.0, 0.0])
+
+If you want to preemptively check that a new command will cause the robot to collide, you should perform collision checking with the output of ``step()``.
+For example:
+
+.. code-block:: python
+
+    while (True):
+        # ... velocity command here
+
+        new_pose = robot.dynamics.step(cmd_vel, dt)
+
+        if robot.is_in_collision(pose=new_pose):
+            robot.dynamics.velocity = np.array([0.0, 0.0, 0.0])
+            continue
+
+        robot.set_pose(new_pose)
 
 Finally, if you want to run with the GUI, you must ensure that the GUI is running on the main thread and the dynamics are on a separate thread.
 You can do this as follows, using our ``command_robots()`` function above.
@@ -101,9 +121,10 @@ While you can look at the documentation for a full list of arguments, the import
     from pyrobosim_ros.ros_interface import WorldROSWrapper
 
     node = WorldROSWrapper(
-        dynamics_rate=0.01,           # Dynamics update rate
-        dynamics_latch_time=0.5,      # Velocity command latch time
-        dynamics_ramp_down_time=0.5,  # Velocity command ramp down time
+        dynamics_rate=0.01,                 # Dynamics update rate
+        dynamics_latch_time=0.5,            # Velocity command latch time
+        dynamics_ramp_down_time=0.5,        # Velocity command ramp down time
+        dynamics_enable_collisions=False,   # Enable collision checking
     )
 
 You can try this out using the following example.

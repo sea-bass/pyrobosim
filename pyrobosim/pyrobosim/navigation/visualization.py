@@ -1,29 +1,35 @@
 """Visualization utilities for path planners."""
 
+from typing import Sequence
+
 import matplotlib.pyplot as plt
+from matplotlib.artist import Artist
+from matplotlib.axes import Axes
 from matplotlib.collections import LineCollection
 
+from ..utils.path import Path
+from ..utils.search_graph import SearchGraph
 
-def plot_path_planner(axes, graphs=[], path=None, path_color="m"):
+
+def plot_path_planner(
+    axes: Axes,
+    graphs: list[SearchGraph] = [],
+    path: Path | None = None,
+    path_color: Sequence[float] | str = "m",
+) -> dict[str, list[Artist]]:
     """
     Plots the planned path on a specified set of axes.
 
     :param axes: The axes on which to draw.
-    :type axes: :class:`matplotlib.axes.Axes`
     :param graphs: A list of path planner graphs to display.
-    :type graphs: list[:class:`pyrobosim.utils.search_graph.SearchGraph`], optional
     :param path: Path to display.
-    :type path: :class:`pyrobosim.utils.motion.Path`, optional
     :param path_color: Color of the path, as an RGB tuple or string.
-    :type path_color: tuple[float] / str, optional
     :return: List of Matplotlib artists containing what was drawn,
         used for bookkeeping.
-    :rtype: list[:class:`matplotlib.artist.Artist`]
     """
-
-    graph_artists = []
-    path_artists = []
-    artists = {}
+    graph_artists: list[Artist] = []
+    path_artists: list[Artist] = []
+    artists: dict[str, list[Artist]] = {}
 
     for graph in graphs:
         # Plot the markers
@@ -74,15 +80,17 @@ def plot_path_planner(axes, graphs=[], path=None, path_color="m"):
     return artists
 
 
-def show_path_planner(graphs=[], path=None, title="Path Planner Output"):
+def show_path_planner(
+    graphs: list[SearchGraph] = [],
+    path: Path | None = None,
+    title: str = "Path Planner Output",
+) -> None:
     """
     Shows the path planner output in a new figure.
 
     :param graphs: A list of path planner graphs to display.
-    :type graphs: list[:class:`pyrobosim.utils.search_graph.SearchGraph`], optional
     :param path: Path to display.
-    :type path: :class:`pyrobosim.utils.motion.Path`, optional
-    :param:
+    :param title: Title to display.
     """
 
     f = plt.figure()

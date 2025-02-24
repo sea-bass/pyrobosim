@@ -5,6 +5,7 @@ Unit tests for polygon utilities.
 """
 
 import pytest
+from pytest import LogCaptureFixture
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon as PolygonPatch
@@ -30,7 +31,9 @@ square_coords = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0), (0.0, 0.0)]
 rectangle_coords = [(0.0, 0.0), (1.0, 0.0), (1.0, 2.0), (0.0, 2.0), (0.0, 0.0)]
 
 
-def coords_approx_equal(coords, expected_coords):
+def coords_approx_equal(
+    coords: list[tuple[float, float]], expected_coords: list[tuple[float, float]]
+) -> None:
     """Checks whether coordinate lists of tuples are approximately equal."""
     assert len(coords) == len(expected_coords)
     for i in range(len(coords)):
@@ -42,14 +45,14 @@ def coords_approx_equal(coords, expected_coords):
 ##############
 
 
-def test_add_coords():
+def test_add_coords() -> None:
     offset = (1.0, -2.0)
     offset_coords = add_coords(square_coords, offset)
     expected_coords = [(1.0, -2.0), (2.0, -2.0), (2.0, -1.0), (1.0, -1.0), (1.0, -2.0)]
     coords_approx_equal(offset_coords, expected_coords)
 
 
-def test_box_to_coords():
+def test_box_to_coords() -> None:
     # Dimensions only
     coords = box_to_coords(dims=[1.0, 2.0])
     expected_coords = [(-0.5, -1.0), (0.5, -1.0), (0.5, 1.0), (-0.5, 1.0), (-0.5, -1.0)]
@@ -66,7 +69,7 @@ def test_box_to_coords():
     coords_approx_equal(coords, expected_coords)
 
 
-def test_get_polygon_centroid():
+def test_get_polygon_centroid() -> None:
     square_poly = Polygon(square_coords)
     assert get_polygon_centroid(square_poly) == pytest.approx([0.5, 0.5])
 
@@ -74,7 +77,7 @@ def test_get_polygon_centroid():
     assert get_polygon_centroid(rectangle_poly) == pytest.approx([0.5, 1.0])
 
 
-def test_inflate_polygon():
+def test_inflate_polygon() -> None:
     empty_poly = Polygon()
     square_poly = Polygon(square_coords)
 
@@ -112,7 +115,7 @@ def test_inflate_polygon():
     coords_approx_equal(inflated_poly_coords, expected_coords)
 
 
-def test_transform_polygon():
+def test_transform_polygon() -> None:
     empty_poly = Polygon()
     square_poly = Polygon(box_to_coords(dims=[1.0, 2.0]))
 
@@ -143,7 +146,7 @@ def test_transform_polygon():
     coords_approx_equal(transformed_poly_coords, expected_coords)
 
 
-def test_sample_from_polygon(caplog):
+def test_sample_from_polygon(caplog: LogCaptureFixture) -> None:
     # Regular polygon
     poly = Polygon(square_coords)
     out = sample_from_polygon(poly)
@@ -156,7 +159,7 @@ def test_sample_from_polygon(caplog):
     assert "Exceeded max polygon samples" in caplog.text
 
 
-def test_polygon_from_footprint(caplog):
+def test_polygon_from_footprint(caplog: LogCaptureFixture) -> None:
     # Box type
     footprint = {
         "type": "box",
@@ -246,12 +249,12 @@ def test_polygon_from_footprint(caplog):
 
     # Invalid type
     footprint = {"type": "invalid"}
-    output = polygon_and_height_from_footprint(footprint, parent_polygon=parent_polygon)
-    assert output == (None, None)
-    assert "Invalid footprint type: invalid" in caplog.text
+    with pytest.raises(ValueError) as exc_info:
+        polygon_and_height_from_footprint(footprint, parent_polygon=parent_polygon)
+    assert str(exc_info.value) == "Invalid footprint type: invalid"
 
 
-def test_convhull_to_rectangle(display=False):
+def test_convhull_to_rectangle(display: bool = False) -> None:
     # Create a cross-shaped object
     xy_pts = np.array(
         [
@@ -291,7 +294,3 @@ def test_convhull_to_rectangle(display=False):
         plt.legend(["Polygon", "Convex Hull", "Rectangle Fit"])
         plt.axis("equal")
         plt.show()
-
-
-if __name__ == "__main__":
-    test_convhull_to_rectangle(display=True)

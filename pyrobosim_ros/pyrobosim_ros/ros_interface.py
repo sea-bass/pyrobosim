@@ -2,6 +2,7 @@
 
 from functools import partial
 import numpy as np
+import numpy.typing as npt
 import os
 import time
 from threading import Thread
@@ -9,28 +10,36 @@ from threading import Thread
 from action_msgs.msg import GoalStatus
 import rclpy
 from rclpy.action import ActionServer, CancelResponse
+from rclpy.action.server import ServerGoalHandle
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.logging import get_logger
 from rclpy.node import Node
+from rclpy.service import Service
+from rclpy.subscription import Subscription
+from rclpy.publisher import Publisher
+from rclpy.time import Time
+from rclpy.timer import Timer
 
 from geometry_msgs.msg import Twist
+from pyrobosim.core import Robot, World
 from pyrobosim.utils.logging import set_global_logger
-from pyrobosim_msgs.action import (
+from pyrobosim_msgs.action import (  # type: ignore[attr-defined]
     DetectObjects,
     ExecuteTaskAction,
     ExecuteTaskPlan,
     FollowPath,
     PlanPath,
 )
-from pyrobosim_msgs.msg import (
+from pyrobosim_msgs.msg import (  # type: ignore[attr-defined]
     ExecutionResult,
     HallwayState,
     LocationState,
     ObjectState,
     RobotState,
+    WorldState,
 )
-from pyrobosim_msgs.srv import RequestWorldState, SetLocationState
+from pyrobosim_msgs.srv import RequestWorldState, SetLocationState  # type: ignore[attr-defined]
 from std_srvs.srv import Trigger
 
 from .ros_conversions import (
@@ -45,20 +54,20 @@ from .ros_conversions import (
 )
 
 
-class WorldROSWrapper(Node):
+class WorldROSWrapper(Node):  # type: ignore[misc]
     """ROS 2 wrapper node for pyrobosim worlds."""
 
     def __init__(
         self,
-        world=None,
-        name="pyrobosim",
-        num_threads=os.cpu_count(),
-        state_pub_rate=0.1,
-        dynamics_rate=0.01,
-        dynamics_latch_time=0.5,
-        dynamics_ramp_down_time=0.5,
-        dynamics_enable_collisions=True,
-    ):
+        world: World | None = None,
+        name: str = "pyrobosim",
+        num_threads: int | None = os.cpu_count(),
+        state_pub_rate: float = 0.1,
+        dynamics_rate: float = 0.01,
+        dynamics_latch_time: float = 0.5,
+        dynamics_ramp_down_time: float = 0.5,
+        dynamics_enable_collisions: bool = True,
+    ) -> None:
         """
         Creates a ROS 2 world wrapper node.
 
@@ -73,21 +82,13 @@ class WorldROSWrapper(Node):
             * Serve a ``execute_task_plan`` action server to run entire task plans on a robot.
 
         :param world: World model instance.
-        :type world: :class:`pyrobosim.core.world.World`
         :param name: Node name, defaults to ``"pyrobosim"``.
-        :type name: str
         :param num_threads: Number of threads in the multi-threaded executor. Defaults to number of CPUs on the host OS.
-        :type num_threads: int
         :param state_pub_rate: Rate, in seconds, to publish robot state.
-        :type state_pub_rate: float
         :param dynamics_rate: Rate, in seconds, to update dynamics.
-        :type dynamics_rate: float
         :param dynamics_latch_time: Time, in seconds, to latch the latest published velocity commands for a robot.
-        :type dynamics_latch_time: float
         :param dynamics_ramp_down_time: Time, in seconds, to ramp down the velocity command to zero. This is applied after the latch time expires.
-        :type dynamics_ramp_down_time: float
         :param dynamics_enable_collisions: If true (default), enables collision checking when updating robot dynamics.
-        :type dynamics_enable_collisions: bool
         """
         self.name = name
         self.num_threads = num_threads
@@ -139,14 +140,27 @@ class WorldROSWrapper(Node):
         )
 
         # Initialize robot specific interface dictionaries
-        self.robot_command_subs = {}
-        self.robot_state_pubs = {}
-        self.robot_state_pub_threads = {}
-        self.robot_plan_path_servers = {}
-        self.robot_follow_path_servers = {}
-        self.robot_reset_path_planner_servers = {}
-        self.robot_object_detection_servers = {}
-        self.latest_robot_cmds = {}
+        self.robot_command_subs: dict[str, Subscription[Twist]] = {}
+        self.robot_state_pubs: dict[str, Publisher[RobotState]] = {}
+        self.robot_state_pub_timers: dict[str, Timer] = {}
+        self.robot_plan_path_servers: dict[
+            str, ActionServer[PlanPath.Goal, PlanPath.Result, PlanPath.Feedback]
+        ] = {}
+        self.robot_follow_path_servers: dict[
+            str, ActionServer[FollowPath.Goal, FollowPath.Result, FollowPath.Feedback]
+        ] = {}
+        self.robot_object_detection_servers: dict[
+            str,
+            ActionServer[
+                DetectObjects.Goal, DetectObjects.Result, DetectObjects.Feedback
+            ],
+        ] = {}
+        self.robot_reset_path_planner_servers: dict[
+            str, Service[Trigger.Request, Trigger.Response]
+        ] = {}
+        self.latest_robot_cmds: dict[
+            str, tuple[Time, npt.NDArray[np.float32]] | None
+        ] = {}
 
         # Start a dynamics timer
         self.dynamics_rate = dynamics_rate
@@ -159,30 +173,26 @@ class WorldROSWrapper(Node):
 
         self.get_logger().info("World node started.")
 
-    def set_world(self, world):
+    def set_world(self, world: World) -> None:
         """
         Sets a world.
 
         :param world: World model instance.
-        :type world: :class:`pyrobosim.core.world.World`, optional
         """
         self.world = world
         self.world.ros_node = self
-        self.world.has_ros_node = True
 
         set_global_logger(get_logger("pyrobosim"))
         self.world.logger = get_logger(self.world.name)
         self.world.logger.info("Configured ROS node.")
 
-    def start(self, wait_for_gui=False, auto_spin=True):
+    def start(self, wait_for_gui: bool = False, auto_spin: bool = True) -> None:
         """
         Starts the node.
 
         :param wait_for_gui: If True, waits for the GUI to come up before starting.
-        :type wait_for_gui: bool
         :param auto_spin: If True, creates an executor and spins it indefinitely.
             If you want to handle your own node execution, set this to False.
-        :type auto_spin: bool
         """
         if auto_spin:
             executor = MultiThreadedExecutor(num_threads=self.num_threads)
@@ -201,7 +211,7 @@ class WorldROSWrapper(Node):
             self.dynamics_rate, self.dynamics_callback
         )
 
-        while wait_for_gui and not self.world.has_gui:
+        while wait_for_gui and not self.world.gui is not None:
             self.get_logger().info("Waiting for GUI...")
             time.sleep(1.0)
         self.get_logger().info("PyRoboSim ROS node ready!")
@@ -212,7 +222,7 @@ class WorldROSWrapper(Node):
             finally:
                 self.shutdown()
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shuts down cleanly."""
         if self.executor:
             self.executor.remove_node(self)
@@ -222,12 +232,11 @@ class WorldROSWrapper(Node):
         if rclpy.ok():
             rclpy.shutdown()
 
-    def add_robot_ros_interfaces(self, robot):
+    def add_robot_ros_interfaces(self, robot: Robot) -> None:
         """
         Adds a velocity command subscriber and state publisher for a specific robot.
 
         :param robot: Robot instance.
-        :type robot: :class:`pyrobosim.core.robot.Robot`
         """
         self.latest_robot_cmds[robot.name] = None
 
@@ -251,7 +260,7 @@ class WorldROSWrapper(Node):
         pub_fn = partial(self.publish_robot_state, pub=pub, robot=robot)
         pub_timer = self.create_timer(self.state_pub_rate, pub_fn)
         self.robot_state_pubs[robot.name] = pub
-        self.robot_state_pub_threads[robot.name] = pub_timer
+        self.robot_state_pub_timers[robot.name] = pub_timer
 
         robot_action_callback_group = ReentrantCallbackGroup()
 
@@ -298,12 +307,11 @@ class WorldROSWrapper(Node):
         robot.logger = get_logger(robot.name)
         robot.logger.info("Configured ROS logger.")
 
-    def remove_robot_ros_interfaces(self, robot):
+    def remove_robot_ros_interfaces(self, robot: Robot) -> None:
         """
         Removes ROS interfaces for a specific robot.
 
         :param robot: Robot instance.
-        :type robot: :class:`pyrobosim.core.robot.Robot`
         """
         name = robot.name
 
@@ -315,9 +323,9 @@ class WorldROSWrapper(Node):
         self.destroy_publisher(pub)
         del self.robot_state_pubs[name]
 
-        pub_timer = self.robot_state_pub_threads[name]
+        pub_timer = self.robot_state_pub_timers[name]
         pub_timer.destroy()
-        del self.robot_state_pub_threads[name]
+        del self.robot_state_pub_timers[name]
 
         plan_path_server = self.robot_plan_path_servers[name]
         plan_path_server.destroy()
@@ -335,7 +343,7 @@ class WorldROSWrapper(Node):
         detect_objects_server.destroy()
         del self.robot_object_detection_servers[name]
 
-    def dynamics_callback(self):
+    def dynamics_callback(self) -> None:
         """
         Updates the dynamics of all spawned robots based on the latest received velocity commands.
         """
@@ -360,35 +368,32 @@ class WorldROSWrapper(Node):
                 # The "else" case is implicit and means the latest velocity command is used as is.
 
                 # Step the dynamics
-                robot.dynamics.step(
-                    cmd_vel,
-                    self.dynamics_rate,
-                    self.world,
-                    check_collisions=self.dynamics_enable_collisions,
-                )
+                target_pose = robot.dynamics.step(cmd_vel, self.dynamics_rate)
+                if robot.is_in_collision(pose=target_pose):
+                    robot.dynamics.velocity = np.array([0.0, 0.0, 0.0])
+                    continue
+                robot.set_pose(target_pose)
 
-    def velocity_command_callback(self, msg, robot):
+    def velocity_command_callback(self, msg: Twist, robot: Robot) -> None:
         """
         Handle single velocity command callback.
 
         :param msg: The incoming velocity message.
-        :type msg: :class:`geometry_msgs.msg.Twist`
         :param robot: The robot instance corresponding to this message.
-        :type robot: :class:`pyrobosim.core.robot.Robot`
         """
         self.latest_robot_cmds[robot.name] = (
             self.get_clock().now(),
             np.array([msg.linear.x, msg.linear.y, msg.angular.z]),
         )
 
-    def action_callback(self, goal_handle):
+    def action_callback(
+        self, goal_handle: ExecuteTaskAction.Goal
+    ) -> ExecuteTaskAction.Result:
         """
         Handle single action callback.
 
         :param goal_handle: Task action goal handle to process.
-        :type goal_handle: :class:`pyrobosim_msgs.action.ExecuteTaskAction.Goal`
         :return: The action execution action result.
-        :rtype: :class:`pyrobosim_msgs.action.ExecuteTaskAction.Result`
         """
         robot = self.world.get_robot_by_name(goal_handle.request.action.robot)
         if not robot:
@@ -400,7 +405,7 @@ class WorldROSWrapper(Node):
                     status=ExecutionResult.INVALID_ACTION, message=message
                 )
             )
-        if self.is_robot_busy(robot):
+        if robot.is_busy():
             message = "Currently executing action(s). Discarding this one."
             self.get_logger().warn(message)
             goal_handle.abort()
@@ -429,16 +434,16 @@ class WorldROSWrapper(Node):
             execution_result=execution_result_to_ros(execution_result)
         )
 
-    def action_cancel_callback(self, goal_handle):
+    def action_cancel_callback(self, goal_handle: ServerGoalHandle) -> CancelResponse:  # type: ignore[type-arg] # Cannot add type args in Humble and Jazzy
         """
         Handle cancellation for single action goals.
 
-        :param goal_handle: Task action goal handle to process.
-        :type goal_handle: :class:`pyrobosim_msgs.action.ExecuteTaskAction.Goal`
+        :param goal_handle: Task action goal handle to cancel.
+        :return: The goal handle cancellation response.
         """
         robot = self.world.get_robot_by_name(goal_handle.request.action.robot)
         if robot is not None:
-            if not self.is_robot_busy(robot):
+            if not robot.is_busy():
                 self.get_logger().info(
                     f"Robot {robot.name} is not busy. Not canceling action."
                 )
@@ -448,14 +453,14 @@ class WorldROSWrapper(Node):
             Thread(target=robot.cancel_actions).start()
         return CancelResponse.ACCEPT
 
-    def plan_callback(self, goal_handle):
+    def plan_callback(
+        self, goal_handle: ExecuteTaskPlan.Goal
+    ) -> ExecuteTaskPlan.Result:
         """
         Handle task plan action callback.
 
         :param goal_handle: Task plan action goal handle to process.
-        :type goal_handle: :class:`pyrobosim_msgs.action.ExecuteTaskPlan.Goal`
         :return: The plan execution action result.
-        :rtype: :class:`pyrobosim_msgs.action.ExecuteTaskPlan.Result`
         """
         plan_msg = goal_handle.request.plan
         robot = self.world.get_robot_by_name(plan_msg.robot)
@@ -470,7 +475,7 @@ class WorldROSWrapper(Node):
                 num_completed=0,
                 num_total=len(plan_msg.actions),
             )
-        if self.is_robot_busy(robot):
+        if robot.is_busy():
             message = "Currently executing action(s). Discarding this plan."
             self.get_logger().warn(message)
             goal_handle.abort()
@@ -501,16 +506,16 @@ class WorldROSWrapper(Node):
             num_total=robot_plan.size(),
         )
 
-    def plan_cancel_callback(self, goal_handle):
+    def plan_cancel_callback(self, goal_handle: ServerGoalHandle) -> CancelResponse:  # type: ignore[type-arg] # Cannot add type args in Humble and Jazzy
         """
         Handle cancellation for task plans.
 
-        :param goal_handle: Task plan goal handle to process.
-        :type goal_handle: :class:`pyrobosim_msgs.action.ExecuteTaskPlan.Goal`
+        :param goal_handle: Task plan goal handle to cancel.
+        :return: The goal handle cancellation response.
         """
         robot = self.world.get_robot_by_name(goal_handle.request.plan.robot)
         if robot is not None:
-            if not self.is_robot_busy(robot):
+            if not robot.is_busy():
                 self.get_logger().info(
                     f"Robot {robot.name} is not busy. Not canceling action."
                 )
@@ -520,16 +525,13 @@ class WorldROSWrapper(Node):
             Thread(target=robot.cancel_actions).start()
         return CancelResponse.ACCEPT
 
-    def robot_path_plan_callback(self, goal_handle, robot=None):
+    def robot_path_plan_callback(self, goal_handle: ServerGoalHandle, robot: Robot) -> PlanPath.Result:  # type: ignore[type-arg] # Cannot add type args in Humble and Jazzy
         """
         Handle path planning action callback for a specific robot.
 
         :param goal_handle: Path planning action goal handle to process.
-        :type goal_handle: :class:`pyrobosim_msgs.action.PlanPath.Goal`
         :param robot: The robot instance corresponding to this request.
-        :type robot: :class:`pyrobosim.core.robot.Robot`
         :return: The path planning action result.
-        :rtype: :class:`pyrobosim_msgs.action.PlanPath.Result`
         """
         goal = goal_handle.request.target_location or pose_from_ros(
             goal_handle.request.target_pose
@@ -551,23 +553,20 @@ class WorldROSWrapper(Node):
             path=path_to_ros(path),
         )
 
-    def robot_path_follow_callback(self, goal_handle, robot=None):
+    def robot_path_follow_callback(self, goal_handle: ServerGoalHandle, robot: Robot) -> FollowPath.Result:  # type: ignore[type-arg] # Cannot add type args in Humble and Jazzy
         """
         Handle path following action callback for a specific robot.
 
         :param goal_handle: Path following action goal handle to process.
-        :type goal_handle: :class:`pyrobosim_msgs.action.FollowPath.Goal`
         :param robot: The robot instance corresponding to this request.
-        :type robot: :class:`pyrobosim.core.robot.Robot`
         :return: The path following action result.
-        :rtype: :class:`pyrobosim_msgs.action.FollowPath.Result`
         """
 
         # Follow path in a separate thread so we can check for cancellation in parallel.
         path = path_from_ros(goal_handle.request.path)
         Thread(target=robot.follow_path, args=(path,)).start()
 
-        if self.world.has_gui:
+        if self.world.gui is not None:
             self.world.gui.set_buttons_during_action(False)
 
         while robot.executing_nav and goal_handle.status != GoalStatus.STATUS_CANCELED:
@@ -577,7 +576,7 @@ class WorldROSWrapper(Node):
                 break
             time.sleep(0.1)
 
-        if self.world.has_gui:
+        if self.world.gui is not None:
             self.world.gui.set_buttons_during_action(True)
 
         if goal_handle.status == GoalStatus.STATUS_CANCELED:
@@ -590,30 +589,27 @@ class WorldROSWrapper(Node):
             execution_result=execution_result_to_ros(robot.last_nav_result)
         )
 
-    def robot_path_cancel_callback(self, goal_handle, robot=None):
+    def robot_path_cancel_callback(self, goal_handle: ServerGoalHandle, robot: Robot) -> CancelResponse:  # type: ignore[type-arg] # Cannot add type args in Humble and Jazzy
         """
         Handle a cancel request for the robot path following action.
 
         :param goal_handle: Path following action goal handle to cancel.
-        :type goal_handle: :class:`pyrobosim_msgs.action.FollowPath.Goal`
         :param robot: The robot instance corresponding to this request.
-        :type robot: :class:`pyrobosim.core.robot.Robot`
         :return: The goal handle cancellation response.
-        :rtype: :class:`rclpy.action.CancelResponse`
         """
         self.get_logger().info(f"Canceling path following for {robot}.")
         return CancelResponse.ACCEPT
 
-    def robot_path_planner_reset_callback(self, request, response, robot=None):
+    def robot_path_planner_reset_callback(
+        self, request: Trigger.Request, response: Trigger.Response, robot: Robot
+    ) -> Trigger.Response:
         """
         Resets a robot's path planner as a response to a service request.
 
         :param request: The service request.
-        :type request: :class:`std_srvs.srv.Trigger.Request`
         :param response: The unmodified service response.
-        :type response: :class:`std_srvs.srv.Trigger.Response`
+        :param robot: The robot for which to reset the path planner.
         :return: The modified service response containing the reset result.
-        :rtype: :class:`std_srvs.srv.Trigger.Response`
         """
         self.get_logger().info(f"Resetting path planner for {robot}.")
 
@@ -625,18 +621,15 @@ class WorldROSWrapper(Node):
         robot.reset_path_planner()
         return Trigger.Response(success=True)
 
-    def robot_detect_objects_callback(self, goal_handle, robot=None):
+    def robot_detect_objects_callback(self, goal_handle: ServerGoalHandle, robot: Robot) -> DetectObjects.Result:  # type: ignore[type-arg] # Cannot add type args in Humble and Jazzy
         """
         Handle object detection action callback for a specific robot.
 
         :param goal_handle: Object detection action goal handle to process.
-        :type goal_handle: :class:`pyrobosim_msgs.action.DetectObjects.Goal`
         :param robot: The robot instance corresponding to this request.
-        :type robot: :class:`pyrobosim.core.robot.Robot`
         :return: The object detection action result.
-        :rtype: :class:`pyrobosim_msgs.action.DetectObjects.Result`
         """
-        if self.world.has_gui:
+        if self.world.gui is not None:
             execution_result = self.world.gui.canvas.detect_objects(
                 robot, goal_handle.request.target_object
             )
@@ -661,26 +654,13 @@ class WorldROSWrapper(Node):
             detected_objects=detected_objects_msg,
         )
 
-    def is_robot_busy(self, robot):
-        """
-        Check if a robot is currently executing an action or plan.
-
-        :param robot: Robot instance to check.
-        :type robot: :class:`pyrobosim.core.robot.Robot`
-        :return: True if the robot is busy, else False.
-        :rtype: bool
-        """
-        return robot.executing_action or robot.executing_plan or robot.executing_nav
-
-    def package_robot_state(self, robot):
+    def package_robot_state(self, robot: Robot) -> RobotState:
         """
         Creates a ROS message containing a robot state.
         This state can be published standalone or packaged into the overall world state.
 
         :param robot: Robot instance from which to extract state.
-        :type robot: :class:`pyrobosim.core.robot.Robot`
         :return: ROS message representing the robot state.
-        :rtype: :class:`pyrobosim_msgs.msg.RobotState`
         """
         state_msg = RobotState(name=robot.name)
         state_msg.header.stamp = self.get_clock().now().to_msg()
@@ -697,27 +677,24 @@ class WorldROSWrapper(Node):
                 state_msg.last_visited_location = robot.location.name
         return state_msg
 
-    def publish_robot_state(self, pub, robot):
+    def publish_robot_state(self, pub: Publisher, robot: Robot) -> None:  # type: ignore[type-arg] # Cannot add type args in Humble and Jazzy
         """
         Helper function to publish robot state.
 
         :param pub: The publisher on which to publish the robot state information.
-        :type pub: :class:`rclpy.publisher.Publisher`
         :param robot: Robot instance from which to extract state.
-        :type robot: :class:`pyrobosim.core.robot.Robot`
         """
         pub.publish(self.package_robot_state(robot))
 
-    def world_state_callback(self, request, response):
+    def world_state_callback(
+        self, request: RequestWorldState.Request, response: RequestWorldState.Response
+    ) -> RequestWorldState.Response:
         """
         Returns the world state as a response to a service request.
 
         :param request: The service request.
-        :type request: :class:`pyrobosim_msgs.srv.RequestWorldState.Request`
         :param response: The unmodified service response.
-        :type response: :class:`pyrobosim_msgs.srv.RequestWorldState.Response`
         :return: The modified service response containing the world state.
-        :rtype: :class:`pyrobosim_msgs.srv.RequestWorldState.Response`
         """
         self.get_logger().info("Received world state request.")
 
@@ -765,16 +742,15 @@ class WorldROSWrapper(Node):
 
         return response
 
-    def set_location_state_callback(self, request, response):
+    def set_location_state_callback(
+        self, request: RequestWorldState.Request, response: RequestWorldState.Response
+    ) -> RequestWorldState.Response:
         """
         Sets the state of a location in the world as a response to a service request.
 
         :param request: The service request.
-        :type request: :class:`pyrobosim_msgs.srv.SetLocationState.Request`
         :param response: The unmodified service response.
-        :type response: :class:`pyrobosim_msgs.srv.SetLocationState.Response`
         :return: The modified service response containing result of setting the location state.
-        :rtype: :class:`pyrobosim_msgs.srv.RequestWorldState.Response`
         """
         self.get_logger().info("Received location state setting request.")
 
@@ -821,14 +797,12 @@ class WorldROSWrapper(Node):
         return response
 
 
-def update_world_from_state_msg(world, msg):
+def update_world_from_state_msg(world: World, msg: WorldState) -> None:
     """
     Updates a world given a state message.
 
     :param world: World object to update.
-    :type world: :class:`pyrobosim.core.world.World`
     :param msg: ROS message describing the desired world state.
-    :type msg: :class:`pyrobosim_msgs.msg.WorldState`
     """
     # Update the robot states
     for robot_state in msg.robots:

@@ -29,7 +29,7 @@ TEST_DATA = np.rot90(
 )
 
 
-def test_create_occupancy_grid_default_args():
+def test_create_occupancy_grid_default_args() -> None:
     grid = OccupancyGrid(TEST_DATA, 1.0)
 
     assert grid.data.shape == (5, 6)
@@ -41,7 +41,7 @@ def test_create_occupancy_grid_default_args():
     assert grid.free_thresh == 0.2
 
 
-def test_create_occupancy_grid_nondefault_args():
+def test_create_occupancy_grid_nondefault_args() -> None:
     grid = OccupancyGrid(
         TEST_DATA, 0.25, origin=(-1.0, 2.0), occ_thresh=0.8, free_thresh=0.12
     )
@@ -55,7 +55,7 @@ def test_create_occupancy_grid_nondefault_args():
     assert grid.free_thresh == 0.12
 
 
-def test_is_in_bounds():
+def test_is_in_bounds() -> None:
     grid = OccupancyGrid(TEST_DATA, 1.0)
 
     assert grid.is_in_bounds((0, 0))  # Lower left
@@ -66,7 +66,7 @@ def test_is_in_bounds():
     assert not grid.is_in_bounds((10, 2))
 
 
-def test_world_to_grid_conversion():
+def test_world_to_grid_conversion() -> None:
     grid = OccupancyGrid(TEST_DATA, 1.0, origin=(1.0, 2.0))
 
     orig_grid_pt = (2, 3)
@@ -77,7 +77,7 @@ def test_world_to_grid_conversion():
     assert new_grid_pt == orig_grid_pt
 
 
-def test_is_occupied():
+def test_is_occupied() -> None:
     grid = OccupancyGrid(TEST_DATA, 1.0)
 
     # Check occupancy of known points in the grid.
@@ -94,7 +94,7 @@ def test_is_occupied():
     assert not grid.is_occupied((3, 4))
 
 
-def test_connectable():
+def test_connectable() -> None:
     grid = OccupancyGrid(TEST_DATA, 1.0)
 
     # Connectable in a vertical line
@@ -121,7 +121,7 @@ def test_connectable():
     is_connectable, last_point = grid.has_straight_line_connection((1, 2), (2, 4))
 
 
-def test_save_load_to_file():
+def test_save_load_to_file() -> None:
     grid = OccupancyGrid(
         TEST_DATA, 0.25, origin=(-1.0, 2.0), occ_thresh=0.8, free_thresh=0.12
     )
@@ -162,7 +162,7 @@ def test_save_load_to_file():
     assert loaded_grid.free_thresh == grid.free_thresh
 
 
-def test_occupancy_grid_from_world():
+def test_occupancy_grid_from_world() -> None:
     from pyrobosim.core import World
 
     world = World()
