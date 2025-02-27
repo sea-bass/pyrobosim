@@ -79,6 +79,33 @@ class World:
 
         self.logger.info("Created world.")
 
+    def reset(self, deterministic: bool = False) -> bool:
+        """
+        Resets the world to its initial state.
+
+        :param deterministic: If True, resets the world completely deterministically.
+            Otherwise, sampled poses may be resampled randomly.
+        :return: True if the reset was successful, else False.
+        """
+        from ..core.yaml_utils import WorldYamlLoader, WorldYamlWriter
+
+        self.logger.info("Resetting world...")
+
+        if deterministic and (self.source_yaml_file is not None):
+            WorldYamlLoader().from_file(self.source_yaml_file, world=self)
+        else:
+            if self.source_yaml is None:
+                self.source_yaml = WorldYamlWriter().to_dict(self)
+            WorldYamlLoader().from_yaml(self.source_yaml, world=self)
+
+        if self.gui is not None:
+            self.gui.canvas.show()
+            self.gui.canvas.draw_signal.emit()
+            self.gui.on_robot_changed()
+
+        self.logger.info("Reset world successfully.")
+        return True  # No error handling yet
+
     ############
     # Metadata #
     ############
@@ -203,33 +230,41 @@ class World:
         room.add_graph_nodes()
         return room
 
-    def remove_room(self, room_name: str) -> bool:
+    def remove_room(self, room: str | Room) -> bool:
         """
         Removes a room from the world by name.
 
-        :param room_name: Name of room to remove.
+        :param room: Name of room or room entity to remove.
         :return: True if the room was successfully removed, else False.
         """
-        room = self.get_room_by_name(room_name)
-        if room is None:
-            self.logger.warning(f"No room {room_name} found for removal.")
+        if isinstance(room, Room):
+            resolved_room: Room | None = room
+        elif isinstance(room, str):
+            resolved_room = self.get_room_by_name(room)
+        if resolved_room is None:
+            self.logger.warning(f"No room {room} found for removal.")
             return False
 
         # Remove hallways associated with the room
-        while len(room.hallways) > 0:
-            self.remove_hallway(room.hallways[-1])
+        while len(resolved_room.hallways) > 0:
+            self.remove_hallway(resolved_room.hallways[-1])
 
         # Remove locations in the room
-        while len(room.locations) > 0:
-            self.remove_location(room.locations[-1])
+        while len(resolved_room.locations) > 0:
+            self.remove_location(resolved_room.locations[-1])
 
         # Remove the room itself
-        self.rooms.remove(room)
-        self.name_to_entity.pop(room_name)
+        self.rooms.remove(resolved_room)
+        self.name_to_entity.pop(resolved_room.name)
         self.num_rooms -= 1
-        self.update_bounds(entity=room, remove=True)
+        self.update_bounds(entity=resolved_room, remove=True)
 
         return True
+
+    def remove_all_rooms(self) -> None:
+        """Cleanly removes all rooms from the world."""
+        for room in reversed(self.rooms):
+            self.remove_room(room)
 
     def add_hallway(self, **hallway_config: Any) -> Hallway | None:
         r"""
@@ -351,13 +386,25 @@ class World:
         ordered_rooms = tuple(sorted([hallway.room_start.name, hallway.room_end.name]))
         self.hallway_instance_counts[ordered_rooms] -= 1
         self.name_to_entity.pop(hallway.name)
-        self.name_to_entity.pop(hallway.reversed_name)
+        if hallway.reversed_name in self.name_to_entity:
+            self.name_to_entity.pop(hallway.reversed_name)
         for room in [hallway.room_start, hallway.room_end]:
             room.hallways.remove(hallway)
             room.update_collision_polygons()
             room.update_visualization_polygon()
             self.update_bounds(entity=hallway, remove=True)
         return True
+
+    def remove_all_hallways(self, restart_numbering: bool = True) -> None:
+        """
+        Cleanly removes all hallways from the world.
+
+        :param restart_numbering: If True, restarts numbering of all categories to zero.
+        """
+        for hallway in reversed(self.hallways):
+            self.remove_hallway(hallway)
+        if restart_numbering:
+            self.hallway_instance_counts = {}
 
     def add_location(self, **location_config: Any) -> Location | None:
         r"""
@@ -560,11 +607,18 @@ class World:
         self.name_to_entity.pop(resolved_location.name)
         for spawn in resolved_location.children:
             self.name_to_entity.pop(spawn.name)
-        if self.gui is not None:
-            self.gui.canvas.show_locations_signal.emit()
-            self.gui.canvas.show_objects_signal.emit()
-            self.gui.canvas.draw_signal.emit()
         return True
+
+    def remove_all_locations(self, restart_numbering: bool = True) -> None:
+        """
+        Cleanly removes all locations from the world.
+
+        :param restart_numbering: If True, restarts numbering of all categories to zero.
+        """
+        for loc in reversed(self.locations):
+            self.remove_location(loc)
+        if restart_numbering:
+            self.location_instance_counts = {}
 
     def open_location(self, location: Entity | str | None) -> ExecutionResult:
         """
@@ -978,7 +1032,6 @@ class World:
         """
         for obj in reversed(self.objects):
             self.remove_object(obj)
-        self.num_objects = 0
         if restart_numbering:
             self.object_instance_counts = {}
 
@@ -1074,33 +1127,43 @@ class World:
         if self.gui is not None:
             self.gui.canvas.show_robots_signal.emit()
         if self.ros_node is not None:
-            self.ros_node.add_robot_ros_interfaces()
+            self.ros_node.add_robot_ros_interfaces(robot)
 
-    def remove_robot(self, robot_name: str) -> bool:
+    def remove_robot(self, robot: Robot | str) -> bool:
         """
         Removes a robot from the world.
 
+        :param robot: Robot instance or name to remove.
         :return: True if the robot was successfully removed, else False.
         """
-        robot = self.get_robot_by_name(robot_name)
-        if robot:
-            self.robots.remove(robot)
-            self.name_to_entity.pop(robot_name)
-            if self.gui is not None:
-                self.gui.canvas.show_robots_signal.emit()
-            if self.ros_node is not None:
-                self.ros_node.remove_robot_ros_interfaces(robot)
-
-            # Find the new max inflation radius and revert it.
-            new_inflation_radius = max(
-                [other_robot.radius for other_robot in self.robots] + [robot.radius]
-            )
-            if new_inflation_radius != self.inflation_radius:
-                self.set_inflation_radius(new_inflation_radius)
-            return True
-        else:
-            self.logger.warning(f"Could not find robot {robot_name} to remove.")
+        if isinstance(robot, Robot):
+            resolved_robot: Robot | None = robot
+        elif isinstance(robot, str):
+            resolved_robot = self.get_robot_by_name(robot)
+        if resolved_robot is None:
+            self.logger.warning(f"Could not find robot {robot} to remove.")
             return False
+
+        self.robots.remove(resolved_robot)
+        self.name_to_entity.pop(resolved_robot.name)
+        if self.gui is not None:
+            self.gui.canvas.show_robots_signal.emit()
+        if self.ros_node is not None:
+            self.ros_node.remove_robot_ros_interfaces(resolved_robot)
+
+        # Find the new max inflation radius and revert it.
+        new_inflation_radius = max(
+            [other_robot.radius for other_robot in self.robots]
+            + [self.inflation_radius]
+        )
+        if new_inflation_radius != self.inflation_radius:
+            self.set_inflation_radius(new_inflation_radius)
+        return True
+
+    def remove_all_robots(self) -> None:
+        """Cleanly removes all robots from the world."""
+        for robot in reversed(self.robots):
+            self.remove_robot(robot)
 
     def set_inflation_radius(self, inflation_radius: float = 0.0) -> None:
         """

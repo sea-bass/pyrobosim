@@ -34,20 +34,25 @@ class WorldYamlLoader:
     """Creates world models from YAML files."""
 
     def from_yaml(
-        self, world_dict: dict[str, Any], world_dir: str | None = None
+        self,
+        world_dict: dict[str, Any],
+        world_dir: str | None = None,
+        world: World | None = None,
     ) -> World:
         """
         Load a world from a YAML description.
 
         :param world_dict: Dictionary containing all the world information
         :param world_dir: Root directory for basing some tokens, uses the current directory if not specified.
+        :param world: If specified, loads the YAML contents to this world.
+            Otherwise, creates and returns a new world instance.
         :return: World model instance.
         """
         self.data = world_dict
         self.world_dir = world_dir
 
         # Build and return the world
-        self.create_world()
+        self.create_world(world)
         self.add_rooms()
         self.add_hallways()
         self.add_locations()
@@ -55,24 +60,40 @@ class WorldYamlLoader:
         self.add_robots()
         return self.world
 
-    def from_file(self, filename: str) -> World:
+    def from_file(self, filename: str, world: World | None = None) -> World:
         """
         Load a world from a YAML file.
 
         :param filename: Path to YAML file describing the world.
+        :param world: If specified, loads the YAML contents to this world.
+            Otherwise, creates and returns a new world instance.
         :return: World model instance.
         """
         with open(filename) as file:
             world_dict = yaml.load(file, Loader=yaml.FullLoader)
         (world_dir, _) = os.path.split(filename)
-        world = self.from_yaml(world_dict, world_dir)
+        world = self.from_yaml(world_dict, world_dir, world=world)
         world.source_yaml_file = filename
         return world
 
-    def create_world(self) -> None:
-        """Creates an initial world with the specified global parameters."""
+    def create_world(self, world: World | None = None) -> None:
+        """
+        Creates an initial world with the specified global parameters.
+
+        :param world: If specified, loads the YAML contents to this world.
+            Otherwise, creates and returns a new world instance.
+        """
         params = self.data.get("params", {})
-        self.world = World(**params)
+
+        if world is None:
+            self.world = World(**params)
+        else:
+            world.remove_all_objects()
+            world.remove_all_robots()
+            world.remove_all_locations()
+            world.remove_all_hallways()
+            world.remove_all_rooms()
+            self.world = world
 
         # Set the location/object metadata
         metadata = self.data.get("metadata")
