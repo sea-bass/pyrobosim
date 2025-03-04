@@ -230,13 +230,14 @@ class World:
         room.add_graph_nodes()
         return room
 
-    def remove_room(self, room: str | Room) -> bool:
+    def remove_room(self, room: Room | str) -> bool:
         """
-        Removes a room from the world by name.
+        Removes a room from the world.
 
-        :param room: Name of room or room entity to remove.
+        :param room: Room entity or name to remove.
         :return: True if the room was successfully removed, else False.
         """
+        # Validate the input
         if isinstance(room, Room):
             resolved_room: Room | None = room
         elif isinstance(room, str):
@@ -368,31 +369,37 @@ class World:
         # Finally, return the Hallway object
         return hallway
 
-    def remove_hallway(self, hallway: Hallway) -> bool:
+    def remove_hallway(self, hallway: Hallway | str) -> bool:
         """
         Removes a hallway between two rooms.
 
-        :param hallway: Hallway object to remove.
+        :param hallway: Hallway object or name to remove.
         :return: True if the hallway was successfully removed, else False.
         """
         # Validate the input
-        if not hallway in self.hallways:
-            self.logger.warning("Invalid hallway specified.")
+        if isinstance(hallway, Hallway):
+            resolved_hallway: Hallway | None = hallway
+        elif isinstance(hallway, str):
+            resolved_hallway = self.get_hallway_by_name(hallway)
+        if resolved_hallway is None:
+            self.logger.warning(f"No hallway {hallway} found for removal.")
             return False
 
         # Remove the hallways from the world and relevant rooms.
-        self.hallways.remove(hallway)
+        self.hallways.remove(resolved_hallway)
         self.num_hallways -= 1
-        ordered_rooms = tuple(sorted([hallway.room_start.name, hallway.room_end.name]))
-        self.hallway_instance_counts[ordered_rooms] -= 1
-        self.name_to_entity.pop(hallway.name)
-        if hallway.reversed_name in self.name_to_entity:
-            self.name_to_entity.pop(hallway.reversed_name)
-        for room in [hallway.room_start, hallway.room_end]:
-            room.hallways.remove(hallway)
+        ordered_rooms = sorted(
+            [resolved_hallway.room_start.name, resolved_hallway.room_end.name]
+        )
+        self.hallway_instance_counts[tuple(ordered_rooms)] -= 1
+        self.name_to_entity.pop(resolved_hallway.name)
+        if resolved_hallway.reversed_name in self.name_to_entity:
+            self.name_to_entity.pop(resolved_hallway.reversed_name)
+        for room in [resolved_hallway.room_start, resolved_hallway.room_end]:
+            room.hallways.remove(resolved_hallway)
             room.update_collision_polygons()
             room.update_visualization_polygon()
-            self.update_bounds(entity=hallway, remove=True)
+            self.update_bounds(entity=resolved_hallway, remove=True)
         return True
 
     def remove_all_hallways(self, restart_numbering: bool = True) -> None:
@@ -1003,7 +1010,7 @@ class World:
         """
         Cleanly removes an object from the world.
 
-        :param loc: Object instance of name to remove.
+        :param loc: Object instance or name to remove.
         :return: True if the object was successfully removed, else False.
         """
         if isinstance(obj, str):
