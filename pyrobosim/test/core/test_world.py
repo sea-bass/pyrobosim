@@ -430,10 +430,6 @@ class TestWorldModeling:
             pose_start, pose_goal, step_dist=0.5
         )
 
-    ##############################################
-    # These tests incrementally clean up a world #
-    ##############################################
-
     @staticmethod
     @pytest.mark.dependency(  # type: ignore[misc]
         depends=[
@@ -441,6 +437,24 @@ class TestWorldModeling:
             "TestWorldModeling::test_collides_with_robots",
             "TestWorldModeling::test_is_connectable",
         ]
+    )
+    def test_reset_world() -> None:
+        """Tests resetting a world."""
+        TestWorldModeling.world.reset()
+
+        assert TestWorldModeling.world.num_rooms == 2
+        assert TestWorldModeling.world.num_locations == 2
+        assert TestWorldModeling.world.num_hallways == 1
+        assert TestWorldModeling.world.num_objects == 2
+        assert len(TestWorldModeling.world.robots) == 2
+
+    ##############################################
+    # These tests incrementally clean up a world #
+    ##############################################
+
+    @staticmethod
+    @pytest.mark.dependency(  # type: ignore[misc]
+        depends=["TestWorldModeling::test_reset_world"]
     )
     def test_remove_robot(caplog: LogCaptureFixture) -> None:
         """Tests deleting robots from the world"""
