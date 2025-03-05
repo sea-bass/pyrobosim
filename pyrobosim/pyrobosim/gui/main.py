@@ -81,11 +81,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
 
         :param world: World object to attach.
         """
-        from ..core.yaml_utils import WorldYamlWriter
-
         self.world = world
-        if self.world.source_yaml is None:
-            self.world.source_yaml = WorldYamlWriter().to_dict(self.world)
         self.world.gui = self
         self.canvas.world = world
 
@@ -391,31 +387,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
 
     def on_reset_world_click(self) -> None:
         """Callback to reset the entire world."""
-        from ..core.yaml_utils import WorldYamlLoader
-
-        # Shut down all the old robots' ROS interfaces.
-        ros_node = self.world.ros_node
-        if ros_node is not None:
-            for robot in self.world.robots:
-                ros_node.remove_robot_ros_interfaces(robot)
-
-        if self.world.source_yaml_file is not None:
-            world = WorldYamlLoader().from_file(self.world.source_yaml_file)
-        elif self.world.source_yaml is not None:
-            world = WorldYamlLoader().from_yaml(self.world.source_yaml)
-        else:
-            raise RuntimeError("Could not find source YAML representation!")
-        self.set_world(world)
-
-        # Start up the new robots' ROS interfaces.
-        if ros_node is not None:
-            ros_node.set_world(world)
-            for robot in self.world.robots:
-                ros_node.add_robot_ros_interfaces(robot)
-
-        self.canvas.show()
-        self.canvas.draw_signal.emit()
-        self.on_robot_changed()
+        self.world.reset()
 
     def on_reset_path_planner_click(self) -> None:
         """Callback to reset the path planner for the current robot."""

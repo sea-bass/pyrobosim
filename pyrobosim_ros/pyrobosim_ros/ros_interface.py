@@ -39,7 +39,7 @@ from pyrobosim_msgs.msg import (  # type: ignore[attr-defined]
     RobotState,
     WorldState,
 )
-from pyrobosim_msgs.srv import RequestWorldState, SetLocationState  # type: ignore[attr-defined]
+from pyrobosim_msgs.srv import RequestWorldState, ResetWorld, SetLocationState  # type: ignore[attr-defined]
 from std_srvs.srv import Trigger
 
 from .ros_conversions import (
@@ -78,6 +78,8 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
             * Allow path planner reset on a ``<robot_name>/reset_path_planner`` service server.
             * Allow object detection for each robot on a ``<robot_name>/detect_objects`` action server.
             * Serve a ``request_world_state`` service to retrieve the world state for planning.
+            * Serve a ``set_location_state`` service to set the state of the location.
+            * Serve a ``reset_world`` service to reset the world.
             * Serve a ``execute_action`` action server to run single actions on a robot.
             * Serve a ``execute_task_plan`` action server to run entire task plans on a robot.
 
@@ -125,18 +127,26 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
         )
 
         # World state service servers
+        self.world_state_callback_group = ReentrantCallbackGroup()
         self.world_state_srv = self.create_service(
             RequestWorldState,
             "request_world_state",
             self.world_state_callback,
-            callback_group=ReentrantCallbackGroup(),
+            callback_group=self.world_state_callback_group,
         )
 
         self.set_location_state_srv = self.create_service(
             SetLocationState,
             "set_location_state",
             self.set_location_state_callback,
-            callback_group=ReentrantCallbackGroup(),
+            callback_group=self.world_state_callback_group,
+        )
+
+        self.reset_world_srv = self.create_service(
+            ResetWorld,
+            "reset_world",
+            self.reset_world_callback,
+            callback_group=self.world_state_callback_group,
         )
 
         # Initialize robot specific interface dictionaries
@@ -794,6 +804,28 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
         # If we made it here, return the latest result.
         if result is not None:
             response.result = execution_result_to_ros(result)
+        return response
+
+    def reset_world_callback(
+        self, request: ResetWorld.Request, response: ResetWorld.Response
+    ) -> ResetWorld.Response:
+        """
+        Reset the world as a response to a service request.
+
+        :param request: The service request.
+        :param response: The service response indicating success or failure.
+        :return: The modified service response containing the result of the reset operation.
+        """
+        # Wait to cancel all the robot actions.
+        cancel_threads = [
+            Thread(target=robot.cancel_actions) for robot in self.world.robots
+        ]
+        for thread in cancel_threads:
+            thread.start()
+        for thread in cancel_threads:
+            thread.join()
+
+        response.success = self.world.reset(deterministic=request.deterministic)
         return response
 
 

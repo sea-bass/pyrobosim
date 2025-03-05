@@ -1,0 +1,12 @@
+# ROS service to reset the world state.
+
+# Request
+# If true, resets the world to exactly the state when it was first loading.
+# Otherwise, if loaded from YAML, randomly sampled positions will change.
+bool deterministic
+
+---
+
+# Response
+# Indicates whether the world reset operation was successful:
+bool success
