@@ -639,14 +639,9 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
         :param robot: The robot instance corresponding to this request.
         :return: The object detection action result.
         """
-        if self.world.gui is not None:
-            execution_result = self.world.gui.canvas.detect_objects(
-                robot, goal_handle.request.target_object
-            )
-        else:
-            execution_result = robot.detect_objects(
-                target_object=goal_handle.request.target_object
-            )
+        execution_result = robot.detect_objects(
+            target_object=goal_handle.request.target_object
+        )
 
         detected_objects_msg = [
             ObjectState(
