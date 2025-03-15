@@ -167,12 +167,10 @@ class ConstantVelocityExecutor(PathExecutor):
         self.robot.last_nav_result = ExecutionResult(status=status, message=message)
         return self.robot.last_nav_result
 
-
+    # IDEA: Start sensor thread above?
+    
     # IDEA: This validation is done based on ROBOT PERCEIVED WORLD, instead of TRUE WORLD?
 
-    # ALSO IDEA: Is it better to combine validate_remaining and validate_upcoming paths under this function?
-    # Just check robot partial_observability_hallway_state?
-    
     def validate_remaining_path(self) -> None:
         """
         Validates the remaining path by checking collisions against the world.
@@ -211,49 +209,6 @@ class ConstantVelocityExecutor(PathExecutor):
                     self.abort_execution = True
 
             time.sleep(max(0, self.validation_dt - (time.time() - start_time)))
-    
-    def validate_upcoming_path(self) -> None:
-        """
-        Validates the upcoming path by checking collisions against hallways.
-
-        This function will set the `abort_execution` attribute to `True`,
-        which cancels the main trajectory execution loop.
-
-        Difference to validate_remaining_path is that this function checks 
-        collision a few steps ahead of the robot, instead of all remaining paths.
-        """
-        if (self.robot is None) or (self.traj is None):
-            return
-
-        while self.following_path and (not self.abort_execution):
-            start_time = time.time()
-            cur_pose = self.robot.get_pose()
-            cur_time = self.current_traj_time
-
-            # Get the waypoint index of the remaining path.
-            for idx, t in enumerate(self.traj.t_pts):
-                if t >= cur_time:
-                    break
-            if idx == self.traj.num_points() - 1:
-                return
-
-            # Collision check the remaining path.
-            poses = [cur_pose]
-            poses.extend(self.traj.poses[idx:idx+10]) # Check 10 steps ahead (TODO: Is this good step count?)
-            if len(poses) > 2:
-                upcoming_path = Path(poses=poses)
-                if (self.robot.world is not None) and (
-                    not self.robot.world.is_path_collision_free(
-                        upcoming_path, step_dist=self.validation_step_dist
-                    )
-                ):
-                    self.robot.logger.warning(
-                        "Detected upcoming collision. Aborting execution."
-                    )
-                    self.abort_execution = True
-
-            time.sleep(max(0, self.validation_dt - (time.time() - start_time)))
-
 
     def to_dict(self) -> dict[str, Any]:
         """
