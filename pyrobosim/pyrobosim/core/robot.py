@@ -20,6 +20,7 @@ from ..planning.actions import (
     TaskAction,
     TaskPlan,
 )
+from ..sensor.lidar import Lidar
 from ..utils.logging import create_logger
 from ..utils.polygon import sample_from_polygon, transform_polygon
 from ..utils.path import Path
@@ -47,6 +48,11 @@ class Robot(Entity):
         partial_observability: bool = False,
         action_execution_options: dict[str, ExecutionOptions] = {},
         initial_battery_level: float = 100.0,
+
+        partial_observability_hallway_states: bool = False,
+        # For now sensor is set under the hood
+        sensor: Lidar | None = Lidar(),
+
     ) -> None:
         """
         Creates a robot instance.
@@ -128,6 +134,10 @@ class Robot(Entity):
         self.last_detected_objects: list[Object] = []
         self.viz_text: Text | None = None
 
+        # Sensor properties - At the moment just for detecting closed hallway?
+        if partial_observability_hallway_states:
+            self.set_sensor(sensor)
+
         self.logger.info("Created robot.")
 
     def get_pose(self) -> Pose:
@@ -169,6 +179,19 @@ class Robot(Entity):
         self.path_executor = path_executor
         if path_executor is not None:
             path_executor.robot = self
+
+
+    # This probably need quite some improvement
+    def set_sensor(self, sensor: Lidar | None) -> None:
+        """
+        Sets a path executor for navigation.
+
+        :param path_executor: Path executor for navigation (see e.g.,
+            :class:`pyrobosim.navigation.execution.ConstantVelocityExecutor`).
+        """
+        self.sensor = sensor
+        if sensor is not None:
+            sensor.robot = self
 
     def is_moving(self) -> bool:
         """

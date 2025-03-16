@@ -26,7 +26,9 @@ class ConstantVelocityExecutor(PathExecutor):
         validate_during_execution: bool = False,
         validation_dt: float = 0.5,
         validation_step_dist: float = 0.025,
+        
         partial_observability_hallway_state: bool = False,
+        sensor_detection_dt: float = 0.5,
     ) -> None:
         """
         Creates a constant velocity path executor.
@@ -37,6 +39,9 @@ class ConstantVelocityExecutor(PathExecutor):
         :param validate_during_execution: If True, runs a separate thread that validates the remaining path at a regular rate.
         :param validation_dt: Time step for validating the remaining path, in seconds.
         :param validation_step_dist: The step size for discretizing a straight line to check collisions.
+
+        :param partial_observability_hallway_state: If True,  robot doesn't know the world's hallways state, until detected.
+        :param sensor_detection_dt: Time step for running sensor and detect collisions, in seconds.
         """
         super().__init__()
         self.dt = dt
@@ -49,6 +54,7 @@ class ConstantVelocityExecutor(PathExecutor):
         self.validation_step_dist = validation_step_dist
 
         self.partial_observability_hallway_state = partial_observability_hallway_state
+        self.sensor_detection_dt = sensor_detection_dt
 
         # Execution state
         self.reset_state()
@@ -117,6 +123,11 @@ class ConstantVelocityExecutor(PathExecutor):
         if self.validate_during_execution and self.robot.world is not None:
             self.validation_timer = Thread(target=self.validate_remaining_path)
             self.validation_timer.start()
+
+        # Optionally, kick off the sensor thread.
+        if self.partial_observability_hallway_state and self.robot.world is not None:
+            self.sensor_thread = Thread(target=self.run_lidar)
+            self.sensor_thread.start()
 
         # Execute the trajectory.
         status = ExecutionStatus.SUCCESS
@@ -209,6 +220,25 @@ class ConstantVelocityExecutor(PathExecutor):
                     self.abort_execution = True
 
             time.sleep(max(0, self.validation_dt - (time.time() - start_time)))
+
+    def run_lidar(self) -> None:
+        """
+        Runs the lidar sensor to detect collisions in the hallway.
+        """
+        if (self.robot is None) or (self.traj is None):
+            return
+
+        while self.following_path and (not self.abort_execution):
+
+            start_time = time.time()
+
+            if self.robot.sensor.detect_collision():
+                self.robot.logger.warning(
+                    "Lidar detected collision. Aborting execution"
+                )
+                self.abort_execution = True
+
+            time.sleep(max(0, self.sensor_detection_dt - (time.time() - start_time)))
 
     def to_dict(self) -> dict[str, Any]:
         """
