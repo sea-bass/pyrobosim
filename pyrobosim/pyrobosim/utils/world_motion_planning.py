@@ -9,7 +9,7 @@ from ..utils.pose import Pose
 
 
 def reduce_waypoints_polygon(
-    world: World, poses: list[Pose], step_dist: float = 0.01
+    world: World, poses: list[Pose], step_dist: float = 0.01, partial_observability_hallway_states: bool = False,
 ) -> list[Pose]:
     """
     Reduces the number of waypoints in a path generated from a polygon based planner.
@@ -26,7 +26,7 @@ def reduce_waypoints_polygon(
     i = len(poses) - 1
     while poses and i >= 0:
         current = poses[i]
-        if world.is_connectable(start, current, step_dist):
+        if world.is_connectable(start=start, goal=current, step_dist=step_dist, partial_observability_hallway_states=partial_observability_hallway_states):
             waypoints.append(current)
             start = current
             poses = poses[i + 1 :]

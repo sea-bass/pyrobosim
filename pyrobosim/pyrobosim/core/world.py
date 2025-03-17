@@ -1639,6 +1639,7 @@ class World:
         goal: Pose,
         step_dist: float = 0.01,
         max_dist: float | None = None,
+        partial_observability_hallway_states: bool = False,
     ) -> bool:
         """
         Checks connectivity between two poses `start` and `goal` in the world
@@ -1674,14 +1675,14 @@ class World:
 
         # Check the occupancy of all the test points.
         for x_check, y_check in zip(x_pts[1:], y_pts[1:]):
-            if self.check_occupancy(Pose(x=x_check, y=y_check)):
+            if self.check_occupancy(Pose(x=x_check, y=y_check), partial_observability_hallway_states):
                 return False
 
         # If the loop was traversed for all points without returning, we can
         # connect the points.
         return True
 
-    def check_occupancy(self, pose: Pose | Sequence[float]) -> bool:
+    def check_occupancy(self, pose: Pose | Sequence[float], partial_observability_hallway_states: bool = False) -> bool:
         """
         Check if a pose in the world is occupied.
 
@@ -1690,8 +1691,11 @@ class World:
         """
         # Loop through all the rooms and hallways and check if the pose
         # is deemed collision-free in any of them.
-        for entity in itertools.chain(self.rooms, self.hallways):
+        for entity in itertools.chain(self.rooms):
             if entity.is_collision_free(pose):
+                return False
+        for entity in itertools.chain(self.hallways):
+            if entity.is_collision_free(pose, partial_observability_hallway_states):
                 return False
         # If we made it through, the pose is occupied.
         return True
@@ -1732,7 +1736,7 @@ class World:
         return True
 
     def sample_free_robot_pose_uniform(
-        self, robot: Robot | None = None, ignore_robots: bool = True
+        self, robot: Robot | None = None, ignore_robots: bool = True, partial_observability_hallway_states: bool = False
     ) -> Pose | None:
         """
         Sample an unoccupied robot pose in the world.
@@ -1758,7 +1762,7 @@ class World:
             y = (ymax - ymin - 2 * r) * np.random.random() + ymin + r
             yaw = 2.0 * np.pi * np.random.random()
             pose = Pose(x=x, y=y, z=0.0, yaw=yaw)
-            if not self.check_occupancy(pose) and (
+            if not self.check_occupancy(pose, partial_observability_hallway_states) and (
                 ignore_robots or not self.collides_with_robots(pose, robot)
             ):
                 return pose
