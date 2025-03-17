@@ -239,7 +239,7 @@ class RRTPlanner(PathPlanner):
 
         :return: Collision-free pose if found, else ``None``.
         """
-        return self.world.sample_free_robot_pose_uniform(self.partial_observability_hallway_states)
+        return self.world.sample_free_robot_pose_uniform(partial_observability_hallway_states = self.partial_observability_hallway_states)
 
     def extend(self, n_start: Node, q_target: Pose) -> Node:
         """
