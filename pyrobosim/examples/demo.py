@@ -130,10 +130,12 @@ def create_world(multirobot: bool = False) -> World:
             dt=0.1,
             max_angular_velocity=4.0,
             validate_during_execution=True,
+            partial_observability_hallway_states=True,
         ),
         grasp_generator=GraspGenerator(grasp_props),
         partial_observability=args.partial_observability,
         color="#CC00CC",
+        partial_observability_hallway_states=True,
     )
     planner_config_rrt = {
         "world": world,
@@ -144,6 +146,7 @@ def create_world(multirobot: bool = False) -> World:
         "max_connection_dist": 0.5,
         "rewire_radius": 1.5,
         "compress_path": False,
+        "partial_observability_hallway_states": True,
     }
     rrt_planner = RRTPlanner(**planner_config_rrt)
     robot0.set_path_planner(rrt_planner)

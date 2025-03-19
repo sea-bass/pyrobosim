@@ -50,6 +50,9 @@ class RRTPlanner(PathPlanner):
         :param max_time: Maximum wall clock time before planning stops.
         :param rewire_radius: Radius around a node to rewire the RRT,
             if using the RRT* algorithm.
+        
+        :param partial_observability_hallway_states: If True,  robot doesn't know the world's hallways state, 
+            and assume all is OPEN.
         """
         self.world = world
 

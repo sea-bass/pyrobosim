@@ -50,9 +50,6 @@ class Robot(Entity):
         initial_battery_level: float = 100.0,
 
         partial_observability_hallway_states: bool = False,
-        # For now sensor is set under the hood
-        sensor: Lidar | None = Lidar(),
-
     ) -> None:
         """
         Creates a robot instance.
@@ -81,6 +78,9 @@ class Robot(Entity):
         :param action_execution_options: A dictionary of action names and their execution options.
             This defines properties such as delays and nondeterminism.
         :param initial_battery_level: The initial battery charge, from 0 to 100.
+
+        :param partial_observability_hallway_states: If True,  robot doesn't know the world's hallways state, 
+            and assume all is OPEN.
         """
         from .world import World
 
@@ -134,8 +134,11 @@ class Robot(Entity):
         self.last_detected_objects: list[Object] = []
         self.viz_text: Text | None = None
 
+        self.partial_observability_hallway_states = partial_observability_hallway_states
         # Sensor properties - At the moment just for detecting closed hallway?
-        if partial_observability_hallway_states:
+        if self.partial_observability_hallway_states:
+            # For now sensor is set under the hood
+            sensor = Lidar()
             self.set_sensor(sensor)
 
         self.logger.info("Created robot.")
@@ -184,10 +187,9 @@ class Robot(Entity):
     # This probably need quite some improvement
     def set_sensor(self, sensor: Lidar | None) -> None:
         """
-        Sets a path executor for navigation.
+        Equip robot with a lidar sensor.
 
-        :param path_executor: Path executor for navigation (see e.g.,
-            :class:`pyrobosim.navigation.execution.ConstantVelocityExecutor`).
+        :class:`pyrobosim.sensor.Lidar` for now.
         """
         self.sensor = sensor
         if sensor is not None:

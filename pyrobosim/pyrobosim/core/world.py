@@ -1720,7 +1720,7 @@ class World:
                 return True
         return False
 
-    def is_path_collision_free(self, path: Path, step_dist: float = 0.01) -> bool:
+    def is_path_collision_free(self, path: Path, step_dist: float = 0.01, partial_observability_hallway_states: bool = False) -> bool:
         """
         Check whether a path is collision free in this world.
 
@@ -1730,7 +1730,7 @@ class World:
         """
         for idx in range(len(path.poses) - 1):
             if not self.is_connectable(
-                path.poses[idx], path.poses[idx + 1], step_dist=step_dist
+                path.poses[idx], path.poses[idx + 1], step_dist=step_dist, partial_observability_hallway_states=partial_observability_hallway_states
             ):
                 return False
         return True

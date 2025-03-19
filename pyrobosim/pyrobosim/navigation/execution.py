@@ -27,7 +27,7 @@ class ConstantVelocityExecutor(PathExecutor):
         validation_dt: float = 0.5,
         validation_step_dist: float = 0.025,
         
-        partial_observability_hallway_state: bool = False,
+        partial_observability_hallway_states: bool = False,
         sensor_detection_dt: float = 0.5,
     ) -> None:
         """
@@ -40,7 +40,8 @@ class ConstantVelocityExecutor(PathExecutor):
         :param validation_dt: Time step for validating the remaining path, in seconds.
         :param validation_step_dist: The step size for discretizing a straight line to check collisions.
 
-        :param partial_observability_hallway_state: If True,  robot doesn't know the world's hallways state, until detected.
+        :param partial_observability_hallway_states: If True,  robot doesn't know the world's hallways state, 
+            and assume all is OPEN.
         :param sensor_detection_dt: Time step for running sensor and detect collisions, in seconds.
         """
         super().__init__()
@@ -53,7 +54,7 @@ class ConstantVelocityExecutor(PathExecutor):
         self.validation_dt = validation_dt
         self.validation_step_dist = validation_step_dist
 
-        self.partial_observability_hallway_state = partial_observability_hallway_state
+        self.partial_observability_hallway_states = partial_observability_hallway_states
         self.sensor_detection_dt = sensor_detection_dt
 
         # Execution state
@@ -125,7 +126,8 @@ class ConstantVelocityExecutor(PathExecutor):
             self.validation_timer.start()
 
         # Optionally, kick off the sensor thread.
-        if self.partial_observability_hallway_state and self.robot.world is not None:
+        if self.partial_observability_hallway_states and self.robot.world is not None:
+            print("Start sensor thread")
             self.sensor_thread = Thread(target=self.run_lidar)
             self.sensor_thread.start()
 
@@ -147,8 +149,12 @@ class ConstantVelocityExecutor(PathExecutor):
                     self.validation_timer is not None
                 ):
                     self.validation_timer.join()
+                if self.partial_observability_hallway_states and(
+                    self.sensor_thread is not None
+                ):
+                    self.sensor_thread.join()
                 message = "Trajectory execution aborted."
-                self.robot.logger.info(message)
+                self.robot.logger.info(message)                
                 status = ExecutionStatus.EXECUTION_FAILURE
                 break
             if self.cancel_execution:
@@ -178,10 +184,8 @@ class ConstantVelocityExecutor(PathExecutor):
         self.robot.last_nav_result = ExecutionResult(status=status, message=message)
         return self.robot.last_nav_result
 
-    # IDEA: Start sensor thread above?
     
-    # IDEA: This validation is done based on ROBOT PERCEIVED WORLD, instead of TRUE WORLD?
-
+    # This validation is done based on ROBOT PERCEIVED WORLD, instead of TRUE WORLD - through partial observability hallway state??
     def validate_remaining_path(self) -> None:
         """
         Validates the remaining path by checking collisions against the world.
@@ -210,8 +214,8 @@ class ConstantVelocityExecutor(PathExecutor):
             if len(poses) > 2:
                 remaining_path = Path(poses=poses)
                 if (self.robot.world is not None) and (
-                    not self.robot.world.is_path_collision_free(                    # Change this to perceived world?
-                        remaining_path, step_dist=self.validation_step_dist
+                    not self.robot.world.is_path_collision_free(                    # Change this to perceived world - through partial observability hallway state?
+                        remaining_path, step_dist=self.validation_step_dist, partial_observability_hallway_states=self.partial_observability_hallway_states
                     )
                 ):
                     self.robot.logger.warning(
