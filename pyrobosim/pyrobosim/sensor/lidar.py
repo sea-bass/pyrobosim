@@ -1,3 +1,4 @@
+import numpy as np
 import itertools
 
 from shapely import intersects_xy
@@ -10,7 +11,7 @@ class Lidar():
 
     def __init__(
         self,
-        scan_radius: float = 0.5,
+        scan_radius: float = 0.2,
         xy_step_distance: float = 0.025,
         ignore_robots: bool = True,
     ) -> None:
@@ -35,16 +36,22 @@ class Lidar():
         scan_points = []
 
         # Collect sampled points using grid-based sampling method
-        for dx in range(int(-self.scan_radius), int(self.scan_radius) + self.xy_step_distance, self.xy_step_distance):
-            for dy in range(int(-self.scan_radius), int(self.scan_radius) + self.xy_step_distance, self.xy_step_distance):
+        for dx in np.arange(-self.scan_radius, (self.scan_radius + self.xy_step_distance), self.xy_step_distance):
+            for dy in np.arange(-self.scan_radius, (self.scan_radius + self.xy_step_distance), self.xy_step_distance):
                 px, py = cur_pose.x + dx, cur_pose.y + dy
 
                 # Check if the point is within the room/hallway internal collision polygon
                 # And check if the point is within the scan radius - (computed px,py from above loop would form a rectangle)
                 for entity in itertools.chain(self.robot.world.rooms, self.robot.world.hallways):
-                    if intersects_xy(entity.internal_collision_polygon, px, py):
-                        if(px-cur_pose.x)**2 + (py-cur_pose.y)**2 <= self.scan_radius**2:
-                            scan_points.append((px, py))
+                    has_close_polygon = hasattr(entity, 'closed_polygon')
+                    if has_close_polygon:
+                        if intersects_xy(entity.internal_collision_polygon, px, py) or intersects_xy(entity.closed_polygon, px, py):
+                            if(px-cur_pose.x)**2 + (py-cur_pose.y)**2 <= self.scan_radius**2:
+                                scan_points.append((px, py))
+                    elif not has_close_polygon:
+                        if intersects_xy(entity.internal_collision_polygon, px, py):
+                            if(px-cur_pose.x)**2 + (py-cur_pose.y)**2 <= self.scan_radius**2:
+                                scan_points.append((px, py))
         
         for point in scan_points:
             pose = Pose(x=point[0], y=point[1])
@@ -54,7 +61,7 @@ class Lidar():
             
             # Above commented code is the desired implementations
             # But now we only focuses on hallways, as rooms have quite some objects to detect(?)
-            for entity in itertools.chain(self.robot.world.hallways):       
+            for entity in itertools.chain(self.robot.world.hallways):
                 if not entity.is_collision_free(pose) or (
                     not self.ignore_robots and self.robot.world.collides_with_robots(pose, self.robot)):
                     return True
