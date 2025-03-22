@@ -121,9 +121,10 @@ def plot_scan_poses(
         [pose.y for pose in poses],
         color = 'y',
         marker='1',
+        linestyle='',
         markerfacecolor='y',
         markeredgecolor='y',
-        markersize=1,
+        markersize=3,
         zorder=1,
     )
     poses_artists.append(markers)
