@@ -27,7 +27,7 @@ from .main import PyRoboSimMainWindow
 from ..core.objects import Object
 from ..core.robot import Robot
 from ..core.world import World
-from ..navigation.visualization import plot_path_planner
+from ..navigation.visualization import plot_path_planner, plot_scan_poses
 from ..utils.path import Path
 from ..utils.pose import Pose
 
@@ -69,6 +69,9 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
 
     show_planner_and_path_signal = Signal(Robot, bool, Path)
     """ Signal for showing planners and paths without threading errors. """
+
+    show_lidar_points_signal = Signal(Robot)
+    """ Signal for showing lidar scan points without threading errors. """
 
     def __init__(
         self,
@@ -117,6 +120,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         self.location_patches: list[PathPatch] = []
         self.location_texts: list[Text] = []
         self.path_planner_artists: dict[str, Artist] = {"graph": [], "path": []}
+        self.scan_poses_artists: dict[str, Artist] = {"poses": []}
         self.show_collision_polygons = False
 
         # Connect signals
@@ -127,6 +131,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         self.show_objects_signal.connect(self.show_objects)
         self.show_robots_signal.connect(self.show_robots)
         self.show_planner_and_path_signal.connect(self.show_planner_and_path)
+        self.show_lidar_points_signal.connect(self.show_lidar_points)
 
         # Thread pool for managing long-running tasks in separate threads.
         self.thread_pool = QThreadPool()
@@ -377,6 +382,34 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                 for artist in self.path_planner_artists["path"]:
                     artist.remove()
                 self.path_planner_artists["path"] = path_planner_artists.get("path", [])
+
+        self.draw_and_sleep()
+
+    def show_lidar_points(
+        self,
+        robot: Robot | None = None,
+    ) -> None:
+        """
+        Plot points scanned by robot's lidar.
+
+        :param robot: If set to a Robot instance, uses that robot for display.
+        """
+        if not robot:
+            self.world.logger.warning("No robot found")
+            return
+
+        # Since removing artists while drawing can cause issues,
+        # this function should also lock drawing.
+        with self.draw_lock:
+            if robot.path_executor:
+                poses = robot.sensor.get_scan_poses()
+                scan_poses_artists = plot_scan_poses(
+                    self.axes, poses=poses
+                )
+
+                for artist in self.scan_poses_artists["poses"]:
+                    artist.remove()
+                self.scan_poses_artists["poses"] = scan_poses_artists.get("poses", [])
 
         self.draw_and_sleep()
 
