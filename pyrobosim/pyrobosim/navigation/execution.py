@@ -236,11 +236,17 @@ class ConstantVelocityExecutor(PathExecutor):
 
             start_time = time.time()
 
-            if self.robot.sensor.detect_collision():
+            detected_collision = self.robot.sensor.detect_collision()
+
+            if detected_collision:
                 self.robot.logger.warning(
                     "Lidar detected collision. Aborting execution"
                 )
                 self.abort_execution = True
+            
+            #TODO: emit signal to draw lidar points it on canvas??
+            if (self.robot.world is not None) and (self.robot.world.gui is not None):
+                self.robot.world.gui.canvas.show_lidar_points_signal.emit(self.robot)
 
             time.sleep(max(0, self.sensor_detection_dt - (time.time() - start_time)))
 

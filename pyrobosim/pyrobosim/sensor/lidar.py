@@ -22,13 +22,11 @@ class Lidar():
         self.xy_step_distance = xy_step_distance
         self.ignore_robots = ignore_robots
 
-    def detect_collision(self) -> bool:
+        self.scan_poses: list[Pose] | None = []
+
+    def scan(self) -> None:
         """
-        Detects collision using the lidar sensor.
-
-        This would be run as a thread for now.
-
-        :return: True if collision is detected, else False.
+        Scan around robot and update self.scan_poses.
         """
 
         cur_pose = self.robot.get_pose()
@@ -52,10 +50,34 @@ class Lidar():
                         if intersects_xy(entity.internal_collision_polygon, px, py):
                             if(px-cur_pose.x)**2 + (py-cur_pose.y)**2 <= self.scan_radius**2:
                                 scan_points.append((px, py))
-        
+
+        self.scan_poses = []
+
         for point in scan_points:
-            pose = Pose(x=point[0], y=point[1])
-            
+            self.scan_poses.append(Pose(x=point[0], y=point[1]))
+
+
+    def get_scan_poses(self) -> list[Pose] | None:
+        """
+        Returns the points that the lidar sensor detects.
+        
+        :return: List of scanned poses.
+        """
+        return self.scan_poses
+        
+
+    def detect_collision(self) -> bool:
+        """
+        Carry out lidar sensing, and examine if scanned poses collide with any objects.
+
+        *This would be run as a thread for now.
+
+        :return: True if collision is detected, else False.
+        """
+
+        self.scan()
+        
+        for pose in self.scan_poses:            
             # if self.robot.world.check_occupancy(pose) or (
             #     not self.ignore_robots and self.robot.world.collides_with_robots(pose, self.robot)):
             
