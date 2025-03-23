@@ -1,8 +1,13 @@
 """Main file containing the core world modeling tools."""
 
+import time
 import itertools
 import numpy as np
 from typing import Any, Sequence
+
+import shapely
+from shapely.geometry import Polygon
+from shapely.ops import unary_union
 
 from .hallway import Hallway
 from .locations import Location, ObjectSpawn
@@ -68,6 +73,8 @@ class World:
         # World bounds, will be set by update_bounds()
         self.x_bounds = None
         self.y_bounds = None
+        self.total_internal_polygon = Polygon()
+        self.total_external_polygon = Polygon()
 
         # Other parameters
         # Max number of tries to sample object locations
@@ -226,6 +233,7 @@ class World:
 
         # Update the room collision polygon based on the world inflation radius
         room.update_collision_polygons(self.inflation_radius)
+        self.update_polygons()
 
         room.add_graph_nodes()
         return room
@@ -364,6 +372,7 @@ class World:
         self.num_hallways += 1
         hallway.update_collision_polygons(self.inflation_radius)
         self.update_bounds(entity=hallway)
+        self.update_polygons()
 
         hallway.add_graph_nodes()
         # Finally, return the Hallway object
@@ -494,6 +503,7 @@ class World:
         self.name_to_entity[loc.name] = loc
         for spawn in loc.children:
             self.name_to_entity[spawn.name] = spawn
+        self.update_polygons()
 
         if self.gui is not None:
             self.gui.canvas.show_locations_signal.emit()
@@ -667,6 +677,7 @@ class World:
 
         location.set_open(True, recursive=True)
         location.update_visualization_polygon()
+        self.update_polygons()
         if self.gui is not None:
             if isinstance(location, Hallway):
                 self.gui.canvas.show_hallways_signal.emit()
@@ -728,6 +739,7 @@ class World:
 
         location.set_open(False, recursive=True)
         location.update_visualization_polygon()
+        self.update_polygons()
         if self.gui is not None:
             if is_hallway:
                 self.gui.canvas.show_hallways_signal.emit()
@@ -1185,6 +1197,7 @@ class World:
             room.update_collision_polygons(self.inflation_radius)
         for hallway in self.hallways:
             hallway.update_collision_polygons(self.inflation_radius)
+        self.update_polygons()
 
     def update_bounds(self, entity: Entity, remove: bool = False) -> None:
         """
@@ -1632,6 +1645,21 @@ class World:
     #######################
     # Occupancy utilities #
     #######################
+    def update_polygons(self) -> None:
+        self.total_internal_polygon = unary_union(
+            [
+                entity.internal_collision_polygon for entity in itertools.chain(self.rooms, self.hallways)
+            ]
+        ).difference(unary_union([hall.inflated_closed_polygon for hall in self.hallways if not hall.is_open]))
+        shapely.prepare(self.total_internal_polygon)
+
+        self.total_external_polygon = unary_union(
+            [entity.polygon for entity in itertools.chain(self.rooms, self.hallways)]
+        ).difference(unary_union(
+            [loc.polygon for loc in self.locations] + [hall.closed_polygon for hall in self.hallways if not hall.is_open]
+        ))
+        shapely.prepare(self.total_external_polygon)
+
 
     def is_connectable(
         self,
@@ -1688,13 +1716,18 @@ class World:
         :param pose: The pose to check.
         :return: True if the pose is occupied, else False.
         """
-        # Loop through all the rooms and hallways and check if the pose
-        # is deemed collision-free in any of them.
-        for entity in itertools.chain(self.rooms, self.hallways):
-            if entity.is_collision_free(pose):
-                return False
-        # If we made it through, the pose is occupied.
-        return True
+        if isinstance(pose, Pose):
+            x = pose.x
+            y = pose.y
+        else:
+            x, y = pose
+
+        val = True
+        # t_start = time.time()
+        val = not bool(shapely.intersects_xy(
+            self.total_internal_polygon, x, y))
+        # self.logger.info(f"Collision time: {(time.time() - t_start) * 1000} ms")
+        return val
 
     def collides_with_robots(self, pose: Pose, robot: Robot | None = None) -> bool:
         """

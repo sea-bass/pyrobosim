@@ -1,0 +1,262 @@
+# Problem 1 World
+
+metadata:
+   locations: $PWD/location_data.yaml
+   objects: $PWD/object_data.yaml
+
+params:
+  name: delib_ws_problem_1
+  inflation_radius: 0.01
+  object_radius: 0.01
+
+robots:
+  - name: robot
+    radius: 0.1
+    location: dining
+    path_executor:
+      type: constant_velocity
+    path_planner:
+      type: rrt
+      bidirectional: true
+      max_connection_dist: 1.0
+      max_time: 5.0
+
+rooms:
+  - name: dining
+    footprint:
+      type: polygon
+      coords:
+        - [-1.6, -1.0]
+        - [1.6, -1.0]
+        - [1.6, 1.0]
+        - [-1.6, 1.0]
+    # Add navigation poses since the centroid is blocked by the table.
+    nav_poses:
+      - position:  # left
+          x: -1.0
+          y: 0.0
+      - position:  # right
+          x: 1.0
+          y: 0.0
+        rotation_eul:
+          yaw: 3.14
+      - position:  # above
+          x: 0.0
+          y: 0.8
+        rotation_eul:
+          yaw: -1.57
+      - position:  # below
+          x: 0.0
+          y: -0.8
+        rotation_eul:
+          yaw: 1.57
+    wall_width: 0.2
+    color: [0, 1, 0]
+
+  - name: kitchen
+    footprint:
+      type: polygon
+      coords:
+        - [-4, -3]
+        - [-0.5, -3]
+        - [-0.5, -1.75]
+        - [-2.25, -1.75]
+        - [-2.25, -0.5]
+        - [-4, -0.5]
+    wall_width: 0.2
+    color: [1, 0, 0]
+
+  - name: trash
+    footprint:
+      type: polygon
+      coords:
+        - [-4, 0.5]
+        - [-2.25, 0.5]
+        - [-2.25, 1.75]
+        - [-0.5, 1.75]
+        - [-0.5, 3]
+        - [-4, 3]
+    wall_width: 0.2
+    color: [0.1, 0.1, 0.1]
+
+  - name: closet
+    footprint:
+      type: polygon
+      coords:
+        - [0.5, 1.75]
+        - [2.25, 1.75]
+        - [2.25, 0.5]
+        - [4, 0.5]
+        - [4, 3]
+        - [0.5, 3]
+    wall_width: 0.2
+    color: [0.7, 0.4, 0.5]
+
+  - name: office
+    footprint:
+      type: polygon
+      coords:
+        - [0.5, -3]
+        - [4, -3]
+        - [4, -0.5]
+        - [2.25, -0.5]
+        - [2.25, -1.75]
+        - [0.5, -1.75]
+    wall_width: 0.2
+    color: [0.0, 0.0, 1.0]
+
+hallways:
+  - room_start: dining
+    room_end: office
+    width: 0.6
+    conn_method: angle
+    conn_angle: -1.57
+    offset: 1.1
+    is_open: false
+    is_locked: false
+
+  - room_start: dining
+    room_end: closet
+    width: 0.6
+    conn_method: angle
+    conn_angle: 1.57
+    offset: -1.1
+    is_open: true
+    is_locked: false
+
+  - room_start: dining
+    room_end: trash
+    width: 0.6
+    conn_method: angle
+    conn_angle: 1.57
+    offset: 1.1
+    is_open: true
+    is_locked: false
+
+  - room_start: dining
+    room_end: kitchen
+    width: 0.6
+    conn_method: angle
+    conn_angle: -1.57
+    offset: -1.1
+    is_open: true
+    is_locked: false
+
+  - room_start: kitchen
+    room_end: trash
+    width: 0.8
+    conn_method: angle
+    conn_angle: 1.57
+    offset: 0.6
+    is_open: true
+    is_locked: false
+
+  - room_start: kitchen
+    room_end: office
+    width: 0.8
+    conn_method: angle
+    conn_angle: 0.0
+    offset: -0.5
+    is_open: true
+    is_locked: false
+
+  - room_start: closet
+    room_end: trash
+    width: 0.8
+    conn_method: angle
+    conn_angle: 3.14
+    offset: -0.5
+    is_open: true
+    is_locked: false
+
+  - room_start: closet
+    room_end: office
+    width: 0.8
+    conn_method: angle
+    conn_angle: -1.57
+    offset: 0.6
+    is_open: true
+    is_locked: false
+
+locations:
+    - name: table
+      parent: dining
+      category: table
+      pose:
+        position:
+          x: 0.0
+          y: 0.15
+
+    - name: desk
+      parent: office
+      category: desk
+      pose:
+        position:
+          x: 3.6
+          y: -2.3
+
+    - name: fridge
+      parent: kitchen
+      category: storage
+      pose:
+        position:
+          x: -3.0
+          y: -2.65
+      is_open: true
+
+    - name: pantry
+      parent: kitchen
+      category: storage
+      pose:
+        position:
+          x: -3.65
+          y: -1.5
+        rotation_eul:
+          yaw: 1.57
+      is_open: true
+
+    - name: bin
+      parent: office
+      category: trashcan_small
+      pose:
+        position:
+          x: 2.6
+          y: -0.85
+
+    - name: dumpster
+      parent: trash
+      category: trashcan_large
+      pose:
+        position:
+          x: -3.4
+          y: 2.4
+
+    - name: charger
+      parent: closet
+      category: charger
+      pose:
+        position:
+          x: 3.5
+          y: 2.5
+        rotation_eul:
+          yaw: -0.785
+      is_charger: true
+
+objects:
+  - parent: pantry
+    category: bread
+
+  - parent: pantry
+    category: snacks
+
+  - parent: fridge
+    category: soda
+
+  - parent: fridge
+    category: butter
+
+  - parent: desk
+    category: waste
+
+  - parent: bin
+    category: waste

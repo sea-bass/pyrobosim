@@ -1,10 +1,15 @@
 """Defines a robot which operates in a world."""
 
 import time
+from threading import Thread, Lock
 from typing import Any, Sequence
 
 import numpy as np
 from matplotlib.text import Text
+import shapely
+from shapely import intersection_all
+from shapely.geometry import MultiLineString, Point
+from shapely.ops import unary_union
 
 from .dynamics import RobotDynamics2D
 from .hallway import Hallway
@@ -84,6 +89,7 @@ class Robot(Entity):
         self.radius = radius
         self.height = height
         self.color = parse_color(color)
+        self.raw_polygon = Point(0, 0).buffer(radius)
 
         if name == "world":
             raise ValueError("Robots cannot be named 'world'.")
@@ -128,7 +134,56 @@ class Robot(Entity):
         self.last_detected_objects: list[Object] = []
         self.viz_text: Text | None = None
 
+        self.state_lock = Lock()
+
+        # TODO: Move out of here
+        seqs = []
+        n = 120
+        rng = 2.5
+        for i in range(n):
+            x = rng * np.cos(2*np.pi * i / n)
+            y = rng * np.sin(2*np.pi * i / n)
+            seqs.append([[0.0, 0.0], [x, y]])
+        self.orig_lidar_lines = MultiLineString(seqs)
+        self.lidar_lines = []
+
+        # Sensor threads
+        self.sensor_threads: list[Thread] = []
+        self.sensors_active = True
+        self.sensor_threads.append(Thread(target=self.lidar_thread, args=(0.1,)))
+        for thread in self.sensor_threads:
+            thread.start()
+
         self.logger.info("Created robot.")
+
+    def __del__(self):
+        self.sensors_active = False
+        for thread in self.sensor_threads:
+            thread.join()
+
+    # TODO: Move out to sensors
+    def lidar_thread(self, rate=0.1):
+        import copy
+        while self.sensors_active:
+            with self.state_lock:
+                t_start = time.time()
+                if self.world:
+                    # shapely.prepare(self.orig_lidar_lines)
+                    # shapely.prepare(self.polygon)
+                    lines = intersection_all(
+                        [
+                            transform_polygon(self.orig_lidar_lines, self.get_pose()),
+                            self.world.total_external_polygon,
+                            # *  # breaks multirobot safety
+                        ]
+                    ).difference(
+                        unary_union([r.polygon for r in self.world.robots if r is not self])
+                    ).geoms
+                    self.lidar_lines = [part.coords for part in shapely.get_parts(lines)[shapely.intersects(self.polygon, lines)]]
+                
+                t_end = time.time() 
+                print(f"Lidar calculation took: {(t_end - t_start) * 1000} ms")
+            time.sleep(max(0.0, rate - (t_end - t_start)))
 
     def get_pose(self) -> Pose:
         """
@@ -144,11 +199,14 @@ class Robot(Entity):
 
         :param pose: New robot pose.
         """
-        self.dynamics.pose = pose
-        if self.world:
-            self.location = self.world.get_location_from_pose(
-                pose, prev_location=self.location
-            )
+        with self.state_lock:
+            self.dynamics.pose = pose
+            self.polygon = transform_polygon(self.raw_polygon, pose)
+
+            if self.world:
+                self.location = self.world.get_location_from_pose(
+                    pose, prev_location=self.location
+                )
 
     def set_path_planner(self, path_planner: PathPlanner | None) -> None:
         """

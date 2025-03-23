@@ -15,6 +15,9 @@ from matplotlib.text import Text
 from matplotlib.transforms import Affine2D
 from PySide6.QtCore import QThreadPool, QTimer, Signal
 
+from matplotlib.collections import LineCollection
+
+
 from .action_runners import (
     NavRunner,
     PickRunner,
@@ -162,6 +165,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
             self.robot_bodies = []
             self.robot_dirs = []
             self.robot_lengths = []
+            self.robot_lidars = []
 
             for i, robot in enumerate(self.world.robots):
                 p = robot.get_pose()
@@ -170,7 +174,8 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                         (p.x, p.y),
                         radius=robot.radius,
                         edgecolor=robot.color,
-                        fill=False,
+                        facecolor=[1.0, 1.0, 1.0],
+                        fill=True,
                         linewidth=2,
                         zorder=self.robot_zorder,
                     )
@@ -201,6 +206,18 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                     verticalalignment="top",
                     fontsize=10,
                 )
+
+                line_segments = LineCollection(
+                    robot.lidar_lines,
+                    color="b",
+                    # alpha=graph.color_alpha,
+                    linewidth=0.5,
+                    linestyle="-",
+                    zorder=0,
+                )
+                self.axes.add_collection(line_segments)
+                self.robot_lidars.append(line_segments)
+
             self.robot_texts = [robot.viz_text for robot in self.world.robots]
 
     def show_hallways(self) -> None:
@@ -251,6 +268,16 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                     coll_patch = room.get_collision_patch()
                     self.axes.add_patch(coll_patch)
                     self.room_patches.append(coll_patch)
+
+            # from shapely.plotting import patch_from_polygon
+            # self.axes.add_patch(patch_from_polygon(
+            #     self.world.total_external_polygon,
+            #     facecolor="k",
+            #     edgecolor="k",
+            #     linewidth=2,
+            #     alpha=0.75,
+            #     zorder=2,
+            # ))
 
     def show_locations(self) -> None:
         """Draws locations and object spawns in the world."""
@@ -398,8 +425,8 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                 self.show_world_state(cur_robot)
                 world.gui.set_buttons_during_action(False)
 
-            self.update_robots_plot()
-            self.draw_and_sleep()
+        self.update_robots_plot()
+        self.draw_and_sleep()
 
     def update_robots_plot(self) -> None:
         """Updates the robot visualization graphics objects."""
@@ -419,6 +446,10 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                     robot.viz_text.set_position((p.x, p.y - 2.0 * robot.radius))
                 if robot.manipulated_object is not None:
                     self.update_object_plot(robot.manipulated_object)
+
+                # TODO: Move out
+                self.robot_lidars[i].set_paths(robot.lidar_lines)
+
 
     def show_world_state(self, robot: Robot | None = None) -> None:
         """
