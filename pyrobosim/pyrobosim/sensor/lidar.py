@@ -1,5 +1,6 @@
 import numpy as np
 import itertools
+import time
 
 from shapely import intersects_xy
 from ..utils.pose import Pose
@@ -11,7 +12,7 @@ class Lidar():
 
     def __init__(
         self,
-        scan_radius: float = 0.5,
+        scan_radius: float = 0.3,
         xy_step_distance: float = 0.1,
         ignore_robots: bool = True,
     ) -> None:
@@ -77,21 +78,17 @@ class Lidar():
 
         self.scan()
         
-        for pose in self.scan_poses:            
-            # if self.robot.world.check_occupancy(pose) or (
-            #     not self.ignore_robots and self.robot.world.collides_with_robots(pose, self.robot)):
-            
-            # Above commented code is the desired implementations
-            # But now we only focuses on hallways, as rooms have quite some objects to detect(?)
+        for pose in self.scan_poses:
 
-            # Go through all hallways, check if the pose is collision free
-            # Return True when we verify a pose is collision free
-            # If we go through all hallways and cant verify pose is collision free,
-            # return False
-            for entity in itertools.chain(self.robot.world.hallways, self.robot.world.rooms):
-                if entity.is_collision_free(pose) and (
-                   self.ignore_robots or not self.robot.world.collides_with_robots(pose, self.robot)):
-                    return False
-                    
-        return True
+            # Check if the pose is occupied
+            # Return True (Detected collision) if we verify a pose is occupied
+            if self.robot.world.check_occupancy(pose) or (
+                not self.ignore_robots and self.robot.world.collides_with_robots(pose, self.robot)):
+                return True
+            
+
+            # If we go through all hallways and cant verify pose is occupied,
+            # return False (No collision)
+
+        return False
 

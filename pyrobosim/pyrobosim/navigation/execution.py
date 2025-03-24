@@ -28,7 +28,7 @@ class ConstantVelocityExecutor(PathExecutor):
         validation_step_dist: float = 0.025,
         
         partial_observability_hallway_states: bool = False,
-        sensor_detection_dt: float = 0.5,
+        sensor_detection_dt: float = 0.025,
     ) -> None:
         """
         Creates a constant velocity path executor.
@@ -127,7 +127,6 @@ class ConstantVelocityExecutor(PathExecutor):
 
         # Optionally, kick off the sensor thread.
         if self.partial_observability_hallway_states and self.robot.world is not None:
-            print("Start sensor thread")
             self.sensor_thread = Thread(target=self.run_lidar)
             self.sensor_thread.start()
 
@@ -245,8 +244,8 @@ class ConstantVelocityExecutor(PathExecutor):
                 self.abort_execution = True
             
             #TODO: emit signal to draw lidar points it on canvas??
-            if (self.robot.world is not None) and (self.robot.world.gui is not None):
-                self.robot.world.gui.canvas.show_lidar_points_signal.emit(self.robot)
+            # if (self.robot.world is not None) and (self.robot.world.gui is not None):
+            #     self.robot.world.gui.canvas.show_lidar_points_signal.emit(self.robot)
 
             time.sleep(max(0, self.sensor_detection_dt - (time.time() - start_time)))
 
