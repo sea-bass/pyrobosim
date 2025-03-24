@@ -1,6 +1,5 @@
 import numpy as np
 import itertools
-import time
 
 from shapely import intersects_xy
 from ..utils.pose import Pose
