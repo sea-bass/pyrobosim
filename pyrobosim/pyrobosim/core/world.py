@@ -1,6 +1,5 @@
 """Main file containing the core world modeling tools."""
 
-import time
 import itertools
 import numpy as np
 from typing import Any, Sequence
@@ -1648,18 +1647,29 @@ class World:
     def update_polygons(self) -> None:
         self.total_internal_polygon = unary_union(
             [
-                entity.internal_collision_polygon for entity in itertools.chain(self.rooms, self.hallways)
+                entity.internal_collision_polygon
+                for entity in itertools.chain(self.rooms, self.hallways)
             ]
-        ).difference(unary_union([hall.inflated_closed_polygon for hall in self.hallways if not hall.is_open]))
+        ).difference(
+            unary_union(
+                [
+                    hall.inflated_closed_polygon
+                    for hall in self.hallways
+                    if not hall.is_open
+                ]
+            )
+        )
         shapely.prepare(self.total_internal_polygon)
 
         self.total_external_polygon = unary_union(
             [entity.polygon for entity in itertools.chain(self.rooms, self.hallways)]
-        ).difference(unary_union(
-            [loc.polygon for loc in self.locations] + [hall.closed_polygon for hall in self.hallways if not hall.is_open]
-        ))
+        ).difference(
+            unary_union(
+                [loc.polygon for loc in self.locations]
+                + [hall.closed_polygon for hall in self.hallways if not hall.is_open]
+            )
+        )
         shapely.prepare(self.total_external_polygon)
-
 
     def is_connectable(
         self,
@@ -1724,8 +1734,7 @@ class World:
 
         val = True
         # t_start = time.time()
-        val = not bool(shapely.intersects_xy(
-            self.total_internal_polygon, x, y))
+        val = not bool(shapely.intersects_xy(self.total_internal_polygon, x, y))
         # self.logger.info(f"Collision time: {(time.time() - t_start) * 1000} ms")
         return val
 
