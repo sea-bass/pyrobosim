@@ -5,6 +5,7 @@ Test script showing how to build a world and use it with pyrobosim
 """
 import os
 import argparse
+import numpy as np
 
 from pyrobosim.core.robot import Robot
 from pyrobosim.core.world import World
@@ -15,6 +16,7 @@ from pyrobosim.navigation.execution import ConstantVelocityExecutor
 from pyrobosim.navigation.a_star import AStarPlanner
 from pyrobosim.navigation.prm import PRMPlanner
 from pyrobosim.navigation.rrt import RRTPlanner
+from pyrobosim.sensors.lidar import Lidar2D
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
@@ -121,6 +123,13 @@ def create_world(multirobot: bool = False) -> World:
         width_clearance=0.01,
         depth_clearance=0.01,
     )
+    lidar = Lidar2D(
+        update_rate_s=0.1,
+        min_angle_rad=-2.0 * np.pi / 3.0,
+        max_angle_rad=2.0 * np.pi / 3.0,
+        angle_resolution_rad=5.0 * np.pi / 180,
+        max_range_m=2.0,
+    )
 
     robot0 = Robot(
         name="robot0",
@@ -131,6 +140,7 @@ def create_world(multirobot: bool = False) -> World:
             max_angular_velocity=4.0,
             validate_during_execution=False,
         ),
+        sensors={"lidar": lidar} if args.lidar else None,
         grasp_generator=GraspGenerator(grasp_props),
         partial_observability=args.partial_observability,
         color="#CC00CC",
@@ -214,6 +224,11 @@ def parse_args() -> argparse.Namespace:
         "--partial-observability",
         action="store_true",
         help="If True, robots have partial observability and must detect objects.",
+    )
+    parser.add_argument(
+        "--lidar",
+        action="store_true",
+        help="If True, adds a lidar sensor to the first robot.",
     )
     return parser.parse_args()
 

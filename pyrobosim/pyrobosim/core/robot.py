@@ -1,14 +1,12 @@
 """Defines a robot which operates in a world."""
 
 import time
-from threading import Thread, Lock
+from threading import Lock
 from typing import Any, Sequence
 
 import numpy as np
 from matplotlib.text import Text
-import shapely
-from shapely import intersection_all
-from shapely.geometry import MultiLineString, Point
+from shapely.geometry import Point
 from shapely.ops import unary_union
 
 from .dynamics import RobotDynamics2D
@@ -25,6 +23,7 @@ from ..planning.actions import (
     TaskAction,
     TaskPlan,
 )
+from ..sensors.types import Sensor
 from ..utils.logging import create_logger
 from ..utils.polygon import sample_from_polygon, transform_polygon
 from ..utils.path import Path
@@ -48,6 +47,7 @@ class Robot(Entity):
         max_angular_acceleration: float = np.inf,
         path_planner: PathPlanner | None = None,
         path_executor: PathExecutor | None = None,
+        sensors: dict[str, Sensor] | None = None,
         grasp_generator: GraspGenerator | None = None,
         partial_observability: bool = False,
         action_execution_options: dict[str, ExecutionOptions] = {},
@@ -74,6 +74,8 @@ class Robot(Entity):
             (see e.g., :class:`pyrobosim.navigation.rrt.RRTPlanner`).
         :param path_executor: Path executor for navigation (see e.g.,
             :class:`pyrobosim.navigation.execution.ConstantVelocityExecutor`).
+        :param sensors: Optional map of names to sensors (see e.g.,
+            :class:`pyrobosim.sensors.lidar.Lidar2D`).
         :param grasp_generator: Grasp generator for manipulating objects.
         :param partial_observability: If False, the robot can access all objects in the world.
             If True, it must detect new objects at specific locations.
@@ -105,12 +107,27 @@ class Robot(Entity):
             max_linear_acceleration=max_linear_acceleration,
             max_angular_acceleration=max_angular_acceleration,
         )
+        self.state_lock = Lock()
+
+        # World interaction properties
+        self.world: World | None = None
+        self.location: Entity | None = None
+        self.manipulated_object: Object | None = None
+        self.partial_observability = partial_observability
+        self.known_objects: set[Object] = set()
+        self.last_detected_objects: list[Object] = []
+        self.viz_text: Text | None = None
 
         # Navigation properties
         self.executing_nav = False
         self.last_nav_result = ExecutionResult()
         self.set_path_planner(path_planner)
         self.set_path_executor(path_executor)
+
+        # Sensing properties
+        self.sensors_active = False
+        self.sensors: dict[str, Sensor] = {}
+        self.set_sensors(sensors)
 
         # Manipulation properties
         self.grasp_generator = grasp_generator
@@ -125,65 +142,13 @@ class Robot(Entity):
         self.canceling_execution = False
         self.battery_level = initial_battery_level
 
-        # World interaction properties
-        self.world: World | None = None
-        self.location: Entity | None = None
-        self.manipulated_object: Object | None = None
-        self.partial_observability = partial_observability
-        self.known_objects: set[Object] = set()
-        self.last_detected_objects: list[Object] = []
-        self.viz_text: Text | None = None
-
-        self.state_lock = Lock()
-
-        # TODO: Move out of here
-        seqs = []
-        n = 120
-        rng = 2.5
-        for i in range(n):
-            x = rng * np.cos(2*np.pi * i / n)
-            y = rng * np.sin(2*np.pi * i / n)
-            seqs.append([[0.0, 0.0], [x, y]])
-        self.orig_lidar_lines = MultiLineString(seqs)
-        self.lidar_lines = []
-
-        # Sensor threads
-        self.sensor_threads: list[Thread] = []
-        self.sensors_active = True
-        self.sensor_threads.append(Thread(target=self.lidar_thread, args=(0.1,)))
-        for thread in self.sensor_threads:
-            thread.start()
-
         self.logger.info("Created robot.")
 
-    def __del__(self):
+    def __del__(self) -> None:
+        """Cleans up when deleting the robot instance."""
         self.sensors_active = False
-        for thread in self.sensor_threads:
-            thread.join()
-
-    # TODO: Move out to sensors
-    def lidar_thread(self, rate=0.1):
-        import copy
-        while self.sensors_active:
-            with self.state_lock:
-                t_start = time.time()
-                if self.world:
-                    # shapely.prepare(self.orig_lidar_lines)
-                    # shapely.prepare(self.polygon)
-                    lines = intersection_all(
-                        [
-                            transform_polygon(self.orig_lidar_lines, self.get_pose()),
-                            self.world.total_external_polygon,
-                            # *  # breaks multirobot safety
-                        ]
-                    ).difference(
-                        unary_union([r.polygon for r in self.world.robots if r is not self])
-                    ).geoms
-                    self.lidar_lines = [part.coords for part in shapely.get_parts(lines)[shapely.intersects(self.polygon, lines)]]
-                
-                t_end = time.time() 
-                print(f"Lidar calculation took: {(t_end - t_start) * 1000} ms")
-            time.sleep(max(0.0, rate - (t_end - t_start)))
+        for sensor in self.sensors.values():
+            sensor.stop_thread()
 
     def get_pose(self) -> Pose:
         """
@@ -227,6 +192,22 @@ class Robot(Entity):
         self.path_executor = path_executor
         if path_executor is not None:
             path_executor.robot = self
+
+    def set_sensors(self, sensors: dict[str, Sensor] | None) -> None:
+        """
+        Sets a list of sensors.
+
+        :param sensors: Optional map of names to sensors (see e.g.,
+            :class:`pyrobosim.sensors.lidar.Lidar2D`).
+        """
+        if sensors is None:
+            return
+
+        self.sensors = sensors
+        self.sensors_active = True
+        for sensor in self.sensors.values():
+            sensor.robot = self
+            sensor.start_thread()
 
     def is_moving(self) -> bool:
         """

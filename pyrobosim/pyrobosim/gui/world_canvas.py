@@ -15,9 +15,6 @@ from matplotlib.text import Text
 from matplotlib.transforms import Affine2D
 from PySide6.QtCore import QThreadPool, QTimer, Signal
 
-from matplotlib.collections import LineCollection
-
-
 from .action_runners import (
     NavRunner,
     PickRunner,
@@ -112,6 +109,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         self.robot_dirs: list[Line2D] = []
         self.robot_lengths: list[float] = []
         self.robot_texts: list[Text] = []
+        self.robot_sensor_artists: list[Artist] = []
         self.obj_patches: list[PathPatch] = []
         self.obj_texts: list[Text] = []
         self.hallway_patches: list[PathPatch] = []
@@ -162,10 +160,12 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                 dir.remove()
             for text in self.robot_texts:
                 text.remove()
+            for artist in self.robot_sensor_artists:
+                artist.remove()
             self.robot_bodies = []
             self.robot_dirs = []
             self.robot_lengths = []
-            self.robot_lidars = []
+            self.robot_sensor_artists = []
 
             for i, robot in enumerate(self.world.robots):
                 p = robot.get_pose()
@@ -207,16 +207,9 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                     fontsize=10,
                 )
 
-                line_segments = LineCollection(
-                    robot.lidar_lines,
-                    color="b",
-                    # alpha=graph.color_alpha,
-                    linewidth=0.5,
-                    linestyle="-",
-                    zorder=0,
-                )
-                self.axes.add_collection(line_segments)
-                self.robot_lidars.append(line_segments)
+                for sensor in robot.sensors.values():
+                    for artist in sensor.setup_artists():
+                        self.axes.add_artist(artist)
 
             self.robot_texts = [robot.viz_text for robot in self.world.robots]
 
@@ -361,8 +354,8 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
     def draw_and_sleep(self) -> None:
         """Redraws the figure and waits a small amount of time."""
         with self.draw_lock:
-            self.fig.canvas.draw()
             self.fig.canvas.flush_events()
+            self.fig.canvas.draw()
             time.sleep(0.005)
 
     def show_planner_and_path(
@@ -447,9 +440,8 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                 if robot.manipulated_object is not None:
                     self.update_object_plot(robot.manipulated_object)
 
-                # TODO: Move out
-                self.robot_lidars[i].set_paths(robot.lidar_lines)
-
+                for sensor in robot.sensors.values():
+                    sensor.update_artists()
 
     def show_world_state(self, robot: Robot | None = None) -> None:
         """
