@@ -143,7 +143,7 @@ class WorldYamlLoader:
                 loc_args["pose"] = construct_pose_from_args(
                     loc_args["pose"], self.world
                 )
-            self.world.add_location(**loc_args)
+            self.world.add_location(**loc_args, show=False)
 
     def add_objects(self) -> None:
         """Add objects to the world."""
@@ -156,7 +156,7 @@ class WorldYamlLoader:
                 obj_args["pose"] = construct_pose_from_args(
                     obj_args["pose"], self.world
                 )
-            self.world.add_object(**obj_args)
+            self.world.add_object(**obj_args, show=False)
 
     def add_robots(self) -> None:
         """Add robots to the world."""
@@ -182,7 +182,7 @@ class WorldYamlLoader:
                 pose = construct_pose_from_args(robot_args["pose"], self.world)
             else:
                 pose = None
-            self.world.add_robot(robot, loc=loc, pose=pose)
+            self.world.add_robot(robot, loc=loc, pose=pose, show=False)
 
     def get_path_planner(self, robot_data: dict[str, Any]) -> Any:
         """Gets path planner to add to a robot."""

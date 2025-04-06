@@ -421,13 +421,17 @@ class World:
         if restart_numbering:
             self.hallway_instance_counts = {}
 
-    def add_location(self, **location_config: Any) -> Location | None:
+    def add_location(
+        self, show: bool = True, **location_config: Any
+    ) -> Location | None:
         r"""
         Adds a location at the specified parent entity, usually a room.
 
         If the location does not have a specified name, it will be given an
         automatic name using its category, e.g., ``"table0"``.
 
+        :param show: If True (default), causes the GUI to be updated.
+            This is mostly for internal usage to speed up reloading.
         :param \*\*location_config: Keyword arguments describing the location.
 
             You can use ``location=Location(...)`` to directly pass in a :class:`pyrobosim.core.location.Location`
@@ -504,7 +508,7 @@ class World:
             self.name_to_entity[spawn.name] = spawn
         self.update_polygons()
 
-        if self.gui is not None:
+        if show and self.gui is not None:
             self.gui.canvas.show_locations_signal.emit()
             self.gui.canvas.show_objects_signal.emit()
             self.gui.canvas.draw_signal.emit()
@@ -847,7 +851,7 @@ class World:
                 return pose_sample
         return None
 
-    def add_object(self, **object_config: Any) -> Object | None:
+    def add_object(self, show: bool = True, **object_config: Any) -> Object | None:
         r"""
         Adds an object to a specific location.
 
@@ -856,6 +860,8 @@ class World:
 
         If the location contains multiple object spawns, one will be selected at random.
 
+        :param show: If True (default), causes the GUI to be updated.
+            This is mostly for internal usage to speed up reloading.
         :param \*\*object_config: Keyword arguments describing the object.
 
             You can use ``object=Object(...)`` to directly pass in a :class:`pyrobosim.core.objects.Object`
@@ -953,7 +959,7 @@ class World:
         self.name_to_entity[obj.name] = obj
         self.num_objects += 1
         self.object_instance_counts[category] += 1
-        if self.gui is not None:
+        if show and self.gui is not None:
             self.gui.canvas.show_objects_signal.emit()
         return obj
 
@@ -1017,11 +1023,13 @@ class World:
 
         return True
 
-    def remove_object(self, obj: Object | str) -> bool:
+    def remove_object(self, obj: Object | str, show: bool = True) -> bool:
         """
         Cleanly removes an object from the world.
 
         :param loc: Object instance or name to remove.
+        :param show: If True (default), causes the GUI to be updated.
+            This is mostly for internal usage to speed up reloading.
         :return: True if the object was successfully removed, else False.
         """
         if isinstance(obj, str):
@@ -1038,7 +1046,7 @@ class World:
         self.num_objects -= 1
         if resolved_object.parent is not None:
             resolved_object.parent.children.remove(resolved_object)
-        if self.gui is not None:
+        if show and self.gui is not None:
             self.gui.canvas.show_objects_signal.emit()
         return True
 
@@ -1049,12 +1057,17 @@ class World:
         :param restart_numbering: If True, restarts numbering of all categories to zero.
         """
         for obj in reversed(self.objects):
-            self.remove_object(obj)
+            # Only update the UI on the final object to be removed.
+            self.remove_object(obj, show=(len(self.objects) == 1))
         if restart_numbering:
             self.object_instance_counts = {}
 
     def add_robot(
-        self, robot: Robot, loc: Entity | None = None, pose: Pose | None = None
+        self,
+        robot: Robot,
+        loc: Entity | None = None,
+        pose: Pose | None = None,
+        show: bool = True,
     ) -> None:
         """
         Adds a robot to the world given either a world entity and/or pose.
@@ -1062,6 +1075,8 @@ class World:
         :param robot: Robot instance to add to the world.
         :param loc: World entity instance or name to place the robot.
         :param pose: Pose at which to add the robot. If not specified, will be sampled.
+        :param show: If True (default), causes the GUI to be updated.
+            This is mostly for internal usage to speed up reloading.
         """
         # Check that the robot name doesn't already exist.
         if robot.name in self.get_robot_names():
@@ -1142,16 +1157,18 @@ class World:
             self.logger.warning("Could not add robot.")
             self.set_inflation_radius(old_inflation_radius)
 
-        if self.gui is not None:
+        if show and self.gui is not None:
             self.gui.canvas.show_robots_signal.emit()
         if self.ros_node is not None:
             self.ros_node.add_robot_ros_interfaces(robot)
 
-    def remove_robot(self, robot: Robot | str) -> bool:
+    def remove_robot(self, robot: Robot | str, show: bool = True) -> bool:
         """
         Removes a robot from the world.
 
         :param robot: Robot instance or name to remove.
+        :param show: If True (default), causes the GUI to be updated.
+            This is mostly for internal usage to speed up reloading.
         :return: True if the robot was successfully removed, else False.
         """
         if isinstance(robot, Robot):
@@ -1164,7 +1181,7 @@ class World:
 
         self.robots.remove(resolved_robot)
         self.name_to_entity.pop(resolved_robot.name)
-        if self.gui is not None:
+        if show and self.gui is not None:
             self.gui.canvas.show_robots_signal.emit()
         if self.ros_node is not None:
             self.ros_node.remove_robot_ros_interfaces(resolved_robot)
@@ -1181,7 +1198,8 @@ class World:
     def remove_all_robots(self) -> None:
         """Cleanly removes all robots from the world."""
         for robot in reversed(self.robots):
-            self.remove_robot(robot)
+            # Only update the UI on the last robot to remove.
+            self.remove_robot(robot, show=(len(self.robots) == 1))
 
     def set_inflation_radius(self, inflation_radius: float = 0.0) -> None:
         """
