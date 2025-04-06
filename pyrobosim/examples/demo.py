@@ -129,7 +129,7 @@ def create_world(multirobot: bool = False) -> World:
             linear_velocity=1.0,
             dt=0.1,
             max_angular_velocity=4.0,
-            validate_during_execution=False,
+            validate_during_execution=True,
             partial_observability_hallway_states=True,
         ),
         grasp_generator=GraspGenerator(grasp_props),

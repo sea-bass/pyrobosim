@@ -140,6 +140,7 @@ class Robot(Entity):
             # For now sensor is set under the hood
             sensor = Lidar()
             self.set_sensor(sensor)
+        self.known_hallway_state: set[Hallway] = set()
 
         self.logger.info("Created robot.")
 
