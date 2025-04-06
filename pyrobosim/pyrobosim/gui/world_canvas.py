@@ -208,7 +208,9 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                 )
 
                 for sensor in robot.sensors.values():
-                    for artist in sensor.setup_artists():
+                    sensor_artists = sensor.setup_artists()
+                    self.robot_sensor_artists.extend(sensor_artists)
+                    for artist in sensor_artists:
                         self.axes.add_artist(artist)
 
             self.robot_texts = [robot.viz_text for robot in self.world.robots]

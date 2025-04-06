@@ -1114,6 +1114,10 @@ class Robot(Entity):
             robot_dict["path_executor"] = self.path_executor.to_dict()
         if self.grasp_generator is not None:
             robot_dict["grasping"] = self.grasp_generator.to_dict()
+        if self.sensors is not None:
+            robot_dict["sensors"] = {
+                name: sensor.to_dict() for name, sensor in self.sensors.items()
+            }
 
         return robot_dict
 
