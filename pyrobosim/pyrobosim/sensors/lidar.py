@@ -12,7 +12,6 @@ from shapely.ops import unary_union
 
 from .types import Sensor
 
-from ..core.robot import Robot
 from ..utils.polygon import transform_polygon
 
 

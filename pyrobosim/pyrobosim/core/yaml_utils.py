@@ -9,6 +9,8 @@ from .robot import Robot
 from .world import World
 from ..navigation.planner_registry import get_planner_class
 from ..planning.actions import ExecutionOptions
+from ..sensors.sensor_registry import get_sensor_class
+from ..sensors.types import Sensor
 from ..utils.general import replace_special_yaml_tokens
 from ..utils.logging import get_global_logger
 from ..utils.pose import Pose
@@ -170,6 +172,7 @@ class WorldYamlLoader:
             robot_args["action_execution_options"] = self.get_action_execution_options(
                 robot_args
             )
+            robot_args["sensors"] = self.get_sensors(robot_args)
             robot = Robot(**robot_args)
 
             loc = robot_data.get("location")
@@ -215,6 +218,23 @@ class WorldYamlLoader:
                 f"Invalid path executor type specified: {path_executor_type}"
             )
             return None
+
+    def get_sensors(self, robot_data: dict[str, Any]) -> Any:
+        """Gets a dictionary of sensors to add to a robot."""
+        if "sensors" not in robot_data:
+            return None
+
+        sensor_args: dict[str, Sensor] = {}
+        sensor_data = robot_data["sensors"].copy()
+
+        for name, sensor in sensor_data.items():
+            sensor_type = sensor["type"]
+            sensor.pop("type")
+            sensor_class = get_sensor_class(sensor_type)
+            sensor_args[name] = sensor_class(**sensor)
+
+        del robot_data["sensors"]
+        return sensor_args
 
     def get_grasp_generator(self, robot_data: dict[str, Any]) -> Any:
         """Gets a grasp generator to add to a robot."""

@@ -1,8 +1,8 @@
 # Problem 1 World
 
 metadata:
-   locations: $PWD/location_data.yaml
-   objects: $PWD/object_data.yaml
+  locations: $PWD/location_data.yaml
+  objects: $PWD/object_data.yaml
 
 params:
   name: delib_ws_problem_1
@@ -20,6 +20,14 @@ robots:
       bidirectional: true
       max_connection_dist: 1.0
       max_time: 5.0
+    sensors:
+      lidar:
+        type: lidar
+        update_rate_s: 0.1
+        min_angle_rad: -2.094
+        max_angle_rad: 2.094
+        angle_resolution_rad: 0.087
+        max_range_m: 2.0
 
 rooms:
   - name: dining
@@ -179,68 +187,68 @@ hallways:
     is_locked: false
 
 locations:
-    - name: table
-      parent: dining
-      category: table
-      pose:
-        position:
-          x: 0.0
-          y: 0.15
+  - name: table
+    parent: dining
+    category: table
+    pose:
+      position:
+        x: 0.0
+        y: 0.15
 
-    - name: desk
-      parent: office
-      category: desk
-      pose:
-        position:
-          x: 3.6
-          y: -2.3
+  - name: desk
+    parent: office
+    category: desk
+    pose:
+      position:
+        x: 3.6
+        y: -2.3
 
-    - name: fridge
-      parent: kitchen
-      category: storage
-      pose:
-        position:
-          x: -3.0
-          y: -2.65
-      is_open: true
+  - name: fridge
+    parent: kitchen
+    category: storage
+    pose:
+      position:
+        x: -3.0
+        y: -2.65
+    is_open: true
 
-    - name: pantry
-      parent: kitchen
-      category: storage
-      pose:
-        position:
-          x: -3.65
-          y: -1.5
-        rotation_eul:
-          yaw: 1.57
-      is_open: true
+  - name: pantry
+    parent: kitchen
+    category: storage
+    pose:
+      position:
+        x: -3.65
+        y: -1.5
+      rotation_eul:
+        yaw: 1.57
+    is_open: true
 
-    - name: bin
-      parent: office
-      category: trashcan_small
-      pose:
-        position:
-          x: 2.6
-          y: -0.85
+  - name: bin
+    parent: office
+    category: trashcan_small
+    pose:
+      position:
+        x: 2.6
+        y: -0.85
 
-    - name: dumpster
-      parent: trash
-      category: trashcan_large
-      pose:
-        position:
-          x: -3.4
-          y: 2.4
+  - name: dumpster
+    parent: trash
+    category: trashcan_large
+    pose:
+      position:
+        x: -3.4
+        y: 2.4
 
-    - name: charger
-      parent: closet
-      category: charger
-      pose:
-        position:
-          x: 3.5
-          y: 2.5
-        rotation_eul:
-          yaw: -0.785
-      is_charger: true
+  - name: charger
+    parent: closet
+    category: charger
+    pose:
+      position:
+        x: 3.5
+        y: 2.5
+      rotation_eul:
+        yaw: -0.785
+    is_charger: true
 
 objects:
   - parent: pantry
