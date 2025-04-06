@@ -77,6 +77,12 @@ class Lidar():
             # Return True (Detected collision) if we verify a pose is occupied
             if self.robot.world.check_occupancy(pose) or (
                 not self.ignore_robots and self.robot.world.collides_with_robots(pose, self.robot)):
+
+                # Then we collect that knowledge
+                for entity in itertools.chain(self.robot.world.hallways):
+                    if intersects_xy(entity.internal_collision_polygon, pose.x, pose.y):
+                        self.robot.known_hallway_states.add(entity)
+                        
                 return True
             
 
