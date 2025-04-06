@@ -96,7 +96,7 @@ class Lidar2D(Sensor):
             t_start = time.time()
             self.update()
             t_end = time.time()
-            print(f"Lidar calculation took: {(t_end - t_start) * 1000} ms")
+            # print(f"Lidar calculation took: {(t_end - t_start) * 1000} ms")
             time.sleep(max(0.0, self.update_rate_s - (t_end - t_start)))
 
     def get_measurement(self) -> tuple[np.ndarray, np.ndarray]:

@@ -17,5 +17,6 @@ Refer to the following pages for different types of usage guides.
    robot_dynamics
    multirobot
    path_planners
+   sensors
    tamp
    geometry_conventions
