@@ -1,8 +1,9 @@
-# Problem 1 World
+# World based on the ROSCon 2024 deliberation workshop.
+# https://github.com/ros-wg-delib/roscon24-workshop
 
 metadata:
-  locations: $PWD/location_data.yaml
-  objects: $PWD/object_data.yaml
+  locations: $PWD/roscon_2024_location_data.yaml
+  objects: $PWD/roscon_2024_object_data.yaml
 
 params:
   name: delib_ws_problem_1

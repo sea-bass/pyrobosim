@@ -1,6 +1,5 @@
-#####################
-# Location metadata #
-#####################
+# Location metadata for ROSCon 2024 deliberation workshop
+# https://github.com/ros-wg-delib/roscon24-workshop
 
 table:
   footprint:

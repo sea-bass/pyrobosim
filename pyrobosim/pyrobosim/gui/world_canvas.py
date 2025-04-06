@@ -151,7 +151,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         self.show_rooms()
 
     def show_robots(self) -> None:
-        """Draws robots as circles with heading lines for visualization."""
+        """Draws robots, along with any associated sensors."""
         with self.draw_lock:
             len(self.world.robots)
             for body in self.robot_bodies:
@@ -263,16 +263,6 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                     coll_patch = room.get_collision_patch()
                     self.axes.add_patch(coll_patch)
                     self.room_patches.append(coll_patch)
-
-            # from shapely.plotting import patch_from_polygon
-            # self.axes.add_patch(patch_from_polygon(
-            #     self.world.total_external_polygon,
-            #     facecolor="k",
-            #     edgecolor="k",
-            #     linewidth=2,
-            #     alpha=0.75,
-            #     zorder=2,
-            # ))
 
     def show_locations(self) -> None:
         """Draws locations and object spawns in the world."""

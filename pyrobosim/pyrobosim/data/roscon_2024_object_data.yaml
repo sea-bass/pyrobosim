@@ -1,6 +1,5 @@
-###################
-# Object metadata #
-###################
+# Object metadata for ROSCon 2024 deliberation workshop
+# https://github.com/ros-wg-delib/roscon24-workshop
 
 bread:
   footprint:
