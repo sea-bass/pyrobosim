@@ -41,15 +41,9 @@ class Lidar():
                 # Check if the point is within the room/hallway internal collision polygon
                 # And check if the point is within the scan radius - (computed px,py from above loop would form a rectangle)
                 for entity in itertools.chain(self.robot.world.rooms, self.robot.world.hallways):
-                    has_close_polygon = hasattr(entity, 'closed_polygon')
-                    if has_close_polygon:
-                        if intersects_xy(entity.internal_collision_polygon, px, py) or intersects_xy(entity.closed_polygon, px, py):
-                            if(px-cur_pose.x)**2 + (py-cur_pose.y)**2 <= self.scan_radius**2:
-                                scan_points.append((px, py))
-                    elif not has_close_polygon:
-                        if intersects_xy(entity.internal_collision_polygon, px, py):
-                            if(px-cur_pose.x)**2 + (py-cur_pose.y)**2 <= self.scan_radius**2:
-                                scan_points.append((px, py))
+                    if intersects_xy(entity.internal_collision_polygon, px, py):
+                        if(px-cur_pose.x)**2 + (py-cur_pose.y)**2 <= self.scan_radius**2:
+                            scan_points.append((px, py))
 
         self.scan_poses = []
 
