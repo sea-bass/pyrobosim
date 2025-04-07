@@ -593,15 +593,15 @@ class Robot(Entity):
                     side_grasps=False,
                 )
 
-            if len(grasps) == 0:
-                message = "Could not generate valid grasps. Cannot pick object."
-                self.logger.warning(message)
-                return ExecutionResult(
-                    status=ExecutionStatus.PLANNING_FAILURE, message=message
-                )
-            else:
+                if len(grasps) == 0:
+                    message = "Could not generate valid grasps. Cannot pick object."
+                    self.logger.warning(message)
+                    return ExecutionResult(
+                        status=ExecutionStatus.PLANNING_FAILURE, message=message
+                    )
                 # TODO: For now, just pick a random grasp.
                 self.last_grasp_selection = np.random.choice(grasps)
+
         if self.last_grasp_selection is not None:
             self.logger.info(f"Selected {self.last_grasp_selection}")
 
