@@ -1640,7 +1640,7 @@ class World:
         step_dist: float = 0.01,
         max_dist: float | None = None,
         partial_observability_hallway_states: bool = False,
-        known_hallway_states: set[Object] = None,
+        known_hallway_states: set[Entity] = None,
     ) -> bool:
         """
         Checks connectivity between two poses `start` and `goal` in the world
@@ -1683,7 +1683,7 @@ class World:
         # connect the points.
         return True
 
-    def check_occupancy(self, pose: Pose | Sequence[float], partial_observability_hallway_states: bool = False, known_hallway_states: set[Object] = None) -> bool:
+    def check_occupancy(self, pose: Pose | Sequence[float], partial_observability_hallway_states: bool = False, known_hallway_states: set[Entity] = None) -> bool:
         """
         Check if a pose in the world is occupied.
 
@@ -1721,7 +1721,7 @@ class World:
                 return True
         return False
 
-    def is_path_collision_free(self, path: Path, step_dist: float = 0.01, partial_observability_hallway_states: bool = False, known_hallway_states: set[Object] = None) -> bool:
+    def is_path_collision_free(self, path: Path, step_dist: float = 0.01, partial_observability_hallway_states: bool = False, known_hallway_states: set[Entity] = None) -> bool:
         """
         Check whether a path is collision free in this world.
 
@@ -1737,7 +1737,7 @@ class World:
         return True
 
     def sample_free_robot_pose_uniform(
-        self, robot: Robot | None = None, ignore_robots: bool = True, partial_observability_hallway_states: bool = False, known_hallway_states: set[Object] = None
+        self, robot: Robot | None = None, ignore_robots: bool = True, partial_observability_hallway_states: bool = False, known_hallway_states: set[Entity] = None
     ) -> Pose | None:
         """
         Sample an unoccupied robot pose in the world.

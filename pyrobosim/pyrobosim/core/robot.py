@@ -140,7 +140,7 @@ class Robot(Entity):
             # For now sensor is set under the hood
             sensor = Lidar()
             self.set_sensor(sensor)
-        self.known_hallway_state: set[Hallway] = set()
+        self.known_hallway_states: set[Hallway] = set()
 
         self.logger.info("Created robot.")
 
@@ -172,6 +172,8 @@ class Robot(Entity):
             (see e.g., :class:`pyrobosim.navigation.rrt.RRTPlanner`).
         """
         self.path_planner = path_planner
+        if path_planner is not None:
+            path_planner.robot = self
 
     def set_path_executor(self, path_executor: PathExecutor | None) -> None:
         """

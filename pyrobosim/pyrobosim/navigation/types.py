@@ -16,6 +16,10 @@ class PathPlanner:
 
     When implementing a new planner, you should subclass from this class.
     """
+    def __init__(self) -> None:
+        from ..core.robot import Robot
+
+        self.robot: Robot | None = None
 
     def plan(self, start: Pose, goal: Pose) -> Path:
         """

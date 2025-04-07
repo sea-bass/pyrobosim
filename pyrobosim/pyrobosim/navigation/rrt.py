@@ -115,7 +115,8 @@ class RRTPlanner(PathPlanner):
             n_goal.pose,
             self.collision_check_step_dist,
             self.max_connection_dist,
-            self.partial_observability_hallway_states
+            self.partial_observability_hallway_states,
+            self.robot.known_hallway_states
         ):
             path_poses = [n_start.pose, n_goal.pose]
             self.latest_path = Path(poses=path_poses)
@@ -142,7 +143,8 @@ class RRTPlanner(PathPlanner):
                 n_new.pose,
                 self.collision_check_step_dist,
                 self.max_connection_dist,
-                self.partial_observability_hallway_states
+                self.partial_observability_hallway_states,
+                self.robot.known_hallway_states
             )
             if connected_node:
                 self.graph_start.add_node(n_new)
@@ -159,7 +161,8 @@ class RRTPlanner(PathPlanner):
                     n_new_goal.pose,
                     self.collision_check_step_dist,
                     self.max_connection_dist,
-                    self.partial_observability_hallway_states
+                    self.partial_observability_hallway_states,
+                    self.robot.known_hallway_states
                 )
                 if connected_node_goal:
                     self.graph_goal.add_node(n_new_goal)
@@ -242,7 +245,7 @@ class RRTPlanner(PathPlanner):
 
         :return: Collision-free pose if found, else ``None``.
         """
-        return self.world.sample_free_robot_pose_uniform(partial_observability_hallway_states = self.partial_observability_hallway_states)
+        return self.world.sample_free_robot_pose_uniform(partial_observability_hallway_states = self.partial_observability_hallway_states, known_hallway_states=self.robot.known_hallway_states)
 
     def extend(self, n_start: Node, q_target: Pose) -> Node:
         """
@@ -295,7 +298,8 @@ class RRTPlanner(PathPlanner):
                     n_tgt.pose,
                     self.collision_check_step_dist,
                     self.max_connection_dist,
-                    self.partial_observability_hallway_states
+                    self.partial_observability_hallway_states,
+                    self.robot.known_hallway_states
                 ):
                     n_rewire = n
                     n_tgt.cost = alt_cost
@@ -338,7 +342,8 @@ class RRTPlanner(PathPlanner):
                 n_tgt.pose,
                 self.collision_check_step_dist,
                 self.max_connection_dist,
-                self.partial_observability_hallway_states
+                self.partial_observability_hallway_states,
+                self.robot.known_hallway_states
             ):
                 n_tgt.parent = n_curr
                 graph.nodes.add(n_tgt)
@@ -354,7 +359,8 @@ class RRTPlanner(PathPlanner):
                     n_new.pose,
                     self.collision_check_step_dist,
                     self.max_connection_dist,
-                    self.partial_observability_hallway_states
+                    self.partial_observability_hallway_states,
+                    self.robot.known_hallway_states
                 ):
                     graph.add_node(n_new)
                     n_curr = n_new
