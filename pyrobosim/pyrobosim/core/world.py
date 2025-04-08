@@ -72,6 +72,8 @@ class World:
         # World bounds, will be set by update_bounds()
         self.x_bounds = None
         self.y_bounds = None
+
+        # Polygons for collision checking
         self.total_internal_polygon = Polygon()
         self.total_external_polygon = Polygon()
 
@@ -1663,6 +1665,9 @@ class World:
     # Occupancy utilities #
     #######################
     def update_polygons(self) -> None:
+        """
+        Updates the world's collision polygons when an entity is added or removed.
+        """
         self.total_internal_polygon = unary_union(
             [
                 entity.internal_collision_polygon
@@ -1750,11 +1755,7 @@ class World:
         else:
             x, y = pose
 
-        val = True
-        # t_start = time.time()
-        val = not bool(shapely.intersects_xy(self.total_internal_polygon, x, y))
-        # self.logger.info(f"Collision time: {(time.time() - t_start) * 1000} ms")
-        return val
+        return not bool(shapely.intersects_xy(self.total_internal_polygon, x, y))
 
     def collides_with_robots(self, pose: Pose, robot: Robot | None = None) -> bool:
         """

@@ -20,11 +20,29 @@ class Sensor:
         self.robot: Robot | None = None
         self.thread = Thread(target=self.thread_function)
 
+    def update(self) -> None:
+        """
+        Performs the sensor calculation.
+
+        Must be implemented in your sensor implementation.
+        """
+        raise NotImplementedError("Must implement update()!")
+
+    def get_measurement(self) -> Any:
+        """
+        Returns the latest measurement from the sensor.
+
+        Must be implemented in your sensor implementation.
+
+        :return: The latest measurement.
+        """
+        raise NotImplementedError("Must implement get_measurement()!")
+
     def thread_function(self) -> None:
         """
-        Defines a function to run in a background thread.
+        Defines the sensor update function to run in a background thread.
 
-        You can leave this unimplemented in your sensor implementation.
+        If the sensor has nothing to do in the background, you can leave this unimplemented in your sensor.
         """
         return
 
@@ -49,6 +67,8 @@ class Sensor:
     def setup_artists(self) -> list[Artist]:
         """
         Sets up and returns the artists for visualizing the sensor.
+
+        :return: The list of MatPlotLib artists for the sensor.
         """
         return []
 

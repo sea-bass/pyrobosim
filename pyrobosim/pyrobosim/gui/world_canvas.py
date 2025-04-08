@@ -207,11 +207,12 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                     fontsize=10,
                 )
 
-                for sensor in robot.sensors.values():
-                    sensor_artists = sensor.setup_artists()
-                    self.robot_sensor_artists.extend(sensor_artists)
-                    for artist in sensor_artists:
-                        self.axes.add_artist(artist)
+                if robot.sensors_active:
+                    for sensor in robot.sensors.values():
+                        sensor_artists = sensor.setup_artists()
+                        self.robot_sensor_artists.extend(sensor_artists)
+                        for artist in sensor_artists:
+                            self.axes.add_artist(artist)
 
             self.robot_texts = [robot.viz_text for robot in self.world.robots]
 
@@ -432,8 +433,9 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                 if robot.manipulated_object is not None:
                     self.update_object_plot(robot.manipulated_object)
 
-                for sensor in robot.sensors.values():
-                    sensor.update_artists()
+                if robot.sensors_active:
+                    for sensor in robot.sensors.values():
+                        sensor.update_artists()
 
     def show_world_state(self, robot: Robot | None = None) -> None:
         """

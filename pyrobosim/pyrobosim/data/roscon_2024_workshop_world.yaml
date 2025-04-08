@@ -25,10 +25,12 @@ robots:
       lidar:
         type: lidar
         update_rate_s: 0.1
-        min_angle_rad: -2.094
-        max_angle_rad: 2.094
-        angle_resolution_rad: 0.087
+        angle_units: degrees
+        min_angle: -120.0
+        max_angle: 120.0
+        angular_resolution: 5.0
         max_range_m: 2.0
+    start_sensor_threads: true
 
 rooms:
   - name: dining

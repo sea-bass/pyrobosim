@@ -7,7 +7,6 @@ from typing import Any, Sequence
 import numpy as np
 from matplotlib.text import Text
 from shapely.geometry import Point
-from shapely.ops import unary_union
 
 from .dynamics import RobotDynamics2D
 from .hallway import Hallway
@@ -47,8 +46,9 @@ class Robot(Entity):
         max_angular_acceleration: float = np.inf,
         path_planner: PathPlanner | None = None,
         path_executor: PathExecutor | None = None,
-        sensors: dict[str, Sensor] | None = None,
         grasp_generator: GraspGenerator | None = None,
+        sensors: dict[str, Sensor] | None = None,
+        start_sensor_threads: bool = True,
         partial_observability: bool = False,
         action_execution_options: dict[str, ExecutionOptions] = {},
         initial_battery_level: float = 100.0,
@@ -74,9 +74,10 @@ class Robot(Entity):
             (see e.g., :class:`pyrobosim.navigation.rrt.RRTPlanner`).
         :param path_executor: Path executor for navigation (see e.g.,
             :class:`pyrobosim.navigation.execution.ConstantVelocityExecutor`).
+        :param grasp_generator: Grasp generator for manipulating objects.
         :param sensors: Optional map of names to sensors (see e.g.,
             :class:`pyrobosim.sensors.lidar.Lidar2D`).
-        :param grasp_generator: Grasp generator for manipulating objects.
+        :param start_sensor_threads: If True, automatically starts the sensor threads.
         :param partial_observability: If False, the robot can access all objects in the world.
             If True, it must detect new objects at specific locations.
         :param action_execution_options: A dictionary of action names and their execution options.
@@ -128,6 +129,8 @@ class Robot(Entity):
         self.sensors_active = False
         self.sensors: dict[str, Sensor] = {}
         self.set_sensors(sensors)
+        if start_sensor_threads:
+            self.start_sensor_threads()
 
         # Manipulation properties
         self.grasp_generator = grasp_generator
@@ -146,9 +149,7 @@ class Robot(Entity):
 
     def __del__(self) -> None:
         """Cleans up when deleting the robot instance."""
-        self.sensors_active = False
-        for sensor in self.sensors.values():
-            sensor.stop_thread()
+        self.stop_sensor_threads()
 
     def get_pose(self) -> Pose:
         """
@@ -202,12 +203,25 @@ class Robot(Entity):
         """
         if sensors is None:
             return
-
         self.sensors = sensors
-        self.sensors_active = True
         for sensor in self.sensors.values():
             sensor.robot = self
+
+    def start_sensor_threads(self) -> None:
+        """Starts the robot's sensor threads."""
+        if len(self.sensors) == 0:
+            return
+        self.sensors_active = True
+        for sensor in self.sensors.values():
             sensor.start_thread()
+
+    def stop_sensor_threads(self) -> None:
+        """Stops the robot's active sensor threads."""
+        if not self.sensors_active:
+            return
+        self.sensors_active = False
+        for sensor in self.sensors.values():
+            sensor.stop_thread()
 
     def is_moving(self) -> bool:
         """

@@ -125,9 +125,10 @@ def create_world(multirobot: bool = False) -> World:
     )
     lidar = Lidar2D(
         update_rate_s=0.1,
-        min_angle_rad=-2.0 * np.pi / 3.0,
-        max_angle_rad=2.0 * np.pi / 3.0,
-        angle_resolution_rad=5.0 * np.pi / 180,
+        angle_units="degrees",
+        min_angle=-120.0,
+        max_angle=120.0,
+        angular_resolution=5.0,
         max_range_m=2.0,
     )
 
