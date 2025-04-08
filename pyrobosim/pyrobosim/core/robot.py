@@ -93,6 +93,7 @@ class Robot(Entity):
         self.height = height
         self.color = parse_color(color)
         self.raw_polygon = Point(0, 0).buffer(radius)
+        self.sensors: dict[str, Sensor] = {}
 
         if name == "world":
             raise ValueError("Robots cannot be named 'world'.")
@@ -127,7 +128,6 @@ class Robot(Entity):
 
         # Sensing properties
         self.sensors_active = False
-        self.sensors: dict[str, Sensor] = {}
         self.set_sensors(sensors)
         if start_sensor_threads:
             self.start_sensor_threads()
@@ -217,7 +217,7 @@ class Robot(Entity):
 
     def stop_sensor_threads(self) -> None:
         """Stops the robot's active sensor threads."""
-        if not self.sensors_active:
+        if not self.sensors or not self.sensors_active:
             return
         self.sensors_active = False
         for sensor in self.sensors.values():

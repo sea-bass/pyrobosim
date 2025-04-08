@@ -5,7 +5,7 @@
 # User variables
 # Please modify these for your environment
 VIRTUALENV_FOLDER=~/python-virtualenvs/pyrobosim
-ROS_WORKSPACE=~/workspace/pyrobosim_ws
+ROS_WORKSPACE=~/pyrobosim_ws
 
 # Create a Python virtual environment
 [ ! -d "${VIRTUALENV_FOLDER}" ] && mkdir -p ${VIRTUALENV_FOLDER}

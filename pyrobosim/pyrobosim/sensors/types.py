@@ -61,7 +61,7 @@ class Sensor:
         implementation of `thread_function()` has a way to stop when the
         robot's `sensors_active` attribute becomes `False` on deletion.
         """
-        if self.thread is not None:
+        if (self.thread is not None) and self.thread.is_alive():
             self.thread.join()
 
     def setup_artists(self) -> list[Artist]:
