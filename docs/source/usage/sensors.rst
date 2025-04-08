@@ -78,17 +78,17 @@ This will only take effect if your robot is created with the ``start_sensor_thre
 
 .. code-block:: python
 
-    def thread_function(self) -> None:
-        if self.robot is None:  # This is created in the constructor!
-            return
+        def thread_function(self) -> None:
+            if self.robot is None:  # This is created in the constructor!
+                return
 
-        # The `sensors_active` attribute of the robot should be used to cleanly
-        # stop this thread when the robot is shut down.
-        while self.robot.sensors_active:
-            t_start = time.time()
-            self.update()
-            t_end = time.time()
-            time.sleep(max(0.0, self.update_rate_s - (t_end - t_start)))
+            # The `sensors_active` attribute of the robot should be used to cleanly
+            # stop this thread when the robot is shut down.
+            while self.robot.sensors_active:
+                t_start = time.time()
+                self.update()
+                t_end = time.time()
+                time.sleep(max(0.0, self.update_rate_s - (t_end - t_start)))
 
 
 For visualization, you can provide ``setup_artists()`` and ``update_artists()`` methods.
@@ -99,21 +99,21 @@ For visualization, you can provide ``setup_artists()`` and ``update_artists()`` 
     from matplotlib.patches import Circle
     from matplotlib.transforms import Affine2D
 
-    def setup_artists(self) -> list[Artist]:
-        """Executes when the sensor is first visualized."""
-        pose = self.robot.get_pose()
-        self.circle = Circle(
-            (pose.x, pose.y),
-            radius=1.0,
-            color="r",
-        )
-        return [self.circle]
+        def setup_artists(self) -> list[Artist]:
+            """Executes when the sensor is first visualized."""
+            pose = self.robot.get_pose()
+            self.circle = Circle(
+                (pose.x, pose.y),
+                radius=1.0,
+                color="r",
+            )
+            return [self.circle]
 
-    def update_artists(self) -> None:
-        """Updates the artist as needed."""
-        pose = self.robot.get_pose()
-        new_tform = Affine2D().translate(pose.x, pose.y)
-        self.circle.set_transform(new_tform)
+        def update_artists(self) -> None:
+            """Updates the artist as needed."""
+            pose = self.robot.get_pose()
+            new_tform = Affine2D().translate(pose.x, pose.y)
+            self.circle.set_transform(new_tform)
 
 
 To serialize to file, which is needed to reset the world, you should also implement the ``to_dict()`` method.

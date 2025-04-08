@@ -5,7 +5,6 @@ Test script showing how to build a world and use it with pyrobosim
 """
 import os
 import argparse
-import numpy as np
 
 from pyrobosim.core.robot import Robot
 from pyrobosim.core.world import World
@@ -139,7 +138,7 @@ def create_world(multirobot: bool = False) -> World:
             linear_velocity=1.0,
             dt=0.1,
             max_angular_velocity=4.0,
-            validate_during_execution=False,
+            validate_during_execution=True,
         ),
         sensors={"lidar": lidar} if args.lidar else None,
         grasp_generator=GraspGenerator(grasp_props),
