@@ -123,7 +123,7 @@ hallways:
     conn_method: angle
     conn_angle: -1.57
     offset: 1.1
-    is_open: false
+    is_open: true
     is_locked: false
 
   - room_start: dining
