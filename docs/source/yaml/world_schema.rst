@@ -39,13 +39,14 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
            yaw: <yaw>
            angle_units: <units>  # Can be "radians" (default) or "degrees"
        initial_battery_level: 50.0
+       partial_observability: False  # If True, robot starts with no detected objects
        # Dynamics limits
        max_linear_velocity: <value>
        max_angular_velocity: <value>
        max_linear_acceleration: <value>
        max_angular_acceleration: <value>
        # Specialized capabilities
-       path_planner:  # Local robot path planner -- generally refers to single-query planners
+       path_planner:  # Path planners for robot navigation
          type: rrt  # Supported types -- astar, rrt, prm, world_graph
          <property>: <planner_property>
        path_executor:  # For following a path
@@ -54,7 +55,17 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
        grasp_generator:  # For object grasp generation
          type: parallel_grasp  # Supported types -- parallel_grasp
          <property>: <grasp_generator_property>
-       partial_observability: False  # If True, robot starts with no detected objects
+       sensors:  # Dictionary of named sensors
+         lidar:
+           type: lidar
+           update_rate_s: 0.1
+           angle_units: degrees
+           min_angle: -120.0
+           max_angle: 120.0
+           angular_resolution: 5.0
+           max_range_m: 2.0
+         # ... other named sensors can go here
+       start_sensor_threads: true  # If True, automatically starts sensor threads
        # Options to control the execution of actions
        action_execution_options:
          navigate:

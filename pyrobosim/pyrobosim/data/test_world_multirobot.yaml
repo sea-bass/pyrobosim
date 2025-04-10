@@ -41,6 +41,16 @@ robots:
       linear_velocity: 1.0
       max_angular_velocity: 4.0
       dt: 0.1
+    sensors:
+      lidar:
+        type: lidar
+        update_rate_s: 0.1
+        angle_units: degrees
+        min_angle: -120.0
+        max_angle: 120.0
+        angular_resolution: 5.0
+        max_range_m: 2.0
+    start_sensor_threads: true
 
   - radius: 0.08
     color: "#CCCC00"

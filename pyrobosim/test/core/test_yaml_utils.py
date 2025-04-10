@@ -329,6 +329,7 @@ class TestWorldYamlLoading:
         )
         from pyrobosim.navigation.execution import ConstantVelocityExecutor
         from pyrobosim.navigation.rrt import RRTPlanner
+        from pyrobosim.sensors.lidar import Lidar2D
 
         loader = TestWorldYamlLoading.yaml_loader
 
@@ -380,6 +381,18 @@ class TestWorldYamlLoading:
                         "width_clearance": 0.01,
                         "depth_clearance": 0.01,
                     },
+                    "sensors": {
+                        "lidar": {
+                            "type": "lidar",
+                            "update_rate_s": 0.1,
+                            "angle_units": "radians",
+                            "min_angle": -np.pi,
+                            "max_angle": np.pi,
+                            "angular_resolution": np.pi / 48.0,
+                            "max_range_m": 3.0,
+                        },
+                    },
+                    "start_sensor_threads": False,
                     "partial_observability": True,
                     "action_execution_options": {
                         "pick": {
@@ -443,6 +456,17 @@ class TestWorldYamlLoading:
         assert grasp_generator.properties.height == 0.04
         assert grasp_generator.properties.width_clearance == 0.01
         assert grasp_generator.properties.depth_clearance == 0.01
+
+        sensors = robot1.sensors
+        assert "lidar" in sensors
+        lidar = sensors["lidar"]
+        assert isinstance(lidar, Lidar2D)
+        assert lidar.update_rate_s == 0.1
+        assert lidar.angle_units == "radians"
+        assert lidar.min_angle == -np.pi
+        assert lidar.max_angle == np.pi
+        assert lidar.angular_resolution == np.pi / 48.0
+        assert lidar.max_range_m == 3.0
 
         action_exec_options = robot1.action_execution_options
         assert len(action_exec_options) == 2
@@ -508,6 +532,9 @@ def test_yaml_load_and_write_dict() -> None:
     assert world_dict["objects"][6]["name"] == "water1"
     assert world_dict["objects"][7]["name"] == "soda"
 
+    # Avoids sensor thread deadlock at shutdown.
+    world.shutdown()
+
 
 def test_yaml_load_and_write_file() -> None:
     """Tests round-trip loading from, and writing to, a YAML file."""
@@ -563,3 +590,7 @@ def test_yaml_load_and_write_file() -> None:
     assert reloaded_world.objects[5].name == "banana1"
     assert reloaded_world.objects[6].name == "water1"
     assert reloaded_world.objects[7].name == "soda"
+
+    # Avoids sensor thread deadlock at shutdown.
+    world.shutdown()
+    reloaded_world.shutdown()

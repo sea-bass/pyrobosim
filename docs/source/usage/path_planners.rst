@@ -63,7 +63,6 @@ If your planner does not have any such data, you still must implement this.
 
 .. code-block:: python
 
-
     from pyrobosim.navigation.types import PathPlanner
     from pyrobosim.utils.path import Path
 

@@ -426,3 +426,6 @@ class TestRosInterface:
         """Shuts down the interface node and rclpy at the end of all other tests."""
         assert TestRosInterface.ros_interface is not None
         TestRosInterface.ros_interface.shutdown()
+
+        # Avoids sensor thread deadlock at shutdown.
+        TestRosInterface.ros_interface.world.shutdown()

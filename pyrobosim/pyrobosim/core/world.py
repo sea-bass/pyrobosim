@@ -4,6 +4,10 @@ import itertools
 import numpy as np
 from typing import Any, Sequence
 
+import shapely
+from shapely.geometry import Polygon
+from shapely.ops import unary_union
+
 from .hallway import Hallway
 from .locations import Location, ObjectSpawn
 from .objects import Object
@@ -69,6 +73,10 @@ class World:
         self.x_bounds = None
         self.y_bounds = None
 
+        # Polygons for collision checking
+        self.total_internal_polygon = Polygon()
+        self.total_external_polygon = Polygon()
+
         # Other parameters
         # Max number of tries to sample object locations
         self.max_object_sample_tries = 1000
@@ -105,6 +113,11 @@ class World:
 
         self.logger.info("Reset world successfully.")
         return True  # No error handling yet
+
+    def shutdown(self) -> None:
+        """Cleanly shuts down the world."""
+        for robot in self.robots:
+            robot.stop_sensor_threads()
 
     ############
     # Metadata #
@@ -226,6 +239,7 @@ class World:
 
         # Update the room collision polygon based on the world inflation radius
         room.update_collision_polygons(self.inflation_radius)
+        self.update_polygons()
 
         room.add_graph_nodes()
         return room
@@ -364,6 +378,7 @@ class World:
         self.num_hallways += 1
         hallway.update_collision_polygons(self.inflation_radius)
         self.update_bounds(entity=hallway)
+        self.update_polygons()
 
         hallway.add_graph_nodes()
         # Finally, return the Hallway object
@@ -413,13 +428,17 @@ class World:
         if restart_numbering:
             self.hallway_instance_counts = {}
 
-    def add_location(self, **location_config: Any) -> Location | None:
+    def add_location(
+        self, show: bool = True, **location_config: Any
+    ) -> Location | None:
         r"""
         Adds a location at the specified parent entity, usually a room.
 
         If the location does not have a specified name, it will be given an
         automatic name using its category, e.g., ``"table0"``.
 
+        :param show: If True (default), causes the GUI to be updated.
+            This is mostly for internal usage to speed up reloading.
         :param \*\*location_config: Keyword arguments describing the location.
 
             You can use ``location=Location(...)`` to directly pass in a :class:`pyrobosim.core.location.Location`
@@ -494,8 +513,9 @@ class World:
         self.name_to_entity[loc.name] = loc
         for spawn in loc.children:
             self.name_to_entity[spawn.name] = spawn
+        self.update_polygons()
 
-        if self.gui is not None:
+        if show and self.gui is not None:
             self.gui.canvas.show_locations_signal.emit()
             self.gui.canvas.show_objects_signal.emit()
             self.gui.canvas.draw_signal.emit()
@@ -667,6 +687,7 @@ class World:
 
         location.set_open(True, recursive=True)
         location.update_visualization_polygon()
+        self.update_polygons()
         if self.gui is not None:
             if isinstance(location, Hallway):
                 self.gui.canvas.show_hallways_signal.emit()
@@ -728,6 +749,7 @@ class World:
 
         location.set_open(False, recursive=True)
         location.update_visualization_polygon()
+        self.update_polygons()
         if self.gui is not None:
             if is_hallway:
                 self.gui.canvas.show_hallways_signal.emit()
@@ -836,7 +858,7 @@ class World:
                 return pose_sample
         return None
 
-    def add_object(self, **object_config: Any) -> Object | None:
+    def add_object(self, show: bool = True, **object_config: Any) -> Object | None:
         r"""
         Adds an object to a specific location.
 
@@ -845,6 +867,8 @@ class World:
 
         If the location contains multiple object spawns, one will be selected at random.
 
+        :param show: If True (default), causes the GUI to be updated.
+            This is mostly for internal usage to speed up reloading.
         :param \*\*object_config: Keyword arguments describing the object.
 
             You can use ``object=Object(...)`` to directly pass in a :class:`pyrobosim.core.objects.Object`
@@ -942,7 +966,7 @@ class World:
         self.name_to_entity[obj.name] = obj
         self.num_objects += 1
         self.object_instance_counts[category] += 1
-        if self.gui is not None:
+        if show and self.gui is not None:
             self.gui.canvas.show_objects_signal.emit()
         return obj
 
@@ -1006,11 +1030,13 @@ class World:
 
         return True
 
-    def remove_object(self, obj: Object | str) -> bool:
+    def remove_object(self, obj: Object | str, show: bool = True) -> bool:
         """
         Cleanly removes an object from the world.
 
         :param loc: Object instance or name to remove.
+        :param show: If True (default), causes the GUI to be updated.
+            This is mostly for internal usage to speed up reloading.
         :return: True if the object was successfully removed, else False.
         """
         if isinstance(obj, str):
@@ -1027,7 +1053,7 @@ class World:
         self.num_objects -= 1
         if resolved_object.parent is not None:
             resolved_object.parent.children.remove(resolved_object)
-        if self.gui is not None:
+        if show and self.gui is not None:
             self.gui.canvas.show_objects_signal.emit()
         return True
 
@@ -1038,12 +1064,17 @@ class World:
         :param restart_numbering: If True, restarts numbering of all categories to zero.
         """
         for obj in reversed(self.objects):
-            self.remove_object(obj)
+            # Only update the UI on the final object to be removed.
+            self.remove_object(obj, show=(len(self.objects) == 1))
         if restart_numbering:
             self.object_instance_counts = {}
 
     def add_robot(
-        self, robot: Robot, loc: Entity | None = None, pose: Pose | None = None
+        self,
+        robot: Robot,
+        loc: Entity | None = None,
+        pose: Pose | None = None,
+        show: bool = True,
     ) -> None:
         """
         Adds a robot to the world given either a world entity and/or pose.
@@ -1051,6 +1082,8 @@ class World:
         :param robot: Robot instance to add to the world.
         :param loc: World entity instance or name to place the robot.
         :param pose: Pose at which to add the robot. If not specified, will be sampled.
+        :param show: If True (default), causes the GUI to be updated.
+            This is mostly for internal usage to speed up reloading.
         """
         # Check that the robot name doesn't already exist.
         if robot.name in self.get_robot_names():
@@ -1131,16 +1164,18 @@ class World:
             self.logger.warning("Could not add robot.")
             self.set_inflation_radius(old_inflation_radius)
 
-        if self.gui is not None:
+        if show and self.gui is not None:
             self.gui.canvas.show_robots_signal.emit()
         if self.ros_node is not None:
             self.ros_node.add_robot_ros_interfaces(robot)
 
-    def remove_robot(self, robot: Robot | str) -> bool:
+    def remove_robot(self, robot: Robot | str, show: bool = True) -> bool:
         """
         Removes a robot from the world.
 
         :param robot: Robot instance or name to remove.
+        :param show: If True (default), causes the GUI to be updated.
+            This is mostly for internal usage to speed up reloading.
         :return: True if the robot was successfully removed, else False.
         """
         if isinstance(robot, Robot):
@@ -1153,7 +1188,7 @@ class World:
 
         self.robots.remove(resolved_robot)
         self.name_to_entity.pop(resolved_robot.name)
-        if self.gui is not None:
+        if show and self.gui is not None:
             self.gui.canvas.show_robots_signal.emit()
         if self.ros_node is not None:
             self.ros_node.remove_robot_ros_interfaces(resolved_robot)
@@ -1170,7 +1205,8 @@ class World:
     def remove_all_robots(self) -> None:
         """Cleanly removes all robots from the world."""
         for robot in reversed(self.robots):
-            self.remove_robot(robot)
+            # Only update the UI on the last robot to remove.
+            self.remove_robot(robot, show=(len(self.robots) == 1))
 
     def set_inflation_radius(self, inflation_radius: float = 0.0) -> None:
         """
@@ -1185,6 +1221,7 @@ class World:
             room.update_collision_polygons(self.inflation_radius)
         for hallway in self.hallways:
             hallway.update_collision_polygons(self.inflation_radius)
+        self.update_polygons()
 
     def update_bounds(self, entity: Entity, remove: bool = False) -> None:
         """
@@ -1632,6 +1669,35 @@ class World:
     #######################
     # Occupancy utilities #
     #######################
+    def update_polygons(self) -> None:
+        """
+        Updates the world's collision polygons when an entity is added or removed.
+        """
+        self.total_internal_polygon = unary_union(
+            [
+                entity.internal_collision_polygon
+                for entity in itertools.chain(self.rooms, self.hallways)
+            ]
+        ).difference(
+            unary_union(
+                [
+                    hall.inflated_closed_polygon
+                    for hall in self.hallways
+                    if not hall.is_open
+                ]
+            )
+        )
+        shapely.prepare(self.total_internal_polygon)
+
+        self.total_external_polygon = unary_union(
+            [entity.polygon for entity in itertools.chain(self.rooms, self.hallways)]
+        ).difference(
+            unary_union(
+                [loc.polygon for loc in self.locations]
+                + [hall.closed_polygon for hall in self.hallways if not hall.is_open]
+            )
+        )
+        shapely.prepare(self.total_external_polygon)
 
     def is_connectable(
         self,
@@ -1688,13 +1754,13 @@ class World:
         :param pose: The pose to check.
         :return: True if the pose is occupied, else False.
         """
-        # Loop through all the rooms and hallways and check if the pose
-        # is deemed collision-free in any of them.
-        for entity in itertools.chain(self.rooms, self.hallways):
-            if entity.is_collision_free(pose):
-                return False
-        # If we made it through, the pose is occupied.
-        return True
+        if isinstance(pose, Pose):
+            x = pose.x
+            y = pose.y
+        else:
+            x, y = pose
+
+        return not bool(shapely.intersects_xy(self.total_internal_polygon, x, y))
 
     def collides_with_robots(self, pose: Pose, robot: Robot | None = None) -> bool:
         """

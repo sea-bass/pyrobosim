@@ -1,10 +1,12 @@
 """Defines a robot which operates in a world."""
 
 import time
+from threading import Lock
 from typing import Any, Sequence
 
 import numpy as np
 from matplotlib.text import Text
+from shapely.geometry import Point
 
 from .dynamics import RobotDynamics2D
 from .hallway import Hallway
@@ -20,6 +22,7 @@ from ..planning.actions import (
     TaskAction,
     TaskPlan,
 )
+from ..sensors.types import Sensor
 from ..utils.logging import create_logger
 from ..utils.polygon import sample_from_polygon, transform_polygon
 from ..utils.path import Path
@@ -44,6 +47,8 @@ class Robot(Entity):
         path_planner: PathPlanner | None = None,
         path_executor: PathExecutor | None = None,
         grasp_generator: GraspGenerator | None = None,
+        sensors: dict[str, Sensor] | None = None,
+        start_sensor_threads: bool = True,
         partial_observability: bool = False,
         action_execution_options: dict[str, ExecutionOptions] = {},
         initial_battery_level: float = 100.0,
@@ -70,6 +75,9 @@ class Robot(Entity):
         :param path_executor: Path executor for navigation (see e.g.,
             :class:`pyrobosim.navigation.execution.ConstantVelocityExecutor`).
         :param grasp_generator: Grasp generator for manipulating objects.
+        :param sensors: Optional map of names to sensors (see e.g.,
+            :class:`pyrobosim.sensors.lidar.Lidar2D`).
+        :param start_sensor_threads: If True, automatically starts the sensor threads.
         :param partial_observability: If False, the robot can access all objects in the world.
             If True, it must detect new objects at specific locations.
         :param action_execution_options: A dictionary of action names and their execution options.
@@ -84,6 +92,8 @@ class Robot(Entity):
         self.radius = radius
         self.height = height
         self.color = parse_color(color)
+        self.raw_polygon = Point(0, 0).buffer(radius)
+        self.sensors: dict[str, Sensor] = {}
 
         if name == "world":
             raise ValueError("Robots cannot be named 'world'.")
@@ -99,12 +109,27 @@ class Robot(Entity):
             max_linear_acceleration=max_linear_acceleration,
             max_angular_acceleration=max_angular_acceleration,
         )
+        self.state_lock = Lock()
+
+        # World interaction properties
+        self.world: World | None = None
+        self.location: Entity | None = None
+        self.manipulated_object: Object | None = None
+        self.partial_observability = partial_observability
+        self.known_objects: set[Object] = set()
+        self.last_detected_objects: list[Object] = []
+        self.viz_text: Text | None = None
 
         # Navigation properties
         self.executing_nav = False
         self.last_nav_result = ExecutionResult()
         self.set_path_planner(path_planner)
         self.set_path_executor(path_executor)
+
+        # Sensing properties
+        self.set_sensors(sensors)
+        if start_sensor_threads:
+            self.start_sensor_threads()
 
         # Manipulation properties
         self.grasp_generator = grasp_generator
@@ -119,16 +144,11 @@ class Robot(Entity):
         self.canceling_execution = False
         self.battery_level = initial_battery_level
 
-        # World interaction properties
-        self.world: World | None = None
-        self.location: Entity | None = None
-        self.manipulated_object: Object | None = None
-        self.partial_observability = partial_observability
-        self.known_objects: set[Object] = set()
-        self.last_detected_objects: list[Object] = []
-        self.viz_text: Text | None = None
-
         self.logger.info("Created robot.")
+
+    def __del__(self) -> None:
+        """Cleans up when deleting the robot instance."""
+        self.stop_sensor_threads()
 
     def get_pose(self) -> Pose:
         """
@@ -144,11 +164,14 @@ class Robot(Entity):
 
         :param pose: New robot pose.
         """
-        self.dynamics.pose = pose
-        if self.world:
-            self.location = self.world.get_location_from_pose(
-                pose, prev_location=self.location
-            )
+        with self.state_lock:
+            self.dynamics.pose = pose
+            self.polygon = transform_polygon(self.raw_polygon, pose)
+
+            if self.world:
+                self.location = self.world.get_location_from_pose(
+                    pose, prev_location=self.location
+                )
 
     def set_path_planner(self, path_planner: PathPlanner | None) -> None:
         """
@@ -169,6 +192,29 @@ class Robot(Entity):
         self.path_executor = path_executor
         if path_executor is not None:
             path_executor.robot = self
+
+    def set_sensors(self, sensors: dict[str, Sensor] | None) -> None:
+        """
+        Sets a list of sensors.
+
+        :param sensors: Optional map of names to sensors (see e.g.,
+            :class:`pyrobosim.sensors.lidar.Lidar2D`).
+        """
+        if sensors is None:
+            return
+        self.sensors = sensors
+        for sensor in self.sensors.values():
+            sensor.robot = self
+
+    def start_sensor_threads(self) -> None:
+        """Starts the robot's sensor threads."""
+        for sensor in self.sensors.values():
+            sensor.start_thread()
+
+    def stop_sensor_threads(self) -> None:
+        """Stops the robot's active sensor threads."""
+        for sensor in self.sensors.values():
+            sensor.stop_thread()
 
     def is_moving(self) -> bool:
         """
@@ -1075,6 +1121,10 @@ class Robot(Entity):
             robot_dict["path_executor"] = self.path_executor.to_dict()
         if self.grasp_generator is not None:
             robot_dict["grasping"] = self.grasp_generator.to_dict()
+        if self.sensors is not None:
+            robot_dict["sensors"] = {
+                name: sensor.to_dict() for name, sensor in self.sensors.items()
+            }
 
         return robot_dict
 
