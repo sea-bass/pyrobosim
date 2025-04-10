@@ -77,32 +77,29 @@ class Lidar2D(Sensor):
         if (self.robot is None) or (self.robot.world is None):
             return
 
-        with self.robot.state_lock:
-            if self.robot.world:
-                lines = (
-                    intersection_all(
+        if self.robot.world:
+            # Need to extract the robot polygon here to prevent syncing issues.
+            robot_polygon = self.robot.polygon
+            lines = (
+                intersection_all(
+                    [
+                        transform_polygon(self.orig_lidar_lines, self.robot.get_pose()),
+                        self.robot.world.total_external_polygon,
+                    ]
+                )
+                .difference(
+                    unary_union(
                         [
-                            transform_polygon(
-                                self.orig_lidar_lines, self.robot.get_pose()
-                            ),
-                            self.robot.world.total_external_polygon,
+                            r.polygon
+                            for r in self.robot.world.robots
+                            if r is not self.robot
                         ]
                     )
-                    .difference(
-                        unary_union(
-                            [
-                                r.polygon
-                                for r in self.robot.world.robots
-                                if r is not self.robot
-                            ]
-                        )
-                    )
-                    .geoms
                 )
-                self.lidar_lines = get_parts(lines)[
-                    intersects(self.robot.polygon, lines)
-                ]
-                self.lidar_coords = [line.coords for line in self.lidar_lines]
+                .geoms
+            )
+            self.lidar_lines = get_parts(lines)[intersects(robot_polygon, lines)]
+            self.lidar_coords = [line.coords for line in self.lidar_lines]
 
     def thread_function(self) -> None:
         """
@@ -111,7 +108,7 @@ class Lidar2D(Sensor):
         if self.robot is None:
             return
 
-        while self.robot.sensors_active:
+        while self.is_active:
             t_start = time.time()
             self.update()
             t_end = time.time()

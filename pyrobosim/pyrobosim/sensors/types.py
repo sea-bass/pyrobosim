@@ -19,6 +19,10 @@ class Sensor:
 
         self.robot: Robot | None = None
         self.thread = Thread(target=self.thread_function)
+        self.is_active = False
+
+    def __del__(self) -> None:
+        self.is_active = False
 
     def update(self) -> None:
         """
@@ -51,6 +55,7 @@ class Sensor:
         Starts the thread defined by your sensor's implementation of `thread_function()`.
         """
         if self.thread is not None:
+            self.is_active = True
             self.thread.start()
 
     def stop_thread(self) -> None:
@@ -59,9 +64,10 @@ class Sensor:
 
         You should not need to override this function, so long as your sensor's
         implementation of `thread_function()` has a way to stop when the
-        robot's `sensors_active` attribute becomes `False` on deletion.
+        `is_active` attribute becomes `False` on deletion.
         """
         if (self.thread is not None) and self.thread.is_alive():
+            self.is_active = False
             self.thread.join()
 
     def setup_artists(self) -> list[Artist]:

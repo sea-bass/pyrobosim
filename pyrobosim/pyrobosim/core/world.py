@@ -114,6 +114,11 @@ class World:
         self.logger.info("Reset world successfully.")
         return True  # No error handling yet
 
+    def shutdown(self) -> None:
+        """Cleanly shuts down the world."""
+        for robot in self.robots:
+            robot.stop_sensor_threads()
+
     ############
     # Metadata #
     ############

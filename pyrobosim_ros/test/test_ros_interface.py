@@ -428,4 +428,4 @@ class TestRosInterface:
         TestRosInterface.ros_interface.shutdown()
 
         # Avoids sensor thread deadlock at shutdown.
-        TestRosInterface.ros_interface.world.robots[0].stop_sensor_threads()
+        TestRosInterface.ros_interface.world.shutdown()

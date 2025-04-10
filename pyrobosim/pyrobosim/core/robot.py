@@ -127,7 +127,6 @@ class Robot(Entity):
         self.set_path_executor(path_executor)
 
         # Sensing properties
-        self.sensors_active = False
         self.set_sensors(sensors)
         if start_sensor_threads:
             self.start_sensor_threads()
@@ -209,17 +208,11 @@ class Robot(Entity):
 
     def start_sensor_threads(self) -> None:
         """Starts the robot's sensor threads."""
-        if len(self.sensors) == 0:
-            return
-        self.sensors_active = True
         for sensor in self.sensors.values():
             sensor.start_thread()
 
     def stop_sensor_threads(self) -> None:
         """Stops the robot's active sensor threads."""
-        if not self.sensors or not self.sensors_active:
-            return
-        self.sensors_active = False
         for sensor in self.sensors.values():
             sensor.stop_thread()
 

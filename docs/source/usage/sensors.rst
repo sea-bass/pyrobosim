@@ -82,9 +82,9 @@ This will only take effect if your robot is created with the ``start_sensor_thre
             if self.robot is None:  # This is created in the constructor!
                 return
 
-            # The `sensors_active` attribute of the robot should be used to cleanly
-            # stop this thread when the robot is shut down.
-            while self.robot.sensors_active:
+            # The `is_active` attribute should be used to cleanly
+            # stop this thread when the sensor is shut down.
+            while self.is_active:
                 t_start = time.time()
                 self.update()
                 t_end = time.time()

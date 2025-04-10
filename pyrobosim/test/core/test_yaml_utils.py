@@ -533,7 +533,7 @@ def test_yaml_load_and_write_dict() -> None:
     assert world_dict["objects"][7]["name"] == "soda"
 
     # Avoids sensor thread deadlock at shutdown.
-    world.robots[0].stop_sensor_threads()
+    world.shutdown()
 
 
 def test_yaml_load_and_write_file() -> None:
@@ -592,5 +592,5 @@ def test_yaml_load_and_write_file() -> None:
     assert reloaded_world.objects[7].name == "soda"
 
     # Avoids sensor thread deadlock at shutdown.
-    world.robots[0].stop_sensor_threads()
-    reloaded_world.robots[0].stop_sensor_threads()
+    world.shutdown()
+    reloaded_world.shutdown()

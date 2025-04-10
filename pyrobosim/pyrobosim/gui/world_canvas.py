@@ -207,8 +207,8 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                     fontsize=10,
                 )
 
-                if robot.sensors_active:
-                    for sensor in robot.sensors.values():
+                for sensor in robot.sensors.values():
+                    if sensor.is_active:
                         sensor_artists = sensor.setup_artists()
                         self.robot_sensor_artists.extend(sensor_artists)
                         for artist in sensor_artists:
@@ -433,8 +433,8 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                 if robot.manipulated_object is not None:
                     self.update_object_plot(robot.manipulated_object)
 
-                if robot.sensors_active:
-                    for sensor in robot.sensors.values():
+                for sensor in robot.sensors.values():
+                    if sensor.is_active:
                         sensor.update_artists()
 
     def show_world_state(self, robot: Robot | None = None) -> None:
