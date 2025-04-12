@@ -7,7 +7,6 @@ import yaml
 
 from .robot import Robot
 from .world import World
-from ..navigation import *
 from ..planning.actions import ExecutionOptions
 from ..utils.general import replace_special_yaml_tokens
 from ..utils.logging import get_global_logger
