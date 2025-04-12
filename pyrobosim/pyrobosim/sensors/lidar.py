@@ -20,6 +20,8 @@ class Lidar2D(Sensor):
     Implements a simulated 2D lidar sensor.
     """
 
+    plugin_name = "lidar"  # Needed to register plugin.
+
     def __init__(
         self,
         *,
@@ -155,10 +157,8 @@ class Lidar2D(Sensor):
 
         :return: A dictionary containing the sensor information.
         """
-        from .sensor_registry import get_sensor_string
-
         return {
-            "type": get_sensor_string(self),
+            "type": self.plugin_name,
             "update_rate_s": self.update_rate_s,
             "angle_units": self.angle_units,
             "min_angle": self.min_angle,

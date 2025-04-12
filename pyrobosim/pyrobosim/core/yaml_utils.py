@@ -7,9 +7,8 @@ import yaml
 
 from .robot import Robot
 from .world import World
-from ..navigation.planner_registry import get_planner_class
+from ..navigation.types import PathPlanner
 from ..planning.actions import ExecutionOptions
-from ..sensors.sensor_registry import get_sensor_class
 from ..sensors.types import Sensor
 from ..utils.general import replace_special_yaml_tokens
 from ..utils.logging import get_global_logger
@@ -195,7 +194,11 @@ class WorldYamlLoader:
         planner_type = planner_data["type"]
         planner_data.pop("type")
 
-        planner_class = get_planner_class(planner_type)
+        planner_class = PathPlanner.registered_plugins.get(planner_type)
+        if planner_class is None:
+            raise RuntimeError(
+                f"Path planner '{planner_type}' is not available. Make sure you have imported its implementation."
+            )
         path_planner = planner_class(**planner_data)
         del robot_data["path_planner"]
         return path_planner
@@ -230,7 +233,11 @@ class WorldYamlLoader:
         for name, sensor in sensor_data.items():
             sensor_type = sensor["type"]
             sensor.pop("type")
-            sensor_class = get_sensor_class(sensor_type)
+            sensor_class = Sensor.registered_plugins.get(sensor_type)
+            if sensor_class is None:
+                raise RuntimeError(
+                    f"Sensor '{sensor_type}' is not available. Make sure you have imported its implementation."
+                )
             sensor_args[name] = sensor_class(**sensor)
 
         del robot_data["sensors"]

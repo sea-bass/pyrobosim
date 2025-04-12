@@ -18,6 +18,8 @@ class RRTPlanner(PathPlanner):
     Implements a Rapidly-exploring Random Tree (RRT) path planner.
     """
 
+    plugin_name = "rrt"  # Needed to register plugin.
+
     def __init__(
         self,
         *,
@@ -375,10 +377,8 @@ class RRTPlanner(PathPlanner):
 
         :return: A dictionary containing the planner information.
         """
-        from .planner_registry import get_planner_string
-
         return {
-            "type": get_planner_string(self),
+            "type": self.plugin_name,
             "bidirectional": self.bidirectional,
             "rrt_connect": self.rrt_connect,
             "rrt_star": self.rrt_star,

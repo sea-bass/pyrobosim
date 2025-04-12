@@ -17,6 +17,16 @@ class PathPlanner:
     When implementing a new planner, you should subclass from this class.
     """
 
+    plugin_name: str
+    """The name of the plugin. Must be implemented by child class."""
+
+    registered_plugins: dict[str, Any] = {}
+    """List of registered path planner plugins."""
+
+    def __init_subclass__(cls, **kwargs: Any):
+        """Registers a path planner subclass."""
+        cls.registered_plugins[cls.plugin_name] = cls
+
     def plan(self, start: Pose, goal: Pose) -> Path:
         """
         Plans a path from start to goal.

@@ -16,6 +16,8 @@ class PRMPlanner(PathPlanner):
     Implements a Probabilistic Roadmap (PRM) path planner.
     """
 
+    plugin_name = "prm"  # Needed to register plugin.
+
     def __init__(
         self,
         *,
@@ -142,10 +144,8 @@ class PRMPlanner(PathPlanner):
 
         :return: A dictionary containing the planner information.
         """
-        from .planner_registry import get_planner_string
-
         return {
-            "type": get_planner_string(self),
+            "type": self.plugin_name,
             "collision_check_step_dist": self.collision_check_step_dist,
             "compress_path": self.compress_path,
             "max_connection_dist": self.max_connection_dist,

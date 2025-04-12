@@ -39,6 +39,8 @@ ASTAR_ACTIONS = {
 class AStarPlanner(PathPlanner, AStar):  # type: ignore[misc]
     """Occupancy grid based implementation of the A* path planning algorithm."""
 
+    plugin_name = "astar"  # Needed to register plugin.
+
     def __init__(
         self,
         *,
@@ -199,10 +201,8 @@ class AStarPlanner(PathPlanner, AStar):  # type: ignore[misc]
 
         :return: A dictionary containing the planner information.
         """
-        from .planner_registry import get_planner_string
-
         return {
-            "type": get_planner_string(self),
+            "type": self.plugin_name,
             "grid_resolution": self.grid_resolution,
             "grid_inflation_radius": self.grid_inflation_radius,
             "heuristic": self.heuristic,

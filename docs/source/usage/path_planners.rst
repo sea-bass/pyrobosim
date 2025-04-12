@@ -10,45 +10,6 @@ Path Planner Definitions
 
 The ``pyrobosim/navigation`` module contains all path planner implementations.
 
-In the ``planner_registry.py`` file available, you will see a list of implemented planner classes that looks like this:
-
-.. code-block:: python
-
-    # Planners
-    from .a_star import AStarPlanner
-    from .rrt import RRTPlanner
-    from .prm import PRMPlanner
-    from .world_graph import WorldGraphPlanner
-
-    PATH_PLANNERS_MAP = {
-        "astar": AStarPlanner,
-        "rrt": RRTPlanner,
-        "prm": PRMPlanner,
-        "world_graph": WorldGraphPlanner,
-    }
-
-When loading path planners from YAML, the ``planner.type`` entry will correspond to one of these entries in the ``PATH_PLANNERS_MAP`` dictionary.
-As such, if you would like to add your own planner, you can do so in this file.
-
-.. code-block:: python
-
-    # Planners
-    from .a_star import AStarPlanner
-    from .rrt import RRTPlanner
-    from .prm import PRMPlanner
-    from .world_graph import WorldGraphPlanner
-    from my_module.my_file import MyNewPlanner
-
-
-    PATH_PLANNERS_MAP = {
-        "astar": AStarPlanner,
-        "rrt": RRTPlanner,
-        "prm": PRMPlanner,
-        "world_graph": WorldGraphPlanner,
-        "my_planner": MyNewPlanner,
-    }
-
-
 What to Implement in a Planner
 ------------------------------
 
@@ -67,6 +28,8 @@ If your planner does not have any such data, you still must implement this.
     from pyrobosim.utils.path import Path
 
     class MyNewPlanner(PathPlanner):
+
+        plugin_name = "my_planner"  # Needed to register the plugin
 
         def __init__(
             self,
@@ -129,18 +92,37 @@ For visualization, you can provide ``get_graphs()`` and ``get_latest_paths()`` m
             return self.latest_path
 
 To serialize to file, which is needed to reset the world, you should also implement the ``to_dict()`` method.
-Note the ``get_planner_string()`` helper function, which extracts the name of the planner you defined in ``PATH_PLANNERS_MAP`` earlier on.
+Note the ``plugin_name`` attribute, which contains the name of the planner you defined earlier on.
 
 .. code-block:: python
 
         def to_dict(self) -> dict[str, Any]:
-            from pyrobosim.navigation.planner_registry import get_planner_string
-
             return {
-                "type": get_planner_string(self),
+                "type": self.plugin_name,
                 "grid_resolution": self.grid_resolution,
                 "grid_inflation_radius": self.grid_inflation_radius,
             }
+
+At this point, you can import your own path planner in code and load it dynamically using the ``PathPlanner`` parent class.
+
+.. code-block:: python
+
+    from pyrobosim.navigation import PathPlanner
+
+    planner_class = PathPlanner.registered_plugins["my_planner"]
+    planner = planner_class(
+        world=world, grid_resolution=0.01, grid_inflation_radius=0.1)
+
+... or from YAML world files.
+
+.. code-block:: yaml
+
+    robots:
+      name: robot
+      path_planner:
+        type: my_planner
+        grid_resolution: 0.01
+        grid_inflation_radius: 0.1
 
 If you would like to implement your own path planner, it is highly recommended to look at the existing planner implementations as a reference.
 You can also always ask the maintainers through a Git issue!
