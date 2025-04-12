@@ -53,8 +53,13 @@ class Entity:
     viz_color: Sequence[float]
     """The color of the visualization polygon patch and text."""
 
-    def __init__(self) -> None:
-        """Construct a new Entity instance."""
+    def __init__(self, *, name: str) -> None:
+        """
+        Construct a new Entity instance.
+
+        :param name: A required entity name.
+        """
+        self.name = name
         self.parent: Entity | None = None
         self.children: list[Entity] = []
 
