@@ -110,6 +110,7 @@ At this point, you can import your own sensor in code and load it dynamically us
 .. code-block:: python
 
     from pyrobosim.sensors import Sensor
+    from my_module import MyNewSensor  # Still need to import this!
 
     sensor_class = Sensor.registered_plugins["my_sensor"]
     sensor = sensor_class(update_rate_s=0.1, initial_value=42)

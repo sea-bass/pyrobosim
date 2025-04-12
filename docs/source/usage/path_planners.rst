@@ -15,12 +15,9 @@ What to Implement in a Planner
 
 The path planners implemented in PyRoboSim provide general functionality to plan paths in a known world, as well as data for visualization in the UI.
 
-First, you want to make a constructor that accepts a world in a ``world`` keyword argument, along with any other data you might expect.
-For example, this planner accepts a world and a few parameters and builds an occupancy grid.
-
 You should implement a ``reset()`` method.
 This is needed if, for example, the world changes and you want to generate new persistent data structures such as a new occupancy grid or roadmap.
-If your planner does not have any such data, you still must implement this.
+Note that the parent class' method can be called using ``super().reset()``, which automatically resets common attributes such as ``latest_path``, ``robot``, and ``world``.
 
 .. code-block:: python
 
@@ -34,20 +31,20 @@ If your planner does not have any such data, you still must implement this.
         def __init__(
             self,
             *,
-            world: World,
             grid_resolution: float,
             grid_inflation_radius: float,
         ) -> None:
-            self.latest_path: Path | None = None
+            super().__init__()
             self.reset()
 
         def reset(self) -> None:
-            self.latest_path = None
-            self.grid = OccupancyGrid.from_world(
-                world,
-                resolution=grid_resolution,
-                inflation_radius=grid_inflation_radius,
-            )
+            super().reset()
+            if self.world is not None:
+                self.grid = OccupancyGrid.from_world(
+                    world,
+                    resolution=grid_resolution,
+                    inflation_radius=grid_inflation_radius,
+                )
 
 Then, you need to implement the actual path planning.
 This is done using a ``plan()`` method that accepts a start and goal pose and returns a ``Path`` object.
@@ -108,10 +105,10 @@ At this point, you can import your own path planner in code and load it dynamica
 .. code-block:: python
 
     from pyrobosim.navigation import PathPlanner
+    from my_module import MyNewPlanner  # Still need to import this!
 
     planner_class = PathPlanner.registered_plugins["my_planner"]
-    planner = planner_class(
-        world=world, grid_resolution=0.01, grid_inflation_radius=0.1)
+    planner = planner_class(grid_resolution=0.01, grid_inflation_radius=0.1)
 
 ... or from YAML world files.
 

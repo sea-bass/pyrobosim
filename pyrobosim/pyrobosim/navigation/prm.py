@@ -4,11 +4,9 @@ import time
 from typing import Any
 
 from .types import PathPlanner
-from ..core.world import World
 from ..utils.path import Path
 from ..utils.pose import Pose
 from ..utils.search_graph import SearchGraph, Node
-from ..utils.world_motion_planning import reduce_waypoints_polygon
 
 
 class PRMPlanner(PathPlanner):
@@ -21,7 +19,6 @@ class PRMPlanner(PathPlanner):
     def __init__(
         self,
         *,
-        world: World,
         compress_path: bool = False,
         collision_check_step_dist: float = 0.025,
         max_connection_dist: float = 2.0,
@@ -30,24 +27,26 @@ class PRMPlanner(PathPlanner):
         """
         Creates an instance of a PRM planner.
 
-        :param world: World object to use in the planner.
         :param compress_path: If true, tries to shorten the path with polygon-based collision checks.
         :param collision_check_step_dist: Step size for discretizing collision checking.
         :param max_connection_dist: Maximum connection distance between nodes.
         :param max_nodes: Maximum nodes sampled to build the PRM.
         """
+        super().__init__()
+
         # Parameters
         self.collision_check_step_dist = collision_check_step_dist
         self.max_connection_dist = max_connection_dist
         self.max_nodes = max_nodes
-        self.world = world
         self.compress_path = compress_path
 
         self.reset()
 
     def reset(self) -> None:
         """Resamples the PRM and resets planning metrics."""
-        self.latest_path = Path()
+        super().reset()
+        if self.world is None:
+            return
 
         # Create a search graph and sample nodes.
         self.graph = SearchGraph(
@@ -68,6 +67,7 @@ class PRMPlanner(PathPlanner):
 
         :param node: Node to try add to the graph.
         """
+        assert self.world is not None
         for other in self.graph.nodes:
             if node == other:
                 continue
@@ -87,6 +87,7 @@ class PRMPlanner(PathPlanner):
         :param goal: Goal pose or graph node.
         :return: Path from start to goal.
         """
+        assert self.world is not None
         # Reset the path and time
         self.latest_path = Path()
         # Create the start and goal nodes
@@ -104,6 +105,8 @@ class PRMPlanner(PathPlanner):
         t_start = time.time()
         self.latest_path = self.graph.find_path(start, goal)
         if self.compress_path:
+            from ..utils.world_motion_planning import reduce_waypoints_polygon
+
             compressed_poses = reduce_waypoints_polygon(
                 self.world, self.latest_path.poses, self.collision_check_step_dist
             )
@@ -120,6 +123,7 @@ class PRMPlanner(PathPlanner):
 
         :return: Collision-free pose if found, else ``None``.
         """
+        assert self.world is not None
         return self.world.sample_free_robot_pose_uniform()
 
     def get_graphs(self) -> list[SearchGraph]:

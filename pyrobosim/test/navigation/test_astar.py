@@ -22,7 +22,6 @@ def test_astar() -> None:
 
     robot = world.robots[0]
     planner_config = {
-        "world": world,
         "grid_resolution": 0.05,
         "grid_inflation_radius": 1.5 * robot.radius,
         "diagonal_motion": True,
@@ -30,7 +29,7 @@ def test_astar() -> None:
         "compress_path": False,
     }
     astar_planner = AStarPlanner(**planner_config)
-
+    robot.set_path_planner(astar_planner)
     full_path = astar_planner.plan(start, goal).poses
 
     assert len(full_path) >= 2
@@ -39,7 +38,6 @@ def test_astar() -> None:
 
     # Plan for same start and goal with path compression enabled
     planner_config = {
-        "world": world,
         "grid_resolution": 0.05,
         "grid_inflation_radius": 1.5 * robot.radius,
         "diagonal_motion": True,
@@ -48,6 +46,8 @@ def test_astar() -> None:
     }
     astar_planner = AStarPlanner(**planner_config)
 
+    robot.set_path_planner(astar_planner)
+    astar_planner.reset()
     compressed_path = astar_planner.plan(start, goal).poses
 
     assert len(compressed_path) >= 2

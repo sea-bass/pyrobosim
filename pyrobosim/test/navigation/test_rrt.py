@@ -18,16 +18,17 @@ def test_rrt_long_distance() -> None:
         os.path.join(get_data_folder(), "test_world.yaml")
     )
     planner_config = {
-        "world": world,
         "bidirectional": False,
         "rrt_connect": False,
         "rrt_star": False,
     }
     rrt = RRTPlanner(**planner_config)
+    world.robots[0].set_path_planner(rrt)
+
     start = Pose(x=-1.6, y=2.8)
     goal = Pose(x=2.5, y=3.0)
-
     path = rrt.plan(start, goal)
+
     assert len(path.poses) >= 2
     assert path.poses[0] == start
     assert path.poses[-1] == goal
@@ -39,16 +40,17 @@ def test_rrt_short_distance_connect() -> None:
         os.path.join(get_data_folder(), "test_world.yaml")
     )
     planner_config = {
-        "world": world,
         "bidirectional": False,
         "rrt_connect": False,
         "rrt_star": False,
     }
     rrt = RRTPlanner(**planner_config)
+    world.robots[0].set_path_planner(rrt)
+
     start = Pose(x=-1.6, y=2.8)
     goal = Pose(x=-1.6, y=3.0)
-
     path = rrt.plan(start, goal)
+
     assert len(path.poses) == 2
     assert path.poses[0] == start
     assert path.poses[1] == goal
@@ -60,15 +62,16 @@ def test_rrt_no_path(caplog: LogCaptureFixture) -> None:
         os.path.join(get_data_folder(), "test_world.yaml")
     )
     planner_config = {
-        "world": world,
         "max_time": 0.5,  # To make the test fail more quickly.
     }
 
     rrt = RRTPlanner(**planner_config)
+    world.robots[0].set_path_planner(rrt)
+
     start = Pose(x=-1.6, y=2.8)
     goal = Pose(x=12.5, y=3.0)
-
     path = rrt.plan(start, goal)
+
     assert len(path.poses) == 0
     assert "Could not find a path from start to goal." in caplog.text
 
@@ -79,16 +82,17 @@ def test_rrt_bidirectional() -> None:
         os.path.join(get_data_folder(), "test_world.yaml")
     )
     planner_config = {
-        "world": world,
         "bidirectional": True,
         "rrt_connect": False,
         "rrt_star": False,
     }
     rrt = RRTPlanner(**planner_config)
+    world.robots[0].set_path_planner(rrt)
+
     start = Pose(x=-1.6, y=2.8)
     goal = Pose(x=2.5, y=3.0)
-
     path = rrt.plan(start, goal)
+
     assert len(path.poses) >= 2
     assert path.poses[0] == start
     assert path.poses[-1] == goal
@@ -100,16 +104,17 @@ def test_rrt_connect() -> None:
         os.path.join(get_data_folder(), "test_world.yaml")
     )
     planner_config = {
-        "world": world,
         "bidirectional": False,
         "rrt_connect": True,
         "rrt_star": False,
     }
     rrt = RRTPlanner(**planner_config)
+    world.robots[0].set_path_planner(rrt)
+
     start = Pose(x=-1.6, y=2.8)
     goal = Pose(x=2.5, y=3.0)
-
     path = rrt.plan(start, goal)
+
     assert len(path.poses) >= 2
     assert path.poses[0] == start
     assert path.poses[-1] == goal
@@ -121,16 +126,17 @@ def test_rrt_star() -> None:
         os.path.join(get_data_folder(), "test_world.yaml")
     )
     planner_config = {
-        "world": world,
         "bidirectional": False,
         "rrt_connect": False,
         "rrt_star": True,
     }
     rrt = RRTPlanner(**planner_config)
+    world.robots[0].set_path_planner(rrt)
+
     start = Pose(x=-1.6, y=2.8)
     goal = Pose(x=2.5, y=3.0)
-
     path = rrt.plan(start, goal)
+
     assert len(path.poses) >= 2
     assert path.poses[0] == start
     assert path.poses[-1] == goal
@@ -142,13 +148,14 @@ def test_rrt_compress_path() -> None:
         os.path.join(get_data_folder(), "test_world.yaml")
     )
     planner_config = {
-        "world": world,
         "bidirectional": False,
         "rrt_connect": False,
         "rrt_star": False,
         "compress_path": False,
     }
     rrt = RRTPlanner(**planner_config)
+    world.robots[0].set_path_planner(rrt)
+
     start = Pose(x=-0.3, y=0.6)
     goal = Pose(x=2.5, y=3.0)
 

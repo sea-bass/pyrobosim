@@ -15,7 +15,6 @@ world = WorldYamlLoader().from_file(world_file)
 def test_rrt() -> None:
     """Creates an RRT planner and plans"""
     planner_config = {
-        "world": world,
         "bidirectional": True,
         "rrt_connect": True,
         "rrt_star": True,

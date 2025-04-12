@@ -7,9 +7,8 @@ import yaml
 
 from .robot import Robot
 from .world import World
-from ..navigation.types import PathPlanner
+from ..navigation import *
 from ..planning.actions import ExecutionOptions
-from ..sensors.types import Sensor
 from ..utils.general import replace_special_yaml_tokens
 from ..utils.logging import get_global_logger
 from ..utils.pose import Pose
@@ -185,12 +184,12 @@ class WorldYamlLoader:
 
     def get_path_planner(self, robot_data: dict[str, Any]) -> Any:
         """Gets path planner to add to a robot."""
+        from ..navigation.types import PathPlanner
 
         if "path_planner" not in robot_data:
             return None
 
         planner_data = robot_data["path_planner"]
-        planner_data["world"] = self.world
         planner_type = planner_data["type"]
         planner_data.pop("type")
 
@@ -224,6 +223,8 @@ class WorldYamlLoader:
 
     def get_sensors(self, robot_data: dict[str, Any]) -> Any:
         """Gets a dictionary of sensors to add to a robot."""
+        from ..sensors.types import Sensor
+
         if "sensors" not in robot_data:
             return None
 

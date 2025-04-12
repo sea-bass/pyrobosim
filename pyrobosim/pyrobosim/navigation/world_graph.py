@@ -6,11 +6,9 @@ from typing import Any
 
 from .types import PathPlanner
 from ..core.locations import Location
-from ..core.world import World
 from ..utils.path import Path
 from ..utils.pose import Pose
 from ..utils.search_graph import SearchGraph, Node
-from ..utils.world_motion_planning import reduce_waypoints_polygon
 
 
 class WorldGraphPlanner(PathPlanner):
@@ -23,7 +21,6 @@ class WorldGraphPlanner(PathPlanner):
     def __init__(
         self,
         *,
-        world: World,
         collision_check_step_dist: float = 0.025,
         max_connection_dist: float | None = None,
         compress_path: bool = False,
@@ -31,15 +28,15 @@ class WorldGraphPlanner(PathPlanner):
         """
         Creates an instance of a world graph planner.
 
-        :param world: World object to use in the planner.
         :param collision_check_step_dist: Step size for discretizing collision checking.
         :param max_connection_dist: Maximum connection distance between nodes.
         :param compress_path: If true, tries to shorten the path with polygon-based collision checks.
         """
+        super().__init__()
+
         # Parameters
         self.collision_check_step_dist = collision_check_step_dist
         self.max_connection_dist = max_connection_dist
-        self.world = world
         self.compress_path = compress_path
 
         self.planning_time = 0.0
@@ -51,6 +48,10 @@ class WorldGraphPlanner(PathPlanner):
         """
         Initializes the graph from the entity nodes in the world linked to this planner.
         """
+        super().reset()
+        if self.world is None:
+            return
+
         # Create a search graph from the nodes in the world.
         self.graph = SearchGraph(color=[0, 0.4, 0.8], color_alpha=0.5, use_planner=True)
         for entity in itertools.chain(
@@ -73,6 +74,7 @@ class WorldGraphPlanner(PathPlanner):
 
         :param node: Node to try add to the graph.
         """
+        assert self.world is not None
         for other in self.graph.nodes:
             if node == other:
                 continue
@@ -110,6 +112,9 @@ class WorldGraphPlanner(PathPlanner):
         t_start = time.time()
         self.latest_path = self.graph.find_path(start, goal)
         if self.compress_path:
+            from ..utils.world_motion_planning import reduce_waypoints_polygon
+
+            assert self.world is not None
             compressed_poses = reduce_waypoints_polygon(
                 self.world, self.latest_path.poses, self.collision_check_step_dist
             )

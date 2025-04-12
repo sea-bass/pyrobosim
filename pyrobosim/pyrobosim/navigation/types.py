@@ -23,6 +23,13 @@ class PathPlanner:
     registered_plugins: dict[str, Any] = {}
     """List of registered path planner plugins."""
 
+    def __init__(self) -> None:
+        from ..core.robot import Robot
+        from ..core.world import World
+
+        self.robot: Robot | None = None
+        self.world: World | None = None
+
     def __init_subclass__(cls, **kwargs: Any):
         """Registers a path planner subclass."""
         cls.registered_plugins[cls.plugin_name] = cls
@@ -39,7 +46,9 @@ class PathPlanner:
 
     def reset(self) -> None:
         """Resets the path planner."""
-        raise NotImplementedError("Must implement in subclass.")
+        self.latest_path = Path()
+        if self.robot is not None:
+            self.world = self.robot.world
 
     def get_graphs(self) -> list[SearchGraph]:
         """

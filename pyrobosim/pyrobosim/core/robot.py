@@ -181,6 +181,9 @@ class Robot(Entity):
             (see e.g., :class:`pyrobosim.navigation.rrt.RRTPlanner`).
         """
         self.path_planner = path_planner
+        if path_planner is not None:
+            path_planner.robot = self
+            path_planner.reset()
 
     def set_path_executor(self, path_executor: PathExecutor | None) -> None:
         """

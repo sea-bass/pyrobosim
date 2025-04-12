@@ -8,7 +8,6 @@ from typing import Any
 from astar import AStar
 
 from .types import PathPlanner
-from ..core import World
 from ..utils.pose import Pose
 from ..utils.path import Path
 from ..utils.search_graph import SearchGraph
@@ -44,7 +43,6 @@ class AStarPlanner(PathPlanner, AStar):  # type: ignore[misc]
     def __init__(
         self,
         *,
-        world: World,
         grid_resolution: float,
         grid_inflation_radius: float,
         heuristic: str = "euclidean",
@@ -54,7 +52,6 @@ class AStarPlanner(PathPlanner, AStar):  # type: ignore[misc]
         """
         Creates an instance of grid based A* planner.
 
-        :param world: World object to use in the planner.
         :param grid_resolution: The resolution of the occupancy grid, in meters.
         :param grid_inflation_radius: The inflation radius of the occupancy grid, in meters.
         :param heuristic: The metric to be used as heuristic ('manhattan', 'euclidean', 'none').
@@ -62,14 +59,11 @@ class AStarPlanner(PathPlanner, AStar):  # type: ignore[misc]
         :param compress_path: If true, waypoint reduction will be applied to generated path, else full path is returned.
         """
         super().__init__()
-        self.world = world
         self.grid_resolution = grid_resolution
         self.grid_inflation_radius = grid_inflation_radius
         self.heuristic = heuristic
         self.diagonal_motion = diagonal_motion
         self.compress_path = compress_path
-        self._set_actions()
-        self._set_heuristic()
         self.reset()
 
     def _set_actions(self) -> None:
@@ -79,6 +73,7 @@ class AStarPlanner(PathPlanner, AStar):  # type: ignore[misc]
 
     def _set_heuristic(self) -> None:
         """Sets the A* heuristic."""
+        assert self.world is not None
         if self.heuristic == "euclidean":
             self._heuristic = lambda p1, p2: math.sqrt(
                 (p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2
@@ -139,7 +134,12 @@ class AStarPlanner(PathPlanner, AStar):  # type: ignore[misc]
         """Resets the occupancy grid."""
         from .occupancy_grid import OccupancyGrid
 
-        self.latest_path = Path()
+        super().reset()
+        if self.world is None:
+            return
+
+        self._set_actions()
+        self._set_heuristic()
         self.grid = OccupancyGrid.from_world(
             self.world,
             resolution=self.grid_resolution,

@@ -124,9 +124,9 @@ class TestRobot:
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
         goal_pose = Pose(x=2.5, y=3.0, yaw=np.pi / 2.0)
 
-        path_planner = WorldGraphPlanner(world=self.test_world)
-        robot = Robot(pose=init_pose, path_planner=path_planner)
-        robot.world = self.test_world
+        path_planner = WorldGraphPlanner()
+        robot = Robot(name="test_robot", path_planner=path_planner)
+        self.test_world.add_robot(robot, pose=init_pose)
         robot.location = self.test_world.get_entity_by_name("kitchen")
 
         # Explicitly provide start pose
@@ -168,11 +168,11 @@ class TestRobot:
         goal_pose = Pose(x=2.5, y=3.0, yaw=np.pi / 2.0)
 
         robot = Robot(
-            pose=init_pose,
-            path_planner=WorldGraphPlanner(world=self.test_world),
+            name="test_robot",
+            path_planner=WorldGraphPlanner(),
             path_executor=ConstantVelocityExecutor(linear_velocity=5.0, dt=0.1),
         )
-        robot.world = self.test_world
+        self.test_world.add_robot(robot, pose=init_pose)
         robot.location = "kitchen"
 
         # Non-threaded option -- blocks
@@ -204,15 +204,15 @@ class TestRobot:
         goal_pose = Pose(x=2.5, y=3.0, yaw=np.pi / 2.0)
 
         robot = Robot(
-            pose=init_pose,
-            path_planner=WorldGraphPlanner(world=self.test_world),
+            name="test_robot",
+            path_planner=WorldGraphPlanner(),
             path_executor=ConstantVelocityExecutor(
                 linear_velocity=1.0,  # Move slowly to give time to cancel.
                 dt=0.1,
                 validate_during_execution=True,
             ),
         )
-        robot.world = self.test_world
+        self.test_world.add_robot(robot, pose=init_pose)
 
         # Plan a path.
         robot.set_pose(init_pose)
@@ -243,13 +243,13 @@ class TestRobot:
         """Check that the robot can manipulate objects."""
         # Spawn the robot near the kitchen table
         robot = Robot(
-            pose=Pose(x=1.0, y=0.5, yaw=0.0),
+            name="test_robot",
             action_execution_options={
                 "pick": ExecutionOptions(battery_usage=5.0),
                 "place": ExecutionOptions(battery_usage=10.0),
             },
         )
-        robot.world = self.test_world
+        self.test_world.add_robot(robot, pose=Pose(x=1.0, y=0.5, yaw=0.0))
         robot.location = self.test_world.get_entity_by_name("table0_tabletop")
 
         # Try pick with a object query that cannot not be found.
@@ -389,22 +389,13 @@ class TestRobot:
     def test_robot_open_close_hallway(self) -> None:
         """Check that the robot can open or close hallways."""
         robot = Robot(
-            pose=Pose(x=1.0, y=0.5, yaw=0.0),
+            name="test_robot",
             action_execution_options={
                 "open": ExecutionOptions(battery_usage=20.0),
                 "close": ExecutionOptions(battery_usage=25.0),
             },
         )
-        robot.world = self.test_world
-
-        # Try to open and close with an unset location.
-        result = robot.open_location()
-        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
-        assert result.message == "Robot location is not set. Cannot open."
-
-        result = robot.close_location()
-        assert result.status == ExecutionStatus.PRECONDITION_FAILURE
-        assert result.message == "Robot location is not set. Cannot close."
+        self.test_world.add_robot(robot, pose=Pose(x=1.0, y=0.5, yaw=0.0))
 
         # Now set the location to a non-openable location, and get a different warning.
         robot.location = self.test_world.get_room_by_name("kitchen")
@@ -469,13 +460,11 @@ class TestRobot:
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
         robot = Robot(
             name="test_robot",
-            pose=init_pose,
-            path_planner=WorldGraphPlanner(world=self.test_world),
+            path_planner=WorldGraphPlanner(),
             path_executor=ConstantVelocityExecutor(linear_velocity=5.0, dt=0.1),
             action_execution_options={"navigate": ExecutionOptions(battery_usage=1.0)},
         )
-        robot.location = "kitchen"
-        robot.world = self.test_world
+        self.test_world.add_robot(robot, pose=init_pose, loc="kitchen")
 
         # Navigate to a location and check that the battery level decreased.
         action = TaskAction(
@@ -502,8 +491,8 @@ class TestRobot:
     def test_execute_invalid_action(self) -> None:
         """Tests execution of an action that is not recognized as a valid type."""
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
-        robot = Robot(name="test_robot", pose=init_pose)
-        robot.world = self.test_world
+        robot = Robot(name="test_robot")
+        self.test_world.add_robot(robot, pose=init_pose)
         action = TaskAction("bad_action")
 
         result = robot.execute_action(action)
@@ -522,14 +511,13 @@ class TestRobot:
             ),
         }
         robot = Robot(
-            pose=init_pose,
-            path_planner=WorldGraphPlanner(world=self.test_world),
+            name="test_robot",
+            path_planner=WorldGraphPlanner(),
             path_executor=ConstantVelocityExecutor(linear_velocity=5.0, dt=0.1),
             action_execution_options=action_execution_options,
             initial_battery_level=80.0,
         )
-        robot.location = "kitchen"
-        robot.world = self.test_world
+        self.test_world.add_robot(robot, pose=init_pose, loc="kitchen")
         my_desk = self.test_world.get_location_by_name("my_desk")
         my_desk.is_charger = True  # Make into a charger to test charging capabilities.
         action = TaskAction(
@@ -557,12 +545,11 @@ class TestRobot:
         """Tests that actions can be canceled during execution."""
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
         robot = Robot(
-            pose=init_pose,
-            path_planner=WorldGraphPlanner(world=self.test_world),
+            name="test_robot",
+            path_planner=WorldGraphPlanner(),
             path_executor=ConstantVelocityExecutor(linear_velocity=3.0, dt=0.1),
         )
-        robot.location = "kitchen"
-        robot.world = self.test_world
+        self.test_world.add_robot(robot, pose=init_pose, loc="kitchen")
         action = TaskAction(
             "navigate",
             source_location="kitchen",
@@ -595,12 +582,11 @@ class TestRobot:
         """Tests execution of a plan consisting of multiple actions."""
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
         robot = Robot(
-            pose=init_pose,
-            path_planner=WorldGraphPlanner(world=self.test_world),
+            name="test_robot",
+            path_planner=WorldGraphPlanner(),
             path_executor=ConstantVelocityExecutor(linear_velocity=5.0, dt=0.1),
         )
-        robot.location = "kitchen"
-        robot.world = self.test_world
+        self.test_world.add_robot(robot, pose=init_pose, loc="kitchen")
 
         result, num_completed = robot.execute_plan(self.create_test_plan())
 
@@ -610,8 +596,8 @@ class TestRobot:
     def test_execute_blank_plan(self) -> None:
         """Tests a trivial case of executing a plan that is None."""
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
-        robot = Robot(name="test_robot", pose=init_pose)
-        robot.world = self.test_world
+        robot = Robot(name="test_robot")
+        self.test_world.add_robot(robot, pose=init_pose)
 
         result, num_completed = robot.execute_plan(None)
         assert result.status == ExecutionStatus.INVALID_ACTION
@@ -622,12 +608,11 @@ class TestRobot:
         """Tests that task plans can be canceled during execution."""
         init_pose = Pose(x=1.0, y=0.5, yaw=0.0)
         robot = Robot(
-            pose=init_pose,
-            path_planner=WorldGraphPlanner(world=self.test_world),
+            name="test_robot",
+            path_planner=WorldGraphPlanner(),
             path_executor=ConstantVelocityExecutor(linear_velocity=5.0, dt=0.1),
         )
-        robot.location = "kitchen"
-        robot.world = self.test_world
+        self.test_world.add_robot(robot, pose=init_pose, loc="kitchen")
 
         # Start a thread that cancels the plan mid execution.
         threading.Timer(3.0, robot.cancel_actions).start()
@@ -647,8 +632,8 @@ class TestRobot:
 
     def test_at_object_spawn(self) -> None:
         """Tests check for robot being at an object spawn."""
-        robot = Robot()
-        robot.world = self.test_world
+        robot = Robot(name="test_robot")
+        self.test_world.add_robot(robot)
         assert not robot.at_object_spawn()
 
         robot.location = self.test_world.get_entity_by_name("kitchen")
