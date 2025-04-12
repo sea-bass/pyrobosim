@@ -65,7 +65,7 @@ def test_apply_first_resolution_strategy() -> None:
 
 def test_apply_nearest_resolution_strategy(caplog: LogCaptureFixture) -> None:
     # Test 'nearest' strategy
-    entity_list = [Entity(), Entity(), Entity()]
+    entity_list = [Entity(name="e1"), Entity(name="e2"), Entity(name="e3")]
     entity_list[0].pose = Pose(x=1.0, y=0.0)
     entity_list[1].pose = Pose(x=2.0, y=0.0)
     entity_list[2].pose = Pose(x=3.0, y=0.0)
