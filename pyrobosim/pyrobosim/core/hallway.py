@@ -68,6 +68,7 @@ class Hallway(Entity):
             raise ValueError("width must be a positive value.")
 
         # Unpack input
+        super().__init__(name=name)
         self.room_start = room_start
         self.room_end = room_end
         self.name = self.reversed_name = name
@@ -77,7 +78,6 @@ class Hallway(Entity):
         self.viz_color = parse_color(color)
         self.is_open = is_open
         self.is_locked = is_locked
-        self.children: list[Entity] = []
 
         # Parse the connection method
         # If the connection is "auto" or "angle", the hallway is a simple rectangle

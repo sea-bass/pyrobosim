@@ -87,8 +87,7 @@ class Robot(Entity):
         from .world import World
 
         # Basic properties
-        super().__init__()
-        self.name = name
+        super().__init__(name=name)
         self.radius = radius
         self.height = height
         self.color = parse_color(color)
