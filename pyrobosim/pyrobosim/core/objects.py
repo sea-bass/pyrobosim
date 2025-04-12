@@ -73,10 +73,9 @@ class Object(Entity):
          - a hexadecimal string (e.g., "#FF0000").
          If using a category with a defined color, this parameter overrides the category color.
         """
-        self.category = category
-        self.name = name
+        super().__init__(name=name)
         self.parent = parent
-        self.children = []
+        self.category = category
 
         self.inflation_radius = inflation_radius
         self.collision_polygon = Polygon()

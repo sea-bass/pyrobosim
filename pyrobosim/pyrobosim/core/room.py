@@ -55,7 +55,7 @@ class Room(Entity):
         """
         from .hallway import Hallway  # Avoids circular import
 
-        self.name = name
+        super().__init__(name=name)
         self.wall_width = wall_width
         self.viz_color = parse_color(color)
 
