@@ -232,7 +232,7 @@ class RRTPlanner(PathPlanner):
 
         if self.compress_path:
             path_poses = reduce_waypoints_polygon(
-                self.world, path_poses, self.collision_check_step_dist, self.partial_observability_hallway_states
+                self.world, path_poses, self.collision_check_step_dist, self.partial_observability_hallway_states, self.robot.known_hallway_states
             )
         planning_time = time.time() - t_start
         self.latest_path = Path(poses=path_poses, planning_time=planning_time)

@@ -27,7 +27,7 @@ from .main import PyRoboSimMainWindow
 from ..core.objects import Object
 from ..core.robot import Robot
 from ..core.world import World
-from ..navigation.visualization import plot_path_planner, plot_scan_poses
+from ..navigation.visualization import plot_path_planner
 from ..utils.path import Path
 from ..utils.pose import Pose
 
@@ -70,9 +70,6 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
     show_planner_and_path_signal = Signal(Robot, bool, Path)
     """ Signal for showing planners and paths without threading errors. """
 
-    show_lidar_points_signal = Signal(Robot)
-    """ Signal for showing lidar scan points without threading errors. """
-
     def __init__(
         self,
         main_window: PyRoboSimMainWindow,
@@ -112,6 +109,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         self.robot_dirs: list[Line2D] = []
         self.robot_lengths: list[float] = []
         self.robot_texts: list[Text] = []
+        self.robot_sensor_artists: list[Artist] = []
         self.obj_patches: list[PathPatch] = []
         self.obj_texts: list[Text] = []
         self.hallway_patches: list[PathPatch] = []
@@ -120,7 +118,6 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         self.location_patches: list[PathPatch] = []
         self.location_texts: list[Text] = []
         self.path_planner_artists: dict[str, Artist] = {"graph": [], "path": []}
-        self.scan_poses_artists: dict[str, Artist] = {"poses": []}
         self.show_collision_polygons = False
 
         # Connect signals
@@ -131,7 +128,6 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         self.show_objects_signal.connect(self.show_objects)
         self.show_robots_signal.connect(self.show_robots)
         self.show_planner_and_path_signal.connect(self.show_planner_and_path)
-        self.show_lidar_points_signal.connect(self.show_lidar_points)
 
         # Thread pool for managing long-running tasks in separate threads.
         self.thread_pool = QThreadPool()
@@ -155,7 +151,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         self.show_rooms()
 
     def show_robots(self) -> None:
-        """Draws robots as circles with heading lines for visualization."""
+        """Draws robots, along with any associated sensors."""
         with self.draw_lock:
             len(self.world.robots)
             for body in self.robot_bodies:
@@ -164,9 +160,12 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                 dir.remove()
             for text in self.robot_texts:
                 text.remove()
+            for artist in self.robot_sensor_artists:
+                artist.remove()
             self.robot_bodies = []
             self.robot_dirs = []
             self.robot_lengths = []
+            self.robot_sensor_artists = []
 
             for i, robot in enumerate(self.world.robots):
                 p = robot.get_pose()
@@ -175,7 +174,8 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                         (p.x, p.y),
                         radius=robot.radius,
                         edgecolor=robot.color,
-                        fill=False,
+                        facecolor=[1.0, 1.0, 1.0],
+                        fill=True,
                         linewidth=2,
                         zorder=self.robot_zorder,
                     )
@@ -206,6 +206,14 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                     verticalalignment="top",
                     fontsize=10,
                 )
+
+                for sensor in robot.sensors.values():
+                    if sensor.is_active:
+                        sensor_artists = sensor.setup_artists()
+                        self.robot_sensor_artists.extend(sensor_artists)
+                        for artist in sensor_artists:
+                            self.axes.add_artist(artist)
+
             self.robot_texts = [robot.viz_text for robot in self.world.robots]
 
     def show_hallways(self) -> None:
@@ -339,8 +347,8 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
     def draw_and_sleep(self) -> None:
         """Redraws the figure and waits a small amount of time."""
         with self.draw_lock:
-            self.fig.canvas.draw()
             self.fig.canvas.flush_events()
+            self.fig.canvas.draw()
             time.sleep(0.005)
 
     def show_planner_and_path(
@@ -385,34 +393,6 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
 
         self.draw_and_sleep()
 
-    def show_lidar_points(
-        self,
-        robot: Robot | None = None,
-    ) -> None:
-        """
-        Plot points scanned by robot's lidar.
-
-        :param robot: If set to a Robot instance, uses that robot for display.
-        """
-        if not robot:
-            self.world.logger.warning("No robot found")
-            return
-
-        # Since removing artists while drawing can cause issues,
-        # this function should also lock drawing.
-        with self.draw_lock:
-            if robot.path_executor:
-                poses = robot.sensor.get_scan_poses()
-                scan_poses_artists = plot_scan_poses(
-                    self.axes, poses=poses
-                )
-
-                for artist in self.scan_poses_artists["poses"]:
-                    artist.remove()
-                self.scan_poses_artists["poses"] = scan_poses_artists.get("poses", [])
-
-        self.draw_and_sleep()
-
     def nav_animation_callback(self) -> None:
         """Timer callback function to animate navigating robots."""
         if not self.main_window.isVisible():
@@ -431,8 +411,8 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                 self.show_world_state(cur_robot)
                 world.gui.set_buttons_during_action(False)
 
-            self.update_robots_plot()
-            self.draw_and_sleep()
+        self.update_robots_plot()
+        self.draw_and_sleep()
 
     def update_robots_plot(self) -> None:
         """Updates the robot visualization graphics objects."""
@@ -452,6 +432,10 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                     robot.viz_text.set_position((p.x, p.y - 2.0 * robot.radius))
                 if robot.manipulated_object is not None:
                     self.update_object_plot(robot.manipulated_object)
+
+                for sensor in robot.sensors.values():
+                    if sensor.is_active:
+                        sensor.update_artists()
 
     def show_world_state(self, robot: Robot | None = None) -> None:
         """

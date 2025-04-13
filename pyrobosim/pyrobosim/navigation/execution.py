@@ -28,7 +28,6 @@ class ConstantVelocityExecutor(PathExecutor):
         validation_step_dist: float = 0.025,
         
         partial_observability_hallway_states: bool = False,
-        sensor_detection_dt: float = 0.025,
     ) -> None:
         """
         Creates a constant velocity path executor.
@@ -42,7 +41,6 @@ class ConstantVelocityExecutor(PathExecutor):
 
         :param partial_observability_hallway_states: If True,  robot doesn't know the world's hallways state, 
             and assume all is OPEN.
-        :param sensor_detection_dt: Time step for running sensor and detect collisions, in seconds.
         """
         super().__init__()
         self.dt = dt
@@ -55,7 +53,6 @@ class ConstantVelocityExecutor(PathExecutor):
         self.validation_step_dist = validation_step_dist
 
         self.partial_observability_hallway_states = partial_observability_hallway_states
-        self.sensor_detection_dt = sensor_detection_dt
 
         # Execution state
         self.reset_state()
@@ -125,11 +122,6 @@ class ConstantVelocityExecutor(PathExecutor):
             self.validation_timer = Thread(target=self.validate_remaining_path)
             self.validation_timer.start()
 
-        # Optionally, kick off the sensor thread.
-        if self.partial_observability_hallway_states and self.robot.world is not None:
-            self.sensor_thread = Thread(target=self.run_lidar)
-            self.sensor_thread.start()
-
         # Execute the trajectory.
         status = ExecutionStatus.SUCCESS
         message = ""
@@ -148,12 +140,8 @@ class ConstantVelocityExecutor(PathExecutor):
                     self.validation_timer is not None
                 ):
                     self.validation_timer.join()
-                if self.partial_observability_hallway_states and(
-                    self.sensor_thread is not None
-                ):
-                    self.sensor_thread.join()
                 message = "Trajectory execution aborted."
-                self.robot.logger.info(message)                
+                self.robot.logger.info(message)
                 status = ExecutionStatus.EXECUTION_FAILURE
                 break
             if self.cancel_execution:
@@ -223,31 +211,6 @@ class ConstantVelocityExecutor(PathExecutor):
                     self.abort_execution = True
 
             time.sleep(max(0, self.validation_dt - (time.time() - start_time)))
-
-    def run_lidar(self) -> None:
-        """
-        Runs the lidar sensor to detect collisions in the hallway.
-        """
-        if (self.robot is None) or (self.traj is None):
-            return
-
-        while self.following_path and (not self.abort_execution):
-
-            start_time = time.time()
-
-            detected_collision = self.robot.sensor.detect_collision()
-
-            if detected_collision:
-                self.robot.logger.warning(
-                    "Lidar detected collision. Aborting execution"
-                )
-                self.abort_execution = True
-            
-            #TODO: emit signal to draw lidar points it on canvas??
-            # if (self.robot.world is not None) and (self.robot.world.gui is not None):
-            #     self.robot.world.gui.canvas.show_lidar_points_signal.emit(self.robot)
-
-            time.sleep(max(0, self.sensor_detection_dt - (time.time() - start_time)))
 
     def to_dict(self) -> dict[str, Any]:
         """

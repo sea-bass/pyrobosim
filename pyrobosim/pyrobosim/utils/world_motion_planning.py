@@ -6,11 +6,11 @@ This is mostly to avoid circular imports.
 
 from ..core.world import World
 from ..utils.pose import Pose
-from ..core.types import Entity
+from ..core.hallway import Hallway
 
 
 def reduce_waypoints_polygon(
-    world: World, poses: list[Pose], step_dist: float = 0.01, partial_observability_hallway_states: bool = False, known_hallway_states: set[Entity] = None
+    world: World, poses: list[Pose], step_dist: float = 0.01, partial_observability_hallway_states: bool = False, known_hallway_states: set[Hallway] = None
 ) -> list[Pose]:
     """
     Reduces the number of waypoints in a path generated from a polygon based planner.

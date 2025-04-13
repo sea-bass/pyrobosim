@@ -33,6 +33,8 @@ class Entity:
     """The main polygon representing the entity."""
     collision_polygon = Polygon()
     """The collision polygon representing the entity."""
+    internal_collision_polygon = Polygon()
+    """The internal collision polygon representing the entity."""
 
     nav_poses: list[Pose] = []
     """The (optional) list of navigation poses for this entity."""

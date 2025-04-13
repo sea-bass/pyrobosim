@@ -100,36 +100,3 @@ def show_path_planner(
     plt.title(title)
     plt.axis("equal")
     plt.show()
-
-def plot_scan_poses(
-        axes: Axes,
-        poses: list[Pose] = [],
-) -> dict[str, list[Artist]]:
-    """"
-    Plots the scan poses on a specified set of axes.
-
-    :param axes: The axes on which to draw.
-    :param poses: The poses to display.
-    :return: List of Matplotlib artists containing what was drawn,
-        used for bookkeeping.
-    """
-    poses_artists: list[Artist] = []
-    artists: dict[str, list[Artist]] = {}
-
-    (markers,) = axes.plot(
-        [pose.x for pose in poses],
-        [pose.y for pose in poses],
-        color = 'y',
-        marker='1',
-        linestyle='',
-        markerfacecolor='y',
-        markeredgecolor='y',
-        markersize=3,
-        zorder=1,
-    )
-    poses_artists.append(markers)
-
-    if poses_artists:
-        artists["poses"] = poses_artists
-    return artists
-    

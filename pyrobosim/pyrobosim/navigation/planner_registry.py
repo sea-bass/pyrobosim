@@ -36,12 +36,12 @@ def get_planner_class(planner_type: str) -> Any:
     return PATH_PLANNERS_MAP[planner_type]
 
 
-def get_planner_string(planner: Any) -> str:
+def get_planner_string(planner: PathPlanner) -> str:
     """
     Helper function that returns the planner string from a planner instance.
 
     :param planner: The path planner instance.
-    :return: The string corresponding to the entry in PLANNER_TYPE_MAP
+    :return: The string corresponding to the entry in `PATH_PLANNERS_MAP`
     :raises ValueError: if the planner has no registered key.
     """
     for planner_str, planner_type in PATH_PLANNERS_MAP.items():

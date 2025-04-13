@@ -15,6 +15,7 @@ from pyrobosim.navigation.execution import ConstantVelocityExecutor
 from pyrobosim.navigation.a_star import AStarPlanner
 from pyrobosim.navigation.prm import PRMPlanner
 from pyrobosim.navigation.rrt import RRTPlanner
+from pyrobosim.sensors.lidar import Lidar2D
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
@@ -121,7 +122,15 @@ def create_world(multirobot: bool = False) -> World:
         width_clearance=0.01,
         depth_clearance=0.01,
     )
-
+    lidar = Lidar2D(
+        update_rate_s=0.1,
+        angle_units="degrees",
+        min_angle=-120.0,
+        max_angle=120.0,
+        angular_resolution=5.0,
+        max_range_m=2.0,
+    )
+    
     robot0 = Robot(
         name="robot0",
         radius=0.1,
@@ -130,12 +139,13 @@ def create_world(multirobot: bool = False) -> World:
             dt=0.1,
             max_angular_velocity=4.0,
             validate_during_execution=True,
-            partial_observability_hallway_states=True,
+            # partial_observability_hallway_states=True,
         ),
+        sensors={"lidar": lidar} if args.lidar else None,
         grasp_generator=GraspGenerator(grasp_props),
         partial_observability=args.partial_observability,
         color="#CC00CC",
-        partial_observability_hallway_states=True,
+        # partial_observability_hallway_states=True,
     )
     planner_config_rrt = {
         "world": world,
@@ -146,7 +156,7 @@ def create_world(multirobot: bool = False) -> World:
         "max_connection_dist": 0.5,
         "rewire_radius": 1.5,
         "compress_path": False,
-        "partial_observability_hallway_states": True,
+        # "partial_observability_hallway_states": True,
     }
     rrt_planner = RRTPlanner(**planner_config_rrt)
     robot0.set_path_planner(rrt_planner)
@@ -217,6 +227,11 @@ def parse_args() -> argparse.Namespace:
         "--partial-observability",
         action="store_true",
         help="If True, robots have partial observability and must detect objects.",
+    )
+    parser.add_argument(
+        "--lidar",
+        action="store_true",
+        help="If True, adds a lidar sensor to the first robot.",
     )
     return parser.parse_args()
 
