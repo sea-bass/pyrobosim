@@ -235,7 +235,7 @@ class WorldYamlLoader:
 
         del robot_data["sensors"]
         return sensor_args
-    
+
     def get_grasp_generator(self, robot_data: dict[str, Any]) -> Any:
         """Gets a grasp generator to add to a robot."""
         from pyrobosim.manipulation.grasping import (

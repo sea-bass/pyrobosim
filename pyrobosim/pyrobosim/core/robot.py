@@ -78,7 +78,7 @@ class Robot(Entity):
             :class:`pyrobosim.navigation.execution.ConstantVelocityExecutor`).
         :param grasp_generator: Grasp generator for manipulating objects.
         :param sensors: Optional map of names to sensors (see e.g.,
-             :class:`pyrobosim.sensors.lidar.Lidar2D`).
+            :class:`pyrobosim.sensors.lidar.Lidar2D`).
         :param start_sensor_threads: If True, automatically starts the sensor threads.
         :param partial_observability: If False, the robot can access all objects in the world.
             If True, it must detect new objects at specific locations.
@@ -92,8 +92,7 @@ class Robot(Entity):
         from .world import World
 
         # Basic properties
-        super().__init__()
-        self.name = name
+        super().__init__(name=name)
         self.radius = radius
         self.height = height
         self.color = parse_color(color)
@@ -115,7 +114,7 @@ class Robot(Entity):
             max_angular_acceleration=max_angular_acceleration,
         )
         self.state_lock = Lock()
-    
+
         # World interaction properties
         self.world: World | None = None
         self.location: Entity | None = None
@@ -148,9 +147,6 @@ class Robot(Entity):
         self.executing_plan = False
         self.canceling_execution = False
         self.battery_level = initial_battery_level
-
-        self.partial_observability_hallway_states = partial_observability_hallway_states
-        self.known_hallway_states: set[Hallway] = set()
 
         self.logger.info("Created robot.")
 
@@ -215,12 +211,12 @@ class Robot(Entity):
         self.sensors = sensors
         for sensor in self.sensors.values():
             sensor.robot = self
-    
+
     def start_sensor_threads(self) -> None:
         """Starts the robot's sensor threads."""
         for sensor in self.sensors.values():
             sensor.start_thread()
- 
+
     def stop_sensor_threads(self) -> None:
         """Stops the robot's active sensor threads."""
         for sensor in self.sensors.values():
@@ -610,15 +606,15 @@ class Robot(Entity):
                     side_grasps=False,
                 )
 
-            if len(grasps) == 0:
-                message = "Could not generate valid grasps. Cannot pick object."
-                self.logger.warning(message)
-                return ExecutionResult(
-                    status=ExecutionStatus.PLANNING_FAILURE, message=message
-                )
-            else:
+                if len(grasps) == 0:
+                    message = "Could not generate valid grasps. Cannot pick object."
+                    self.logger.warning(message)
+                    return ExecutionResult(
+                        status=ExecutionStatus.PLANNING_FAILURE, message=message
+                    )
                 # TODO: For now, just pick a random grasp.
                 self.last_grasp_selection = np.random.choice(grasps)
+
         if self.last_grasp_selection is not None:
             self.logger.info(f"Selected {self.last_grasp_selection}")
 

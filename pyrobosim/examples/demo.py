@@ -130,7 +130,7 @@ def create_world(multirobot: bool = False) -> World:
         angular_resolution=5.0,
         max_range_m=2.0,
     )
-    
+
     robot0 = Robot(
         name="robot0",
         radius=0.1,

@@ -74,10 +74,9 @@ class Location(Entity):
         :param is_charger: If True, the robot charges its battery at this location.
         """
         # Extract the model information from the model list
-        self.name = name
-        self.category = category
+        super().__init__(name=name)
         self.parent = parent
-        self.children: list[Entity] = []
+        self.category = category
         self.is_open = is_open
 
         category_metadata = Location.metadata.get(category)
@@ -225,10 +224,9 @@ class ObjectSpawn(Entity):
         :param category_metadata: Metadata dictionary for the parent category.
         :param parent: Parent of the location (typically a :class:`pyrobosim.core.locations.Location`)
         """
-        self.name = name
+        super().__init__(name=name)
         assert parent is not None
         self.parent = parent
-        self.children: list[Entity] = []
         self.category = parent.category
         self.set_open(parent.is_open, recursive=True)
 

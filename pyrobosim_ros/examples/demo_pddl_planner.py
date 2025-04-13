@@ -142,14 +142,11 @@ class PlannerNode(Node):  # type: ignore[misc]
             return
 
         # Unpack the latest world state.
-        try:
-            if self.world_state_future_response is not None:
-                result = self.world_state_future_response.result()
-                if result is None:
-                    raise RuntimeError("Result was none -- this should not happen.")
-                update_world_from_state_msg(self.world, result.state)
-        except Exception:
-            self.get_logger().info("Failed to unpack world state.")
+        if self.world_state_future_response is not None:
+            result = self.world_state_future_response.result()
+            if result is None:
+                raise RuntimeError("Result was none -- this should not happen.")
+            update_world_from_state_msg(self.world, result.state)
 
         # Once the world state is set, plan using the first robot.
         self.get_logger().info("Planning...")

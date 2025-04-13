@@ -113,7 +113,7 @@ class World:
 
         self.logger.info("Reset world successfully.")
         return True  # No error handling yet
-    
+
     def shutdown(self) -> None:
         """Cleanly shuts down the world."""
         for robot in self.robots:
@@ -1064,15 +1064,15 @@ class World:
         :param restart_numbering: If True, restarts numbering of all categories to zero.
         """
         for obj in reversed(self.objects):
-             # Only update the UI on the final object to be removed.
+            # Only update the UI on the final object to be removed.
             self.remove_object(obj, show=(len(self.objects) == 1))
         if restart_numbering:
             self.object_instance_counts = {}
 
     def add_robot(
-        self, 
-        robot: Robot, 
-        loc: Entity | None = None, 
+        self,
+        robot: Robot,
+        loc: Entity | None = None,
         pose: Pose | None = None,
         show: bool = True,
     ) -> None:

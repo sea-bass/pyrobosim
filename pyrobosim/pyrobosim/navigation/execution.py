@@ -100,7 +100,8 @@ class ConstantVelocityExecutor(PathExecutor):
             max_angular_velocity=self.max_angular_velocity,
         )
         if self.traj is None:
-            self.robot.logger.warning("Failed to get trajectory from path.")
+            message = "Failed to get trajectory from path."
+            self.robot.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE,
                 message=message,
@@ -108,7 +109,8 @@ class ConstantVelocityExecutor(PathExecutor):
 
         traj_interp = interpolate_trajectory(self.traj, self.dt)
         if traj_interp is None:
-            self.robot.logger.warning("Failed to interpolate trajectory.")
+            message = "Failed to interpolate trajectory."
+            self.robot.logger.warning(message)
             return ExecutionResult(
                 status=ExecutionStatus.PRECONDITION_FAILURE,
                 message=message,

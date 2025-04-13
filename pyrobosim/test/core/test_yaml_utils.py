@@ -534,7 +534,7 @@ def test_yaml_load_and_write_dict() -> None:
 
     # Avoids sensor thread deadlock at shutdown.
     world.shutdown()
- 
+
 
 def test_yaml_load_and_write_file() -> None:
     """Tests round-trip loading from, and writing to, a YAML file."""
