@@ -1,7 +1,7 @@
 Robot Dynamics
 ==============
 
-While the main focus of ``pyrobosim`` is to command robots with high-level actions, it is also possible to directly send velocity commands to your robots.
+While the main focus of PyRoboSim is to command robots with high-level actions, it is also possible to directly send velocity commands to your robots.
 
 When you instantiate a :py:class:`pyrobosim.core.robot.Robot` object, it contains a :py:class:`pyrobosim.core.dynamics.RobotDynamics2D` object.
 
@@ -96,7 +96,7 @@ The full example is available here for you to run and modify.
 ROS 2 Interface Usage
 ---------------------
 
-If you launch ``pyrobosim`` with the ROS 2 interface, you can command each robot using ROS topics.
+If you launch PyRoboSim with the ROS 2 interface, you can command each robot using ROS topics.
 
 For example, a robot named ``my_robot`` will have a topic ``my_robot/cmd_vel`` of type ``geometry_msgs/Twist``.
 To command this robot from an existing ROS 2 node in Python, you can do something like this:

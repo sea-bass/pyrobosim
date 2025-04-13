@@ -1,13 +1,13 @@
 Concepts
 ========
 
-``pyrobosim`` is primarily a world modeling framework for prototyping high-level robotics behavior applications.
+PyRoboSim is primarily a world modeling framework for prototyping high-level robotics behavior applications.
 
 
 Worlds
 ------
 
-Worlds in ``pyrobosim`` consist of a hierarchy of polygonal *entities*, including:
+Worlds in PyRoboSim consist of a hierarchy of polygonal *entities*, including:
 
 * **Robots**: A movable entity capable of actions that can change its own state and the state of the world.
 * **Rooms**: Regions that a robot can navigate.
