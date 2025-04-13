@@ -58,7 +58,7 @@ else
     if [ ! -f "install/setup.bash" ]
     then
         echo "Building ROS workspace at ${PYROBOSIM_ROS_WORKSPACE}..."
-        colcon build
+        colcon build --symlink-install
     fi
     echo "Sourcing ROS workspace at ${PYROBOSIM_ROS_WORKSPACE}."
     source install/setup.bash

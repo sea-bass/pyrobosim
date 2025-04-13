@@ -22,7 +22,7 @@ copyright = "2022-2025, Sebastian Castro"
 author = "Sebastian Castro"
 
 # The full version, including alpha/beta/rc tags
-version = release = "3.3.0"
+version = release = "4.0.0"
 
 
 # -- General configuration ---------------------------------------------------
