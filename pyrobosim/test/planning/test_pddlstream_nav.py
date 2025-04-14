@@ -67,7 +67,6 @@ def create_test_world(add_hallway: bool = True) -> World:
 
     # Create a search graph and motion planner
     planner_config = {
-        "world": world,
         "bidirectional": False,
         "rrt_connect": False,
         "rrt_star": False,

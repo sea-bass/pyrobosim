@@ -1158,6 +1158,8 @@ class World:
             robot.location = loc
             robot.set_pose(robot_pose)
             robot.world = self
+            if robot.path_planner is not None:
+                robot.path_planner.reset()
             self.robots.append(robot)
             self.name_to_entity[robot.name] = robot
         else:

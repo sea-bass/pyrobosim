@@ -17,14 +17,15 @@ def test_prm_default() -> None:
     world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
     )
-    planner_config = {"world": world}
 
     np.random.seed(1234)  # Fix seed for reproducibility
-    prm = PRMPlanner(**planner_config)
+    prm = PRMPlanner()
+    world.robots[0].set_path_planner(prm)
+
     start = Pose(x=-1.6, y=2.8)
     goal = Pose(x=2.5, y=3.0)
-
     path = prm.plan(start, goal)
+
     assert len(path.poses) >= 2
     assert path.poses[0] == start
     assert path.poses[-1] == goal
@@ -35,13 +36,14 @@ def test_prm_no_path(caplog: LogCaptureFixture) -> None:
     world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
     )
-    planner_config = {"world": world}
 
-    prm = PRMPlanner(**planner_config)
+    prm = PRMPlanner()
+    world.robots[0].set_path_planner(prm)
+
     start = Pose(x=-1.6, y=2.8)
     goal = Pose(x=12.5, y=3.0)
-
     path = prm.plan(start, goal)
+
     assert len(path.poses) == 0
     assert "Could not find a path from start to goal." in caplog.text
 
@@ -51,15 +53,13 @@ def test_prm_compress_path() -> None:
     world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
     )
-    planner_config = {
-        "world": world,
-        "compress_path": False,
-    }
+    planner_config = {"compress_path": False}
     prm = PRMPlanner(**planner_config)
-    start = Pose(x=-0.3, y=0.6)
-    goal = Pose(x=2.5, y=3.0)
+    world.robots[0].set_path_planner(prm)
 
     np.random.seed(1234)  # Use same seed for reproducibility
+    start = Pose(x=-0.3, y=0.6)
+    goal = Pose(x=2.5, y=3.0)
     orig_path = prm.plan(start, goal)
     assert len(orig_path.poses) >= 2
 

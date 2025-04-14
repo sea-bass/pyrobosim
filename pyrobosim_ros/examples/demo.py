@@ -114,7 +114,6 @@ def create_world() -> World:
     # Add a robot
     # Create path planner
     planner_config = {
-        "world": world,
         "bidirectional": True,
         "rrt_connect": False,
         "rrt_star": True,

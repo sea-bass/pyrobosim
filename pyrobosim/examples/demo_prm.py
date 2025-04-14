@@ -15,7 +15,6 @@ world = WorldYamlLoader().from_file(world_file)
 def test_prm() -> None:
     """Creates a PRM planner and plans"""
     planner_config = {
-        "world": world,
         "max_nodes": 100,
         "collision_check_step_dist": 0.025,
         "max_connection_dist": 1.5,

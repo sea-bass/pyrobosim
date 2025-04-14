@@ -2,9 +2,10 @@
 Basic types for sensor simulation.
 """
 
-from matplotlib.artist import Artist
 from threading import Thread
 from typing import Any
+
+from matplotlib.artist import Artist
 
 
 class Sensor:
@@ -14,12 +15,22 @@ class Sensor:
     When implementing a new sensor, you should subclass from this class.
     """
 
+    plugin_name: str
+    """The name of the plugin. Must be implemented by child class."""
+
+    registered_plugins: dict[str, Any] = {}
+    """List of registered sensor plugins."""
+
     def __init__(self) -> None:
         from ..core.robot import Robot
 
         self.robot: Robot | None = None
         self.thread = Thread(target=self.thread_function)
         self.is_active = False
+
+    def __init_subclass__(cls, **kwargs: Any):
+        """Registers a path planner subclass."""
+        cls.registered_plugins[cls.plugin_name] = cls
 
     def __del__(self) -> None:
         self.is_active = False
