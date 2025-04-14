@@ -94,7 +94,7 @@ For visualization, you can provide ``setup_artists()`` and ``update_artists()`` 
 
 
 To serialize to file, which is needed to reset the world, you should also implement the ``to_dict()`` method.
-Note the ``plugin_name`` attribute, which contains the name of the sensor you definedearlier on.
+Note the ``plugin_name`` attribute, which contains the name of the sensor you defined earlier on.
 
 .. code-block:: python
 
