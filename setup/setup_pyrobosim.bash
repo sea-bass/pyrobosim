@@ -5,7 +5,6 @@
 # User variables
 # Please modify these for your environment
 VIRTUALENV_FOLDER=~/python-virtualenvs/pyrobosim
-ROS_WORKSPACE=~/pyrobosim_ws
 
 # Create a Python virtual environment
 [ ! -d "${VIRTUALENV_FOLDER}" ] && mkdir -p ${VIRTUALENV_FOLDER}
@@ -37,12 +36,19 @@ echo -e ""
 read -p "Do you want to set up ROS? (y/n) : " USE_ROS
 if [ "${USE_ROS,,}" == "y" ]
 then
-  # Validate that the ROS workspace specified exists.
-  if [ ! -d "${ROS_WORKSPACE}" ]
-  then
-      echo -e "\nFolder '${ROS_WORKSPACE}' does not exist."
-      echo "Please configure it to the ROS workspace that contains the 'pyrobosim' repository."
-      exit 1
+  # Attempt to auto-detect ROS workspace from script location
+  POTENTIAL_WS=$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")
+  echo "Checking if ${POTENTIAL_WS}/src/pyrobosim exists..."
+
+  if [ -d "${POTENTIAL_WS}/src/pyrobosim" ]; then
+    ROS_WORKSPACE="${POTENTIAL_WS}"
+    echo "[INFO] Detected ROS workspace at: ${ROS_WORKSPACE}"
+  else
+    echo -e "\n[ERROR] Could not detect a valid ROS workspace."
+    echo "[INFO] Expected: ${POTENTIAL_WS}/src/pyrobosim"
+    echo "[INFO] Please place the repo inside a ROS 2 workspace (e.g. my_ws/src/pyrobosim)"
+    type deactivate &> /dev/null && deactivate
+    exit 1
   fi
 
   rm -rf ${ROS_WORKSPACE}/build ${ROS_WORKSPACE}/install ${ROS_WORKSPACE}/log
