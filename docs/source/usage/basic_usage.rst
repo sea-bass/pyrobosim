@@ -1,6 +1,6 @@
 Basic Usage
 ===========
-To get started with ``pyrobosim``, you can run the following examples.
+To get started with PyRoboSim, you can run the following examples.
 
 
 Standalone
@@ -76,7 +76,7 @@ The first command will start a world as a ROS 2 node, and the second one will ex
 Creating Worlds
 ---------------
 
-Worlds can be created either with the ``pyrobosim`` API, or loaded from a YAML file using the :py:class:`pyrobosim.core.yaml_utils.WorldYamlLoader` utility.
+Worlds can be created either with the Python API, or loaded from a YAML file using the :py:class:`pyrobosim.core.yaml_utils.WorldYamlLoader` utility.
 
 By default, ``demo.py`` creates a world using the API, but you can alternatively try a demo YAML file using the ``--world-file`` argument.
 For example:

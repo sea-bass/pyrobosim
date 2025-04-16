@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Tests for object creation in pyrobosim.
+Tests for object creation in PyRoboSim.
 """
 
 import os

@@ -9,6 +9,7 @@ dependencies/
 
 # Python cache and metadata folders
 __pycache__/
+.mypy_cache/
 .pytest_cache/
 *.egg-info/
 

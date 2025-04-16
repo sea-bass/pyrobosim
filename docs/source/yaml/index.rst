@@ -3,7 +3,7 @@
 YAML Schemas
 ============
 
-``pyrobosim`` relies on YAML files to define entities in the world.
+PyRoboSim worlds can be created using the Python API, but can also loaded from YAML files.
 
 Specifically, each world draws from a set of **location** and **object** metadata files.
 

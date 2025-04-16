@@ -1,4 +1,4 @@
-# Tests for pyrobosim ROS conversions functionality
+# Tests for PyRoboSim ROS conversions functionality
 
 import pytest
 from rclpy.duration import Duration
@@ -30,7 +30,7 @@ from pyrobosim_ros.ros_conversions import (
 
 def test_pose_conversion() -> None:
     """Tests round-trip conversion of pose objects."""
-    # Create a pyrobosim pose
+    # Create a PyRoboSim pose
     orig_pose = Pose(x=1.0, y=2.0, z=3.0, q=[0.707, 0.0, 0.707, 0.0])  # wxyz
 
     # Convert to a ROS Message
@@ -43,7 +43,7 @@ def test_pose_conversion() -> None:
     assert ros_pose.orientation.y == pytest.approx(orig_pose.q[2])
     assert ros_pose.orientation.z == pytest.approx(orig_pose.q[3])
 
-    # Convert back to a pyrobosim Pose
+    # Convert back to a PyRoboSim Pose
     new_pose = pose_from_ros(ros_pose)
     assert new_pose.is_approx(orig_pose)
 
@@ -51,7 +51,7 @@ def test_pose_conversion() -> None:
 def test_path_conversion() -> None:
     """Tests round-trip conversion of path objects."""
 
-    # Create a pyrobosim path
+    # Create a PyRoboSim path
     poses = [
         Pose(x=0.0, y=0.0, z=0.0, q=[1.0, 0.0, 0.0, 0.0]),
         Pose(x=1.0, y=0.0, z=0.0, q=[0.707, 0.0, 0.0, 0.707]),
@@ -72,7 +72,7 @@ def test_path_conversion() -> None:
         assert ros_pose.orientation.y == pytest.approx(orig_pose.q[2])
         assert ros_pose.orientation.z == pytest.approx(orig_pose.q[3])
 
-    # Convert back to a pyrobosim path
+    # Convert back to a PyRoboSim path
     new_path = path_from_ros(ros_path)
     assert new_path.num_poses == orig_path.num_poses
     assert new_path.length == orig_path.length
@@ -83,7 +83,7 @@ def test_path_conversion() -> None:
 def test_task_action_conversion() -> None:
     """Tests round-trip conversion of task action objects."""
 
-    # Create a pyrobosim task action
+    # Create a PyRoboSim task action
     orig_action = TaskAction(
         "pick",
         robot="robot0",
@@ -115,7 +115,7 @@ def test_task_action_conversion() -> None:
     assert ros_action.pose.orientation.z == pytest.approx(orig_action.pose.q[3])
     assert len(ros_action.path.poses) == orig_action.path.num_poses
 
-    # Convert back to a pyrobosim task action
+    # Convert back to a PyRoboSim task action
     new_action = task_action_from_ros(ros_action)
     assert new_action.robot == orig_action.robot
     assert new_action.type == orig_action.type
@@ -135,7 +135,7 @@ def test_task_action_conversion() -> None:
 def test_task_plan_conversion() -> None:
     """Tests round-trip conversion of task plan objects."""
 
-    # Create a pyrobosim task plan
+    # Create a PyRoboSim task plan
     nav_path = Path(
         [
             Pose(x=0.0, y=0.0, z=0.0, q=[1.0, 0.0, 0.0, 0.0]),
@@ -167,7 +167,7 @@ def test_task_plan_conversion() -> None:
         assert orig_action.type == ros_action.type
     assert ros_plan.cost == pytest.approx(orig_plan.total_cost)
 
-    # Convert back to a pyrobosim task plan
+    # Convert back to a PyRoboSim task plan
     new_plan = task_plan_from_ros(ros_plan)
     assert new_plan.robot == orig_plan.robot
     assert len(new_plan.actions) == len(orig_plan.actions)
@@ -190,7 +190,7 @@ def test_execution_result_conversion() -> None:
     for code in code_names:
         expected_message = f"Action completed with status {code}."
 
-        # Create a pyrobosim execution result
+        # Create a PyRoboSim execution result
         orig_result = ExecutionResult(
             status=getattr(ExecutionStatus, code),
             message=expected_message,
@@ -201,7 +201,7 @@ def test_execution_result_conversion() -> None:
         assert ros_result.status == getattr(RosExecutionResult, code)
         assert ros_result.message == expected_message
 
-        # Convert back to a pyrobosim object
+        # Convert back to a PyRoboSim object
         new_result = execution_result_from_ros(ros_result)
         assert new_result.status == orig_result.status
         assert new_result.message == orig_result.message

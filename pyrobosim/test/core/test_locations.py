@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Tests for location and object spawn creation in pyrobosim.
+Tests for location and object spawn creation in PyRoboSim.
 """
 
 import os

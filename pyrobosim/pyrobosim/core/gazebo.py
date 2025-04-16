@@ -51,7 +51,7 @@ class WorldGazeboExporter:
         are printed to the Terminal.
 
         :param classic: If True, exports to Gazebo Classic, else to Gazebo Sim.
-        :param out_folder: The output folder. If not specified, defaults to the pyrobosim `data/worlds` folder.
+        :param out_folder: The output folder. If not specified, defaults to the PyRoboSim `data/worlds` folder.
         :return: Path to output folder with generated world.
         """
         world_name = self.world.name
@@ -146,7 +146,7 @@ class WorldGazeboExporter:
         Export locations and objects to Gazebo representations.
 
         For each entity that is exported, we check whether it is created from a
-        geometry primitive within pyrobosim, or it references an existing model mesh.
+        geometry primitive within PyRoboSim, or it references an existing model mesh.
 
         If created from a primitive, we export each location/object category to a separate
         Gazebo model created using the "polyline" geometry (extruding the 2D footprint).

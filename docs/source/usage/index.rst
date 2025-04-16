@@ -1,7 +1,7 @@
 Usage
 =====
 
-``pyrobosim`` offers a standalone Python API for modeling worlds and simulating robots acting within those worlds.
+PyRoboSim offers a standalone Python API for modeling worlds and simulating robots acting within those worlds.
 Optionally, you can also launch this tool with:
 
  * A ROS 2 interface that offers topics, services, and actions to interact with the world.

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Test script showing how to build a world and use it with pyrobosim
+Test script showing how to build a world and use it with PyRoboSim.
 """
 import os
 import argparse

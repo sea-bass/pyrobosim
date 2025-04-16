@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-System-level tests for the pyrobosim UI functionality to execute tasks.
+System-level tests for the PyRoboSim UI functionality to execute tasks.
 """
 
 import os

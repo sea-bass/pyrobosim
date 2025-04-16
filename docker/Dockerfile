@@ -1,9 +1,9 @@
-# Dockerfile for pyrobosim builds with and without ROS
+# Dockerfile for PyRoboSim builds with and without ROS
 ARG ROS_DISTRO=humble
 
 ##################################
 #
-# base pyrobosim build for Ubuntu
+# base PyRoboSim build for Ubuntu
 #
 ##################################
 FROM ubuntu:latest AS pyrobosim
@@ -39,7 +39,7 @@ COPY test/python_test_requirements.txt test/
 RUN pip3 install -r docs/python_docs_requirements.txt && \
     pip3 install -r test/python_test_requirements.txt
 
-# Copy the rest of the source directory and install pyrobosim
+# Copy the rest of the source directory and install PyRoboSim
 COPY . /opt/pyrobosim/
 RUN pip3 install -e pyrobosim
 
@@ -48,7 +48,7 @@ CMD /bin/bash
 
 ##################################
 #
-# pyrobosim build for Ubuntu / ROS
+# PyRoboSim build for Ubuntu / ROS
 #
 ##################################
 FROM ros:${ROS_DISTRO}-ros-base AS pyrobosim_ros
@@ -71,7 +71,7 @@ WORKDIR /pyrobosim_ws/src
 COPY setup/configure_pddlstream.bash /pyrobosim_ws/src/setup/
 RUN setup/configure_pddlstream.bash
 
-# Install pyrobosim, docs, and testing dependencies
+# Install PyRoboSim, docs, and testing dependencies
 ENV PIP_BREAK_SYSTEM_PACKAGES=1
 COPY pyrobosim/setup.py pyrobosim/
 COPY docs/python_docs_requirements.txt docs/
@@ -80,7 +80,7 @@ RUN pip3 install -e ./pyrobosim && \
     pip3 install -r docs/python_docs_requirements.txt && \
     pip3 install -r test/python_test_requirements.txt
 
-# Build the ROS workspace, which includes pyrobosim
+# Build the ROS workspace, which includes PyRoboSim
 COPY . /pyrobosim_ws/src/
 WORKDIR /pyrobosim_ws
 RUN . /opt/ros/${ROS_DISTRO}/setup.bash && \

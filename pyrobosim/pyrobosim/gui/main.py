@@ -1,4 +1,4 @@
-"""Main utilities for pyrobosim GUI."""
+"""Main utilities for PyRoboSim GUI."""
 
 import numpy as np
 import signal
@@ -17,7 +17,7 @@ from ..core.world import World
 
 def start_gui(world: World) -> None:
     """
-    Helper function to start a pyrobosim GUI for a world model.
+    Helper function to start a PyRoboSim GUI for a world model.
 
     :param world: World object to attach to the GUI.
     """
@@ -27,11 +27,11 @@ def start_gui(world: World) -> None:
 
 
 class PyRoboSimGUI(QtWidgets.QApplication):  # type: ignore [misc]
-    """Main pyrobosim GUI class."""
+    """Main PyRoboSim GUI class."""
 
     def __init__(self, world: World, args: Any, show: bool = True) -> None:
         """
-        Creates an instance of the pyrobosim GUI.
+        Creates an instance of the PyRoboSim GUI.
 
         :param world: World object to attach to the GUI.
         :param args: System arguments, needed by the QApplication constructor.
@@ -45,7 +45,7 @@ class PyRoboSimGUI(QtWidgets.QApplication):  # type: ignore [misc]
 
 
 class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
-    """Main application window for the pyrobosim GUI."""
+    """Main application window for the PyRoboSim GUI."""
 
     update_buttons_signal = Signal()
     """Signal for updating UI button state."""
@@ -54,7 +54,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
         self, world: World, show: bool = True, *args: Any, **kwargs: Any
     ) -> None:
         """
-        Creates an instance of the pyrobosim application main window.
+        Creates an instance of the PyRoboSim application main window.
 
         :param world: World object to attach.
         :param show: If true (default), shows the GUI. Otherwise runs headless for testing.
@@ -64,7 +64,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
         super(PyRoboSimMainWindow, self).__init__(*args, **kwargs)
         self.layout_created = False
 
-        self.setWindowTitle("pyrobosim")
+        self.setWindowTitle("PyRoboSim")
         self.set_window_dims()
 
         self.canvas = WorldCanvas(self, world, show)

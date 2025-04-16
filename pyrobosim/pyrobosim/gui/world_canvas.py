@@ -1,4 +1,4 @@
-"""Utilities for displaying a pyrobosim world in a figure canvas."""
+"""Utilities for displaying a PyRoboSim world in a figure canvas."""
 
 import adjustText
 import numpy as np
@@ -34,7 +34,7 @@ from ..utils.pose import Pose
 
 class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
     """
-    Canvas for rendering a pyrobosim world as a matplotlib figure in an
+    Canvas for rendering a PyRoboSim world as a MatPlotLib figure in an
     application.
     """
 
@@ -80,7 +80,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         realtime_factor: float = 1.0,
     ) -> None:
         """
-        Creates an instance of a pyrobosim figure canvas.
+        Creates an instance of a PyRoboSim figure canvas.
 
         :param main_window: The main window object, needed for bookkeeping.
         :param world: World object to attach.

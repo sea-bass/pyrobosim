@@ -1,4 +1,4 @@
-"""Core pyrobosim module.
+"""Core PyRoboSim module.
 
 This module contains all the tools for world representation
 (e.g. robots, rooms, locations, objects).

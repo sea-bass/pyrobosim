@@ -9,7 +9,7 @@ This package is being tested with:
 pip install (Limited)
 ---------------------
 
-You can quickly install ``pyrobosim`` through PyPi.
+You can quickly install PyRoboSim through PyPi.
 However, note that this will not include any of the ROS 2 or Task and Motion Planning functionality.
 
 ::
