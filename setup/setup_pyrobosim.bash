@@ -5,8 +5,6 @@
 # User variables
 # Please modify these for your environment
 VIRTUALENV_FOLDER=~/python-virtualenvs/pyrobosim
-# Optional: Set this if you're workspace hasn't been detected
-# CUSTOM_ROS_WORKSPACE=~/path/to/ws
 
 # Create a Python virtual environment
 [ ! -d "${VIRTUALENV_FOLDER}" ] && mkdir -p ${VIRTUALENV_FOLDER}
@@ -37,61 +35,37 @@ echo "PYROBOSIM_VENV=${VIRTUALENV_FOLDER}" >> ${ENV_FILE}
 echo -e ""
 read -p "Do you want to set up ROS? (y/n) : " USE_ROS
 if [ "${USE_ROS,,}" == "y" ]; then
-  # 1. Use custom workspace if explicitly set
-  if [ -n "$CUSTOM_ROS_WORKSPACE" ]; then
-    MATCHED_DIR=$(find "${CUSTOM_ROS_WORKSPACE}/src" -type d -name "pyrobosim" 2>/dev/null | head -n 1)
-    if [ -d "${CUSTOM_ROS_WORKSPACE}/src" ] && [ -n "$MATCHED_DIR" ]; then
-      ROS_WORKSPACE="$CUSTOM_ROS_WORKSPACE"
-      echo "[INFO] Using user-defined ROS workspace: $ROS_WORKSPACE"
+  # Attempt to auto-detect by going up the tree and looking for a src/ folder
+  SEARCH_DIR="$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")"
+  while [ "$SEARCH_DIR" != "/" ]; do
+    if [ -d "${SEARCH_DIR}/src" ]; then
+      ROS_WORKSPACE="$SEARCH_DIR"
+      echo "[INFO] Found ROS workspace at: $ROS_WORKSPACE"
+      break
+    fi
+    SEARCH_DIR="$(dirname "$SEARCH_DIR")"
+  done
+
+  # If not found, ask the user to input the path manually
+  if [ -z "$ROS_WORKSPACE" ]; then
+    echo -e "\n[WARN] Could not auto-detect a valid ROS workspace."
+    read -p "Please enter the path to your ROS workspace manually: " USER_INPUT_PATH
+    MATCHED_DIR=$(find "${USER_INPUT_PATH}/src" -type d -name "pyrobosim" 2>/dev/null | head -n 1)
+    if [ -d "${USER_INPUT_PATH}/src" ] && [ -n "$MATCHED_DIR" ]; then
+      ROS_WORKSPACE="$USER_INPUT_PATH"
+      echo "[INFO] Using manually provided ROS workspace: $ROS_WORKSPACE"
     else
       # If no valid workspace found, fail
-      echo -e "\n[ERROR] The path set in CUSTOM_ROS_WORKSPACE is not valid."
+      echo -e "\n[ERROR] The path provided is not valid."
       echo "[INFO] Either:"
-      echo " - The path was written incorrectly"
-      echo " - The path does not follow the ROS workspace structure (e.g. my_ws/src/), in which case it’s not a valid ROS workspace for building"
-      type deactivate &> /dev/null && deactivate
-      exit 1
-    fi
-  # 2. Else attempt auto-detection
-  else
-    echo "[INFO] Attempting to auto-detect ROS workspace..."
-
-    POTENTIAL_WS=$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")
-    FLAT_WS_FOUND=false
-    NESTED_WS_FOUND=""
-
-    if [ -d "${POTENTIAL_WS}/src/pyrobosim" ]; then
-      ROS_WORKSPACE="$POTENTIAL_WS"
-      FLAT_WS_FOUND=true
-      echo "[INFO] Found flat ROS workspace at: $ROS_WORKSPACE"
-    else
-      while [ "$POTENTIAL_WS" != "/" ]; do
-        if [ -d "${POTENTIAL_WS}/src" ]; then
-          NESTED_WS_FOUND="$POTENTIAL_WS"
-          break
-        fi
-        POTENTIAL_WS=$(dirname "$POTENTIAL_WS")
-      done
-    fi
-
-    if [ "$FLAT_WS_FOUND" = false ] && [ -n "$NESTED_WS_FOUND" ]; then
-      echo "[INFO] Found pyrobosim nested in: $NESTED_WS_FOUND/src/"
-      read -p "Use $NESTED_WS_FOUND as your ROS workspace? (y/n): " CONFIRM
-      if [ "${CONFIRM,,}" == "y" ]; then
-        ROS_WORKSPACE="$NESTED_WS_FOUND"
-      else
-        unset ROS_WORKSPACE
-      fi
-    fi
-
-    # If no valid workspace found, fail but propose to set CUSTOM_ROS_WORKSPACE variable
-    if [ -z "$ROS_WORKSPACE" ]; then
-      echo -e "\n[ERROR] Could not detect a valid ROS workspace."
-      echo "[INFO] Tip: You can set a manual path by editing the CUSTOM_ROS_WORKSPACE variable at the top of this script."
+      echo " - The path was written incorrectly (e.g. ~/path/to/my_ws)"
+      echo " - The path does not follow the ROS workspace structure (e.g. my_ws/src), in which case it’s not a valid ROS workspace for building"
+      echo " - The src directory does not include pyrobosim"
       type deactivate &> /dev/null && deactivate
       exit 1
     fi
   fi
+
 
   rm -rf ${ROS_WORKSPACE}/build ${ROS_WORKSPACE}/install ${ROS_WORKSPACE}/log
 
