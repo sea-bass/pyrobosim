@@ -131,7 +131,7 @@ You can try this out using the following example.
 
 ::
 
-    # Launch pyrobosim
+    # Launch PyRoboSim
     ros2 launch pyrobosim_ros demo.launch.py
 
     # Launch a simple velocity publisher node

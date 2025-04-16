@@ -1,5 +1,5 @@
 """
-Utilities to convert between standalone pyrobosim objects and
+Utilities to convert between standalone PyRoboSim objects and
 ROS representations (messages, services, etc.).
 """
 
@@ -27,7 +27,7 @@ from pyrobosim.utils.pose import Pose
 
 def pose_from_ros(msg: RosPose) -> Pose:
     """
-    Converts ROS pose message to a pyrobosim pose.
+    Converts ROS pose message to a PyRoboSim pose.
 
     :param msg: ROS message.
     :return: Pose object.
@@ -47,7 +47,7 @@ def pose_from_ros(msg: RosPose) -> Pose:
 
 def pose_to_ros(pose: Pose | None) -> RosPose:
     """
-    Converts a pyrobosim Pose to a ROS message.
+    Converts a PyRoboSim Pose to a ROS message.
 
     :param act: Pose object.
     :return: ROS message.
@@ -66,7 +66,7 @@ def pose_to_ros(pose: Pose | None) -> RosPose:
 
 def path_from_ros(msg: RosPath) -> Path:
     """
-    Converts ROS path message to a pyrobosim motion Path.
+    Converts ROS path message to a PyRoboSim motion Path.
 
     :param msg: ROS message.
     :return: Path object.
@@ -76,7 +76,7 @@ def path_from_ros(msg: RosPath) -> Path:
 
 def path_to_ros(path: Path) -> RosPath:
     """
-    Converts a pyrobosim motion Path to a ROS message.
+    Converts a PyRoboSim motion Path to a ROS message.
 
     :param path: Path object.
     :return: ROS message.

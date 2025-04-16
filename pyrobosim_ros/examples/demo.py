@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Example showing how to build a world and use it with pyrobosim,
+Example showing how to build a world and use it with PyRoboSim,
 additionally starting up a ROS interface.
 """
 import os

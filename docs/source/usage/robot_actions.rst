@@ -160,6 +160,6 @@ Alternatively, you can select the ``world`` option to show all existing objects.
 .. image:: ../media/pyrobosim_partial_observability.png
     :align: center
     :width: 720px
-    :alt: Partial observability in the pyrobosim GUI.
+    :alt: Partial observability in the PyRoboSim GUI.
 
 |

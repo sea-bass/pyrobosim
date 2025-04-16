@@ -3,7 +3,7 @@
 <package format="3">
   <name>pyrobosim_ros</name>
   <version>4.0.0</version>
-  <description>ROS 2 wrapper around pyrobosim.</description>
+  <description>ROS 2 wrapper around PyRoboSim.</description>
   <maintainer email="sebas.a.castro@gmail.com">Sebastian Castro</maintainer>
   <license>MIT</license>
 

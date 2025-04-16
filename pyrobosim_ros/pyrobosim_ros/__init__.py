@@ -1,5 +1,5 @@
-"""ROS 2 interface to pyrobosim.
+"""ROS 2 interface to PyRoboSim.
 
-This module contains tools for using pyrobosim with ROS 2, including interfaces
+This module contains tools for using PyRoboSim with ROS 2, including interfaces
 to world and robot models, as well as general conversion utilities.
 """

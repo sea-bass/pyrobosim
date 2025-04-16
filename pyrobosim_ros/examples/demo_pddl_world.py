@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Example showing how to start a pyrobosim world that receives a plan from a
+Example showing how to start a PyRoboSim world that receives a plan from a
 Task and Motion Planner such as PDDLStream.
 """
 

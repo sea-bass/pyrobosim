@@ -1,4 +1,4 @@
-# Contributing to pyrobosim
+# Contributing to PyRoboSim
 
 Thank you for considering a contribution to PyRoboSim!
 

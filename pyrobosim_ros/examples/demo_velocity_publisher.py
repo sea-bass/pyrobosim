@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Example showing how to publish velocity commands to a pyrobosim robot.
+Example showing how to publish velocity commands to a PyRoboSim robot.
 """
 
 import rclpy

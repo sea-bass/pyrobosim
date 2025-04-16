@@ -1,5 +1,5 @@
 """
-Basic sanity checks for pyrobosim module.
+Basic sanity checks for PyRoboSim module.
 """
 
 import importlib
