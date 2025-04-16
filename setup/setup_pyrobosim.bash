@@ -39,33 +39,32 @@ if [ "${USE_ROS,,}" == "y" ]; then
   SEARCH_DIR="$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")"
   while [ "$SEARCH_DIR" != "/" ]; do
     if [ -d "${SEARCH_DIR}/src" ]; then
-      ROS_WORKSPACE="$SEARCH_DIR"
-      echo "[INFO] Found ROS workspace at: $ROS_WORKSPACE"
+      ROS_WORKSPACE="${SEARCH_DIR}"
+      echo "[INFO] Found ROS workspace at: ${ROS_WORKSPACE}"
       break
     fi
-    SEARCH_DIR="$(dirname "$SEARCH_DIR")"
+    SEARCH_DIR="$(dirname "${SEARCH_DIR}")"
   done
 
   # If not found, ask the user to input the path manually
-  if [ -z "$ROS_WORKSPACE" ]; then
+  if [ -z "${ROS_WORKSPACE}" ]; then
     echo -e "\n[WARN] Could not auto-detect a valid ROS workspace."
     read -p "Please enter the path to your ROS workspace manually: " USER_INPUT_PATH
     MATCHED_DIR=$(find "${USER_INPUT_PATH}/src" -type d -name "pyrobosim" 2>/dev/null | head -n 1)
-    if [ -d "${USER_INPUT_PATH}/src" ] && [ -n "$MATCHED_DIR" ]; then
-      ROS_WORKSPACE="$USER_INPUT_PATH"
-      echo "[INFO] Using manually provided ROS workspace: $ROS_WORKSPACE"
+    if [ -d "${USER_INPUT_PATH}/src" ] && [ -n "${MATCHED_DIR}" ]; then
+      ROS_WORKSPACE="${USER_INPUT_PATH}"
+      echo "[INFO] Using manually provided ROS workspace: ${ROS_WORKSPACE}"
     else
       # If no valid workspace found, fail
       echo -e "\n[ERROR] The path provided is not valid."
       echo "[INFO] Either:"
-      echo " - The path was written incorrectly (e.g. ~/path/to/my_ws)"
-      echo " - The path does not follow the ROS workspace structure (e.g. my_ws/src), in which case it’s not a valid ROS workspace for building"
-      echo " - The src directory does not include pyrobosim"
+      echo " - The path was written incorrectly or with special characters (e.g., ~/path/to/my_ws)"
+      echo " - The path does not follow the ROS workspace structure (e.g., my_ws/src), in which case it's not a valid ROS workspace for building"
+      echo " - The src directory does not include PyRoboSim"
       type deactivate &> /dev/null && deactivate
       exit 1
     fi
   fi
-
 
   rm -rf ${ROS_WORKSPACE}/build ${ROS_WORKSPACE}/install ${ROS_WORKSPACE}/log
 
