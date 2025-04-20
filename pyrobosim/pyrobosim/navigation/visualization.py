@@ -9,7 +9,6 @@ from matplotlib.collections import LineCollection
 
 from ..utils.path import Path
 from ..utils.search_graph import SearchGraph
-from ..utils.pose import Pose
 
 
 def plot_path_planner(

@@ -204,7 +204,10 @@ class ConstantVelocityExecutor(PathExecutor):
                 remaining_path = Path(poses=poses)
                 if (self.robot.world is not None) and (
                     not self.robot.world.is_path_collision_free(                    # Change this to perceived world - through partial observability hallway state?
-                        remaining_path, step_dist=self.validation_step_dist, partial_observability_hallway_states=self.partial_observability_hallway_states, known_hallway_states=self.robot.known_hallway_states
+                        remaining_path, 
+                        step_dist=self.validation_step_dist, 
+                        partial_observability_hallway_states=self.partial_observability_hallway_states, 
+                        known_hallway_states=self.robot.known_hallway_states if self.partial_observability_hallway_states else None
                     )
                 ):
                     self.robot.logger.warning(
