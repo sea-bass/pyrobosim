@@ -7,6 +7,7 @@ import numpy as np
 
 from .types import PathPlanner
 from ..core.world import World
+from ..core.robot import Robot
 from ..utils.path import Path
 from ..utils.pose import Pose
 from ..utils.search_graph import SearchGraph, Node
@@ -22,6 +23,7 @@ class RRTPlanner(PathPlanner):
         self,
         *,
         world: World,
+        robot: Robot,
         bidirectional: bool = False,
         rrt_connect: bool = False,
         rrt_star: bool = False,
@@ -31,8 +33,6 @@ class RRTPlanner(PathPlanner):
         max_time: float = 2.0,
         rewire_radius: float = 1.0,
         compress_path: bool = False,
-
-        partial_observability_hallway_states : bool = False
     ) -> None:
         """
         Creates an instance of an RRT planner.
@@ -75,7 +75,8 @@ class RRTPlanner(PathPlanner):
         self.color_alpha = 0.5
 
         # Partial Observability for Hallway States [ Open / Close ]
-        self.partial_observability_hallway_states = partial_observability_hallway_states
+        self.robot = robot
+        self.partial_observability_hallway_states = getattr(self.robot, "partial_observability_hallway_states", None)
 
         self.reset()
 

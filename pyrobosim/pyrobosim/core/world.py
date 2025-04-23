@@ -1690,7 +1690,7 @@ class World:
         shapely.prepare(self.total_internal_polygon)
 
         self.total_external_polygon = unary_union(
-            [entity.polygon for entity in itertools.chain(self.rooms, self.hallways)]
+            [entity.internal_collision_polygon for entity in itertools.chain(self.rooms, self.hallways)]
         ).difference(
             unary_union(
                 [loc.polygon for loc in self.locations]
@@ -1772,7 +1772,19 @@ class World:
         else:
             x, y = pose
 
-        return not bool(shapely.intersects_xy(self.total_internal_polygon, x, y))
+        # Robot assumes all hallway opens
+        if partial_observability_hallway_states:
+            total_internal_polygon_with_partial_observability_hallway_states = unary_union(
+                [self.total_internal_polygon] + [hall.internal_collision_polygon for hall in self.hallways if hall not in known_hallway_states])
+            is_free = not bool(shapely.intersects_xy(total_internal_polygon_with_partial_observability_hallway_states, x, y))
+        
+        else:
+            is_free = not bool(shapely.intersects_xy(self.total_internal_polygon, x, y))
+
+        return is_free
+        # Should we continue on this, or revert back to is_collision_free?
+        # Ideally to continue on this.. So we look at partial_observability and known_hallway_states,
+        # then maybe includes inflated_close_polygon if not in known_hallway_states?
 
     def collides_with_robots(self, pose: Pose, robot: Robot | None = None) -> bool:
         """
