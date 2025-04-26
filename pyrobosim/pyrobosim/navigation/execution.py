@@ -29,8 +29,6 @@ class ConstantVelocityExecutor(PathExecutor):
         validate_during_execution: bool = False,
         validation_dt: float = 0.5,
         validation_step_dist: float = 0.025,
-        
-        partial_observability_hallway_states: bool = False,
         lidar_sensor_measurement_dt: float = 0.3,
     ) -> None:
         """
@@ -56,8 +54,6 @@ class ConstantVelocityExecutor(PathExecutor):
 
         self.lidar_sensor_timer: Thread | None = None
         self.lidar_sensor_measurement_dt = lidar_sensor_measurement_dt
-
-        self.partial_observability_hallway_states = getattr(self.robot, "partial_observability_hallway_states", None)
 
         # Execution state
         self.reset_state()
@@ -129,9 +125,9 @@ class ConstantVelocityExecutor(PathExecutor):
             self.validation_timer = Thread(target=self.validate_remaining_path)
             self.validation_timer.start()
 
-        if self.partial_observability_hallway_states:
-            self.lidar_sensor_timer = Thread(target=self.detect_closed_hallway)
-            self.lidar_sensor_timer.start()
+        # if self.robot.partial_observability_hallway_states:
+        #     self.lidar_sensor_timer = Thread(target=self.detect_closed_hallway)
+        #     self.lidar_sensor_timer.start()
 
         # Execute the trajectory.
         status = ExecutionStatus.SUCCESS
@@ -151,10 +147,10 @@ class ConstantVelocityExecutor(PathExecutor):
                     self.validation_timer is not None
                 ):
                     self.validation_timer.join()
-                if self.partial_observability_hallway_states and (
-                    self.lidar_sensor_timer is not None
-                ):
-                    self.lidar_sensor_timer.join()
+                # if self.robot.partial_observability_hallway_states and (
+                #     self.lidar_sensor_timer is not None
+                # ):
+                #     self.lidar_sensor_timer.join()
                 message = "Trajectory execution aborted."
                 self.robot.logger.info(message)
                 status = ExecutionStatus.EXECUTION_FAILURE
@@ -219,8 +215,8 @@ class ConstantVelocityExecutor(PathExecutor):
                     not self.robot.world.is_path_collision_free(                    # Change this to perceived world - through partial observability hallway state?
                         remaining_path, 
                         step_dist=self.validation_step_dist, 
-                        partial_observability_hallway_states=self.partial_observability_hallway_states, 
-                        known_hallway_states=self.robot.known_hallway_states if self.partial_observability_hallway_states else None
+                        partial_observability_hallway_states=self.robot.partial_observability_hallway_states,
+                        known_hallway_states=self.robot.known_hallway_states
                     )
                 ):
                     self.robot.logger.warning(
@@ -294,6 +290,5 @@ class ConstantVelocityExecutor(PathExecutor):
             "validate_during_execution": self.validate_during_execution,
             "validation_dt": self.validation_dt,
             "validation_step_dist": self.validation_step_dist,
-            "partial_observability_hallway_states": self.partial_observability_hallway_states,
             "lidar_sensor_measurement_dt": self.lidar_sensor_measurement_dt,
         }

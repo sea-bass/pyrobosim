@@ -1,4 +1,5 @@
 """Main file containing the core world modeling tools."""
+import time
 
 import itertools
 import numpy as np
@@ -1690,7 +1691,7 @@ class World:
         shapely.prepare(self.total_internal_polygon)
 
         self.total_external_polygon = unary_union(
-            [entity.internal_collision_polygon for entity in itertools.chain(self.rooms, self.hallways)]
+            [entity.polygon for entity in itertools.chain(self.rooms, self.hallways)]
         ).difference(
             unary_union(
                 [loc.polygon for loc in self.locations]
@@ -1756,16 +1757,6 @@ class World:
         :param pose: The pose to check.
         :return: True if the pose is occupied, else False.
         """
-        # # Loop through all the rooms and hallways and check if the pose
-        # # is deemed collision-free in any of them.
-        # for entity in itertools.chain(self.rooms):
-        #     if entity.is_collision_free(pose):
-        #         return False
-        # for entity in itertools.chain(self.hallways):
-        #     if entity.is_collision_free(pose, partial_observability_hallway_states, known_hallway_states):
-        #         return False
-        # # If we made it through, the pose is occupied.
-        # return True
         if isinstance(pose, Pose):
             x = pose.x
             y = pose.y
@@ -1773,15 +1764,18 @@ class World:
             x, y = pose
 
         # Robot assumes all hallway opens
-        if partial_observability_hallway_states:
-            total_internal_polygon_with_partial_observability_hallway_states = unary_union(
-                [self.total_internal_polygon] + [hall.internal_collision_polygon for hall in self.hallways if hall not in known_hallway_states])
-            is_free = not bool(shapely.intersects_xy(total_internal_polygon_with_partial_observability_hallway_states, x, y))
-        
+        if partial_observability_hallway_states:    
+            # Loop through all the rooms and hallways and check if the pose
+            # is deemed collision-free in any of them.
+            if not bool(shapely.intersects_xy(self.total_internal_polygon, x, y)):
+                for entity in itertools.chain(self.hallways):
+                    if entity.is_collision_free(pose, partial_observability_hallway_states, known_hallway_states):
+                        return False
+                return True
+            return False
+                
         else:
-            is_free = not bool(shapely.intersects_xy(self.total_internal_polygon, x, y))
-
-        return is_free
+            return not bool(shapely.intersects_xy(self.total_internal_polygon, x, y))
         # Should we continue on this, or revert back to is_collision_free?
         # Ideally to continue on this.. So we look at partial_observability and known_hallway_states,
         # then maybe includes inflated_close_polygon if not in known_hallway_states?
