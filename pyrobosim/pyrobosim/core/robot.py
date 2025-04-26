@@ -52,7 +52,6 @@ class Robot(Entity):
         partial_observability: bool = False,
         action_execution_options: dict[str, ExecutionOptions] = {},
         initial_battery_level: float = 100.0,
-
         partial_observability_hallway_states: bool = False,
     ) -> None:
         """
@@ -85,7 +84,6 @@ class Robot(Entity):
         :param action_execution_options: A dictionary of action names and their execution options.
             This defines properties such as delays and nondeterminism.
         :param initial_battery_level: The initial battery charge, from 0 to 100.
-
         :param partial_observability_hallway_states: If True,  robot doesn't know the world's hallways state, 
             and assume all is OPEN.
         """
@@ -147,6 +145,9 @@ class Robot(Entity):
         self.executing_plan = False
         self.canceling_execution = False
         self.battery_level = initial_battery_level
+
+        self.partial_observability_hallway_states = partial_observability_hallway_states
+        self.known_hallway_states: set[Hallway] = set()
 
         self.logger.info("Created robot.")
 

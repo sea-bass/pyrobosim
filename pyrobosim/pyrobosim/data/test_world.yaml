@@ -108,7 +108,7 @@ hallways:
     room_end: bathroom
     width: 0.7
     conn_method: auto
-    is_open: False
+    is_open: True
     is_locked: False
     color: "#666666"
 

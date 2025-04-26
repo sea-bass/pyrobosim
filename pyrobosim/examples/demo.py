@@ -139,16 +139,16 @@ def create_world(multirobot: bool = False) -> World:
             dt=0.1,
             max_angular_velocity=4.0,
             validate_during_execution=True,
-            # partial_observability_hallway_states=True,
         ),
         sensors={"lidar": lidar} if args.lidar else None,
         grasp_generator=GraspGenerator(grasp_props),
         partial_observability=args.partial_observability,
         color="#CC00CC",
-        # partial_observability_hallway_states=True,
+        partial_observability_hallway_states=args.partial_observability_hallway_states,
     )
     planner_config_rrt = {
         "world": world,
+        "robot": robot0,
         "bidirectional": True,
         "rrt_connect": False,
         "rrt_star": True,
@@ -156,7 +156,6 @@ def create_world(multirobot: bool = False) -> World:
         "max_connection_dist": 0.5,
         "rewire_radius": 1.5,
         "compress_path": False,
-        # "partial_observability_hallway_states": True,
     }
     rrt_planner = RRTPlanner(**planner_config_rrt)
     robot0.set_path_planner(rrt_planner)
@@ -232,6 +231,11 @@ def parse_args() -> argparse.Namespace:
         "--lidar",
         action="store_true",
         help="If True, adds a lidar sensor to the first robot.",
+    )
+    parser.add_argument(
+        "--partial-observability-hallway-states",
+        action="store_true",
+        help="If True, robots have partial observability on hallway states and assume its all OPEN at the start.",
     )
     return parser.parse_args()
 

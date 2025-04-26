@@ -4,6 +4,9 @@ import time
 from threading import Thread
 from typing import Any
 
+import numpy as np
+import shapely
+
 from .types import PathExecutor
 from ..planning.actions import ExecutionResult, ExecutionStatus
 from ..utils.logging import get_global_logger
@@ -26,8 +29,7 @@ class ConstantVelocityExecutor(PathExecutor):
         validate_during_execution: bool = False,
         validation_dt: float = 0.5,
         validation_step_dist: float = 0.025,
-        
-        partial_observability_hallway_states: bool = False,
+        lidar_sensor_measurement_dt: float = 0.3,
     ) -> None:
         """
         Creates a constant velocity path executor.
@@ -38,9 +40,7 @@ class ConstantVelocityExecutor(PathExecutor):
         :param validate_during_execution: If True, runs a separate thread that validates the remaining path at a regular rate.
         :param validation_dt: Time step for validating the remaining path, in seconds.
         :param validation_step_dist: The step size for discretizing a straight line to check collisions.
-
-        :param partial_observability_hallway_states: If True,  robot doesn't know the world's hallways state, 
-            and assume all is OPEN.
+        :param lidar_sensor_measurement_dt: Time step for taking lidar sensor measurement, in seconds.
         """
         super().__init__()
         self.dt = dt
@@ -52,7 +52,8 @@ class ConstantVelocityExecutor(PathExecutor):
         self.validation_dt = validation_dt
         self.validation_step_dist = validation_step_dist
 
-        self.partial_observability_hallway_states = partial_observability_hallway_states
+        self.lidar_sensor_timer: Thread | None = None
+        self.lidar_sensor_measurement_dt = lidar_sensor_measurement_dt
 
         # Execution state
         self.reset_state()
@@ -124,6 +125,10 @@ class ConstantVelocityExecutor(PathExecutor):
             self.validation_timer = Thread(target=self.validate_remaining_path)
             self.validation_timer.start()
 
+        # if self.robot.partial_observability_hallway_states:
+        #     self.lidar_sensor_timer = Thread(target=self.detect_closed_hallway)
+        #     self.lidar_sensor_timer.start()
+
         # Execute the trajectory.
         status = ExecutionStatus.SUCCESS
         message = ""
@@ -142,6 +147,10 @@ class ConstantVelocityExecutor(PathExecutor):
                     self.validation_timer is not None
                 ):
                     self.validation_timer.join()
+                # if self.robot.partial_observability_hallway_states and (
+                #     self.lidar_sensor_timer is not None
+                # ):
+                #     self.lidar_sensor_timer.join()
                 message = "Trajectory execution aborted."
                 self.robot.logger.info(message)
                 status = ExecutionStatus.EXECUTION_FAILURE
@@ -206,8 +215,8 @@ class ConstantVelocityExecutor(PathExecutor):
                     not self.robot.world.is_path_collision_free(                    # Change this to perceived world - through partial observability hallway state?
                         remaining_path, 
                         step_dist=self.validation_step_dist, 
-                        partial_observability_hallway_states=self.partial_observability_hallway_states, 
-                        known_hallway_states=self.robot.known_hallway_states if self.partial_observability_hallway_states else None
+                        partial_observability_hallway_states=self.robot.partial_observability_hallway_states,
+                        known_hallway_states=self.robot.known_hallway_states
                     )
                 ):
                     self.robot.logger.warning(
@@ -216,6 +225,56 @@ class ConstantVelocityExecutor(PathExecutor):
                     self.abort_execution = True
 
             time.sleep(max(0, self.validation_dt - (time.time() - start_time)))
+
+    def detect_closed_hallway(self) -> None:
+        """
+        Get lidar measurement and determine if a hallway is closed.
+        If a hallway is closed, it would determine if the hallway is on its path.
+
+        If yes, this function will set the `abort_execution` attribute to `True`,
+        which cancels the main trajectory execution loop.
+        """
+        if (self.robot is None) or (self.traj is None):
+            return 
+
+        while self.following_path and (not self.abort_execution):
+            start_time = time.time()
+            cur_pose = self.robot.get_pose()
+
+            # Get lidar measurement and check
+            units_scaling = 1.0 if self.robot.sensors["lidar"].angle_units == "radians" else np.pi / 180
+            measured_angles =  (
+                np.arange(self.robot.sensors["lidar"].min_angle, 
+                        self.robot.sensors["lidar"].max_angle + self.robot.sensors["lidar"].angular_resolution, 
+                        self.robot.sensors["lidar"].angular_resolution)
+                    * units_scaling
+            )
+            measured_lengths = self.robot.sensors["lidar"].get_measurement()
+
+            analyse_pose = []
+            for angle, length in zip(measured_angles, measured_lengths):
+                if length < self.robot.sensors["lidar"].max_range_m:
+                    # There are objects in lidar line of sight
+                    x = cur_pose.x + length * np.cos(angle)
+                    y = cur_pose.y + length * np.sin(angle)
+                    analyse_pose.append((x, y))
+
+            for pose in analyse_pose:
+                for hallway in self.robot.world.hallways:
+                    # Check if there are pose intersecting with hallway polygon
+                    if shapely.intersects_xy(hallway.internal_collision_polygon, pose[0], pose[1]):
+                        # If yes, check if the hallway is closed
+                        if not hallway.is_open:
+                            detected_closed_hallway = True
+                            self.robot.known_hallway_states.add(hallway)
+                            break
+
+            if detected_closed_hallway:
+                self.robot.logger.warning(
+                    "Detected closed hallway. Aborting execution.")
+                self.abort_execution = True
+
+            time.sleep(max(0, self.lidar_sensor_measurement_dt - (time.time() - start_time)))
 
     def to_dict(self) -> dict[str, Any]:
         """
@@ -231,4 +290,5 @@ class ConstantVelocityExecutor(PathExecutor):
             "validate_during_execution": self.validate_during_execution,
             "validation_dt": self.validation_dt,
             "validation_step_dist": self.validation_step_dist,
+            "lidar_sensor_measurement_dt": self.lidar_sensor_measurement_dt,
         }
