@@ -1,5 +1,7 @@
 """Hallway representation for world modeling."""
 
+from __future__ import annotations
+
 import math
 from typing import Any, Sequence
 
@@ -212,18 +214,17 @@ class Hallway(Entity):
 
         is_free = intersects_xy(self.internal_collision_polygon, x, y)
 
-        if not partial_observability_hallway_states:    
+        # With partial observability_hallway_states,
+        # Check if robot recorded the hallway state as closed
+        # If yes, return that it is not collision free if pose intersects inflated_closed_polygon
+        # (Robot will assume hallway is closed)
+        if partial_observability_hallway_states:
+            if self in recorded_closed_hallways:
+                is_free = is_free and not intersects_xy(self.inflated_closed_polygon, x, y)
+
+        else:
             if not self.is_open:
                 is_free = is_free and not intersects_xy(self.inflated_closed_polygon, x, y)
-        
-        # With partial observability_hallway_states,
-        # Check if robot has the hallway state knowledge
-        # If yes only proceed to check if its open or close
-        # If not then skip - assume hallway is open
-        else:
-            if self in recorded_closed_hallways:
-                if not self.is_open:
-                    is_free = is_free and not intersects_xy(self.inflated_closed_polygon, x, y)
 
         return bool(is_free)
 

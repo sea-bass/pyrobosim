@@ -27,9 +27,9 @@ class ConstantVelocityExecutor(PathExecutor):
         linear_velocity: float = 1.0,
         max_angular_velocity: float | None = None,
         validate_during_execution: bool = False,
-        validation_dt: float = 0.5,
+        validation_dt: float = 0.1,
         validation_step_dist: float = 0.025,
-        lidar_sensor_measurement_dt: float = 0.1,
+        lidar_sensor_measurement_dt: float = 0.05,
     ) -> None:
         """
         Creates a constant velocity path executor.
@@ -228,11 +228,10 @@ class ConstantVelocityExecutor(PathExecutor):
 
     def detect_closed_hallway(self) -> None:
         """
-        Get lidar measurement and determine if a hallway is closed.
-        If a hallway is closed, it would determine if the hallway is on its path.
-
-        If yes, this function will set the `abort_execution` attribute to `True`,
-        which cancels the main trajectory execution loop.
+        Get lidar measurement and determine if it's scanning a hallway.
+        If yes, it would update the robot recorded_closed_hallways knowledge.
+        It either remove (if it detects hallway is open) or add (if it detects hallway is close) the hallway
+        into the robot's knowledge.
         """
         if (self.robot is None) or (self.traj is None):
             return 
@@ -265,8 +264,15 @@ class ConstantVelocityExecutor(PathExecutor):
                     if shapely.intersects_xy(hallway.internal_collision_polygon, pose[0], pose[1]):
                         # If yes, check if the hallway is closed
                         if not hallway.is_open:
-                            self.robot.recorded_closed_hallways.add(hallway)
-                            break
+                            if hallway not in self.robot.recorded_closed_hallways:
+                                self.robot.recorded_closed_hallways.add(hallway)
+                                print(f"Added hallway into closed knowledge.")
+                                break
+                        else:
+                            if hallway in self.robot.recorded_closed_hallways:
+                                self.robot.recorded_closed_hallways.remove(hallway)
+                                print(f"Removed hallway from closed knowledge.")
+                                break
 
             time.sleep(max(0, self.lidar_sensor_measurement_dt - (time.time() - start_time)))
 

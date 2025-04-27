@@ -1763,21 +1763,29 @@ class World:
             x, y = pose
 
         # Robot assumes all hallway opens
-        if partial_observability_hallway_states:    
-            # Loop through all the rooms and hallways and check if the pose
-            # is deemed collision-free in any of them.
-            if not bool(shapely.intersects_xy(self.total_internal_polygon, x, y)):
-                for entity in itertools.chain(self.hallways):
-                    if entity.is_collision_free(pose, partial_observability_hallway_states, recorded_closed_hallways):
-                        return False
-                return True
-            return False
+        if partial_observability_hallway_states:
+            # If pose intersects updated self.total_internal_polygon - deemed not occupied
+            # if bool(shapely.intersects_xy(self.total_internal_polygon, x, y)):
+                
+                # This checks if the pose is in a hallway that is included in robot recorded_closed_hallways
+                # If yes, it overwrites to deemed it as occupied
+                
+                #FUCKED
+            for entity in itertools.chain(self.rooms):
+                if entity.is_collision_free(pose):
+                    return False
+            for entity in itertools.chain(self.hallways):
+                if entity.is_collision_free(pose, partial_observability_hallway_states, recorded_closed_hallways):
+                    return False
+            return True
+                #FUCKED
+            
+            # Just deemed pose as occupied if it doesnt intersects updated self.total_internal_polygon
+            # return True
                 
         else:
             return not bool(shapely.intersects_xy(self.total_internal_polygon, x, y))
-        # Should we continue on this, or revert back to is_collision_free?
-        # Ideally to continue on this.. So we look at partial_observability and recorded_closed_hallways,
-        # then maybe includes inflated_close_polygon if not in recorded_closed_hallways?
+        
 
     def collides_with_robots(self, pose: Pose, robot: Robot | None = None) -> bool:
         """
