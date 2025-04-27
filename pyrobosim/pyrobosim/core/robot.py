@@ -147,7 +147,7 @@ class Robot(Entity):
         self.battery_level = initial_battery_level
 
         self.partial_observability_hallway_states = partial_observability_hallway_states
-        self.known_hallway_states: set[Hallway] = set()
+        self.recorded_closed_hallways: set[Hallway] = set()
 
         self.logger.info("Created robot.")
 
@@ -186,8 +186,6 @@ class Robot(Entity):
             (see e.g., :class:`pyrobosim.navigation.rrt.RRTPlanner`).
         """
         self.path_planner = path_planner
-        if path_planner is not None:
-            path_planner.robot = self
 
     def set_path_executor(self, path_executor: PathExecutor | None) -> None:
         """

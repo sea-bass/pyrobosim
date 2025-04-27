@@ -216,7 +216,7 @@ class ConstantVelocityExecutor(PathExecutor):
                         remaining_path, 
                         step_dist=self.validation_step_dist, 
                         partial_observability_hallway_states=self.robot.partial_observability_hallway_states,
-                        known_hallway_states=self.robot.known_hallway_states
+                        recorded_closed_hallways=self.robot.recorded_closed_hallways
                     )
                 ):
                     self.robot.logger.warning(
@@ -265,16 +265,10 @@ class ConstantVelocityExecutor(PathExecutor):
                     if shapely.intersects_xy(hallway.internal_collision_polygon, pose[0], pose[1]):
                         # If yes, check if the hallway is closed
                         if not hallway.is_open:
-                            # detected_closed_hallway = True
-                            self.robot.known_hallway_states.add(hallway)
+                            self.robot.recorded_closed_hallways.add(hallway)
                             break
 
-            # if detected_closed_hallway:
-            #     self.robot.logger.warning(
-            #         "Detected closed hallway. Aborting execution.")
-            #     self.abort_execution = True
-
-            # time.sleep(max(0, self.lidar_sensor_measurement_dt - (time.time() - start_time)))
+            time.sleep(max(0, self.lidar_sensor_measurement_dt - (time.time() - start_time)))
 
     def to_dict(self) -> dict[str, Any]:
         """

@@ -1,7 +1,5 @@
 """Hallway representation for world modeling."""
 
-from __future__ import annotations
-
 import math
 from typing import Any, Sequence
 
@@ -200,7 +198,7 @@ class Hallway(Entity):
             zorder=2,
         )
 
-    def is_collision_free(self, pose: Pose | Sequence[float], partial_observability_hallway_states: bool = False, known_hallway_states: set[Hallway] = None) -> bool:
+    def is_collision_free(self, pose: Pose | Sequence[float], partial_observability_hallway_states: bool = False, recorded_closed_hallways: set[Hallway] = None) -> bool:
         """
         Checks whether a pose in the hallway is collision-free.
 
@@ -223,7 +221,7 @@ class Hallway(Entity):
         # If yes only proceed to check if its open or close
         # If not then skip - assume hallway is open
         else:
-            if self in known_hallway_states:
+            if self in recorded_closed_hallways:
                 if not self.is_open:
                     is_free = is_free and not intersects_xy(self.inflated_closed_polygon, x, y)
 
