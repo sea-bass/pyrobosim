@@ -23,7 +23,6 @@ class RRTPlanner(PathPlanner):
         self,
         *,
         world: World,
-        robot: Robot,
         bidirectional: bool = False,
         rrt_connect: bool = False,
         rrt_star: bool = False,
@@ -70,9 +69,6 @@ class RRTPlanner(PathPlanner):
         self.color_start = [0.0, 0.0, 0.0]
         self.color_goal = [0.0, 0.4, 0.8]
         self.color_alpha = 0.5
-
-        # Partial Observability for Hallway States [ Open / Close ]
-        self.robot = robot
 
         self.reset()
 
