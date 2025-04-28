@@ -1764,24 +1764,13 @@ class World:
 
         # Robot assumes all hallway opens
         if partial_observability_hallway_states:
-            # If pose intersects updated self.total_internal_polygon - deemed not occupied
-            # if bool(shapely.intersects_xy(self.total_internal_polygon, x, y)):
-                
-                # This checks if the pose is in a hallway that is included in robot recorded_closed_hallways
-                # If yes, it overwrites to deemed it as occupied
-                
-                #FUCKED
             for entity in itertools.chain(self.rooms):
                 if entity.is_collision_free(pose):
                     return False
             for entity in itertools.chain(self.hallways):
                 if entity.is_collision_free(pose, partial_observability_hallway_states, recorded_closed_hallways):
                     return False
-            return True
-                #FUCKED
-            
-            # Just deemed pose as occupied if it doesnt intersects updated self.total_internal_polygon
-            # return True
+            return True                
                 
         else:
             return not bool(shapely.intersects_xy(self.total_internal_polygon, x, y))
