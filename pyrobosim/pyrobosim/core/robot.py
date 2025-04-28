@@ -886,7 +886,12 @@ class Robot(Entity):
                 return ExecutionResult(
                     status=ExecutionStatus.EXECUTION_FAILURE, message=message
                 )
-
+        
+        # Update recorded_closed_hallways knowledge
+        if isinstance(self.location, Hallway):
+            self.recorded_closed_hallways.remove(self.location)
+            print(f"Removed hallway {self.location.name}")
+        
         if isinstance(self.location, ObjectSpawn):
             loc_to_open = self.location.parent
         else:
@@ -946,6 +951,11 @@ class Robot(Entity):
                 return ExecutionResult(
                     status=ExecutionStatus.EXECUTION_FAILURE, message=message
                 )
+
+        # Update recorded_closed_hallways knowledge
+        if isinstance(self.location, Hallway):
+            self.recorded_closed_hallways.add(self.location)
+            print(f"Added hallway {self.location.name}")
 
         if isinstance(self.location, ObjectSpawn):
             loc_to_close = self.location.parent
