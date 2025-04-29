@@ -267,12 +267,12 @@ class ConstantVelocityExecutor(PathExecutor):
                         if not hallway.is_open:
                             if hallway not in self.robot.recorded_closed_hallways:
                                 self.robot.recorded_closed_hallways.add(hallway)
-                                print(f"Added hallway into closed knowledge.")
+                                print(f"Added {hallway.name} into closed knowledge.")      # Might need to change how to present this data
                                 break
                         else:
                             if hallway in self.robot.recorded_closed_hallways:
                                 self.robot.recorded_closed_hallways.remove(hallway)
-                                print(f"Removed hallway from closed knowledge.")
+                                print(f"Removed {hallway.name} from closed knowledge.")    # Might need to change how to present this data
                                 break
 
             time.sleep(max(0, self.lidar_sensor_measurement_dt - (time.time() - start_time)))
