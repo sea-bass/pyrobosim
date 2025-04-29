@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Tests for room creation in pyrobosim.
+Tests for room creation in PyRoboSim.
 """
 
 import pytest

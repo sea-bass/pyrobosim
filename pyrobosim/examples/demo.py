@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Test script showing how to build a world and use it with pyrobosim
+Test script showing how to build a world and use it with PyRoboSim.
 """
 import os
 import argparse
@@ -147,8 +147,6 @@ def create_world(multirobot: bool = False) -> World:
         partial_observability_hallway_states=args.partial_observability_hallway_states,
     )
     planner_config_rrt = {
-        "world": world,
-        "robot": robot0,
         "bidirectional": True,
         "rrt_connect": False,
         "rrt_star": True,
@@ -171,7 +169,6 @@ def create_world(multirobot: bool = False) -> World:
             partial_observability=args.partial_observability,
         )
         planner_config_prm = {
-            "world": world,
             "collision_check_step_dist": 0.025,
             "max_connection_dist": 1.5,
             "max_nodes": 100,
@@ -190,7 +187,6 @@ def create_world(multirobot: bool = False) -> World:
             partial_observability=args.partial_observability,
         )
         planner_config_astar = {
-            "world": world,
             "grid_resolution": 0.05,
             "grid_inflation_radius": 0.15,
             "diagonal_motion": True,

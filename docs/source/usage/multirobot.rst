@@ -1,7 +1,7 @@
 Multirobot Environments
 =======================
 
-``pyrobosim`` enables you to run multirobot environments.
+PyRoboSim enables you to run multirobot environments.
 
 
 Standalone
@@ -24,7 +24,7 @@ Or you can use a sample multirobot world file:
 .. image:: ../media/pyrobosim_demo_multirobot.png
     :align: center
     :width: 720px
-    :alt: pyrobosim multirobot demo.
+    :alt: PyRoboSim multirobot demo.
 
 |
 
@@ -64,6 +64,6 @@ The output should look as follows:
 .. image:: ../media/pyrobosim_demo_multirobot_plan.png
     :align: center
     :width: 720px
-    :alt: pyrobosim multirobot demo with ROS 2 executing multiple plans.
+    :alt: PyRoboSim multirobot demo with ROS 2 executing multiple plans.
 
 |

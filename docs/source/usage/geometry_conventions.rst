@@ -10,4 +10,4 @@ The Euler angle convention is extrinsic XYZ (roll = X, pitch = Y, yaw = Z) in ra
 Quaternions use the order convention ``[qw, qx, qy, qz]``.
 There is more documentation in the :py:class:`pyrobosim.utils.pose.Pose` source code.
 
-When ROS 2 is connected to pyrobosim, the reference frame is ``map``.
+When ROS 2 is connected to PyRoboSim, the reference frame is ``map``.

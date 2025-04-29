@@ -20,7 +20,6 @@ def reduce_waypoints_polygon(
     :param step_dist: The step size for discretizing a straight line to check collisions.
     """
     waypoints = []
-
     start = poses[0]
     waypoints.append(start)
     poses = poses[1:]

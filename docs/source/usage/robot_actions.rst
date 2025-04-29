@@ -3,7 +3,7 @@
 Robot Actions
 =============
 
-``pyrobosim`` enables you to command robots to take high-level actions.
+PyRoboSim enables you to command robots to take high-level actions.
 
 The actions currently supported are:
 
@@ -144,7 +144,7 @@ By default, all robots have full knowledge of all the objects in the world.
 A common use case for design robot behaviors is that a robot instead starts with limited or no knowledge of objects.
 In these cases, the robot must explicitly go to a location and use an object detector to find new objects to add to their world model.
 
-You can model this in ``pyrobosim`` by instantiating robot objects with the ``partial_observability`` option set to ``True``.
+You can model this in PyRoboSim by instantiating robot objects with the ``partial_observability`` option set to ``True``.
 Then, you can use the **Detect** action to find objects at the robot's current location.
 
 To test this, you can run the following example.
@@ -160,6 +160,6 @@ Alternatively, you can select the ``world`` option to show all existing objects.
 .. image:: ../media/pyrobosim_partial_observability.png
     :align: center
     :width: 720px
-    :alt: Partial observability in the pyrobosim GUI.
+    :alt: Partial observability in the PyRoboSim GUI.
 
 |

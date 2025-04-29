@@ -10,31 +10,6 @@ Sensor Definitions
 
 The ``pyrobosim/sensors`` module contains all sensor model implementations.
 
-In the ``sensor_registry.py`` file available, you will see a list of implemented planner classes that looks like this:
-
-.. code-block:: python
-
-    # Sensors
-    from .lidar import Lidar2D
-
-    SENSORS_MAP = {
-        "lidar": Lidar2D,
-    }
-
-When loading sensors from YAML, the ``sensor.type`` entry will correspond to one of these entries in the ``SENSORS_MAP`` dictionary.
-As such, if you would like to add your own sensor, you can do so in this file.
-
-.. code-block:: python
-
-    # Sensors
-    from .lidar import Lidar2D
-    from my_module.my_file import MyNewSensor
-
-    SENSORS_MAP = {
-        "lidar": Lidar2D,
-        "my_sensor": MyNewSensor,
-    }
-
 
 What to Implement in a Sensor
 ------------------------------
@@ -48,6 +23,8 @@ First, you want subclass from the ``Sensor`` class and create a constructor as f
     from pyrobosim.sensors.types import Sensor
 
     class MyNewSensor(Sensor):
+
+        plugin_name = "my_sensor"  # Needed to register the plugin
 
         def __init__(
             self,
@@ -117,19 +94,38 @@ For visualization, you can provide ``setup_artists()`` and ``update_artists()`` 
 
 
 To serialize to file, which is needed to reset the world, you should also implement the ``to_dict()`` method.
-Note the ``get_sensor_string()`` helper function, which extracts the name of the sensor you defined in ``SENSORS_MAP`` earlier on.
+Note the ``plugin_name`` attribute, which contains the name of the sensor you defined earlier on.
 
 .. code-block:: python
 
         def to_dict(self) -> dict[str, Any]:
-            from pyrobosim.sensors.sensor_registry import get_sensor_string
-
             return {
-                "type": get_sensor_string(self),
+                "type": self.plugin_name,
                 "update_rate_s": self.update_rate_s,
                 "initial_value": self.initial_value,
             }
 
+At this point, you can import your own sensor in code and load it dynamically using the ``Sensor`` parent class.
+
+.. code-block:: python
+
+    from pyrobosim.sensors import Sensor
+    from my_module import MyNewSensor  # Still need to import this!
+
+    sensor_class = Sensor.registered_plugins["my_sensor"]
+    sensor = sensor_class(update_rate_s=0.1, initial_value=42)
+
+... or from YAML world files.
+
+.. code-block:: yaml
+
+    robots:
+      name: robot
+      sensors:
+        my_cool_sensor:
+          type: my_sensor
+          update_rate_s: 0.1
+          initial_value: 42
 
 If you would like to implement your own sensor, it is highly recommended to look at the existing sensor implementations as a reference.
 You can also always ask the maintainers through a Git issue!

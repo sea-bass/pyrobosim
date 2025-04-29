@@ -1,17 +1,17 @@
-# Contributing to pyrobosim
+# Contributing to PyRoboSim
 
-Thank you for considering a contribution to `pyrobosim`!
+Thank you for considering a contribution to PyRoboSim!
 
 While jumping into someone else's code base can be challenging, here are some tips to help you navigate contributing to this repository.
 
 ## Getting Started
 
-Before you can contribute, you should first make sure you can run `pyrobosim`.
+Before you can contribute, you should first make sure you can run PyRoboSim.
 Refer to the [setup documentation](https://pyrobosim.readthedocs.io/en/latest/setup.html), and choose either a local or Docker based installation.
 
 ## Submitting an Issue
 
-If you have any issues with `pyrobosim`, or any ideas to make the tool better for yourself and others, please [submit a Git issue](https://github.com/sea-bass/pyrobosim/issues/new)!
+If you have any issues with PyRoboSim, or any ideas to make the tool better for yourself and others, please [submit a Git issue](https://github.com/sea-bass/pyrobosim/issues/new)!
 
 Make sure to take a look at the [list of open issues](https://github.com/sea-bass/pyrobosim/issues) first.
 
@@ -55,7 +55,7 @@ You can open the `test_results.html` file using your favorite browser if you wan
 
 ### Documentation
 
-You can also build the `pyrobosim` documentation locally.
+You can also build the PyRoboSim documentation locally.
 This lets you verify how changes to the documentation (new pages, changes to existing pages, docstrings in the Python code, etc.) look before you push to your branch.
 
 The docs are built using [Sphinx](https://www.sphinx-doc.org/en/master/) and [ReadTheDocs (RTD)](https://about.readthedocs.com/).

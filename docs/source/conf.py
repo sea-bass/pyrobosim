@@ -22,7 +22,7 @@ copyright = "2022-2025, Sebastian Castro"
 author = "Sebastian Castro"
 
 # The full version, including alpha/beta/rc tags
-version = release = "3.3.0"
+version = release = "4.0.0"
 
 
 # -- General configuration ---------------------------------------------------
@@ -30,7 +30,13 @@ version = release = "3.3.0"
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["sphinx.ext.autodoc", "sphinx.ext.autosummary", "sphinx_rtd_theme"]
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx_rtd_theme",
+    "sphinx_copybutton",
+    "sphinxcontrib.youtube",
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

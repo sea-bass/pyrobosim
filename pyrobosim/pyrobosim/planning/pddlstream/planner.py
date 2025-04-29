@@ -74,7 +74,7 @@ class PDDLStreamPlanner:
         :param max_attempts: Maximum planning attempts.
         :param verbose: If True, prints additional information. Defaults to False.
         :param \*\*planner_config: Additional keyword arguments to pass to the PDDLStream planner.
-        :return: A task plan object ready to use with ``pyrobosim``.
+        :return: A task plan object ready to use with PyRoboSim.
         """
         # Set the initial and goal states for PDDLStream
         init = world_to_pddlstream_init(self.world, robot)

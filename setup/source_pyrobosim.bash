@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Sets up the pyrobosim environment for development.
+# Sets up the PyRoboSim environment for development.
 #
 # One recommendation is to make a bash function for this script in
 # your ~/.bashrc file as follows:
@@ -42,9 +42,9 @@ source ${PYROBOSIM_VENV}/bin/activate
 # Parse ROS workspace and distro arguments.
 if [ -z "${PYROBOSIM_ROS_WORKSPACE}" ]
 then
-    echo "Setting up pyrobosim with no ROS distro."
+    echo "Setting up PyRoboSim with no ROS distro."
 else
-    echo "Setting up pyrobosim with ROS ${PYROBOSIM_ROS_DISTRO}."
+    echo "Setting up PyRoboSim with ROS ${PYROBOSIM_ROS_DISTRO}."
     source /opt/ros/${PYROBOSIM_ROS_DISTRO}/setup.bash
 
     if [ ! -d "${PYROBOSIM_ROS_WORKSPACE}/src" ]
@@ -58,7 +58,7 @@ else
     if [ ! -f "install/setup.bash" ]
     then
         echo "Building ROS workspace at ${PYROBOSIM_ROS_WORKSPACE}..."
-        colcon build
+        colcon build --symlink-install
     fi
     echo "Sourcing ROS workspace at ${PYROBOSIM_ROS_WORKSPACE}."
     source install/setup.bash

@@ -17,7 +17,6 @@ def demo_astar() -> None:
     """Creates an occupancy grid based A* planner and plans a path."""
     robot = world.robots[0]
     planner_config = {
-        "world": world,
         "grid_resolution": 0.05,
         "grid_inflation_radius": 1.5 * robot.radius,
         "diagonal_motion": True,

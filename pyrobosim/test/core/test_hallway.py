@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Tests for hallway creation in pyrobosim.
+Tests for hallway creation in PyRoboSim.
 """
 
 import pytest

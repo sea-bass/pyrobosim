@@ -6,12 +6,9 @@ from typing import Any
 import numpy as np
 
 from .types import PathPlanner
-from ..core.world import World
-from ..core.robot import Robot
 from ..utils.path import Path
 from ..utils.pose import Pose
 from ..utils.search_graph import SearchGraph, Node
-from ..utils.world_motion_planning import reduce_waypoints_polygon
 
 
 class RRTPlanner(PathPlanner):
@@ -19,10 +16,11 @@ class RRTPlanner(PathPlanner):
     Implements a Rapidly-exploring Random Tree (RRT) path planner.
     """
 
+    plugin_name = "rrt"  # Needed to register plugin.
+
     def __init__(
         self,
         *,
-        world: World,
         bidirectional: bool = False,
         rrt_connect: bool = False,
         rrt_star: bool = False,
@@ -36,7 +34,6 @@ class RRTPlanner(PathPlanner):
         """
         Creates an instance of an RRT planner.
 
-        :param world: World object to use in the planner.
         :param bidirectional: If True, uses bidirectional RRT to grow trees
             from both start and goal.
         :param rrt_connect: If True, uses RRTConnect to bias tree growth
@@ -50,7 +47,7 @@ class RRTPlanner(PathPlanner):
         :param rewire_radius: Radius around a node to rewire the RRT,
             if using the RRT* algorithm.
         """
-        self.world = world
+        super().__init__()
 
         # Algorithm options
         self.bidirectional = bidirectional
@@ -74,10 +71,10 @@ class RRTPlanner(PathPlanner):
 
     def reset(self) -> None:
         """Resets the search trees and planning metrics."""
+        super().reset()
         self.graph_start = SearchGraph(color=[0, 0, 0])
         if self.bidirectional:
             self.graph_goal = SearchGraph(color=[0, 0.4, 0.8])
-        self.latest_path = Path()
         self.nodes_sampled = 0
         self.n_rewires = 0
 
@@ -92,6 +89,9 @@ class RRTPlanner(PathPlanner):
         self.reset()
         t_start = time.time()
         goal_found = False
+
+        if self.world is None:
+            raise RuntimeError("Cannot plan without a robot or world!")
 
         # Create the start and goal nodes
         n_start = Node(start, parent=None)
@@ -224,6 +224,8 @@ class RRTPlanner(PathPlanner):
                 n = n.parent
 
         if self.compress_path:
+            from ..utils.world_motion_planning import reduce_waypoints_polygon
+
             path_poses = reduce_waypoints_polygon(
                 self.world, 
                 path_poses, 
@@ -242,6 +244,7 @@ class RRTPlanner(PathPlanner):
 
         :return: Collision-free pose if found, else ``None``.
         """
+        assert self.world is not None
         return self.world.sample_free_robot_pose_uniform(
             partial_observability_hallway_states = self.robot.partial_observability_hallway_states,
             recorded_closed_hallways=self.robot.recorded_closed_hallways
@@ -287,6 +290,8 @@ class RRTPlanner(PathPlanner):
         :param graph: The tree to rewire.
         :param n_tgt: The target tree node to rewire within the tree.
         """
+        assert self.world is not None
+
         # First, find the node to rewire, if any
         n_rewire = None
         for n in graph.nodes:
@@ -329,6 +334,8 @@ class RRTPlanner(PathPlanner):
         :param n_tgt: The target tree node defining the connection goal.
         :return: A tuple containing connection success and the final node added.
         """
+        assert self.world is not None
+
         # Needed for bidirectional RRT so the connection node is in both trees.
         if self.bidirectional:
             n_tgt = copy.deepcopy(n_tgt)
@@ -395,10 +402,8 @@ class RRTPlanner(PathPlanner):
 
         :return: A dictionary containing the planner information.
         """
-        from .planner_registry import get_planner_string
-
         return {
-            "type": get_planner_string(self),
+            "type": self.plugin_name,
             "bidirectional": self.bidirectional,
             "rrt_connect": self.rrt_connect,
             "rrt_star": self.rrt_star,

@@ -6,7 +6,7 @@ metadata:
   objects: $PWD/roscon_2024_object_data.yaml
 
 params:
-  name: delib_ws_problem_1
+  name: roscon_2024_world
   inflation_radius: 0.01
   object_radius: 0.01
 
