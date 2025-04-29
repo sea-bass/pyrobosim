@@ -183,7 +183,8 @@ class ConstantVelocityExecutor(PathExecutor):
         return self.robot.last_nav_result
 
     
-    # This validation is done based on ROBOT PERCEIVED WORLD, instead of TRUE WORLD - through partial observability hallway state??
+    # With partial_observability_hallway_states, validation is done based on ROBOT PERCEIVED WORLD, instead of TRUE WORLD
+    # In line is_path_collision_free
     def validate_remaining_path(self) -> None:
         """
         Validates the remaining path by checking collisions against the world.
@@ -212,7 +213,7 @@ class ConstantVelocityExecutor(PathExecutor):
             if len(poses) > 2:
                 remaining_path = Path(poses=poses)
                 if (self.robot.world is not None) and (
-                    not self.robot.world.is_path_collision_free(                    # Change this to perceived world - through partial observability hallway state?
+                    not self.robot.world.is_path_collision_free(
                         remaining_path, 
                         step_dist=self.validation_step_dist, 
                         partial_observability_hallway_states=self.robot.partial_observability_hallway_states,

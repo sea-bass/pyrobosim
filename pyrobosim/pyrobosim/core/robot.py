@@ -889,7 +889,7 @@ class Robot(Entity):
                 return ExecutionResult(
                     status=ExecutionStatus.EXECUTION_FAILURE, message=message
                 )
-        
+
         # Update recorded_closed_hallways knowledge
         if isinstance(self.location, Hallway):
             self.recorded_closed_hallways.remove(self.location)

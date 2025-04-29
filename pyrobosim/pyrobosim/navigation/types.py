@@ -16,10 +16,6 @@ class PathPlanner:
 
     When implementing a new planner, you should subclass from this class.
     """
-    def __init__(self) -> None:
-        from ..core.robot import Robot
-
-        self.robot: Robot | None = None
 
     plugin_name: str
     """The name of the plugin. Must be implemented by child class."""
