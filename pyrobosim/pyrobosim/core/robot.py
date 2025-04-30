@@ -892,7 +892,7 @@ class Robot(Entity):
 
         # Update recorded_closed_hallways knowledge
         if isinstance(self.location, Hallway):
-            if hallway in self.robot.recorded_closed_hallways
+            if hallway in self.robot.recorded_closed_hallways:
                 self.recorded_closed_hallways.remove(self.location)
                 print(f"Removed {self.location.name} from closed knowledge.")    # Might need to change how to present this data
 
@@ -958,7 +958,7 @@ class Robot(Entity):
 
         # Update recorded_closed_hallways knowledge
         if isinstance(self.location, Hallway):
-            if hallway not in self.robot.recorded_closed_hallways
+            if hallway not in self.robot.recorded_closed_hallways:
                 self.recorded_closed_hallways.add(self.location)
                 print(f"Added {self.location.name} from closed knowledge.")    # Might need to change how to present this data
 
