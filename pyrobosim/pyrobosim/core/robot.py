@@ -892,8 +892,9 @@ class Robot(Entity):
 
         # Update recorded_closed_hallways knowledge
         if isinstance(self.location, Hallway):
-            self.recorded_closed_hallways.remove(self.location)
-            print(f"Removed {self.location.name} from closed knowledge.")    # Might need to change how to present this data
+            if hallway in self.robot.recorded_closed_hallways
+                self.recorded_closed_hallways.remove(self.location)
+                print(f"Removed {self.location.name} from closed knowledge.")    # Might need to change how to present this data
 
         if isinstance(self.location, ObjectSpawn):
             loc_to_open = self.location.parent
@@ -957,8 +958,9 @@ class Robot(Entity):
 
         # Update recorded_closed_hallways knowledge
         if isinstance(self.location, Hallway):
-            self.recorded_closed_hallways.add(self.location)
-            print(f"Added {self.location.name} from closed knowledge.")    # Might need to change how to present this data
+            if hallway not in self.robot.recorded_closed_hallways
+                self.recorded_closed_hallways.add(self.location)
+                print(f"Added {self.location.name} from closed knowledge.")    # Might need to change how to present this data
 
         if isinstance(self.location, ObjectSpawn):
             loc_to_close = self.location.parent
