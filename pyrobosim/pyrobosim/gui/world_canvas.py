@@ -124,7 +124,6 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         self.show_location_names = True
         self.show_robot_names = True
 
-
         # Connect signals
         self.draw_signal.connect(self.draw_and_sleep)
         self.navigate_signal.connect(self.navigate)
@@ -159,9 +158,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         """Shows/hides room names."""
         self.show_room_names = not self.show_room_names
         self.world.logger.info(
-            "Enabling room names"
-            if self.show_room_names
-            else "Disabling room names"
+            "Enabling room names" if self.show_room_names else "Disabling room names"
         )
         self.show_rooms()
         self.draw_signal.emit()
@@ -192,9 +189,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         """Shows/hides robot names."""
         self.show_robot_names = not self.show_robot_names
         self.world.logger.info(
-            "Enabling robot names"
-            if self.show_robot_names
-            else "Disabling robot names"
+            "Enabling robot names" if self.show_robot_names else "Disabling robot names"
         )
         self.show_robots()
         self.draw_signal.emit()
@@ -266,7 +261,9 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                         for artist in sensor_artists:
                             self.axes.add_artist(artist)
 
-            self.robot_texts = [robot.viz_text for robot in self.world.robots if robot.viz_text]
+            self.robot_texts = [
+                robot.viz_text for robot in self.world.robots if robot.viz_text
+            ]
 
     def show_hallways(self) -> None:
         """Draws hallways in the world."""
@@ -378,7 +375,9 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                     obj.viz_text = None
 
             self.obj_patches = [o.viz_patch for o in known_objects]
-            self.obj_texts = [o.viz_text for o in known_objects if o.viz_text is not None]
+            self.obj_texts = [
+                o.viz_text for o in known_objects if o.viz_text is not None
+            ]
 
             # Adjust the text to try avoid collisions
             adjustText.adjust_text(

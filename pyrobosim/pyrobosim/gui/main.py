@@ -106,7 +106,6 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
         window_y = int(screen.top() + 0.5 * (screen.height() - window_height))
         self.setGeometry(window_x, window_y, window_width, window_height)
 
-
     def create_layout(self) -> None:
         """Creates the main GUI layout."""
         self.main_widget = QtWidgets.QWidget()
@@ -174,13 +173,14 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
         self.addToolBar(QtCore.Qt.BottomToolBarArea, self.nav_toolbar)
         self.world_layout.addWidget(self.canvas)
 
-
         # Other options
         self.other_options_layout = QtWidgets.QGridLayout()
         self.visibility_layout = QtWidgets.QHBoxLayout()
         self.toggle_menu_button = QtWidgets.QToolButton()
         self.toggle_menu_button.setText("Visibility Controls")
-        self.toggle_menu_button.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.toggle_menu_button.setPopupMode(
+            QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup
+        )
         self.visibility_menu = QtWidgets.QMenu()
 
         self.visibility_dropdown = QtWidgets.QFrame(self)
@@ -189,7 +189,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
         self.visibility_dropdown.setLayout(QtWidgets.QVBoxLayout())
 
         def add_checkbox(label, default_state, slot):
-            """Helper function to add visibility toggles of room/loaction/object/robot names"""
+            """Helper function to add visibility toggles of room/location/object/robot names"""
             checkbox = QtWidgets.QCheckBox(label)
             checkbox.setChecked(default_state)
             checkbox.stateChanged.connect(slot)
@@ -199,14 +199,26 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
             self.visibility_menu.addAction(action)
             return checkbox
 
-        self.show_collision_action = add_checkbox("Show collision polygons", False, self.on_toggle_collision)
-        self.show_room_names_checkbox = add_checkbox("Show room names", True, self.on_toogle_room_names)
-        self.show_object_names_checkbox = add_checkbox("Show object names", True, self.on_toggle_object_names)
-        self.show_location_names_checkbox = add_checkbox("Show location names", True, self.on_toggle_location_names)
-        self.show_robot_names_checkbox = add_checkbox("Show robot names", True, self.on_toggle_robot_names)
+        self.show_collision_action = add_checkbox(
+            "Show collision polygons", False, self.on_toggle_collision
+        )
+        self.show_room_names_checkbox = add_checkbox(
+            "Show room names", True, self.on_toogle_room_names
+        )
+        self.show_object_names_checkbox = add_checkbox(
+            "Show object names", True, self.on_toggle_object_names
+        )
+        self.show_location_names_checkbox = add_checkbox(
+            "Show location names", True, self.on_toggle_location_names
+        )
+        self.show_robot_names_checkbox = add_checkbox(
+            "Show robot names", True, self.on_toggle_robot_names
+        )
 
         self.toggle_menu_button.setMenu(self.visibility_menu)
-        self.visibility_layout.addWidget(self.toggle_menu_button, alignment=Qt.AlignmentFlag.AlignLeft)
+        self.visibility_layout.addWidget(
+            self.toggle_menu_button, alignment=Qt.AlignmentFlag.AlignLeft
+        )
         visibility_widget = QtWidgets.QWidget()
         visibility_widget.setLayout(self.visibility_layout)
         self.other_options_layout.addWidget(visibility_widget, 0, 0)
