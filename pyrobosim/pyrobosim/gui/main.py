@@ -6,7 +6,8 @@ import sys
 from typing import Any
 
 from PySide6 import QtWidgets
-from PySide6.QtCore import Signal, QEvent
+from PySide6.QtCore import Qt
+from PySide6.QtCore import Signal, QEvent, QPoint
 from PySide6.QtGui import QFont, QScreen
 from matplotlib.backends.qt_compat import QtCore
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
@@ -105,6 +106,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
         window_y = int(screen.top() + 0.5 * (screen.height() - window_height))
         self.setGeometry(window_x, window_y, window_width, window_height)
 
+
     def create_layout(self) -> None:
         """Creates the main GUI layout."""
         self.main_widget = QtWidgets.QWidget()
@@ -172,17 +174,43 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
         self.addToolBar(QtCore.Qt.BottomToolBarArea, self.nav_toolbar)
         self.world_layout.addWidget(self.canvas)
 
+
         # Other options
         self.other_options_layout = QtWidgets.QGridLayout()
-        self.toggle_collision_polygons_checkbox = QtWidgets.QCheckBox(
-            "Show collision polygons"
-        )
-        self.toggle_collision_polygons_checkbox.clicked.connect(
-            self.on_collision_polygon_toggle_click
-        )
-        self.other_options_layout.addWidget(
-            self.toggle_collision_polygons_checkbox, 0, 0
-        )
+        self.visibility_layout = QtWidgets.QHBoxLayout()
+        self.toggle_menu_button = QtWidgets.QToolButton()
+        self.toggle_menu_button.setText("Visibility Controls")
+        self.toggle_menu_button.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.visibility_menu = QtWidgets.QMenu()
+
+        self.visibility_dropdown = QtWidgets.QFrame(self)
+        self.visibility_dropdown.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.visibility_dropdown.setWindowFlags(Qt.Popup)
+        self.visibility_dropdown.setLayout(QtWidgets.QVBoxLayout())
+
+        def add_checkbox(label, default_state, slot):
+            """Helper function to add visibility toggles of room/loaction/object/robot names"""
+            checkbox = QtWidgets.QCheckBox(label)
+            checkbox.setChecked(default_state)
+            checkbox.stateChanged.connect(slot)
+
+            action = QtWidgets.QWidgetAction(self.visibility_menu)
+            action.setDefaultWidget(checkbox)
+            self.visibility_menu.addAction(action)
+            return checkbox
+
+        self.show_collision_action = add_checkbox("Show collision polygons", False, self.on_toggle_collision)
+        self.show_room_names_checkbox = add_checkbox("Show room names", True, self.on_toogle_room_names)
+        self.show_object_names_checkbox = add_checkbox("Show object names", True, self.on_toggle_object_names)
+        self.show_location_names_checkbox = add_checkbox("Show location names", True, self.on_toggle_location_names)
+        self.show_robot_names_checkbox = add_checkbox("Show robot names", True, self.on_toggle_robot_names)
+
+        self.toggle_menu_button.setMenu(self.visibility_menu)
+        self.visibility_layout.addWidget(self.toggle_menu_button, alignment=Qt.AlignmentFlag.AlignLeft)
+        visibility_widget = QtWidgets.QWidget()
+        visibility_widget.setLayout(self.visibility_layout)
+        self.other_options_layout.addWidget(visibility_widget, 0, 0)
+
         self.reset_world_button = QtWidgets.QPushButton("Reset world")
         self.reset_world_button.clicked.connect(self.on_reset_world_click)
         self.other_options_layout.addWidget(self.reset_world_button, 0, 1)
@@ -372,9 +400,29 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
         elif (robot is None) and self.goal_textbox.text():
             self.world.close_location(self.goal_textbox.text())
 
-    def on_collision_polygon_toggle_click(self) -> None:
+    def on_toggle_collision(self) -> None:
         """Callback to toggle collision polygons."""
         self.canvas.toggle_collision_polygons()
+        self.canvas.draw_signal.emit()
+
+    def on_toogle_room_names(self) -> None:
+        """Callback to toggle room name visibility."""
+        self.canvas.toggle_room_names()
+        self.canvas.draw_signal.emit()
+
+    def on_toggle_object_names(self) -> None:
+        """Callback to toggle object name visibility."""
+        self.canvas.toggle_object_names()
+        self.canvas.draw_signal.emit()
+
+    def on_toggle_location_names(self) -> None:
+        """Callback to toggle location name visibility."""
+        self.canvas.toggle_location_names()
+        self.canvas.draw_signal.emit()
+
+    def on_toggle_robot_names(self) -> None:
+        """Callback to toggle robot name visibility."""
+        self.canvas.toggle_robot_names()
         self.canvas.draw_signal.emit()
 
     def on_cancel_action_click(self) -> None:
