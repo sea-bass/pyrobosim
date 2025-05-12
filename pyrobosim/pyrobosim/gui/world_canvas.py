@@ -147,7 +147,9 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         """Shows/hides collision polygons."""
         self.show_collision_polygons = not self.show_collision_polygons
         self.world.logger.info(
-            ("Enabling" if self.show_collision_polygons else "Disabling") + " collision polygons")
+            ("Enabling" if self.show_collision_polygons else "Disabling")
+            + " collision polygons"
+        )
         self.show_hallways()
         self.show_rooms()
 
@@ -155,7 +157,8 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         """Shows/hides room names."""
         self.show_room_names = not self.show_room_names
         self.world.logger.info(
-            ("Enabling" if self.show_room_names else "Disabling") + " room names")
+            ("Enabling" if self.show_room_names else "Disabling") + " room names"
+        )
         self.show_rooms()
         self.draw_signal.emit()
 
@@ -163,7 +166,8 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         """Shows/hides object names."""
         self.show_object_names = not self.show_object_names
         self.world.logger.info(
-            ("Enabling" if self.show_object_names else "Disabling") + " object names")
+            ("Enabling" if self.show_object_names else "Disabling") + " object names"
+        )
         self.show_objects()
         self.draw_signal.emit()
 
@@ -171,7 +175,9 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         """Shows/hides location names."""
         self.show_location_names = not self.show_location_names
         self.world.logger.info(
-            ("Enabling" if self.show_location_names else "Disabling") + " location names")
+            ("Enabling" if self.show_location_names else "Disabling")
+            + " location names"
+        )
         self.show_locations()
         self.draw_signal.emit()
 
@@ -179,7 +185,8 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         """Shows/hides robot names."""
         self.show_robot_names = not self.show_robot_names
         self.world.logger.info(
-            ("Enabling" if self.show_robot_names else "Disabling") + " robot names")
+            ("Enabling" if self.show_robot_names else "Disabling") + " robot names"
+        )
         self.show_robots()
         self.show_objects()
         self.draw_signal.emit()
@@ -252,7 +259,9 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                             self.axes.add_artist(artist)
 
             self.robot_texts = [
-                robot.viz_text for robot in self.world.robots if robot.viz_text is not None
+                robot.viz_text
+                for robot in self.world.robots
+                if robot.viz_text is not None
             ]
 
     def show_hallways(self) -> None:
