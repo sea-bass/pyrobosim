@@ -147,7 +147,7 @@ class Object(Entity):
             linewidth=2,
             fill=None,
             alpha=0.75,
-            zorder=3,
+            zorder=4,
         )
 
     def get_footprint(self) -> np.ndarray:
