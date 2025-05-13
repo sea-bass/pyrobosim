@@ -186,8 +186,6 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
             ("Enabling" if self.show_robot_names else "Disabling") + " robot names"
         )
         self.show_robots()
-        print("NOT SHOWING OBJECTS")
-        # self.show_objects()
         self.draw_signal.emit()
 
     def show_robots(self) -> None:
