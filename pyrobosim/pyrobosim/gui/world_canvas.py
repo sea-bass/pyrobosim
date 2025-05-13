@@ -39,8 +39,6 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
     """
 
     # Visualization constants
-    object_zorder = 3
-    """ zorder for object visualization. """
     robot_zorder = 3
     """ zorder for robot visualization. """
     robot_dir_line_factor = 3.0
@@ -188,7 +186,8 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
             ("Enabling" if self.show_robot_names else "Disabling") + " robot names"
         )
         self.show_robots()
-        self.show_objects()
+        print("NOT SHOWING OBJECTS")
+        # self.show_objects()
         self.draw_signal.emit()
 
     def show_robots(self) -> None:

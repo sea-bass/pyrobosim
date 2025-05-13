@@ -423,37 +423,47 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
             self.world.close_location(self.goal_textbox.text())
 
     def on_toggle_collision_polygons(self, state: int) -> None:
-        """Callback to toggle collision polygons.
+        """
+        Callback to toggle collision polygons.
 
-        :param state: Integer state of the checkbox (0=unchecked, 2=checked)"""
+        :param state: Integer state of the checkbox (0=unchecked, 2=checked)
+        """
         self.canvas.toggle_collision_polygons()
         self.canvas.draw_signal.emit()
 
     def on_toggle_room_names(self, state: int) -> None:
-        """Callback to toggle room name visibility.
+        """
+        Callback to toggle room name visibility.
 
-        :param state: Integer state of the checkbox (0=unchecked, 2=checked)"""
+        :param state: Integer state of the checkbox (0=unchecked, 2=checked)
+        """
         self.canvas.toggle_room_names()
         self.canvas.draw_signal.emit()
 
     def on_toggle_object_names(self, state: int) -> None:
-        """Callback to toggle object name visibility.
+        """
+        Callback to toggle object name visibility.
 
-        :param state: Integer state of the checkbox (0=unchecked, 2=checked)"""
+        :param state: Integer state of the checkbox (0=unchecked, 2=checked)
+        """
         self.canvas.toggle_object_names()
         self.canvas.draw_signal.emit()
 
     def on_toggle_location_names(self, state: int) -> None:
-        """Callback to toggle location name visibility.
+        """
+        Callback to toggle location name visibility.
 
-        :param state: Integer state of the checkbox (0=unchecked, 2=checked)"""
+        :param state: Integer state of the checkbox (0=unchecked, 2=checked)
+        """
         self.canvas.toggle_location_names()
         self.canvas.draw_signal.emit()
 
     def on_toggle_robot_names(self, state: int) -> None:
-        """Callback to toggle robot name visibility.
+        """
+        Callback to toggle robot name visibility.
 
-        :param state: Integer state of the checkbox (0=unchecked, 2=checked)"""
+        :param state: Integer state of the checkbox (0=unchecked, 2=checked)
+        """
         self.canvas.toggle_robot_names()
         self.canvas.draw_signal.emit()
 
