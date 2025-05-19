@@ -10,7 +10,11 @@ from ..core.hallway import Hallway
 
 
 def reduce_waypoints_polygon(
-    world: World, poses: list[Pose], step_dist: float = 0.01, partial_observability_hallway_states: bool = False, recorded_closed_hallways: set[Hallway] = None
+    world: World,
+    poses: list[Pose],
+    step_dist: float = 0.01,
+    partial_observability_hallway_states: bool = False,
+    recorded_closed_hallways: set[Hallway] | None = None,
 ) -> list[Pose]:
     """
     Reduces the number of waypoints in a path generated from a polygon based planner.
@@ -26,7 +30,13 @@ def reduce_waypoints_polygon(
     i = len(poses) - 1
     while poses and i >= 0:
         current = poses[i]
-        if world.is_connectable(start=start, goal=current, step_dist=step_dist, partial_observability_hallway_states=partial_observability_hallway_states, recorded_closed_hallways=recorded_closed_hallways):
+        if world.is_connectable(
+            start=start,
+            goal=current,
+            step_dist=step_dist,
+            partial_observability_hallway_states=partial_observability_hallway_states,
+            recorded_closed_hallways=recorded_closed_hallways,
+        ):
             waypoints.append(current)
             start = current
             poses = poses[i + 1 :]

@@ -1708,7 +1708,7 @@ class World:
         step_dist: float = 0.01,
         max_dist: float | None = None,
         partial_observability_hallway_states: bool = False,
-        recorded_closed_hallways: set[Hallway] = None,
+        recorded_closed_hallways: set[Hallway] | None = None,
     ) -> bool:
         """
         Checks connectivity between two poses `start` and `goal` in the world
@@ -1744,14 +1744,23 @@ class World:
 
         # Check the occupancy of all the test points.
         for x_check, y_check in zip(x_pts[1:], y_pts[1:]):
-            if self.check_occupancy(Pose(x=x_check, y=y_check), partial_observability_hallway_states, recorded_closed_hallways):
+            if self.check_occupancy(
+                Pose(x=x_check, y=y_check),
+                partial_observability_hallway_states,
+                recorded_closed_hallways,
+            ):
                 return False
 
         # If the loop was traversed for all points without returning, we can
         # connect the points.
         return True
 
-    def check_occupancy(self, pose: Pose | Sequence[float], partial_observability_hallway_states: bool = False, recorded_closed_hallways: set[Hallway] = None) -> bool:
+    def check_occupancy(
+        self,
+        pose: Pose | Sequence[float],
+        partial_observability_hallway_states: bool = False,
+        recorded_closed_hallways: set[Hallway] | None = None,
+    ) -> bool:
         """
         Check if a pose in the world is occupied.
 
@@ -1766,17 +1775,18 @@ class World:
 
         # Robot assumes all hallway opens
         if partial_observability_hallway_states:
-            for entity in itertools.chain(self.rooms):
-                if entity.is_collision_free(pose):
+            for room_entity in itertools.chain(self.rooms):
+                if room_entity.is_collision_free(pose):
                     return False
-            for entity in itertools.chain(self.hallways):
-                if entity.is_collision_free(pose, partial_observability_hallway_states, recorded_closed_hallways):
+            for hallway_entity in itertools.chain(self.hallways):
+                if hallway_entity.is_collision_free(
+                    pose, partial_observability_hallway_states, recorded_closed_hallways
+                ):
                     return False
-            return True                
-                
+            return True
+
         else:
             return not bool(shapely.intersects_xy(self.total_internal_polygon, x, y))
-        
 
     def collides_with_robots(self, pose: Pose, robot: Robot | None = None) -> bool:
         """
@@ -1798,7 +1808,13 @@ class World:
                 return True
         return False
 
-    def is_path_collision_free(self, path: Path, step_dist: float = 0.01, partial_observability_hallway_states: bool = False, recorded_closed_hallways: set[Hallway] = None) -> bool:
+    def is_path_collision_free(
+        self,
+        path: Path,
+        step_dist: float = 0.01,
+        partial_observability_hallway_states: bool = False,
+        recorded_closed_hallways: set[Hallway] | None = None,
+    ) -> bool:
         """
         Check whether a path is collision free in this world.
 
@@ -1808,13 +1824,21 @@ class World:
         """
         for idx in range(len(path.poses) - 1):
             if not self.is_connectable(
-                path.poses[idx], path.poses[idx + 1], step_dist=step_dist, partial_observability_hallway_states=partial_observability_hallway_states, recorded_closed_hallways=recorded_closed_hallways
+                path.poses[idx],
+                path.poses[idx + 1],
+                step_dist=step_dist,
+                partial_observability_hallway_states=partial_observability_hallway_states,
+                recorded_closed_hallways=recorded_closed_hallways,
             ):
                 return False
         return True
 
     def sample_free_robot_pose_uniform(
-        self, robot: Robot | None = None, ignore_robots: bool = True, partial_observability_hallway_states: bool = False, recorded_closed_hallways: set[Hallway] = None
+        self,
+        robot: Robot | None = None,
+        ignore_robots: bool = True,
+        partial_observability_hallway_states: bool = False,
+        recorded_closed_hallways: set[Hallway] | None = None,
     ) -> Pose | None:
         """
         Sample an unoccupied robot pose in the world.
@@ -1840,9 +1864,9 @@ class World:
             y = (ymax - ymin - 2 * r) * np.random.random() + ymin + r
             yaw = 2.0 * np.pi * np.random.random()
             pose = Pose(x=x, y=y, z=0.0, yaw=yaw)
-            if not self.check_occupancy(pose, partial_observability_hallway_states, recorded_closed_hallways) and (
-                ignore_robots or not self.collides_with_robots(pose, robot)
-            ):
+            if not self.check_occupancy(
+                pose, partial_observability_hallway_states, recorded_closed_hallways
+            ) and (ignore_robots or not self.collides_with_robots(pose, robot)):
                 return pose
         self.logger.warning("Could not sample pose.")
         return None

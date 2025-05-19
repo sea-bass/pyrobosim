@@ -200,7 +200,12 @@ class Hallway(Entity):
             zorder=2,
         )
 
-    def is_collision_free(self, pose: Pose | Sequence[float], partial_observability_hallway_states: bool = False, recorded_closed_hallways: set[Hallway] = None) -> bool:
+    def is_collision_free(
+        self,
+        pose: Pose | Sequence[float],
+        partial_observability_hallway_states: bool = False,
+        recorded_closed_hallways: set[Hallway] | None = None,
+    ) -> bool:
         """
         Checks whether a pose in the hallway is collision-free.
 
@@ -219,12 +224,19 @@ class Hallway(Entity):
         # If yes, return that it is not collision free if pose intersects inflated_closed_polygon
         # (Robot will assume hallway is closed)
         if partial_observability_hallway_states:
-            if self in recorded_closed_hallways:
-                is_free = is_free and not intersects_xy(self.inflated_closed_polygon, x, y)
+            if (
+                recorded_closed_hallways is not None
+                and self in recorded_closed_hallways
+            ):
+                is_free = is_free and not intersects_xy(
+                    self.inflated_closed_polygon, x, y
+                )
 
         else:
             if not self.is_open:
-                is_free = is_free and not intersects_xy(self.inflated_closed_polygon, x, y)
+                is_free = is_free and not intersects_xy(
+                    self.inflated_closed_polygon, x, y
+                )
 
         return bool(is_free)
 

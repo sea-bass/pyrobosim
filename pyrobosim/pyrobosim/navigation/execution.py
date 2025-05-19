@@ -12,6 +12,7 @@ from ..planning.actions import ExecutionResult, ExecutionStatus
 from ..utils.logging import get_global_logger
 from ..utils.path import Path
 from ..utils.trajectory import get_constant_speed_trajectory, interpolate_trajectory
+from ..sensors.lidar import Lidar2D
 
 
 class ConstantVelocityExecutor(PathExecutor):
@@ -182,7 +183,6 @@ class ConstantVelocityExecutor(PathExecutor):
         self.robot.last_nav_result = ExecutionResult(status=status, message=message)
         return self.robot.last_nav_result
 
-    
     # With partial_observability_hallway_states, validation is done based on ROBOT PERCEIVED WORLD, instead of TRUE WORLD
     # In line is_path_collision_free
     def validate_remaining_path(self) -> None:
@@ -214,10 +214,10 @@ class ConstantVelocityExecutor(PathExecutor):
                 remaining_path = Path(poses=poses)
                 if (self.robot.world is not None) and (
                     not self.robot.world.is_path_collision_free(
-                        remaining_path, 
-                        step_dist=self.validation_step_dist, 
+                        remaining_path,
+                        step_dist=self.validation_step_dist,
                         partial_observability_hallway_states=self.robot.partial_observability_hallway_states,
-                        recorded_closed_hallways=self.robot.recorded_closed_hallways
+                        recorded_closed_hallways=self.robot.recorded_closed_hallways,
                     )
                 ):
                     self.robot.logger.warning(
@@ -234,48 +234,67 @@ class ConstantVelocityExecutor(PathExecutor):
         It either remove (if it detects hallway is open) or add (if it detects hallway is close) the hallway
         into the robot's knowledge.
         """
-        if (self.robot is None) or (self.traj is None):
-            return 
+        if (self.robot is None) or (self.traj is None) or (self.robot.world is None):
+            return
 
         while self.following_path and (not self.abort_execution):
             start_time = time.time()
             cur_pose = self.robot.get_pose()
 
-            # Get lidar measurement and check
-            units_scaling = 1.0 if self.robot.sensors["lidar"].angle_units == "radians" else np.pi / 180
-            measured_angles =  (
-                np.arange(self.robot.sensors["lidar"].min_angle, 
-                        self.robot.sensors["lidar"].max_angle + self.robot.sensors["lidar"].angular_resolution, 
-                        self.robot.sensors["lidar"].angular_resolution)
+            lidar_sensor = self.robot.sensors.get("lidar")
+            if isinstance(lidar_sensor, Lidar2D):
+                # Get lidar measurement and check
+                units_scaling = (
+                    1.0 if lidar_sensor.angle_units == "radians" else np.pi / 180
+                )
+                measured_angles = (
+                    np.arange(
+                        lidar_sensor.min_angle,
+                        lidar_sensor.max_angle + lidar_sensor.angular_resolution,
+                        lidar_sensor.angular_resolution,
+                    )
                     * units_scaling
+                )
+                measured_lengths = lidar_sensor.get_measurement()
+
+                analyse_pose = []
+                for angle, length in zip(measured_angles, measured_lengths):
+                    if length < lidar_sensor.max_range_m:
+                        # There are objects in lidar line of sight
+                        x = cur_pose.x + length * np.cos(angle)
+                        y = cur_pose.y + length * np.sin(angle)
+                        analyse_pose.append((x, y))
+
+                for pose in analyse_pose:
+                    for hallway in self.robot.world.hallways:
+                        # Check if there are pose intersecting with hallway polygon
+                        if shapely.intersects_xy(
+                            hallway.internal_collision_polygon, pose[0], pose[1]
+                        ):
+                            # If yes, check if the hallway is closed
+                            if not hallway.is_open:
+                                if hallway not in self.robot.recorded_closed_hallways:
+                                    self.robot.recorded_closed_hallways.add(hallway)
+                                    print(
+                                        f"Added {hallway.name} into closed knowledge."
+                                    )  # Might need to change how to present this data
+                                    break
+                            else:
+                                if hallway in self.robot.recorded_closed_hallways:
+                                    self.robot.recorded_closed_hallways.remove(hallway)
+                                    print(
+                                        f"Removed {hallway.name} from closed knowledge."
+                                    )  # Might need to change how to present this data
+                                    break
+
+            else:
+                self.robot.logger.warning(
+                    "Lidar sensor is not a 2D lidar. Cannot detect closed hallway."
+                )
+
+            time.sleep(
+                max(0, self.lidar_sensor_measurement_dt - (time.time() - start_time))
             )
-            measured_lengths = self.robot.sensors["lidar"].get_measurement()
-
-            analyse_pose = []
-            for angle, length in zip(measured_angles, measured_lengths):
-                if length < self.robot.sensors["lidar"].max_range_m:
-                    # There are objects in lidar line of sight
-                    x = cur_pose.x + length * np.cos(angle)
-                    y = cur_pose.y + length * np.sin(angle)
-                    analyse_pose.append((x, y))
-
-            for pose in analyse_pose:
-                for hallway in self.robot.world.hallways:
-                    # Check if there are pose intersecting with hallway polygon
-                    if shapely.intersects_xy(hallway.internal_collision_polygon, pose[0], pose[1]):
-                        # If yes, check if the hallway is closed
-                        if not hallway.is_open:
-                            if hallway not in self.robot.recorded_closed_hallways:
-                                self.robot.recorded_closed_hallways.add(hallway)
-                                print(f"Added {hallway.name} into closed knowledge.")      # Might need to change how to present this data
-                                break
-                        else:
-                            if hallway in self.robot.recorded_closed_hallways:
-                                self.robot.recorded_closed_hallways.remove(hallway)
-                                print(f"Removed {hallway.name} from closed knowledge.")    # Might need to change how to present this data
-                                break
-
-            time.sleep(max(0, self.lidar_sensor_measurement_dt - (time.time() - start_time)))
 
     def to_dict(self) -> dict[str, Any]:
         """

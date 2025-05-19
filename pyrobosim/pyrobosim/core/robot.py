@@ -84,7 +84,7 @@ class Robot(Entity):
         :param action_execution_options: A dictionary of action names and their execution options.
             This defines properties such as delays and nondeterminism.
         :param initial_battery_level: The initial battery charge, from 0 to 100.
-        :param partial_observability_hallway_states: If True,  robot doesn't know the world's hallways state, 
+        :param partial_observability_hallway_states: If True,  robot doesn't know the world's hallways state,
             and assume all is OPEN.
         """
         from .world import World
@@ -894,7 +894,9 @@ class Robot(Entity):
         if isinstance(self.location, Hallway):
             if self.location in self.recorded_closed_hallways:
                 self.recorded_closed_hallways.remove(self.location)
-                print(f"Removed {self.location.name} from closed knowledge.")    # Might need to change how to present this data
+                print(
+                    f"Removed {self.location.name} from closed knowledge."
+                )  # Might need to change how to present this data
 
         if isinstance(self.location, ObjectSpawn):
             loc_to_open = self.location.parent
@@ -960,7 +962,9 @@ class Robot(Entity):
         if isinstance(self.location, Hallway):
             if self.location not in self.recorded_closed_hallways:
                 self.recorded_closed_hallways.add(self.location)
-                print(f"Added {self.location.name} from closed knowledge.")    # Might need to change how to present this data
+                print(
+                    f"Added {self.location.name} from closed knowledge."
+                )  # Might need to change how to present this data
 
         if isinstance(self.location, ObjectSpawn):
             loc_to_close = self.location.parent
