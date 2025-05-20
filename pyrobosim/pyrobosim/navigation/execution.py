@@ -274,12 +274,16 @@ class ConstantVelocityExecutor(PathExecutor):
                             if not hallway.is_open:
                                 if hallway not in self.robot.recorded_closed_hallways:
                                     self.robot.recorded_closed_hallways.add(hallway)
-                                    self.robot.logger.info(f"Added {hallway.name} into closed knowledge.")
+                                    self.robot.logger.info(
+                                        f"Added {hallway.name} into closed knowledge."
+                                    )
                                     break
                             else:
                                 if hallway in self.robot.recorded_closed_hallways:
                                     self.robot.recorded_closed_hallways.remove(hallway)
-                                    self.robot.logger.info(f"Removed {hallway.name} from closed knowledge.")
+                                    self.robot.logger.info(
+                                        f"Removed {hallway.name} from closed knowledge."
+                                    )
                                     break
 
             else:
