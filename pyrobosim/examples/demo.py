@@ -68,7 +68,6 @@ def create_world(multirobot: bool = False) -> World:
         room_end="bathroom",
         width=0.7,
         color="#666666",
-        is_open=False,
     )
     world.add_hallway(
         room_start="bathroom",
@@ -144,7 +143,11 @@ def create_world(multirobot: bool = False) -> World:
             max_angular_velocity=4.0,
             validate_during_execution=True,
         ),
-        sensors={"lidar": lidar} if args.lidar else None,
+        sensors=(
+            {"lidar": lidar}
+            if args.lidar or args.partial_observability_hallway_states
+            else None
+        ),
         grasp_generator=GraspGenerator(grasp_props),
         partial_observability=args.partial_observability,
         color="#CC00CC",

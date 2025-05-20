@@ -219,7 +219,7 @@ class Hallway(Entity):
 
         is_free = intersects_xy(self.internal_collision_polygon, x, y)
 
-        # With partial observability_hallway_states,
+        # With partial_observability_hallway_states,
         # Check if robot recorded the hallway state as closed
         # If yes, return that it is not collision free if pose intersects inflated_closed_polygon
         # (Robot will assume hallway is closed)

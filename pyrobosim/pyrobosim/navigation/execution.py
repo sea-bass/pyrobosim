@@ -184,7 +184,6 @@ class ConstantVelocityExecutor(PathExecutor):
         return self.robot.last_nav_result
 
     # With partial_observability_hallway_states, validation is done based on ROBOT PERCEIVED WORLD, instead of TRUE WORLD
-    # In line is_path_collision_free
     def validate_remaining_path(self) -> None:
         """
         Validates the remaining path by checking collisions against the world.
