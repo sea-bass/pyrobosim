@@ -52,6 +52,7 @@ class Robot(Entity):
         partial_observability: bool = False,
         action_execution_options: dict[str, ExecutionOptions] = {},
         initial_battery_level: float = 100.0,
+        partial_observability_hallway_states: bool = False,
     ) -> None:
         """
         Creates a robot instance.
@@ -83,6 +84,8 @@ class Robot(Entity):
         :param action_execution_options: A dictionary of action names and their execution options.
             This defines properties such as delays and nondeterminism.
         :param initial_battery_level: The initial battery charge, from 0 to 100.
+        :param partial_observability_hallway_states: If True,  robot doesn't know the world's hallways state,
+            and assume all is OPEN.
         """
         from .world import World
 
@@ -142,6 +145,9 @@ class Robot(Entity):
         self.executing_plan = False
         self.canceling_execution = False
         self.battery_level = initial_battery_level
+
+        self.partial_observability_hallway_states = partial_observability_hallway_states
+        self.recorded_closed_hallways: set[Hallway] = set()
 
         self.logger.info("Created robot.")
 
@@ -884,6 +890,12 @@ class Robot(Entity):
                     status=ExecutionStatus.EXECUTION_FAILURE, message=message
                 )
 
+        # Update recorded_closed_hallways knowledge
+        if isinstance(self.location, Hallway):
+            if self.location in self.recorded_closed_hallways:
+                self.recorded_closed_hallways.remove(self.location)
+                self.logger.info(f"Removed {self.location.name} from closed knowledge.")
+
         if isinstance(self.location, ObjectSpawn):
             loc_to_open = self.location.parent
         else:
@@ -943,6 +955,12 @@ class Robot(Entity):
                 return ExecutionResult(
                     status=ExecutionStatus.EXECUTION_FAILURE, message=message
                 )
+
+        # Update recorded_closed_hallways knowledge
+        if isinstance(self.location, Hallway):
+            if self.location not in self.recorded_closed_hallways:
+                self.recorded_closed_hallways.add(self.location)
+                self.logger.info(f"Added {self.location.name} from closed knowledge.")
 
         if isinstance(self.location, ObjectSpawn):
             loc_to_close = self.location.parent

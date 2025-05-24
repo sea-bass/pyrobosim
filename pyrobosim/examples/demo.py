@@ -64,7 +64,10 @@ def create_world(multirobot: bool = False) -> World:
 
     # Add hallways between the rooms
     world.add_hallway(
-        room_start="kitchen", room_end="bathroom", width=0.7, color="#666666"
+        room_start="kitchen",
+        room_end="bathroom",
+        width=0.7,
+        color="#666666",
     )
     world.add_hallway(
         room_start="bathroom",
@@ -140,10 +143,15 @@ def create_world(multirobot: bool = False) -> World:
             max_angular_velocity=4.0,
             validate_during_execution=True,
         ),
-        sensors={"lidar": lidar} if args.lidar else None,
+        sensors=(
+            {"lidar": lidar}
+            if args.lidar or args.partial_observability_hallway_states
+            else None
+        ),
         grasp_generator=GraspGenerator(grasp_props),
         partial_observability=args.partial_observability,
         color="#CC00CC",
+        partial_observability_hallway_states=args.partial_observability_hallway_states,
     )
     planner_config_rrt = {
         "bidirectional": True,
@@ -166,6 +174,7 @@ def create_world(multirobot: bool = False) -> World:
             path_executor=ConstantVelocityExecutor(),
             grasp_generator=GraspGenerator(grasp_props),
             partial_observability=args.partial_observability,
+            partial_observability_hallway_states=args.partial_observability_hallway_states,
         )
         planner_config_prm = {
             "collision_check_step_dist": 0.025,
@@ -184,6 +193,7 @@ def create_world(multirobot: bool = False) -> World:
             path_executor=ConstantVelocityExecutor(),
             grasp_generator=GraspGenerator(grasp_props),
             partial_observability=args.partial_observability,
+            partial_observability_hallway_states=args.partial_observability_hallway_states,
         )
         planner_config_astar = {
             "grid_resolution": 0.05,
@@ -226,6 +236,11 @@ def parse_args() -> argparse.Namespace:
         "--lidar",
         action="store_true",
         help="If True, adds a lidar sensor to the first robot.",
+    )
+    parser.add_argument(
+        "--partial-observability-hallway-states",
+        action="store_true",
+        help="If True, robots have partial observability on hallway states and assume its all OPEN at the start.",
     )
     return parser.parse_args()
 
