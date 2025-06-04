@@ -235,7 +235,7 @@ class ConstantVelocityExecutor(PathExecutor):
         """
         if (self.robot is None) or (self.traj is None) or (self.robot.world is None):
             return
-        
+
         lidar_sensor = self.robot.sensors.get("lidar")
         if isinstance(lidar_sensor, Lidar2D):
             # Get lidar measurement and check
@@ -250,7 +250,7 @@ class ConstantVelocityExecutor(PathExecutor):
                 )
                 * units_scaling
             )
-        
+
         else:
             self.robot.logger.warning(
                 "Lidar sensor is not a 2D lidar. Cannot detect closed hallway."
@@ -291,7 +291,7 @@ class ConstantVelocityExecutor(PathExecutor):
                                     f"Removed {hallway.name} from closed knowledge."
                                 )
                                 break
-                            
+
             time.sleep(
                 max(0, self.lidar_sensor_measurement_dt - (time.time() - start_time))
             )
