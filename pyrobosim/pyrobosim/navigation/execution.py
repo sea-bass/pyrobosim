@@ -30,6 +30,7 @@ class ConstantVelocityExecutor(PathExecutor):
         validate_during_execution: bool = False,
         validation_dt: float = 0.1,
         validation_step_dist: float = 0.025,
+        lidar_sensor_name: str | None = None,
         lidar_sensor_measurement_dt: float = 0.05,
     ) -> None:
         """
@@ -54,6 +55,7 @@ class ConstantVelocityExecutor(PathExecutor):
         self.validation_step_dist = validation_step_dist
 
         self.lidar_sensor_timer: Thread | None = None
+        self.lidar_sensor_name = lidar_sensor_name
         self.lidar_sensor_measurement_dt = lidar_sensor_measurement_dt
 
         # Execution state
@@ -236,7 +238,7 @@ class ConstantVelocityExecutor(PathExecutor):
         if (self.robot is None) or (self.traj is None) or (self.robot.world is None):
             return
 
-        lidar_sensor = self.robot.sensors.get("lidar")
+        lidar_sensor = self.robot.sensors.get(self.lidar_sensor_name)
         if isinstance(lidar_sensor, Lidar2D):
             # Get lidar measurement and check
             units_scaling = (
