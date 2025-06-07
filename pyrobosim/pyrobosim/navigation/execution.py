@@ -240,18 +240,8 @@ class ConstantVelocityExecutor(PathExecutor):
 
         lidar_sensor = self.robot.sensors.get(self.lidar_sensor_name)
         if isinstance(lidar_sensor, Lidar2D):
-            # Get lidar measurement and check
-            units_scaling = (
-                1.0 if lidar_sensor.angle_units == "radians" else np.pi / 180
-            )
-            measured_angles = (
-                np.arange(
-                    lidar_sensor.min_angle,
-                    lidar_sensor.max_angle + lidar_sensor.angular_resolution,
-                    lidar_sensor.angular_resolution,
-                )
-                * units_scaling
-            )
+            # Get lidar angles range
+            measured_angles = lidar_sensor.angles
 
         else:
             self.robot.logger.warning(
