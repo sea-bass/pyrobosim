@@ -10,6 +10,7 @@ from pyrobosim.utils.pose import Pose
 from pyrobosim.sensors.lidar import Lidar2D
 from pyrobosim.navigation.execution import ConstantVelocityExecutor
 
+
 def test_partial_observability_hallway_states_enabled() -> None:
     """Tests planning with default world graph planner settings."""
     world = WorldYamlLoader().from_file(
@@ -27,23 +28,24 @@ def test_partial_observability_hallway_states_enabled() -> None:
     end = Pose(x=-0.8, y=1.3)
 
     collision_free_without_partial_observability_hallway_states = robot.world.is_connectable(
-        start = start,
-        goal = end,
-        partial_observability_hallway_states = robot.partial_observability_hallway_states, 
-        recorded_closed_hallways = robot.recorded_closed_hallways
-        )
-    
+        start=start,
+        goal=end,
+        partial_observability_hallway_states=robot.partial_observability_hallway_states,
+        recorded_closed_hallways=robot.recorded_closed_hallways,
+    )
+
     # This would test if a robot would regard a hallway as open without prior knowledge
     robot.partial_observability_hallway_states = True
     collision_free_with_partial_observability_hallway_states = robot.world.is_connectable(
-        start = start,
-        goal = end,
-        partial_observability_hallway_states = robot.partial_observability_hallway_states, 
-        recorded_closed_hallways = robot.recorded_closed_hallways
-        )
+        start=start,
+        goal=end,
+        partial_observability_hallway_states=robot.partial_observability_hallway_states,
+        recorded_closed_hallways=robot.recorded_closed_hallways,
+    )
 
     assert collision_free_without_partial_observability_hallway_states == False
     assert collision_free_with_partial_observability_hallway_states == True
+
 
 def test_detect_closed_hallway() -> None:
     """Tests updating recorded closed hallways."""
@@ -78,12 +80,11 @@ def test_detect_closed_hallway() -> None:
     robot.path_executor.abort_execution = False
     robot.path_executor.detect_closed_hallway()
     robot_knowledge_test1 = robot.recorded_closed_hallways
-    
+
     # Stop the function
     robot.following_path = False
     robot.path_executor.abort_execution = True
 
-    
     # Place robot within 2m of closed hallway, but lidar range not detecting closed hallway
     robot.set_pose(Pose(x=0.3, y=0.4, yaw=-0.735))
     lidar_sensor.update()
@@ -95,7 +96,6 @@ def test_detect_closed_hallway() -> None:
     # Stop the function
     robot.following_path = False
     robot.path_executor.abort_execution = True
-
 
     # Place robot within 2m of closed hallway, and lidar range detecting closed hallway
     robot.set_pose(Pose(x=0.3, y=0.4, yaw=2.356))
@@ -112,10 +112,3 @@ def test_detect_closed_hallway() -> None:
     assert len(robot_knowledge_test1) == 0
     assert len(robot_knowledge_test2) == 0
     assert len(robot_knowledge_test3) == 1
-
-
-
-
-
-
-
