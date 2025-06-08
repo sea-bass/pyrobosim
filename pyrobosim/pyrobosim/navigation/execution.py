@@ -235,7 +235,13 @@ class ConstantVelocityExecutor(PathExecutor):
         It either remove (if it detects hallway is open) or add (if it detects hallway is close) the hallway
         into the robot's knowledge.
         """
-        if (self.robot is None) or (self.traj is None) or (self.robot.world is None):
+        if (self.robot is None) or (self.robot.world is None):
+            return
+
+        if self.lidar_sensor_name is None:
+            self.robot.logger.warning(
+                "No lidar sensor name provided. Cannot detect closed hallway."
+            )
             return
 
         lidar_sensor = self.robot.sensors.get(self.lidar_sensor_name)
