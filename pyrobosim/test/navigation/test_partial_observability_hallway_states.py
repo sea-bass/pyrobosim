@@ -3,6 +3,7 @@
 """Unit tests for the Partial Observability Hallway States feature."""
 
 import os
+from threading import Thread
 
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.utils.general import get_data_folder
@@ -78,36 +79,39 @@ def test_detect_closed_hallway() -> None:
     lidar_sensor.update()
     robot.path_executor.following_path = True
     robot.path_executor.abort_execution = False
-    robot.path_executor.detect_closed_hallway()
-    robot_knowledge_test1 = robot.recorded_closed_hallways
-
+    t = Thread(target=robot.path_executor.detect_closed_hallway)
+    t.start()
     # Stop the function
-    robot.following_path = False
+    robot.path_executor.following_path = False
     robot.path_executor.abort_execution = True
+    t.join()
+    robot_knowledge_test1 = set(robot.recorded_closed_hallways)
 
     # Place robot within 2m of closed hallway, but lidar range not detecting closed hallway
     robot.set_pose(Pose(x=0.3, y=0.4, yaw=-0.735))
     lidar_sensor.update()
     robot.path_executor.following_path = True
     robot.path_executor.abort_execution = False
-    robot.path_executor.detect_closed_hallway()
-    robot_knowledge_test2 = robot.recorded_closed_hallways
-
+    t = Thread(target=robot.path_executor.detect_closed_hallway)
+    t.start()
     # Stop the function
-    robot.following_path = False
+    robot.path_executor.following_path = False
     robot.path_executor.abort_execution = True
+    t.join()
+    robot_knowledge_test2 = set(robot.recorded_closed_hallways)
 
     # Place robot within 2m of closed hallway, and lidar range detecting closed hallway
     robot.set_pose(Pose(x=0.3, y=0.4, yaw=2.356))
     lidar_sensor.update()
     robot.path_executor.following_path = True
     robot.path_executor.abort_execution = False
-    robot.path_executor.detect_closed_hallway()
-    robot_knowledge_test3 = robot.recorded_closed_hallways
-
+    t = Thread(target=robot.path_executor.detect_closed_hallway)
+    t.start()
     # Stop the function
-    robot.following_path = False
+    robot.path_executor.following_path = False
     robot.path_executor.abort_execution = True
+    t.join()
+    robot_knowledge_test3 = set(robot.recorded_closed_hallways)
 
     assert len(robot_knowledge_test1) == 0
     assert len(robot_knowledge_test2) == 0

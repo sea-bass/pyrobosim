@@ -264,8 +264,9 @@ class ConstantVelocityExecutor(PathExecutor):
             for angle, length in zip(measured_angles, measured_lengths):
                 if length < lidar_sensor.max_range_m:
                     # There are objects in lidar line of sight
-                    x = cur_pose.x + length * np.cos(angle)
-                    y = cur_pose.y + length * np.sin(angle)
+                    adjusted_angle = angle + cur_pose.get_yaw()
+                    x = cur_pose.x + length * np.cos(adjusted_angle)
+                    y = cur_pose.y + length * np.sin(adjusted_angle)
                     analyse_pose.append((x, y))
 
             for pose in analyse_pose:
