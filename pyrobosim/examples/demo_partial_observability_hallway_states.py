@@ -80,24 +80,24 @@ def create_world(multirobot: bool = False) -> World:
         width=0.6,
         conn_method="points",
         conn_points=[(1.0, 0.5), (2.5, 0.5), (2.5, 3.0)],
-        is_open=False
+        is_open=False,
     )
 
     # Add locations
-    
+
     # table
     world.add_location(
         category="table",
         parent="kitchen",
         pose=Pose(x=0.85, y=-0.5, z=0.0, yaw=-90.0, angle_units="degrees"),
     )
-    
-    #desk
+
+    # desk
     desk_pose = world.get_pose_relative_to(
         Pose(x=0.525, y=0.4, z=0.0, yaw=0.0), "bedroom"
     )
     world.add_location(category="desk", parent="bedroom", pose=desk_pose)
-    
+
     # counter
     world.add_location(
         category="counter",
@@ -123,13 +123,9 @@ def create_world(multirobot: bool = False) -> World:
             dt=0.1,
             max_angular_velocity=4.0,
             validate_during_execution=True,
-            lidar_sensor_name=(
-                "lidar"
-            ),
+            lidar_sensor_name=("lidar"),
         ),
-        sensors=(
-            {"lidar": lidar0}
-        ),
+        sensors=({"lidar": lidar0}),
         color="#CC00CC",
         partial_observability_hallway_states=True,
     )
@@ -164,13 +160,9 @@ def create_world(multirobot: bool = False) -> World:
                 dt=0.1,
                 max_angular_velocity=4.0,
                 validate_during_execution=True,
-                lidar_sensor_name=(
-                    "lidar"
-                ),
+                lidar_sensor_name=("lidar"),
             ),
-            sensors=(
-                {"lidar": lidar1}
-            ),
+            sensors=({"lidar": lidar1}),
             partial_observability_hallway_states=True,
         )
         # planner_config_prm = {
@@ -201,13 +193,9 @@ def create_world(multirobot: bool = False) -> World:
                 dt=0.1,
                 max_angular_velocity=4.0,
                 validate_during_execution=True,
-                lidar_sensor_name=(
-                    "lidar"
-                ),
+                lidar_sensor_name=("lidar"),
             ),
-            sensors=(
-                {"lidar": lidar2}
-            ),
+            sensors=({"lidar": lidar2}),
             partial_observability_hallway_states=True,
         )
         # planner_config_astar = {
@@ -223,9 +211,12 @@ def create_world(multirobot: bool = False) -> World:
 
     return world
 
+
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments"""
-    parser = argparse.ArgumentParser(description="Pyrobosim demo for partial observability hallway states.")
+    parser = argparse.ArgumentParser(
+        description="Pyrobosim demo for partial observability hallway states."
+    )
     parser.add_argument(
         "--multirobot",
         action="store_true",
