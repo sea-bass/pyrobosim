@@ -904,11 +904,13 @@ class Robot(Entity):
             loc_to_open = self.location.parent
         else:
             loc_to_open = self.location
-        result=self.world.open_location(loc_to_open)
-    
-        if isinstance(self.location, Hallway) and isinstance(self.path_planner, PRMPlanner):
+        result = self.world.open_location(loc_to_open)
+
+        if isinstance(self.location, Hallway) and isinstance(
+            self.path_planner, PRMPlanner
+        ):
             self.reset_path_planner()
-        
+
         return result
 
     def close_location(self) -> ExecutionResult:
@@ -978,11 +980,13 @@ class Robot(Entity):
             loc_to_close = self.location.parent
         else:
             loc_to_close = self.location
-        result=self.world.close_location(loc_to_close, ignore_robots=[self])
+        result = self.world.close_location(loc_to_close, ignore_robots=[self])
 
-        if isinstance(self.location, Hallway) and isinstance(self.path_planner, PRMPlanner):
+        if isinstance(self.location, Hallway) and isinstance(
+            self.path_planner, PRMPlanner
+        ):
             self.reset_path_planner()
-        
+
         return result
 
     def execute_action(self, action: TaskAction) -> ExecutionResult:

@@ -283,9 +283,7 @@ class ConstantVelocityExecutor(PathExecutor):
                                 self.robot.logger.info(
                                     f"Added {hallway.name} into closed knowledge."
                                 )
-                                if isinstance(
-                                    self.robot.path_planner, PRMPlanner
-                                ):
+                                if isinstance(self.robot.path_planner, PRMPlanner):
                                     self.robot.reset_path_planner()
                                 break
                         else:
@@ -294,9 +292,7 @@ class ConstantVelocityExecutor(PathExecutor):
                                 self.robot.logger.info(
                                     f"Removed {hallway.name} from closed knowledge."
                                 )
-                                if isinstance(
-                                    self.robot.path_planner, PRMPlanner
-                                ):
+                                if isinstance(self.robot.path_planner, PRMPlanner):
                                     self.robot.reset_path_planner()
                                 break
 

@@ -77,7 +77,7 @@ class PRMPlanner(PathPlanner):
                 self.collision_check_step_dist,
                 self.max_connection_dist,
                 self.robot.partial_observability_hallway_states,
-                self.robot.recorded_closed_hallways
+                self.robot.recorded_closed_hallways,
             ):
                 self.graph.add_edge(node, other)
 
@@ -110,7 +110,11 @@ class PRMPlanner(PathPlanner):
             from ..utils.world_motion_planning import reduce_waypoints_polygon
 
             compressed_poses = reduce_waypoints_polygon(
-                self.world, self.latest_path.poses, self.collision_check_step_dist, self.robot.partial_observability_hallway_states,self.robot.recorded_closed_hallways,
+                self.world,
+                self.latest_path.poses,
+                self.collision_check_step_dist,
+                self.robot.partial_observability_hallway_states,
+                self.robot.recorded_closed_hallways,
             )
             self.latest_path.set_poses(compressed_poses)
         self.latest_path.fill_yaws()
@@ -126,7 +130,10 @@ class PRMPlanner(PathPlanner):
         :return: Collision-free pose if found, else ``None``.
         """
         assert self.world is not None
-        return self.world.sample_free_robot_pose_uniform(partial_observability_hallway_states=self.robot.partial_observability_hallway_states, recorded_closed_hallways=self.robot.recorded_closed_hallways)
+        return self.world.sample_free_robot_pose_uniform(
+            partial_observability_hallway_states=self.robot.partial_observability_hallway_states,
+            recorded_closed_hallways=self.robot.recorded_closed_hallways,
+        )
 
     def get_graphs(self) -> list[SearchGraph]:
         """
