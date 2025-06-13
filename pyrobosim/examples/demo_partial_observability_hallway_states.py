@@ -165,15 +165,14 @@ def create_world(multirobot: bool = False) -> World:
             sensors=({"lidar": lidar1}),
             partial_observability_hallway_states=True,
         )
-        # planner_config_prm = {
-        #     "collision_check_step_dist": 0.025,
-        #     "max_connection_dist": 1.5,
-        #     "max_nodes": 100,
-        #     "compress_path": False,
-        # }
-        # prm_planner = PRMPlanner(**planner_config_prm)
-        rrt_planner1 = RRTPlanner(**planner_config_rrt)
-        robot1.set_path_planner(rrt_planner1)
+        planner_config_prm = {
+            "collision_check_step_dist": 0.025,
+            "max_connection_dist": 1.5,
+            "max_nodes": 100,
+            "compress_path": False,
+        }
+        prm_planner = PRMPlanner(**planner_config_prm)
+        robot1.set_path_planner(prm_planner)
         world.add_robot(robot1, loc="bathroom")
 
         lidar2 = Lidar2D(

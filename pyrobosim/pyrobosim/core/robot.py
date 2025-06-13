@@ -14,6 +14,7 @@ from .locations import ObjectSpawn
 from .objects import Object
 from .types import Entity, set_parent
 from ..manipulation.grasping import Grasp, GraspGenerator
+from ..navigation.prm import PRMPlanner
 from ..navigation.types import PathExecutor, PathPlanner
 from ..planning.actions import (
     ExecutionOptions,
@@ -903,7 +904,12 @@ class Robot(Entity):
             loc_to_open = self.location.parent
         else:
             loc_to_open = self.location
-        return self.world.open_location(loc_to_open)
+        result=self.world.open_location(loc_to_open)
+    
+        if isinstance(self.location, Hallway) and isinstance(self.path_planner, PRMPlanner):
+            self.reset_path_planner()
+        
+        return result
 
     def close_location(self) -> ExecutionResult:
         """
@@ -972,7 +978,12 @@ class Robot(Entity):
             loc_to_close = self.location.parent
         else:
             loc_to_close = self.location
-        return self.world.close_location(loc_to_close, ignore_robots=[self])
+        result=self.world.close_location(loc_to_close, ignore_robots=[self])
+
+        if isinstance(self.location, Hallway) and isinstance(self.path_planner, PRMPlanner):
+            self.reset_path_planner()
+        
+        return result
 
     def execute_action(self, action: TaskAction) -> ExecutionResult:
         """
