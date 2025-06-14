@@ -68,6 +68,7 @@ class PRMPlanner(PathPlanner):
         :param node: Node to try add to the graph.
         """
         assert self.world is not None
+        assert self.robot is not None
         for other in self.graph.nodes:
             if node == other:
                 continue
@@ -90,6 +91,7 @@ class PRMPlanner(PathPlanner):
         :return: Path from start to goal.
         """
         assert self.world is not None
+        assert self.robot is not None
         # Reset the path and time
         self.latest_path = Path()
         # Create the start and goal nodes
@@ -130,6 +132,7 @@ class PRMPlanner(PathPlanner):
         :return: Collision-free pose if found, else ``None``.
         """
         assert self.world is not None
+        assert self.robot is not None
         return self.world.sample_free_robot_pose_uniform(
             partial_observability_hallway_states=self.robot.partial_observability_hallway_states,
             recorded_closed_hallways=self.robot.recorded_closed_hallways,
