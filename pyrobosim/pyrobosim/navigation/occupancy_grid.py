@@ -10,6 +10,7 @@ from typing_extensions import Self  # For compatibility with Python <= 3.10
 import yaml
 
 from ..core.world import World
+from ..core.hallway import Hallway
 from ..utils.logging import get_global_logger
 
 
@@ -257,6 +258,8 @@ class OccupancyGrid:
         xlim: tuple[float, float] | None = None,
         ylim: tuple[float, float] | None = None,
         auto_lim_padding_ratio: float = 0.05,
+        partial_observability_hallway_states: bool = False,
+        recorded_closed_hallways: set[Hallway] | None = None,
     ) -> Self:
         """
         Generates an occupancy grid of a world at a given resolution.
@@ -304,7 +307,11 @@ class OccupancyGrid:
             x = xrange[i]
             for j in range(ny):
                 y = yrange[j]
-                occupancy_grid_data[i, j] = world.check_occupancy((x, y))
+                occupancy_grid_data[i, j] = world.check_occupancy(
+                    (x, y),
+                    partial_observability_hallway_states,
+                    recorded_closed_hallways,
+                )
         origin = (x_limits[0], y_limits[0])
 
         # Reset collision polygons to original inflation radius
