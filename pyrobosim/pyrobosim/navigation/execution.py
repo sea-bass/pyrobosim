@@ -7,6 +7,7 @@ from typing import Any
 import numpy as np
 import shapely
 
+from .a_star import AStarPlanner
 from .prm import PRMPlanner
 from .types import PathExecutor
 from ..planning.actions import ExecutionResult, ExecutionStatus
@@ -283,8 +284,10 @@ class ConstantVelocityExecutor(PathExecutor):
                                 self.robot.logger.info(
                                     f"Added {hallway.name} into closed knowledge."
                                 )
-                                if isinstance(self.robot.path_planner, PRMPlanner):
-                                    self.robot.reset_path_planner()
+                                # if isinstance(
+                                #     self.robot.path_planner, PRMPlanner
+                                # ) or isinstance(self.robot.path_planner, AStarPlanner):
+                                #     self.robot.reset_path_planner()
                                 break
                         else:
                             if hallway in self.robot.recorded_closed_hallways:
@@ -292,8 +295,10 @@ class ConstantVelocityExecutor(PathExecutor):
                                 self.robot.logger.info(
                                     f"Removed {hallway.name} from closed knowledge."
                                 )
-                                if isinstance(self.robot.path_planner, PRMPlanner):
-                                    self.robot.reset_path_planner()
+                                # if isinstance(
+                                #     self.robot.path_planner, PRMPlanner
+                                # ) or isinstance(self.robot.path_planner, AStarPlanner):
+                                #     self.robot.reset_path_planner()
                                 break
 
             time.sleep(

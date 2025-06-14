@@ -14,6 +14,7 @@ from .locations import ObjectSpawn
 from .objects import Object
 from .types import Entity, set_parent
 from ..manipulation.grasping import Grasp, GraspGenerator
+from ..navigation.a_star import AStarPlanner
 from ..navigation.prm import PRMPlanner
 from ..navigation.types import PathExecutor, PathPlanner
 from ..planning.actions import (
@@ -906,10 +907,11 @@ class Robot(Entity):
             loc_to_open = self.location
         result = self.world.open_location(loc_to_open)
 
-        if isinstance(self.location, Hallway) and isinstance(
-            self.path_planner, PRMPlanner
-        ):
-            self.reset_path_planner()
+        # if isinstance(self.location, Hallway) and (
+        #     isinstance(self.path_planner, PRMPlanner)
+        #     or isinstance(self.path_planner, AStarPlanner)
+        # ):
+        #     self.reset_path_planner()
 
         return result
 
@@ -982,10 +984,11 @@ class Robot(Entity):
             loc_to_close = self.location
         result = self.world.close_location(loc_to_close, ignore_robots=[self])
 
-        if isinstance(self.location, Hallway) and isinstance(
-            self.path_planner, PRMPlanner
-        ):
-            self.reset_path_planner()
+        # if isinstance(self.location, Hallway) and (
+        #     isinstance(self.path_planner, PRMPlanner)
+        #     or isinstance(self.path_planner, AStarPlanner)
+        # ):
+        #     self.reset_path_planner()
 
         return result
 

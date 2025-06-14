@@ -197,15 +197,14 @@ def create_world(multirobot: bool = False) -> World:
             sensors=({"lidar": lidar2}),
             partial_observability_hallway_states=True,
         )
-        # planner_config_astar = {
-        #     "grid_resolution": 0.05,
-        #     "grid_inflation_radius": 0.15,
-        #     "diagonal_motion": True,
-        #     "heuristic": "euclidean",
-        # }
-        # astar_planner = AStarPlanner(**planner_config_astar)
-        rrt_planner2 = RRTPlanner(**planner_config_rrt)
-        robot2.set_path_planner(rrt_planner2)
+        planner_config_astar = {
+            "grid_resolution": 0.05,
+            "grid_inflation_radius": 0.15,
+            "diagonal_motion": True,
+            "heuristic": "euclidean",
+        }
+        astar_planner = AStarPlanner(**planner_config_astar)
+        robot2.set_path_planner(astar_planner)
         world.add_robot(robot2, loc="bedroom")
 
     return world

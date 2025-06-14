@@ -126,7 +126,7 @@ class AStarPlanner(PathPlanner, AStar):  # type: ignore[misc]
         for action in self.allowable_actions:
             dx, dy = ASTAR_ACTIONS[action].action
             x, y = cell[0] + dx, cell[1] + dy
-            if not self.grid.is_occupied((x, y)):
+            if not self.grid.is_occupied((x, y)):  # type: ignore[has-type]
                 neighbors_list.append((x, y))
         return neighbors_list
 
@@ -135,7 +135,7 @@ class AStarPlanner(PathPlanner, AStar):  # type: ignore[misc]
         from .occupancy_grid import OccupancyGrid
 
         super().reset()
-        if self.world is None:
+        if (self.world is None) or (self.robot is None):
             return
 
         self._set_actions()
@@ -144,6 +144,8 @@ class AStarPlanner(PathPlanner, AStar):  # type: ignore[misc]
             self.world,
             resolution=self.grid_resolution,
             inflation_radius=self.grid_inflation_radius,
+            partial_observability_hallway_states=self.robot.partial_observability_hallway_states,
+            recorded_closed_hallways=self.robot.recorded_closed_hallways,
         )
 
     def plan(self, start: Pose, goal: Pose) -> Path:
