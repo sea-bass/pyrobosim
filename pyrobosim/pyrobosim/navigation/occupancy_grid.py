@@ -9,8 +9,8 @@ from typing import Sequence
 from typing_extensions import Self  # For compatibility with Python <= 3.10
 import yaml
 
-from ..core.world import World
 from ..core.hallway import Hallway
+from ..core.world import World
 from ..utils.logging import get_global_logger
 
 
@@ -258,7 +258,7 @@ class OccupancyGrid:
         xlim: tuple[float, float] | None = None,
         ylim: tuple[float, float] | None = None,
         auto_lim_padding_ratio: float = 0.05,
-        partial_observability_hallway_states: bool = False,
+        fog_hallways: bool = False,
         recorded_closed_hallways: set[Hallway] | None = None,
     ) -> Self:
         """
@@ -274,6 +274,8 @@ class OccupancyGrid:
         :param ylim: Y coordinate limits, in meters.
         :param auto_lim_padding_ratio: Additional padding ratio outside world
             limits if automatically computed, defaults to 0.05.
+        :param fog_hallways: If True, occupancy is checked based on recorded knowledge, instead of ground truth.
+        :param recorded_closed_hallways: Recorded knowledge of hallway states.
         :return: Occupancy grid of the world.
         """
         # If limits are not specified, use the world limits, but slightly padded.
@@ -309,7 +311,7 @@ class OccupancyGrid:
                 y = yrange[j]
                 occupancy_grid_data[i, j] = world.check_occupancy(
                     (x, y),
-                    partial_observability_hallway_states,
+                    fog_hallways,
                     recorded_closed_hallways,
                 )
         origin = (x_limits[0], y_limits[0])

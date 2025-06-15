@@ -54,7 +54,7 @@ class Robot(Entity):
         partial_observability: bool = False,
         action_execution_options: dict[str, ExecutionOptions] = {},
         initial_battery_level: float = 100.0,
-        partial_observability_hallway_states: bool = False,
+        fog_hallways: bool = False,
     ) -> None:
         """
         Creates a robot instance.
@@ -86,8 +86,8 @@ class Robot(Entity):
         :param action_execution_options: A dictionary of action names and their execution options.
             This defines properties such as delays and nondeterminism.
         :param initial_battery_level: The initial battery charge, from 0 to 100.
-        :param partial_observability_hallway_states: If True,  robot doesn't know the world's hallways state,
-            and assume all is OPEN.
+        :param fog_hallways: If True,  robot doesn't know the ground truth for world's hallways state,
+            and assume all is OPEN at the start.
         """
         from .world import World
 
@@ -148,7 +148,7 @@ class Robot(Entity):
         self.canceling_execution = False
         self.battery_level = initial_battery_level
 
-        self.partial_observability_hallway_states = partial_observability_hallway_states
+        self.fog_hallways = fog_hallways
         self.recorded_closed_hallways: set[Hallway] = set()
 
         self.logger.info("Created robot.")
@@ -893,7 +893,7 @@ class Robot(Entity):
                 )
 
         # Update recorded_closed_hallways knowledge
-        if self.partial_observability_hallway_states:
+        if self.fog_hallways:
             if isinstance(self.location, Hallway):
                 if self.location in self.recorded_closed_hallways:
                     self.recorded_closed_hallways.remove(self.location)
@@ -907,11 +907,9 @@ class Robot(Entity):
             loc_to_open = self.location
         result = self.world.open_location(loc_to_open)
 
-        if isinstance(self.location, Hallway) and (
-            isinstance(self.path_planner, PRMPlanner)
-            or isinstance(self.path_planner, AStarPlanner)
-        ):
-            self.reset_path_planner()
+        if isinstance(self.location, Hallway):
+            if isinstance(self.path_planner, PRMPlanner) or isinstance(self.path_planner, AStarPlanner):
+                self.reset_path_planner()
 
         return result
 
@@ -970,7 +968,7 @@ class Robot(Entity):
                 )
 
         # Update recorded_closed_hallways knowledge
-        if self.partial_observability_hallway_states:
+        if self.fog_hallways:
             if isinstance(self.location, Hallway):
                 if self.location not in self.recorded_closed_hallways:
                     self.recorded_closed_hallways.add(self.location)

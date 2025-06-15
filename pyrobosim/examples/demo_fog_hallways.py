@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
 """
-Test script showing how to build a world and use it with PyRoboSim.
+Test script showing PyRoboSim fog_hallways feature.
+fog_hallways refers to robot not knowing the true state of the hallway
+until it senses it with sensors.
 """
 import os
 import argparse
@@ -9,7 +11,6 @@ import argparse
 from pyrobosim.core.robot import Robot
 from pyrobosim.core.world import World
 from pyrobosim.gui import start_gui
-from pyrobosim.manipulation import GraspGenerator
 from pyrobosim.navigation.execution import ConstantVelocityExecutor
 from pyrobosim.navigation.a_star import AStarPlanner
 from pyrobosim.navigation.prm import PRMPlanner
@@ -127,7 +128,7 @@ def create_world(multirobot: bool = False) -> World:
         ),
         sensors=({"lidar": lidar0}),
         color="#CC00CC",
-        partial_observability_hallway_states=True,
+        fog_hallways=True,
     )
     planner_config_rrt = {
         "bidirectional": True,
@@ -163,7 +164,7 @@ def create_world(multirobot: bool = False) -> World:
                 lidar_sensor_name=("lidar"),
             ),
             sensors=({"lidar": lidar1}),
-            partial_observability_hallway_states=True,
+            fog_hallways=True,
         )
         planner_config_prm = {
             "collision_check_step_dist": 0.025,
@@ -195,7 +196,7 @@ def create_world(multirobot: bool = False) -> World:
                 lidar_sensor_name=("lidar"),
             ),
             sensors=({"lidar": lidar2}),
-            partial_observability_hallway_states=True,
+            fog_hallways=True,
         )
         planner_config_astar = {
             "grid_resolution": 0.05,
@@ -213,7 +214,7 @@ def create_world(multirobot: bool = False) -> World:
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments"""
     parser = argparse.ArgumentParser(
-        description="Pyrobosim demo for partial observability hallway states."
+        description="Pyrobosim demo for fog_hallways feature."
     )
     parser.add_argument(
         "--multirobot",

@@ -4,16 +4,16 @@ Motion planning utilities that require a world instance.
 This is mostly to avoid circular imports.
 """
 
+from ..core.hallway import Hallway
 from ..core.world import World
 from ..utils.pose import Pose
-from ..core.hallway import Hallway
 
 
 def reduce_waypoints_polygon(
     world: World,
     poses: list[Pose],
     step_dist: float = 0.01,
-    partial_observability_hallway_states: bool = False,
+    fog_hallways: bool = False,
     recorded_closed_hallways: set[Hallway] | None = None,
 ) -> list[Pose]:
     """
@@ -22,6 +22,8 @@ def reduce_waypoints_polygon(
     :param world: The world object in which the path is generated.
     :param poses: The list of poses that make up the path.
     :param step_dist: The step size for discretizing a straight line to check collisions.
+    :param fog_hallways: If True, connectability is checked based on recorded knowledge, instead of ground truth.
+    :param recorded_closed_hallways: Recorded knowledge of hallway states.
     """
     waypoints = []
     start = poses[0]
@@ -34,7 +36,7 @@ def reduce_waypoints_polygon(
             start=start,
             goal=current,
             step_dist=step_dist,
-            partial_observability_hallway_states=partial_observability_hallway_states,
+            fog_hallways=fog_hallways,
             recorded_closed_hallways=recorded_closed_hallways,
         ):
             waypoints.append(current)

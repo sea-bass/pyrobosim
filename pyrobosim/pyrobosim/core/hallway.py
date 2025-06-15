@@ -12,10 +12,10 @@ from shapely.plotting import patch_from_polygon
 
 from .room import Room
 from .types import Entity
-from ..utils.pose import Pose, get_angle, get_bearing_range
-from ..utils.polygon import inflate_polygon
 from ..utils.general import parse_color
 from ..utils.graph_types import Node
+from ..utils.polygon import inflate_polygon
+from ..utils.pose import Pose, get_angle, get_bearing_range
 
 
 class Hallway(Entity):
@@ -203,13 +203,15 @@ class Hallway(Entity):
     def is_collision_free(
         self,
         pose: Pose | Sequence[float],
-        partial_observability_hallway_states: bool = False,
+        fog_hallways: bool = False,
         recorded_closed_hallways: set[Hallway] | None = None,
     ) -> bool:
         """
         Checks whether a pose in the hallway is collision-free.
 
         :param pose: Pose to test.
+        :param fog_hallways: If True, collision is checked based on recorded knowledge, instead of ground truth.
+        :param recorded_closed_hallways: Recorded knowledge of hallway states.
         :return: True if collision-free, else False.
         """
         if isinstance(pose, Pose):
@@ -219,11 +221,10 @@ class Hallway(Entity):
 
         is_free = intersects_xy(self.internal_collision_polygon, x, y)
 
-        # With partial_observability_hallway_states,
-        # Check if robot recorded the hallway state as closed
-        # If yes, return that it is not collision free if pose intersects inflated_closed_polygon
-        # (Robot will assume hallway is closed)
-        if partial_observability_hallway_states:
+        # With fog_hallways,
+        # check is based on hallway states recorded by the robot,
+        # instead of ground truth hallway states.
+        if fog_hallways:
             if (
                 recorded_closed_hallways is not None
                 and self in recorded_closed_hallways

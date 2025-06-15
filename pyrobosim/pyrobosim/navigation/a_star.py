@@ -144,7 +144,7 @@ class AStarPlanner(PathPlanner, AStar):  # type: ignore[misc]
             self.world,
             resolution=self.grid_resolution,
             inflation_radius=self.grid_inflation_radius,
-            partial_observability_hallway_states=self.robot.partial_observability_hallway_states,
+            fog_hallways=self.robot.fog_hallways,
             recorded_closed_hallways=self.robot.recorded_closed_hallways,
         )
 

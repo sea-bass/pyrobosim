@@ -11,10 +11,10 @@ from .a_star import AStarPlanner
 from .prm import PRMPlanner
 from .types import PathExecutor
 from ..planning.actions import ExecutionResult, ExecutionStatus
+from ..sensors.lidar import Lidar2D
 from ..utils.logging import get_global_logger
 from ..utils.path import Path
 from ..utils.trajectory import get_constant_speed_trajectory, interpolate_trajectory
-from ..sensors.lidar import Lidar2D
 
 
 class ConstantVelocityExecutor(PathExecutor):
@@ -44,6 +44,7 @@ class ConstantVelocityExecutor(PathExecutor):
         :param validate_during_execution: If True, runs a separate thread that validates the remaining path at a regular rate.
         :param validation_dt: Time step for validating the remaining path, in seconds.
         :param validation_step_dist: The step size for discretizing a straight line to check collisions.
+        :param lidar_sensor_name: Name of the lidar sensor to use for detecting closed hallways.
         :param lidar_sensor_measurement_dt: Time step for taking lidar sensor measurement, in seconds.
         """
         super().__init__()
@@ -131,7 +132,7 @@ class ConstantVelocityExecutor(PathExecutor):
             self.validation_timer = Thread(target=self.validate_remaining_path)
             self.validation_timer.start()
 
-        if self.robot.partial_observability_hallway_states:
+        if self.robot.fog_hallways:
             self.lidar_sensor_timer = Thread(target=self.detect_closed_hallway)
             self.lidar_sensor_timer.start()
 
@@ -153,7 +154,7 @@ class ConstantVelocityExecutor(PathExecutor):
                     self.validation_timer is not None
                 ):
                     self.validation_timer.join()
-                if self.robot.partial_observability_hallway_states and (
+                if self.robot.fog_hallways and (
                     self.lidar_sensor_timer is not None
                 ):
                     self.lidar_sensor_timer.join()
@@ -196,7 +197,9 @@ class ConstantVelocityExecutor(PathExecutor):
         self.robot.last_nav_result = ExecutionResult(status=status, message=message)
         return self.robot.last_nav_result
 
-    # With partial_observability_hallway_states, validation is done based on ROBOT PERCEIVED WORLD, instead of TRUE WORLD
+    # With fog_hallways feature enabled, 
+    # validation of collisions in remaining path will be carried out based robot's recorded hallway states, 
+    # instead of of hallway states of the world's ground truth.
     def validate_remaining_path(self) -> None:
         """
         Validates the remaining path by checking collisions against the world.
@@ -228,7 +231,7 @@ class ConstantVelocityExecutor(PathExecutor):
                     not self.robot.world.is_path_collision_free(
                         remaining_path,
                         step_dist=self.validation_step_dist,
-                        partial_observability_hallway_states=self.robot.partial_observability_hallway_states,
+                        fog_hallways=self.robot.fog_hallways,
                         recorded_closed_hallways=self.robot.recorded_closed_hallways,
                     )
                 ):

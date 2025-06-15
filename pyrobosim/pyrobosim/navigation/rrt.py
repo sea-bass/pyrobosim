@@ -108,7 +108,7 @@ class RRTPlanner(PathPlanner):
             n_goal.pose,
             self.collision_check_step_dist,
             self.max_connection_dist,
-            self.robot.partial_observability_hallway_states,
+            self.robot.fog_hallways,
             self.robot.recorded_closed_hallways,
         ):
             path_poses = [n_start.pose, n_goal.pose]
@@ -136,7 +136,7 @@ class RRTPlanner(PathPlanner):
                 n_new.pose,
                 self.collision_check_step_dist,
                 self.max_connection_dist,
-                self.robot.partial_observability_hallway_states,
+                self.robot.fog_hallways,
                 self.robot.recorded_closed_hallways,
             )
             if connected_node:
@@ -154,7 +154,7 @@ class RRTPlanner(PathPlanner):
                     n_new_goal.pose,
                     self.collision_check_step_dist,
                     self.max_connection_dist,
-                    self.robot.partial_observability_hallway_states,
+                    self.robot.fog_hallways,
                     self.robot.recorded_closed_hallways,
                 )
                 if connected_node_goal:
@@ -230,7 +230,7 @@ class RRTPlanner(PathPlanner):
                 self.world,
                 path_poses,
                 self.collision_check_step_dist,
-                self.robot.partial_observability_hallway_states,
+                self.robot.fog_hallways,
                 self.robot.recorded_closed_hallways,
             )
         planning_time = time.time() - t_start
@@ -247,7 +247,7 @@ class RRTPlanner(PathPlanner):
         assert self.world is not None
         assert self.robot is not None
         return self.world.sample_free_robot_pose_uniform(
-            partial_observability_hallway_states=self.robot.partial_observability_hallway_states,
+            fog_hallways=self.robot.fog_hallways,
             recorded_closed_hallways=self.robot.recorded_closed_hallways,
         )
 
@@ -305,7 +305,7 @@ class RRTPlanner(PathPlanner):
                     n_tgt.pose,
                     self.collision_check_step_dist,
                     self.max_connection_dist,
-                    self.robot.partial_observability_hallway_states,
+                    self.robot.fog_hallways,
                     self.robot.recorded_closed_hallways,
                 ):
                     n_rewire = n
@@ -352,7 +352,7 @@ class RRTPlanner(PathPlanner):
                 n_tgt.pose,
                 self.collision_check_step_dist,
                 self.max_connection_dist,
-                self.robot.partial_observability_hallway_states,
+                self.robot.fog_hallways,
                 self.robot.recorded_closed_hallways,
             ):
                 n_tgt.parent = n_curr
@@ -369,7 +369,7 @@ class RRTPlanner(PathPlanner):
                     n_new.pose,
                     self.collision_check_step_dist,
                     self.max_connection_dist,
-                    self.robot.partial_observability_hallway_states,
+                    self.robot.fog_hallways,
                     self.robot.recorded_closed_hallways,
                 ):
                     graph.add_node(n_new)
