@@ -30,10 +30,10 @@ class ConstantVelocityExecutor(PathExecutor):
         linear_velocity: float = 1.0,
         max_angular_velocity: float | None = None,
         validate_during_execution: bool = False,
-        validation_dt: float = 0.1,
+        validation_dt: float = 0.5,
         validation_step_dist: float = 0.025,
         lidar_sensor_name: str | None = None,
-        lidar_sensor_measurement_dt: float = 0.05,
+        lidar_sensor_measurement_dt: float = 0.25,
     ) -> None:
         """
         Creates a constant velocity path executor.
@@ -323,5 +323,6 @@ class ConstantVelocityExecutor(PathExecutor):
             "validate_during_execution": self.validate_during_execution,
             "validation_dt": self.validation_dt,
             "validation_step_dist": self.validation_step_dist,
+            "lidar_sensor_name": self.lidar_sensor_name,
             "lidar_sensor_measurement_dt": self.lidar_sensor_measurement_dt,
         }
