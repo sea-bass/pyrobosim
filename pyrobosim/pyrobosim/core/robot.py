@@ -989,7 +989,9 @@ class Robot(Entity):
         result = self.world.close_location(loc_to_close, ignore_robots=[self])
 
         if isinstance(self.location, Hallway):
-            if isinstance(self.path_planner, PRMPlanner) or isinstance(self.path_planner, AStarPlanner):
+            if isinstance(self.path_planner, PRMPlanner) or isinstance(
+                self.path_planner, AStarPlanner
+            ):
                 self.reset_path_planner()
 
             for robot in self.world.robots:
