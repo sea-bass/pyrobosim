@@ -1,5 +1,7 @@
 """Hallway representation for world modeling."""
 
+from __future__ import annotations
+
 import math
 from typing import Any, Sequence
 
@@ -10,10 +12,10 @@ from shapely.plotting import patch_from_polygon
 
 from .room import Room
 from .types import Entity
-from ..utils.pose import Pose, get_angle, get_bearing_range
-from ..utils.polygon import inflate_polygon
 from ..utils.general import parse_color
 from ..utils.graph_types import Node
+from ..utils.polygon import inflate_polygon
+from ..utils.pose import Pose, get_angle, get_bearing_range
 
 
 class Hallway(Entity):
@@ -198,11 +200,18 @@ class Hallway(Entity):
             zorder=2,
         )
 
-    def is_collision_free(self, pose: Pose | Sequence[float]) -> bool:
+    def is_collision_free(
+        self,
+        pose: Pose | Sequence[float],
+        fog_hallways: bool = False,
+        recorded_closed_hallways: set[Hallway] | None = None,
+    ) -> bool:
         """
         Checks whether a pose in the hallway is collision-free.
 
         :param pose: Pose to test.
+        :param fog_hallways: If True, collision is checked based on recorded knowledge, instead of ground truth.
+        :param recorded_closed_hallways: Recorded knowledge of hallway states.
         :return: True if collision-free, else False.
         """
         if isinstance(pose, Pose):
@@ -211,8 +220,25 @@ class Hallway(Entity):
             x, y = pose[0], pose[1]
 
         is_free = intersects_xy(self.internal_collision_polygon, x, y)
-        if not self.is_open:
-            is_free = is_free and not intersects_xy(self.inflated_closed_polygon, x, y)
+
+        # With fog_hallways,
+        # check is based on hallway states recorded by the robot,
+        # instead of ground truth hallway states.
+        if fog_hallways:
+            if (
+                recorded_closed_hallways is not None
+                and self in recorded_closed_hallways
+            ):
+                is_free = is_free and not intersects_xy(
+                    self.inflated_closed_polygon, x, y
+                )
+
+        else:
+            if not self.is_open:
+                is_free = is_free and not intersects_xy(
+                    self.inflated_closed_polygon, x, y
+                )
+
         return bool(is_free)
 
     def add_graph_nodes(self) -> None:

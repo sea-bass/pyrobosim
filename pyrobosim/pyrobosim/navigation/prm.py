@@ -68,6 +68,7 @@ class PRMPlanner(PathPlanner):
         :param node: Node to try add to the graph.
         """
         assert self.world is not None
+        assert self.robot is not None
         for other in self.graph.nodes:
             if node == other:
                 continue
@@ -76,6 +77,8 @@ class PRMPlanner(PathPlanner):
                 other.pose,
                 self.collision_check_step_dist,
                 self.max_connection_dist,
+                self.robot.fog_hallways,
+                self.robot.recorded_closed_hallways,
             ):
                 self.graph.add_edge(node, other)
 
@@ -88,6 +91,7 @@ class PRMPlanner(PathPlanner):
         :return: Path from start to goal.
         """
         assert self.world is not None
+        assert self.robot is not None
         # Reset the path and time
         self.latest_path = Path()
         # Create the start and goal nodes
@@ -108,7 +112,11 @@ class PRMPlanner(PathPlanner):
             from ..utils.world_motion_planning import reduce_waypoints_polygon
 
             compressed_poses = reduce_waypoints_polygon(
-                self.world, self.latest_path.poses, self.collision_check_step_dist
+                self.world,
+                self.latest_path.poses,
+                self.collision_check_step_dist,
+                self.robot.fog_hallways,
+                self.robot.recorded_closed_hallways,
             )
             self.latest_path.set_poses(compressed_poses)
         self.latest_path.fill_yaws()
@@ -124,7 +132,11 @@ class PRMPlanner(PathPlanner):
         :return: Collision-free pose if found, else ``None``.
         """
         assert self.world is not None
-        return self.world.sample_free_robot_pose_uniform()
+        assert self.robot is not None
+        return self.world.sample_free_robot_pose_uniform(
+            fog_hallways=self.robot.fog_hallways,
+            recorded_closed_hallways=self.robot.recorded_closed_hallways,
+        )
 
     def get_graphs(self) -> list[SearchGraph]:
         """
