@@ -908,7 +908,9 @@ class Robot(Entity):
         result = self.world.open_location(loc_to_open)
 
         if isinstance(self.location, Hallway):
-            if isinstance(self.path_planner, PRMPlanner) or isinstance(self.path_planner, AStarPlanner):
+            if isinstance(self.path_planner, PRMPlanner) or isinstance(
+                self.path_planner, AStarPlanner
+            ):
                 self.reset_path_planner()
 
         return result

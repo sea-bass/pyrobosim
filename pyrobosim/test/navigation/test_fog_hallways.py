@@ -20,7 +20,7 @@ def test_fog_hallways_enabled() -> None:
     # Set up a closed hallway for testing
     world.hallways[0].is_open = False
     world.update_polygons()
-    
+
     robot = world.robots[0]
 
     # Create a path through closed hallway
@@ -33,7 +33,7 @@ def test_fog_hallways_enabled() -> None:
         fog_hallways=robot.fog_hallways,
         recorded_closed_hallways=robot.recorded_closed_hallways,
     )
-    
+
     # Enable fog_hallways
     # This would test if a robot would regard a hallway as open without prior knowledge
     robot.fog_hallways = True
