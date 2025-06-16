@@ -43,6 +43,22 @@ jobs:
           cache-from: |
             type=registry,ref=iridiumxi/pyrobosim:buildcache-base
 
+      # Execute tests and save the artifacts
+      - name: Run tests using the built image
+        run: |
+          docker run \
+            -w /opt/pyrobosim \
+            --volume ./test/results:/opt/pyrobosim/test/results:rw \
+            pyrobosim:base \
+            /bin/bash -c 'PYTHONPATH=/opt/pyrobosim/dependencies/pddlstream:${PYTHONPATH} ./test/run_tests.bash'
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test/results/
+        # Always publish test results even when there are failures.
+        if: ${{ always() }}
+
       # These steps run if not using a fork
       - name: Login to Docker Hub Registry
         uses: docker/login-action@v3
@@ -68,16 +84,6 @@ jobs:
           cache-to: |
             type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:buildcache-base,mode=max
         if: ${{ !github.event.pull_request.head.repo.fork }}
-
-      # Execute tests and save the artifacts
-      - name: Run tests using the built image
-        run: |
-          docker run \
-            -w /opt/pyrobosim \
-            --volume ./test/results:/opt/pyrobosim/test/results:rw \
-            pyrobosim:base \
-            /bin/bash -c 'PYTHONPATH=/opt/pyrobosim/dependencies/pddlstream:${PYTHONPATH} ./test/run_tests.bash'
-        if: ${{ !github.event.pull_request.head.repo.fork }}
       - name: Pytest coverage comment
         id: coverageComment
         uses: MishaKav/pytest-coverage-comment@main
@@ -86,9 +92,7 @@ jobs:
           junitxml-path: ./test/results/test_results.xml
           pytest-xml-coverage-path: ./test/results/test_results_coverage.xml
           coverage-path-prefix: pyrobosim/pyrobosim/
-        # This will break on PRs from forks
         if: ${{ !github.event.pull_request.head.repo.fork }}
-
       - name: Create coverage badge
         uses: schneegans/dynamic-badges-action@v1.7.0
         with:
@@ -102,13 +106,6 @@ jobs:
           namedLogo: python
         # Only update this badge on main
         if: github.ref == 'refs/heads/main'
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: test/results/
-        # Always publish test results even when there are failures.
-        if: ${{ always() }}
 
   # Build and test with ROS 2
   ros2-test:
