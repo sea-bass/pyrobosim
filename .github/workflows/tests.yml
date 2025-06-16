@@ -30,7 +30,6 @@ jobs:
         uses: docker/setup-buildx-action@v3
         with:
           driver: docker-container
-
       - name: Build Docker image (no push)
         uses: docker/build-push-action@v5
         with:
@@ -122,6 +121,35 @@ jobs:
         uses: docker/setup-buildx-action@v3
         with:
           driver: docker-container
+      - name: Build Docker image (no push)
+        uses: docker/build-push-action@v5
+        with:
+          file: docker/Dockerfile
+          target: pyrobosim_ros
+          context: .
+          build-args: |
+            ROS_DISTRO=${{ matrix.ros_distro }}
+          tags: pyrobosim:${{ matrix.ros_distro }}
+          push: false
+          load: true
+          cache-from: |
+            type=registry,ref=iridiumxi/pyrobosim:buildcache-${{ matrix.ros_distro }}
+
+      # Execute tests and save the artifacts
+      - name: Run tests (from loaded image)
+        run: |
+          docker run \
+            --volume ./test/:/pyrobosim_ws/test/:rw \
+            --volume ./pytest.ini:/pyrobosim_ws/pytest.ini:rw \
+            pyrobosim:${{ matrix.ros_distro }} \
+            /bin/bash -c './src/test/run_tests.bash ${{ matrix.ros_distro }}'
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.ros_distro }}
+          path: test/results/
+        # Always publish test results even when there are failures.
+        if: ${{ always() }}
 
       # These steps run if not using a fork
       - name: Login to Docker Hub Registry
@@ -130,7 +158,12 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PAT }}
         if: ${{ !github.event.pull_request.head.repo.fork }}
-      - name: Build Docker image (with cache)
+      - name: Tag and push Docker image
+        run: |
+          docker tag pyrobosim:${{ matrix.ros_distro }} ${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:${{ matrix.ros_distro }}
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:${{ matrix.ros_distro }}
+        if: ${{ !github.event.pull_request.head.repo.fork }}
+      - name: Save the build cache
         uses: docker/build-push-action@v5
         with:
           file: docker/Dockerfile
@@ -145,44 +178,3 @@ jobs:
           cache-to: |
             type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:buildcache-${{ matrix.ros_distro }},mode=max
         if: ${{ !github.event.pull_request.head.repo.fork }}
-      - name: Run tests (from pushed image)
-        run: |
-          docker run \
-            --volume ./test/:/pyrobosim_ws/src/test/:rw \
-            --volume ./pytest.ini:/pyrobosim_ws/pytest.ini:rw \
-            ${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:${{ matrix.ros_distro }} \
-            /bin/bash -c './src/test/run_tests.bash ${{ matrix.ros_distro }}'
-        if: ${{ !github.event.pull_request.head.repo.fork }}
-
-      # These steps run from a fork
-      - name: Build Docker image (no push)
-        uses: docker/build-push-action@v5
-        with:
-          file: docker/Dockerfile
-          target: pyrobosim_ros
-          context: .
-          build-args: |
-            ROS_DISTRO=${{ matrix.ros_distro }}
-          tags: pyrobosim:${{ matrix.ros_distro }}
-          push: false
-          cache-from: |
-            type=registry,ref=iridiumxi/pyrobosim:buildcache-${{ matrix.ros_distro }}
-          outputs: type=docker,dest=./pyrobosim_${{ matrix.ros_distro }}.tar
-        if: ${{ github.event.pull_request.head.repo.fork }}
-      - name: Run tests (from loaded image)
-        run: |
-          docker load --input ./pyrobosim_${{ matrix.ros_distro }}.tar
-          docker run \
-            --volume ./test/:/pyrobosim_ws/test/:rw \
-            --volume ./pytest.ini:/pyrobosim_ws/pytest.ini:rw \
-            pyrobosim:${{ matrix.ros_distro }} \
-            /bin/bash -c './src/test/run_tests.bash ${{ matrix.ros_distro }}'
-        if: ${{ github.event.pull_request.head.repo.fork }}
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results-${{ matrix.ros_distro }}
-          path: test/results/
-        # Always publish test results even when there are failures.
-        if: ${{ always() }}
