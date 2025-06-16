@@ -36,7 +36,7 @@ jobs:
           file: docker/Dockerfile
           target: pyrobosim
           context: .
-          tags: pyrobosim:base
+          tags: pyrobosim:${{ github.head_ref || github.ref_name }}
           push: false
           load: true
           cache-from: |
@@ -48,7 +48,7 @@ jobs:
           docker run \
             -w /opt/pyrobosim \
             --volume ./test/results:/opt/pyrobosim/test/results:rw \
-            pyrobosim:base \
+            pyrobosim:${{ github.head_ref || github.ref_name }} \
             /bin/bash -c 'PYTHONPATH=/opt/pyrobosim/dependencies/pddlstream:${PYTHONPATH} ./test/run_tests.bash'
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -124,7 +124,7 @@ jobs:
           context: .
           build-args: |
             ROS_DISTRO=${{ matrix.ros_distro }}
-          tags: pyrobosim:${{ matrix.ros_distro }}
+          tags: pyrobosim:${{ github.head_ref || github.ref_name }}-${{ matrix.ros_distro }}
           push: false
           load: true
           cache-from: |
@@ -136,7 +136,7 @@ jobs:
           docker run \
             --volume ./test/:/pyrobosim_ws/test/:rw \
             --volume ./pytest.ini:/pyrobosim_ws/pytest.ini:rw \
-            pyrobosim:${{ matrix.ros_distro }} \
+            pyrobosim:${{ github.head_ref || github.ref_name }}-${{ matrix.ros_distro }} \
             /bin/bash -c './src/test/run_tests.bash ${{ matrix.ros_distro }}'
       - name: Upload test results
         uses: actions/upload-artifact@v4
