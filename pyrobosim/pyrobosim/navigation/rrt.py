@@ -90,7 +90,7 @@ class RRTPlanner(PathPlanner):
         t_start = time.time()
         goal_found = False
 
-        if self.world is None:
+        if (self.world is None) or (self.robot is None):
             raise RuntimeError("Cannot plan without a robot or world!")
 
         # Create the start and goal nodes
@@ -108,6 +108,8 @@ class RRTPlanner(PathPlanner):
             n_goal.pose,
             self.collision_check_step_dist,
             self.max_connection_dist,
+            self.robot.fog_hallways,
+            self.robot.recorded_closed_hallways,
         ):
             path_poses = [n_start.pose, n_goal.pose]
             self.latest_path = Path(poses=path_poses)
@@ -134,6 +136,8 @@ class RRTPlanner(PathPlanner):
                 n_new.pose,
                 self.collision_check_step_dist,
                 self.max_connection_dist,
+                self.robot.fog_hallways,
+                self.robot.recorded_closed_hallways,
             )
             if connected_node:
                 self.graph_start.add_node(n_new)
@@ -150,6 +154,8 @@ class RRTPlanner(PathPlanner):
                     n_new_goal.pose,
                     self.collision_check_step_dist,
                     self.max_connection_dist,
+                    self.robot.fog_hallways,
+                    self.robot.recorded_closed_hallways,
                 )
                 if connected_node_goal:
                     self.graph_goal.add_node(n_new_goal)
@@ -221,7 +227,11 @@ class RRTPlanner(PathPlanner):
             from ..utils.world_motion_planning import reduce_waypoints_polygon
 
             path_poses = reduce_waypoints_polygon(
-                self.world, path_poses, self.collision_check_step_dist
+                self.world,
+                path_poses,
+                self.collision_check_step_dist,
+                self.robot.fog_hallways,
+                self.robot.recorded_closed_hallways,
             )
         planning_time = time.time() - t_start
         self.latest_path = Path(poses=path_poses, planning_time=planning_time)
@@ -235,7 +245,11 @@ class RRTPlanner(PathPlanner):
         :return: Collision-free pose if found, else ``None``.
         """
         assert self.world is not None
-        return self.world.sample_free_robot_pose_uniform()
+        assert self.robot is not None
+        return self.world.sample_free_robot_pose_uniform(
+            fog_hallways=self.robot.fog_hallways,
+            recorded_closed_hallways=self.robot.recorded_closed_hallways,
+        )
 
     def extend(self, n_start: Node, q_target: Pose) -> Node:
         """
@@ -278,6 +292,7 @@ class RRTPlanner(PathPlanner):
         :param n_tgt: The target tree node to rewire within the tree.
         """
         assert self.world is not None
+        assert self.robot is not None
 
         # First, find the node to rewire, if any
         n_rewire = None
@@ -290,6 +305,8 @@ class RRTPlanner(PathPlanner):
                     n_tgt.pose,
                     self.collision_check_step_dist,
                     self.max_connection_dist,
+                    self.robot.fog_hallways,
+                    self.robot.recorded_closed_hallways,
                 ):
                     n_rewire = n
                     n_tgt.cost = alt_cost
@@ -320,6 +337,7 @@ class RRTPlanner(PathPlanner):
         :return: A tuple containing connection success and the final node added.
         """
         assert self.world is not None
+        assert self.robot is not None
 
         # Needed for bidirectional RRT so the connection node is in both trees.
         if self.bidirectional:
@@ -334,6 +352,8 @@ class RRTPlanner(PathPlanner):
                 n_tgt.pose,
                 self.collision_check_step_dist,
                 self.max_connection_dist,
+                self.robot.fog_hallways,
+                self.robot.recorded_closed_hallways,
             ):
                 n_tgt.parent = n_curr
                 graph.nodes.add(n_tgt)
@@ -349,6 +369,8 @@ class RRTPlanner(PathPlanner):
                     n_new.pose,
                     self.collision_check_step_dist,
                     self.max_connection_dist,
+                    self.robot.fog_hallways,
+                    self.robot.recorded_closed_hallways,
                 ):
                     graph.add_node(n_new)
                     n_curr = n_new
