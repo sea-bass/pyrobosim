@@ -296,10 +296,10 @@ class Robot(Entity):
         """
         if self.world is None:
             return []
-        
+
         if self.fog_hallways:
             return list(self.recorded_closed_hallways)
-        
+
         return [hall for hall in self.world.hallways if not hall.is_open]
 
     def _attach_object(self, obj: Object) -> None:

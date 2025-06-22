@@ -712,7 +712,9 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
             recorded_closed_hallways = robot.get_recorded_closed_hallways()
         else:
             objects = self.world.objects
-            recorded_closed_hallways = [hall for hall in self.world.hallways if not hall.is_open]
+            recorded_closed_hallways = [
+                hall for hall in self.world.hallways if not hall.is_open
+            ]
 
         # Add location, hallway, and object states.
         for loc in self.world.locations:
