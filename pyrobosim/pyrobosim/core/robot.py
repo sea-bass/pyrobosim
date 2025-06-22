@@ -288,6 +288,20 @@ class Robot(Entity):
         """
         return isinstance(self.location, (Hallway, ObjectSpawn))
 
+    def get_recorded_closed_hallways(self) -> list[Hallway]:
+        """
+        Returns a list of closed hallway recorded by the robot.
+
+        :return: The list of recorded closed hallway.
+        """
+        if self.world is None:
+            return []
+        
+        if self.fog_hallways:
+            return list(self.recorded_closed_hallways)
+        
+        return [hall for hall in self.world.hallways if not hall.is_open]
+
     def _attach_object(self, obj: Object) -> None:
         """
         Helper function to attach an object in the world to the robot.
