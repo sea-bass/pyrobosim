@@ -123,6 +123,8 @@ class Robot(Entity):
         self.known_objects: set[Object] = set()
         self.last_detected_objects: list[Object] = []
         self.viz_text: Text | None = None
+        self.fog_hallways = fog_hallways
+        self.recorded_closed_hallways: set[Hallway] = set()
 
         # Navigation properties
         self.executing_nav = False
@@ -148,8 +150,9 @@ class Robot(Entity):
         self.canceling_execution = False
         self.battery_level = initial_battery_level
 
-        self.fog_hallways = fog_hallways
-        self.recorded_closed_hallways: set[Hallway] = set()
+        # Do a check for lidar that would be attached to path executor
+        if self.fog_hallways:
+            self.path_executor.validate_lidar_for_fog_hallways()  # type: ignore[union-attr]
 
         self.logger.info("Created robot.")
 

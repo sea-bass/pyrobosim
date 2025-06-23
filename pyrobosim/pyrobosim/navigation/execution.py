@@ -74,6 +74,26 @@ class ConstantVelocityExecutor(PathExecutor):
         self.cancel_execution = False  # Flag to cancel from user
         self.hallway_states_updated = False  # Flag to track hallway states updates
 
+    def validate_lidar_for_fog_hallways(self) -> None:
+        """
+        Validates if the lidar sensor is set up correctly with fog hallways enabled.
+        """
+        if self.robot is None:
+            return
+
+        if self.lidar_sensor_name is None:
+            self.robot.logger.warning(
+                "No lidar sensor name provided to executor. Cannot validate fog hallways."
+            )
+            return
+
+        lidar_sensor = self.robot.sensors.get(self.lidar_sensor_name)
+        if not isinstance(lidar_sensor, Lidar2D):
+            self.robot.logger.warning(
+                "Lidar sensor is not a 2D lidar. Cannot detect closed hallway."
+            )
+            return
+
     def execute(
         self, path: Path, realtime_factor: float = 1.0, battery_usage: float = 0.0
     ) -> ExecutionResult:
@@ -250,31 +270,17 @@ class ConstantVelocityExecutor(PathExecutor):
         if (self.robot is None) or (self.robot.world is None):
             return
 
-        if self.lidar_sensor_name is None:
-            self.robot.logger.warning(
-                "No lidar sensor name provided. Cannot detect closed hallway."
-            )
-            return
-
-        lidar_sensor = self.robot.sensors.get(self.lidar_sensor_name)
-        if isinstance(lidar_sensor, Lidar2D):
-            # Get lidar angles range
-            measured_angles = lidar_sensor.angles
-
-        else:
-            self.robot.logger.warning(
-                "Lidar sensor is not a 2D lidar. Cannot detect closed hallway."
-            )
-            return
+        lidar_sensor = self.robot.sensors.get(self.lidar_sensor_name)  # type: ignore[arg-type, union-attr]
+        measured_angles = lidar_sensor.angles  # type: ignore[union-attr]
 
         while self.following_path and (not self.abort_execution):
             start_time = time.time()
             cur_pose = self.robot.get_pose()
 
-            measured_lengths = lidar_sensor.get_measurement()
+            measured_lengths = lidar_sensor.get_measurement()  # type: ignore[union-attr]
             analyse_pose = []
             for angle, length in zip(measured_angles, measured_lengths):
-                if length < lidar_sensor.max_range_m:
+                if length < lidar_sensor.max_range_m:  # type: ignore[union-attr]
                     # There are objects in lidar line of sight
                     adjusted_angle = angle + cur_pose.get_yaw()
                     x = cur_pose.x + length * np.cos(adjusted_angle)
