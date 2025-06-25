@@ -224,7 +224,7 @@ class Robot(Entity):
 
         :return: True if the robot is moving, False otherwise.
         """
-        return self.executing_nav or np.count_nonzero(self.dynamics.velocity) > 0
+        return self.executing_nav or bool(np.count_nonzero(self.dynamics.velocity) > 0)
 
     def is_busy(self) -> bool:
         """
