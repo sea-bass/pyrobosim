@@ -9,6 +9,7 @@ from .types import PathPlanner
 from ..utils.path import Path
 from ..utils.pose import Pose
 from ..utils.search_graph import SearchGraph, Node
+from ..utils.world_collision import is_connectable
 
 
 class RRTPlanner(PathPlanner):
@@ -103,13 +104,13 @@ class RRTPlanner(PathPlanner):
             self.graph_goal.nodes = {n_goal}
 
         # If the goal is within max connection distance of the start, connect them directly
-        if self.world.is_connectable(
+        if is_connectable(
             n_start.pose,
             n_goal.pose,
+            self.world,
+            self.robot,
             self.collision_check_step_dist,
             self.max_connection_dist,
-            self.robot.fog_hallways,
-            self.robot.recorded_closed_hallways,
         ):
             path_poses = [n_start.pose, n_goal.pose]
             self.latest_path = Path(poses=path_poses)
@@ -131,13 +132,13 @@ class RRTPlanner(PathPlanner):
             n_near = self.graph_start.nearest(q_sample)
             assert n_near is not None  # This would mean the graph is empty
             n_new = self.extend(n_near, q_sample)
-            connected_node = self.world.is_connectable(
+            connected_node = is_connectable(
                 n_near.pose,
                 n_new.pose,
+                self.world,
+                self.robot,
                 self.collision_check_step_dist,
                 self.max_connection_dist,
-                self.robot.fog_hallways,
-                self.robot.recorded_closed_hallways,
             )
             if connected_node:
                 self.graph_start.add_node(n_new)
@@ -149,13 +150,13 @@ class RRTPlanner(PathPlanner):
                 n_near_goal = self.graph_goal.nearest(q_sample)
                 assert n_near_goal is not None  # This would mean the graph is empty
                 n_new_goal = self.extend(n_near_goal, q_sample)
-                connected_node_goal = self.world.is_connectable(
+                connected_node_goal = is_connectable(
                     n_near_goal.pose,
                     n_new_goal.pose,
+                    self.world,
+                    self.robot,
                     self.collision_check_step_dist,
                     self.max_connection_dist,
-                    self.robot.fog_hallways,
-                    self.robot.recorded_closed_hallways,
                 )
                 if connected_node_goal:
                     self.graph_goal.add_node(n_new_goal)
@@ -229,9 +230,8 @@ class RRTPlanner(PathPlanner):
             path_poses = reduce_waypoints_polygon(
                 self.world,
                 path_poses,
+                self.robot,
                 self.collision_check_step_dist,
-                self.robot.fog_hallways,
-                self.robot.recorded_closed_hallways,
             )
         planning_time = time.time() - t_start
         self.latest_path = Path(poses=path_poses, planning_time=planning_time)
@@ -300,13 +300,13 @@ class RRTPlanner(PathPlanner):
             dist = n.pose.get_linear_distance(n_tgt.pose)
             if (n != n_tgt) and (dist <= self.rewire_radius):
                 alt_cost = n.cost + dist
-                if (alt_cost < n_tgt.cost) and self.world.is_connectable(
+                if (alt_cost < n_tgt.cost) and is_connectable(
                     n.pose,
                     n_tgt.pose,
+                    self.world,
+                    self.robot,
                     self.collision_check_step_dist,
                     self.max_connection_dist,
-                    self.robot.fog_hallways,
-                    self.robot.recorded_closed_hallways,
                 ):
                     n_rewire = n
                     n_tgt.cost = alt_cost
@@ -347,13 +347,13 @@ class RRTPlanner(PathPlanner):
             dist = n_curr.pose.get_linear_distance(n_tgt.pose)
 
             # First, try directly connecting to the goal
-            if dist < self.max_connection_dist and self.world.is_connectable(
+            if dist < self.max_connection_dist and is_connectable(
                 n_curr.pose,
                 n_tgt.pose,
+                self.world,
+                self.robot,
                 self.collision_check_step_dist,
                 self.max_connection_dist,
-                self.robot.fog_hallways,
-                self.robot.recorded_closed_hallways,
             ):
                 n_tgt.parent = n_curr
                 graph.nodes.add(n_tgt)
@@ -364,13 +364,13 @@ class RRTPlanner(PathPlanner):
             if self.rrt_connect:
                 # If using RRTConnect, keep trying to connect.
                 n_new = self.extend(n_curr, n_tgt.pose)
-                if self.world.is_connectable(
+                if is_connectable(
                     n_curr.pose,
                     n_new.pose,
+                    self.world,
+                    self.robot,
                     self.collision_check_step_dist,
                     self.max_connection_dist,
-                    self.robot.fog_hallways,
-                    self.robot.recorded_closed_hallways,
                 ):
                     graph.add_node(n_new)
                     n_curr = n_new

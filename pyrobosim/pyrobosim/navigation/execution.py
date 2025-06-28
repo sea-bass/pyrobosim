@@ -15,6 +15,7 @@ from ..sensors.lidar import Lidar2D
 from ..utils.logging import get_global_logger
 from ..utils.path import Path
 from ..utils.trajectory import get_constant_speed_trajectory, interpolate_trajectory
+from ..utils.world_collision import is_path_collision_free
 
 
 class ConstantVelocityExecutor(PathExecutor):
@@ -246,11 +247,10 @@ class ConstantVelocityExecutor(PathExecutor):
             if len(poses) > 2:
                 remaining_path = Path(poses=poses)
                 if (self.robot.world is not None) and (
-                    not self.robot.world.is_path_collision_free(
+                    not is_path_collision_free(
                         remaining_path,
+                        robot=self.robot,
                         step_dist=self.validation_step_dist,
-                        fog_hallways=self.robot.fog_hallways,
-                        recorded_closed_hallways=self.robot.recorded_closed_hallways,
                     )
                 ):
                     self.robot.logger.warning(
@@ -300,6 +300,7 @@ class ConstantVelocityExecutor(PathExecutor):
                                 self.robot.logger.info(
                                     f"Added {hallway.name} into closed knowledge."
                                 )
+                                self.robot.update_polygons()
                                 self.hallway_states_updated = True
                                 break
                         else:
@@ -308,6 +309,7 @@ class ConstantVelocityExecutor(PathExecutor):
                                 self.robot.logger.info(
                                     f"Removed {hallway.name} from closed knowledge."
                                 )
+                                self.robot.update_polygons()
                                 self.hallway_states_updated = True
                                 break
 

@@ -10,6 +10,7 @@ from pyrobosim.navigation.execution import ConstantVelocityExecutor
 from pyrobosim.sensors.lidar import Lidar2D
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
+from pyrobosim.utils.world_collision import is_connectable
 
 
 def test_fog_hallways_enabled() -> None:
@@ -27,21 +28,21 @@ def test_fog_hallways_enabled() -> None:
     start = Pose(x=-0.2, y=0.7)
     end = Pose(x=-0.8, y=1.3)
 
-    collision_free_without_fog_hallways = robot.world.is_connectable(
+    collision_free_without_fog_hallways = is_connectable(
         start=start,
         goal=end,
-        fog_hallways=robot.fog_hallways,
-        recorded_closed_hallways=robot.recorded_closed_hallways,
+        world=world,
+        robot=robot,
     )
 
     # Enable fog_hallways
     # This would test if a robot would regard a hallway as open without prior knowledge
     robot.fog_hallways = True
-    collision_free_with_fog_hallways = robot.world.is_connectable(
+    collision_free_with_fog_hallways = is_connectable(
         start=start,
         goal=end,
-        fog_hallways=robot.fog_hallways,
-        recorded_closed_hallways=robot.recorded_closed_hallways,
+        world=world,
+        robot=robot,
     )
 
     assert collision_free_without_fog_hallways == False

@@ -2,7 +2,7 @@
 
 import itertools
 import numpy as np
-from typing import Any, Sequence
+from typing import Any
 
 import shapely
 from shapely.geometry import Polygon
@@ -16,9 +16,9 @@ from .robot import Robot
 from .types import Entity, EntityMetadata, InvalidEntityCategoryException, set_parent
 from ..planning.actions import ExecutionResult, ExecutionStatus
 from ..utils.logging import create_logger
-from ..utils.path import Path
 from ..utils.pose import Pose
 from ..utils.polygon import sample_from_polygon, transform_polygon
+from ..utils.world_collision import check_occupancy
 
 
 class World:
@@ -1110,7 +1110,7 @@ class World:
                     self.logger.warning("Unable to sample free pose.")
             else:
                 # Validate that the pose is unoccupied
-                if self.check_occupancy((pose.x, pose.y)):
+                if check_occupancy((pose.x, pose.y), self):
                     self.logger.warning(f"{pose} is occupied.")
                 robot_pose = pose
             # If we have a valid pose, extract its location
@@ -1701,96 +1701,8 @@ class World:
         )
         shapely.prepare(self.total_external_polygon)
 
-    def is_connectable(
-        self,
-        start: Pose,
-        goal: Pose,
-        step_dist: float = 0.01,
-        max_dist: float | None = None,
-        fog_hallways: bool = False,
-        recorded_closed_hallways: set[Hallway] | None = None,
-    ) -> bool:
-        """
-        Checks connectivity between two poses `start` and `goal` in the world
-        by sampling points spaced by the `self.collision_check_dist` parameter
-        and verifying that every point is in the free configuration space.
-
-        :param start: Start pose
-        :param goal: Goal pose
-        :param step_dist: The step size for discretizing a straight line to check collisions.
-        :param max_dist: The maximum allowed connection distance.
-        :param fog_hallways: If True, occupancy is checked based on recorded knowledge, instead of ground truth.
-        :param recorded_closed_hallways: Recorded knowledge of hallway states.
-        :return: True if poses can be connected, else False.
-        """
-        # Trivial case where nodes are identical.
-        if start == goal:
-            return True
-
-        # Check against the max edge distance.
-        dist = start.get_linear_distance(goal, ignore_z=True)
-        angle = start.get_angular_distance(goal)
-        if max_dist and (dist > max_dist):
-            return False
-
-        # Build up the array of test X and Y coordinates for sampling between
-        # the start and goal points.
-        dist_array = np.arange(0, dist, step_dist)
-        # If the nodes are coincident, connect them by default.
-        if dist_array.size == 0:
-            return True
-        if dist_array[-1] != dist:
-            np.append(dist_array, dist)
-        x_pts = start.x + dist_array * np.cos(angle)
-        y_pts = start.y + dist_array * np.sin(angle)
-
-        # Check the occupancy of all the test points.
-        for x_check, y_check in zip(x_pts[1:], y_pts[1:]):
-            if self.check_occupancy(
-                Pose(x=x_check, y=y_check),
-                fog_hallways,
-                recorded_closed_hallways,
-            ):
-                return False
-
-        # If the loop was traversed for all points without returning, we can
-        # connect the points.
-        return True
-
-    def check_occupancy(
-        self,
-        pose: Pose | Sequence[float],
-        fog_hallways: bool = False,
-        recorded_closed_hallways: set[Hallway] | None = None,
-    ) -> bool:
-        """
-        Check if a pose in the world is occupied.
-
-        :param pose: The pose to check.
-        :param fog_hallways: If True, occupancy is checked based on recorded knowledge, instead of ground truth.
-        :param recorded_closed_hallways: Recorded knowledge of hallway states.
-        :return: True if the pose is occupied, else False.
-        """
-        if isinstance(pose, Pose):
-            x = pose.x
-            y = pose.y
-        else:
-            x, y = pose
-
-        # Robot assumes all hallway opens
-        if fog_hallways:
-            for room_entity in itertools.chain(self.rooms):
-                if room_entity.is_collision_free(pose):
-                    return False
-            for hallway_entity in itertools.chain(self.hallways):
-                if hallway_entity.is_collision_free(
-                    pose, fog_hallways, recorded_closed_hallways
-                ):
-                    return False
-            return True
-
-        else:
-            return not bool(shapely.intersects_xy(self.total_internal_polygon, x, y))
+        for robot in self.robots:
+            robot.update_polygons()
 
     def collides_with_robots(self, pose: Pose, robot: Robot | None = None) -> bool:
         """
@@ -1812,39 +1724,10 @@ class World:
                 return True
         return False
 
-    def is_path_collision_free(
-        self,
-        path: Path,
-        step_dist: float = 0.01,
-        fog_hallways: bool = False,
-        recorded_closed_hallways: set[Hallway] | None = None,
-    ) -> bool:
-        """
-        Check whether a path is collision free in this world.
-
-        :param path: The path to use for collision checking.
-        :param step_dist: The step size for discretizing a straight line to check collisions.
-        :param fog_hallways: If True, collisions checked based on recorded knowledge, instead of ground truth.
-        :param recorded_closed_hallways: Recorded knowledge of hallway states.
-        :return: True if the path is collision free, else False.
-        """
-        for idx in range(len(path.poses) - 1):
-            if not self.is_connectable(
-                path.poses[idx],
-                path.poses[idx + 1],
-                step_dist=step_dist,
-                fog_hallways=fog_hallways,
-                recorded_closed_hallways=recorded_closed_hallways,
-            ):
-                return False
-        return True
-
     def sample_free_robot_pose_uniform(
         self,
         robot: Robot | None = None,
         ignore_robots: bool = True,
-        fog_hallways: bool = False,
-        recorded_closed_hallways: set[Hallway] | None = None,
     ) -> Pose | None:
         """
         Sample an unoccupied robot pose in the world.
@@ -1855,8 +1738,6 @@ class World:
 
         :param robot: Robot instance, if specified.
         :param ignore_robots: If True, ignore collisions with other robots.
-        :param fog_hallways: If True, occupancy is checked based on recorded knowledge, instead of ground truth.
-        :param recorded_closed_hallways: Recorded knowledge of hallway states.
         :return: Collision-free pose if found, else ``None``.
         """
         if (self.x_bounds is None) or (self.y_bounds is None):
@@ -1872,9 +1753,9 @@ class World:
             y = (ymax - ymin - 2 * r) * np.random.random() + ymin + r
             yaw = 2.0 * np.pi * np.random.random()
             pose = Pose(x=x, y=y, z=0.0, yaw=yaw)
-            if not self.check_occupancy(
-                pose, fog_hallways, recorded_closed_hallways
-            ) and (ignore_robots or not self.collides_with_robots(pose, robot)):
+            if not check_occupancy(pose, self, robot) and (
+                ignore_robots or not self.collides_with_robots(pose, robot)
+            ):
                 return pose
         self.logger.warning("Could not sample pose.")
         return None

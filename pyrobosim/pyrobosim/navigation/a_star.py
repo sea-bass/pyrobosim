@@ -144,8 +144,7 @@ class AStarPlanner(PathPlanner, AStar):  # type: ignore[misc]
             self.world,
             resolution=self.grid_resolution,
             inflation_radius=self.grid_inflation_radius,
-            fog_hallways=self.robot.fog_hallways,
-            recorded_closed_hallways=self.robot.recorded_closed_hallways,
+            robot=self.robot,
         )
 
     def plan(self, start: Pose, goal: Pose) -> Path:

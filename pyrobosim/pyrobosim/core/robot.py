@@ -33,6 +33,7 @@ from ..utils.polygon import sample_from_polygon, transform_polygon
 from ..utils.path import Path
 from ..utils.pose import Pose
 from ..utils.general import parse_color
+from ..utils.world_collision import check_occupancy
 
 
 class Robot(Entity):
@@ -263,9 +264,9 @@ class Robot(Entity):
             return False
 
         pose = pose or self.dynamics.pose
-        return self.world.check_occupancy(pose) or self.world.collides_with_robots(
-            pose, robot=self
-        )
+        return check_occupancy(
+            pose, self.world, self
+        ) or self.world.collides_with_robots(pose, robot=self)
 
     def at_object_spawn(self) -> bool:
         """
@@ -929,7 +930,6 @@ class Robot(Entity):
         else:
             loc_to_open = self.location
         result = self.world.open_location(loc_to_open)
-        self.update_polygons()
 
         if isinstance(self.location, Hallway):
             if isinstance(self.path_planner, PRMPlanner) or isinstance(
@@ -1011,7 +1011,6 @@ class Robot(Entity):
         else:
             loc_to_close = self.location
         result = self.world.close_location(loc_to_close, ignore_robots=[self])
-        self.update_polygons()
 
         if isinstance(self.location, Hallway):
             if isinstance(self.path_planner, PRMPlanner) or isinstance(
@@ -1167,30 +1166,29 @@ class Robot(Entity):
         self.executing_plan = False
         self.current_plan = None
         return result, num_completed
-    
+
     def update_polygons(self) -> None:
         """
         Updates the world's collision polygons when hallway state changes.
         """
         if self.fog_hallways:
             # closed_hallways would be obtained from robot knowledge
-            closed_hallways = [hall for hall in self.world.hallways if hall in self.recorded_closed_hallways]
+            closed_hallways = [
+                hall
+                for hall in self.world.hallways
+                if hall in self.recorded_closed_hallways
+            ]
         else:
             # closed_hallways would be obtained from the ground truth
             closed_hallways = [hall for hall in self.world.hallways if not hall.is_open]
-        
+
         self.total_internal_polygon = unary_union(
             [
                 entity.internal_collision_polygon
                 for entity in itertools.chain(self.world.rooms, self.world.hallways)
             ]
         ).difference(
-            unary_union(
-                [
-                    hall.inflated_closed_polygon
-                    for hall in closed_hallways
-                ]
-            )
+            unary_union([hall.inflated_closed_polygon for hall in closed_hallways])
         )
 
         shapely.prepare(self.total_internal_polygon)
