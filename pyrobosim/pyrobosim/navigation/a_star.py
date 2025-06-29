@@ -126,7 +126,7 @@ class AStarPlanner(PathPlanner, AStar):  # type: ignore[misc]
         for action in self.allowable_actions:
             dx, dy = ASTAR_ACTIONS[action].action
             x, y = cell[0] + dx, cell[1] + dy
-            if not self.grid.is_occupied((x, y)):  # type: ignore[has-type]
+            if not self.grid.is_occupied((x, y)):
                 neighbors_list.append((x, y))
         return neighbors_list
 

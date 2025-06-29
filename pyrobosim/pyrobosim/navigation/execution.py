@@ -73,7 +73,6 @@ class ConstantVelocityExecutor(PathExecutor):
         self.following_path = False  # Flag to track path following
         self.abort_execution = False  # Flag to abort internally
         self.cancel_execution = False  # Flag to cancel from user
-        self.hallway_states_updated = False  # Flag to track hallway states updates
 
     def validate_lidar_for_fog_hallways(self) -> None:
         """
@@ -202,14 +201,6 @@ class ConstantVelocityExecutor(PathExecutor):
             prev_pose = cur_pose
             time.sleep(max(0, sleep_time - (time.time() - start_time)))
 
-        # check if path planner needs to be reset at the end of path execution
-        if self.hallway_states_updated:
-            if isinstance(self.robot.path_planner, PRMPlanner) or isinstance(
-                self.robot.path_planner, AStarPlanner
-            ):
-                # If the path planner is PRM or AStar, reset it to update the world.
-                self.robot.reset_path_planner()
-
         # Finalize path execution.
         self.reset_state()
         time.sleep(0.1)  # To ensure background threads get the end of the path.
@@ -301,8 +292,8 @@ class ConstantVelocityExecutor(PathExecutor):
                                     f"Added {hallway.name} into closed knowledge."
                                 )
                                 self.robot.update_polygons()
-                                self.robot.world.gui.canvas.show_hallways_signal.emit()
-                                self.hallway_states_updated = True
+                                if self.robot.world.gui is not None:
+                                    self.robot.world.gui.canvas.show_hallways_signal.emit()
                                 break
                         else:
                             if hallway in self.robot.recorded_closed_hallways:
@@ -311,8 +302,8 @@ class ConstantVelocityExecutor(PathExecutor):
                                     f"Removed {hallway.name} from closed knowledge."
                                 )
                                 self.robot.update_polygons()
-                                self.robot.world.gui.canvas.show_hallways_signal.emit()
-                                self.hallway_states_updated = True
+                                if self.robot.world.gui is not None:
+                                    self.robot.world.gui.canvas.show_hallways_signal.emit()
                                 break
 
             time.sleep(
