@@ -130,6 +130,7 @@ def create_world(multirobot: bool = False) -> World:
         color="#CC00CC",
         fog_hallways=True,
     )
+    world.add_robot(robot0, loc="kitchen")
     planner_config_rrt = {
         "bidirectional": True,
         "rrt_connect": False,
@@ -141,7 +142,6 @@ def create_world(multirobot: bool = False) -> World:
     }
     rrt_planner0 = RRTPlanner(**planner_config_rrt)
     robot0.set_path_planner(rrt_planner0)
-    world.add_robot(robot0, loc="kitchen")
 
     if multirobot:
         lidar1 = Lidar2D(
@@ -166,6 +166,7 @@ def create_world(multirobot: bool = False) -> World:
             sensors=({"lidar": lidar1}),
             fog_hallways=True,
         )
+        world.add_robot(robot1, loc="bathroom")
         planner_config_prm = {
             "collision_check_step_dist": 0.025,
             "max_connection_dist": 1.5,
@@ -174,7 +175,6 @@ def create_world(multirobot: bool = False) -> World:
         }
         prm_planner = PRMPlanner(**planner_config_prm)
         robot1.set_path_planner(prm_planner)
-        world.add_robot(robot1, loc="bathroom")
 
         lidar2 = Lidar2D(
             update_rate_s=0.1,
@@ -198,6 +198,7 @@ def create_world(multirobot: bool = False) -> World:
             sensors=({"lidar": lidar2}),
             fog_hallways=True,
         )
+        world.add_robot(robot2, loc="bedroom")
         planner_config_astar = {
             "grid_resolution": 0.05,
             "grid_inflation_radius": 0.15,
@@ -206,7 +207,6 @@ def create_world(multirobot: bool = False) -> World:
         }
         astar_planner = AStarPlanner(**planner_config_astar)
         robot2.set_path_planner(astar_planner)
-        world.add_robot(robot2, loc="bedroom")
 
     return world
 
