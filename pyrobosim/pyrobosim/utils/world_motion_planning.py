@@ -21,7 +21,6 @@ def reduce_waypoints_polygon(
 
     :param world: The world object in which the path is generated.
     :param poses: The list of poses that make up the path.
-    :param world: The world in which the path is located.
     :param robot: The robot instance running collision checking.
     :param step_dist: The step size for discretizing a straight line to check collisions.
     :return: Reduced waypoints pose list.
