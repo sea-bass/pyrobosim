@@ -301,6 +301,7 @@ class ConstantVelocityExecutor(PathExecutor):
                                     f"Added {hallway.name} into closed knowledge."
                                 )
                                 self.robot.update_polygons()
+                                self.robot.world.gui.canvas.show_hallways_signal.emit()
                                 self.hallway_states_updated = True
                                 break
                         else:
@@ -310,6 +311,7 @@ class ConstantVelocityExecutor(PathExecutor):
                                     f"Removed {hallway.name} from closed knowledge."
                                 )
                                 self.robot.update_polygons()
+                                self.robot.world.gui.canvas.show_hallways_signal.emit()
                                 self.hallway_states_updated = True
                                 break
 
