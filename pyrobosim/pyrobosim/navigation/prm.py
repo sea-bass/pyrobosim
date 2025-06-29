@@ -7,6 +7,7 @@ from .types import PathPlanner
 from ..utils.path import Path
 from ..utils.pose import Pose
 from ..utils.search_graph import SearchGraph, Node
+from ..utils.world_collision import is_connectable
 
 
 class PRMPlanner(PathPlanner):
@@ -72,13 +73,13 @@ class PRMPlanner(PathPlanner):
         for other in self.graph.nodes:
             if node == other:
                 continue
-            if self.world.is_connectable(
+            if is_connectable(
                 node.pose,
                 other.pose,
+                self.world,
+                self.robot,
                 self.collision_check_step_dist,
                 self.max_connection_dist,
-                self.robot.fog_hallways,
-                self.robot.recorded_closed_hallways,
             ):
                 self.graph.add_edge(node, other)
 
@@ -114,9 +115,8 @@ class PRMPlanner(PathPlanner):
             compressed_poses = reduce_waypoints_polygon(
                 self.world,
                 self.latest_path.poses,
+                self.robot,
                 self.collision_check_step_dist,
-                self.robot.fog_hallways,
-                self.robot.recorded_closed_hallways,
             )
             self.latest_path.set_poses(compressed_poses)
         self.latest_path.fill_yaws()
@@ -133,10 +133,7 @@ class PRMPlanner(PathPlanner):
         """
         assert self.world is not None
         assert self.robot is not None
-        return self.world.sample_free_robot_pose_uniform(
-            fog_hallways=self.robot.fog_hallways,
-            recorded_closed_hallways=self.robot.recorded_closed_hallways,
-        )
+        return self.world.sample_free_robot_pose_uniform(robot=self.robot)
 
     def get_graphs(self) -> list[SearchGraph]:
         """

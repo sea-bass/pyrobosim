@@ -11,6 +11,7 @@ from pyrobosim.core import Hallway, Object, World
 from pyrobosim.utils.pose import Pose
 
 from pyrobosim.utils.general import get_data_folder
+from pyrobosim.utils.world_collision import check_occupancy, is_connectable
 
 
 class TestWorldModeling:
@@ -354,19 +355,19 @@ class TestWorldModeling:
 
         # Free pose in a room
         free_room_pose = Pose(x=1.0, y=1.0)
-        assert not TestWorldModeling.world.check_occupancy(free_room_pose)
+        assert not check_occupancy(free_room_pose, TestWorldModeling.world)
 
         # Free pose in a hallway
         free_hallway_pose = Pose(x=1.3, y=2.2)
-        assert not TestWorldModeling.world.check_occupancy(free_hallway_pose)
+        assert not check_occupancy(free_hallway_pose, TestWorldModeling.world)
 
         # Occupied pose in a room due to locations
         occupied_pose_in_table = Pose(x=1.0, y=-0.5)
-        assert TestWorldModeling.world.check_occupancy(occupied_pose_in_table)
+        assert check_occupancy(occupied_pose_in_table, TestWorldModeling.world)
 
         # Occupied pose outside the walls
         occupied_pose_outside_walls = Pose(x=0.0, y=3.0)
-        assert TestWorldModeling.world.check_occupancy(occupied_pose_outside_walls)
+        assert check_occupancy(occupied_pose_outside_walls, TestWorldModeling.world)
 
     @staticmethod
     @pytest.mark.dependency(depends=["TestWorldModeling::test_add_robot"])  # type: ignore[misc]
@@ -408,11 +409,11 @@ class TestWorldModeling:
         pose_goal = Pose(x=0.5, y=1.0)
 
         # Default arguments should return True.
-        assert TestWorldModeling.world.is_connectable(pose_start, pose_goal)
+        assert is_connectable(pose_start, pose_goal, TestWorldModeling.world)
 
         # If the max connection distance is larger than the actual distance, this should return False instead.
-        assert not TestWorldModeling.world.is_connectable(
-            pose_start, pose_goal, max_dist=0.5
+        assert not is_connectable(
+            pose_start, pose_goal, TestWorldModeling.world, max_dist=0.5
         )
 
         ## Test with a straight line right near a wall
@@ -420,13 +421,13 @@ class TestWorldModeling:
         pose_goal = Pose(x=3.0, y=2.75)
 
         # With a small step distance, this should return False
-        assert not TestWorldModeling.world.is_connectable(
-            pose_start, pose_goal, step_dist=0.01
+        assert not is_connectable(
+            pose_start, pose_goal, TestWorldModeling.world, step_dist=0.01
         )
 
         # With a large step distance, this should return True as the collision point is skipped
-        assert not TestWorldModeling.world.is_connectable(
-            pose_start, pose_goal, step_dist=0.5
+        assert not is_connectable(
+            pose_start, pose_goal, TestWorldModeling.world, step_dist=0.5
         )
 
     @staticmethod
