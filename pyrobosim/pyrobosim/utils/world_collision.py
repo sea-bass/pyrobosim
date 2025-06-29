@@ -1,15 +1,18 @@
 """Collision and occupancy checking utilities that require a world and a robot instance."""
 
+from __future__ import annotations
+
 import numpy as np
-from typing import Sequence
+from typing import Sequence, TYPE_CHECKING
 
 import shapely
 
 from .path import Path
 from .pose import Pose
-from ..core.robot import Robot
-from ..core.world import World
 
+if TYPE_CHECKING:
+    from ..core.robot import Robot
+    from ..core.world import World
 
 def is_connectable(
     start: Pose,

@@ -1166,6 +1166,9 @@ class World:
             self.logger.warning("Could not add robot.")
             self.set_inflation_radius(old_inflation_radius)
 
+        # Update robot's total_internal_polygon
+        robot.update_polygons()
+
         if show and self.gui is not None:
             self.gui.canvas.show_robots_signal.emit()
         if self.ros_node is not None:

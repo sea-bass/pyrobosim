@@ -247,8 +247,7 @@ class RRTPlanner(PathPlanner):
         assert self.world is not None
         assert self.robot is not None
         return self.world.sample_free_robot_pose_uniform(
-            fog_hallways=self.robot.fog_hallways,
-            recorded_closed_hallways=self.robot.recorded_closed_hallways,
+            robot=self.robot
         )
 
     def extend(self, n_start: Node, q_target: Pose) -> Node:
