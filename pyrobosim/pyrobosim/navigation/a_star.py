@@ -135,7 +135,7 @@ class AStarPlanner(PathPlanner, AStar):  # type: ignore[misc]
         from .occupancy_grid import OccupancyGrid
 
         super().reset()
-        if self.world is None:
+        if (self.world is None) or (self.robot is None):
             return
 
         self._set_actions()
@@ -144,6 +144,7 @@ class AStarPlanner(PathPlanner, AStar):  # type: ignore[misc]
             self.world,
             resolution=self.grid_resolution,
             inflation_radius=self.grid_inflation_radius,
+            robot=self.robot,
         )
 
     def plan(self, start: Pose, goal: Pose) -> Path:

@@ -1,12 +1,15 @@
 """Defines a robot which operates in a world."""
 
+import itertools
 import time
 from threading import Lock
 from typing import Any, Sequence
 
 import numpy as np
+import shapely
 from matplotlib.text import Text
-from shapely.geometry import Point
+from shapely.geometry import Point, Polygon
+from shapely.ops import unary_union
 
 from .dynamics import RobotDynamics2D
 from .hallway import Hallway
@@ -14,6 +17,8 @@ from .locations import ObjectSpawn
 from .objects import Object
 from .types import Entity, set_parent
 from ..manipulation.grasping import Grasp, GraspGenerator
+from ..navigation.a_star import AStarPlanner
+from ..navigation.prm import PRMPlanner
 from ..navigation.types import PathExecutor, PathPlanner
 from ..planning.actions import (
     ExecutionOptions,
@@ -28,6 +33,7 @@ from ..utils.polygon import sample_from_polygon, transform_polygon
 from ..utils.path import Path
 from ..utils.pose import Pose
 from ..utils.general import parse_color
+from ..utils.world_collision import check_occupancy
 
 
 class Robot(Entity):
@@ -52,6 +58,7 @@ class Robot(Entity):
         partial_observability: bool = False,
         action_execution_options: dict[str, ExecutionOptions] = {},
         initial_battery_level: float = 100.0,
+        fog_hallways: bool = False,
     ) -> None:
         """
         Creates a robot instance.
@@ -83,6 +90,8 @@ class Robot(Entity):
         :param action_execution_options: A dictionary of action names and their execution options.
             This defines properties such as delays and nondeterminism.
         :param initial_battery_level: The initial battery charge, from 0 to 100.
+        :param fog_hallways: If True,  robot doesn't know the ground truth for world's hallways state,
+            and assume all is OPEN at the start.
         """
         from .world import World
 
@@ -118,6 +127,11 @@ class Robot(Entity):
         self.known_objects: set[Object] = set()
         self.last_detected_objects: list[Object] = []
         self.viz_text: Text | None = None
+        self.fog_hallways = fog_hallways
+        self.recorded_closed_hallways: set[Hallway] = set()
+
+        # Polygons for collision checking
+        self.total_internal_polygon = Polygon()
 
         # Navigation properties
         self.executing_nav = False
@@ -142,6 +156,10 @@ class Robot(Entity):
         self.executing_plan = False
         self.canceling_execution = False
         self.battery_level = initial_battery_level
+
+        # Do a check for lidar that would be attached to path executor
+        if self.fog_hallways:
+            self.path_executor.validate_lidar_for_fog_hallways()  # type: ignore[union-attr]
 
         self.logger.info("Created robot.")
 
@@ -246,9 +264,9 @@ class Robot(Entity):
             return False
 
         pose = pose or self.dynamics.pose
-        return self.world.check_occupancy(pose) or self.world.collides_with_robots(
-            pose, robot=self
-        )
+        return check_occupancy(
+            pose, self.world, self
+        ) or self.world.collides_with_robots(pose, robot=self)
 
     def at_object_spawn(self) -> bool:
         """
@@ -279,6 +297,20 @@ class Robot(Entity):
         :return: True if the robot is at an openable location, else False.
         """
         return isinstance(self.location, (Hallway, ObjectSpawn))
+
+    def get_known_closed_hallways(self) -> list[Hallway]:
+        """
+        Returns a list of closed hallway recorded by the robot.
+
+        :return: The list of recorded closed hallway.
+        """
+        if self.world is None:
+            return []
+
+        if self.fog_hallways:
+            return list(self.recorded_closed_hallways)
+
+        return [hall for hall in self.world.hallways if not hall.is_open]
 
     def _attach_object(self, obj: Object) -> None:
         """
@@ -884,6 +916,15 @@ class Robot(Entity):
                     status=ExecutionStatus.EXECUTION_FAILURE, message=message
                 )
 
+        # Update recorded_closed_hallways knowledge
+        if self.fog_hallways:
+            if isinstance(self.location, Hallway):
+                if self.location in self.recorded_closed_hallways:
+                    self.recorded_closed_hallways.remove(self.location)
+                    self.logger.info(
+                        f"Removed {self.location.name} from closed knowledge."
+                    )
+
         if isinstance(self.location, ObjectSpawn):
             loc_to_open = self.location.parent
         else:
@@ -943,6 +984,15 @@ class Robot(Entity):
                 return ExecutionResult(
                     status=ExecutionStatus.EXECUTION_FAILURE, message=message
                 )
+
+        # Update recorded_closed_hallways knowledge
+        if self.fog_hallways:
+            if isinstance(self.location, Hallway):
+                if self.location not in self.recorded_closed_hallways:
+                    self.recorded_closed_hallways.add(self.location)
+                    self.logger.info(
+                        f"Added {self.location.name} from closed knowledge."
+                    )
 
         if isinstance(self.location, ObjectSpawn):
             loc_to_close = self.location.parent
@@ -1092,6 +1142,35 @@ class Robot(Entity):
         self.executing_plan = False
         self.current_plan = None
         return result, num_completed
+
+    def update_polygons(self) -> None:
+        """
+        Updates the world's collision polygons when hallway state changes.
+        """
+        if self.world is None:
+            return
+
+        if self.fog_hallways:
+            # closed_hallways would be obtained from robot knowledge
+            closed_hallways = [
+                hall
+                for hall in self.world.hallways
+                if hall in self.recorded_closed_hallways
+            ]
+        else:
+            # closed_hallways would be obtained from the ground truth
+            closed_hallways = [hall for hall in self.world.hallways if not hall.is_open]
+
+        self.total_internal_polygon = unary_union(
+            [
+                entity.internal_collision_polygon
+                for entity in itertools.chain(self.world.rooms, self.world.hallways)
+            ]
+        ).difference(
+            unary_union([hall.inflated_closed_polygon for hall in closed_hallways])
+        )
+
+        shapely.prepare(self.total_internal_polygon)
 
     def to_dict(self) -> dict[str, Any]:
         """

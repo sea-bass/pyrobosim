@@ -269,9 +269,17 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
 
             self.hallway_patches = [h.viz_patch for h in self.world.hallways]
 
+            robot = self.main_window.get_current_robot()
+            if robot:
+                known_closed_hallways = robot.get_known_closed_hallways()
+            else:
+                known_closed_hallways = [
+                    hall for hall in self.world.hallways if not hall.is_open
+                ]
+
             for h in self.world.hallways:
                 self.axes.add_patch(h.viz_patch)
-                if not h.is_open:
+                if h in known_closed_hallways:
                     closed_patch = h.get_closed_patch()
                     self.axes.add_patch(closed_patch)
                     self.hallway_patches.append(closed_patch)

@@ -360,6 +360,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
     def on_robot_changed(self) -> None:
         """Callback when the currently selected robot changes."""
         self.canvas.show_objects_signal.emit()
+        self.canvas.show_hallways_signal.emit()
         self.update_buttons_signal.emit()
 
     def on_navigate_click(self) -> None:
