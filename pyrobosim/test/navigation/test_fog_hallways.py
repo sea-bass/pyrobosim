@@ -38,6 +38,7 @@ def test_fog_hallways_enabled() -> None:
     # Enable fog_hallways
     # This would test if a robot would regard a hallway as open without prior knowledge
     robot.fog_hallways = True
+    robot.update_polygons()
     collision_free_with_fog_hallways = is_connectable(
         start=start,
         goal=end,

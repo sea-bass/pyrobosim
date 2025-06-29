@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from ..core.robot import Robot
     from ..core.world import World
 
+
 def is_connectable(
     start: Pose,
     goal: Pose,
@@ -69,6 +70,7 @@ def is_connectable(
     # connect the points.
     return True
 
+
 def check_occupancy(
     pose: Pose | Sequence[float],
     world: World,
@@ -76,7 +78,7 @@ def check_occupancy(
 ) -> bool:
     """
     Check if a pose in the world is occupied.
-    If robot instace is provided, interpretation would be based on robot's perception of the world.
+    If robot instance is provided, interpretation would be based on robot's perception of the world.
 
     :param pose: The pose to check.
     :param world: The world in which the pose is located.
@@ -90,10 +92,11 @@ def check_occupancy(
         x, y = pose
 
     if robot is None:
-        source = world
+        polygon = world.total_internal_polygon
     else:
-        source = robot
-    return not bool(shapely.intersects_xy(source.total_internal_polygon, x, y))
+        polygon = robot.total_internal_polygon
+    return not bool(shapely.intersects_xy(polygon, x, y))
+
 
 def is_path_collision_free(
     path: Path,
@@ -104,11 +107,14 @@ def is_path_collision_free(
     Check whether a path is collision free in this world.
 
     :param path: The path to use for collision checking.
-    :param world: The world in which the path is located.
     :param robot: The robot instance used for collision checking.
     :param step_dist: The step size for discretizing a straight line to check collisions.
     :return: True if the path is collision free, else False.
     """
+    if robot.world is None:
+        robot.logger.error("Robot is not attached to World.")
+        raise RuntimeError("Robot is not attached to World.")
+
     for idx in range(len(path.poses) - 1):
         if not is_connectable(
             path.poses[idx],

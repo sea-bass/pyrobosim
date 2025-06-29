@@ -133,9 +133,7 @@ class PRMPlanner(PathPlanner):
         """
         assert self.world is not None
         assert self.robot is not None
-        return self.world.sample_free_robot_pose_uniform(
-            robot=self.robot
-        )
+        return self.world.sample_free_robot_pose_uniform(robot=self.robot)
 
     def get_graphs(self) -> list[SearchGraph]:
         """

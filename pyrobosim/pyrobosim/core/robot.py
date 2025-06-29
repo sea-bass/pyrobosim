@@ -1171,6 +1171,9 @@ class Robot(Entity):
         """
         Updates the world's collision polygons when hallway state changes.
         """
+        if self.world is None:
+            return
+
         if self.fog_hallways:
             # closed_hallways would be obtained from robot knowledge
             closed_hallways = [
