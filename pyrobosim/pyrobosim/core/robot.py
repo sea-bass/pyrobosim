@@ -298,7 +298,7 @@ class Robot(Entity):
         """
         return isinstance(self.location, (Hallway, ObjectSpawn))
 
-    def get_recorded_closed_hallways(self) -> list[Hallway]:
+    def get_known_closed_hallways(self) -> list[Hallway]:
         """
         Returns a list of closed hallway recorded by the robot.
 

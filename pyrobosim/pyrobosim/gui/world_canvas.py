@@ -226,7 +226,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
 
             robot = self.main_window.get_current_robot()
             if robot:
-                known_closed_hallways = robot.get_recorded_closed_hallways()
+                known_closed_hallways = robot.get_known_closed_hallways()
             else:
                 known_closed_hallways = [
                     hall for hall in self.world.hallways if not hall.is_open

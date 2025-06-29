@@ -709,10 +709,10 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
             if not robot:
                 return response  # empty response
             objects = robot.get_known_objects()
-            recorded_closed_hallways = robot.get_recorded_closed_hallways()
+            known_closed_hallways = robot.get_known_closed_hallways()
         else:
             objects = self.world.objects
-            recorded_closed_hallways = [
+            known_closed_hallways = [
                 hall for hall in self.world.hallways if not hall.is_open
             ]
 
@@ -732,7 +732,7 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
                 name=hall.name,
                 room_start=hall.room_start.name,
                 room_end=hall.room_end.name,
-                is_open=(hall not in recorded_closed_hallways),
+                is_open=(hall not in known_closed_hallways),
                 is_locked=hall.is_locked,
             )
             response.state.hallways.append(hall_msg)
