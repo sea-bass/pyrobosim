@@ -302,7 +302,7 @@ class Robot(Entity):
         """
         Returns a list of closed hallway recorded by the robot.
 
-        :return: The list of recorded closed hallway.
+        :return: The list of recorded closed hallways.
         """
         if self.world is None:
             return []
@@ -991,7 +991,7 @@ class Robot(Entity):
                 if self.location not in self.recorded_closed_hallways:
                     self.recorded_closed_hallways.add(self.location)
                     self.logger.info(
-                        f"Added {self.location.name} from closed knowledge."
+                        f"Added {self.location.name} to closed knowledge."
                     )
 
         if isinstance(self.location, ObjectSpawn):

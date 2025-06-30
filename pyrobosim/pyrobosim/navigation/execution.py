@@ -209,7 +209,7 @@ class ConstantVelocityExecutor(PathExecutor):
 
     # With fog_hallways feature enabled,
     # validation of collisions in remaining path will be carried out based robot's recorded hallway states,
-    # instead of of hallway states of the world's ground truth.
+    # instead of hallway states of the world's ground truth.
     def validate_remaining_path(self) -> None:
         """
         Validates the remaining path by checking collisions against the world.
@@ -253,7 +253,7 @@ class ConstantVelocityExecutor(PathExecutor):
 
     def detect_closed_hallway(self) -> None:
         """
-        Get lidar measurement and determine if it's scanning a hallway.
+        Get lidar measurements and determine if a robot is scanning a hallway.
         If yes, it would update the robot recorded_closed_hallways knowledge.
         It either remove (if it detects hallway is open) or add (if it detects hallway is close) the hallway
         into the robot's knowledge.
