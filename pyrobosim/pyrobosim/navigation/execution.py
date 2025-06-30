@@ -151,7 +151,7 @@ class ConstantVelocityExecutor(PathExecutor):
             self.validation_timer.start()
 
         if self.robot.fog_hallways:
-            self.lidar_sensor_timer = Thread(target=self.detect_closed_hallway)
+            self.lidar_sensor_timer = Thread(target=self.detect_closed_hallways)
             self.lidar_sensor_timer.start()
 
         # Execute the trajectory.
