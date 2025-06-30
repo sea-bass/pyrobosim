@@ -990,9 +990,7 @@ class Robot(Entity):
             if isinstance(self.location, Hallway):
                 if self.location not in self.recorded_closed_hallways:
                     self.recorded_closed_hallways.add(self.location)
-                    self.logger.info(
-                        f"Added {self.location.name} to closed knowledge."
-                    )
+                    self.logger.info(f"Added {self.location.name} to closed knowledge.")
 
         if isinstance(self.location, ObjectSpawn):
             loc_to_close = self.location.parent
