@@ -122,7 +122,7 @@ def create_world(multirobot: bool = False) -> World:
         width_clearance=0.01,
         depth_clearance=0.01,
     )
-    lidar = Lidar2D(
+    lidar0 = Lidar2D(
         update_rate_s=0.1,
         angle_units="degrees",
         min_angle=-120.0,
@@ -130,7 +130,6 @@ def create_world(multirobot: bool = False) -> World:
         angular_resolution=5.0,
         max_range_m=2.0,
     )
-
     robot0 = Robot(
         name="robot0",
         radius=0.1,
@@ -139,10 +138,12 @@ def create_world(multirobot: bool = False) -> World:
             dt=0.1,
             max_angular_velocity=4.0,
             validate_during_execution=True,
+            lidar_sensor_name=("lidar" if args.fog_hallways else None),
         ),
-        sensors={"lidar": lidar} if args.lidar else None,
+        sensors=({"lidar": lidar0} if args.lidar or args.fog_hallways else None),
         grasp_generator=GraspGenerator(grasp_props),
         partial_observability=args.partial_observability,
+        fog_hallways=args.fog_hallways,
         color="#CC00CC",
     )
     world.add_robot(robot0, loc="kitchen")
@@ -159,13 +160,26 @@ def create_world(multirobot: bool = False) -> World:
     robot0.set_path_planner(rrt_planner)
 
     if multirobot:
+        lidar1 = Lidar2D(
+            update_rate_s=0.1,
+            angle_units="degrees",
+            min_angle=-120.0,
+            max_angle=120.0,
+            angular_resolution=5.0,
+            max_range_m=2.0,
+        )
         robot1 = Robot(
             name="robot1",
             radius=0.08,
             color=(0.8, 0.8, 0),
-            path_executor=ConstantVelocityExecutor(),
+            path_executor=ConstantVelocityExecutor(
+                validate_during_execution=args.fog_hallways,
+                lidar_sensor_name=("lidar" if args.fog_hallways else None),
+            ),
+            sensors=({"lidar": lidar1} if args.lidar or args.fog_hallways else None),
             grasp_generator=GraspGenerator(grasp_props),
             partial_observability=args.partial_observability,
+            fog_hallways=args.fog_hallways,
         )
         world.add_robot(robot1, loc="bathroom")
         planner_config_prm = {
@@ -177,13 +191,26 @@ def create_world(multirobot: bool = False) -> World:
         prm_planner = PRMPlanner(**planner_config_prm)
         robot1.set_path_planner(prm_planner)
 
+        lidar2 = Lidar2D(
+            update_rate_s=0.1,
+            angle_units="degrees",
+            min_angle=-120.0,
+            max_angle=120.0,
+            angular_resolution=5.0,
+            max_range_m=2.0,
+        )
         robot2 = Robot(
             name="robot2",
             radius=0.06,
             color=(0, 0.8, 0.8),
-            path_executor=ConstantVelocityExecutor(),
+            path_executor=ConstantVelocityExecutor(
+                validate_during_execution=args.fog_hallways,
+                lidar_sensor_name=("lidar" if args.fog_hallways else None),
+            ),
+            sensors=({"lidar": lidar2} if args.lidar or args.fog_hallways else None),
             grasp_generator=GraspGenerator(grasp_props),
             partial_observability=args.partial_observability,
+            fog_hallways=args.fog_hallways,
         )
         world.add_robot(robot2, loc="bedroom")
         planner_config_astar = {
@@ -226,6 +253,11 @@ def parse_args() -> argparse.Namespace:
         "--lidar",
         action="store_true",
         help="If True, adds a lidar sensor to the first robot.",
+    )
+    parser.add_argument(
+        "--fog-hallways",
+        action="store_true",
+        help="If True, robots have partial observability on hallway states and assume all hallways are OPEN at the beginning.",
     )
     return parser.parse_args()
 
