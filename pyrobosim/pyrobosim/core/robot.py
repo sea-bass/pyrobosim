@@ -916,11 +916,11 @@ class Robot(Entity):
 
         # Update recorded_closed_hallways knowledge
         if self.fog_hallways:
-            if isinstance(self.location, Hallway) and (self.location in self.recorded_closed_hallways):
+            if isinstance(self.location, Hallway) and (
+                self.location in self.recorded_closed_hallways
+            ):
                 self.recorded_closed_hallways.remove(self.location)
-                self.logger.info(
-                    f"Removed {self.location.name} from closed knowledge."
-                )
+                self.logger.info(f"Removed {self.location.name} from closed knowledge.")
 
         if isinstance(self.location, ObjectSpawn):
             loc_to_open = self.location.parent
@@ -984,7 +984,9 @@ class Robot(Entity):
 
         # Update recorded_closed_hallways knowledge
         if self.fog_hallways:
-            if isinstance(self.location, Hallway) and (self.location not in self.recorded_closed_hallways):
+            if isinstance(self.location, Hallway) and (
+                self.location not in self.recorded_closed_hallways
+            ):
                 self.recorded_closed_hallways.add(self.location)
                 self.logger.info(f"Added {self.location.name} to closed knowledge.")
 
@@ -1147,7 +1149,7 @@ class Robot(Entity):
         if self.fog_hallways:
             # closed_hallways would be obtained from robot knowledge
             closed_hallways = self.get_known_closed_hallways()
-            
+
             self.total_internal_polygon = unary_union(
                 [
                     entity.internal_collision_polygon
