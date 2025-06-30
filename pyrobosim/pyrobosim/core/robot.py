@@ -17,8 +17,6 @@ from .locations import ObjectSpawn
 from .objects import Object
 from .types import Entity, set_parent
 from ..manipulation.grasping import Grasp, GraspGenerator
-from ..navigation.a_star import AStarPlanner
-from ..navigation.prm import PRMPlanner
 from ..navigation.types import PathExecutor, PathPlanner
 from ..planning.actions import (
     ExecutionOptions,
@@ -918,12 +916,11 @@ class Robot(Entity):
 
         # Update recorded_closed_hallways knowledge
         if self.fog_hallways:
-            if isinstance(self.location, Hallway):
-                if self.location in self.recorded_closed_hallways:
-                    self.recorded_closed_hallways.remove(self.location)
-                    self.logger.info(
-                        f"Removed {self.location.name} from closed knowledge."
-                    )
+            if isinstance(self.location, Hallway) and (self.location in self.recorded_closed_hallways):
+                self.recorded_closed_hallways.remove(self.location)
+                self.logger.info(
+                    f"Removed {self.location.name} from closed knowledge."
+                )
 
         if isinstance(self.location, ObjectSpawn):
             loc_to_open = self.location.parent
@@ -987,10 +984,9 @@ class Robot(Entity):
 
         # Update recorded_closed_hallways knowledge
         if self.fog_hallways:
-            if isinstance(self.location, Hallway):
-                if self.location not in self.recorded_closed_hallways:
-                    self.recorded_closed_hallways.add(self.location)
-                    self.logger.info(f"Added {self.location.name} to closed knowledge.")
+            if isinstance(self.location, Hallway) and (self.location not in self.recorded_closed_hallways):
+                self.recorded_closed_hallways.add(self.location)
+                self.logger.info(f"Added {self.location.name} to closed knowledge.")
 
         if isinstance(self.location, ObjectSpawn):
             loc_to_close = self.location.parent
@@ -1150,25 +1146,21 @@ class Robot(Entity):
 
         if self.fog_hallways:
             # closed_hallways would be obtained from robot knowledge
-            closed_hallways = [
-                hall
-                for hall in self.world.hallways
-                if hall in self.recorded_closed_hallways
-            ]
+            closed_hallways = self.get_known_closed_hallways()
+            
+            self.total_internal_polygon = unary_union(
+                [
+                    entity.internal_collision_polygon
+                    for entity in itertools.chain(self.world.rooms, self.world.hallways)
+                ]
+            ).difference(
+                unary_union([hall.inflated_closed_polygon for hall in closed_hallways])
+            )
+
+            shapely.prepare(self.total_internal_polygon)
+
         else:
-            # closed_hallways would be obtained from the ground truth
-            closed_hallways = [hall for hall in self.world.hallways if not hall.is_open]
-
-        self.total_internal_polygon = unary_union(
-            [
-                entity.internal_collision_polygon
-                for entity in itertools.chain(self.world.rooms, self.world.hallways)
-            ]
-        ).difference(
-            unary_union([hall.inflated_closed_polygon for hall in closed_hallways])
-        )
-
-        shapely.prepare(self.total_internal_polygon)
+            self.total_internal_polygon = self.world.total_internal_polygon
 
     def to_dict(self) -> dict[str, Any]:
         """

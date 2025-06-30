@@ -7,8 +7,6 @@ from typing import Any
 import numpy as np
 import shapely
 
-from .a_star import AStarPlanner
-from .prm import PRMPlanner
 from .types import PathExecutor
 from ..planning.actions import ExecutionResult, ExecutionStatus
 from ..sensors.lidar import Lidar2D
@@ -208,7 +206,7 @@ class ConstantVelocityExecutor(PathExecutor):
         return self.robot.last_nav_result
 
     # With fog_hallways feature enabled,
-    # validation of collisions in remaining path will be carried out based robot's recorded hallway states,
+    # validation of collisions in remaining path will be carried out based on robot's hallway states knowledge,
     # instead of hallway states of the world's ground truth.
     def validate_remaining_path(self) -> None:
         """
@@ -251,10 +249,10 @@ class ConstantVelocityExecutor(PathExecutor):
 
             time.sleep(max(0, self.validation_dt - (time.time() - start_time)))
 
-    def detect_closed_hallway(self) -> None:
+    def detect_closed_hallways(self) -> None:
         """
         Get lidar measurements and determine if a robot is scanning a hallway.
-        If yes, it would update the robot recorded_closed_hallways knowledge.
+        If so, it would update the robot's hallway states knowledge.
         It either remove (if it detects hallway is open) or add (if it detects hallway is close) the hallway
         into the robot's knowledge.
         """

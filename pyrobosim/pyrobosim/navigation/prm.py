@@ -68,8 +68,7 @@ class PRMPlanner(PathPlanner):
 
         :param node: Node to try add to the graph.
         """
-        assert self.world is not None
-        assert self.robot is not None
+        assert (self.world is not None) and (self.robot is not None)
         for other in self.graph.nodes:
             if node == other:
                 continue
@@ -91,8 +90,7 @@ class PRMPlanner(PathPlanner):
         :param goal: Goal pose or graph node.
         :return: Path from start to goal.
         """
-        assert self.world is not None
-        assert self.robot is not None
+        assert (self.world is not None) and (self.robot is not None)
         # Reset the path and time
         self.latest_path = Path()
         # Create the start and goal nodes
@@ -131,8 +129,7 @@ class PRMPlanner(PathPlanner):
 
         :return: Collision-free pose if found, else ``None``.
         """
-        assert self.world is not None
-        assert self.robot is not None
+        assert (self.world is not None) and (self.robot is not None)
         return self.world.sample_free_robot_pose_uniform(robot=self.robot)
 
     def get_graphs(self) -> list[SearchGraph]:

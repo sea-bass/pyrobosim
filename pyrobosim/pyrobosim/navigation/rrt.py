@@ -244,8 +244,7 @@ class RRTPlanner(PathPlanner):
 
         :return: Collision-free pose if found, else ``None``.
         """
-        assert self.world is not None
-        assert self.robot is not None
+        assert (self.world is not None) and (self.robot is not None)
         return self.world.sample_free_robot_pose_uniform(robot=self.robot)
 
     def extend(self, n_start: Node, q_target: Pose) -> Node:
@@ -288,8 +287,7 @@ class RRTPlanner(PathPlanner):
         :param graph: The tree to rewire.
         :param n_tgt: The target tree node to rewire within the tree.
         """
-        assert self.world is not None
-        assert self.robot is not None
+        assert (self.world is not None) and (self.robot is not None)
 
         # First, find the node to rewire, if any
         n_rewire = None
@@ -333,8 +331,7 @@ class RRTPlanner(PathPlanner):
         :param n_tgt: The target tree node defining the connection goal.
         :return: A tuple containing connection success and the final node added.
         """
-        assert self.world is not None
-        assert self.robot is not None
+        assert (self.world is not None) and (self.robot is not None)
 
         # Needed for bidirectional RRT so the connection node is in both trees.
         if self.bidirectional:
