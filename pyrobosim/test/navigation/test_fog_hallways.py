@@ -13,7 +13,7 @@ from pyrobosim.utils.pose import Pose
 from pyrobosim.utils.world_collision import is_connectable
 
 
-def test_fog_hallways_enabled() -> None:
+def test_partial_obs_hallways_enabled() -> None:
     """Tests fog hallways feature with slight modifications to default world graph planner settings."""
     world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
@@ -28,26 +28,26 @@ def test_fog_hallways_enabled() -> None:
     start = Pose(x=-0.2, y=0.7)
     end = Pose(x=-0.8, y=1.3)
 
-    collision_free_without_fog_hallways = is_connectable(
+    collision_free_without_partial_obs_hallways = is_connectable(
         start=start,
         goal=end,
         world=world,
         robot=robot,
     )
 
-    # Enable fog_hallways
+    # Enable partial_obs_hallways
     # This would test if a robot would regard a hallway as open without prior knowledge
-    robot.fog_hallways = True
+    robot.partial_obs_hallways = True
     robot.update_polygons()
-    collision_free_with_fog_hallways = is_connectable(
+    collision_free_with_partial_obs_hallways = is_connectable(
         start=start,
         goal=end,
         world=world,
         robot=robot,
     )
 
-    assert collision_free_without_fog_hallways == False
-    assert collision_free_with_fog_hallways == True
+    assert collision_free_without_partial_obs_hallways == False
+    assert collision_free_with_partial_obs_hallways == True
 
 
 def test_detect_hallway_states() -> None:
@@ -72,7 +72,7 @@ def test_detect_hallway_states() -> None:
     path_executor = ConstantVelocityExecutor(lidar_sensor_name="lidar")
     robot.set_path_executor(path_executor)
 
-    robot.fog_hallways = True
+    robot.partial_obs_hallways = True
 
     lidar_sensor = robot.sensors.get(path_executor.lidar_sensor_name)
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 """
-Test script showing PyRoboSim fog_hallways feature.
-fog_hallways refers to robot not knowing the true state of the hallway
+Test script showing PyRoboSim partial_obs_hallways feature.
+partial_obs_hallways refers to robot not knowing the true state of the hallway
 until it senses it with sensors.
 """
 import os
@@ -128,7 +128,7 @@ def create_world(multirobot: bool = False) -> World:
         ),
         sensors=({"lidar": lidar0}),
         color="#CC00CC",
-        fog_hallways=True,
+        partial_obs_hallways=True,
     )
     world.add_robot(robot0, loc="kitchen")
     planner_config_rrt = {
@@ -164,7 +164,7 @@ def create_world(multirobot: bool = False) -> World:
                 lidar_sensor_name=("lidar"),
             ),
             sensors=({"lidar": lidar1}),
-            fog_hallways=True,
+            partial_obs_hallways=True,
         )
         world.add_robot(robot1, loc="bathroom")
         planner_config_prm = {
@@ -196,7 +196,7 @@ def create_world(multirobot: bool = False) -> World:
                 lidar_sensor_name=("lidar"),
             ),
             sensors=({"lidar": lidar2}),
-            fog_hallways=True,
+            partial_obs_hallways=True,
         )
         world.add_robot(robot2, loc="bedroom")
         planner_config_astar = {
@@ -214,7 +214,7 @@ def create_world(multirobot: bool = False) -> World:
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments"""
     parser = argparse.ArgumentParser(
-        description="Pyrobosim demo for fog_hallways feature."
+        description="Pyrobosim demo for partial_obs_hallways feature."
     )
     parser.add_argument(
         "--multirobot",

@@ -72,7 +72,7 @@ class ConstantVelocityExecutor(PathExecutor):
         self.abort_execution = False  # Flag to abort internally
         self.cancel_execution = False  # Flag to cancel from user
 
-    def validate_lidar_for_fog_hallways(self) -> None:
+    def validate_lidar_for_partial_obs_hallways(self) -> None:
         """
         Validates if the lidar sensor is set up correctly with fog hallways enabled.
         """
@@ -150,7 +150,7 @@ class ConstantVelocityExecutor(PathExecutor):
             self.validation_timer = Thread(target=self.validate_remaining_path)
             self.validation_timer.start()
 
-        if self.robot.fog_hallways:
+        if self.robot.partial_obs_hallways:
             self.lidar_sensor_timer = Thread(target=self.detect_hallway_states)
             self.lidar_sensor_timer.start()
 
@@ -172,7 +172,9 @@ class ConstantVelocityExecutor(PathExecutor):
                     self.validation_timer is not None
                 ):
                     self.validation_timer.join()
-                if self.robot.fog_hallways and (self.lidar_sensor_timer is not None):
+                if self.robot.partial_obs_hallways and (
+                    self.lidar_sensor_timer is not None
+                ):
                     self.lidar_sensor_timer.join()
                 message = "Trajectory execution aborted."
                 self.robot.logger.info(message)
@@ -205,7 +207,7 @@ class ConstantVelocityExecutor(PathExecutor):
         self.robot.last_nav_result = ExecutionResult(status=status, message=message)
         return self.robot.last_nav_result
 
-    # With fog_hallways feature enabled,
+    # With partial_obs_hallways feature enabled,
     # validation of collisions in remaining path will be carried out based on robot's hallway states knowledge,
     # instead of hallway states of the world's ground truth.
     def validate_remaining_path(self) -> None:

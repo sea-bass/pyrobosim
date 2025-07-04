@@ -56,7 +56,7 @@ class Robot(Entity):
         partial_observability: bool = False,
         action_execution_options: dict[str, ExecutionOptions] = {},
         initial_battery_level: float = 100.0,
-        fog_hallways: bool = False,
+        partial_obs_hallways: bool = False,
     ) -> None:
         """
         Creates a robot instance.
@@ -88,7 +88,7 @@ class Robot(Entity):
         :param action_execution_options: A dictionary of action names and their execution options.
             This defines properties such as delays and nondeterminism.
         :param initial_battery_level: The initial battery charge, from 0 to 100.
-        :param fog_hallways: If True,  robot doesn't know the ground truth for world's hallways state,
+        :param partial_obs_hallways: If True,  robot doesn't know the ground truth for world's hallways state,
             and assume all is OPEN at the start.
         """
         from .world import World
@@ -125,7 +125,7 @@ class Robot(Entity):
         self.known_objects: set[Object] = set()
         self.last_detected_objects: list[Object] = []
         self.viz_text: Text | None = None
-        self.fog_hallways = fog_hallways
+        self.partial_obs_hallways = partial_obs_hallways
         self.recorded_closed_hallways: set[Hallway] = set()
 
         # Polygons for collision checking
@@ -156,8 +156,8 @@ class Robot(Entity):
         self.battery_level = initial_battery_level
 
         # Do a check for lidar that would be attached to path executor
-        if self.fog_hallways:
-            self.path_executor.validate_lidar_for_fog_hallways()  # type: ignore[union-attr]
+        if self.partial_obs_hallways:
+            self.path_executor.validate_lidar_for_partial_obs_hallways()  # type: ignore[union-attr]
 
         self.logger.info("Created robot.")
 
@@ -305,7 +305,7 @@ class Robot(Entity):
         if self.world is None:
             return []
 
-        if self.fog_hallways:
+        if self.partial_obs_hallways:
             return list(self.recorded_closed_hallways)
 
         return [hall for hall in self.world.hallways if not hall.is_open]
@@ -915,7 +915,7 @@ class Robot(Entity):
                 )
 
         # Update recorded_closed_hallways knowledge
-        if self.fog_hallways:
+        if self.partial_obs_hallways:
             if isinstance(self.location, Hallway) and (
                 self.location in self.recorded_closed_hallways
             ):
@@ -983,7 +983,7 @@ class Robot(Entity):
                 )
 
         # Update recorded_closed_hallways knowledge
-        if self.fog_hallways:
+        if self.partial_obs_hallways:
             if isinstance(self.location, Hallway) and (
                 self.location not in self.recorded_closed_hallways
             ):
@@ -1146,7 +1146,7 @@ class Robot(Entity):
         if self.world is None:
             return
 
-        if self.fog_hallways:
+        if self.partial_obs_hallways:
             # closed_hallways would be obtained from robot knowledge
             closed_hallways = self.get_known_closed_hallways()
 
