@@ -142,9 +142,10 @@ def create_world(multirobot: bool = False) -> World:
         ),
         sensors={"lidar": lidar} if args.lidar else None,
         grasp_generator=GraspGenerator(grasp_props),
-        partial_observability=args.partial_observability,
+        partial_obs_objects=args.partial_obs_objects,
         color="#CC00CC",
     )
+    world.add_robot(robot0, loc="kitchen")
     planner_config_rrt = {
         "bidirectional": True,
         "rrt_connect": False,
@@ -156,7 +157,6 @@ def create_world(multirobot: bool = False) -> World:
     }
     rrt_planner = RRTPlanner(**planner_config_rrt)
     robot0.set_path_planner(rrt_planner)
-    world.add_robot(robot0, loc="kitchen")
 
     if multirobot:
         robot1 = Robot(
@@ -165,8 +165,9 @@ def create_world(multirobot: bool = False) -> World:
             color=(0.8, 0.8, 0),
             path_executor=ConstantVelocityExecutor(),
             grasp_generator=GraspGenerator(grasp_props),
-            partial_observability=args.partial_observability,
+            partial_obs_objects=args.partial_obs_objects,
         )
+        world.add_robot(robot1, loc="bathroom")
         planner_config_prm = {
             "collision_check_step_dist": 0.025,
             "max_connection_dist": 1.5,
@@ -175,7 +176,6 @@ def create_world(multirobot: bool = False) -> World:
         }
         prm_planner = PRMPlanner(**planner_config_prm)
         robot1.set_path_planner(prm_planner)
-        world.add_robot(robot1, loc="bathroom")
 
         robot2 = Robot(
             name="robot2",
@@ -183,8 +183,9 @@ def create_world(multirobot: bool = False) -> World:
             color=(0, 0.8, 0.8),
             path_executor=ConstantVelocityExecutor(),
             grasp_generator=GraspGenerator(grasp_props),
-            partial_observability=args.partial_observability,
+            partial_obs_objects=args.partial_obs_objects,
         )
+        world.add_robot(robot2, loc="bedroom")
         planner_config_astar = {
             "grid_resolution": 0.05,
             "grid_inflation_radius": 0.15,
@@ -193,7 +194,6 @@ def create_world(multirobot: bool = False) -> World:
         }
         astar_planner = AStarPlanner(**planner_config_astar)
         robot2.set_path_planner(astar_planner)
-        world.add_robot(robot2, loc="bedroom")
 
     return world
 
@@ -218,9 +218,9 @@ def parse_args() -> argparse.Namespace:
         + "If not specified, a world will be created programmatically.",
     )
     parser.add_argument(
-        "--partial-observability",
+        "--partial-obs-objects",
         action="store_true",
-        help="If True, robots have partial observability and must detect objects.",
+        help="If True, robots have partial observability of objects and must detect them.",
     )
     parser.add_argument(
         "--lidar",

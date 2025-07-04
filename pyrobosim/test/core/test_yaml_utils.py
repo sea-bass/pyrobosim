@@ -393,7 +393,8 @@ class TestWorldYamlLoading:
                         },
                     },
                     "start_sensor_threads": False,
-                    "partial_observability": True,
+                    "partial_obs_objects": True,
+                    "partial_obs_hallways": True,
                     "action_execution_options": {
                         "pick": {
                             "delay": 1.0,
@@ -418,7 +419,8 @@ class TestWorldYamlLoading:
         assert robot0.path_planner is None
         assert isinstance(robot0.path_executor, ConstantVelocityExecutor)
         assert robot0.grasp_generator is None
-        assert not robot0.partial_observability
+        assert not robot0.partial_obs_objects
+        assert not robot0.partial_obs_hallways
         assert robot0.action_execution_options == {}
         assert robot0.battery_level == 100.0
 
@@ -431,7 +433,8 @@ class TestWorldYamlLoading:
         assert robot1.get_pose() == Pose.from_list([2.5, 3.0, 1.57])
         assert np.all(robot1.dynamics.vel_limits == np.array([1.0, 1.0, 3.0]))
         assert np.all(robot1.dynamics.accel_limits == np.array([2.0, 2.0, 6.0]))
-        assert robot1.partial_observability
+        assert robot1.partial_obs_objects
+        assert robot1.partial_obs_hallways
         assert robot1.battery_level == 50.0
 
         path_planner = robot1.path_planner

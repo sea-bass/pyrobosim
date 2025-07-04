@@ -92,6 +92,7 @@ class PathExecutor:
         from ..core.robot import Robot
 
         self.robot: Robot | None = None
+        self.cancel_all_threads = False
 
     def execute(
         self, path: Path, realtime_factor: float = 1.0, battery_usage: float = 0.0
@@ -104,6 +105,12 @@ class PathExecutor:
             real time, defaults to 1.0.
         :param battery_usage: Robot battery usage per unit distance.
         :return: An object describing the execution result.
+        """
+        raise NotImplementedError("Must implement in subclass.")
+
+    def validate_sensors_for_partial_obs_hallways(self) -> None:
+        """
+        Validates if the lidar sensor is set up correctly with partial hallway observability.
         """
         raise NotImplementedError("Must implement in subclass.")
 

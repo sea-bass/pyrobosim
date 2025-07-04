@@ -1,12 +1,15 @@
 """Defines a robot which operates in a world."""
 
+import itertools
 import time
 from threading import Lock
 from typing import Any, Sequence
 
 import numpy as np
+import shapely
 from matplotlib.text import Text
-from shapely.geometry import Point
+from shapely.geometry import Point, Polygon
+from shapely.ops import unary_union
 
 from .dynamics import RobotDynamics2D
 from .hallway import Hallway
@@ -28,6 +31,7 @@ from ..utils.polygon import sample_from_polygon, transform_polygon
 from ..utils.path import Path
 from ..utils.pose import Pose
 from ..utils.general import parse_color
+from ..utils.world_collision import check_occupancy
 
 
 class Robot(Entity):
@@ -49,7 +53,8 @@ class Robot(Entity):
         grasp_generator: GraspGenerator | None = None,
         sensors: dict[str, Sensor] | None = None,
         start_sensor_threads: bool = True,
-        partial_observability: bool = False,
+        partial_obs_objects: bool = False,
+        partial_obs_hallways: bool = False,
         action_execution_options: dict[str, ExecutionOptions] = {},
         initial_battery_level: float = 100.0,
     ) -> None:
@@ -78,8 +83,10 @@ class Robot(Entity):
         :param sensors: Optional map of names to sensors (see e.g.,
             :class:`pyrobosim.sensors.lidar.Lidar2D`).
         :param start_sensor_threads: If True, automatically starts the sensor threads.
-        :param partial_observability: If False, the robot can access all objects in the world.
+        :param partial_obs_objects: If False, the robot can access all objects in the world.
             If True, it must detect new objects at specific locations.
+        :param partial_obs_hallways: If True, robot doesn't know the ground truth for the world's
+            hallway states, and assumes all are open at the start unless sensed otherwise.
         :param action_execution_options: A dictionary of action names and their execution options.
             This defines properties such as delays and nondeterminism.
         :param initial_battery_level: The initial battery charge, from 0 to 100.
@@ -114,21 +121,26 @@ class Robot(Entity):
         self.world: World | None = None
         self.location: Entity | None = None
         self.manipulated_object: Object | None = None
-        self.partial_observability = partial_observability
+        self.partial_obs_objects = partial_obs_objects
         self.known_objects: set[Object] = set()
         self.last_detected_objects: list[Object] = []
         self.viz_text: Text | None = None
+        self.partial_obs_hallways = partial_obs_hallways
+        self.recorded_closed_hallways: set[Hallway] = set()
+
+        # Polygons for collision checking
+        self.total_internal_polygon = Polygon()
+
+        # Sensing properties
+        self.set_sensors(sensors)
+        if start_sensor_threads:
+            self.start_sensor_threads()
 
         # Navigation properties
         self.executing_nav = False
         self.last_nav_result = ExecutionResult()
         self.set_path_planner(path_planner)
         self.set_path_executor(path_executor)
-
-        # Sensing properties
-        self.set_sensors(sensors)
-        if start_sensor_threads:
-            self.start_sensor_threads()
 
         # Manipulation properties
         self.grasp_generator = grasp_generator
@@ -194,6 +206,8 @@ class Robot(Entity):
         self.path_executor = path_executor
         if path_executor is not None:
             path_executor.robot = self
+            if self.partial_obs_hallways:
+                path_executor.validate_sensors_for_partial_obs_hallways()
 
     def set_sensors(self, sensors: dict[str, Sensor] | None) -> None:
         """
@@ -217,6 +231,8 @@ class Robot(Entity):
         """Stops the robot's active sensor threads."""
         for sensor in self.sensors.values():
             sensor.stop_thread()
+        if self.path_executor is not None:
+            self.path_executor.cancel_all_threads = True
 
     def is_moving(self) -> bool:
         """
@@ -246,9 +262,9 @@ class Robot(Entity):
             return False
 
         pose = pose or self.dynamics.pose
-        return self.world.check_occupancy(pose) or self.world.collides_with_robots(
-            pose, robot=self
-        )
+        return check_occupancy(
+            pose, self.world, self
+        ) or self.world.collides_with_robots(pose, robot=self)
 
     def at_object_spawn(self) -> bool:
         """
@@ -267,7 +283,7 @@ class Robot(Entity):
         if self.world is None:
             return []
 
-        if self.partial_observability:
+        if self.partial_obs_objects:
             return list(self.known_objects)
 
         return self.world.objects
@@ -279,6 +295,20 @@ class Robot(Entity):
         :return: True if the robot is at an openable location, else False.
         """
         return isinstance(self.location, (Hallway, ObjectSpawn))
+
+    def get_known_closed_hallways(self) -> list[Hallway]:
+        """
+        Returns a list of closed hallway recorded by the robot.
+
+        :return: The list of recorded closed hallways.
+        """
+        if self.world is None:
+            return []
+
+        if self.partial_obs_hallways:
+            return list(self.recorded_closed_hallways)
+
+        return [hall for hall in self.world.hallways if not hall.is_open]
 
     def _attach_object(self, obj: Object) -> None:
         """
@@ -884,6 +914,14 @@ class Robot(Entity):
                     status=ExecutionStatus.EXECUTION_FAILURE, message=message
                 )
 
+        # Update recorded_closed_hallways knowledge
+        if self.partial_obs_hallways:
+            if isinstance(self.location, Hallway) and (
+                self.location in self.recorded_closed_hallways
+            ):
+                self.recorded_closed_hallways.remove(self.location)
+                self.logger.info(f"Removed {self.location.name} from closed knowledge.")
+
         if isinstance(self.location, ObjectSpawn):
             loc_to_open = self.location.parent
         else:
@@ -943,6 +981,14 @@ class Robot(Entity):
                 return ExecutionResult(
                     status=ExecutionStatus.EXECUTION_FAILURE, message=message
                 )
+
+        # Update recorded_closed_hallways knowledge
+        if self.partial_obs_hallways:
+            if isinstance(self.location, Hallway) and (
+                self.location not in self.recorded_closed_hallways
+            ):
+                self.recorded_closed_hallways.add(self.location)
+                self.logger.info(f"Added {self.location.name} to closed knowledge.")
 
         if isinstance(self.location, ObjectSpawn):
             loc_to_close = self.location.parent
@@ -1093,6 +1139,31 @@ class Robot(Entity):
         self.current_plan = None
         return result, num_completed
 
+    def update_polygons(self) -> None:
+        """
+        Updates the world's collision polygons when hallway state changes.
+        """
+        if self.world is None:
+            return
+
+        if self.partial_obs_hallways:
+            # closed_hallways would be obtained from robot knowledge
+            closed_hallways = self.get_known_closed_hallways()
+
+            self.total_internal_polygon = unary_union(
+                [
+                    entity.internal_collision_polygon
+                    for entity in itertools.chain(self.world.rooms, self.world.hallways)
+                ]
+            ).difference(
+                unary_union([hall.inflated_closed_polygon for hall in closed_hallways])
+            )
+
+            shapely.prepare(self.total_internal_polygon)
+
+        else:
+            self.total_internal_polygon = self.world.total_internal_polygon
+
     def to_dict(self) -> dict[str, Any]:
         """
         Serializes the robot to a dictionary.
@@ -1111,6 +1182,8 @@ class Robot(Entity):
             "max_angular_velocity": float(self.dynamics.vel_limits[-1]),
             "max_linear_acceleration": float(self.dynamics.accel_limits[0]),
             "max_angular_acceleration": float(self.dynamics.accel_limits[-1]),
+            "partial_obs_objects": self.partial_obs_objects,
+            "partial_obs_hallways": self.partial_obs_hallways,
         }
 
         if self.world is not None:
@@ -1139,6 +1212,8 @@ class Robot(Entity):
         details_str = f"Robot: {self.name}"
         details_str += f"\n\t{self.get_pose()}"
         details_str += f"\n\tBattery: {self.battery_level:.2f}%"
-        if self.partial_observability:
-            details_str += "\n\tPartial observability enabled"
+        if self.partial_obs_objects:
+            details_str += "\n\tPartial object observability enabled"
+        if self.partial_obs_hallways:
+            details_str += "\n\tPartial hallway observability enabled"
         print(details_str)

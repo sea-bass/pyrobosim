@@ -9,6 +9,7 @@ from ..core.locations import Location
 from ..utils.path import Path
 from ..utils.pose import Pose
 from ..utils.search_graph import SearchGraph, Node
+from ..utils.world_collision import is_connectable
 
 
 class WorldGraphPlanner(PathPlanner):
@@ -78,11 +79,12 @@ class WorldGraphPlanner(PathPlanner):
         for other in self.graph.nodes:
             if node == other:
                 continue
-            if self.world.is_connectable(
+            if is_connectable(
                 node.pose,
                 other.pose,
-                self.collision_check_step_dist,
-                self.max_connection_dist,
+                self.world,
+                step_dist=self.collision_check_step_dist,
+                max_dist=self.max_connection_dist,
             ):
                 self.graph.add_edge(node, other)
 
@@ -116,7 +118,9 @@ class WorldGraphPlanner(PathPlanner):
 
             assert self.world is not None
             compressed_poses = reduce_waypoints_polygon(
-                self.world, self.latest_path.poses, self.collision_check_step_dist
+                self.world,
+                self.latest_path.poses,
+                step_dist=self.collision_check_step_dist,
             )
             self.latest_path.set_poses(compressed_poses)
         self.graph.remove_node(start)

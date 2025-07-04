@@ -9,8 +9,10 @@ from typing import Sequence
 from typing_extensions import Self  # For compatibility with Python <= 3.10
 import yaml
 
+from ..core.robot import Robot
 from ..core.world import World
 from ..utils.logging import get_global_logger
+from ..utils.world_collision import check_occupancy
 
 
 class OccupancyGrid:
@@ -254,6 +256,7 @@ class OccupancyGrid:
         world: World,
         resolution: float,
         inflation_radius: float = 0.0,
+        robot: Robot | None = None,
         xlim: tuple[float, float] | None = None,
         ylim: tuple[float, float] | None = None,
         auto_lim_padding_ratio: float = 0.05,
@@ -267,6 +270,7 @@ class OccupancyGrid:
         :param world: World object from which to create an occupancy grid.
         :param resolution: Grid resolution, in meters.
         :param inflation_radius: Inflation radius, in meters.
+        :param robot: Robot instance used for checking collisions.
         :param xlim: X coordinate limits, in meters.
         :param ylim: Y coordinate limits, in meters.
         :param auto_lim_padding_ratio: Additional padding ratio outside world
@@ -304,7 +308,7 @@ class OccupancyGrid:
             x = xrange[i]
             for j in range(ny):
                 y = yrange[j]
-                occupancy_grid_data[i, j] = world.check_occupancy((x, y))
+                occupancy_grid_data[i, j] = check_occupancy((x, y), world, robot)
         origin = (x_limits[0], y_limits[0])
 
         # Reset collision polygons to original inflation radius

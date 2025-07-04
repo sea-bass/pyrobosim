@@ -157,10 +157,10 @@ class TestRosInterface:
         assert len(result.state.objects) == 8
 
         # Partial robot state.
-        # Since the world is not configured for partial observability, we make manual modifications to robot1.
+        # Since the world is not configured for partial object observability, we make manual modifications to robot1.
         world = TestRosInterface.ros_interface.world
         robot1 = world.get_robot_by_name("robot1")
-        robot1.partial_observability = True
+        robot1.partial_obs_objects = True
         robot1.known_objects = set(
             [world.get_object_by_name("apple0"), world.get_object_by_name("banana0")]
         )

@@ -4,11 +4,16 @@ import time
 from threading import Thread
 from typing import Any
 
+from shapely import intersection_all
+from shapely.ops import unary_union
+
 from .types import PathExecutor
 from ..planning.actions import ExecutionResult, ExecutionStatus
+from ..sensors.lidar import Lidar2D
 from ..utils.logging import get_global_logger
 from ..utils.path import Path
 from ..utils.trajectory import get_constant_speed_trajectory, interpolate_trajectory
+from ..utils.world_collision import is_path_collision_free
 
 
 class ConstantVelocityExecutor(PathExecutor):
@@ -26,6 +31,8 @@ class ConstantVelocityExecutor(PathExecutor):
         validate_during_execution: bool = False,
         validation_dt: float = 0.5,
         validation_step_dist: float = 0.025,
+        lidar_sensor_name: str | None = None,
+        lidar_sensor_measurement_dt: float = 0.25,
     ) -> None:
         """
         Creates a constant velocity path executor.
@@ -36,6 +43,8 @@ class ConstantVelocityExecutor(PathExecutor):
         :param validate_during_execution: If True, runs a separate thread that validates the remaining path at a regular rate.
         :param validation_dt: Time step for validating the remaining path, in seconds.
         :param validation_step_dist: The step size for discretizing a straight line to check collisions.
+        :param lidar_sensor_name: Name of the lidar sensor to use for detecting closed hallways.
+        :param lidar_sensor_measurement_dt: Time step for taking lidar sensor measurement, in seconds.
         """
         super().__init__()
         self.dt = dt
@@ -46,6 +55,10 @@ class ConstantVelocityExecutor(PathExecutor):
         self.validate_during_execution = validate_during_execution
         self.validation_dt = validation_dt
         self.validation_step_dist = validation_step_dist
+
+        self.lidar_sensor_timer: Thread | None = None
+        self.lidar_sensor_name = lidar_sensor_name
+        self.lidar_sensor_measurement_dt = lidar_sensor_measurement_dt
 
         # Execution state
         self.reset_state()
@@ -166,6 +179,9 @@ class ConstantVelocityExecutor(PathExecutor):
         self.robot.last_nav_result = ExecutionResult(status=status, message=message)
         return self.robot.last_nav_result
 
+    # With partial_obs_hallways feature enabled,
+    # validation of collisions in remaining path will be carried out based on robot's hallway states knowledge,
+    # instead of hallway states of the world's ground truth.
     def validate_remaining_path(self) -> None:
         """
         Validates the remaining path by checking collisions against the world.
@@ -194,8 +210,10 @@ class ConstantVelocityExecutor(PathExecutor):
             if len(poses) > 2:
                 remaining_path = Path(poses=poses)
                 if (self.robot.world is not None) and (
-                    not self.robot.world.is_path_collision_free(
-                        remaining_path, step_dist=self.validation_step_dist
+                    not is_path_collision_free(
+                        remaining_path,
+                        robot=self.robot,
+                        step_dist=self.validation_step_dist,
                     )
                 ):
                     self.robot.logger.warning(
@@ -204,6 +222,92 @@ class ConstantVelocityExecutor(PathExecutor):
                     self.abort_execution = True
 
             time.sleep(max(0, self.validation_dt - (time.time() - start_time)))
+
+    def validate_sensors_for_partial_obs_hallways(self) -> None:
+        """
+        Validates if the lidar sensor is set up correctly with partial hallway observability.
+        """
+        if self.robot is None:
+            return
+
+        if self.lidar_sensor_name is None:
+            self.robot.logger.warning(
+                "No lidar sensor name provided to executor. Cannot observe hallway states."
+            )
+            return
+
+        lidar_sensor = self.robot.sensors.get(self.lidar_sensor_name)
+        if not isinstance(lidar_sensor, Lidar2D):
+            self.robot.logger.warning(
+                f"Sensor '{self.lidar_sensor_name}' is not a 2D lidar. Cannot observe hallway states."
+            )
+            return
+
+        if (self.lidar_sensor_timer is None) or (
+            not self.lidar_sensor_timer.is_alive()
+        ):
+            self.lidar_sensor_timer = Thread(target=self.detect_hallway_states)
+            self.lidar_sensor_timer.start()
+
+    def detect_hallway_states(self) -> None:
+        """
+        Get lidar measurements and determine if a robot is scanning a hallway.
+        If so, it would update the robot's hallway states knowledge.
+        It either remove (if it detects hallway is open) or add (if it detects hallway is close) the hallway
+        into the robot's knowledge.
+        """
+        if (self.robot is None) or (self.lidar_sensor_name is None):
+            return
+
+        lidar_sensor = self.robot.sensors.get(self.lidar_sensor_name)
+        assert isinstance(lidar_sensor, Lidar2D)
+
+        # Start the loop
+        while not self.cancel_all_threads:
+            start_time = time.time()
+
+            if self.robot.world is not None:
+                for h in self.robot.world.hallways:
+
+                    # Check if hallway state differs between ground truth and robot's knowledge.
+                    state_differs = (
+                        h.is_open and h in self.robot.recorded_closed_hallways
+                    ) or (
+                        not h.is_open and h not in self.robot.recorded_closed_hallways
+                    )
+
+                    # Skip other checks if the state does not differ.
+                    if not state_differs:
+                        continue
+
+                    # Check if lidar is measuring a hallway.
+                    intersects_lidar = intersection_all(
+                        [
+                            unary_union(lidar_sensor.lidar_lines),
+                            h.internal_collision_polygon,
+                        ]
+                    )
+
+                    # If yes, update the robot's knowledge.
+                    if intersects_lidar:
+                        if not h.is_open:
+                            self.robot.recorded_closed_hallways.add(h)
+                            self.robot.logger.info(
+                                f"Added {h.name} into closed knowledge."
+                            )
+                        else:
+                            self.robot.recorded_closed_hallways.remove(h)
+                            self.robot.logger.info(
+                                f"Removed {h.name} from closed knowledge."
+                            )
+
+                        self.robot.update_polygons()
+                        if self.robot.world.gui is not None:
+                            self.robot.world.gui.canvas.show_hallways_signal.emit()
+
+            time.sleep(
+                max(0, self.lidar_sensor_measurement_dt - (time.time() - start_time))
+            )
 
     def to_dict(self) -> dict[str, Any]:
         """
@@ -219,4 +323,6 @@ class ConstantVelocityExecutor(PathExecutor):
             "validate_during_execution": self.validate_during_execution,
             "validation_dt": self.validation_dt,
             "validation_step_dist": self.validation_step_dist,
+            "lidar_sensor_name": self.lidar_sensor_name,
+            "lidar_sensor_measurement_dt": self.lidar_sensor_measurement_dt,
         }

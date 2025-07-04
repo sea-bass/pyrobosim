@@ -139,12 +139,12 @@ If you leave this option at its default value (``None``), the failures will be n
 Partial Observability
 ---------------------
 
-By default, all robots have full knowledge of all the objects in the world.
+By default, all robots have full knowledge of all the entities in the world.
 
 A common use case for design robot behaviors is that a robot instead starts with limited or no knowledge of objects.
 In these cases, the robot must explicitly go to a location and use an object detector to find new objects to add to their world model.
 
-You can model this in PyRoboSim by instantiating robot objects with the ``partial_observability`` option set to ``True``.
+You can model this in PyRoboSim by instantiating robot objects with the ``partial_obs_objects`` option set to ``True``.
 Then, you can use the **Detect** action to find objects at the robot's current location.
 
 To test this, you can run the following example.
@@ -152,7 +152,7 @@ To test this, you can run the following example.
 ::
 
     cd /path/to/pyrobosim/pyrobosim
-    python3 examples/demo.py --multirobot --partial-observability
+    python3 examples/demo.py --multirobot --partial-obs-objects
 
 In the GUI, selecting a robot in the drop-down menu will only display the objects locally known to that robot.
 Alternatively, you can select the ``world`` option to show all existing objects.
@@ -163,3 +163,15 @@ Alternatively, you can select the ``world`` option to show all existing objects.
     :alt: Partial observability in the PyRoboSim GUI.
 
 |
+
+
+Similarly, you can model partial observability of hallway states by instantiating robot objects with the ``partial_obs_hallways`` option set to ``True``.
+In this case, the robot assumes all hallways are initially open.
+If equipped with a lidar sensor, the robot can update its local knowledge of the hallway states when navigating within range.
+
+To test this, you can run the following example.
+
+::
+
+    cd /path/to/pyrobosim/pyrobosim
+    python3 examples/demo_partial_obs_hallways.py

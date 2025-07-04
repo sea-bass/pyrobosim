@@ -7,6 +7,7 @@ from .types import PathPlanner
 from ..utils.path import Path
 from ..utils.pose import Pose
 from ..utils.search_graph import SearchGraph, Node
+from ..utils.world_collision import is_connectable
 
 
 class PRMPlanner(PathPlanner):
@@ -67,13 +68,15 @@ class PRMPlanner(PathPlanner):
 
         :param node: Node to try add to the graph.
         """
-        assert self.world is not None
+        assert (self.world is not None) and (self.robot is not None)
         for other in self.graph.nodes:
             if node == other:
                 continue
-            if self.world.is_connectable(
+            if is_connectable(
                 node.pose,
                 other.pose,
+                self.world,
+                self.robot,
                 self.collision_check_step_dist,
                 self.max_connection_dist,
             ):
@@ -87,7 +90,7 @@ class PRMPlanner(PathPlanner):
         :param goal: Goal pose or graph node.
         :return: Path from start to goal.
         """
-        assert self.world is not None
+        assert (self.world is not None) and (self.robot is not None)
         # Reset the path and time
         self.latest_path = Path()
         # Create the start and goal nodes
@@ -108,7 +111,10 @@ class PRMPlanner(PathPlanner):
             from ..utils.world_motion_planning import reduce_waypoints_polygon
 
             compressed_poses = reduce_waypoints_polygon(
-                self.world, self.latest_path.poses, self.collision_check_step_dist
+                self.world,
+                self.latest_path.poses,
+                self.robot,
+                self.collision_check_step_dist,
             )
             self.latest_path.set_poses(compressed_poses)
         self.latest_path.fill_yaws()
@@ -123,8 +129,8 @@ class PRMPlanner(PathPlanner):
 
         :return: Collision-free pose if found, else ``None``.
         """
-        assert self.world is not None
-        return self.world.sample_free_robot_pose_uniform()
+        assert (self.world is not None) and (self.robot is not None)
+        return self.world.sample_free_robot_pose_uniform(robot=self.robot)
 
     def get_graphs(self) -> list[SearchGraph]:
         """
