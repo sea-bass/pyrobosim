@@ -92,6 +92,7 @@ class PathExecutor:
         from ..core.robot import Robot
 
         self.robot: Robot | None = None
+        self.cancel_all_threads = False
 
     def execute(
         self, path: Path, realtime_factor: float = 1.0, battery_usage: float = 0.0

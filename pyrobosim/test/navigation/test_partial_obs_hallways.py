@@ -3,7 +3,7 @@
 """Unit tests for the hallway partial observability feature."""
 
 import os
-from threading import Thread
+import time
 
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.navigation.execution import ConstantVelocityExecutor
@@ -59,6 +59,7 @@ def test_detect_hallway_states() -> None:
     world.hallways[0].is_open = False
     world.update_polygons()
     robot = world.robots[0]
+    robot.partial_obs_hallways = True
     lidar = Lidar2D(
         update_rate_s=0.1,
         angle_units="degrees",
@@ -79,42 +80,27 @@ def test_detect_hallway_states() -> None:
     # Place robot more than 2m away from closed hallway
     robot.set_pose(Pose(x=2.5, y=0.5, yaw=3.142))
     lidar_sensor.update()
-    robot.path_executor.following_path = True
-    robot.path_executor.abort_execution = False
-    t = Thread(target=robot.path_executor.detect_hallway_states)
-    t.start()
-    # Stop the function
-    robot.path_executor.following_path = False
-    robot.path_executor.abort_execution = True
-    t.join()
-    robot_knowledge_test1 = set(robot.recorded_closed_hallways)
+    time.sleep(1.0)
+    assert robot.recorded_closed_hallways == set()
 
     # Place robot within 2m of closed hallway, but lidar range not detecting closed hallway
     robot.set_pose(Pose(x=0.3, y=0.4, yaw=-0.735))
     lidar_sensor.update()
-    robot.path_executor.following_path = True
-    robot.path_executor.abort_execution = False
-    t = Thread(target=robot.path_executor.detect_hallway_states)
-    t.start()
-    # Stop the function
-    robot.path_executor.following_path = False
-    robot.path_executor.abort_execution = True
-    t.join()
-    robot_knowledge_test2 = set(robot.recorded_closed_hallways)
+    time.sleep(1.0)
+    assert robot.recorded_closed_hallways == set()
 
     # Place robot within 2m of closed hallway, and lidar range detecting closed hallway
     robot.set_pose(Pose(x=0.3, y=0.4, yaw=2.356))
     lidar_sensor.update()
-    robot.path_executor.following_path = True
-    robot.path_executor.abort_execution = False
-    t = Thread(target=robot.path_executor.detect_hallway_states)
-    t.start()
-    # Stop the function
-    robot.path_executor.following_path = False
-    robot.path_executor.abort_execution = True
-    t.join()
-    robot_knowledge_test3 = set(robot.recorded_closed_hallways)
+    time.sleep(1.0)
+    assert robot.recorded_closed_hallways == set(
+        [world.get_entity_by_name("hall_bathroom_kitchen")]
+    )
 
-    assert len(robot_knowledge_test1) == 0
-    assert len(robot_knowledge_test2) == 0
-    assert len(robot_knowledge_test3) == 1
+    # Now open the hallway
+    world.open_location("hall_bathroom_kitchen")
+    lidar_sensor.update()
+    time.sleep(1.0)
+    assert robot.recorded_closed_hallways == set()
+
+    robot.stop_sensor_threads()  # Ensures test can terminate

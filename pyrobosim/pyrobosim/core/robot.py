@@ -131,16 +131,16 @@ class Robot(Entity):
         # Polygons for collision checking
         self.total_internal_polygon = Polygon()
 
+        # Sensing properties
+        self.set_sensors(sensors)
+        if start_sensor_threads:
+            self.start_sensor_threads()
+
         # Navigation properties
         self.executing_nav = False
         self.last_nav_result = ExecutionResult()
         self.set_path_planner(path_planner)
         self.set_path_executor(path_executor)
-
-        # Sensing properties
-        self.set_sensors(sensors)
-        if start_sensor_threads:
-            self.start_sensor_threads()
 
         # Manipulation properties
         self.grasp_generator = grasp_generator
@@ -231,6 +231,8 @@ class Robot(Entity):
         """Stops the robot's active sensor threads."""
         for sensor in self.sensors.values():
             sensor.stop_thread()
+        if self.path_executor is not None:
+            self.path_executor.cancel_all_threads = True
 
     def is_moving(self) -> bool:
         """
