@@ -48,7 +48,7 @@ repos:
 
   # Finds issues in YAML files.
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.37.0
+    rev: v1.37.1
     hooks:
       - id: yamllint
         args:
@@ -68,7 +68,7 @@ repos:
 
   # Type checking -- see mypy.ini for configuration
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.15.0
+    rev: v1.16.1
     hooks:
       - id: mypy
 

@@ -30,6 +30,33 @@ jobs:
         uses: docker/setup-buildx-action@v3
         with:
           driver: docker-container
+      - name: Build Docker image (no push)
+        uses: docker/build-push-action@v5
+        with:
+          file: docker/Dockerfile
+          target: pyrobosim
+          context: .
+          tags: pyrobosim:${{ github.head_ref || github.ref_name }}
+          push: false
+          load: true
+          cache-from: |
+            type=registry,ref=iridiumxi/pyrobosim:buildcache-base
+
+      # Execute tests and save the artifacts
+      - name: Run tests using the built image
+        run: |
+          docker run \
+            -w /opt/pyrobosim \
+            --volume ./test/results:/opt/pyrobosim/test/results:rw \
+            pyrobosim:${{ github.head_ref || github.ref_name }} \
+            /bin/bash -c 'PYTHONPATH=/opt/pyrobosim/dependencies/pddlstream:${PYTHONPATH} ./test/run_tests.bash'
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test/results/
+        # Always publish test results even when there are failures.
+        if: ${{ always() }}
 
       # These steps run if not using a fork
       - name: Login to Docker Hub Registry
@@ -38,7 +65,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PAT }}
         if: ${{ !github.event.pull_request.head.repo.fork }}
-      - name: Build Docker image (with cache)
+      - name: Save the build cache and image
         uses: docker/build-push-action@v5
         with:
           file: docker/Dockerfile
@@ -51,14 +78,6 @@ jobs:
           cache-to: |
             type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:buildcache-base,mode=max
         if: ${{ !github.event.pull_request.head.repo.fork }}
-      - name: Run tests (from pushed image)
-        run: |
-          docker run \
-            -w /opt/pyrobosim \
-            --volume ./test/results:/opt/pyrobosim/test/results:rw \
-            ${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:base \
-            /bin/bash -c 'PYTHONPATH=/opt/pyrobosim/dependencies/pddlstream:${PYTHONPATH} ./test/run_tests.bash'
-        if: ${{ !github.event.pull_request.head.repo.fork }}
       - name: Pytest coverage comment
         id: coverageComment
         uses: MishaKav/pytest-coverage-comment@main
@@ -67,32 +86,7 @@ jobs:
           junitxml-path: ./test/results/test_results.xml
           pytest-xml-coverage-path: ./test/results/test_results_coverage.xml
           coverage-path-prefix: pyrobosim/pyrobosim/
-        # This will break on PRs from forks
         if: ${{ !github.event.pull_request.head.repo.fork }}
-
-      # These steps run from a fork
-      - name: Build Docker image (no push)
-        uses: docker/build-push-action@v5
-        with:
-          file: docker/Dockerfile
-          target: pyrobosim
-          context: .
-          tags: pyrobosim:base
-          push: false
-          cache-from: |
-            type=registry,ref=iridiumxi/pyrobosim:buildcache-base
-          outputs: type=docker,dest=./pyrobosim_base.tar
-        if: ${{ github.event.pull_request.head.repo.fork }}
-      - name: Run tests (from loaded image)
-        run: |
-          docker load --input ./pyrobosim_base.tar
-          docker run \
-            -w /opt/pyrobosim \
-            --volume ./test/results:/opt/pyrobosim/test/results:rw \
-            pyrobosim:base \
-            /bin/bash -c 'PYTHONPATH=./dependencies/pddlstream:${PYTHONPATH} ./test/run_tests.bash'
-        if: ${{ github.event.pull_request.head.repo.fork }}
-
       - name: Create coverage badge
         uses: schneegans/dynamic-badges-action@v1.7.0
         with:
@@ -106,19 +100,12 @@ jobs:
           namedLogo: python
         # Only update this badge on main
         if: github.ref == 'refs/heads/main'
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: test/results/
-        # Always publish test results even when there are failures.
-        if: ${{ always() }}
 
   # Build and test with ROS 2
   ros2-test:
     strategy:
       matrix:
-        ros_distro: [humble, jazzy, rolling]
+        ros_distro: [humble, jazzy, kilted, rolling]
 
     name: ros-${{ matrix.ros_distro }}-test
     runs-on: ubuntu-latest
@@ -129,6 +116,35 @@ jobs:
         uses: docker/setup-buildx-action@v3
         with:
           driver: docker-container
+      - name: Build Docker image (no push)
+        uses: docker/build-push-action@v5
+        with:
+          file: docker/Dockerfile
+          target: pyrobosim_ros
+          context: .
+          build-args: |
+            ROS_DISTRO=${{ matrix.ros_distro }}
+          tags: pyrobosim:${{ github.head_ref || github.ref_name }}-${{ matrix.ros_distro }}
+          push: false
+          load: true
+          cache-from: |
+            type=registry,ref=iridiumxi/pyrobosim:buildcache-${{ matrix.ros_distro }}
+
+      # Execute tests and save the artifacts
+      - name: Run tests (from loaded image)
+        run: |
+          docker run \
+            --volume ./test/:/pyrobosim_ws/test/:rw \
+            --volume ./pytest.ini:/pyrobosim_ws/pytest.ini:rw \
+            pyrobosim:${{ github.head_ref || github.ref_name }}-${{ matrix.ros_distro }} \
+            /bin/bash -c './src/test/run_tests.bash ${{ matrix.ros_distro }}'
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.ros_distro }}
+          path: test/results/
+        # Always publish test results even when there are failures.
+        if: ${{ always() }}
 
       # These steps run if not using a fork
       - name: Login to Docker Hub Registry
@@ -137,7 +153,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PAT }}
         if: ${{ !github.event.pull_request.head.repo.fork }}
-      - name: Build Docker image (with cache)
+      - name: Save the build cache and image
         uses: docker/build-push-action@v5
         with:
           file: docker/Dockerfile
@@ -152,44 +168,3 @@ jobs:
           cache-to: |
             type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:buildcache-${{ matrix.ros_distro }},mode=max
         if: ${{ !github.event.pull_request.head.repo.fork }}
-      - name: Run tests (from pushed image)
-        run: |
-          docker run \
-            --volume ./test/:/pyrobosim_ws/src/test/:rw \
-            --volume ./pytest.ini:/pyrobosim_ws/pytest.ini:rw \
-            ${{ secrets.DOCKERHUB_USERNAME }}/pyrobosim:${{ matrix.ros_distro }} \
-            /bin/bash -c './src/test/run_tests.bash ${{ matrix.ros_distro }}'
-        if: ${{ !github.event.pull_request.head.repo.fork }}
-
-      # These steps run from a fork
-      - name: Build Docker image (no push)
-        uses: docker/build-push-action@v5
-        with:
-          file: docker/Dockerfile
-          target: pyrobosim_ros
-          context: .
-          build-args: |
-            ROS_DISTRO=${{ matrix.ros_distro }}
-          tags: pyrobosim:${{ matrix.ros_distro }}
-          push: false
-          cache-from: |
-            type=registry,ref=iridiumxi/pyrobosim:buildcache-${{ matrix.ros_distro }}
-          outputs: type=docker,dest=./pyrobosim_${{ matrix.ros_distro }}.tar
-        if: ${{ github.event.pull_request.head.repo.fork }}
-      - name: Run tests (from loaded image)
-        run: |
-          docker load --input ./pyrobosim_${{ matrix.ros_distro }}.tar
-          docker run \
-            --volume ./test/:/pyrobosim_ws/test/:rw \
-            --volume ./pytest.ini:/pyrobosim_ws/pytest.ini:rw \
-            pyrobosim:${{ matrix.ros_distro }} \
-            /bin/bash -c './src/test/run_tests.bash ${{ matrix.ros_distro }}'
-        if: ${{ github.event.pull_request.head.repo.fork }}
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results-${{ matrix.ros_distro }}
-          path: test/results/
-        # Always publish test results even when there are failures.
-        if: ${{ always() }}

@@ -39,8 +39,6 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
     """
 
     # Visualization constants
-    object_zorder = 3
-    """ zorder for object visualization. """
     robot_zorder = 3
     """ zorder for robot visualization. """
     robot_dir_line_factor = 3.0
@@ -119,6 +117,10 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         self.location_texts: list[Text] = []
         self.path_planner_artists: dict[str, Artist] = {"graph": [], "path": []}
         self.show_collision_polygons = False
+        self.show_room_names = True
+        self.show_object_names = True
+        self.show_location_names = True
+        self.show_robot_names = True
 
         # Connect signals
         self.draw_signal.connect(self.draw_and_sleep)
@@ -143,12 +145,48 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         """Shows/hides collision polygons."""
         self.show_collision_polygons = not self.show_collision_polygons
         self.world.logger.info(
-            "Enabling collision polygons"
-            if self.show_collision_polygons
-            else "Disabling collision polygons"
+            ("Enabling" if self.show_collision_polygons else "Disabling")
+            + " collision polygons"
         )
         self.show_hallways()
         self.show_rooms()
+
+    def toggle_room_names(self) -> None:
+        """Shows/hides room names."""
+        self.show_room_names = not self.show_room_names
+        self.world.logger.info(
+            ("Enabling" if self.show_room_names else "Disabling") + " room names"
+        )
+        self.show_rooms()
+        self.draw_signal.emit()
+
+    def toggle_object_names(self) -> None:
+        """Shows/hides object names."""
+        self.show_object_names = not self.show_object_names
+        self.world.logger.info(
+            ("Enabling" if self.show_object_names else "Disabling") + " object names"
+        )
+        self.show_objects()
+        self.draw_signal.emit()
+
+    def toggle_location_names(self) -> None:
+        """Shows/hides location names."""
+        self.show_location_names = not self.show_location_names
+        self.world.logger.info(
+            ("Enabling" if self.show_location_names else "Disabling")
+            + " location names"
+        )
+        self.show_locations()
+        self.draw_signal.emit()
+
+    def toggle_robot_names(self) -> None:
+        """Shows/hides robot names."""
+        self.show_robot_names = not self.show_robot_names
+        self.world.logger.info(
+            ("Enabling" if self.show_robot_names else "Disabling") + " robot names"
+        )
+        self.show_robots()
+        self.draw_signal.emit()
 
     def show_robots(self) -> None:
         """Draws robots, along with any associated sensors."""
@@ -194,18 +232,21 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                 self.robot_dirs.append(robot_dir)
                 self.robot_lengths.append(robot_length)
 
-                x = p.x
-                y = p.y - 2.0 * robot.radius
-                robot.viz_text = self.axes.text(
-                    x,
-                    y,
-                    robot.name,
-                    clip_on=True,
-                    color=robot.color,
-                    horizontalalignment="center",
-                    verticalalignment="top",
-                    fontsize=10,
-                )
+                if self.show_robot_names:
+                    x = p.x
+                    y = p.y - 2.0 * robot.radius
+                    robot.viz_text = self.axes.text(
+                        x,
+                        y,
+                        robot.name,
+                        clip_on=True,
+                        color=robot.color,
+                        horizontalalignment="center",
+                        verticalalignment="top",
+                        fontsize=10,
+                    )
+                else:
+                    robot.viz_text = None
 
                 for sensor in robot.sensors.values():
                     if sensor.is_active:
@@ -214,7 +255,11 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                         for artist in sensor_artists:
                             self.axes.add_artist(artist)
 
-            self.robot_texts = [robot.viz_text for robot in self.world.robots]
+            self.robot_texts = [
+                robot.viz_text
+                for robot in self.world.robots
+                if robot.viz_text is not None
+            ]
 
     def show_hallways(self) -> None:
         """Draws hallways in the world."""
@@ -256,17 +301,18 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
 
             for room in self.world.rooms:
                 self.axes.add_patch(room.viz_patch)
-                viz_text = self.axes.text(
-                    room.centroid[0],
-                    room.centroid[1],
-                    room.name,
-                    color=room.viz_color,
-                    fontsize=12,
-                    ha="center",
-                    va="top",
-                    clip_on=True,
-                )
-                self.room_texts.append(viz_text)
+                if self.show_room_names:
+                    viz_text = self.axes.text(
+                        room.centroid[0],
+                        room.centroid[1],
+                        room.name,
+                        color=room.viz_color,
+                        fontsize=12,
+                        ha="center",
+                        va="top",
+                        clip_on=True,
+                    )
+                    self.room_texts.append(viz_text)
 
                 if self.show_collision_polygons:
                     coll_patch = room.get_collision_patch()
@@ -286,20 +332,22 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
 
             for loc in self.world.locations:
                 self.axes.add_patch(loc.viz_patch)
-                loc_text = self.axes.text(
-                    loc.pose.x,
-                    loc.pose.y,
-                    loc.name,
-                    color=loc.viz_color,
-                    fontsize=10,
-                    ha="center",
-                    va="top",
-                    clip_on=True,
-                )
+                if self.show_location_names:
+                    loc_text = self.axes.text(
+                        loc.pose.x,
+                        loc.pose.y,
+                        loc.name,
+                        color=loc.viz_color,
+                        fontsize=10,
+                        ha="center",
+                        va="top",
+                        clip_on=True,
+                    )
+                    self.location_texts.append(loc_text)
+
                 for spawn in loc.children:
                     self.axes.add_patch(spawn.viz_patch)
 
-                self.location_texts.append(loc_text)
                 self.location_patches.extend(
                     [spawn.viz_patch for spawn in loc.children]
                 )
@@ -320,14 +368,20 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
 
             for obj in known_objects:
                 self.axes.add_patch(obj.viz_patch)
-                xmin, ymin, xmax, ymax = obj.polygon.bounds
-                x = obj.pose.x + 1.0 * (xmax - xmin)
-                y = obj.pose.y + 1.0 * (ymax - ymin)
-                obj.viz_text = self.axes.text(
-                    x, y, obj.name, clip_on=True, color=obj.viz_color, fontsize=8
-                )
+                if self.show_object_names:
+                    xmin, ymin, xmax, ymax = obj.polygon.bounds
+                    x = obj.pose.x + 1.0 * (xmax - xmin)
+                    y = obj.pose.y + 1.0 * (ymax - ymin)
+                    obj.viz_text = self.axes.text(
+                        x, y, obj.name, clip_on=True, color=obj.viz_color, fontsize=8
+                    )
+                else:
+                    obj.viz_text = None
+
             self.obj_patches = [o.viz_patch for o in known_objects]
-            self.obj_texts = [o.viz_text for o in known_objects]
+            self.obj_texts = [
+                o.viz_text for o in known_objects if o.viz_text is not None
+            ]
 
             # Adjust the text to try avoid collisions
             adjustText.adjust_text(
