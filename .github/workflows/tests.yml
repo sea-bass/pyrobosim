@@ -134,10 +134,10 @@ jobs:
       - name: Run tests (from loaded image)
         run: |
           docker run \
-            --volume ./test/:/pyrobosim_ws/test/:rw \
-            --volume ./pytest.ini:/pyrobosim_ws/pytest.ini:rw \
+            --volume ./test/:/pyrobosim_ws/src/test/:rw \
+            --volume ./pytest.ini:/pyrobosim_ws/src/pytest.ini:rw \
             pyrobosim:${{ github.head_ref || github.ref_name }}-${{ matrix.ros_distro }} \
-            /bin/bash -c './src/test/run_tests.bash ${{ matrix.ros_distro }}'
+            /bin/bash -c '/pyrobosim_ws/src/test/run_tests.bash ${{ matrix.ros_distro }}'
       - name: Upload test results
         uses: actions/upload-artifact@v4
         with:
