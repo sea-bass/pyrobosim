@@ -4,8 +4,8 @@ import time
 from threading import Thread
 from typing import Any
 
-import numpy as np
-import shapely
+from shapely import intersection_all
+from shapely.ops import unary_union
 
 from .types import PathExecutor
 from ..planning.actions import ExecutionResult, ExecutionStatus
@@ -151,7 +151,7 @@ class ConstantVelocityExecutor(PathExecutor):
             self.validation_timer.start()
 
         if self.robot.fog_hallways:
-            self.lidar_sensor_timer = Thread(target=self.detect_closed_hallways)
+            self.lidar_sensor_timer = Thread(target=self.detect_hallway_states)
             self.lidar_sensor_timer.start()
 
         # Execute the trajectory.
@@ -249,7 +249,7 @@ class ConstantVelocityExecutor(PathExecutor):
 
             time.sleep(max(0, self.validation_dt - (time.time() - start_time)))
 
-    def detect_closed_hallways(self) -> None:
+    def detect_hallway_states(self) -> None:
         """
         Get lidar measurements and determine if a robot is scanning a hallway.
         If so, it would update the robot's hallway states knowledge.
@@ -260,49 +260,44 @@ class ConstantVelocityExecutor(PathExecutor):
             return
 
         lidar_sensor = self.robot.sensors.get(self.lidar_sensor_name)  # type: ignore[arg-type, union-attr]
-        measured_angles = lidar_sensor.angles  # type: ignore[union-attr]
 
+        # Start the loop
         while self.following_path and (not self.abort_execution):
             start_time = time.time()
-            cur_pose = self.robot.get_pose()
 
-            measured_lengths = lidar_sensor.get_measurement()  # type: ignore[union-attr]
-            analyse_pose = []
-            for angle, length in zip(measured_angles, measured_lengths):
-                if length < lidar_sensor.max_range_m:  # type: ignore[union-attr]
-                    # There are objects in lidar line of sight
-                    adjusted_angle = angle + cur_pose.get_yaw()
-                    x = cur_pose.x + length * np.cos(adjusted_angle)
-                    y = cur_pose.y + length * np.sin(adjusted_angle)
-                    analyse_pose.append((x, y))
+            for h in self.robot.world.hallways:
 
-            for pose in analyse_pose:
-                for hallway in self.robot.world.hallways:
-                    # Check if there are pose intersecting with hallway polygon
-                    if shapely.intersects_xy(
-                        hallway.internal_collision_polygon, pose[0], pose[1]
-                    ):
-                        # If yes, check if the hallway is closed
-                        if not hallway.is_open:
-                            if hallway not in self.robot.recorded_closed_hallways:
-                                self.robot.recorded_closed_hallways.add(hallway)
-                                self.robot.logger.info(
-                                    f"Added {hallway.name} into closed knowledge."
-                                )
-                                self.robot.update_polygons()
-                                if self.robot.world.gui is not None:
-                                    self.robot.world.gui.canvas.show_hallways_signal.emit()
-                                break
-                        else:
-                            if hallway in self.robot.recorded_closed_hallways:
-                                self.robot.recorded_closed_hallways.remove(hallway)
-                                self.robot.logger.info(
-                                    f"Removed {hallway.name} from closed knowledge."
-                                )
-                                self.robot.update_polygons()
-                                if self.robot.world.gui is not None:
-                                    self.robot.world.gui.canvas.show_hallways_signal.emit()
-                                break
+                # Check if hallway state differs between ground truth and robot's knowledge.
+                state_differs = (
+                    h.is_open and h in self.robot.recorded_closed_hallways
+                ) or (not h.is_open and h not in self.robot.recorded_closed_hallways)
+
+                # Skip other checks if the state does not differ.
+                if not state_differs:
+                    continue
+
+                # Check if lidar is measuring a hallway. 
+                intersects_lidar = intersection_all(
+                    [
+                        unary_union(lidar_sensor.lidar_lines.tolist()),  # type: ignore[union-attr]
+                        h.internal_collision_polygon,
+                    ]
+                )
+
+                # If yes, update the robot's knowledge.
+                if intersects_lidar:
+                    if not h.is_open:
+                        self.robot.recorded_closed_hallways.add(h)
+                        self.robot.logger.info(f"Added {h.name} into closed knowledge.")
+                    else:
+                        self.robot.recorded_closed_hallways.remove(h)
+                        self.robot.logger.info(
+                            f"Removed {h.name} from closed knowledge."
+                        )
+
+                    self.robot.update_polygons()
+                    if self.robot.world.gui is not None:
+                        self.robot.world.gui.canvas.show_hallways_signal.emit()
 
             time.sleep(
                 max(0, self.lidar_sensor_measurement_dt - (time.time() - start_time))

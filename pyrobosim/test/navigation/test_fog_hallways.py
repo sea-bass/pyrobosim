@@ -50,7 +50,7 @@ def test_fog_hallways_enabled() -> None:
     assert collision_free_with_fog_hallways == True
 
 
-def test_detect_closed_hallway() -> None:
+def test_detect_hallway_states() -> None:
     """Tests updating recorded closed hallways."""
     world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
@@ -81,7 +81,7 @@ def test_detect_closed_hallway() -> None:
     lidar_sensor.update()
     robot.path_executor.following_path = True
     robot.path_executor.abort_execution = False
-    t = Thread(target=robot.path_executor.detect_closed_hallway)
+    t = Thread(target=robot.path_executor.detect_hallway_states)
     t.start()
     # Stop the function
     robot.path_executor.following_path = False
@@ -94,7 +94,7 @@ def test_detect_closed_hallway() -> None:
     lidar_sensor.update()
     robot.path_executor.following_path = True
     robot.path_executor.abort_execution = False
-    t = Thread(target=robot.path_executor.detect_closed_hallway)
+    t = Thread(target=robot.path_executor.detect_hallway_states)
     t.start()
     # Stop the function
     robot.path_executor.following_path = False
@@ -107,7 +107,7 @@ def test_detect_closed_hallway() -> None:
     lidar_sensor.update()
     robot.path_executor.following_path = True
     robot.path_executor.abort_execution = False
-    t = Thread(target=robot.path_executor.detect_closed_hallway)
+    t = Thread(target=robot.path_executor.detect_hallway_states)
     t.start()
     # Stop the function
     robot.path_executor.following_path = False
