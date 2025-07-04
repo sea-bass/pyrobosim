@@ -276,7 +276,7 @@ class ConstantVelocityExecutor(PathExecutor):
                 if not state_differs:
                     continue
 
-                # Check if lidar is measuring a hallway. 
+                # Check if lidar is measuring a hallway.
                 intersects_lidar = intersection_all(
                     [
                         unary_union(lidar_sensor.lidar_lines.tolist()),  # type: ignore[union-attr]
