@@ -107,6 +107,12 @@ class PathExecutor:
         """
         raise NotImplementedError("Must implement in subclass.")
 
+    def validate_sensors_for_partial_obs_hallways(self) -> None:
+        """
+        Validates if the lidar sensor is set up correctly with partial hallway observability.
+        """
+        raise NotImplementedError("Must implement in subclass.")
+
     def to_dict(self) -> dict[str, Any]:
         """
         Serializes the executor to a dictionary.

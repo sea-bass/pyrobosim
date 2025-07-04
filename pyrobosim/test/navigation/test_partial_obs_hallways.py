@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Unit tests for the Fog Hallways feature."""
+"""Unit tests for the hallway partial observability feature."""
 
 import os
 from threading import Thread
@@ -14,7 +14,7 @@ from pyrobosim.utils.world_collision import is_connectable
 
 
 def test_partial_obs_hallways_enabled() -> None:
-    """Tests fog hallways feature with slight modifications to default world graph planner settings."""
+    """Tests partial hallway observability feature with slight modifications to default world graph planner settings."""
     world = WorldYamlLoader().from_file(
         os.path.join(get_data_folder(), "test_world.yaml")
     )

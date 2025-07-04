@@ -142,7 +142,7 @@ def create_world(multirobot: bool = False) -> World:
         ),
         sensors={"lidar": lidar} if args.lidar else None,
         grasp_generator=GraspGenerator(grasp_props),
-        partial_observability=args.partial_observability,
+        partial_obs_objects=args.partial_obs_objects,
         color="#CC00CC",
     )
     world.add_robot(robot0, loc="kitchen")
@@ -165,7 +165,7 @@ def create_world(multirobot: bool = False) -> World:
             color=(0.8, 0.8, 0),
             path_executor=ConstantVelocityExecutor(),
             grasp_generator=GraspGenerator(grasp_props),
-            partial_observability=args.partial_observability,
+            partial_obs_objects=args.partial_obs_objects,
         )
         world.add_robot(robot1, loc="bathroom")
         planner_config_prm = {
@@ -183,7 +183,7 @@ def create_world(multirobot: bool = False) -> World:
             color=(0, 0.8, 0.8),
             path_executor=ConstantVelocityExecutor(),
             grasp_generator=GraspGenerator(grasp_props),
-            partial_observability=args.partial_observability,
+            partial_obs_objects=args.partial_obs_objects,
         )
         world.add_robot(robot2, loc="bedroom")
         planner_config_astar = {
@@ -218,9 +218,9 @@ def parse_args() -> argparse.Namespace:
         + "If not specified, a world will be created programmatically.",
     )
     parser.add_argument(
-        "--partial-observability",
+        "--partial-obs-objects",
         action="store_true",
-        help="If True, robots have partial observability and must detect objects.",
+        help="If True, robots have partial observability of objects and must detect them.",
     )
     parser.add_argument(
         "--lidar",

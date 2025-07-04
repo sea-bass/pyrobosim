@@ -270,7 +270,7 @@ class OccupancyGrid:
         :param world: World object from which to create an occupancy grid.
         :param resolution: Grid resolution, in meters.
         :param inflation_radius: Inflation radius, in meters.
-        :param robot: Robot instance used for checking collision.
+        :param robot: Robot instance used for checking collisions.
         :param xlim: X coordinate limits, in meters.
         :param ylim: Y coordinate limits, in meters.
         :param auto_lim_padding_ratio: Additional padding ratio outside world

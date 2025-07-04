@@ -53,10 +53,10 @@ class Robot(Entity):
         grasp_generator: GraspGenerator | None = None,
         sensors: dict[str, Sensor] | None = None,
         start_sensor_threads: bool = True,
-        partial_observability: bool = False,
+        partial_obs_objects: bool = False,
+        partial_obs_hallways: bool = False,
         action_execution_options: dict[str, ExecutionOptions] = {},
         initial_battery_level: float = 100.0,
-        partial_obs_hallways: bool = False,
     ) -> None:
         """
         Creates a robot instance.
@@ -83,13 +83,13 @@ class Robot(Entity):
         :param sensors: Optional map of names to sensors (see e.g.,
             :class:`pyrobosim.sensors.lidar.Lidar2D`).
         :param start_sensor_threads: If True, automatically starts the sensor threads.
-        :param partial_observability: If False, the robot can access all objects in the world.
+        :param partial_obs_objects: If False, the robot can access all objects in the world.
             If True, it must detect new objects at specific locations.
+        :param partial_obs_hallways: If True, robot doesn't know the ground truth for the world's
+            hallway states, and assumes all are open at the start unless sensed otherwise.
         :param action_execution_options: A dictionary of action names and their execution options.
             This defines properties such as delays and nondeterminism.
         :param initial_battery_level: The initial battery charge, from 0 to 100.
-        :param partial_obs_hallways: If True,  robot doesn't know the ground truth for world's hallways state,
-            and assume all is OPEN at the start.
         """
         from .world import World
 
@@ -121,7 +121,7 @@ class Robot(Entity):
         self.world: World | None = None
         self.location: Entity | None = None
         self.manipulated_object: Object | None = None
-        self.partial_observability = partial_observability
+        self.partial_obs_objects = partial_obs_objects
         self.known_objects: set[Object] = set()
         self.last_detected_objects: list[Object] = []
         self.viz_text: Text | None = None
@@ -154,10 +154,6 @@ class Robot(Entity):
         self.executing_plan = False
         self.canceling_execution = False
         self.battery_level = initial_battery_level
-
-        # Do a check for lidar that would be attached to path executor
-        if self.partial_obs_hallways:
-            self.path_executor.validate_lidar_for_partial_obs_hallways()  # type: ignore[union-attr]
 
         self.logger.info("Created robot.")
 
@@ -210,6 +206,8 @@ class Robot(Entity):
         self.path_executor = path_executor
         if path_executor is not None:
             path_executor.robot = self
+            if self.partial_obs_hallways:
+                path_executor.validate_sensors_for_partial_obs_hallways()
 
     def set_sensors(self, sensors: dict[str, Sensor] | None) -> None:
         """
@@ -283,7 +281,7 @@ class Robot(Entity):
         if self.world is None:
             return []
 
-        if self.partial_observability:
+        if self.partial_obs_objects:
             return list(self.known_objects)
 
         return self.world.objects
@@ -1182,6 +1180,8 @@ class Robot(Entity):
             "max_angular_velocity": float(self.dynamics.vel_limits[-1]),
             "max_linear_acceleration": float(self.dynamics.accel_limits[0]),
             "max_angular_acceleration": float(self.dynamics.accel_limits[-1]),
+            "partial_obs_objects": self.partial_obs_objects,
+            "partial_obs_hallways": self.partial_obs_hallways,
         }
 
         if self.world is not None:
@@ -1210,6 +1210,8 @@ class Robot(Entity):
         details_str = f"Robot: {self.name}"
         details_str += f"\n\t{self.get_pose()}"
         details_str += f"\n\tBattery: {self.battery_level:.2f}%"
-        if self.partial_observability:
-            details_str += "\n\tPartial observability enabled"
+        if self.partial_obs_objects:
+            details_str += "\n\tPartial object observability enabled"
+        if self.partial_obs_hallways:
+            details_str += "\n\tPartial hallway observability enabled"
         print(details_str)

@@ -72,23 +72,23 @@ class ConstantVelocityExecutor(PathExecutor):
         self.abort_execution = False  # Flag to abort internally
         self.cancel_execution = False  # Flag to cancel from user
 
-    def validate_lidar_for_partial_obs_hallways(self) -> None:
+    def validate_sensors_for_partial_obs_hallways(self) -> None:
         """
-        Validates if the lidar sensor is set up correctly with fog hallways enabled.
+        Validates if the lidar sensor is set up correctly with partial hallway observability.
         """
         if self.robot is None:
             return
 
         if self.lidar_sensor_name is None:
             self.robot.logger.warning(
-                "No lidar sensor name provided to executor. Cannot validate fog hallways."
+                "No lidar sensor name provided to executor. Cannot observe hallway states."
             )
             return
 
         lidar_sensor = self.robot.sensors.get(self.lidar_sensor_name)
         if not isinstance(lidar_sensor, Lidar2D):
             self.robot.logger.warning(
-                "Lidar sensor is not a 2D lidar. Cannot detect closed hallway."
+                "Lidar sensor is not a 2D lidar. Cannot observe hallway states."
             )
             return
 
@@ -264,7 +264,7 @@ class ConstantVelocityExecutor(PathExecutor):
         lidar_sensor = self.robot.sensors.get(self.lidar_sensor_name)  # type: ignore[arg-type, union-attr]
 
         # Start the loop
-        while self.following_path and (not self.abort_execution):
+        while True:
             start_time = time.time()
 
             for h in self.robot.world.hallways:

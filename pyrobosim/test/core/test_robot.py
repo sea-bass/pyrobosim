@@ -67,7 +67,8 @@ class TestRobot:
         assert robot.path_executor == None
         assert robot.grasp_generator == None
         assert robot.world == None
-        assert not robot.partial_observability
+        assert not robot.partial_obs_objects
+        assert not robot.partial_obs_hallways
         assert robot.battery_level == 100.0
 
         robot.print_details()
@@ -87,7 +88,8 @@ class TestRobot:
             radius=0.1,
             height=0.15,
             color=(0.5, 0.5, 0.5),
-            partial_observability=True,
+            partial_obs_objects=True,
+            partial_obs_hallways=True,
             initial_battery_level=50.0,
         )
 
@@ -100,16 +102,18 @@ class TestRobot:
         assert robot.radius == pytest.approx(0.1)
         assert robot.height == pytest.approx(0.15)
         assert robot.color == pytest.approx((0.5, 0.5, 0.5))
-        assert robot.partial_observability
+        assert robot.partial_obs_objects
+        assert robot.partial_obs_hallways
         assert robot.battery_level == 50.0
 
         robot.print_details()
         out, _ = capsys.readouterr()
         expected_details_str = (
             "Robot: test_robot\n"
-            + "\tPose: [x=1.00, y=2.00, z=0.00, qw=0.707, qx=0.000, qy=-0.000, qz=0.707]\n"
-            + "\tBattery: 50.00%\n"
-            "\tPartial observability enabled\n"
+            "\tPose: [x=1.00, y=2.00, z=0.00, qw=0.707, qx=0.000, qy=-0.000, qz=0.707]\n"
+            "\tBattery: 50.00%\n"
+            "\tPartial object observability enabled\n"
+            "\tPartial hallway observability enabled\n"
         )
         assert out == expected_details_str
 
@@ -642,9 +646,9 @@ class TestRobot:
         robot.location = self.test_world.get_entity_by_name("table0_tabletop")
         assert robot.at_object_spawn()
 
-    def test_partial_observability(self) -> None:
-        """Tests partial observability capabilities."""
-        robot = Robot(partial_observability=True)
+    def test_partial_obs_objects(self) -> None:
+        """Tests partial object observability capabilities."""
+        robot = Robot(partial_obs_objects=True)
 
         # If no world is assigned, there should be no known objects
         assert len(robot.get_known_objects()) == 0
