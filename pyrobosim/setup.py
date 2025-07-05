@@ -37,7 +37,7 @@ readme_text = readme_path.read_text() if readme_path.exists() else ""
 
 setup(
     name=project_name,
-    version="4.1.0",
+    version="4.2.0",
     url="https://github.com/sea-bass/pyrobosim",
     author="Sebastian Castro",
     author_email="sebas.a.castro@gmail.com",
