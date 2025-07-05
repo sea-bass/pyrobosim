@@ -134,8 +134,8 @@ class Robot(Entity):
         self.total_internal_polygon = Polygon()
 
         # Sensing properties
-        self.start_sensor_threads = start_sensor_threads
         self.set_sensors(sensors)
+        self.start_sensor_threads = start_sensor_threads
         if self.start_sensor_threads:
             self.do_start_sensor_threads()
 
