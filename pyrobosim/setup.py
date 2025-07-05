@@ -48,6 +48,5 @@ setup(
     install_requires=install_requires,
     packages=find_packages(),
     package_data={project_name: get_files_in_folder(data_dir)},
-    tests_require=["pytest"],
     zip_safe=True,
 )

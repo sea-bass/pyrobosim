@@ -41,8 +41,6 @@ class PRMPlanner(PathPlanner):
         self.max_nodes = max_nodes
         self.compress_path = compress_path
 
-        self.reset()
-
     def reset(self) -> None:
         """Resamples the PRM and resets planning metrics."""
         super().reset()

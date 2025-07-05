@@ -64,7 +64,6 @@ class AStarPlanner(PathPlanner, AStar):  # type: ignore[misc]
         self.heuristic = heuristic
         self.diagonal_motion = diagonal_motion
         self.compress_path = compress_path
-        self.reset()
 
     def _set_actions(self) -> None:
         """Generates the actions available."""

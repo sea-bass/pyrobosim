@@ -1166,8 +1166,10 @@ class World:
             self.logger.warning("Could not add robot.")
             self.set_inflation_radius(old_inflation_radius)
 
-        # Update robot's total_internal_polygon
+        # Update robot's total_internal_polygon and initialize planner.
         robot.update_polygons()
+        if robot.path_planner is not None:
+            robot.path_planner.reset()
 
         if show and self.gui is not None:
             self.gui.canvas.show_robots_signal.emit()
