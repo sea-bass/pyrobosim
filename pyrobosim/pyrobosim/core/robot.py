@@ -133,8 +133,9 @@ class Robot(Entity):
 
         # Sensing properties
         self.set_sensors(sensors)
-        if start_sensor_threads:
-            self.start_sensor_threads()
+        self.start_sensor_threads = start_sensor_threads
+        if self.start_sensor_threads:
+            self.do_start_sensor_threads()
 
         # Navigation properties
         self.executing_nav = False
@@ -153,6 +154,7 @@ class Robot(Entity):
         self.current_plan: TaskPlan | None = None
         self.executing_plan = False
         self.canceling_execution = False
+        self.initial_battery_level = initial_battery_level
         self.battery_level = initial_battery_level
 
         self.logger.info("Created robot.")
@@ -222,7 +224,7 @@ class Robot(Entity):
         for sensor in self.sensors.values():
             sensor.robot = self
 
-    def start_sensor_threads(self) -> None:
+    def do_start_sensor_threads(self) -> None:
         """Starts the robot's sensor threads."""
         for sensor in self.sensors.values():
             sensor.start_thread()
@@ -1184,6 +1186,8 @@ class Robot(Entity):
             "max_angular_acceleration": float(self.dynamics.accel_limits[-1]),
             "partial_obs_objects": self.partial_obs_objects,
             "partial_obs_hallways": self.partial_obs_hallways,
+            "initial_battery_level": self.initial_battery_level,
+            "start_sensor_threads": self.start_sensor_threads,
         }
 
         if self.world is not None:
@@ -1196,9 +1200,14 @@ class Robot(Entity):
             robot_dict["path_executor"] = self.path_executor.to_dict()
         if self.grasp_generator is not None:
             robot_dict["grasping"] = self.grasp_generator.to_dict()
-        if self.sensors is not None:
+        if len(self.sensors) > 0:
             robot_dict["sensors"] = {
                 name: sensor.to_dict() for name, sensor in self.sensors.items()
+            }
+        if len(self.action_execution_options) > 0:
+            robot_dict["action_execution_options"] = {
+                name: action.to_dict()
+                for name, action in self.action_execution_options.items()
             }
 
         return robot_dict
