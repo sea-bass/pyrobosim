@@ -43,8 +43,6 @@ class WorldGraphPlanner(PathPlanner):
         self.planning_time = 0.0
         self.latest_path = Path()
 
-        self.reset()
-
     def reset(self) -> None:
         """
         Initializes the graph from the entity nodes in the world linked to this planner.

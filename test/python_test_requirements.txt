@@ -4,4 +4,4 @@ pytest
 pytest-cov
 pytest-dependency
 pytest-html
-setuptools>=78.1.1
+setuptools>=78.1.1,<80.0.0  # See https://github.com/pypa/setuptools/issues/4971

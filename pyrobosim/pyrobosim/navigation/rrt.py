@@ -68,8 +68,6 @@ class RRTPlanner(PathPlanner):
         self.color_goal = [0.0, 0.4, 0.8]
         self.color_alpha = 0.5
 
-        self.reset()
-
     def reset(self) -> None:
         """Resets the search trees and planning metrics."""
         super().reset()
