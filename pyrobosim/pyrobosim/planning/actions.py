@@ -1,6 +1,8 @@
 """Defines actions for task and motion planning."""
 
 from enum import IntEnum
+from typing import Any
+
 import numpy as np
 import time
 
@@ -44,6 +46,23 @@ class ExecutionOptions:
         """
         time.sleep(self.delay)
         return float(self.rng.random()) <= self.success_probability
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Serializes the execution options to a dictionary.
+
+        :return: A dictionary containing the execution options information.
+        """
+        options_dict = {
+            "delay": self.delay,
+            "success_probability": self.success_probability,
+            "battery_usage": self.battery_usage,
+        }
+
+        if self.rng_seed is not None:
+            options_dict["rng_seed"] = self.rng_seed
+
+        return options_dict
 
 
 class ExecutionStatus(IntEnum):

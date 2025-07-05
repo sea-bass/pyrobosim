@@ -39,7 +39,8 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
            yaw: <yaw>
            angle_units: <units>  # Can be "radians" (default) or "degrees"
        initial_battery_level: 50.0
-       partial_observability: False  # If True, robot starts with no detected objects
+       partial_obs_objects: False  # If True, robot starts with no detected objects
+       partial_obs_hallways: False  # If True, robot starts with all hallways detected open
        # Dynamics limits
        max_linear_velocity: <value>
        max_angular_velocity: <value>

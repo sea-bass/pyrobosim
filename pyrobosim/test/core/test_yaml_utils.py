@@ -500,9 +500,150 @@ def test_yaml_load_and_write_dict() -> None:
 
     assert "robots" in world_dict
     assert len(world_dict["robots"]) == 3
-    assert world_dict["robots"][0].get("name") == "robot0"
-    assert world_dict["robots"][1].get("name") == "robot1"
-    assert world_dict["robots"][2].get("name") == "robot2"
+
+    robot0_dict = world_dict["robots"][0]
+    assert robot0_dict.get("name") == "robot0"
+    assert robot0_dict.get("radius") == 0.1
+    assert robot0_dict.get("height") == 0.0
+    assert robot0_dict.get("color") == (0.8, 0.0, 0.8)
+    assert robot0_dict.get("max_linear_velocity") == np.inf
+    assert robot0_dict.get("max_angular_velocity") == np.inf
+    assert robot0_dict.get("max_linear_acceleration") == np.inf
+    assert robot0_dict.get("max_angular_acceleration") == np.inf
+    assert robot0_dict.get("location") == "kitchen"
+    assert robot0_dict.get("pose").get("position").get("x") == 0.0
+    assert robot0_dict.get("pose").get("position").get("y") == 0.0
+    assert robot0_dict.get("pose").get("position").get("z") == 0.0
+    assert robot0_dict.get("pose").get("rotation_quat").get("w") == 1.0
+    assert robot0_dict.get("pose").get("rotation_quat").get("x") == 0.0
+    assert robot0_dict.get("pose").get("rotation_quat").get("y") == 0.0
+    assert robot0_dict.get("pose").get("rotation_quat").get("z") == 0.0
+    assert "grasping" not in robot0_dict
+    assert robot0_dict.get("path_planner").get("type") == "rrt"
+    assert robot0_dict.get("path_planner").get("collision_check_step_dist") == 0.025
+    assert robot0_dict.get("path_planner").get("max_connection_dist") == 0.5
+    assert robot0_dict.get("path_planner").get("bidirectional") == True
+    assert robot0_dict.get("path_planner").get("rrt_star") == True
+    assert robot0_dict.get("path_planner").get("rewire_radius") == 1.5
+    assert robot0_dict.get("path_planner").get("max_nodes_sampled") == 1000
+    assert robot0_dict.get("path_planner").get("max_time") == 2.0
+    assert robot0_dict.get("path_planner").get("compress_path") == False
+    assert robot0_dict.get("path_executor").get("type") == "constant_velocity"
+    assert robot0_dict.get("path_executor").get("linear_velocity") == 1.0
+    assert robot0_dict.get("path_executor").get("max_angular_velocity") == 4.0
+    assert robot0_dict.get("path_executor").get("dt") == 0.1
+    assert len(robot0_dict.get("sensors")) == 1
+    assert robot0_dict.get("sensors").get("lidar").get("type") == "lidar"
+    assert robot0_dict.get("sensors").get("lidar").get("update_rate_s") == 0.1
+    assert robot0_dict.get("sensors").get("lidar").get("angle_units") == "degrees"
+    assert robot0_dict.get("sensors").get("lidar").get("min_angle") == -120.0
+    assert robot0_dict.get("sensors").get("lidar").get("max_angle") == 120.0
+    assert robot0_dict.get("sensors").get("lidar").get("angular_resolution") == 5.0
+    assert robot0_dict.get("sensors").get("lidar").get("max_range_m") == 2.0
+    assert robot0_dict.get("start_sensor_threads") == True
+    assert robot0_dict.get("partial_obs_objects") == False
+    assert robot0_dict.get("partial_obs_hallways") == False
+    assert robot0_dict.get("initial_battery_level") == 100.0
+    assert "action_execution_options" not in robot0_dict
+
+    robot1_dict = world_dict["robots"][1]
+    assert robot1_dict.get("name") == "robot1"
+    assert robot1_dict.get("radius") == 0.08
+    assert robot1_dict.get("height") == 0.0
+    assert robot1_dict.get("color") == (0.8, 0.8, 0.0)
+    assert robot1_dict.get("max_linear_velocity") == np.inf
+    assert robot1_dict.get("max_angular_velocity") == np.inf
+    assert robot1_dict.get("max_linear_acceleration") == np.inf
+    assert robot1_dict.get("max_angular_acceleration") == np.inf
+    assert robot1_dict.get("location") == "bathroom"
+    robot1_pose = world.robots[1].get_pose()
+    assert robot1_dict.get("pose").get("position").get("x") == robot1_pose.x
+    assert robot1_dict.get("pose").get("position").get("y") == robot1_pose.y
+    assert robot1_dict.get("pose").get("position").get("z") == robot1_pose.z
+    assert robot1_dict.get("pose").get("rotation_quat").get("w") == robot1_pose.q[0]
+    assert robot1_dict.get("pose").get("rotation_quat").get("x") == robot1_pose.q[1]
+    assert robot1_dict.get("pose").get("rotation_quat").get("y") == robot1_pose.q[2]
+    assert robot1_dict.get("pose").get("rotation_quat").get("z") == robot1_pose.q[3]
+    assert robot1_dict.get("grasping").get("generator") == "parallel_grasp"
+    assert robot1_dict.get("grasping").get("max_width") == 0.175
+    assert robot1_dict.get("grasping").get("depth") == 0.1
+    assert robot1_dict.get("grasping").get("height") == 0.04
+    assert robot1_dict.get("grasping").get("width_clearance") == 0.01
+    assert robot1_dict.get("grasping").get("depth_clearance") == 0.01
+    assert robot1_dict.get("path_planner").get("type") == "prm"
+    assert robot1_dict.get("path_planner").get("collision_check_step_dist") == 0.025
+    assert robot1_dict.get("path_planner").get("max_connection_dist") == 1.5
+    assert robot1_dict.get("path_planner").get("max_nodes") == 100
+    assert robot1_dict.get("path_planner").get("compress_path") == False
+    assert robot1_dict.get("path_executor").get("type") == "constant_velocity"
+    assert "sensors" not in robot1_dict
+    assert robot1_dict.get("start_sensor_threads") == True
+    assert robot1_dict.get("partial_obs_objects") == False
+    assert robot1_dict.get("partial_obs_hallways") == False
+    assert robot1_dict.get("initial_battery_level") == 100.0
+    assert "action_execution_options" not in robot1_dict
+
+    robot2_dict = world_dict["robots"][2]
+    assert robot2_dict.get("name") == "robot2"
+    assert robot2_dict.get("radius") == 0.06
+    assert robot2_dict.get("height") == 0.0
+    assert robot2_dict.get("color") == (0.0, 0.8, 0.8)
+    assert robot2_dict.get("max_linear_velocity") == np.inf
+    assert robot2_dict.get("max_angular_velocity") == np.inf
+    assert robot2_dict.get("max_linear_acceleration") == np.inf
+    assert robot2_dict.get("max_angular_acceleration") == np.inf
+    assert robot2_dict.get("location") == "bedroom"
+    robot2_pose = world.robots[2].get_pose()
+    assert robot2_dict.get("pose").get("position").get("x") == robot2_pose.x
+    assert robot2_dict.get("pose").get("position").get("y") == robot2_pose.y
+    assert robot2_dict.get("pose").get("position").get("z") == robot2_pose.z
+    assert robot2_dict.get("pose").get("rotation_quat").get("w") == robot2_pose.q[0]
+    assert robot2_dict.get("pose").get("rotation_quat").get("x") == robot2_pose.q[1]
+    assert robot2_dict.get("pose").get("rotation_quat").get("y") == robot2_pose.q[2]
+    assert robot2_dict.get("pose").get("rotation_quat").get("z") == robot2_pose.q[3]
+    assert "grasping" not in robot2_dict
+    assert robot2_dict.get("path_planner").get("type") == "astar"
+    assert robot2_dict.get("path_planner").get("grid_resolution") == 0.05
+    assert robot2_dict.get("path_planner").get("grid_inflation_radius") == 0.15
+    assert robot2_dict.get("path_planner").get("heuristic") == "euclidean"
+    assert robot2_dict.get("path_planner").get("diagonal_motion") == True
+    assert robot2_dict.get("path_planner").get("compress_path") == False
+    assert robot2_dict.get("path_executor").get("type") == "constant_velocity"
+    assert "sensors" not in robot2_dict
+    assert robot2_dict.get("start_sensor_threads") == True
+    assert robot2_dict.get("partial_obs_objects") == False
+    assert robot2_dict.get("partial_obs_hallways") == False
+    assert robot2_dict.get("initial_battery_level") == 95.0
+    exec_opts_dict = robot2_dict.get("action_execution_options")
+    assert len(exec_opts_dict) == 6
+    assert exec_opts_dict.get("navigate").get("delay") == 0.0
+    assert exec_opts_dict.get("navigate").get("success_probability") == 0.9
+    assert exec_opts_dict.get("navigate").get("battery_usage") == 0.5
+    assert exec_opts_dict.get("navigate").get("rng_seed") == 42
+    assert exec_opts_dict.get("pick").get("delay") == 1.0
+    assert exec_opts_dict.get("pick").get("success_probability") == 0.75
+    assert exec_opts_dict.get("pick").get("battery_usage") == 5.0
+    assert "rng_seed" not in exec_opts_dict.get("pick")
+    assert exec_opts_dict.get("place").get("delay") == 0.5
+    assert exec_opts_dict.get("place").get("success_probability") == 0.75
+    assert exec_opts_dict.get("place").get("battery_usage") == 5.0
+    assert "rng_seed" not in exec_opts_dict.get("place")
+    assert exec_opts_dict.get("open").get("delay") == 0.0
+    assert exec_opts_dict.get("open").get("success_probability") == 0.5
+    assert exec_opts_dict.get("open").get("battery_usage") == 5.0
+    assert "rng_seed" not in exec_opts_dict.get("open")
+    assert exec_opts_dict.get("close").get("delay") == 0.0
+    assert exec_opts_dict.get("close").get("success_probability") == 0.5
+    assert exec_opts_dict.get("close").get("battery_usage") == 5.0
+    assert "rng_seed" not in exec_opts_dict.get("close")
+    assert exec_opts_dict.get("pick").get("delay") == 1.0
+    assert exec_opts_dict.get("pick").get("success_probability") == 0.75
+    assert exec_opts_dict.get("pick").get("battery_usage") == 5.0
+    assert "rng_seed" not in exec_opts_dict.get("pick")
+    assert exec_opts_dict.get("detect").get("delay") == 0.0
+    assert exec_opts_dict.get("detect").get("success_probability") == 0.8
+    assert exec_opts_dict.get("detect").get("battery_usage") == 2.0
+    assert "rng_seed" not in exec_opts_dict.get("detect")
 
     assert "rooms" in world_dict
     assert len(world_dict["rooms"]) == 3
