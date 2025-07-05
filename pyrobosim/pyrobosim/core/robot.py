@@ -99,6 +99,8 @@ class Robot(Entity):
         self.height = height
         self.color = parse_color(color)
         self.raw_polygon = Point(0, 0).buffer(radius)
+        self.path_planner: PathPlanner | None = None
+        self.path_executor: PathExecutor | None = None
         self.sensors: dict[str, Sensor] = {}
 
         if name == "world":
@@ -132,8 +134,8 @@ class Robot(Entity):
         self.total_internal_polygon = Polygon()
 
         # Sensing properties
-        self.set_sensors(sensors)
         self.start_sensor_threads = start_sensor_threads
+        self.set_sensors(sensors)
         if self.start_sensor_threads:
             self.do_start_sensor_threads()
 
