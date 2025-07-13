@@ -33,7 +33,7 @@ Below is a list of known projects that use PyRoboSim.
 
 * `Home Service Robotics at MIT CSAIL <https://roboticseabass.com/2020/12/30/2020-review-service-robotics-mit-csail/>`_, by Sebastian Castro (2020) -- the precursor to this work!
 * `Task Planning in Robotics <https://roboticseabass.com/2022/07/19/task-planning-in-robotics/>`_ and `Integrated Task and Motion Planning in Robotics <https://roboticseabass.com/2022/07/30/integrated-task-and-motion-planning-in-robotics/>`_ blog posts, by Sebastian Castro (2022)
-* `Hierarchically Decentralized Heterogeneous Multi-Robot Task Allocation System <https://arxiv.org/abs/2405.02484>`_, by Sujeet Kashid and Ashwin D. Kumat (2024)
+* `Hierarchically Decentralized Heterogeneous Multi-Robot Task Allocation System <https://arxiv.org/abs/2405.02484>`_ (2024) and `Evaluating the Impact of Resource Distribution on Efficiency of Multi-Robot Task Allocation System <https://ieeexplore.ieee.org/abstract/document/10976240>`_ (2025), by Sujeet Kashid and Ashwin D. Kumat
 * `Hands-On with ROS 2 Deliberation Technologies <https://github.com/ros-wg-delib/roscon24-workshop>`_ workshop at `ROSCon 2024 <https://roscon.ros.org/2024/>`_, by Christian Henkel, Sebastian Castro, Davide Faconti, David Oberacker, David Conner, and Matthias Mayr (2024)
 * `AutoAPMS: A unified software framework for creating behavior-based robotic applications <https://github.com/robin-mueller/auto-apms>`_, by Robin Müller (2025)
 * `Collaborative Large Language Models for Task Allocation in Construction Robots <https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5097309>`_, by Samuel A. Prieto and Borja García de Soto (2025)
