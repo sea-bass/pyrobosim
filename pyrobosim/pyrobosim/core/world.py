@@ -99,7 +99,7 @@ class World:
 
         self.logger.info("Resetting world...")
 
-        if deterministic and (self.source_yaml_file is not None):
+        if (not deterministic) and (self.source_yaml_file is not None):
             WorldYamlLoader().from_file(self.source_yaml_file, world=self)
         else:
             if self.source_yaml is None:

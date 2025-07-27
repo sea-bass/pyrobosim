@@ -154,7 +154,8 @@ class WorldYamlLoader:
         for id, robot_data in enumerate(self.data.get("robots", [])):
             # Create the robot
             robot_args = copy.deepcopy(robot_data)
-            del robot_args["location"]
+            if "location" in robot_args:
+                del robot_args["location"]
             if "name" not in robot_args:
                 robot_args["name"] = f"robot{id}"
             robot_args["path_planner"] = self.get_path_planner(robot_args)

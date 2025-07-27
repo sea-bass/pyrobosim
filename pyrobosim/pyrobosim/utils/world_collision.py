@@ -91,7 +91,7 @@ def check_occupancy(
     else:
         x, y = pose
 
-    if robot is None:
+    if (robot is None) or (robot.total_internal_polygon.is_empty):
         polygon = world.total_internal_polygon
     else:
         polygon = robot.total_internal_polygon
