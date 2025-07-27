@@ -338,33 +338,40 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
         """
         name = robot.name
 
-        sub = self.robot_command_subs[name]
-        self.destroy_subscription(sub)
-        del self.robot_command_subs[name]
+        sub = self.robot_command_subs.get(name)
+        if sub:
+            self.destroy_subscription(sub)
+            del self.robot_command_subs[name]
 
-        pub = self.robot_state_pubs[name]
-        self.destroy_publisher(pub)
-        del self.robot_state_pubs[name]
+        pub = self.robot_state_pubs.get(name)
+        if pub:
+            self.destroy_publisher(pub)
+            del self.robot_state_pubs[name]
 
-        pub_timer = self.robot_state_pub_timers[name]
-        pub_timer.destroy()
-        del self.robot_state_pub_timers[name]
+        pub_timer = self.robot_state_pub_timers.get(name)
+        if pub_timer:
+            pub_timer.destroy()
+            del self.robot_state_pub_timers[name]
 
-        plan_path_server = self.robot_plan_path_servers[name]
-        plan_path_server.destroy()
-        del self.robot_plan_path_servers[name]
+        plan_path_server = self.robot_plan_path_servers.get(name)
+        if plan_path_server:
+            plan_path_server.destroy()
+            del self.robot_plan_path_servers[name]
 
-        plan_follow_server = self.robot_follow_path_servers[name]
-        plan_follow_server.destroy()
-        del self.robot_follow_path_servers[name]
+        plan_follow_server = self.robot_follow_path_servers.get(name)
+        if plan_follow_server:
+            plan_follow_server.destroy()
+            del self.robot_follow_path_servers[name]
 
-        reset_path_planner_server = self.robot_reset_path_planner_servers[name]
-        self.destroy_service(reset_path_planner_server)
-        del self.robot_reset_path_planner_servers[name]
+        reset_path_planner_server = self.robot_reset_path_planner_servers.get(name)
+        if reset_path_planner_server:
+            self.destroy_service(reset_path_planner_server)
+            del self.robot_reset_path_planner_servers[name]
 
-        detect_objects_server = self.robot_object_detection_servers[name]
-        detect_objects_server.destroy()
-        del self.robot_object_detection_servers[name]
+        detect_objects_server = self.robot_object_detection_servers.get(name)
+        if detect_objects_server:
+            detect_objects_server.destroy()
+            del self.robot_object_detection_servers[name]
 
     def dynamics_callback(self) -> None:
         """
@@ -858,6 +865,9 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
             thread.start()
         for thread in cancel_threads:
             thread.join()
+
+        for robot in self.world.robots:
+            self.remove_robot_ros_interfaces(robot)
 
         response.success = self.world.reset(deterministic=request.deterministic)
         return response
