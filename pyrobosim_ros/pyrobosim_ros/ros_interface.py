@@ -39,7 +39,12 @@ from pyrobosim_msgs.msg import (  # type: ignore[attr-defined]
     RobotState,
     WorldState,
 )
-from pyrobosim_msgs.srv import RequestWorldState, ResetWorld, SetLocationState  # type: ignore[attr-defined]
+from pyrobosim_msgs.srv import (  # type: ignore[attr-defined]
+    RequestWorldInfo,
+    RequestWorldState,
+    ResetWorld,
+    SetLocationState,
+)
 from std_srvs.srv import Trigger
 
 from .ros_conversions import (
@@ -77,7 +82,7 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
             * Allow path planning and following for each robot on ``<robot_name>/plan_path`` and ``<robot_name>/follow_path`` action servers, respectively.
             * Allow path planner reset on a ``<robot_name>/reset_path_planner`` service server.
             * Allow object detection for each robot on a ``<robot_name>/detect_objects`` action server.
-            * Serve a ``request_world_state`` service to retrieve the world state for planning.
+            * Serve ``request_world_info`` and ``request_world_state`` services to retrieve the world information and state, respectively, for planning.
             * Serve a ``set_location_state`` service to set the state of the location.
             * Serve a ``reset_world`` service to reset the world.
             * Serve a ``execute_action`` action server to run single actions on a robot.
@@ -126,8 +131,16 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
             callback_group=ReentrantCallbackGroup(),
         )
 
-        # World state service servers
+        # World info and state service servers
         self.world_state_callback_group = ReentrantCallbackGroup()
+
+        self.world_info_srv = self.create_service(
+            RequestWorldInfo,
+            "request_world_info",
+            self.world_info_callback,
+            callback_group=self.world_state_callback_group,
+        )
+
         self.world_state_srv = self.create_service(
             RequestWorldState,
             "request_world_state",
@@ -690,6 +703,27 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
         :param robot: Robot instance from which to extract state.
         """
         pub.publish(self.package_robot_state(robot))
+
+    def world_info_callback(
+        self, request: RequestWorldInfo.Request, response: RequestWorldInfo.Response
+    ) -> RequestWorldState.Response:
+        """
+        Returns the world information as a response to a service request.
+
+        :param request: The service request.
+        :param response: The unmodified service response.
+        :return: The modified service response containing the world information.
+        """
+        self.get_logger().info("Received world information request")
+
+        response.info.name = self.world.name
+        response.info.location_categories = (
+            self.world.get_location_metadata().get_categories()
+        )
+        response.info.object_categories = (
+            self.world.get_object_metadata().get_categories()
+        )
+        return response
 
     def world_state_callback(
         self, request: RequestWorldState.Request, response: RequestWorldState.Response

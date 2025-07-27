@@ -22,7 +22,7 @@ from pyrobosim_msgs.action import (  # type: ignore
     PlanPath,
 )
 from pyrobosim_msgs.msg import ExecutionResult, RobotState, TaskAction, TaskPlan  # type: ignore
-from pyrobosim_msgs.srv import RequestWorldState, SetLocationState  # type: ignore
+from pyrobosim_msgs.srv import RequestWorldInfo, RequestWorldState, SetLocationState  # type: ignore
 from pyrobosim_ros.ros_interface import WorldROSWrapper
 
 
@@ -128,7 +128,36 @@ class TestRosInterface:
 
     @staticmethod
     @pytest.mark.dependency(  # type: ignore[misc]
-        name="test_get_world_state", depends=["test_robot_pub_sub"]
+        name="test_get_world_info", depends=["test_robot_pub_sub"]
+    )
+    def test_get_world_info() -> None:
+        """Test that we can retrieve the world information via service call."""
+        assert TestRosInterface.node is not None
+        assert TestRosInterface.ros_interface is not None
+
+        client = TestRosInterface.node.create_client(
+            RequestWorldInfo, "request_world_info"
+        )
+        future = client.call_async(RequestWorldInfo.Request())
+        start_time = time.time()
+        while not future.done():
+            if TestRosInterface.executor is not None:
+                TestRosInterface.executor.spin_once(timeout_sec=0.1)
+            if time.time() - start_time > 2.0:
+                break
+
+        assert future.done()
+        result = future.result()
+        assert isinstance(result, RequestWorldInfo.Response)
+        assert result.info.name == "test_world_multirobot"
+        assert len(result.info.location_categories) == 5
+        assert len(result.info.object_categories) == 4
+
+        TestRosInterface.node.destroy_client(client)
+
+    @staticmethod
+    @pytest.mark.dependency(  # type: ignore[misc]
+        name="test_get_world_state", depends=["test_get_world_info"]
     )
     def test_get_world_state() -> None:
         """Test that we can retrieve the world state via service call."""

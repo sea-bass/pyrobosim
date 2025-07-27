@@ -178,6 +178,14 @@ class EntityMetadata:
 
         self.sources.append(filename)
 
+    def get_categories(self) -> list[str]:
+        """
+        Gets the list of categories in this metadata.
+
+        :return: A list of category names for this metadata.
+        """
+        return list(self.data.keys())
+
 
 class InvalidEntityCategoryException(Exception):
     """Raised when an invalid entity metadata category is used."""

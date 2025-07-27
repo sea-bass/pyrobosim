@@ -1,0 +1,6 @@
+# ROS service to request world information
+
+---
+
+# The world information
+WorldInfo info
