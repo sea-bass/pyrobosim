@@ -84,15 +84,9 @@ class WorldYamlLoader:
         """
         params = self.data.get("params", {})
 
-        if world is None:
-            self.world = World(**params)
-        else:
-            world.remove_all_objects()
-            world.remove_all_robots()
-            world.remove_all_locations()
-            world.remove_all_hallways()
-            world.remove_all_rooms()
-            self.world = world
+        self.world = World(**params)
+        if world is not None:
+            world = self.world
 
         # Set the location/object metadata
         metadata = self.data.get("metadata")

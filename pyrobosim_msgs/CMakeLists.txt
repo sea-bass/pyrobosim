@@ -24,10 +24,12 @@ set(msg_files
   "msg/RobotState.msg"
   "msg/TaskAction.msg"
   "msg/TaskPlan.msg"
+  "msg/WorldInfo.msg"
   "msg/WorldState.msg"
 )
 
 set(srv_files
+  "srv/RequestWorldInfo.srv"
   "srv/RequestWorldState.srv"
   "srv/ResetWorld.srv"
   "srv/SetLocationState.srv"

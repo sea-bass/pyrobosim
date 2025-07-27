@@ -3,6 +3,7 @@
 # Fixed data
 string name
 string category
+string[] spawns
 
 # Dynamic data
 string parent
