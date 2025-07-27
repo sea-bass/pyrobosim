@@ -8,5 +8,5 @@ bool deterministic
 ---
 
 # Response
-# Indicates whether the world reset operation was successful:
+# Indicates whether the world reset operation was successful.
 bool success

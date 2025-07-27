@@ -12,7 +12,7 @@ import rclpy
 from rclpy.action import ActionServer, CancelResponse
 from rclpy.action.server import ServerGoalHandle
 from rclpy.callback_groups import ReentrantCallbackGroup
-from rclpy.executors import MultiThreadedExecutor
+from rclpy.executors import Executor, MultiThreadedExecutor
 from rclpy.logging import get_logger
 from rclpy.node import Node
 from rclpy.service import Service
@@ -104,7 +104,7 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
         # Internal state
         self.executing_plan = False
         self.last_command_status = None
-        self.executor = None
+        self.executor: Executor | None = None
 
         # Server for executing single action
         self.action_server = ActionServer(
@@ -721,6 +721,7 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
             loc_msg = LocationState(
                 name=loc.name,
                 category=loc.category,
+                spawns=[spawn.name for spawn in loc.children],
                 parent=loc.get_room_name(),
                 pose=pose_to_ros(loc.pose),
                 is_open=loc.is_open,
