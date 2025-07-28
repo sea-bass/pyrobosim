@@ -330,7 +330,8 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
         robot.logger = get_logger(robot.name)
         robot.logger.info("Configured ROS logger.")
 
-        self.executor.wake()
+        if self.executor is not None:
+            self.executor.wake()
 
     def remove_robot_ros_interfaces(self, robot: Robot) -> None:
         """
@@ -375,7 +376,8 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
             detect_objects_server.destroy()
             del self.robot_object_detection_servers[name]
 
-        self.executor.wake()
+        if self.executor is not None:
+            self.executor.wake()
 
     def dynamics_callback(self) -> None:
         """
