@@ -50,7 +50,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
     draw_signal = Signal()
     """ Signal for drawing without threading errors. """
 
-    navigate_signal = Signal(Robot, str, Path)
+    navigate_signal = Signal(Robot, str, Path, float)
     """ Signal for starting a navigation task without threading errors. """
 
     show_hallways_signal = Signal()
@@ -75,7 +75,6 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         show: bool = True,
         dpi: int = 100,
         animation_dt: float = 0.1,
-        realtime_factor: float = 1.0,
     ) -> None:
         """
         Creates an instance of a PyRoboSim figure canvas.
@@ -85,7 +84,6 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         :param show: If true (default), shows the GUI. Otherwise runs headless for testing.
         :param dpi: DPI for the figure.
         :param animation_dt: Time step for animations (seconds).
-        :param realtime_factor: Real-time multiplication factor for animation (1.0 is real-time).
         """
         self.fig = Figure(dpi=dpi, tight_layout=True)
         self.axes = self.fig.add_subplot(111)
@@ -101,7 +99,6 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
 
         # Display/animation properties
         self.animation_dt = animation_dt
-        self.realtime_factor = realtime_factor
 
         self.robot_bodies: list[Circle] = []
         self.robot_dirs: list[Line2D] = []
@@ -136,7 +133,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
 
         # Start timer for animating robot navigation state.
         if show:
-            sleep_time_msec = int(1000.0 * self.animation_dt / self.realtime_factor)
+            sleep_time_msec = int(1000.0 * self.animation_dt)
             self.nav_animator = QTimer()
             self.nav_animator.timeout.connect(self.nav_animation_callback)
             self.nav_animator.start(sleep_time_msec)
@@ -544,15 +541,23 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         if obj.viz_text is not None:
             obj.viz_text.set_position((x, y))
 
-    def navigate(self, robot: Robot, goal: str, path: Path | None = None) -> None:
+    def navigate(
+        self,
+        robot: Robot,
+        goal: str,
+        path: Path | None = None,
+        realtime_factor: float = 1.0,
+    ) -> None:
         """
         Starts a thread to navigate a robot to a goal.
 
         :param robot: Robot instance or name to execute action.
         :param goal: Name of goal location (resolved by the world model).
         :param path: Path to goal location, defaults to None.
+        :param realtime_factor: A multiplier on the execution time relative to
+            real time. Defaults to 1.0. If negative, runs as quickly as possible.
         """
-        nav_thread = NavRunner(self.world, robot, goal, path, self.realtime_factor)
+        nav_thread = NavRunner(self.world, robot, goal, path, realtime_factor)
         self.thread_pool.start(nav_thread)
 
     def pick_object(
