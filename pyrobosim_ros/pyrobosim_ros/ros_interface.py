@@ -356,10 +356,7 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
             self.destroy_publisher(pub)
             del self.robot_state_pubs[name]
 
-        pub_timer = self.robot_state_pub_timers.get(name)
-        if pub_timer:
-            pub_timer.destroy()
-            del self.robot_state_pub_timers[name]
+        self.stop_robot_ros_timers(robot)
 
         plan_path_server = self.robot_plan_path_servers.get(name)
         if plan_path_server:
@@ -383,6 +380,17 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
 
         if self.executor is not None:
             self.executor.wake()
+
+    def stop_robot_ros_timers(self, robot: Robot) -> None:
+        """
+        Stops any running ROS timers for a specific robot.
+
+        :param robot: Robot instance.
+        """
+        pub_timer = self.robot_state_pub_timers.get(robot.name)
+        if pub_timer:
+            pub_timer.destroy()
+            del self.robot_state_pub_timers[robot.name]
 
     def dynamics_callback(self) -> None:
         """

@@ -1202,8 +1202,11 @@ class World:
         self.name_to_entity.pop(resolved_robot.name)
         if show and self.gui is not None:
             self.gui.canvas.show_robots_signal.emit()
-        if remove_ros_interfaces and (self.ros_node is not None):
-            self.ros_node.remove_robot_ros_interfaces(resolved_robot)
+        if self.ros_node is not None:
+            if remove_ros_interfaces:
+                self.ros_node.remove_robot_ros_interfaces(resolved_robot)
+            else:  # Still want to stop publisher timers while resetting.
+                self.ros_node.stop_robot_ros_timers(resolved_robot)
 
         # Find the new max inflation radius and revert it.
         new_inflation_radius = max(
