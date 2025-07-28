@@ -372,7 +372,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
         loc = self.goal_textbox.text()
         if loc is not None:
             robot.logger.info(f"Navigating to {loc}")
-            self.canvas.navigate_signal.emit(robot, loc, None)
+            self.canvas.navigate_signal.emit(robot, loc, None, 1.0)
 
     def on_pick_click(self) -> None:
         """Callback to pick an object."""

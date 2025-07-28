@@ -397,8 +397,8 @@ class Robot(Entity):
         Follows a specified path using the attached path executor.
 
         :param path: The path to follow.
-        :param realtime_factor: A real-time multiplier on execution speed,
-            defaults to 1.0.
+        :param realtime_factor: A multiplier on the execution time relative to
+            real time. Defaults to 1.0. If negative, runs as quickly as possible.
         :return: An object describing the execution result.
         """
         self.last_nav_result = ExecutionResult()
@@ -475,8 +475,8 @@ class Robot(Entity):
         :param goal: Goal pose or entity name for the robot.
             If not specified, returns None.
         :param path: The path to follow.
-        :param realtime_factor: A real-time multiplier on execution speed,
-            defaults to 1.0.
+        :param realtime_factor: A multiplier on the execution time relative to
+            real time. Defaults to 1.0. If negative, runs as quickly as possible.
         :return: An object describing the execution result.
         """
         if self.battery_level <= 0.0:
@@ -1000,12 +1000,16 @@ class Robot(Entity):
             loc_to_close = self.location
         return self.world.close_location(loc_to_close, ignore_robots=[self])
 
-    def execute_action(self, action: TaskAction) -> ExecutionResult:
+    def execute_action(
+        self, action: TaskAction, realtime_factor: float = 1.0
+    ) -> ExecutionResult:
         """
         Executes an action, specified as a
         :class:`pyrobosim.planning.actions.TaskAction` object.
 
         :param action: Action to execute.
+        :param realtime_factor: A multiplier on the execution time relative to
+            real time. Defaults to 1.0. If negative, runs as quickly as possible.
         :return: An object describing the execution result.
         """
         self.executing_action = True
@@ -1025,16 +1029,19 @@ class Robot(Entity):
                     target_location_name = action.target_location
 
                 self.world.gui.canvas.navigate_signal.emit(
-                    self, target_location_name, path
+                    self,
+                    target_location_name,
+                    path,
+                    realtime_factor,
                 )
                 while self.executing_nav:
-                    time.sleep(0.5)  # Delay to wait for navigation
+                    time.sleep(0.25)  # Delay to wait for navigation
                 result = self.last_nav_result
             else:
                 result = self.navigate(
                     goal=action.target_location,
                     path=path,
-                    realtime_factor=1.0,
+                    realtime_factor=realtime_factor,
                 )
 
         elif action.type == "pick":
@@ -1089,7 +1096,10 @@ class Robot(Entity):
                 time.sleep(0.1)
 
     def execute_plan(
-        self, plan: TaskPlan, delay: float = 0.5
+        self,
+        plan: TaskPlan,
+        delay: float = 0.5,
+        realtime_factor: float = 1.0,
     ) -> tuple[ExecutionResult, int]:
         """
         Executes a task plan, specified as a
@@ -1097,6 +1107,8 @@ class Robot(Entity):
 
         :param plan: Task plan to execute.
         :param delay: Artificial delay between actions for visualization.
+        :param realtime_factor: A multiplier on the execution time relative to
+            real time. Defaults to 1.0. If negative, runs as quickly as possible.
         :return: A tuple containing an execution result and the number of actions completed.
         """
         if plan is None:
@@ -1128,7 +1140,7 @@ class Robot(Entity):
                 break
 
             self.logger.info(f"Executing action {act_msg.type} [{n+1}/{num_acts}]")
-            result = self.execute_action(act_msg)
+            result = self.execute_action(act_msg, realtime_factor=realtime_factor)
             if not result.is_success():
                 self.logger.info(
                     f"Task plan failed to execute on action {n+1}/{num_acts}"

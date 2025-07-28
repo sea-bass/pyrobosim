@@ -3,6 +3,13 @@
 # Goal
 pyrobosim_msgs/TaskPlan plan
 
+# An artificial delay, in seconds, to introduce between actions.
+float32 delay 0.5
+
+# A multiplier on the execution time relative to real time.
+# Defaults to 1.0. If negative, runs as quickly as possible.
+float32 realtime_factor 1.0
+
 ---
 
 # Result

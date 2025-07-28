@@ -19,7 +19,7 @@ class NavRunner(QRunnable):  # type: ignore[misc]
         robot: Robot | str | None,
         goal: str,
         path: Path | None,
-        realtime_factor: float,
+        realtime_factor: float = 1.0,
     ) -> None:
         """
         Creates a navigation execution thread.
@@ -28,7 +28,8 @@ class NavRunner(QRunnable):  # type: ignore[misc]
         :param robot: Robot instance or name to execute action.
         :param goal: Name of goal location (resolved by the world model).
         :param path: Path to goal location.
-        :param realtime_factor: Scaling factor for animating the path execution.
+        :param realtime_factor: A multiplier on the execution time relative to
+            real time. Defaults to 1.0. If negative, runs as quickly as possible.
         """
         super(NavRunner, self).__init__()
         self.world = world

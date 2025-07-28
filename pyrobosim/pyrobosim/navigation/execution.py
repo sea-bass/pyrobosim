@@ -80,7 +80,7 @@ class ConstantVelocityExecutor(PathExecutor):
 
         :param path: Path to execute on the robot.
         :param realtime_factor: A multiplier on the execution time relative to
-            real time, defaults to 1.0.
+            real time. Defaults to 1.0. If negative, runs as quickly as possible.
         :param battery_usage: Robot battery usage per unit distance.
         :return: An object describing the execution result.
         """

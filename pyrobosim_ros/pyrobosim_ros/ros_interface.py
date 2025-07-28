@@ -466,10 +466,11 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
 
         # Execute the action
         robot_action = task_action_from_ros(goal_handle.request.action)
+        realtime_factor = goal_handle.request.realtime_factor
         self.get_logger().info(
             f"Executing action {robot_action.type} with robot {robot.name}..."
         )
-        execution_result = robot.execute_action(robot_action)
+        execution_result = robot.execute_action(robot_action, realtime_factor)
         self.get_logger().info(
             f"Action {robot_action.type} finished with status: {execution_result.status.name}"
         )
@@ -539,7 +540,11 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
         # Execute the plan
         self.get_logger().info(f"Executing task plan with robot {robot.name}...")
         robot_plan = task_plan_from_ros(plan_msg)
-        execution_result, num_completed = robot.execute_plan(robot_plan)
+        delay = goal_handle.request.delay
+        realtime_factor = goal_handle.request.realtime_factor
+        execution_result, num_completed = robot.execute_plan(
+            robot_plan, delay=delay, realtime_factor=realtime_factor
+        )
         self.get_logger().info(
             f"Plan finished with status: {execution_result.status.name} (completed {num_completed}/{robot_plan.size()} actions)"
         )
