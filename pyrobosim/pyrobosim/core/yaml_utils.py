@@ -88,7 +88,7 @@ class WorldYamlLoader:
             self.world = World(**params)
         else:
             world.remove_all_objects()
-            world.remove_all_robots()
+            world.remove_all_robots(remove_ros_interfaces=False)  # OK for resetting.
             world.remove_all_locations()
             world.remove_all_hallways()
             world.remove_all_rooms()

@@ -264,67 +264,72 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
         self.latest_robot_cmds[robot.name] = None
 
         # Create subscriber
-        sub = self.create_subscription(
-            Twist,
-            f"{robot.name}/cmd_vel",
-            lambda msg: self.velocity_command_callback(msg, robot),
-            10,
-            callback_group=ReentrantCallbackGroup(),
-        )
-        self.robot_command_subs[robot.name] = sub
+        if robot.name not in self.robot_command_subs:
+            self.robot_command_subs[robot.name] = self.create_subscription(
+                Twist,
+                f"{robot.name}/cmd_vel",
+                lambda msg: self.velocity_command_callback(msg, robot),
+                10,
+                callback_group=ReentrantCallbackGroup(),
+            )
 
         # Create robot state publisher timer
-        pub = self.create_publisher(
-            RobotState,
-            f"{robot.name}/robot_state",
-            10,
-            callback_group=ReentrantCallbackGroup(),
+        if robot.name not in self.robot_state_pubs:
+            self.robot_state_pubs[robot.name] = self.create_publisher(
+                RobotState,
+                f"{robot.name}/robot_state",
+                10,
+                callback_group=ReentrantCallbackGroup(),
+            )
+
+        pub_fn = partial(
+            self.publish_robot_state, pub=self.robot_state_pubs[robot.name], robot=robot
         )
-        pub_fn = partial(self.publish_robot_state, pub=pub, robot=robot)
         pub_timer = self.create_timer(self.state_pub_rate, pub_fn)
-        self.robot_state_pubs[robot.name] = pub
         self.robot_state_pub_timers[robot.name] = pub_timer
 
         robot_action_callback_group = ReentrantCallbackGroup()
 
         # Specialized action servers for path planning and execution.
-        plan_path_server = ActionServer(
-            self,
-            PlanPath,
-            f"{robot.name}/plan_path",
-            execute_callback=partial(self.robot_path_plan_callback, robot=robot),
-            callback_group=robot_action_callback_group,
-        )
-        self.robot_plan_path_servers[robot.name] = plan_path_server
+        if robot.name not in self.robot_plan_path_servers:
+            self.robot_plan_path_servers[robot.name] = ActionServer(
+                self,
+                PlanPath,
+                f"{robot.name}/plan_path",
+                execute_callback=partial(self.robot_path_plan_callback, robot=robot),
+                callback_group=robot_action_callback_group,
+            )
 
-        follow_path_server = ActionServer(
-            self,
-            FollowPath,
-            f"{robot.name}/follow_path",
-            execute_callback=partial(self.robot_path_follow_callback, robot=robot),
-            cancel_callback=partial(self.robot_path_cancel_callback, robot=robot),
-            callback_group=robot_action_callback_group,
-        )
-        self.robot_follow_path_servers[robot.name] = follow_path_server
+        if robot.name not in self.robot_follow_path_servers:
+            self.robot_follow_path_servers[robot.name] = ActionServer(
+                self,
+                FollowPath,
+                f"{robot.name}/follow_path",
+                execute_callback=partial(self.robot_path_follow_callback, robot=robot),
+                cancel_callback=partial(self.robot_path_cancel_callback, robot=robot),
+                callback_group=robot_action_callback_group,
+            )
 
         # Service server for resetting path planner.
-        reset_path_planner_srv = self.create_service(
-            Trigger,
-            f"{robot.name}/reset_path_planner",
-            partial(self.robot_path_planner_reset_callback, robot=robot),
-            callback_group=ReentrantCallbackGroup(),
-        )
-        self.robot_reset_path_planner_servers[robot.name] = reset_path_planner_srv
+        if robot.name not in self.robot_reset_path_planner_servers:
+            self.robot_reset_path_planner_servers[robot.name] = self.create_service(
+                Trigger,
+                f"{robot.name}/reset_path_planner",
+                partial(self.robot_path_planner_reset_callback, robot=robot),
+                callback_group=ReentrantCallbackGroup(),
+            )
 
         # Specialized action server for object detection.
-        object_detection_server = ActionServer(
-            self,
-            DetectObjects,
-            f"{robot.name}/detect_objects",
-            execute_callback=partial(self.robot_detect_objects_callback, robot=robot),
-            callback_group=robot_action_callback_group,
-        )
-        self.robot_object_detection_servers[robot.name] = object_detection_server
+        if robot.name not in self.robot_object_detection_servers:
+            self.robot_object_detection_servers[robot.name] = ActionServer(
+                self,
+                DetectObjects,
+                f"{robot.name}/detect_objects",
+                execute_callback=partial(
+                    self.robot_detect_objects_callback, robot=robot
+                ),
+                callback_group=robot_action_callback_group,
+            )
 
         # Set up logger interface for robot
         robot.logger = get_logger(robot.name)
