@@ -1176,13 +1176,18 @@ class World:
         if self.ros_node is not None:
             self.ros_node.add_robot_ros_interfaces(robot)
 
-    def remove_robot(self, robot: Robot | str, show: bool = True) -> bool:
+    def remove_robot(
+        self, robot: Robot | str, show: bool = True, remove_ros_interfaces: bool = True
+    ) -> bool:
         """
         Removes a robot from the world.
 
         :param robot: Robot instance or name to remove.
         :param show: If True (default), causes the GUI to be updated.
             This is mostly for internal usage to speed up reloading.
+        :param remove_ros_interfaces: If True (default), and the world has a ROS interface,
+            it removes them. This is configurable since resetting the world is prone to a rclpy bug.
+            See https://github.com/ros2/rclpy/issues/1206 for more details.
         :return: True if the robot was successfully removed, else False.
         """
         if isinstance(robot, Robot):
@@ -1198,7 +1203,10 @@ class World:
         if show and self.gui is not None:
             self.gui.canvas.show_robots_signal.emit()
         if self.ros_node is not None:
-            self.ros_node.remove_robot_ros_interfaces(resolved_robot)
+            if remove_ros_interfaces:
+                self.ros_node.remove_robot_ros_interfaces(resolved_robot)
+            else:  # Still want to stop publisher timers while resetting.
+                self.ros_node.stop_robot_ros_timers(resolved_robot)
 
         # Find the new max inflation radius and revert it.
         new_inflation_radius = max(
@@ -1209,11 +1217,21 @@ class World:
             self.set_inflation_radius(new_inflation_radius)
         return True
 
-    def remove_all_robots(self) -> None:
-        """Cleanly removes all robots from the world."""
+    def remove_all_robots(self, remove_ros_interfaces: bool = True) -> None:
+        """
+        Cleanly removes all robots from the world.
+
+        :param remove_ros_interfaces: If True (default), and the world has a ROS interface,
+            it removes them. This is configurable since resetting the world is prone to a rclpy bug.
+            See https://github.com/ros2/rclpy/issues/1206 for more details.
+        """
         for robot in reversed(self.robots):
             # Only update the UI on the last robot to remove.
-            self.remove_robot(robot, show=(len(self.robots) == 1))
+            self.remove_robot(
+                robot,
+                show=(len(self.robots) == 1),
+                remove_ros_interfaces=remove_ros_interfaces,
+            )
 
     def set_inflation_radius(self, inflation_radius: float = 0.0) -> None:
         """
