@@ -872,9 +872,6 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
         for thread in cancel_threads:
             thread.join()
 
-        for robot in self.world.robots:
-            self.remove_robot_ros_interfaces(robot)
-
         response.success = self.world.reset(deterministic=request.deterministic)
         return response
 
