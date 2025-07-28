@@ -448,7 +448,7 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
             )
         if robot.is_busy():
             message = "Currently executing action(s). Discarding this one."
-            self.get_logger().warn(message)
+            self.get_logger().warning(message)
             goal_handle.abort()
             return ExecuteTaskAction.Result(
                 execution_result=ExecutionResult(
@@ -518,7 +518,7 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
             )
         if robot.is_busy():
             message = "Currently executing action(s). Discarding this plan."
-            self.get_logger().warn(message)
+            self.get_logger().warning(message)
             goal_handle.abort()
             return ExecuteTaskAction.Result(
                 execution_result=ExecutionResult(
@@ -656,7 +656,7 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
 
         if not robot.path_planner:
             message = f"{robot} does not have a path planner. Cannot reset."
-            self.get_logger().warn(message)
+            self.get_logger().warning(message)
             return Trigger.Response(success=False, message=message)
 
         robot.reset_path_planner()
@@ -820,7 +820,7 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
         entity = self.world.get_entity_by_name(request.location_name)
         if not entity:
             message = f"No location matching query: {request.location_name}"
-            self.get_logger().warn(message)
+            self.get_logger().warning(message)
             response.result.status = ExecutionResult.INVALID_ACTION
             response.result.message = message
             return response
