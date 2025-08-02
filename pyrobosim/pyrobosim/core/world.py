@@ -57,6 +57,7 @@ class World:
         self.rooms: list[Room] = []
         self.hallways: list[Hallway] = []
         self.locations: list[Location] = []
+        self.object_spawns: list[ObjectSpawn] = []
         self.objects: list[Object] = []
         self.set_metadata()
 
@@ -515,6 +516,9 @@ class World:
         loc.parent.locations.append(loc)
         loc.parent.update_collision_polygons(self.inflation_radius)
         self.locations.append(loc)
+        self.object_spawns.extend(
+            [spawn for spawn in loc.children if isinstance(spawn, ObjectSpawn)]
+        )
         self.location_instance_counts[category] += 1
         self.num_locations += 1
         self.name_to_entity[loc.name] = loc
@@ -632,6 +636,9 @@ class World:
 
         # Remove the location.
         self.locations.remove(resolved_location)
+        for spawn in resolved_location.children:
+            assert isinstance(spawn, ObjectSpawn)
+            self.object_spawns.remove(spawn)
         self.num_locations -= 1
         self.location_instance_counts[resolved_location.category or "location"] -= 1
         room = resolved_location.parent
@@ -901,7 +908,7 @@ class World:
                 parent = self.get_entity_by_name(parent)
             elif (parent is None) and (len(self.locations) > 0):
                 # If no parent was specified, spawn at a random location.
-                parent = np.random.choice(self.get_object_spawns())
+                parent = np.random.choice(self.object_spawns)
 
             # If the parent is a location object, pick an object spawn at random.
             # Otherwise, if it's an object spawn, use that entity as is.
@@ -1209,11 +1216,8 @@ class World:
         self.name_to_entity.pop(resolved_robot.name)
         if show and self.gui is not None:
             self.gui.canvas.show_robots_signal.emit()
-        if self.ros_node is not None:
-            if remove_ros_interfaces:
-                self.ros_node.remove_robot_ros_interfaces(resolved_robot)
-            else:  # Still want to stop publisher timers while resetting.
-                self.ros_node.stop_robot_ros_timers(resolved_robot)
+        if (self.ros_node is not None) and remove_ros_interfaces:
+            self.ros_node.remove_robot_ros_interfaces(resolved_robot)
 
         # Find the new max inflation radius and revert it.
         new_inflation_radius = max(
