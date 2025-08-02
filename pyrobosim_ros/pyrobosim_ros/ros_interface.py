@@ -909,7 +909,9 @@ def update_world_from_state_msg(world: World, msg: WorldState) -> None:
         if robot is not None:
             robot.set_pose(pose_from_ros(robot_state.pose))
         else:
-            print(f"Tried to update state for invalid robot {robot_state.name}")
+            world.logger.error(
+                f"Tried to update state for invalid robot {robot_state.name}"
+            )
 
     # Update the object states
     for obj_state in msg.objects:
