@@ -431,13 +431,38 @@ class TestWorldModeling:
     )
     def test_reset_world() -> None:
         """Tests resetting a world."""
-        TestWorldModeling.world.reset()
+        world = TestWorldModeling.world
 
-        assert TestWorldModeling.world.num_rooms == 2
-        assert TestWorldModeling.world.num_locations == 2
-        assert TestWorldModeling.world.num_hallways == 1
-        assert TestWorldModeling.world.num_objects == 2
-        assert len(TestWorldModeling.world.robots) == 2
+        world.reset()
+        assert world.num_rooms == 2
+        assert world.num_locations == 2
+        assert world.num_hallways == 1
+        assert world.num_objects == 2
+        assert len(world.robots) == 2
+
+        # Reset with "deterministic" mode
+        original_robot_0_pose = world.robots[0].get_pose()
+        original_apple_pose = world.objects[0].pose
+        world.reset(deterministic=True)
+        assert world.robots[0].get_pose() == original_robot_0_pose
+        assert world.objects[0].pose == original_apple_pose
+
+        # Now reset with a fixed seed.
+        seed = 1234
+        world.reset(seed=seed)
+
+        assert world.num_rooms == 2
+        assert world.num_locations == 2
+        assert world.num_hallways == 1
+        assert world.num_objects == 2
+        assert len(world.robots) == 2
+
+        original_robot_0_pose = world.robots[0].get_pose()
+        original_apple_pose = world.objects[0].pose
+        for i in range(10):
+            world.reset(seed=seed)
+            assert world.robots[0].get_pose() == original_robot_0_pose
+            assert world.objects[0].pose == original_apple_pose
 
     ##############################################
     # These tests incrementally clean up a world #

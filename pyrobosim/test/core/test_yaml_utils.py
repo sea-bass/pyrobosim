@@ -481,8 +481,8 @@ def test_yaml_load_and_write_dict() -> None:
     assert world_dict["params"].get("inflation_radius") == 0.1  # From the largest robot
 
     assert "metadata" in world_dict
-    assert world_dict["metadata"].get("locations") == Location.metadata.sources
-    assert world_dict["metadata"].get("objects") == Object.metadata.sources
+    assert world_dict["metadata"].get("locations") == list(Location.metadata.sources)
+    assert world_dict["metadata"].get("objects") == list(Object.metadata.sources)
 
     assert "robots" in world_dict
     assert len(world_dict["robots"]) == 3
