@@ -87,17 +87,24 @@ class World:
 
         self.logger.info("Created world.")
 
-    def reset(self, deterministic: bool = False) -> bool:
+    def reset(self, deterministic: bool = False, seed: int = -1) -> bool:
         """
         Resets the world to its initial state.
 
         :param deterministic: If True, resets the world completely deterministically.
             Otherwise, sampled poses may be resampled randomly.
+        :param seed: The seed to use for random number generation.
+            This is useful for applications such as machine learning where you want to control randomness.
+            If -1 (default), does not use a fixed seed.
         :return: True if the reset was successful, else False.
         """
         from ..core.yaml_utils import WorldYamlLoader, WorldYamlWriter
 
-        self.logger.info("Resetting world...")
+        if seed < 0:
+            self.logger.info("Resetting world...")
+        else:
+            np.random.seed(seed)
+            self.logger.info(f"Resetting world with seed {seed}...")
 
         if (not deterministic) and (self.source_yaml_file is not None):
             WorldYamlLoader().from_file(self.source_yaml_file, world=self)

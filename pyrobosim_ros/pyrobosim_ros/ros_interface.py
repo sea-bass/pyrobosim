@@ -890,7 +890,9 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
         for thread in cancel_threads:
             thread.join()
 
-        response.success = self.world.reset(deterministic=request.deterministic)
+        response.success = self.world.reset(
+            deterministic=request.deterministic, seed=request.seed
+        )
         return response
 
 

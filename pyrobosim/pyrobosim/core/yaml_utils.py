@@ -301,8 +301,8 @@ class WorldYamlWriter:
         }
 
         # Extract the location and object metadata.
-        loc_metadata_files = world.get_location_metadata().sources
-        obj_metadata_files = world.get_object_metadata().sources
+        loc_metadata_files = list(world.get_location_metadata().sources)
+        obj_metadata_files = list(world.get_object_metadata().sources)
 
         world_dict["metadata"] = {
             "locations": loc_metadata_files,

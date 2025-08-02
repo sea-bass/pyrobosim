@@ -5,6 +5,11 @@
 # Otherwise, if loaded from YAML, randomly sampled positions will change.
 bool deterministic
 
+# The seed to use for random number generation.
+# This is useful for applications such as machine learning where you want to control randomness.
+# If -1 (default), does not use a fixed seed.
+int64 seed -1
+
 ---
 
 # Response

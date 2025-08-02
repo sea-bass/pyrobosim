@@ -125,7 +125,7 @@ class EntityMetadata:
         self.data = self._load_metadata(filename)
 
         # List of file paths from which metadata has been loaded.
-        self.sources: list[str] = [filename] if filename is not None else []
+        self.sources: set[str] = set([filename]) if filename is not None else set()
 
     def _load_metadata(self, filename: str | None) -> dict[str, Any]:
         """
@@ -176,7 +176,7 @@ class EntityMetadata:
                 raise MetadataConflictException(key, self.data[key], value, filename)
             self.data[key] = value
 
-        self.sources.append(filename)
+        self.sources.add(filename)
 
     def get_categories(self) -> list[str]:
         """
