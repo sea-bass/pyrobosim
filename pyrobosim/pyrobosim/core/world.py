@@ -887,13 +887,16 @@ class World:
         # Else, create an object directly from the specified arguments.
         if "object" in object_config:
             obj: Object = object_config["object"]
-        elif "parent" in object_config:
+        else:
             parent = object_config.get("parent")
 
             if isinstance(parent, str):
                 parent = self.get_entity_by_name(parent)
+            elif (parent is None) and (len(self.locations) > 0):
+                # If no parent was specified, spawn at a random location.
+                parent = np.random.choice(self.get_object_spawns())
 
-            # If it's a location object, pick an object spawn at random.
+            # If the parent is a location object, pick an object spawn at random.
             # Otherwise, if it's an object spawn, use that entity as is.
             if isinstance(parent, Location):
                 parent = np.random.choice(parent.children)
@@ -918,9 +921,6 @@ class World:
             except InvalidEntityCategoryException as exception:
                 self.logger.warning(str(exception))
                 return None
-        else:
-            self.logger.warning("Object instance or parent must be specified.")
-            return None
 
         # Check for duplicate names.
         if obj.name in self.get_object_names():

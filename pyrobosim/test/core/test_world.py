@@ -281,15 +281,6 @@ class TestWorldModeling:
         ]
         assert TestWorldModeling.world.get_object_names(category_list=["water"]) == []
 
-        # Test missing parent
-        result = TestWorldModeling.world.add_object(
-            category="apple",
-            pose=Pose(),
-        )
-        assert result is None
-        assert "Object instance or parent must be specified." in caplog.text
-        caplog.clear()
-
         # Test invalid category
         result = TestWorldModeling.world.add_object(
             category="does_not_exist",

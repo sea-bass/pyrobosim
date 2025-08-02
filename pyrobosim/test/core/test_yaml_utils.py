@@ -258,20 +258,6 @@ class TestWorldYamlLoading:
         loader.add_objects()
         assert len(loader.world.objects) == 0
 
-        # No parent means the object is not added.
-        loader.data = {
-            "objects": [
-                {
-                    "category": "banana",
-                    "pose": [3.2, 3.5, 0.0, 0.707],
-                }
-            ]
-        }
-        loader.add_objects()
-        assert len(loader.world.objects) == 0
-        assert "Object instance or parent must be specified." in caplog.text
-        caplog.clear()
-
         # Invalid object category means the object is not added.
         loader.data = {
             "objects": [
