@@ -277,7 +277,7 @@ objects:
     parent: counter0_right
 
   - category: water
-    parent: [table, desk]
+    parent: desk
 
   - name: soda
     category: coke

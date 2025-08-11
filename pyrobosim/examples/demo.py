@@ -112,7 +112,7 @@ def create_world(multirobot: bool = False) -> World:
     world.add_object(category="apple", parent=table)
     world.add_object(category="water", parent=counter)
     world.add_object(category="banana", parent=counter)
-    world.add_object(category="water", parent=["table", "desk"])
+    world.add_object(category="water", parent="desk")
 
     # Add robots
     grasp_props = ParallelGraspProperties(
