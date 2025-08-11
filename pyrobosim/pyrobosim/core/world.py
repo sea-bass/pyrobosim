@@ -15,7 +15,6 @@ from .room import Room
 from .robot import Robot
 from .types import Entity, EntityMetadata, InvalidEntityCategoryException, set_parent
 from ..planning.actions import ExecutionResult, ExecutionStatus
-from ..utils.knowledge import query_to_entity
 from ..utils.logging import create_logger
 from ..utils.pose import Pose
 from ..utils.polygon import sample_from_polygon, transform_polygon
@@ -911,6 +910,7 @@ class World:
                 parent = np.random.choice(parent)
 
             if isinstance(parent, str):
+                from ..utils.knowledge import query_to_entity
                 parent = query_to_entity(
                     self, parent, mode="location", resolution_strategy="random"
                 )
@@ -1124,7 +1124,9 @@ class World:
 
         robot_pose: Pose | None = None
         if isinstance(loc, list):
-            resolved_loc: Entity | str | None = np.random.choice(loc)
+            resolved_loc: Entity | str | list[Entity | str] | None = np.random.choice(
+                loc
+            )
         else:
             resolved_loc = loc
 
@@ -1148,6 +1150,7 @@ class World:
         else:
             # First, validate that the location is valid for a robot
             if isinstance(resolved_loc, str):
+                from ..utils.knowledge import query_to_entity
                 resolved_loc = query_to_entity(
                     self, resolved_loc, mode="location", resolution_strategy="random"
                 )
