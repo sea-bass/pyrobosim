@@ -54,7 +54,7 @@ robots:
 
   - radius: 0.08
     color: "#CCCC00"
-    location: bathroom
+    location: [bathroom, counter]
     grasping:
       generator: parallel_grasp
       max_width: 0.175
@@ -72,7 +72,7 @@ robots:
   - name: "robot2"
     radius: 0.06
     color: [0.0, 0.8, 0.8]
-    location: bedroom
+    location: [bedroom, desk]
     path_planner:  # Rapidly-expanding Random Tree (RRT) planner
       type: astar
       grid_resolution: 0.05
@@ -277,7 +277,7 @@ objects:
     parent: counter0_right
 
   - category: water
-    parent: my_desk
+    parent: [table, desk]
 
   - name: soda
     category: coke

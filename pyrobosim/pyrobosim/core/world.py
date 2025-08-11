@@ -15,6 +15,7 @@ from .room import Room
 from .robot import Robot
 from .types import Entity, EntityMetadata, InvalidEntityCategoryException, set_parent
 from ..planning.actions import ExecutionResult, ExecutionStatus
+from ..utils.knowledge import query_to_entity
 from ..utils.logging import create_logger
 from ..utils.pose import Pose
 from ..utils.polygon import sample_from_polygon, transform_polygon
@@ -890,6 +891,8 @@ class World:
 
             You can also pass in the parent entity name as the ``parent`` argument, and it will be resolved to an actual entity, if it exists in the world.
 
+            If you pass in a list of parent entities, a random one will be selected.
+
         :return: Object instance if successfully created, else None.
         """
         # If the category name is empty, use "object" as the base name.
@@ -904,8 +907,13 @@ class World:
         else:
             parent = object_config.get("parent")
 
+            if isinstance(parent, list):
+                parent = np.random.choice(parent)
+
             if isinstance(parent, str):
-                parent = self.get_entity_by_name(parent)
+                parent = query_to_entity(
+                    self, parent, mode="location", resolution_strategy="random"
+                )
             elif (parent is None) and (len(self.locations) > 0):
                 # If no parent was specified, spawn at a random location.
                 parent = np.random.choice(self.object_spawns)
@@ -1086,7 +1094,7 @@ class World:
     def add_robot(
         self,
         robot: Robot,
-        loc: Entity | None = None,
+        loc: Entity | str | list[Entity | str] | None = None,
         pose: Pose | None = None,
         show: bool = True,
     ) -> None:
@@ -1095,6 +1103,7 @@ class World:
 
         :param robot: Robot instance to add to the world.
         :param loc: World entity instance or name to place the robot.
+            You can also pass in a list, in which case a random entity will be selected.
         :param pose: Pose at which to add the robot. If not specified, will be sampled.
         :param show: If True (default), causes the GUI to be updated.
             This is mostly for internal usage to speed up reloading.
@@ -1114,7 +1123,12 @@ class World:
             self.set_inflation_radius(new_inflation_radius)
 
         robot_pose: Pose | None = None
-        if loc is None:
+        if isinstance(loc, list):
+            resolved_loc: Entity | str | None = np.random.choice(loc)
+        else:
+            resolved_loc = loc
+
+        if resolved_loc is None:
             if pose is None:
                 # If nothing is specified, sample any valid location in the world
                 robot_pose = self.sample_free_robot_pose_uniform(
@@ -1129,47 +1143,52 @@ class World:
                 robot_pose = pose
             # If we have a valid pose, extract its location
             if robot_pose is not None:
-                loc = self.get_location_from_pose(robot_pose)
+                resolved_loc = self.get_location_from_pose(robot_pose)
 
         else:
             # First, validate that the location is valid for a robot
-            if isinstance(loc, str):
-                loc = self.get_entity_by_name(loc)
+            if isinstance(resolved_loc, str):
+                resolved_loc = query_to_entity(
+                    self, resolved_loc, mode="location", resolution_strategy="random"
+                )
 
-            if isinstance(loc, (Room, Hallway)):
+            if isinstance(resolved_loc, (Room, Hallway)):
                 if pose is None:
                     # Sample a pose in the location
                     x_sample, y_sample = sample_from_polygon(
-                        loc.internal_collision_polygon,
+                        resolved_loc.internal_collision_polygon,
                         max_tries=self.max_object_sample_tries,
                     )
                     if (x_sample is None) or (y_sample is None):
-                        self.logger.warning(f"Could not sample pose in {loc.name}.")
+                        self.logger.warning(
+                            f"Could not sample pose in {resolved_loc.name}."
+                        )
                     else:
                         yaw_sample = np.random.uniform(-np.pi, np.pi)
                         robot_pose = Pose(x=x_sample, y=y_sample, z=0.0, yaw=yaw_sample)
                 else:
                     # Validate that the pose is unoccupied and in the right location
-                    if not loc.is_collision_free(pose):
+                    if not resolved_loc.is_collision_free(pose):
                         self.logger.warning(f"{pose} is occupied")
                     robot_pose = pose
 
-            elif isinstance(loc, (Location, ObjectSpawn)):
-                if isinstance(loc, Location):
+            elif isinstance(resolved_loc, (Location, ObjectSpawn)):
+                if isinstance(resolved_loc, Location):
                     # NOTE: If you don't want a random object spawn, use the object spawn as the input location.
-                    loc = np.random.choice(loc.children)
+                    resolved_loc = np.random.choice(resolved_loc.children)
 
-                assert isinstance(loc, ObjectSpawn)
-                if pose in loc.nav_poses:  # Slim chance of this happening lol
+                assert isinstance(resolved_loc, ObjectSpawn)
+                if (pose is not None) and (pose in resolved_loc.nav_poses):
+                    # Slim chance of this happening lol
                     robot_pose = pose
                 else:
-                    robot_pose = np.random.choice(loc.nav_poses)
+                    robot_pose = np.random.choice(resolved_loc.nav_poses)
             else:
-                self.logger.warning("Invalid location specified.")
+                self.logger.warning(f"Invalid location specified: {loc}.")
 
         # If we got a valid location / pose combination, add the robot
         if robot_pose is not None:
-            robot.location = loc
+            robot.location = resolved_loc
             robot.set_pose(robot_pose)
             robot.world = self
             if robot.path_planner is not None:

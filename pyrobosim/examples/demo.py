@@ -112,7 +112,7 @@ def create_world(multirobot: bool = False) -> World:
     world.add_object(category="apple", parent=table)
     world.add_object(category="water", parent=counter)
     world.add_object(category="banana", parent=counter)
-    world.add_object(category="water", parent=desk)
+    world.add_object(category="water", parent=["table", "desk"])
 
     # Add robots
     grasp_props = ParallelGraspProperties(
@@ -167,7 +167,7 @@ def create_world(multirobot: bool = False) -> World:
             grasp_generator=GraspGenerator(grasp_props),
             partial_obs_objects=args.partial_obs_objects,
         )
-        world.add_robot(robot1, loc="bathroom")
+        world.add_robot(robot1, loc=["bathroom", "counter"])
         planner_config_prm = {
             "collision_check_step_dist": 0.025,
             "max_connection_dist": 1.5,
@@ -185,7 +185,7 @@ def create_world(multirobot: bool = False) -> World:
             grasp_generator=GraspGenerator(grasp_props),
             partial_obs_objects=args.partial_obs_objects,
         )
-        world.add_robot(robot2, loc="bedroom")
+        world.add_robot(robot2, loc=["bedroom", "desk"])
         planner_config_astar = {
             "grid_resolution": 0.05,
             "grid_inflation_radius": 0.15,

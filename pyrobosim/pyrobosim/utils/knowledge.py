@@ -5,6 +5,7 @@ Utilities to reason about entities using world knowledge
 
 import random
 import sys
+from typing import TYPE_CHECKING
 
 from ..core.hallway import Hallway
 from ..core.locations import Location, ObjectSpawn
@@ -12,7 +13,9 @@ from ..core.robot import Robot
 from ..core.room import Room
 from ..core.types import Entity
 from ..core.objects import Object
-from ..core.world import World
+
+if TYPE_CHECKING:
+    from ..core.world import World
 from ..utils.graph_types import Node
 from ..utils.logging import get_global_logger
 

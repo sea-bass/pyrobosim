@@ -541,7 +541,11 @@ def test_yaml_load_and_write_dict() -> None:
     assert robot1_dict.get("max_angular_velocity") == np.inf
     assert robot1_dict.get("max_linear_acceleration") == np.inf
     assert robot1_dict.get("max_angular_acceleration") == np.inf
-    assert robot1_dict.get("location") == "bathroom"
+    assert robot1_dict.get("location") in (
+        "bathroom",
+        "counter0_left",
+        "counter0_right",
+    )
     robot1_pose = world.robots[1].get_pose()
     assert robot1_dict.get("pose").get("position").get("x") == robot1_pose.x
     assert robot1_dict.get("pose").get("position").get("y") == robot1_pose.y
@@ -578,7 +582,7 @@ def test_yaml_load_and_write_dict() -> None:
     assert robot2_dict.get("max_angular_velocity") == np.inf
     assert robot2_dict.get("max_linear_acceleration") == np.inf
     assert robot2_dict.get("max_angular_acceleration") == np.inf
-    assert robot2_dict.get("location") == "bedroom"
+    assert robot2_dict.get("location") in ("bedroom", "my_desk_desktop")
     robot2_pose = world.robots[2].get_pose()
     assert robot2_dict.get("pose").get("position").get("x") == robot2_pose.x
     assert robot2_dict.get("pose").get("position").get("y") == robot2_pose.y
