@@ -116,8 +116,8 @@ class World:
 
         if self.gui is not None:
             self.gui.canvas.show()
+            self.gui.update_buttons_signal.emit()
             self.gui.canvas.draw_signal.emit()
-            self.gui.on_robot_changed()
 
         self.logger.info("Reset world successfully.")
         return True  # No error handling yet
