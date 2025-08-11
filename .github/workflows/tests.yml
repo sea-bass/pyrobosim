@@ -104,6 +104,7 @@ jobs:
   # Build and test with ROS 2
   ros2-test:
     strategy:
+      fail-fast: false
       matrix:
         ros_distro: [humble, jazzy, kilted, rolling]
 

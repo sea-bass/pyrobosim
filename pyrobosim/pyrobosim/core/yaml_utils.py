@@ -174,8 +174,6 @@ class WorldYamlLoader:
             robot = Robot(**robot_args)
 
             loc = robot_data.get("location")
-            if loc is not None:
-                loc = self.world.get_entity_by_name(loc)
             if "pose" in robot_args:
                 pose = construct_pose_from_args(robot_args["pose"], self.world)
             else:
