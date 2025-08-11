@@ -182,6 +182,13 @@ class WorldYamlLoader:
                 pose = None
             self.world.add_robot(robot, loc=loc, pose=pose, show=False)
 
+        # Clean up any unused ROS interface due to resetting the world.
+        new_robot_names = self.world.get_robot_names()
+        if self.world.ros_node is not None:
+            for robot_name in self.world.ros_node.latest_robot_cmds:
+                if robot_name not in new_robot_names:
+                    self.world.ros_node.remove_robot_interfaces(robot_name)
+
     def get_path_planner(self, robot_data: dict[str, Any]) -> Any:
         """Gets path planner to add to a robot."""
         from ..navigation.types import PathPlanner

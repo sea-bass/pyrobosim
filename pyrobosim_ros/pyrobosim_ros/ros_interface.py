@@ -341,13 +341,13 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
         if self.executor is not None:
             self.executor.wake()
 
-    def remove_robot_ros_interfaces(self, robot: Robot) -> None:
+    def remove_robot_ros_interfaces(self, robot: Robot | str) -> None:
         """
         Removes ROS interfaces for a specific robot.
 
-        :param robot: Robot instance.
+        :param robot: Robot instance or name.
         """
-        name = robot.name
+        name = robot if isinstance(robot, str) else robot.name
 
         sub = self.robot_command_subs.get(name)
         if sub:
@@ -359,10 +359,10 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
             self.destroy_publisher(pub)
             del self.robot_state_pubs[name]
 
-        pub_timer = self.robot_state_pub_timers.get(robot.name)
+        pub_timer = self.robot_state_pub_timers.get(name)
         if pub_timer:
             pub_timer.destroy()
-            del self.robot_state_pub_timers[robot.name]
+            del self.robot_state_pub_timers[name]
 
         plan_path_server = self.robot_plan_path_servers.get(name)
         if plan_path_server:
