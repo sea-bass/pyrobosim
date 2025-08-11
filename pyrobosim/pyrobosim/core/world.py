@@ -911,6 +911,7 @@ class World:
 
             if isinstance(parent, str):
                 from ..utils.knowledge import query_to_entity
+
                 parent = query_to_entity(
                     self, parent, mode="location", resolution_strategy="random"
                 )
@@ -1151,6 +1152,7 @@ class World:
             # First, validate that the location is valid for a robot
             if isinstance(resolved_loc, str):
                 from ..utils.knowledge import query_to_entity
+
                 resolved_loc = query_to_entity(
                     self, resolved_loc, mode="location", resolution_strategy="random"
                 )
