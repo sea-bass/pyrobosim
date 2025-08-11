@@ -1125,9 +1125,7 @@ class World:
 
         robot_pose: Pose | None = None
         if isinstance(loc, list):
-            resolved_loc: Entity | str | list[Entity | str] | None = np.random.choice(
-                loc
-            )
+            resolved_loc: Entity | str | None = np.random.choice(loc)
         else:
             resolved_loc = loc
 
