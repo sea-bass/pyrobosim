@@ -1037,6 +1037,7 @@ class Robot(Entity):
                 while self.executing_nav:
                     time.sleep(0.25)  # Delay to wait for navigation
                 result = self.last_nav_result
+                self.world.gui.update_buttons_signal.emit()
             else:
                 result = self.navigate(
                     goal=action.target_location,
