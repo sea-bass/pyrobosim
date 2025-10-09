@@ -88,9 +88,9 @@ RUN . /opt/ros/${ROS_DISTRO}/setup.bash && \
 
 # Remove display warnings
 RUN mkdir /tmp/runtime-root
-ENV XDG_RUNTIME_DIR "/tmp/runtime-root"
+ENV XDG_RUNTIME_DIR="/tmp/runtime-root"
 RUN chmod -R 0700 /tmp/runtime-root
-ENV NO_AT_BRIDGE 1
+ENV NO_AT_BRIDGE=1
 
 # Setup an entrypoint and working folder
 COPY setup /pyrobosim_ws/src/setup
