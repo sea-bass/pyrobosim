@@ -2,7 +2,6 @@
 
 import adjustText
 import numpy as np
-import time
 import threading
 import matplotlib.pyplot as plt
 from matplotlib.artist import Artist
@@ -13,7 +12,7 @@ from matplotlib.patches import PathPatch
 from matplotlib.pyplot import Circle
 from matplotlib.text import Text
 from matplotlib.transforms import Affine2D
-from PySide6.QtCore import QThreadPool, QTimer, Signal
+from PySide6.QtCore import QEventLoop, QThreadPool, QTimer, Signal
 
 from .action_runners import (
     NavRunner,
@@ -118,9 +117,10 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         self.show_object_names = True
         self.show_location_names = True
         self.show_robot_names = True
+        self.should_draw = False
 
         # Connect signals
-        self.draw_signal.connect(self.draw_and_sleep)
+        self.draw_signal.connect(self.queue_draw)
         self.navigate_signal.connect(self.navigate)
         self.show_hallways_signal.connect(self.show_hallways)
         self.show_locations_signal.connect(self.show_locations)
@@ -137,6 +137,10 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
             self.nav_animator = QTimer()
             self.nav_animator.timeout.connect(self.nav_animation_callback)
             self.nav_animator.start(sleep_time_msec)
+
+            self.draw_timer = QTimer()
+            self.draw_timer.timeout.connect(self.draw_and_sleep)
+            self.draw_timer.start(sleep_time_msec)
 
     def toggle_collision_polygons(self) -> None:
         """Shows/hides collision polygons."""
@@ -403,12 +407,24 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         self.axes.autoscale()
         self.axes.axis("equal")
 
+    def queue_draw(self) -> None:
+        """Queues up drawing when needed."""
+        with self.draw_lock:
+            self.should_draw = True
+
     def draw_and_sleep(self) -> None:
         """Redraws the figure and waits a small amount of time."""
+        if not self.isVisible():
+            return
         with self.draw_lock:
-            self.fig.canvas.flush_events()
-            self.fig.canvas.draw()
-            time.sleep(0.005)
+            if self.should_draw:
+                self.fig.canvas.flush_events()
+                self.fig.canvas.draw_idle()
+                self.fig.canvas.repaint()
+                loop = QEventLoop()
+                QTimer.singleShot(5, loop.quit)  # milliseconds
+                loop.exec()
+                self.should_draw = False
 
     def show_planner_and_path(
         self,
@@ -450,7 +466,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                     artist.remove()
                 self.path_planner_artists["path"] = path_planner_artists.get("path", [])
 
-        self.draw_and_sleep()
+        self.draw_signal.emit()
 
     def nav_animation_callback(self) -> None:
         """Timer callback function to animate navigating robots."""
@@ -470,8 +486,8 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                 self.show_world_state(cur_robot)
                 world.gui.set_buttons_during_action(False)
 
-        self.update_robots_plot()
-        self.draw_and_sleep()
+            self.update_robots_plot()
+            self.draw_signal.emit()
 
     def update_robots_plot(self) -> None:
         """Updates the robot visualization graphics objects."""
