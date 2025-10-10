@@ -12,17 +12,19 @@ from PySide6.QtGui import QFont, QScreen
 from matplotlib.backends.qt_compat import QtCore
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
 
+from .options import WorldCanvasOptions
 from ..core.robot import Robot
 from ..core.world import World
 
 
-def start_gui(world: World) -> None:
+def start_gui(world: World, options: WorldCanvasOptions = WorldCanvasOptions()) -> None:
     """
     Helper function to start a PyRoboSim GUI for a world model.
 
     :param world: World object to attach to the GUI.
+    :param options: A world canvas options dataclass instance.
     """
-    app = PyRoboSimGUI(world, sys.argv)
+    app = PyRoboSimGUI(world, sys.argv, options=options)
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     sys.exit(app.exec_())
 
@@ -30,17 +32,24 @@ def start_gui(world: World) -> None:
 class PyRoboSimGUI(QtWidgets.QApplication):  # type: ignore [misc]
     """Main PyRoboSim GUI class."""
 
-    def __init__(self, world: World, args: Any, show: bool = True) -> None:
+    def __init__(
+        self,
+        world: World,
+        args: Any,
+        show: bool = True,
+        options: WorldCanvasOptions = WorldCanvasOptions(),
+    ) -> None:
         """
         Creates an instance of the PyRoboSim GUI.
 
         :param world: World object to attach to the GUI.
         :param args: System arguments, needed by the QApplication constructor.
         :param show: If true (default), shows the GUI. Otherwise runs headless for testing.
+        :param options: A world canvas options dataclass instance.
         """
         super(PyRoboSimGUI, self).__init__(args)
         self.world = world
-        self.main_window = PyRoboSimMainWindow(self.world, show)
+        self.main_window = PyRoboSimMainWindow(self.world, show=show, options=options)
         if show:
             self.main_window.show()
 
@@ -52,13 +61,19 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
     """Signal for updating UI button state."""
 
     def __init__(
-        self, world: World, show: bool = True, *args: Any, **kwargs: Any
+        self,
+        world: World,
+        show: bool = True,
+        options: WorldCanvasOptions = WorldCanvasOptions(),
+        *args: Any,
+        **kwargs: Any,
     ) -> None:
         """
         Creates an instance of the PyRoboSim application main window.
 
         :param world: World object to attach.
         :param show: If true (default), shows the GUI. Otherwise runs headless for testing.
+        :param options: A world canvas options dataclass instance.
         """
         from .world_canvas import WorldCanvas
 
@@ -68,7 +83,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
         self.setWindowTitle("PyRoboSim")
         self.set_window_dims()
 
-        self.canvas = WorldCanvas(self, world, show)
+        self.canvas = WorldCanvas(self, world, show=show, options=options)
         self.set_world(world)
 
         self.create_layout()
