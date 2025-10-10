@@ -3,8 +3,9 @@ Utilities to reason about entities using world knowledge
 (that is, metadata about locations and objects).
 """
 
-import random
 import sys
+
+import numpy as np
 
 from ..core.hallway import Hallway
 from ..core.locations import Location, ObjectSpawn
@@ -42,7 +43,7 @@ def apply_resolution_strategy(
     if resolution_strategy == "first":
         return entity_list[0]
     elif resolution_strategy == "random":
-        return random.choice(entity_list)
+        return np.random.choice(entity_list)  # type: ignore[no-any-return]
     elif resolution_strategy == "nearest":
         if not robot:
             get_global_logger().warning(
