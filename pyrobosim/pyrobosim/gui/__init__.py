@@ -9,4 +9,5 @@ picking, and placing objects.
 """
 
 from .main import *
+from .options import *
 from .world_canvas import *

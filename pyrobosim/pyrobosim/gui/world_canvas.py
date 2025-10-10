@@ -1,8 +1,9 @@
 """Utilities for displaying a PyRoboSim world in a figure canvas."""
 
+import threading
+
 import adjustText
 import numpy as np
-import threading
 import matplotlib.pyplot as plt
 from matplotlib.artist import Artist
 from matplotlib.figure import Figure
@@ -22,7 +23,9 @@ from .action_runners import (
     OpenRunner,
     CloseRunner,
 )
+
 from .main import PyRoboSimMainWindow
+from .options import WorldCanvasOptions
 from ..core.objects import Object
 from ..core.robot import Robot
 from ..core.world import World
@@ -72,8 +75,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         main_window: PyRoboSimMainWindow,
         world: World,
         show: bool = True,
-        dpi: int = 100,
-        animation_dt: float = 0.1,
+        options: WorldCanvasOptions = WorldCanvasOptions(),
     ) -> None:
         """
         Creates an instance of a PyRoboSim figure canvas.
@@ -81,23 +83,21 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         :param main_window: The main window object, needed for bookkeeping.
         :param world: World object to attach.
         :param show: If true (default), shows the GUI. Otherwise runs headless for testing.
-        :param dpi: DPI for the figure.
-        :param animation_dt: Time step for animations (seconds).
+        :param options: An options dataclass instance.
         """
-        self.fig = Figure(dpi=dpi, tight_layout=True)
+        self.fig = Figure(dpi=options.dpi, tight_layout=True)
         self.axes = self.fig.add_subplot(111)
         super(WorldCanvas, self).__init__(self.fig)
         plt.ion()
 
         self.main_window = main_window
         self.world = world
+        self.options = options
 
         self.displayed_path = None
         self.displayed_path_start = None
         self.displayed_path_goal = None
-
-        # Display/animation properties
-        self.animation_dt = animation_dt
+        self.should_draw = False
 
         self.robot_bodies: list[Circle] = []
         self.robot_dirs: list[Line2D] = []
@@ -112,12 +112,6 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         self.location_patches: list[PathPatch] = []
         self.location_texts: list[Text] = []
         self.path_planner_artists: dict[str, Artist] = {"graph": [], "path": []}
-        self.show_collision_polygons = False
-        self.show_room_names = True
-        self.show_object_names = True
-        self.show_location_names = True
-        self.show_robot_names = True
-        self.should_draw = False
 
         # Connect signals
         self.draw_signal.connect(self.queue_draw)
@@ -133,7 +127,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
 
         # Start timer for animating robot navigation state.
         if show:
-            sleep_time_msec = int(1000.0 * self.animation_dt)
+            sleep_time_msec = int(1000.0 * self.options.animation_dt)
             self.nav_animator = QTimer()
             self.nav_animator.timeout.connect(self.nav_animation_callback)
             self.nav_animator.start(sleep_time_msec)
@@ -144,9 +138,9 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
 
     def toggle_collision_polygons(self) -> None:
         """Shows/hides collision polygons."""
-        self.show_collision_polygons = not self.show_collision_polygons
+        self.options.show_collision_polygons = not self.options.show_collision_polygons
         self.world.logger.info(
-            ("Enabling" if self.show_collision_polygons else "Disabling")
+            ("Enabling" if self.options.show_collision_polygons else "Disabling")
             + " collision polygons"
         )
         self.show_hallways()
@@ -154,27 +148,27 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
 
     def toggle_room_names(self) -> None:
         """Shows/hides room names."""
-        self.show_room_names = not self.show_room_names
+        self.options.show_room_names = not self.options.show_room_names
         self.world.logger.info(
-            ("Enabling" if self.show_room_names else "Disabling") + " room names"
+            ("Enabling" if self.options.show_room_names else "Disabling") + " room names"
         )
         self.show_rooms()
         self.draw_signal.emit()
 
     def toggle_object_names(self) -> None:
         """Shows/hides object names."""
-        self.show_object_names = not self.show_object_names
+        self.options.show_object_names = not self.options.show_object_names
         self.world.logger.info(
-            ("Enabling" if self.show_object_names else "Disabling") + " object names"
+            ("Enabling" if self.options.show_object_names else "Disabling") + " object names"
         )
         self.show_objects()
         self.draw_signal.emit()
 
     def toggle_location_names(self) -> None:
         """Shows/hides location names."""
-        self.show_location_names = not self.show_location_names
+        self.options.show_location_names = not self.options.show_location_names
         self.world.logger.info(
-            ("Enabling" if self.show_location_names else "Disabling")
+            ("Enabling" if self.options.show_location_names else "Disabling")
             + " location names"
         )
         self.show_locations()
@@ -182,9 +176,9 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
 
     def toggle_robot_names(self) -> None:
         """Shows/hides robot names."""
-        self.show_robot_names = not self.show_robot_names
+        self.options.show_robot_names = not self.options.show_robot_names
         self.world.logger.info(
-            ("Enabling" if self.show_robot_names else "Disabling") + " robot names"
+            ("Enabling" if self.options.show_robot_names else "Disabling") + " robot names"
         )
         self.show_robots()
         self.draw_signal.emit()
@@ -245,7 +239,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                 self.robot_dirs.append(robot_dir)
                 self.robot_lengths.append(robot_length)
 
-                if self.show_robot_names:
+                if self.options.show_robot_names:
                     x = p.x
                     y = p.y - 2.0 * robot.radius
                     robot.viz_text = self.axes.text(
@@ -299,7 +293,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                     closed_patch = h.get_closed_patch()
                     self.axes.add_patch(closed_patch)
                     self.hallway_patches.append(closed_patch)
-                elif self.show_collision_polygons:
+                elif self.options.show_collision_polygons:
                     coll_patch = h.get_collision_patch()
                     self.axes.add_patch(coll_patch)
                     self.hallway_patches.append(coll_patch)
@@ -323,7 +317,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
 
             for room in self.world.rooms:
                 self.axes.add_patch(room.viz_patch)
-                if self.show_room_names:
+                if self.options.show_room_names:
                     viz_text = self.axes.text(
                         room.centroid[0],
                         room.centroid[1],
@@ -336,7 +330,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                     )
                     self.room_texts.append(viz_text)
 
-                if self.show_collision_polygons:
+                if self.options.show_collision_polygons:
                     coll_patch = room.get_collision_patch()
                     self.axes.add_patch(coll_patch)
                     self.room_patches.append(coll_patch)
@@ -360,7 +354,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
 
             for loc in self.world.locations:
                 self.axes.add_patch(loc.viz_patch)
-                if self.show_location_names:
+                if self.options.show_location_names:
                     loc_text = self.axes.text(
                         loc.pose.x,
                         loc.pose.y,
@@ -402,7 +396,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
 
             for obj in known_objects:
                 self.axes.add_patch(obj.viz_patch)
-                if self.show_object_names:
+                if self.options.show_object_names:
                     xmin, ymin, xmax, ymax = obj.polygon.bounds
                     x = obj.pose.x + 1.0 * (xmax - xmin)
                     y = obj.pose.y + 1.0 * (ymax - ymin)
