@@ -23,7 +23,6 @@ from .action_runners import (
     OpenRunner,
     CloseRunner,
 )
-
 from .main import PyRoboSimMainWindow
 from .options import WorldCanvasOptions
 from ..core.objects import Object

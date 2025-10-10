@@ -12,6 +12,7 @@ class WorldCanvasOptions:
 
     animation_dt: float = 0.1
     """ The animation timer period, in seconds."""
+
     show_collision_polygons: bool = False
     """ Whether to show collision polygons. """
 
