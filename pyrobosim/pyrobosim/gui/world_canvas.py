@@ -194,13 +194,25 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         with self.draw_lock:
             len(self.world.robots)
             for body in self.robot_bodies:
-                body.remove()
+                try:
+                    body.remove()
+                except ValueError:
+                    pass
             for dir in self.robot_dirs:
-                dir.remove()
+                try:
+                    dir.remove()
+                except ValueError:
+                    pass
             for text in self.robot_texts:
-                text.remove()
+                try:
+                    text.remove()
+                except ValueError:
+                    pass
             for artist in self.robot_sensor_artists:
-                artist.remove()
+                try:
+                    artist.remove()
+                except ValueError:
+                    pass
             self.robot_bodies = []
             self.robot_dirs = []
             self.robot_lengths = []
@@ -266,7 +278,10 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         """Draws hallways in the world."""
         with self.draw_lock:
             for hallway in self.hallway_patches:
-                hallway.remove()
+                try:
+                    hallway.remove()
+                except ValueError:
+                    pass
 
             self.hallway_patches = [h.viz_patch for h in self.world.hallways]
 
@@ -293,9 +308,15 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         """Draws rooms in the world."""
         with self.draw_lock:
             for room in self.room_patches:
-                room.remove()
+                try:
+                    room.remove()
+                except ValueError:
+                    pass
             for text in self.room_texts:
-                text.remove()
+                try:
+                    text.remove()
+                except ValueError:
+                    pass
 
             self.room_patches = [room.viz_patch for room in self.world.rooms]
             self.room_texts = []
@@ -324,9 +345,15 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         """Draws locations and object spawns in the world."""
         with self.draw_lock:
             for location in self.location_patches:
-                location.remove()
+                try:
+                    location.remove()
+                except ValueError:
+                    pass
             for text in self.location_texts:
-                text.remove()
+                try:
+                    text.remove()
+                except ValueError:
+                    pass
 
             self.location_patches = [loc.viz_patch for loc in self.world.locations]
             self.location_texts = []
@@ -357,9 +384,15 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         """Draws objects and their associated texts."""
         with self.draw_lock:
             for obj_patch in self.obj_patches:
-                obj_patch.remove()
+                try:
+                    obj_patch.remove()
+                except ValueError:
+                    pass
             for obj_text in self.obj_texts:
-                obj_text.remove()
+                try:
+                    obj_text.remove()
+                except ValueError:
+                    pass
 
             robot = self.main_window.get_current_robot()
             if robot:
@@ -457,13 +490,19 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                 )
 
                 for artist in self.path_planner_artists["graph"]:
-                    artist.remove()
+                    try:
+                        artist.remove()
+                    except ValueError:
+                        pass
                 self.path_planner_artists["graph"] = path_planner_artists.get(
                     "graph", []
                 )
 
                 for artist in self.path_planner_artists["path"]:
-                    artist.remove()
+                    try:
+                        artist.remove()
+                    except ValueError:
+                        pass
                 self.path_planner_artists["path"] = path_planner_artists.get("path", [])
 
         self.draw_signal.emit()
