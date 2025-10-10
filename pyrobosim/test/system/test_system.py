@@ -110,6 +110,7 @@ class TestSystem:
             )
             window.goal_textbox.setText(obj_query)
             window.on_pick_click()
+            time.sleep(0.2)
             assert robot.manipulated_object == expected_object
 
             # Navigate to place location
@@ -117,6 +118,7 @@ class TestSystem:
 
             # Place an object
             window.on_place_click()
+            time.sleep(0.2)
             assert robot.manipulated_object is None
 
     @pytest.mark.dependency(name="test_open_close", depends=["test_pick_detect_place"])  # type: ignore[misc]
@@ -136,10 +138,12 @@ class TestSystem:
 
             # Close the location and verify that it's closed.
             window.on_close_click()
+            time.sleep(0.2)
             assert not location.is_open
 
             # Open the location and verify that it's open.
             window.on_open_click()
+            time.sleep(0.2)
             assert location.is_open
 
     @pytest.mark.dependency(name="test_nav_cancel", depends=["test_open_close"])  # type: ignore[misc]
