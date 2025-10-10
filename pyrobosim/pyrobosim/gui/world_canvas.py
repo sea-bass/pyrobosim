@@ -150,7 +150,8 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         """Shows/hides room names."""
         self.options.show_room_names = not self.options.show_room_names
         self.world.logger.info(
-            ("Enabling" if self.options.show_room_names else "Disabling") + " room names"
+            ("Enabling" if self.options.show_room_names else "Disabling")
+            + " room names"
         )
         self.show_rooms()
         self.draw_signal.emit()
@@ -159,7 +160,8 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         """Shows/hides object names."""
         self.options.show_object_names = not self.options.show_object_names
         self.world.logger.info(
-            ("Enabling" if self.options.show_object_names else "Disabling") + " object names"
+            ("Enabling" if self.options.show_object_names else "Disabling")
+            + " object names"
         )
         self.show_objects()
         self.draw_signal.emit()
@@ -178,7 +180,8 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
         """Shows/hides robot names."""
         self.options.show_robot_names = not self.options.show_robot_names
         self.world.logger.info(
-            ("Enabling" if self.options.show_robot_names else "Disabling") + " robot names"
+            ("Enabling" if self.options.show_robot_names else "Disabling")
+            + " robot names"
         )
         self.show_robots()
         self.draw_signal.emit()

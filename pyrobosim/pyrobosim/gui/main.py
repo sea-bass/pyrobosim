@@ -32,7 +32,13 @@ def start_gui(world: World, options: WorldCanvasOptions = WorldCanvasOptions()) 
 class PyRoboSimGUI(QtWidgets.QApplication):  # type: ignore [misc]
     """Main PyRoboSim GUI class."""
 
-    def __init__(self, world: World, args: Any, show: bool = True, options: WorldCanvasOptions = WorldCanvasOptions()) -> None:
+    def __init__(
+        self,
+        world: World,
+        args: Any,
+        show: bool = True,
+        options: WorldCanvasOptions = WorldCanvasOptions(),
+    ) -> None:
         """
         Creates an instance of the PyRoboSim GUI.
 
@@ -55,7 +61,12 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
     """Signal for updating UI button state."""
 
     def __init__(
-        self, world: World, show: bool = True, options: WorldCanvasOptions = WorldCanvasOptions(), *args: Any, **kwargs: Any
+        self,
+        world: World,
+        show: bool = True,
+        options: WorldCanvasOptions = WorldCanvasOptions(),
+        *args: Any,
+        **kwargs: Any,
     ) -> None:
         """
         Creates an instance of the PyRoboSim application main window.
