@@ -38,6 +38,7 @@ Below is a list of known projects that use PyRoboSim.
 * `AutoAPMS: A unified software framework for creating behavior-based robotic applications <https://github.com/robin-mueller/auto-apms>`_, by Robin Müller (2025)
 * `Collaborative Large Language Models for Task Allocation in Construction Robots <https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5097309>`_, by Samuel A. Prieto and Borja García de Soto (2025)
 * `Replacing Large Language Models for Personalized Robot Behavior <https://digital.wpi.edu/concern/etds/5999n813z>`_, by Tuomas Pyorre (2025)
+* `Reinforcement Learning for Deliberation in ROS 2 <https://github.com/ros-wg-delib/rl_deliberation>`_, by Christian Henkel and Sebastian Castro (2025)
 
 If you have something to add, please submit a pull request!
 
