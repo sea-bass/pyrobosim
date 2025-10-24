@@ -1,7 +1,7 @@
 """General package utilities."""
 
-import os
 import re
+from pathlib import Path
 from typing import Sequence
 
 from matplotlib.colors import CSS4_COLORS, to_rgb
@@ -22,18 +22,16 @@ def get_data_folder() -> str:
         # If running as a ROS 2 node, get the data folder from the package share directory.
         from ament_index_python.packages import get_package_share_directory
 
-        data_folder = os.path.join(get_package_share_directory("pyrobosim"), "data")
+        data_folder = Path(get_package_share_directory("pyrobosim")) / "data"
     except:
         # Else, assume it's relative to the file's current directory.
-        data_folder = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "..", "data"
-        )
+        data_folder = Path(__file__).parent.parent / "data"
 
-    return data_folder
+    return data_folder.as_posix()
 
 
 def replace_special_yaml_tokens(
-    in_text: str | list[str], root_dir: str | None = None
+    in_text: str | list[str], root_dir: Path | str | None = None
 ) -> str | list[str]:
     """
     Replaces special tokens permitted in our YAML specification.
@@ -44,11 +42,13 @@ def replace_special_yaml_tokens(
     :return: YAML text(s) with all special tokens substituted.
     """
     if root_dir is None:
-        root_dir = os.getcwd()
+        root_dir = Path.cwd()
+    if isinstance(root_dir, Path):
+        root_dir = root_dir.as_posix()
 
     def process_text(text: str) -> str:
         """Helper function to replace tokens in a single metadata string."""
-        text = text.replace("$HOME", os.environ["HOME"])
+        text = text.replace("$HOME", Path.home().as_posix())
         text = text.replace("$DATA", get_data_folder())
         text = text.replace("$PWD", root_dir)
         return text
