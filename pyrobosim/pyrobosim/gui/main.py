@@ -314,6 +314,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
             self.reset_path_planner_button.setEnabled(False)
             self.rand_pose_button.setEnabled(False)
 
+        self.canvas.update_robots_plot()
         self.canvas.draw_signal.emit()
 
     def set_buttons_during_action(self, state: bool) -> None:
