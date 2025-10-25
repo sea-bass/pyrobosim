@@ -117,7 +117,6 @@ class World:
         if self.gui is not None:
             self.gui.canvas.show()
             self.gui.update_buttons_signal.emit()
-            self.gui.canvas.draw_signal.emit()
 
         self.logger.info("Reset world successfully.")
         return True  # No error handling yet
@@ -1236,6 +1235,7 @@ class World:
 
         self.robots.remove(resolved_robot)
         self.name_to_entity.pop(resolved_robot.name)
+        resolved_robot.stop_sensor_threads()
         if show and self.gui is not None:
             self.gui.canvas.show_robots_signal.emit()
         if (self.ros_node is not None) and remove_ros_interfaces:

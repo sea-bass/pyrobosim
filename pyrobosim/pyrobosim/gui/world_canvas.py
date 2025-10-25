@@ -430,6 +430,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
 
         # Robots, along with their paths and planner graphs
         self.show_robots()
+        self.update_robots_plot()
         if len(self.world.robots) > 0:
             self.show_planner_and_path(robot=self.world.robots[0])
 
@@ -513,16 +514,15 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
             return
 
         # Check if any robot is currently navigating.
-        nav_status = [robot.is_moving() for robot in world.robots]
-        if any(nav_status):
+        if any(robot.is_moving() for robot in world.robots):
             # Show the state of the currently selected robot
             cur_robot = world.gui.get_current_robot()
             if cur_robot is not None and cur_robot.is_moving():
                 self.show_world_state(cur_robot)
                 world.gui.set_buttons_during_action(False)
 
-            self.update_robots_plot()
-            self.draw_signal.emit()
+        self.update_robots_plot()
+        self.draw_signal.emit()
 
     def update_robots_plot(self) -> None:
         """Updates the robot visualization graphics objects."""
