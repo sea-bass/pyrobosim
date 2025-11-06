@@ -39,6 +39,7 @@ Below is a list of known projects that use PyRoboSim.
 * `Collaborative Large Language Models for Task Allocation in Construction Robots <https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5097309>`_, by Samuel A. Prieto and Borja García de Soto (2025)
 * `Replacing Large Language Models for Personalized Robot Behavior <https://digital.wpi.edu/concern/etds/5999n813z>`_, by Tuomas Pyorre (2025)
 * `Reinforcement Learning for Deliberation in ROS 2 <https://github.com/ros-wg-delib/rl_deliberation>`_, by Christian Henkel and Sebastian Castro (2025)
+* `BT4.x, Groot2 y BTROS2: Orquestación avanzada en ROS 2 <https://github.com/Eurecat/BTWorkshop_ROSCON_ES25>`_, by Davide Faconti and Devis Dal Moro (2025)
 
 If you have something to add, please submit a pull request!
 
