@@ -3,7 +3,7 @@
 import itertools
 import time
 from threading import Lock
-from typing import Any, Sequence
+from typing import Any, Sequence, TYPE_CHECKING
 
 import numpy as np
 import shapely
@@ -33,6 +33,8 @@ from ..utils.pose import Pose
 from ..utils.general import parse_color
 from ..utils.world_collision import check_occupancy
 
+if TYPE_CHECKING:
+    from ..ai.policies import RobotPolicy
 
 class Robot(Entity):
     """Representation of a robot in the world."""
@@ -57,6 +59,7 @@ class Robot(Entity):
         partial_obs_hallways: bool = False,
         action_execution_options: dict[str, ExecutionOptions] = {},
         initial_battery_level: float = 100.0,
+        policy: "RobotPolicy | None" = None,
     ) -> None:
         """
         Creates a robot instance.
@@ -158,6 +161,7 @@ class Robot(Entity):
         self.canceling_execution = False
         self.initial_battery_level = initial_battery_level
         self.battery_level = initial_battery_level
+        self.policy = policy
 
         self.logger.info("Created robot.")
 
@@ -212,6 +216,56 @@ class Robot(Entity):
             path_executor.robot = self
             if self.partial_obs_hallways:
                 path_executor.validate_sensors_for_partial_obs_hallways()
+
+    def set_policy(self, policy: "RobotPolicy | None") -> None:
+        """
+        Sets a high-level decision policy for the robot.
+
+        :param policy: Policy instance implementing ``propose_plan``.
+        """
+        self.policy = policy
+
+    def execute_policy_step(self, delay: float = 0.5) -> tuple[ExecutionResult, int]:
+        """
+        Query the policy for a task plan and execute it.
+
+        :param delay: Delay between actions when executing the returned plan.
+        :return: Tuple of execution result and number of completed actions.
+        """
+        if self.policy is None:
+            message = "Robot policy is not set."
+            self.logger.warning(message)
+            return (
+                ExecutionResult(status=ExecutionStatus.INVALID_ACTION, message=message),
+                0,
+            )
+
+        if self.world is None:
+            message = "Robot must belong to a world before executing a policy step."
+            self.logger.warning(message)
+            return (
+                ExecutionResult(status=ExecutionStatus.INVALID_ACTION, message=message),
+                0,
+            )
+
+        try:
+            plan = self.policy.propose_plan(self.world, self)
+        except Exception as exc:
+            message = f"Policy failed to produce a plan: {exc}"
+            self.logger.error(message)
+            return (
+                ExecutionResult(status=ExecutionStatus.INVALID_ACTION, message=message),
+                0,
+            )
+        if plan is None or plan.size() == 0:
+            message = "Policy did not provide any actions."
+            self.logger.info(message)
+            return (
+                ExecutionResult(status=ExecutionStatus.INVALID_ACTION, message=message),
+                0,
+            )
+
+        return self.execute_plan(plan, delay=delay)
 
     def set_sensors(self, sensors: dict[str, Sensor] | None) -> None:
         """

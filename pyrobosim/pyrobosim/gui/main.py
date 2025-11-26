@@ -12,19 +12,17 @@ from PySide6.QtGui import QFont, QScreen
 from matplotlib.backends.qt_compat import QtCore
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
 
-from .options import WorldCanvasOptions
 from ..core.robot import Robot
 from ..core.world import World
 
 
-def start_gui(world: World, options: WorldCanvasOptions = WorldCanvasOptions()) -> None:
+def start_gui(world: World) -> None:
     """
     Helper function to start a PyRoboSim GUI for a world model.
 
     :param world: World object to attach to the GUI.
-    :param options: A world canvas options dataclass instance.
     """
-    app = PyRoboSimGUI(world, sys.argv, options=options)
+    app = PyRoboSimGUI(world, sys.argv)
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     sys.exit(app.exec_())
 
@@ -32,24 +30,17 @@ def start_gui(world: World, options: WorldCanvasOptions = WorldCanvasOptions()) 
 class PyRoboSimGUI(QtWidgets.QApplication):  # type: ignore [misc]
     """Main PyRoboSim GUI class."""
 
-    def __init__(
-        self,
-        world: World,
-        args: Any,
-        show: bool = True,
-        options: WorldCanvasOptions = WorldCanvasOptions(),
-    ) -> None:
+    def __init__(self, world: World, args: Any, show: bool = True) -> None:
         """
         Creates an instance of the PyRoboSim GUI.
 
         :param world: World object to attach to the GUI.
         :param args: System arguments, needed by the QApplication constructor.
         :param show: If true (default), shows the GUI. Otherwise runs headless for testing.
-        :param options: A world canvas options dataclass instance.
         """
         super(PyRoboSimGUI, self).__init__(args)
         self.world = world
-        self.main_window = PyRoboSimMainWindow(self.world, show=show, options=options)
+        self.main_window = PyRoboSimMainWindow(self.world, show)
         if show:
             self.main_window.show()
 
@@ -61,19 +52,13 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
     """Signal for updating UI button state."""
 
     def __init__(
-        self,
-        world: World,
-        show: bool = True,
-        options: WorldCanvasOptions = WorldCanvasOptions(),
-        *args: Any,
-        **kwargs: Any,
+        self, world: World, show: bool = True, *args: Any, **kwargs: Any
     ) -> None:
         """
         Creates an instance of the PyRoboSim application main window.
 
         :param world: World object to attach.
         :param show: If true (default), shows the GUI. Otherwise runs headless for testing.
-        :param options: A world canvas options dataclass instance.
         """
         from .world_canvas import WorldCanvas
 
@@ -83,7 +68,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
         self.setWindowTitle("PyRoboSim")
         self.set_window_dims()
 
-        self.canvas = WorldCanvas(self, world, show=show, options=options)
+        self.canvas = WorldCanvas(self, world, show)
         self.set_world(world)
 
         self.create_layout()
@@ -182,6 +167,16 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
         self.goal_textbox = QtWidgets.QLineEdit()
         self.queries_layout.addWidget(self.goal_textbox, 6)
 
+        self.llm_prompt_layout = QtWidgets.QHBoxLayout()
+        llm_prompt_label = QtWidgets.QLabel("LLM directive:")
+        llm_prompt_label.setFont(bold_font)
+        self.llm_prompt_layout.addWidget(llm_prompt_label)
+        self.llm_prompt_textbox = QtWidgets.QLineEdit()
+        self.llm_prompt_textbox.setPlaceholderText(
+            "Describe what you want the robot to accomplish (optional)."
+        )
+        self.llm_prompt_layout.addWidget(self.llm_prompt_textbox)
+
         # Action buttons
         self.action_layout = QtWidgets.QGridLayout()
         self.nav_button = QtWidgets.QPushButton("Navigate")
@@ -202,6 +197,9 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
         self.close_button = QtWidgets.QPushButton("Close")
         self.close_button.clicked.connect(self.on_close_click)
         self.action_layout.addWidget(self.close_button, 1, 2)
+        self.llm_step_button = QtWidgets.QPushButton("LLM Step")
+        self.llm_step_button.clicked.connect(self.on_llm_step_click)
+        self.action_layout.addWidget(self.llm_step_button, 2, 0, 1, 3)
 
         # World layout (Matplotlib affordances)
         self.world_layout = QtWidgets.QVBoxLayout()
@@ -262,6 +260,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
         self.main_layout = QtWidgets.QVBoxLayout(self.main_widget)
         self.main_layout.addLayout(self.buttons_layout)
         self.main_layout.addLayout(self.queries_layout)
+        self.main_layout.addLayout(self.llm_prompt_layout)
         self.main_layout.addLayout(self.action_layout)
         self.main_layout.addLayout(self.world_layout)
         self.main_layout.addLayout(self.other_options_layout)
@@ -289,6 +288,7 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
             at_open_object_spawn = robot.at_object_spawn() and is_location_open
             can_pick = robot.manipulated_object is None
             can_open_close = robot.at_openable_location() and can_pick
+            has_policy = robot.policy is not None
 
             self.nav_button.setEnabled(not is_moving)
             self.pick_button.setEnabled(can_pick and at_open_object_spawn)
@@ -300,6 +300,10 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
             self.reset_world_button.setEnabled(not is_moving)
             self.reset_path_planner_button.setEnabled(not is_moving)
             self.rand_pose_button.setEnabled(not is_moving)
+            self.llm_step_button.setEnabled(
+                has_policy and not (robot.executing_plan or robot.executing_action or is_moving)
+            )
+            self.llm_prompt_textbox.setEnabled(has_policy)
 
             self.canvas.show_world_state(robot)
         else:
@@ -313,8 +317,9 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
             self.reset_world_button.setEnabled(True)
             self.reset_path_planner_button.setEnabled(False)
             self.rand_pose_button.setEnabled(False)
+            self.llm_step_button.setEnabled(False)
+            self.llm_prompt_textbox.setEnabled(False)
 
-        self.canvas.update_robots_plot()
         self.canvas.draw_signal.emit()
 
     def set_buttons_during_action(self, state: bool) -> None:
@@ -324,7 +329,8 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
 
         :param state: Desired button state (True to enable, False to disable)
         """
-        if self.get_current_robot() is not None:
+        robot = self.get_current_robot()
+        if robot is not None:
             self.nav_button.setEnabled(state)
             self.pick_button.setEnabled(state)
             self.place_button.setEnabled(state)
@@ -335,6 +341,8 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
             self.cancel_action_button.setEnabled(not state)
             self.reset_world_button.setEnabled(state)
             self.reset_path_planner_button.setEnabled(state)
+            self.llm_step_button.setEnabled(state and robot.policy is not None)
+            self.llm_prompt_textbox.setEnabled(robot.policy is not None and state)
 
     ####################
     # Button Callbacks #
@@ -438,6 +446,32 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
             self.update_buttons_signal.emit()
         elif (robot is None) and self.goal_textbox.text():
             self.world.close_location(self.goal_textbox.text())
+
+    def on_llm_step_click(self) -> None:
+        """Callback to trigger an LLM-driven policy step."""
+        robot = self.get_current_robot()
+        if robot is None:
+            self.world.logger.warning("No robot selected for LLM control.")
+            return
+        if robot.policy is None:
+            self.world.logger.warning(
+                "Current robot does not have an LLM policy. Launch the demo with --llm-model."
+            )
+            return
+        if robot.is_busy():
+            self.world.logger.info("Robot is busy executing another action.")
+            return
+
+        directive = self.llm_prompt_textbox.text()
+        if hasattr(robot.policy, "set_user_directive"):
+            robot.policy.set_user_directive(directive)
+
+        self.set_buttons_during_action(False)
+        try:
+            robot.execute_policy_step()
+        finally:
+            self.set_buttons_during_action(True)
+            self.update_buttons_signal.emit()
 
     def on_toggle_collision_polygons(self, state: int) -> None:
         """
