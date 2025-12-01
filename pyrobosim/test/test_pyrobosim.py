@@ -2,12 +2,12 @@
 Basic sanity checks for PyRoboSim module.
 """
 
-import importlib
 from importlib.metadata import version
+from importlib.util import find_spec
 
 
 def test_import() -> None:
-    assert importlib.util.find_spec("pyrobosim")
+    assert find_spec("pyrobosim")
 
 
 def test_version() -> None:
