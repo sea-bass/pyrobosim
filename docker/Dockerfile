@@ -37,15 +37,11 @@ RUN setup/configure_pddlstream.bash
 ENV PIP_BREAK_SYSTEM_PACKAGES=1
 COPY docs/python_docs_requirements.txt docs/
 COPY test/python_test_requirements.txt test/
-COPY wheels/ /tmp/wheels/
 RUN pip3 install -U pip setuptools wheel && \
     pip3 install -U "packaging>=24.1" "scikit-build-core>=0.10"
-RUN pip3 install --no-build-isolation -v "llama-cpp-python==0.3.16" || true
+RUN pip3 install --no-build-isolation -v "llama-cpp-python==0.3.16"
 RUN pip3 install -r docs/python_docs_requirements.txt && \
     pip3 install -r test/python_test_requirements.txt
-RUN if ls /tmp/wheels/*.whl 1>/dev/null 2>&1; then \
-        pip3 install --no-cache-dir /tmp/wheels/*.whl; \
-    fi
 
 # Copy the rest of the source directory and install PyRoboSim
 COPY . /opt/pyrobosim/
@@ -84,16 +80,12 @@ ENV PIP_BREAK_SYSTEM_PACKAGES=1
 COPY pyrobosim/setup.py pyrobosim/
 COPY docs/python_docs_requirements.txt docs/
 COPY test/python_test_requirements.txt test/
-COPY wheels/ /tmp/wheels/
 RUN pip3 install -U pip setuptools wheel && \
     pip3 install -U "packaging>=24.1" "scikit-build-core>=0.10"
-RUN pip3 install --no-build-isolation -v "llama-cpp-python==0.3.16" || true
+RUN pip3 install --no-build-isolation -v "llama-cpp-python==0.3.16"
 RUN pip3 install -e ./pyrobosim && \
     pip3 install -r docs/python_docs_requirements.txt && \
     pip3 install -r test/python_test_requirements.txt
-RUN if ls /tmp/wheels/*.whl 1>/dev/null 2>&1; then \
-        pip3 install --no-cache-dir /tmp/wheels/*.whl; \
-    fi
 
 # Build the ROS workspace, which includes PyRoboSim
 COPY . /pyrobosim_ws/src/

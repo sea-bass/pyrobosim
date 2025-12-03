@@ -75,27 +75,10 @@ services:
     extends: base
     volumes:
       - ./models:/models:ro
-      - ./wheels:/wheels:ro
     command: >
       python3 src/pyrobosim/examples/demo.py
       --llm-model ${LLM_MODEL_PATH:-/models/model.gguf}
       --llm-auto-step
-
-
-  llama_cpp_builder:
-    extends: base
-    volumes:
-      - ./dependencies/llama-cpp-python:/deps/llama-cpp-python:rw
-      - ./wheels:/wheels:rw
-    command: >
-      bash -lc "
-      if [ ! -d /deps/llama-cpp-python ]; then
-        echo 'Clone llama-cpp-python into dependencies/llama-cpp-python first.' && exit 1;
-      fi;
-      rm -f /wheels/llama_cpp_python-*.whl &&
-      pip wheel /deps/llama-cpp-python --no-deps -w /tmp/wheels &&
-      cp /tmp/wheels/llama_cpp_python-*.whl /wheels/
-      "
 
   ##################################
   # Task and Motion Planning demos #

@@ -15,6 +15,4 @@ demo:
 demo-llm:
 	$(DOCKER_COMPOSE) run --rm \
 		-e LLM_MODEL_PATH=$(LLM_MODEL_PATH) \
-		-e LLM_WHEEL_PATH=$(LLM_WHEEL_PATH) \
 		demo_llm
-
