@@ -36,6 +36,7 @@ from ..utils.world_collision import check_occupancy
 if TYPE_CHECKING:
     from ..ai.policies import RobotPolicy
 
+
 class Robot(Entity):
     """Representation of a robot in the world."""
 

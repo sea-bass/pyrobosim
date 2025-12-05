@@ -50,7 +50,9 @@ class LocalLLM(TextGenerator):
                 n_threads=self.n_threads,
                 n_gpu_layers=self.n_gpu_layers,
             )
-        except Exception as exc:  # pragma: no cover - backend errors are environment specific
+        except (
+            Exception
+        ) as exc:  # pragma: no cover - backend errors are environment specific
             raise LocalLLMError(f"Failed to load local LLM model: {exc}") from exc
 
     def generate(
@@ -79,11 +81,15 @@ class LocalLLM(TextGenerator):
                 temperature=completion_kwargs["temperature"],
                 stop=stop,
             )
-        except Exception as exc:  # pragma: no cover - backend runtime errors are environment specific
+        except (
+            Exception
+        ) as exc:  # pragma: no cover - backend runtime errors are environment specific
             raise LocalLLMError(f"Local LLM generation failed: {exc}") from exc
 
         try:
             choice = response["choices"][0]
             return str(choice.get("text", "")).strip()
         except (KeyError, IndexError, TypeError) as exc:
-            raise LocalLLMError(f"Unexpected response format from local LLM: {response}") from exc
+            raise LocalLLMError(
+                f"Unexpected response format from local LLM: {response}"
+            ) from exc

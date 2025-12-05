@@ -301,7 +301,8 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
             self.reset_path_planner_button.setEnabled(not is_moving)
             self.rand_pose_button.setEnabled(not is_moving)
             self.llm_step_button.setEnabled(
-                has_policy and not (robot.executing_plan or robot.executing_action or is_moving)
+                has_policy
+                and not (robot.executing_plan or robot.executing_action or is_moving)
             )
             self.llm_prompt_textbox.setEnabled(has_policy)
 

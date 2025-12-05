@@ -56,7 +56,9 @@ def _format_robot_state(robot: "Robot") -> str:
     """Summarize the robot state for the prompt."""
     pose = robot.get_pose()
     location_name = robot.location.name if robot.location else "unknown"
-    carried_object = robot.manipulated_object.name if robot.manipulated_object else "none"
+    carried_object = (
+        robot.manipulated_object.name if robot.manipulated_object else "none"
+    )
     yaw = pose.get_yaw()
     return (
         f"Robot {robot.name} at {location_name} "
@@ -102,7 +104,9 @@ def _extract_json_payload(text: str) -> Any:
             stack.append(char)
         elif char in "}]":
             if not stack:
-                raise ValueError("Found closing brace before opening brace in model output.")
+                raise ValueError(
+                    "Found closing brace before opening brace in model output."
+                )
             opener = stack.pop()
             if pairs.get(opener) != char:
                 raise ValueError("Mismatched braces in JSON payload.")
@@ -130,6 +134,8 @@ def _action_from_payload(payload: dict, robot_name: str) -> TaskAction:
         source_location=payload.get("source_location"),
         target_location=payload.get("target_location"),
     )
+
+
 def _actions_from_payload(payload: Any, robot_name: str) -> list[TaskAction]:
     """Convert a payload (object, list, or dict with 'actions') into TaskActions."""
     actions_raw: list[dict[str, Any]]
@@ -167,8 +173,8 @@ class LLMPolicy(RobotPolicy):
         "keys it needs: object, room, source_location, target_location. "
         "Always include a navigate action before any pick/place at a different location. "
         "Stop once the robot has reached the appropriate location and can pick or place. Example:\n"
-        "[{{\"type\": \"navigate\", \"target_location\": \"kitchen_table\"}}, "
-        "{{\"type\": \"pick\", \"object\": \"banana0\", \"source_location\": \"table0_tabletop\"}}]\n"
+        '[{{"type": "navigate", "target_location": "kitchen_table"}}, '
+        '{{"type": "pick", "object": "banana0", "source_location": "table0_tabletop"}}]\n'
         "Do not add explanations outside of the JSON array."
     )
     max_tokens: int = 256
@@ -182,7 +188,9 @@ class LLMPolicy(RobotPolicy):
 
     def propose_plan(self, world: "World", robot: "Robot") -> TaskPlan | None:
         if robot.world is None:
-            raise LLMPolicyError("Robot must belong to a world before calling the policy.")
+            raise LLMPolicyError(
+                "Robot must belong to a world before calling the policy."
+            )
 
         prompt = self.prompt_template.format(
             robot_name=robot.name,
@@ -203,6 +211,8 @@ class LLMPolicy(RobotPolicy):
             payload = _extract_json_payload(output)
             actions = _actions_from_payload(payload, robot.name)
         except Exception as exc:
-            raise LLMPolicyError(f"Failed to parse LLM output: {exc}. Output was: {output}") from exc
+            raise LLMPolicyError(
+                f"Failed to parse LLM output: {exc}. Output was: {output}"
+            ) from exc
 
         return TaskPlan(robot=robot.name, actions=actions)
