@@ -36,7 +36,7 @@ PyRoboSim can run a lightweight, fully local language model policy through the `
    ```bash
    mkdir -p models
    ```
-2. Download or convert an LLM checkpoint to GGUF format (for example, `Mistral-7B-Instruct-v0.3.f16.gguf`) and place it inside `models/`. Rename it to `model.gguf` if you prefer to use the default path.
+2. Download or convert an LLM checkpoint to GGUF format (for example, `Mistral-7B-Instruct-v0.3.f16.gguf` or  `Qwen2.5-VL-7B-Instruct-Q8_0.gguf`) and place it inside `models/`. Rename it to `model.gguf` if you prefer to use the default path.
 
 ### Run the LLM demo
 
