@@ -53,3 +53,5 @@ make demo-llm LLM_MODEL_PATH=/models/Mistral-7B-Instruct-v0.3.f16.gguf
 ```
 
 The GUI exposes an “LLM directive” text box and `LLM Step` button so you can send natural-language goals to the robot. Use `--llm-auto-step` (already set by the Docker command) to watch the policy execute each directive automatically.
+
+![LLM-directed mission generation demo](docs/source/media/llm.gif)
