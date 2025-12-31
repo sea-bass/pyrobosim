@@ -192,22 +192,22 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
             for body in self.robot_bodies:
                 try:
                     body.remove()
-                except ValueError:
+                except (ValueError, NotImplementedError):
                     pass
             for dir in self.robot_dirs:
                 try:
                     dir.remove()
-                except ValueError:
+                except (ValueError, NotImplementedError):
                     pass
             for text in self.robot_texts:
                 try:
                     text.remove()
-                except ValueError:
+                except (ValueError, NotImplementedError):
                     pass
             for artist in self.robot_sensor_artists:
                 try:
                     artist.remove()
-                except ValueError:
+                except (ValueError, NotImplementedError):
                     pass
             self.robot_bodies = []
             self.robot_dirs = []
@@ -276,7 +276,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
             for hallway in self.hallway_patches:
                 try:
                     hallway.remove()
-                except ValueError:
+                except (ValueError, NotImplementedError):
                     pass
 
             self.hallway_patches = [h.viz_patch for h in self.world.hallways]
@@ -306,12 +306,12 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
             for room in self.room_patches:
                 try:
                     room.remove()
-                except ValueError:
+                except (ValueError, NotImplementedError):
                     pass
             for text in self.room_texts:
                 try:
                     text.remove()
-                except ValueError:
+                except (ValueError, NotImplementedError):
                     pass
 
             self.room_patches = [room.viz_patch for room in self.world.rooms]
@@ -343,12 +343,12 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
             for location in self.location_patches:
                 try:
                     location.remove()
-                except ValueError:
+                except (ValueError, NotImplementedError):
                     pass
             for text in self.location_texts:
                 try:
                     text.remove()
-                except ValueError:
+                except (ValueError, NotImplementedError):
                     pass
 
             self.location_patches = [loc.viz_patch for loc in self.world.locations]
@@ -382,12 +382,12 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
             for obj_patch in self.obj_patches:
                 try:
                     obj_patch.remove()
-                except ValueError:
+                except (ValueError, NotImplementedError):
                     pass
             for obj_text in self.obj_texts:
                 try:
                     obj_text.remove()
-                except ValueError:
+                except (ValueError, NotImplementedError):
                     pass
 
             robot = self.main_window.get_current_robot()
@@ -489,7 +489,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                 for artist in self.path_planner_artists["graph"]:
                     try:
                         artist.remove()
-                    except ValueError:
+                    except (ValueError, NotImplementedError):
                         pass
                 self.path_planner_artists["graph"] = path_planner_artists.get(
                     "graph", []
@@ -498,7 +498,7 @@ class WorldCanvas(FigureCanvasQTAgg):  # type: ignore [misc]
                 for artist in self.path_planner_artists["path"]:
                     try:
                         artist.remove()
-                    except ValueError:
+                    except (ValueError, NotImplementedError):
                         pass
                 self.path_planner_artists["path"] = path_planner_artists.get("path", [])
 
