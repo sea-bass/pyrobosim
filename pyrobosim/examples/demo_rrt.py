@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import os
 
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.gui import start_gui
@@ -8,7 +7,7 @@ from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 
 # Load a test world.
-world_file = os.path.join(get_data_folder(), "test_world.yaml")
+world_file = get_data_folder() / "test_world.yaml"
 world = WorldYamlLoader().from_file(world_file)
 
 

@@ -5,7 +5,6 @@ Tests Gazebo world saving and occupancy grid export capabilities.
 """
 
 import argparse
-import os
 
 from pyrobosim.core import WorldGazeboExporter, WorldYamlLoader
 from pyrobosim.navigation.occupancy_grid import OccupancyGrid
@@ -53,7 +52,7 @@ def main() -> None:
     # Load a test world from YAML file.
     data_folder = get_data_folder()
     loader = WorldYamlLoader()
-    world = loader.from_file(os.path.join(data_folder, args.world_file))
+    world = loader.from_file(data_folder / args.world_file)
 
     # Export a Gazebo world.
     exp = WorldGazeboExporter(world)

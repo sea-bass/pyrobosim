@@ -1,8 +1,8 @@
 """Task and Motion Planning tools using PDDLStream."""
 
-import os
 from typing import Any, Callable
 
+import pathlib
 from pddlstream.algorithms.focused import solve_adaptive
 from pddlstream.language.constants import And, PDDLProblem
 from pddlstream.utils import read
@@ -26,7 +26,7 @@ class PDDLStreamPlanner:
     def __init__(
         self,
         world: World,
-        domain_folder: str,
+        domain_folder: pathlib.Path,
         stream_map_fn: Callable[
             [World, Robot], dict[str, Any]
         ] = get_default_stream_map_fn(),
@@ -44,9 +44,10 @@ class PDDLStreamPlanner:
         self.world = world
 
         # Planning configuration parameters
-        domain_pddl_file = os.path.join(domain_folder, "domain.pddl")
+        domain_folder = pathlib.Path(domain_folder)
+        domain_pddl_file = domain_folder / "domain.pddl"
         self.domain_pddl = read(domain_pddl_file)
-        stream_pddl_file = os.path.join(domain_folder, "streams.pddl")
+        stream_pddl_file = domain_folder / "streams.pddl"
         self.stream_pddl = read(stream_pddl_file)
         self.stream_map_fn = stream_map_fn
         self.stream_info_fn = stream_info_fn

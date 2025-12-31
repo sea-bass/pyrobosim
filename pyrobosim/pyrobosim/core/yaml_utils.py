@@ -1,10 +1,10 @@
 """Utilities to create worlds from YAML files."""
 
 import copy
-import os
 from typing import Any
 import yaml
 
+import pathlib
 from .robot import Robot
 from .world import World
 from ..planning.actions import ExecutionOptions
@@ -35,7 +35,7 @@ class WorldYamlLoader:
     def from_yaml(
         self,
         world_dict: dict[str, Any],
-        world_dir: str | None = None,
+        world_dir: pathlib.Path | None = None,
         world: World | None = None,
     ) -> World:
         """
@@ -59,7 +59,7 @@ class WorldYamlLoader:
         self.add_robots()
         return self.world
 
-    def from_file(self, filename: str, world: World | None = None) -> World:
+    def from_file(self, filename: pathlib.Path, world: World | None = None) -> World:
         """
         Load a world from a YAML file.
 
@@ -68,9 +68,10 @@ class WorldYamlLoader:
             Otherwise, creates and returns a new world instance.
         :return: World model instance.
         """
-        with open(filename) as file:
+        filename = pathlib.Path(filename)
+        with filename.open() as file:
             world_dict = yaml.load(file, Loader=yaml.FullLoader)
-        (world_dir, _) = os.path.split(filename)
+        world_dir = filename.parent
         world = self.from_yaml(world_dict, world_dir, world=world)
         world.source_yaml_file = filename
         return world
@@ -310,8 +311,8 @@ class WorldYamlWriter:
         obj_metadata_files = list(world.get_object_metadata().sources)
 
         world_dict["metadata"] = {
-            "locations": loc_metadata_files,
-            "objects": obj_metadata_files,
+            "locations": [str(loc) for loc in loc_metadata_files],
+            "objects": [str(obj) for obj in obj_metadata_files],
         }
 
         # Go through all the entities in the world and similarly add them to the dictionary.
@@ -328,15 +329,16 @@ class WorldYamlWriter:
 
         return world_dict
 
-    def to_file(self, world: World, filename: str) -> None:
+    def to_file(self, world: World, filename: pathlib.Path) -> None:
         """
         Serializes a world to a YAML file.
 
         :param world: The world model to serialize.
         :param filename: The name of the file to write to.
         """
+        filename = pathlib.Path(filename)
         world_dict = self.to_dict(world)
-        with open(filename, "w") as out_file:
+        with filename.open("w") as out_file:
             yaml.dump(
                 world_dict,
                 out_file,

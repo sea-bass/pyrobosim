@@ -4,7 +4,6 @@
 Test script showing how to perform task and motion planning with PDDLStream.
 """
 
-import os
 import argparse
 import threading
 import time
@@ -35,13 +34,13 @@ def parse_args() -> argparse.Namespace:
 
 def load_world() -> World:
     """Load a test world."""
-    world_file = os.path.join(get_data_folder(), "pddlstream_simple_world.yaml")
+    world_file = get_data_folder() / "pddlstream_simple_world.yaml"
     return WorldYamlLoader().from_file(world_file)
 
 
 def start_planner(world: World, args: argparse.Namespace) -> None:
     """Test PDDLStream planner under various scenarios."""
-    domain_folder = os.path.join(get_default_domains_folder(), args.example)
+    domain_folder = get_default_domains_folder() / args.example
     planner = PDDLStreamPlanner(world, domain_folder)
 
     # Wait for the GUI to load

@@ -2,7 +2,7 @@
 Utilities to connect world models with PDDLStream.
 """
 
-import os
+import pathlib
 from typing import Any, Callable
 
 from pddlstream.language.constants import Solution
@@ -17,13 +17,13 @@ from ...utils.path import Path
 from ...utils.pose import Pose
 
 
-def get_default_domains_folder() -> str:
+def get_default_domains_folder() -> pathlib.Path:
     """
     Returns the default path to the folder containing PDDLStream domains.
 
     :return: Path to domains folder.
     """
-    return os.path.join(get_data_folder(), "pddlstream", "domains")
+    return get_data_folder() / "pddlstream" / "domains"
 
 
 def get_default_stream_info_fn() -> Callable[[], dict[str, Any]]:

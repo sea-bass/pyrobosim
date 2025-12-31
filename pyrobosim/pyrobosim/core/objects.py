@@ -5,6 +5,7 @@ from typing import Any, Sequence
 import numpy as np
 from matplotlib.patches import PathPatch
 from matplotlib.text import Text
+import pathlib
 from shapely.geometry import Polygon
 from shapely.plotting import patch_from_polygon
 from scipy.spatial import ConvexHull
@@ -32,7 +33,7 @@ class Object(Entity):
     """ Visualization color (RGB tuple). """
 
     @classmethod
-    def add_metadata(cls, filename: str) -> None:
+    def add_metadata(cls, filename: pathlib.Path) -> None:
         """
         Add object metadata from a new file to existing metadata.
 

@@ -1,13 +1,13 @@
 """General package utilities."""
 
 import re
-from pathlib import Path
+import pathlib
 from typing import Sequence
 
 from matplotlib.colors import CSS4_COLORS, to_rgb
 
 
-def get_data_folder() -> str:
+def get_data_folder() -> pathlib.Path:
     """
     Get a path to the folder containing data.
 
@@ -22,40 +22,40 @@ def get_data_folder() -> str:
         # If running as a ROS 2 node, get the data folder from the package share directory.
         from ament_index_python.packages import get_package_share_directory
 
-        data_folder = Path(get_package_share_directory("pyrobosim")) / "data"
+        data_folder = pathlib.Path(get_package_share_directory("pyrobosim")) / "data"
     except:
         # Else, assume it's relative to the file's current directory.
-        data_folder = Path(__file__).parent.parent / "data"
+        data_folder = pathlib.Path(__file__).parent.parent / "data"
 
-    return data_folder.as_posix()
+    return data_folder
 
 
 def replace_special_yaml_tokens(
-    in_text: str | list[str], root_dir: Path | str | None = None
-) -> str | list[str]:
+    in_text: str | pathlib.Path | list[str | pathlib.Path],
+    root_dir: pathlib.Path | str | None = None,
+) -> pathlib.Path | list[pathlib.Path]:
     """
     Replaces special tokens permitted in our YAML specification.
     If you want to add any other special tokens, you should do so in the process_text helper function.
 
-    :param in_text: Input YAML text or a list of YAML texts.
+    :param in_text: Input YAML path or a list of YAML paths.
     :param root_dir: Root directory for basing some tokens, uses the current directory if not specified.
     :return: YAML text(s) with all special tokens substituted.
     """
-    if root_dir is None:
-        root_dir = Path.cwd()
-    if isinstance(root_dir, Path):
-        root_dir = root_dir.as_posix()
+    root_dir = pathlib.Path(root_dir) if root_dir is not None else pathlib.Path.cwd()
 
-    def process_text(text: str) -> str:
+    def process_text(text: str | pathlib.Path) -> pathlib.Path:
         """Helper function to replace tokens in a single metadata string."""
-        text = text.replace("$HOME", Path.home().as_posix())
-        text = text.replace("$DATA", get_data_folder())
-        text = text.replace("$PWD", root_dir)
-        return text
+        if isinstance(text, pathlib.Path):
+            text = text.as_posix()
+        text = text.replace("$HOME", pathlib.Path.home().as_posix())
+        text = text.replace("$DATA", get_data_folder().as_posix())
+        text = text.replace("$PWD", root_dir.as_posix())
+        return pathlib.Path(text)
 
     if isinstance(in_text, list):
         return [process_text(text) for text in in_text]
-    elif isinstance(in_text, str):
+    elif isinstance(in_text, (str, pathlib.Path)):
         return process_text(in_text)
     else:
         raise TypeError(f"Could not replace text for input type: {type(in_text)}.")

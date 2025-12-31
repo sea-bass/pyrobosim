@@ -3,7 +3,6 @@
 """
 Test script showing how to command robot velocities and simulate dynamics.
 """
-import os
 import numpy as np
 import time
 from threading import Thread
@@ -23,8 +22,8 @@ def create_world() -> World:
 
     # Set the location and object metadata
     world.set_metadata(
-        locations=os.path.join(data_folder, "example_location_data.yaml"),
-        objects=os.path.join(data_folder, "example_object_data.yaml"),
+        locations=data_folder / "example_location_data.yaml",
+        objects=data_folder / "example_object_data.yaml",
     )
 
     # Add rooms

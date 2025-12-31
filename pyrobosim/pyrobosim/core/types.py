@@ -2,10 +2,10 @@
 Core types for PyRoboSim.
 """
 
-import os
 from typing import Any, Sequence
 from typing_extensions import Self  # For compatibility with Python <= 3.10
 
+import pathlib
 from matplotlib.patches import PathPatch
 from shapely import intersects_xy, Polygon
 import yaml
@@ -114,7 +114,7 @@ class Entity:
 class EntityMetadata:
     """Represents metadata about entities, such as locations or objects."""
 
-    def __init__(self, filename: str | None = None) -> None:
+    def __init__(self, filename: pathlib.Path | None = None) -> None:
         """
         Creates metadata from a YAML file.
 
@@ -125,9 +125,11 @@ class EntityMetadata:
         self.data = self._load_metadata(filename)
 
         # List of file paths from which metadata has been loaded.
-        self.sources: set[str] = set([filename]) if filename is not None else set()
+        self.sources: set[pathlib.Path] = (
+            set([filename]) if filename is not None else set()
+        )
 
-    def _load_metadata(self, filename: str | None) -> dict[str, Any]:
+    def _load_metadata(self, filename: pathlib.Path | None) -> dict[str, Any]:
         """
         Loads metadata from a YAML file
 
@@ -136,10 +138,10 @@ class EntityMetadata:
         if filename is None:
             return {}
 
-        if not os.path.isfile(filename):
+        if not filename.is_file():
             raise FileNotFoundError(f"Metadata filename not found: {filename}")
 
-        with open(filename) as file:
+        with filename.open() as file:
             metadata = yaml.load(file, Loader=yaml.FullLoader)
             assert isinstance(metadata, dict)
             return metadata
@@ -164,12 +166,13 @@ class EntityMetadata:
         assert data is None or isinstance(data, dict)
         return data
 
-    def add(self, filename: str) -> None:
+    def add(self, filename: pathlib.Path) -> None:
         """
         Add metadata from a new YAML file to existing data.
 
         :param filename: Path to metadata YAML file.
         """
+        filename = pathlib.Path(filename)
         new_data = self._load_metadata(filename)
         for key, value in new_data.items():
             if key in self.data and self.data[key] != value:
@@ -200,7 +203,11 @@ class MetadataConflictException(Exception):
     """
 
     def __init__(
-        self, key: str, old_value: Any, new_value: Any, source: str | None = None
+        self,
+        key: str,
+        old_value: Any,
+        new_value: Any,
+        source: pathlib.Path | None = None,
     ) -> None:
         """
         Creates an MetadataConflictException instance.

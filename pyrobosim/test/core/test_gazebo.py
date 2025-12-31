@@ -22,7 +22,7 @@ def test_export_gazebo_default_folder() -> None:
 
     exporter = WorldGazeboExporter(world)
     world_folder = exporter.export()
-    assert world_folder == os.path.join(get_data_folder(), "worlds", world.name)
+    assert world_folder == str(os.path.join(get_data_folder(), "worlds", world.name))
 
 
 @pytest.mark.parametrize("classic", [True, False])  # type: ignore[misc]
@@ -33,4 +33,4 @@ def test_export_gazebo(classic: bool) -> None:
 
     exporter = WorldGazeboExporter(world)
     world_folder = exporter.export(classic=classic, out_folder=output_folder)
-    assert world_folder == os.path.join(output_folder, world.name)
+    assert world_folder == str(os.path.join(output_folder, world.name))

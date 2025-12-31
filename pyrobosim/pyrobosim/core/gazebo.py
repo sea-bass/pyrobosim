@@ -1,8 +1,8 @@
 """Utilities to export worlds to Gazebo."""
 
-import os
 import shutil
 import itertools
+import pathlib
 from shapely.geometry import LineString, Polygon, MultiPolygon
 from shapely.ops import split
 
@@ -31,18 +31,20 @@ class WorldGazeboExporter:
         """
         self.world = world
         self.data_folder = get_data_folder()
-        self.default_out_folder = os.path.join(self.data_folder, "worlds")
-        self.out_folder = ""
+        self.default_out_folder = self.data_folder / "worlds"
+        self.out_folder = self.default_out_folder
 
         # Set up template text for string replacement.
-        self.template_folder = os.path.join(self.data_folder, "templates")
+        self.template_folder = self.data_folder / "templates"
         self.model_template_text = self.read_template_file("model_template.sdf")
         self.model_config_template_text = self.read_template_file(
             "model_template.config"
         )
         self.link_template_text = self.read_template_file("link_template_polyline.sdf")
 
-    def export(self, classic: bool = False, out_folder: str | None = None) -> str:
+    def export(
+        self, classic: bool = False, out_folder: pathlib.Path | None = None
+    ) -> pathlib.Path:
         """
         Exports the world to an SDF file to use with Gazebo, including
         all other necessary models for locations and/or objects.
@@ -64,9 +66,12 @@ class WorldGazeboExporter:
         self.model_include_text = ""
 
         # Define output folder
-        self.out_folder = os.path.join(
-            out_folder or self.default_out_folder, world_name
+        out_folder_or_default = (
+            pathlib.Path(out_folder)
+            if out_folder is not None
+            else self.default_out_folder
         )
+        self.out_folder = out_folder_or_default / world_name
         self.include_model_paths = set([self.out_folder])
 
         # Convert all the world entities for export
@@ -75,10 +80,8 @@ class WorldGazeboExporter:
 
         # Add all the model includes to the world file and write it.
         world_text = world_text.replace("$MODEL_INCLUDES", self.model_include_text)
-        world_file_name = os.path.normpath(
-            os.path.join(self.out_folder, f"{world_name}.sdf")
-        )
-        with open(world_file_name, "w") as f:
+        world_file_name = (self.out_folder / f"{world_name}.sdf").resolve()
+        with world_file_name.open("w") as f:
             f.write(world_text)
 
         # Print commands for the user to start the world.
@@ -90,7 +93,9 @@ class WorldGazeboExporter:
             model_path_env = "GAZEBO_MODEL_PATH"
             command = "gazebo"
 
-        include_path_str = ":".join(self.include_model_paths)
+        include_path_str = ":".join(
+            [path.as_posix() for path in self.include_model_paths]
+        )
         help_string = f"\nWorld file saved to {world_file_name}\n"
         help_string += "Ensure to update your Gazebo model path:\n"
         help_string += (
@@ -124,16 +129,16 @@ class WorldGazeboExporter:
         walls_text = walls_text.replace("$POSE", "0 0 0 0 0 0")
         walls_text = walls_text.replace("$STATIC", "1")
         walls_text = walls_text.replace("$LINKS", full_links_text)
-        walls_folder = os.path.join(self.out_folder, "walls")
-        if os.path.isdir(self.out_folder):
+        walls_folder = self.out_folder / "walls"
+        if self.out_folder.exists():
             shutil.rmtree(self.out_folder)
-        os.makedirs(walls_folder)
-        with open(os.path.join(self.out_folder, walls_name, "model.sdf"), "w") as f:
+        walls_folder.mkdir(parents=True, exist_ok=True)
+        with (self.out_folder / walls_name / "model.sdf").open("w") as f:
             f.write(walls_text)
 
         # Create a config file.
         config_text = self.model_config_template_text.replace("$NAME", walls_name)
-        with open(os.path.join(self.out_folder, walls_name, "model.config"), "w") as f:
+        with (self.out_folder / walls_name / "model.config").open("w") as f:
             f.write(config_text)
 
         # Now include the walls model in the world file.
@@ -160,9 +165,9 @@ class WorldGazeboExporter:
             assert isinstance(entity, (Location, Object))
             assert entity.category is not None
             if entity.category_metadata["footprint"]["type"] != "mesh":
-                folder = os.path.join(self.out_folder, entity.category)
-                if not os.path.isdir(folder):
-                    os.makedirs(folder)
+                folder = self.out_folder / entity.category
+                if not folder.exists():
+                    folder.mkdir(parents=True, exist_ok=True)
 
                     # Create a model SDF file.
                     loc_model_text = self.model_template_text
@@ -174,7 +179,7 @@ class WorldGazeboExporter:
                     loc_model_text = loc_model_text.replace("$LINKS", loc_link_text)
                     loc_model_text = loc_model_text.replace("$STATIC", "0")
                     with open(
-                        os.path.join(self.out_folder, entity.category, "model.sdf"), "w"
+                        self.out_folder / entity.category / "model.sdf", "w"
                     ) as f:
                         f.write(loc_model_text)
 
@@ -183,7 +188,7 @@ class WorldGazeboExporter:
                         "$NAME", entity.category
                     )
                     with open(
-                        os.path.join(self.out_folder, entity.category, "model.config"),
+                        self.out_folder / entity.category / "model.config",
                         "w",
                     ) as f:
                         f.write(config_text)
@@ -193,10 +198,9 @@ class WorldGazeboExporter:
                 model_path = replace_special_yaml_tokens(
                     entity.category_metadata["footprint"]["model_path"]
                 )
-                assert isinstance(model_path, str)
-                model_path_split = os.path.split(model_path)
-                self.include_model_paths.add(os.path.normpath(model_path_split[0]))
-                model_name = model_path_split[-1]
+                assert isinstance(model_path, pathlib.Path)
+                self.include_model_paths.add(model_path.parent.resolve())
+                model_name = model_path.name
             else:
                 model_name = entity.category
 
@@ -287,6 +291,6 @@ class WorldGazeboExporter:
         :param filename: Filename, relative to the template folder.
         :return: Raw template text.
         """
-        fullfile = os.path.join(self.template_folder, filename)
-        with open(fullfile, "r") as f:
+        fullfile = self.template_folder / filename
+        with fullfile.open("r") as f:
             return f.read()

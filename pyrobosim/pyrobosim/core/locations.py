@@ -2,6 +2,7 @@
 
 from typing import Any, Sequence
 
+import pathlib
 from shapely.plotting import patch_from_polygon
 
 from .types import Entity, EntityMetadata, InvalidEntityCategoryException
@@ -28,7 +29,7 @@ class Location(Entity):
     """ Visualization color (RGB tuple). """
 
     @classmethod
-    def add_metadata(cls, filename: str) -> None:
+    def add_metadata(cls, filename: pathlib.Path) -> None:
         """
         Add location metadata from a new file to existing metadata.
 

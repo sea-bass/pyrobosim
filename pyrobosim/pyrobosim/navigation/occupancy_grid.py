@@ -1,9 +1,9 @@
 """Occupancy grid utilities."""
 
 import math
+import pathlib
 import numpy as np
 import matplotlib.pyplot as plt
-import os
 from PIL import Image
 from typing import Sequence
 from typing_extensions import Self  # For compatibility with Python <= 3.10
@@ -159,7 +159,7 @@ class OccupancyGrid:
                 decision += (dy << 1) - (dx << 1)
         return can_connect, last_point
 
-    def save_to_file(self, folder: str, filename: str = "world_map") -> None:
+    def save_to_file(self, folder: pathlib.Path, filename: str = "world_map") -> None:
         """
         Save occupancy grid to PGM and YAML files compatible with ROS tools.
 
@@ -167,8 +167,9 @@ class OccupancyGrid:
         :param filename: Name of PGM/YAML file, defaults to "world_map".
         """
         # Write the PGM file.
-        pgm_file = os.path.join(folder, filename + ".pgm")
-        with open(pgm_file, "wb") as f:
+        folder = pathlib.Path(folder)
+        pgm_file = folder / f"{filename}.pgm"
+        with pgm_file.open("wb") as f:
             # Create the PGM file header.
             file_header = f"P5\n# CREATOR: world {self.resolution:.3} m/pix"
             file_header += f"\n{self.width} {self.height}\n255\n"
@@ -189,21 +190,21 @@ class OccupancyGrid:
             f.close()
 
         # Write the YAML file.
-        yaml_file = os.path.join(folder, filename + ".yaml")
+        yaml_file = folder / f"{filename}.yaml"
         x_orig, y_orig = self.origin
         yaml_dict = {
-            "image": pgm_file,
+            "image": pgm_file.as_posix(),
             "resolution": self.resolution,
             "origin": [x_orig, y_orig, 0],
             "negate": 0,
             "occupied_thresh": self.occ_thresh,
             "free_thresh": self.free_thresh,
         }
-        with open(yaml_file, "w") as f:
+        with yaml_file.open("w") as f:
             yaml.dump(yaml_dict, f, sort_keys=False, default_flow_style=None)
 
     @classmethod
-    def from_file(cls, folder: str, filename: str | None = None) -> Self:
+    def from_file(cls, folder: pathlib.Path, filename: str | None = None) -> Self:
         """
         Loads an occupancy grid from a folder containing a PGM image file and a YAML file.
 
@@ -211,16 +212,15 @@ class OccupancyGrid:
         :param filename: Name of YAML file, defaults to None.
             If None is specified, this function will try to find the file using the .yaml extension.
         """
-        all_files = os.listdir(folder)
+        folder = pathlib.Path(folder)
+        all_files = folder.iterdir()
 
         # Read the YAML file
         if filename:
-            yaml_path = os.path.join(folder, f"{filename}.yaml")
+            yaml_path = folder / f"{filename}.yaml"
         else:
             yaml_files = [
-                file
-                for file in all_files
-                if file.endswith(".yaml") or file.endswith(".yml")
+                file for file in all_files if file.suffix in [".yaml", ".yml"]
             ]
             if len(yaml_files) == 0:
                 raise FileNotFoundError(
@@ -230,9 +230,9 @@ class OccupancyGrid:
                 get_global_logger().warning(
                     "Found multiple YAML files. Loading the first one."
                 )
-            yaml_path = os.path.join(folder, yaml_files[0])
+            yaml_path = folder / yaml_files[0]
 
-        with open(yaml_path, "r") as f:
+        with yaml_path.open("r") as f:
             yaml_dict = yaml.load(f, yaml.FullLoader)
             image_path = yaml_dict["image"]
             resolution = yaml_dict["resolution"]
