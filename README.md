@@ -6,7 +6,7 @@
 
 ROS 2 enabled 2D mobile robot simulator for behavior prototyping.
 
-By Sebastian Castro, 2022-2025
+By Sebastian Castro, 2022-2026
 
 Refer to the [full documentation](https://pyrobosim.readthedocs.io/) for setup, usage, and other concepts.
 
