@@ -4,6 +4,7 @@ import itertools
 import numpy as np
 from typing import Any
 
+import pathlib
 import shapely
 from shapely.geometry import Polygon
 from shapely.ops import unary_union
@@ -44,7 +45,7 @@ class World:
         self.name = name
         self.wall_height = wall_height
         self.source_yaml: dict[str, Any] | None = None
-        self.source_yaml_file: str | None = None
+        self.source_yaml_file: pathlib.Path | None = None
         self.logger = create_logger(self.name)
 
         # Connected apps
@@ -131,8 +132,8 @@ class World:
     ############
     def set_metadata(
         self,
-        locations: str | list[str] | None = None,
-        objects: str | list[str] | None = None,
+        locations: pathlib.Path | list[pathlib.Path] | None = None,
+        objects: pathlib.Path | list[pathlib.Path] | None = None,
     ) -> None:
         """
         Sets location and object metadata from the specified files.
@@ -148,8 +149,8 @@ class World:
 
     def add_metadata(
         self,
-        locations: str | list[str] | None = None,
-        objects: str | list[str] | None = None,
+        locations: pathlib.Path | list[pathlib.Path] | None = None,
+        objects: pathlib.Path | list[pathlib.Path] | None = None,
     ) -> None:
         """
         Add location and object metadata from the specified files, allowing
@@ -161,14 +162,14 @@ class World:
         if isinstance(locations, list):
             for location in locations:
                 Location.add_metadata(location)
-        elif isinstance(locations, str):
-            Location.add_metadata(locations)
+        elif isinstance(locations, (str, pathlib.Path)):
+            Location.add_metadata(pathlib.Path(locations))
 
         if isinstance(objects, list):
             for object in objects:
                 Object.add_metadata(object)
-        elif isinstance(objects, str):
-            Object.add_metadata(objects)
+        elif isinstance(objects, (str, pathlib.Path)):
+            Object.add_metadata(pathlib.Path(objects))
 
     def get_location_metadata(self) -> EntityMetadata:
         """

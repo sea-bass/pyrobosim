@@ -4,12 +4,12 @@ Polygon representation and maniupulation utilities.
 These tools rely heavily on the Shapely package.
 """
 
-import os
 import collada
 import numpy as np
 import trimesh
 from typing import Any, Sequence
 
+import pathlib
 from scipy.spatial import ConvexHull
 from shapely.affinity import rotate, translate
 from shapely.geometry import Point, Polygon, CAP_STYLE, JOIN_STYLE
@@ -194,12 +194,12 @@ def polygon_and_height_from_mesh(mesh_data: dict[str, str]) -> tuple[Polygon, fl
     :return: Shapely polygon representing the 2D convex hull of the mesh, plus the vertical (Z) height.
     """
     mesh_filename = replace_special_yaml_tokens(
-        os.path.join(mesh_data["model_path"], mesh_data["mesh_path"])
+        pathlib.Path(mesh_data["model_path"]) / mesh_data["mesh_path"]
     )
     mesh = trimesh.load_mesh(mesh_filename, "dae")
 
     # Get the unit scale.
-    c = collada.Collada(mesh_filename)
+    c = collada.Collada(str(mesh_filename))
     scale = c.assetInfo.unitmeter
 
     # Get the convex hull of the 2D points.

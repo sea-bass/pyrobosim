@@ -3,7 +3,6 @@
 """
 Test script showing how to build a world and use it with PyRoboSim.
 """
-import os
 import argparse
 
 from pyrobosim.core.robot import Robot
@@ -30,12 +29,12 @@ def create_world(multirobot: bool = False) -> World:
     # Set the location and object metadata
     world.add_metadata(
         locations=[
-            os.path.join(data_folder, "example_location_data_furniture.yaml"),
-            os.path.join(data_folder, "example_location_data_accessories.yaml"),
+            data_folder / "example_location_data_furniture.yaml",
+            data_folder / "example_location_data_accessories.yaml",
         ],
         objects=[
-            os.path.join(data_folder, "example_object_data_food.yaml"),
-            os.path.join(data_folder, "example_object_data_drink.yaml"),
+            data_folder / "example_object_data_food.yaml",
+            data_folder / "example_object_data_drink.yaml",
         ],
     )
 
@@ -199,7 +198,7 @@ def create_world(multirobot: bool = False) -> World:
 
 
 def create_world_from_yaml(world_file: str) -> World:
-    return WorldYamlLoader().from_file(os.path.join(data_folder, world_file))
+    return WorldYamlLoader().from_file(data_folder / world_file)
 
 
 def parse_args() -> argparse.Namespace:

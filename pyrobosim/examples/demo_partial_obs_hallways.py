@@ -6,7 +6,6 @@ Test script showing PyRoboSim partial hallway observability feature.
 This refers to the robot not knowing the true state (open/closed) of hallways
 until it senses them with sensors.
 """
-import os
 import argparse
 
 from pyrobosim.core.robot import Robot
@@ -31,8 +30,8 @@ def create_world(multirobot: bool = False) -> World:
     # Set the location metadata
     world.add_metadata(
         locations=[
-            os.path.join(data_folder, "example_location_data_furniture.yaml"),
-            os.path.join(data_folder, "example_location_data_accessories.yaml"),
+            data_folder / "example_location_data_furniture.yaml",
+            data_folder / "example_location_data_accessories.yaml",
         ],
     )
 
