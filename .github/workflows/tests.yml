@@ -26,6 +26,12 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+      - name: Sanitize tag name
+        id: sanitize_tag
+        run: |
+          BRANCH="${{ github.head_ref || github.ref_name }}"
+          TAG="${BRANCH//\//-}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
@@ -36,7 +42,7 @@ jobs:
           file: docker/Dockerfile
           target: pyrobosim
           context: .
-          tags: pyrobosim:${{ github.head_ref || github.ref_name }}
+          tags: pyrobosim:${{ steps.sanitize_tag.outputs.tag }}
           push: false
           load: true
           cache-from: |
@@ -48,7 +54,7 @@ jobs:
           docker run \
             -w /opt/pyrobosim \
             --volume ./test/results:/opt/pyrobosim/test/results:rw \
-            pyrobosim:${{ github.head_ref || github.ref_name }} \
+            pyrobosim:${{ steps.sanitize_tag.outputs.tag }} \
             /bin/bash -c 'PYTHONPATH=/opt/pyrobosim/dependencies/pddlstream:${PYTHONPATH} ./test/run_tests.bash'
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -113,6 +119,12 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+      - name: Sanitize tag name
+        id: sanitize_tag
+        run: |
+          BRANCH="${{ github.head_ref || github.ref_name }}"
+          TAG="${BRANCH//\//-}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
@@ -125,7 +137,7 @@ jobs:
           context: .
           build-args: |
             ROS_DISTRO=${{ matrix.ros_distro }}
-          tags: pyrobosim:${{ github.head_ref || github.ref_name }}-${{ matrix.ros_distro }}
+          tags: pyrobosim:${{ steps.sanitize_tag.outputs.tag }}-${{ matrix.ros_distro }}
           push: false
           load: true
           cache-from: |
@@ -137,7 +149,7 @@ jobs:
           docker run \
             --volume ./test/:/pyrobosim_ws/src/test/:rw \
             --volume ./pytest.ini:/pyrobosim_ws/src/pytest.ini:rw \
-            pyrobosim:${{ github.head_ref || github.ref_name }}-${{ matrix.ros_distro }} \
+            pyrobosim:${{ steps.sanitize_tag.outputs.tag }}-${{ matrix.ros_distro }} \
             /bin/bash -c '/pyrobosim_ws/src/test/run_tests.bash ${{ matrix.ros_distro }}'
       - name: Upload test results
         uses: actions/upload-artifact@v4
