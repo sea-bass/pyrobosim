@@ -129,7 +129,8 @@ class TestWorldYamlLoading:
         assert loader.world.rooms[1].name == "bedroom"
         poly, _ = polygon_and_height_from_footprint(rooms_dict["rooms"][1]["footprint"])
         assert loader.world.rooms[1].polygon == transform_polygon(
-            poly, Pose(x=2.625, y=3.5),
+            poly,
+            Pose(x=2.625, y=3.5),
         )
         assert loader.world.rooms[1].wall_width == 0.2
         assert loader.world.rooms[1].viz_color == (0, 1, 0)

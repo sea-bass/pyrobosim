@@ -43,7 +43,11 @@ def test_create_occupancy_grid_default_args() -> None:
 
 def test_create_occupancy_grid_nondefault_args() -> None:
     grid = OccupancyGrid(
-        TEST_DATA, 0.25, origin=(-1.0, 2.0), occ_thresh=0.8, free_thresh=0.12,
+        TEST_DATA,
+        0.25,
+        origin=(-1.0, 2.0),
+        occ_thresh=0.8,
+        free_thresh=0.12,
     )
 
     assert grid.data.shape == (5, 6)
@@ -123,7 +127,11 @@ def test_connectable() -> None:
 
 def test_save_load_to_file() -> None:
     grid = OccupancyGrid(
-        TEST_DATA, 0.25, origin=(-1.0, 2.0), occ_thresh=0.8, free_thresh=0.12,
+        TEST_DATA,
+        0.25,
+        origin=(-1.0, 2.0),
+        occ_thresh=0.8,
+        free_thresh=0.12,
     )
 
     output_folder = tempfile.mkdtemp()
@@ -139,11 +147,15 @@ def test_save_load_to_file() -> None:
     # Verify the contents of the YAML file
     with yaml_path.open("r") as f:
         yaml_dict = yaml.load(f, yaml.FullLoader)
-        assert isinstance(yaml_dict, dict), f"Loaded YAML is not a dict. type={type(yaml_dict)}, content={yaml_dict!r}"
+        assert isinstance(
+            yaml_dict, dict
+        ), f"Loaded YAML is not a dict. type={type(yaml_dict)}, content={yaml_dict!r}"
 
         # Ensure required keys exist
         for key in ("image", "resolution", "origin", "occupied_thresh", "free_thresh"):
-            assert key in yaml_dict, f"Missing key '{key}' in YAML. keys_present={list(yaml_dict.keys())!r}"
+            assert (
+                key in yaml_dict
+            ), f"Missing key '{key}' in YAML. keys_present={list(yaml_dict.keys())!r}"
 
         # Image path: compare as strings to avoid Path vs str mismatch
         got_image = yaml_dict["image"]
@@ -194,7 +206,9 @@ def test_save_load_to_file() -> None:
 
     # Now load back the occupancy grid
     loaded_grid = OccupancyGrid.from_file(output_folder)
-    assert isinstance(loaded_grid, OccupancyGrid), f"Loaded object is not OccupancyGrid: {type(loaded_grid)}"
+    assert isinstance(
+        loaded_grid, OccupancyGrid
+    ), f"Loaded object is not OccupancyGrid: {type(loaded_grid)}"
 
     # Use numpy's testing helpers to give detailed diffs for array mismatches
     np.testing.assert_array_equal(
@@ -206,18 +220,18 @@ def test_save_load_to_file() -> None:
         ),
     )
 
-    assert loaded_grid.resolution == grid.resolution, (
-        f"Resolution mismatch: loaded={loaded_grid.resolution}, expected={grid.resolution}"
-    )
-    assert loaded_grid.origin == grid.origin, (
-        f"Origin mismatch: loaded={loaded_grid.origin}, expected={grid.origin}"
-    )
-    assert loaded_grid.occ_thresh == grid.occ_thresh, (
-        f"Occupied threshold mismatch: loaded={loaded_grid.occ_thresh}, expected={grid.occ_thresh}"
-    )
-    assert loaded_grid.free_thresh == grid.free_thresh, (
-        f"Free threshold mismatch: loaded={loaded_grid.free_thresh}, expected={grid.free_thresh}"
-    )
+    assert (
+        loaded_grid.resolution == grid.resolution
+    ), f"Resolution mismatch: loaded={loaded_grid.resolution}, expected={grid.resolution}"
+    assert (
+        loaded_grid.origin == grid.origin
+    ), f"Origin mismatch: loaded={loaded_grid.origin}, expected={grid.origin}"
+    assert (
+        loaded_grid.occ_thresh == grid.occ_thresh
+    ), f"Occupied threshold mismatch: loaded={loaded_grid.occ_thresh}, expected={grid.occ_thresh}"
+    assert (
+        loaded_grid.free_thresh == grid.free_thresh
+    ), f"Free threshold mismatch: loaded={loaded_grid.free_thresh}, expected={grid.free_thresh}"
 
 
 def test_occupancy_grid_from_world() -> None:

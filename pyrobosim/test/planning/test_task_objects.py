@@ -186,7 +186,11 @@ def test_task_plan_nondefault_args() -> None:
             cost=0.75,
         ),
         TaskAction(
-            "place", object="apple", target_location="desk0", pose=place_pose, cost=0.5,
+            "place",
+            object="apple",
+            target_location="desk0",
+            pose=place_pose,
+            cost=0.5,
         ),
     ]
     plan = TaskPlan(robot="robot0", actions=actions)
@@ -209,7 +213,10 @@ def test_print_task_plan(capsys: CaptureFixture) -> None:
 
     actions = [
         TaskAction(
-            "navigate", source_location="charger", target_location="table", cost=1.0,
+            "navigate",
+            source_location="charger",
+            target_location="table",
+            cost=1.0,
         ),
         TaskAction("detect", object="apple"),
         TaskAction("pick", object="apple", target_location="table", cost=0.75),

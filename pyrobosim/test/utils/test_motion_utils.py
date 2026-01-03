@@ -132,7 +132,8 @@ def test_reduce_waypoints_polygon() -> None:
         Pose(x=0.3, y=0.3),  # Should get optimized out
         Pose(x=0.8, y=0.3),  # Should get optimized out
         Pose(
-            x=0.8, y=0.5,
+            x=0.8,
+            y=0.5,
         ),  # Not optimized out since it's needed to traverse the hallway
         Pose(x=1.8, y=0.5),  # Should get optimized out
         Pose(x=2.2, y=0.5),  # Not optimized out since it's needed to reach goal

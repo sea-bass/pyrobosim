@@ -32,7 +32,8 @@ rectangle_coords = [(0.0, 0.0), (1.0, 0.0), (1.0, 2.0), (0.0, 2.0), (0.0, 0.0)]
 
 
 def coords_approx_equal(
-    coords: list[tuple[float, float]], expected_coords: list[tuple[float, float]],
+    coords: list[tuple[float, float]],
+    expected_coords: list[tuple[float, float]],
 ) -> None:
     """Checks whether coordinate lists of tuples are approximately equal."""
     assert len(coords) == len(expected_coords)
@@ -139,7 +140,8 @@ def test_transform_polygon() -> None:
 
     # Translation and rotatoin
     transformed_poly = transform_polygon(
-        square_poly, Pose(x=1.0, y=-2.0, yaw=np.pi / 2.0),
+        square_poly,
+        Pose(x=1.0, y=-2.0, yaw=np.pi / 2.0),
     )
     transformed_poly_coords = list(transformed_poly.exterior.coords)
     expected_coords = [(2.0, -2.5), (2.0, -1.5), (0.0, -1.5), (0.0, -2.5), (2.0, -2.5)]
@@ -219,7 +221,8 @@ def test_polygon_from_footprint() -> None:
         "height": 0.25,
     }
     polygon, height = polygon_and_height_from_footprint(
-        footprint, parent_polygon=parent_polygon,
+        footprint,
+        parent_polygon=parent_polygon,
     )
     poly_coords = list(polygon.exterior.coords)
     expected_coords = [(0.5, 1.0), (1.5, 1.0), (1.5, 3.0), (0.5, 3.0), (0.5, 1.0)]
@@ -234,7 +237,8 @@ def test_polygon_from_footprint() -> None:
         "height": 0.25,
     }
     polygon, height = polygon_and_height_from_footprint(
-        footprint, pose=Pose(x=10.0, y=-10.0, yaw=np.pi / 2.0),
+        footprint,
+        pose=Pose(x=10.0, y=-10.0, yaw=np.pi / 2.0),
     )
     poly_coords = list(polygon.exterior.coords)
     expected_coords = [
