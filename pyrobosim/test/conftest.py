@@ -1,4 +1,5 @@
 import pathlib
+from typing import Any, Protocol
 
 import pytest
 
@@ -6,8 +7,22 @@ from pyrobosim.core import World, WorldYamlLoader
 from pyrobosim.utils.general import get_data_folder
 
 
+class _WorldFactoryProtocol(Protocol):
+    """Typing protocol for the `world` pytest fixture.
+
+    The actual fixture returns a small factory object which is callable to
+    produce `World` instances but also proxies attribute access to a default
+    `World` instance (so tests may use `world()` or `world.robots`).  Declaring
+    this Protocol lets mypy understand both usages.
+    """
+
+    def __call__(self, filename: str = ...) -> World: ...
+
+    def __getattr__(self, name: str) -> Any: ...
+
+
 @pytest.fixture(autouse=False, scope="module")
-def world() -> World:
+def world() -> _WorldFactoryProtocol:
     """Create a reusable test world factory for sensors tests.
 
     Usage:
