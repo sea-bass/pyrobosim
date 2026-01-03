@@ -7,7 +7,7 @@ from pyrobosim.core import World, WorldYamlLoader
 from pyrobosim.utils.general import get_data_folder
 
 
-class _WorldFactoryProtocol(Protocol):
+class WorldFactoryProtocol(Protocol):
     """Typing protocol for the `world` pytest fixture.
 
     The actual fixture returns a small factory object which is callable to
@@ -22,7 +22,7 @@ class _WorldFactoryProtocol(Protocol):
 
 
 @pytest.fixture(autouse=False, scope="module")
-def world() -> _WorldFactoryProtocol:
+def world() -> WorldFactoryProtocol:
     """Create a reusable test world factory for sensors tests.
 
     Usage:

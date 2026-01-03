@@ -3,15 +3,15 @@
 """Unit tests for the World Graph planner"""
 
 
-from typing import Callable
+from pyrobosim.test.conftest import WorldFactoryProtocol
 from pytest import LogCaptureFixture
 
 from pyrobosim.navigation.world_graph import WorldGraphPlanner
+
 from pyrobosim.utils.pose import Pose
-from pyrobosim.core.world import World
 
 
-def test_world_graph_default(world: Callable[..., World]) -> None:
+def test_world_graph_default(world: WorldFactoryProtocol) -> None:
     """Tests planning with default world graph planner settings."""
     planner = WorldGraphPlanner()
     world.robots[0].set_path_planner(planner)
@@ -26,7 +26,7 @@ def test_world_graph_default(world: Callable[..., World]) -> None:
 
 
 def test_world_graph_short_connection_distance(
-    caplog: LogCaptureFixture, world: Callable[..., World]
+    caplog: LogCaptureFixture, world: WorldFactoryProtocol
 ) -> None:
     """Tests planning with short connection distance, which should fail."""
     planner_config = {

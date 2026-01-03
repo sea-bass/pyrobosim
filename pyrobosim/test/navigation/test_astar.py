@@ -2,14 +2,13 @@
 
 """Unit tests for A* planner"""
 
-from typing import Callable
 
 from pyrobosim.navigation.a_star import AStarPlanner
 from pyrobosim.utils.pose import Pose
-from pyrobosim.core.world import World
+from pyrobosim.test.conftest import WorldFactoryProtocol
 
 
-def test_astar(world: Callable[..., World]) -> None:
+def test_astar(world: WorldFactoryProtocol) -> None:
     """Test A* planner with and without path compression"""
 
     start = Pose(x=-1.6, y=2.8)

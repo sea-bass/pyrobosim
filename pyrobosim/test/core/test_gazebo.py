@@ -4,16 +4,14 @@
 
 import pathlib
 import tempfile
-from typing import Callable
-
 import pytest
 
 from pyrobosim.core import WorldGazeboExporter
 from pyrobosim.utils.general import get_data_folder
-from pyrobosim.core.world import World
+from pyrobosim.test.conftest import WorldFactoryProtocol
 
 
-def test_export_gazebo_default_folder(world: Callable[..., World]) -> None:
+def test_export_gazebo_default_folder(world: WorldFactoryProtocol) -> None:
     """Exports a test world to Gazebo using the default folder."""
 
     exporter = WorldGazeboExporter(world)
@@ -22,7 +20,7 @@ def test_export_gazebo_default_folder(world: Callable[..., World]) -> None:
 
 
 @pytest.mark.parametrize("classic", [True, False])  # type: ignore[misc]
-def test_export_gazebo(classic: bool, world: Callable[..., World]) -> None:
+def test_export_gazebo(classic: bool, world: WorldFactoryProtocol) -> None:
     """Exports a test world to Gazebo using a provided output folder."""
     output_folder = tempfile.mkdtemp()
 

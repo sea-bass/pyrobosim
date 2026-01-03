@@ -4,15 +4,14 @@
 
 
 import numpy as np
-from typing import Callable
 from pytest import LogCaptureFixture
 
 from pyrobosim.navigation.prm import PRMPlanner
 from pyrobosim.utils.pose import Pose
-from pyrobosim.core.world import World
+from pyrobosim.test.conftest import WorldFactoryProtocol
 
 
-def test_prm_default(world: Callable[..., World]) -> None:
+def test_prm_default(world: WorldFactoryProtocol) -> None:
     """Tests planning with default world graph planner settings."""
 
     np.random.seed(1234)  # Fix seed for reproducibility
@@ -28,7 +27,7 @@ def test_prm_default(world: Callable[..., World]) -> None:
     assert path.poses[-1] == goal
 
 
-def test_prm_no_path(caplog: LogCaptureFixture, world: Callable[..., World]) -> None:
+def test_prm_no_path(caplog: LogCaptureFixture, world: WorldFactoryProtocol) -> None:
     """Test that PRM gracefully returns when there is no feasible path."""
 
     prm = PRMPlanner()
@@ -42,7 +41,7 @@ def test_prm_no_path(caplog: LogCaptureFixture, world: Callable[..., World]) -> 
     assert "Could not find a path from start to goal." in caplog.text
 
 
-def test_prm_compress_path(world: Callable[..., World]) -> None:
+def test_prm_compress_path(world: WorldFactoryProtocol) -> None:
     """Tests planning with path compression option."""
 
     planner_config = {"compress_path": False}
