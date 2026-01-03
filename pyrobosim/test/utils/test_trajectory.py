@@ -138,7 +138,9 @@ def test_get_constant_speed_trajectory_limited_ang_vel() -> None:
         ],
     )
     traj = get_constant_speed_trajectory(
-        path, linear_velocity=0.5, max_angular_velocity=np.pi / 8,
+        path,
+        linear_velocity=0.5,
+        max_angular_velocity=np.pi / 8,
     )
 
     assert traj.num_points() == 4

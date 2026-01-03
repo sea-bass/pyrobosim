@@ -20,7 +20,7 @@ class TestGetEntities:
     def create_world(self) -> None:
         world = World()
 
-    # Set the location and object metadata
+        # Set the location and object metadata
         data_folder = get_data_folder()
         world.set_metadata(
             locations=pathlib.Path(data_folder) / "example_location_data.yaml",
@@ -65,7 +65,9 @@ class TestGetEntities:
             pose=Pose(x=0.85, y=-0.5, z=0.0, yaw=-np.pi / 2.0),
         )
         desk = world.add_location(
-            category="desk", parent="bedroom", pose=Pose(x=3.15, y=3.65, z=0.0),
+            category="desk",
+            parent="bedroom",
+            pose=Pose(x=3.15, y=3.65, z=0.0),
         )
         counter = world.add_location(
             category="counter",

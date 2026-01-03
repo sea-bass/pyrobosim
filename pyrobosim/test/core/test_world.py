@@ -42,7 +42,8 @@ class TestWorldModeling:
 
         # Clear out previous metadata before setting new one
         TestWorldModeling.world.set_metadata(
-            locations=pathlib.Path(data_folder) / "example_location_data_furniture.yaml",
+            locations=pathlib.Path(data_folder)
+            / "example_location_data_furniture.yaml",
             objects=pathlib.Path(data_folder) / "example_object_data_food.yaml",
         )
 
@@ -95,7 +96,9 @@ class TestWorldModeling:
         room1_name = "kitchen"
         room1_coords = [(-1, -1), (1.5, -1), (1.5, 1.5), (0.5, 1.5)]
         TestWorldModeling.world.add_room(
-            name=room1_name, footprint=room1_coords, color=[1, 0, 0],
+            name=room1_name,
+            footprint=room1_coords,
+            color=[1, 0, 0],
         )
 
         assert len(TestWorldModeling.world.rooms) == 1
@@ -105,7 +108,9 @@ class TestWorldModeling:
         room2_name = "bedroom"
         room2_coords = [(1.75, 2.5), (3.5, 2.5), (3.5, 4), (1.75, 4)]
         TestWorldModeling.world.add_room(
-            name=room2_name, footprint=room2_coords, color=[1, 0, 0],
+            name=room2_name,
+            footprint=room2_coords,
+            color=[1, 0, 0],
         )
 
         assert len(TestWorldModeling.world.rooms) == 2
@@ -140,10 +145,12 @@ class TestWorldModeling:
             == hallway
         )
         assert TestWorldModeling.world.get_hallways_from_rooms(
-            "kitchen", "bedroom",
+            "kitchen",
+            "bedroom",
         ) == [hallway]
         assert TestWorldModeling.world.get_hallways_from_rooms(
-            "bedroom", "kitchen",
+            "bedroom",
+            "kitchen",
         ) == [hallway]
         assert TestWorldModeling.world.get_hallways_attached_to_room("bedroom") == [
             hallway,
@@ -255,7 +262,9 @@ class TestWorldModeling:
 
         apple = TestWorldModeling.world.add_object(category="apple", parent="table0")
         banana = TestWorldModeling.world.add_object(
-            category="banana", name="ripe_banana", parent="study_desk",
+            category="banana",
+            name="ripe_banana",
+            parent="study_desk",
         )
         assert len(TestWorldModeling.world.objects) == 2
 
@@ -378,16 +387,20 @@ class TestWorldModeling:
 
         # Robots should collide with each other
         assert not TestWorldModeling.world.collides_with_robots(
-            robot_0.get_pose(), robot=robot_0,
+            robot_0.get_pose(),
+            robot=robot_0,
         )
         assert TestWorldModeling.world.collides_with_robots(
-            robot_1.get_pose(), robot=robot_0,
+            robot_1.get_pose(),
+            robot=robot_0,
         )
         assert TestWorldModeling.world.collides_with_robots(
-            robot_0.get_pose(), robot=robot_1,
+            robot_0.get_pose(),
+            robot=robot_1,
         )
         assert not TestWorldModeling.world.collides_with_robots(
-            robot_1.get_pose(), robot=robot_1,
+            robot_1.get_pose(),
+            robot=robot_1,
         )
 
     @staticmethod
@@ -404,7 +417,10 @@ class TestWorldModeling:
 
         # If the max connection distance is larger than the actual distance, this should return False instead.
         assert not is_connectable(
-            pose_start, pose_goal, TestWorldModeling.world, max_dist=0.5,
+            pose_start,
+            pose_goal,
+            TestWorldModeling.world,
+            max_dist=0.5,
         )
 
         # Test with a straight line right near a wall
@@ -413,12 +429,18 @@ class TestWorldModeling:
 
         # With a small step distance, this should return False
         assert not is_connectable(
-            pose_start, pose_goal, TestWorldModeling.world, step_dist=0.01,
+            pose_start,
+            pose_goal,
+            TestWorldModeling.world,
+            step_dist=0.01,
         )
 
         # With a large step distance, this should return True as the collision point is skipped
         assert not is_connectable(
-            pose_start, pose_goal, TestWorldModeling.world, step_dist=0.5,
+            pose_start,
+            pose_goal,
+            TestWorldModeling.world,
+            step_dist=0.5,
         )
 
     @staticmethod

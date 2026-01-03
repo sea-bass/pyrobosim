@@ -50,7 +50,10 @@ def test_pose_from_position() -> None:
     ],
 )
 def test_pose_from_euler_angles(
-    angle_units: str, roll: float, pitch: float, yaw: float,
+    angle_units: str,
+    roll: float,
+    pitch: float,
+    yaw: float,
 ) -> None:
     """Test creating a pose using Euler angles specified in different units."""
     pose = Pose(roll=roll, pitch=pitch, yaw=yaw, angle_units=angle_units)
@@ -143,7 +146,8 @@ def test_pose_from_transform() -> None:
 
 
 @pytest.mark.parametrize(  # type: ignore[misc]
-    "angle_units, angle_value", [("radians", np.pi / 2), ("degrees", 90.0)],
+    "angle_units, angle_value",
+    [("radians", np.pi / 2), ("degrees", 90.0)],
 )
 def test_pose_to_from_dict(angle_units: str, angle_value: float) -> None:
     """Test creating poses using a dictionary and saving them back out."""
@@ -200,7 +204,8 @@ def test_pose_to_from_dict(angle_units: str, angle_value: float) -> None:
 
 
 @pytest.mark.parametrize(  # type: ignore[misc]
-    "angle_units, angle_value", [("radians", np.pi / 2), ("degrees", 90.0)],
+    "angle_units, angle_value",
+    [("radians", np.pi / 2), ("degrees", 90.0)],
 )
 def test_construct_pose(angle_units: str, angle_value: float) -> None:
     """Test pose construct function that accepts various types"""
@@ -338,7 +343,13 @@ def test_is_approx_radians() -> None:
 def test_is_approx_degrees() -> None:
     """Test approximate equivalence functionality for pose in degrees"""
     pose1 = Pose(
-        x=1.0, y=2.0, z=3.0, roll=90.0, pitch=0.0, yaw=-90.0, angle_units="degrees",
+        x=1.0,
+        y=2.0,
+        z=3.0,
+        roll=90.0,
+        pitch=0.0,
+        yaw=-90.0,
+        angle_units="degrees",
     )
     pose2 = Pose(
         x=1.0 + 1e-4,

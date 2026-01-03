@@ -40,19 +40,28 @@ def create_test_world(add_alt_desk: bool = True) -> World:
     storage_coords = [(2, -2), (5, -2), (5, 2), (2, 2)]
     world.add_room(name="storage", footprint=storage_coords, color=[0, 0, 1])
     world.add_hallway(
-        room_start="home", room_end="storage", width=0.75, conn_method="auto",
+        room_start="home",
+        room_end="storage",
+        width=0.75,
+        conn_method="auto",
     )
 
     # Add locations and objects
     table0 = world.add_location(
-        category="table", parent="home", pose=Pose(x=0.0, y=0.5, z=0.0, yaw=np.pi / 2.0),
+        category="table",
+        parent="home",
+        pose=Pose(x=0.0, y=0.5, z=0.0, yaw=np.pi / 2.0),
     )
     desk0 = world.add_location(
-        category="desk", parent="storage", pose=Pose(x=2.5, y=-1.5, z=0.0, yaw=0.0),
+        category="desk",
+        parent="storage",
+        pose=Pose(x=2.5, y=-1.5, z=0.0, yaw=0.0),
     )
     if add_alt_desk:
         desk1 = world.add_location(
-            category="desk", parent="storage", pose=Pose(x=4.5, y=1.5, z=0.0, yaw=0.0),
+            category="desk",
+            parent="storage",
+            pose=Pose(x=4.5, y=1.5, z=0.0, yaw=0.0),
         )
     world.add_object(category="banana", parent=table0)
     world.add_object(
@@ -135,7 +144,10 @@ domains_to_test = ["04_nav_manip_stream", "05_nav_grasp_stream"]
 def test_manip_single_desk(domain_name: str) -> None:
     world = create_test_world(add_alt_desk=False)
     plan = start_planner(
-        world, domain_name=domain_name, max_attempts=3, search_sample_ratio=0.5,
+        world,
+        domain_name=domain_name,
+        max_attempts=3,
+        search_sample_ratio=0.5,
     )
     assert plan is not None
 
@@ -144,7 +156,10 @@ def test_manip_single_desk(domain_name: str) -> None:
 def test_manip_double_desk(domain_name: str) -> None:
     world = create_test_world(add_alt_desk=True)
     plan = start_planner(
-        world, domain_name=domain_name, max_attempts=3, search_sample_ratio=0.2,
+        world,
+        domain_name=domain_name,
+        max_attempts=3,
+        search_sample_ratio=0.2,
     )
     assert plan is not None
 
@@ -158,7 +173,8 @@ if __name__ == "__main__":
     # Start task and motion planner in separate thread.
     world = create_test_world(add_alt_desk)
     planner_thread = threading.Thread(
-        target=start_planner, args=(world, domain_name, interactive, max_attempts),
+        target=start_planner,
+        args=(world, domain_name, interactive, max_attempts),
     )
     planner_thread.start()
 

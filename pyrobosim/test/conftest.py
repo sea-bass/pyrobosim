@@ -29,6 +29,7 @@ def world() -> World:
         :param default: The default World instance to proxy attributes to.
         :return: A new WorldFactory instance.
         """
+
         def __init__(self, default: World) -> None:
             """Creates a WorldFactory instance.
 

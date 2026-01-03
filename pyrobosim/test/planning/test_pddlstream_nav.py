@@ -54,11 +54,15 @@ def create_test_world(add_hallway: bool = True) -> World:
 
     # Add locations and objects
     table0 = world.add_location(
-        category="table", parent="unreachable", pose=Pose(x=3.5, y=-0.25, z=0.0),
+        category="table",
+        parent="unreachable",
+        pose=Pose(x=3.5, y=-0.25, z=0.0),
     )
     world.add_object(category="apple", parent=table0)
     table1 = world.add_location(
-        category="table", parent="goal_room", pose=Pose(x=3.5, y=2.75, z=0.0),
+        category="table",
+        parent="goal_room",
+        pose=Pose(x=3.5, y=2.75, z=0.0),
     )
     world.add_object(category="apple", parent=table1)
 
@@ -81,7 +85,9 @@ def create_test_world(add_hallway: bool = True) -> World:
 
 
 def start_planner(
-    world: World, domain_name: str = "03_nav_stream", interactive: bool = False,
+    world: World,
+    domain_name: str = "03_nav_stream",
+    interactive: bool = False,
 ) -> TaskPlan:
     domain_folder = pathlib.Path(get_default_domains_folder()) / domain_name
     planner = PDDLStreamPlanner(world, domain_folder)
@@ -131,7 +137,8 @@ if __name__ == "__main__":
     # domain_name = "02_derived" # Will get infeasible plan
     domain_name = "03_nav_stream"  # Will get feasible plan
     planner_thread = threading.Thread(
-        target=start_planner, args=(world, domain_name, True),
+        target=start_planner,
+        args=(world, domain_name, True),
     )
     planner_thread.start()
 

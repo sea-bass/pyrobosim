@@ -23,7 +23,9 @@ def test_world_graph_default(world) -> None:
     assert path.poses[-1] == goal
 
 
-def test_world_graph_short_connection_distance(caplog: LogCaptureFixture, world) -> None:
+def test_world_graph_short_connection_distance(
+    caplog: LogCaptureFixture, world
+) -> None:
     """Tests planning with short connection distance, which should fail."""
     planner_config = {
         "collision_check_step_dist": 0.025,
