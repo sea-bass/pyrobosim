@@ -18,7 +18,7 @@ class TestHallway:
 
         coords_start = [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)]
         self.room_start = self.test_world.add_room(
-            name="room_start", footprint=coords_start
+            name="room_start", footprint=coords_start,
         )
 
         coords_end = [(3.0, 5.0), (5.0, 3.0), (5.0, 5.0), (3.0, 5.0)]
@@ -88,7 +88,7 @@ class TestHallway:
         """Test that all the hallway validation checks work."""
         with pytest.raises(ValueError) as exc_info:
             self.test_world.add_hallway(
-                room_start="bad_start_room", room_end="room_end", width=0.1
+                room_start="bad_start_room", room_end="room_end", width=0.1,
             )
         assert "Room not found: bad_start_room" in caplog.text
         assert (
@@ -98,14 +98,14 @@ class TestHallway:
         caplog.clear()
         with pytest.raises(ValueError) as exc_info:
             self.test_world.add_hallway(
-                room_start="room_start", room_end="bad_end_room", width=0.1
+                room_start="room_start", room_end="bad_end_room", width=0.1,
             )
         assert "Room not found: bad_end_room" in caplog.text
         assert str(exc_info.value) == "bad_end_room must be a valid end Room object."
 
         with pytest.raises(ValueError) as exc_info:
             self.test_world.add_hallway(
-                room_start="room_start", room_end="room_end", width=0.0
+                room_start="room_start", room_end="room_end", width=0.0,
             )
         assert str(exc_info.value) == "width must be a positive value."
 
@@ -119,7 +119,7 @@ class TestHallway:
         assert str(exc_info.value) == "No valid connection method: bad_conn_method."
 
     def test_add_hallway_open_close_lock_unlock(
-        self, caplog: LogCaptureFixture
+        self, caplog: LogCaptureFixture,
     ) -> None:
         """Test the open, close, lock, and unlock capabilities of hallways."""
         result = self.test_world.add_hallway(

@@ -3,19 +3,20 @@
 """
 Unit tests for robot class.
 """
-import os
+import pathlib
+import threading
+import time
+
 import numpy as np
 import pytest
 from pytest import CaptureFixture, LogCaptureFixture
-import time
-import threading
 
 from pyrobosim.core import Pose, Robot, WorldYamlLoader
 from pyrobosim.navigation.execution import ConstantVelocityExecutor
 from pyrobosim.navigation.world_graph import WorldGraphPlanner
 from pyrobosim.planning.actions import (
-    ExecutionStatus,
     ExecutionOptions,
+    ExecutionStatus,
     TaskAction,
     TaskPlan,
 )
@@ -27,7 +28,7 @@ class TestRobot:
     @pytest.fixture(autouse=True)  # type: ignore[misc]
     def create_test_world(self) -> None:
         self.test_world = WorldYamlLoader().from_file(
-            os.path.join(get_data_folder(), "test_world.yaml")
+            pathlib.Path(get_data_folder()) / "test_world.yaml",
         )
 
     def create_test_plan(self) -> TaskPlan:
@@ -63,10 +64,10 @@ class TestRobot:
         assert robot.radius == pytest.approx(0.0)
         assert robot.height == pytest.approx(0.0)
         assert robot.color == pytest.approx((0.8, 0.0, 0.8))
-        assert robot.path_planner == None
-        assert robot.path_executor == None
-        assert robot.grasp_generator == None
-        assert robot.world == None
+        assert robot.path_planner is None
+        assert robot.path_executor is None
+        assert robot.grasp_generator is None
+        assert robot.world is None
         assert not robot.partial_obs_objects
         assert not robot.partial_obs_hallways
         assert robot.battery_level == 100.0

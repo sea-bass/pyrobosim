@@ -14,7 +14,7 @@ from pyrobosim.utils.pose import Pose
 
 # Create a grasp generator
 properties = ParallelGraspProperties(
-    max_width=0.15, depth=0.1, height=0.04, width_clearance=0.01, depth_clearance=0.01
+    max_width=0.15, depth=0.1, height=0.04, width_clearance=0.01, depth_clearance=0.01,
 )
 gen = GraspGenerator(properties)
 
@@ -25,7 +25,7 @@ def test_cube_no_grasps() -> None:
     """
     object_dims = [0.1, 0.1, 0.1]
     grasps = gen.generate(
-        object_dims, front_grasps=False, top_grasps=False, side_grasps=False
+        object_dims, front_grasps=False, top_grasps=False, side_grasps=False,
     )
     assert len(grasps) == 0
 
@@ -37,7 +37,7 @@ def test_cube_front_grasps() -> None:
     """
     object_dims = [0.1, 0.1, 0.1]
     grasps = gen.generate(
-        object_dims, front_grasps=True, top_grasps=False, side_grasps=False
+        object_dims, front_grasps=True, top_grasps=False, side_grasps=False,
     )
     assert len(grasps) == 2
     for grasp in grasps:
@@ -52,7 +52,7 @@ def test_cube_top_grasps() -> None:
     """
     object_dims = [0.1, 0.1, 0.1]
     grasps = gen.generate(
-        object_dims, front_grasps=False, top_grasps=True, side_grasps=False
+        object_dims, front_grasps=False, top_grasps=True, side_grasps=False,
     )
     assert len(grasps) == 2
     for grasp in grasps:
@@ -67,7 +67,7 @@ def test_cube_side_grasps() -> None:
     """
     object_dims = [0.1, 0.1, 0.1]
     grasps = gen.generate(
-        object_dims, front_grasps=False, top_grasps=False, side_grasps=True
+        object_dims, front_grasps=False, top_grasps=False, side_grasps=True,
     )
     assert len(grasps) == 4
     assert grasps[0].face == GraspFace.RIGHT
@@ -87,7 +87,7 @@ def test_cube_all_grasps() -> None:
     """
     object_dims = [0.1, 0.1, 0.1]
     grasps = gen.generate(
-        object_dims, front_grasps=True, top_grasps=True, side_grasps=True
+        object_dims, front_grasps=True, top_grasps=True, side_grasps=True,
     )
     assert len(grasps) == 8
     assert grasps[0].face == GraspFace.FRONT
@@ -115,7 +115,7 @@ def test_deep_cube_all_grasps() -> None:
     """
     object_dims = [0.5, 0.1, 0.1]
     grasps = gen.generate(
-        object_dims, front_grasps=True, top_grasps=True, side_grasps=True
+        object_dims, front_grasps=True, top_grasps=True, side_grasps=True,
     )
     assert len(grasps) == 5
     assert grasps[0].face == GraspFace.FRONT
@@ -137,7 +137,7 @@ def test_wide_cube_all_grasps() -> None:
     """
     object_dims = [0.1, 0.5, 0.1]
     grasps = gen.generate(
-        object_dims, front_grasps=True, top_grasps=True, side_grasps=True
+        object_dims, front_grasps=True, top_grasps=True, side_grasps=True,
     )
     assert len(grasps) == 6
     assert grasps[0].face == GraspFace.FRONT
@@ -161,7 +161,7 @@ def test_tall_cube_all_grasps() -> None:
     """
     object_dims = [0.1, 0.1, 0.5]
     grasps = gen.generate(
-        object_dims, front_grasps=True, top_grasps=True, side_grasps=True
+        object_dims, front_grasps=True, top_grasps=True, side_grasps=True,
     )
     assert len(grasps) == 5
     assert grasps[0].face == GraspFace.FRONT
@@ -183,7 +183,7 @@ def test_large_cube_all_grasps() -> None:
     """
     object_dims = [0.5, 0.5, 0.5]
     grasps = gen.generate(
-        object_dims, front_grasps=True, top_grasps=True, side_grasps=True
+        object_dims, front_grasps=True, top_grasps=True, side_grasps=True,
     )
     assert len(grasps) == 0
 
