@@ -3,12 +3,13 @@
 """
 Unit tests for entity getting with world models.
 """
-import os
+import pathlib
+
+import numpy as np
 import pytest
 from pytest import LogCaptureFixture
-import numpy as np
 
-from pyrobosim.core import Robot, Room, Location, ObjectSpawn, Object, World
+from pyrobosim.core import Location, Object, ObjectSpawn, Robot, Room, World
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.knowledge import graph_node_from_entity
 from pyrobosim.utils.pose import Pose
@@ -22,8 +23,8 @@ class TestGetEntities:
         # Set the location and object metadata
         data_folder = get_data_folder()
         world.set_metadata(
-            locations=os.path.join(data_folder, "example_location_data.yaml"),
-            objects=os.path.join(data_folder, "example_object_data.yaml"),
+            locations=pathlib.Path(data_folder) / "example_location_data.yaml",
+            objects=pathlib.Path(data_folder) / "example_object_data.yaml",
         )
 
         # Add rooms
@@ -64,7 +65,9 @@ class TestGetEntities:
             pose=Pose(x=0.85, y=-0.5, z=0.0, yaw=-np.pi / 2.0),
         )
         desk = world.add_location(
-            category="desk", parent="bedroom", pose=Pose(x=3.15, y=3.65, z=0.0)
+            category="desk",
+            parent="bedroom",
+            pose=Pose(x=3.15, y=3.65, z=0.0),
         )
         counter = world.add_location(
             category="counter",

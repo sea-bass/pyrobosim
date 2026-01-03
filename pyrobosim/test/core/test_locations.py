@@ -4,7 +4,8 @@
 Tests for location and object spawn creation in PyRoboSim.
 """
 
-import os
+import pathlib
+
 import pytest
 from pytest import LogCaptureFixture
 
@@ -20,8 +21,8 @@ class TestLocations:
         data_folder = get_data_folder()
         self.test_world = World()
         self.test_world.set_metadata(
-            locations=os.path.join(data_folder, "example_location_data.yaml"),
-            objects=os.path.join(data_folder, "example_object_data.yaml"),
+            locations=pathlib.Path(data_folder) / "example_location_data.yaml",
+            objects=pathlib.Path(data_folder) / "example_object_data.yaml",
         )
 
         coords = [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)]
