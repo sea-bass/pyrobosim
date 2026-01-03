@@ -32,7 +32,7 @@ def test_path_pose_list(capsys: CaptureFixture) -> None:
             Pose(x=0.0, y=0.0),
             Pose(x=1.0, y=0.0, yaw=np.pi / 2.0),
             Pose(x=1.0, y=3.0, q=[0.707, 0.0, 0.707, 0.0]),
-        ]
+        ],
     )
     assert len(path.poses) == 3
     assert path.num_poses == 3
@@ -60,7 +60,7 @@ def test_path_fill_yaws() -> None:
             Pose(x=2.0, y=5.0),  # Yaw should be pi/2
             Pose(x=0.0, y=5.0),  # Yaw should be pi
             Pose(x=0.0, y=4.0),  # Yaw should remain at its final value
-        ]
+        ],
     )
     expected_yaws = [0.0, np.pi / 4.0, np.pi / 4.0, np.pi / 2.0, np.pi, 0.0]
 
@@ -132,7 +132,8 @@ def test_reduce_waypoints_polygon() -> None:
         Pose(x=0.3, y=0.3),  # Should get optimized out
         Pose(x=0.8, y=0.3),  # Should get optimized out
         Pose(
-            x=0.8, y=0.5
+            x=0.8,
+            y=0.5,
         ),  # Not optimized out since it's needed to traverse the hallway
         Pose(x=1.8, y=0.5),  # Should get optimized out
         Pose(x=2.2, y=0.5),  # Not optimized out since it's needed to reach goal

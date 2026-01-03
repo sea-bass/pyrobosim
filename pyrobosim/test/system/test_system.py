@@ -5,14 +5,15 @@ System-level tests for the PyRoboSim UI functionality to execute tasks.
 """
 
 import os
+import pathlib
 import sys
-import pytest
 import time
+
+import pytest
 
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.gui import PyRoboSimGUI
 from pyrobosim.utils.knowledge import query_to_entity
-
 
 # Needed for UI tests to work with CI
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
@@ -22,8 +23,8 @@ class TestSystem:
     @pytest.fixture(autouse=True)  # type: ignore[misc]
     def setup_and_teardown(self) -> None:
         # Load world from file.
-        cur_path = os.path.dirname(os.path.realpath(__file__))
-        world_file_path = os.path.join(cur_path, "test_system_world.yaml")
+        cur_path = pathlib.Path(__file__).parent
+        world_file_path = cur_path / "test_system_world.yaml"
         world = WorldYamlLoader().from_file(world_file_path)
 
         # Create headless app.

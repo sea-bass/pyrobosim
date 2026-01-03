@@ -3,10 +3,11 @@
 """
 Tests for PDDLStream planning with navigation streams.
 """
-from importlib.util import find_spec
-import os
-import pytest
+import pathlib
 import threading
+from importlib.util import find_spec
+
+import pytest
 
 if find_spec("pddlstream") is None:
     pytest.skip(allow_module_level=True, reason="PDDLStream not available")
@@ -28,8 +29,8 @@ def create_test_world(add_hallway: bool = True) -> World:
     # Set the location and object metadata
     data_folder = get_data_folder()
     world.set_metadata(
-        locations=os.path.join(data_folder, "example_location_data.yaml"),
-        objects=os.path.join(data_folder, "example_object_data.yaml"),
+        locations=pathlib.Path(data_folder) / "example_location_data.yaml",
+        objects=pathlib.Path(data_folder) / "example_object_data.yaml",
     )
 
     # Add rooms
@@ -53,11 +54,15 @@ def create_test_world(add_hallway: bool = True) -> World:
 
     # Add locations and objects
     table0 = world.add_location(
-        category="table", parent="unreachable", pose=Pose(x=3.5, y=-0.25, z=0.0)
+        category="table",
+        parent="unreachable",
+        pose=Pose(x=3.5, y=-0.25, z=0.0),
     )
     world.add_object(category="apple", parent=table0)
     table1 = world.add_location(
-        category="table", parent="goal_room", pose=Pose(x=3.5, y=2.75, z=0.0)
+        category="table",
+        parent="goal_room",
+        pose=Pose(x=3.5, y=2.75, z=0.0),
     )
     world.add_object(category="apple", parent=table1)
 
@@ -80,9 +85,11 @@ def create_test_world(add_hallway: bool = True) -> World:
 
 
 def start_planner(
-    world: World, domain_name: str = "03_nav_stream", interactive: bool = False
+    world: World,
+    domain_name: str = "03_nav_stream",
+    interactive: bool = False,
 ) -> TaskPlan:
-    domain_folder = os.path.join(get_default_domains_folder(), domain_name)
+    domain_folder = pathlib.Path(get_default_domains_folder()) / domain_name
     planner = PDDLStreamPlanner(world, domain_folder)
     goal_literals = [("Has", "robot", "apple")]
 
@@ -130,7 +137,8 @@ if __name__ == "__main__":
     # domain_name = "02_derived" # Will get infeasible plan
     domain_name = "03_nav_stream"  # Will get feasible plan
     planner_thread = threading.Thread(
-        target=start_planner, args=(world, domain_name, True)
+        target=start_planner,
+        args=(world, domain_name, True),
     )
     planner_thread.start()
 
