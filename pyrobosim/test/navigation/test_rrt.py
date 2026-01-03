@@ -3,13 +3,15 @@
 """Unit tests for the RRT planner"""
 
 import numpy as np
+from typing import Callable
 from pytest import LogCaptureFixture
 
 from pyrobosim.navigation.rrt import RRTPlanner
 from pyrobosim.utils.pose import Pose
+from pyrobosim.core.world import World
 
 
-def test_rrt_long_distance(world) -> None:
+def test_rrt_long_distance(world: Callable[..., World]) -> None:
     """Tests planning with default world graph planner settings."""
 
     planner_config = {
@@ -29,7 +31,7 @@ def test_rrt_long_distance(world) -> None:
     assert path.poses[-1] == goal
 
 
-def test_rrt_short_distance_connect(world) -> None:
+def test_rrt_short_distance_connect(world: Callable[..., World]) -> None:
     """Tests if direct connection works if goal is within max_connection_distance."""
     planner_config = {
         "bidirectional": False,
@@ -48,7 +50,7 @@ def test_rrt_short_distance_connect(world) -> None:
     assert path.poses[1] == goal
 
 
-def test_rrt_no_path(caplog: LogCaptureFixture, world) -> None:
+def test_rrt_no_path(caplog: LogCaptureFixture, world: Callable[..., World]) -> None:
     """Test that RRT gracefully returns when there is no feasible path."""
 
     planner_config = {
@@ -66,7 +68,7 @@ def test_rrt_no_path(caplog: LogCaptureFixture, world) -> None:
     assert "Could not find a path from start to goal." in caplog.text
 
 
-def test_rrt_bidirectional(world) -> None:
+def test_rrt_bidirectional(world: Callable[..., World]) -> None:
     """Tests bidirectional RRT planning."""
 
     planner_config = {
@@ -86,7 +88,7 @@ def test_rrt_bidirectional(world) -> None:
     assert path.poses[-1] == goal
 
 
-def test_rrt_connect(world) -> None:
+def test_rrt_connect(world: Callable[..., World]) -> None:
     """Tests RRTConnect planning."""
 
     planner_config = {
@@ -106,7 +108,7 @@ def test_rrt_connect(world) -> None:
     assert path.poses[-1] == goal
 
 
-def test_rrt_star(world) -> None:
+def test_rrt_star(world: Callable[..., World]) -> None:
     """Tests RRT* planning."""
     planner_config = {
         "bidirectional": False,
@@ -125,7 +127,7 @@ def test_rrt_star(world) -> None:
     assert path.poses[-1] == goal
 
 
-def test_rrt_compress_path(world) -> None:
+def test_rrt_compress_path(world: Callable[..., World]) -> None:
     """Tests planning with path compression option."""
     planner_config = {
         "bidirectional": False,

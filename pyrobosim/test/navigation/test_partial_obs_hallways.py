@@ -4,14 +4,16 @@
 
 import math
 import time
+from typing import Callable
 
 from pyrobosim.navigation.execution import ConstantVelocityExecutor
 from pyrobosim.sensors.lidar import Lidar2D
 from pyrobosim.utils.pose import Pose
 from pyrobosim.utils.world_collision import is_connectable
+from pyrobosim.core.world import World
 
 
-def test_partial_obs_hallways_enabled(world) -> None:
+def test_partial_obs_hallways_enabled(world: Callable[..., World]) -> None:
     """Tests partial hallway observability feature with slight modifications to default world graph planner settings."""
     # Set up a closed hallway for testing
     world.hallways[0].is_open = False
@@ -45,7 +47,7 @@ def test_partial_obs_hallways_enabled(world) -> None:
     assert collision_free_with_partial_obs_hallways is True
 
 
-def test_detect_hallway_states(world) -> None:
+def test_detect_hallway_states(world: Callable[..., World]) -> None:
     """Tests updating recorded closed hallways."""
 
     # Set up a closed hallway for testing

@@ -3,11 +3,13 @@
 """Unit tests for lidar sensor."""
 
 import numpy as np
+from typing import Callable
 
 from pyrobosim.sensors.lidar import Lidar2D
+from pyrobosim.core.world import World
 
 
-def test_lidar_2d(world) -> None:
+def test_lidar_2d(world: Callable[..., World]) -> None:
     # Setup a robot with a lidar sensor using the shared fixture factory.
     w = world()
     lidar = Lidar2D(

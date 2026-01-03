@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 
 """Unit tests for world Gazebo exporting utilities."""
+
 import pathlib
 import tempfile
+from typing import Callable
 
 import pytest
 
 from pyrobosim.core import WorldGazeboExporter
 from pyrobosim.utils.general import get_data_folder
+from pyrobosim.core.world import World
 
 
-def test_export_gazebo_default_folder(world) -> None:
+def test_export_gazebo_default_folder(world: Callable[..., World]) -> None:
     """Exports a test world to Gazebo using the default folder."""
 
     exporter = WorldGazeboExporter(world)
@@ -19,7 +22,7 @@ def test_export_gazebo_default_folder(world) -> None:
 
 
 @pytest.mark.parametrize("classic", [True, False])  # type: ignore[misc]
-def test_export_gazebo(classic: bool, world) -> None:
+def test_export_gazebo(classic: bool, world: Callable[..., World]) -> None:
     """Exports a test world to Gazebo using a provided output folder."""
     output_folder = tempfile.mkdtemp()
 

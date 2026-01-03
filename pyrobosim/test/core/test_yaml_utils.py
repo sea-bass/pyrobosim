@@ -5,6 +5,7 @@
 import pathlib
 import tempfile
 from math import pi
+from typing import Callable
 
 import numpy as np
 import pytest
@@ -677,7 +678,7 @@ def test_yaml_load_and_write_dict() -> None:
     world.shutdown()
 
 
-def test_yaml_load_and_write_file(world) -> None:
+def test_yaml_load_and_write_file(world: Callable[..., World]) -> None:
     """Tests round-trip loading from, and writing to, a YAML file."""
     world = world("test_world_multirobot.yaml")
 
