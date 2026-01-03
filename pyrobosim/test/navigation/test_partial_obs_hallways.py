@@ -5,12 +5,11 @@
 import math
 import time
 
-from test.conftest import WorldFactoryProtocol
-
 from pyrobosim.navigation.execution import ConstantVelocityExecutor
 from pyrobosim.sensors.lidar import Lidar2D
 from pyrobosim.utils.pose import Pose
 from pyrobosim.utils.world_collision import is_connectable
+from test.conftest import WorldFactoryProtocol
 
 
 def test_partial_obs_hallways_enabled(world: WorldFactoryProtocol) -> None:

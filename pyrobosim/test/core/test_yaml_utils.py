@@ -13,11 +13,11 @@ from pytest import LogCaptureFixture
 from pyrobosim.core.locations import Location
 from pyrobosim.core.objects import Object
 from pyrobosim.core.world import World
-from test.conftest import WorldFactoryProtocol
 from pyrobosim.core.yaml_utils import WorldYamlLoader, WorldYamlWriter
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.polygon import polygon_and_height_from_footprint, transform_polygon
 from pyrobosim.utils.pose import Pose
+from test.conftest import WorldFactoryProtocol
 
 
 class TestWorldYamlLoading:

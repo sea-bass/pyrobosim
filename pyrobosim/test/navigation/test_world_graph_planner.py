@@ -3,12 +3,11 @@
 """Unit tests for the World Graph planner"""
 
 
-from test.conftest import WorldFactoryProtocol
 from pytest import LogCaptureFixture
 
 from pyrobosim.navigation.world_graph import WorldGraphPlanner
-
 from pyrobosim.utils.pose import Pose
+from test.conftest import WorldFactoryProtocol
 
 
 def test_world_graph_default(world: WorldFactoryProtocol) -> None:
