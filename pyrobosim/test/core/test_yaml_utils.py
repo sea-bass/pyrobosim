@@ -13,7 +13,7 @@ from pytest import LogCaptureFixture
 from pyrobosim.core.locations import Location
 from pyrobosim.core.objects import Object
 from pyrobosim.core.world import World
-from pyrobosim.test.conftest import WorldFactoryProtocol
+from test.conftest import WorldFactoryProtocol
 from pyrobosim.core.yaml_utils import WorldYamlLoader, WorldYamlWriter
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.polygon import polygon_and_height_from_footprint, transform_polygon
@@ -676,9 +676,6 @@ def test_yaml_load_and_write_dict() -> None:
 
     # Avoids sensor thread deadlock at shutdown.
     world.shutdown()
-
-
-from pyrobosim.test.conftest import WorldFactoryProtocol
 
 
 def test_yaml_load_and_write_file(world: WorldFactoryProtocol) -> None:

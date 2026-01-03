@@ -3,7 +3,7 @@
 """Unit tests for the World Graph planner"""
 
 
-from pyrobosim.test.conftest import WorldFactoryProtocol
+from test.conftest import WorldFactoryProtocol
 from pytest import LogCaptureFixture
 
 from pyrobosim.navigation.world_graph import WorldGraphPlanner

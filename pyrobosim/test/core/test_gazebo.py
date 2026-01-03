@@ -8,7 +8,7 @@ import pytest
 
 from pyrobosim.core import WorldGazeboExporter
 from pyrobosim.utils.general import get_data_folder
-from pyrobosim.test.conftest import WorldFactoryProtocol
+from test.conftest import WorldFactoryProtocol
 
 
 def test_export_gazebo_default_folder(world: WorldFactoryProtocol) -> None:

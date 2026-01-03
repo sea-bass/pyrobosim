@@ -5,7 +5,7 @@
 
 from pyrobosim.navigation.a_star import AStarPlanner
 from pyrobosim.utils.pose import Pose
-from pyrobosim.test.conftest import WorldFactoryProtocol
+from test.conftest import WorldFactoryProtocol
 
 
 def test_astar(world: WorldFactoryProtocol) -> None:

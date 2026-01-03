@@ -3,7 +3,7 @@
 """Unit tests for lidar sensor."""
 
 import numpy as np
-from pyrobosim.test.conftest import WorldFactoryProtocol
+from test.conftest import WorldFactoryProtocol
 
 from pyrobosim.sensors.lidar import Lidar2D
 

@@ -8,7 +8,7 @@ from pytest import LogCaptureFixture
 
 from pyrobosim.navigation.prm import PRMPlanner
 from pyrobosim.utils.pose import Pose
-from pyrobosim.test.conftest import WorldFactoryProtocol
+from test.conftest import WorldFactoryProtocol
 
 
 def test_prm_default(world: WorldFactoryProtocol) -> None:

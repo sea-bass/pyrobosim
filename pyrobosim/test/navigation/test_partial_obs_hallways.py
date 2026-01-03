@@ -5,7 +5,7 @@
 import math
 import time
 
-from pyrobosim.test.conftest import WorldFactoryProtocol
+from test.conftest import WorldFactoryProtocol
 
 from pyrobosim.navigation.execution import ConstantVelocityExecutor
 from pyrobosim.sensors.lidar import Lidar2D

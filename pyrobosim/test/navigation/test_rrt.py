@@ -7,7 +7,7 @@ from pytest import LogCaptureFixture
 
 from pyrobosim.navigation.rrt import RRTPlanner
 from pyrobosim.utils.pose import Pose
-from pyrobosim.test.conftest import WorldFactoryProtocol
+from test.conftest import WorldFactoryProtocol
 
 
 def test_rrt_long_distance(world: WorldFactoryProtocol) -> None:
