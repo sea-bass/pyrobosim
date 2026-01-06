@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 
 """Unit tests for lidar sensor."""
-
 import numpy as np
+import pathlib
 
-from pyrobosim.pyrobosim.core.world import World
+from pyrobosim.core.world import WorldYamlLoader
+from pyrobosim.utils.general import get_data_folder
 from pyrobosim.sensors.lidar import Lidar2D
 
 
-def test_lidar_2d(world: World) -> None:
-    # Setup a robot with a lidar sensor using the shared fixture factory.
-    w = world()
+def test_lidar_2d() -> None:
+    # Setup a robot with a lidar sensor.
+    world = WorldYamlLoader().from_file(
+        pathlib.Path(get_data_folder()) / "test_world.yaml"
+    )
     lidar = Lidar2D(
         update_rate_s=0.1,
         angle_units="degrees",
@@ -19,7 +22,7 @@ def test_lidar_2d(world: World) -> None:
         angular_resolution=5.0,
         max_range_m=2.0,
     )
-    robot = w.robots[0]
+    robot = world.robots[0]
     robot.set_sensors({"lidar": lidar})
 
     # Verify that the sensor is not active.
