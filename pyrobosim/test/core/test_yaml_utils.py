@@ -17,7 +17,6 @@ from pyrobosim.core.yaml_utils import WorldYamlLoader, WorldYamlWriter
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.polygon import polygon_and_height_from_footprint, transform_polygon
 from pyrobosim.utils.pose import Pose
-from test.conftest import WorldFactoryProtocol
 
 
 class TestWorldYamlLoading:
@@ -678,7 +677,7 @@ def test_yaml_load_and_write_dict() -> None:
     world.shutdown()
 
 
-def test_yaml_load_and_write_file(world: WorldFactoryProtocol) -> None:
+def test_yaml_load_and_write_file(world: World) -> None:
     """Tests round-trip loading from, and writing to, a YAML file."""
     world = world("test_world_multirobot.yaml")
 

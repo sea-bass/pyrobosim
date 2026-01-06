@@ -6,7 +6,6 @@ Unit tests for world knowledge utilities.
 
 import os
 
-import pytest
 from pytest import LogCaptureFixture
 
 from pyrobosim.core import Robot, World, WorldYamlLoader

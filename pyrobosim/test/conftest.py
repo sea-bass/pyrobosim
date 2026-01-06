@@ -1,14 +1,13 @@
 import pathlib
-from typing import Any
 
 import pytest
 
-from pyrobosim.core import WorldYamlLoader
+from pyrobosim.core import World, WorldYamlLoader
 from pyrobosim.utils.general import get_data_folder
 
 
 @pytest.fixture(autouse=False, scope="module")
-def world(w: str = "test_world.yaml") -> Any:
+def world(w: str = "test_world.yaml") -> World:
     """Create a reusable test world factory for sensors tests.
 
     Usage:

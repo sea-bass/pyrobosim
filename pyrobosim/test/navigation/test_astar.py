@@ -4,11 +4,11 @@
 
 
 from pyrobosim.navigation.a_star import AStarPlanner
+from pyrobosim.pyrobosim.core.world import World
 from pyrobosim.utils.pose import Pose
-from test.conftest import WorldFactoryProtocol
 
 
-def test_astar(world: WorldFactoryProtocol) -> None:
+def test_astar(world: World) -> None:
     """Test A* planner with and without path compression"""
 
     start = Pose(x=-1.6, y=2.8)

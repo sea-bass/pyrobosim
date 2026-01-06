@@ -4,11 +4,11 @@
 
 import numpy as np
 
+from pyrobosim.pyrobosim.core.world import World
 from pyrobosim.sensors.lidar import Lidar2D
-from test.conftest import WorldFactoryProtocol
 
 
-def test_lidar_2d(world: WorldFactoryProtocol) -> None:
+def test_lidar_2d(world: World) -> None:
     # Setup a robot with a lidar sensor using the shared fixture factory.
     w = world()
     lidar = Lidar2D(
