@@ -6,7 +6,7 @@ import numpy as np
 from pytest import LogCaptureFixture
 
 from pyrobosim.navigation.rrt import RRTPlanner
-from pyrobosim.pyrobosim.core.world import World
+from pyrobosim.core.world import World
 from pyrobosim.utils.pose import Pose
 
 

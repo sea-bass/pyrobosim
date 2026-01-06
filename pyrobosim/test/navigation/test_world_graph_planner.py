@@ -6,7 +6,7 @@
 from pytest import LogCaptureFixture
 
 from pyrobosim.navigation.world_graph import WorldGraphPlanner
-from pyrobosim.pyrobosim.core.world import World
+from pyrobosim.core.world import World
 from pyrobosim.utils.pose import Pose
 
 

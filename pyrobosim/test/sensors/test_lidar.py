@@ -4,7 +4,7 @@
 import numpy as np
 import pathlib
 
-from pyrobosim.core.world import WorldYamlLoader
+from pyrobosim.core.yaml_utils import WorldYamlLoader
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.sensors.lidar import Lidar2D
 
