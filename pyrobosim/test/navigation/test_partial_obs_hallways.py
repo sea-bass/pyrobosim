@@ -2,21 +2,22 @@
 
 """Unit tests for the hallway partial observability feature."""
 
-import math
 import pathlib
 import time
 
+from pyrobosim.core import WorldYamlLoader
 from pyrobosim.navigation.execution import ConstantVelocityExecutor
-from pyrobosim.pyrobosim.core.world import World
-from pyrobosim.pyrobosim.core.yaml_utils import WorldYamlLoader
-from pyrobosim.pyrobosim.utils.general import get_data_folder
 from pyrobosim.sensors.lidar import Lidar2D
+from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 from pyrobosim.utils.world_collision import is_connectable
 
 
-def test_partial_obs_hallways_enabled(world: World) -> None:
+def test_partial_obs_hallways_enabled() -> None:
     """Tests partial hallway observability feature with slight modifications to default world graph planner settings."""
+    world = WorldYamlLoader().from_file(
+        pathlib.Path(get_data_folder()) / "test_world.yaml"
+    )
     # Set up a closed hallway for testing
     world.hallways[0].is_open = False
     world.update_polygons()
@@ -77,7 +78,7 @@ def test_detect_hallway_states() -> None:
     lidar_sensor = robot.sensors.get(path_executor.lidar_sensor_name)
 
     # Place robot more than 2m away from closed hallway
-    robot.set_pose(Pose(x=2.5, y=0.5, yaw=math.pi))
+    robot.set_pose(Pose(x=2.5, y=0.5, yaw=3.142))
     lidar_sensor.update()
     time.sleep(1.0)
     assert robot.recorded_closed_hallways == set()
@@ -93,7 +94,7 @@ def test_detect_hallway_states() -> None:
     lidar_sensor.update()
     time.sleep(1.0)
     assert robot.recorded_closed_hallways == set(
-        [world.get_entity_by_name("hall_bathroom_kitchen")],
+        [world.get_entity_by_name("hall_bathroom_kitchen")]
     )
 
     # Now open the hallway
