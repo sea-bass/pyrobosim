@@ -3,10 +3,13 @@
 """Unit tests for the hallway partial observability feature."""
 
 import math
+import pathlib
 import time
 
 from pyrobosim.navigation.execution import ConstantVelocityExecutor
 from pyrobosim.pyrobosim.core.world import World
+from pyrobosim.pyrobosim.core.yaml_utils import WorldYamlLoader
+from pyrobosim.pyrobosim.utils.general import get_data_folder
 from pyrobosim.sensors.lidar import Lidar2D
 from pyrobosim.utils.pose import Pose
 from pyrobosim.utils.world_collision import is_connectable
@@ -46,9 +49,11 @@ def test_partial_obs_hallways_enabled(world: World) -> None:
     assert collision_free_with_partial_obs_hallways is True
 
 
-def test_detect_hallway_states(world: World) -> None:
+def test_detect_hallway_states() -> None:
     """Tests updating recorded closed hallways."""
-
+    world = WorldYamlLoader().from_file(
+        pathlib.Path(get_data_folder()) / "test_world.yaml"
+    )
     # Set up a closed hallway for testing
     world.hallways[0].is_open = False
     world.update_polygons()
