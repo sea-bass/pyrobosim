@@ -4,15 +4,16 @@
 Unit tests for pose utilities class.
 """
 
+from typing import Any
+
 import numpy as np
 import pytest
-from typing import Any
 
 from pyrobosim.core import Pose
 from pyrobosim.utils.pose import (
     get_angle,
-    get_distance,
     get_bearing_range,
+    get_distance,
     rot2d,
     wrap_angle,
 )
@@ -49,7 +50,10 @@ def test_pose_from_position() -> None:
     ],
 )
 def test_pose_from_euler_angles(
-    angle_units: str, roll: float, pitch: float, yaw: float
+    angle_units: str,
+    roll: float,
+    pitch: float,
+    yaw: float,
 ) -> None:
     """Test creating a pose using Euler angles specified in different units."""
     pose = Pose(roll=roll, pitch=pitch, yaw=yaw, angle_units=angle_units)
@@ -130,7 +134,7 @@ def test_pose_from_transform() -> None:
             [0.0, 0.0, -1.0, 2.0],
             [-1.0, 0.0, 0.0, 3.0],
             [0.0, 0.0, 0.0, 1.0],
-        ]
+        ],
     )
     pose = Pose.from_transform(tform)
 
@@ -142,7 +146,8 @@ def test_pose_from_transform() -> None:
 
 
 @pytest.mark.parametrize(  # type: ignore[misc]
-    "angle_units, angle_value", [("radians", np.pi / 2), ("degrees", 90.0)]
+    "angle_units, angle_value",
+    [("radians", np.pi / 2), ("degrees", 90.0)],
 )
 def test_pose_to_from_dict(angle_units: str, angle_value: float) -> None:
     """Test creating poses using a dictionary and saving them back out."""
@@ -199,7 +204,8 @@ def test_pose_to_from_dict(angle_units: str, angle_value: float) -> None:
 
 
 @pytest.mark.parametrize(  # type: ignore[misc]
-    "angle_units, angle_value", [("radians", np.pi / 2), ("degrees", 90.0)]
+    "angle_units, angle_value",
+    [("radians", np.pi / 2), ("degrees", 90.0)],
 )
 def test_construct_pose(angle_units: str, angle_value: float) -> None:
     """Test pose construct function that accepts various types"""
@@ -208,7 +214,7 @@ def test_construct_pose(angle_units: str, angle_value: float) -> None:
         {
             "position": {"x": 1.0, "y": 2.0, "z": 3.0},
             "rotation_eul": {"yaw": angle_value, "angle_units": angle_units},
-        }
+        },
     )
 
     expected_tform = np.array(
@@ -217,7 +223,7 @@ def test_construct_pose(angle_units: str, angle_value: float) -> None:
             [1.0, 0.0, 0.0, 2.0],
             [0.0, 0.0, 1.0, 3.0],
             [0.0, 0.0, 0.0, 1.0],
-        ]
+        ],
     )
 
     pose_from_tform = Pose.construct(expected_tform)
@@ -290,7 +296,7 @@ def test_get_matrices(
             [0.0, 0.0, -1.0, 2.0],
             [-1.0, 0.0, 0.0, 3.0],
             [0.0, 0.0, 0.0, 1.0],
-        ]
+        ],
     )
 
     expected_translation_matrix = np.eye(4)
@@ -337,7 +343,13 @@ def test_is_approx_radians() -> None:
 def test_is_approx_degrees() -> None:
     """Test approximate equivalence functionality for pose in degrees"""
     pose1 = Pose(
-        x=1.0, y=2.0, z=3.0, roll=90.0, pitch=0.0, yaw=-90.0, angle_units="degrees"
+        x=1.0,
+        y=2.0,
+        z=3.0,
+        roll=90.0,
+        pitch=0.0,
+        yaw=-90.0,
+        angle_units="degrees",
     )
     pose2 = Pose(
         x=1.0 + 1e-4,
@@ -411,7 +423,7 @@ def test_rot2d() -> None:
     assert rot2d(orig_vec, np.pi / 2) == pytest.approx([0.0, 1.0])
     assert rot2d(orig_vec, np.pi) == pytest.approx([-1.0, 0.0])
     assert rot2d(orig_vec, -3 * np.pi / 4) == pytest.approx(
-        [-np.sqrt(2) / 2, -np.sqrt(2) / 2]
+        [-np.sqrt(2) / 2, -np.sqrt(2) / 2],
     )
 
 

@@ -2,21 +2,17 @@
 
 """Unit tests for the RRT planner"""
 
-import os
 import numpy as np
 from pytest import LogCaptureFixture
 
-from pyrobosim.core import WorldYamlLoader
 from pyrobosim.navigation.rrt import RRTPlanner
-from pyrobosim.utils.general import get_data_folder
+from pyrobosim.core.world import World
 from pyrobosim.utils.pose import Pose
 
 
-def test_rrt_long_distance() -> None:
+def test_rrt_long_distance(world: World) -> None:
     """Tests planning with default world graph planner settings."""
-    world = WorldYamlLoader().from_file(
-        os.path.join(get_data_folder(), "test_world.yaml")
-    )
+
     planner_config = {
         "bidirectional": False,
         "rrt_connect": False,
@@ -34,11 +30,8 @@ def test_rrt_long_distance() -> None:
     assert path.poses[-1] == goal
 
 
-def test_rrt_short_distance_connect() -> None:
+def test_rrt_short_distance_connect(world: World) -> None:
     """Tests if direct connection works if goal is within max_connection_distance."""
-    world = WorldYamlLoader().from_file(
-        os.path.join(get_data_folder(), "test_world.yaml")
-    )
     planner_config = {
         "bidirectional": False,
         "rrt_connect": False,
@@ -56,11 +49,9 @@ def test_rrt_short_distance_connect() -> None:
     assert path.poses[1] == goal
 
 
-def test_rrt_no_path(caplog: LogCaptureFixture) -> None:
+def test_rrt_no_path(caplog: LogCaptureFixture, world: World) -> None:
     """Test that RRT gracefully returns when there is no feasible path."""
-    world = WorldYamlLoader().from_file(
-        os.path.join(get_data_folder(), "test_world.yaml")
-    )
+
     planner_config = {
         "max_time": 0.5,  # To make the test fail more quickly.
     }
@@ -76,11 +67,9 @@ def test_rrt_no_path(caplog: LogCaptureFixture) -> None:
     assert "Could not find a path from start to goal." in caplog.text
 
 
-def test_rrt_bidirectional() -> None:
+def test_rrt_bidirectional(world: World) -> None:
     """Tests bidirectional RRT planning."""
-    world = WorldYamlLoader().from_file(
-        os.path.join(get_data_folder(), "test_world.yaml")
-    )
+
     planner_config = {
         "bidirectional": True,
         "rrt_connect": False,
@@ -98,11 +87,9 @@ def test_rrt_bidirectional() -> None:
     assert path.poses[-1] == goal
 
 
-def test_rrt_connect() -> None:
+def test_rrt_connect(world: World) -> None:
     """Tests RRTConnect planning."""
-    world = WorldYamlLoader().from_file(
-        os.path.join(get_data_folder(), "test_world.yaml")
-    )
+
     planner_config = {
         "bidirectional": False,
         "rrt_connect": True,
@@ -120,11 +107,8 @@ def test_rrt_connect() -> None:
     assert path.poses[-1] == goal
 
 
-def test_rrt_star() -> None:
+def test_rrt_star(world: World) -> None:
     """Tests RRT* planning."""
-    world = WorldYamlLoader().from_file(
-        os.path.join(get_data_folder(), "test_world.yaml")
-    )
     planner_config = {
         "bidirectional": False,
         "rrt_connect": False,
@@ -142,11 +126,8 @@ def test_rrt_star() -> None:
     assert path.poses[-1] == goal
 
 
-def test_rrt_compress_path() -> None:
+def test_rrt_compress_path(world: World) -> None:
     """Tests planning with path compression option."""
-    world = WorldYamlLoader().from_file(
-        os.path.join(get_data_folder(), "test_world.yaml")
-    )
     planner_config = {
         "bidirectional": False,
         "rrt_connect": False,

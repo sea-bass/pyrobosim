@@ -2,15 +2,15 @@
 Unit tests for core world modeling.
 """
 
-import os
+import pathlib
+
+import numpy as np
 import pytest
 from pytest import LogCaptureFixture
-import numpy as np
 
 from pyrobosim.core import Hallway, Object, World
-from pyrobosim.utils.pose import Pose
-
 from pyrobosim.utils.general import get_data_folder
+from pyrobosim.utils.pose import Pose
 from pyrobosim.utils.world_collision import check_occupancy, is_connectable
 
 
@@ -27,12 +27,12 @@ class TestWorldModeling:
         data_folder = get_data_folder()
         TestWorldModeling.world.add_metadata(
             locations=[
-                os.path.join(data_folder, "example_location_data_furniture.yaml"),
-                os.path.join(data_folder, "example_location_data_accessories.yaml"),
+                pathlib.Path(data_folder) / "example_location_data_furniture.yaml",
+                pathlib.Path(data_folder) / "example_location_data_accessories.yaml",
             ],
             objects=[
-                os.path.join(data_folder, "example_object_data_food.yaml"),
-                os.path.join(data_folder, "example_object_data_drink.yaml"),
+                pathlib.Path(data_folder) / "example_object_data_food.yaml",
+                pathlib.Path(data_folder) / "example_object_data_drink.yaml",
             ],
         )
 
@@ -42,8 +42,9 @@ class TestWorldModeling:
 
         # Clear out previous metadata before setting new one
         TestWorldModeling.world.set_metadata(
-            locations=os.path.join(data_folder, "example_location_data_furniture.yaml"),
-            objects=os.path.join(data_folder, "example_object_data_food.yaml"),
+            locations=pathlib.Path(data_folder)
+            / "example_location_data_furniture.yaml",
+            objects=pathlib.Path(data_folder) / "example_object_data_food.yaml",
         )
 
         assert len(TestWorldModeling.world.get_location_metadata().sources) == 1
@@ -52,9 +53,9 @@ class TestWorldModeling:
         # Add more metadata
         TestWorldModeling.world.add_metadata(
             locations=[
-                os.path.join(data_folder, "example_location_data_accessories.yaml")
+                pathlib.Path(data_folder) / "example_location_data_accessories.yaml",
             ],
-            objects=[os.path.join(data_folder, "example_object_data_drink.yaml")],
+            objects=[pathlib.Path(data_folder) / "example_object_data_drink.yaml"],
         )
 
         assert len(TestWorldModeling.world.get_location_metadata().sources) == 2
@@ -70,12 +71,12 @@ class TestWorldModeling:
         data_folder = get_data_folder()
         TestWorldModeling.world.set_metadata(
             locations=[
-                os.path.join(data_folder, "example_location_data_furniture.yaml"),
-                os.path.join(data_folder, "example_location_data_accessories.yaml"),
+                pathlib.Path(data_folder) / "example_location_data_furniture.yaml",
+                pathlib.Path(data_folder) / "example_location_data_accessories.yaml",
             ],
             objects=[
-                os.path.join(data_folder, "example_object_data_food.yaml"),
-                os.path.join(data_folder, "example_object_data_drink.yaml"),
+                pathlib.Path(data_folder) / "example_object_data_food.yaml",
+                pathlib.Path(data_folder) / "example_object_data_drink.yaml",
             ],
         )
 
@@ -158,7 +159,7 @@ class TestWorldModeling:
             "TestWorldModeling::test_create_world_default",
             "TestWorldModeling::test_create_room",
             "TestWorldModeling::test_create_hallway",
-        ]
+        ],
     )
     def test_create_location(caplog: LogCaptureFixture) -> None:
         """Tests the creation of locations"""
@@ -255,7 +256,9 @@ class TestWorldModeling:
 
         apple = TestWorldModeling.world.add_object(category="apple", parent="table0")
         banana = TestWorldModeling.world.add_object(
-            category="banana", name="ripe_banana", parent="study_desk"
+            category="banana",
+            name="ripe_banana",
+            parent="study_desk",
         )
         assert len(TestWorldModeling.world.objects) == 2
 
@@ -395,7 +398,7 @@ class TestWorldModeling:
     def test_is_connectable() -> None:
         """Tests if poses are connectable in a straight line."""
 
-        ## Test with a simple straight line in free space
+        # Test with a simple straight line in free space
         pose_start = Pose(x=1.0, y=0.25)
         pose_goal = Pose(x=0.5, y=1.0)
 
@@ -404,21 +407,30 @@ class TestWorldModeling:
 
         # If the max connection distance is larger than the actual distance, this should return False instead.
         assert not is_connectable(
-            pose_start, pose_goal, TestWorldModeling.world, max_dist=0.5
+            pose_start,
+            pose_goal,
+            TestWorldModeling.world,
+            max_dist=0.5,
         )
 
-        ## Test with a straight line right near a wall
+        # Test with a straight line right near a wall
         pose_start = Pose(x=1.5, y=2.4)
         pose_goal = Pose(x=3.0, y=2.75)
 
         # With a small step distance, this should return False
         assert not is_connectable(
-            pose_start, pose_goal, TestWorldModeling.world, step_dist=0.01
+            pose_start,
+            pose_goal,
+            TestWorldModeling.world,
+            step_dist=0.01,
         )
 
         # With a large step distance, this should return True as the collision point is skipped
         assert not is_connectable(
-            pose_start, pose_goal, TestWorldModeling.world, step_dist=0.5
+            pose_start,
+            pose_goal,
+            TestWorldModeling.world,
+            step_dist=0.5,
         )
 
     @staticmethod
@@ -427,7 +439,7 @@ class TestWorldModeling:
             "TestWorldModeling::test_check_occupancy",
             "TestWorldModeling::test_collides_with_robots",
             "TestWorldModeling::test_is_connectable",
-        ]
+        ],
     )
     def test_reset_world() -> None:
         """Tests resetting a world."""
@@ -459,7 +471,7 @@ class TestWorldModeling:
 
         original_robot_0_pose = world.robots[0].get_pose()
         original_apple_pose = world.objects[0].pose
-        for i in range(10):
+        for _ in range(10):
             world.reset(seed=seed)
             assert world.robots[0].get_pose() == original_robot_0_pose
             assert world.objects[0].pose == original_apple_pose
@@ -470,7 +482,7 @@ class TestWorldModeling:
 
     @staticmethod
     @pytest.mark.dependency(  # type: ignore[misc]
-        depends=["TestWorldModeling::test_reset_world"]
+        depends=["TestWorldModeling::test_reset_world"],
     )
     def test_remove_robot(caplog: LogCaptureFixture) -> None:
         """Tests deleting robots from the world"""
@@ -533,7 +545,7 @@ class TestWorldModeling:
             "TestWorldModeling::test_remove_hallway",
             "TestWorldModeling::test_remove_location",
             "TestWorldModeling::test_remove_object",
-        ]
+        ],
     )
     def test_hierarchical_cleanup() -> None:
         """Tests if an entity is automatically deleted on parent deletion"""

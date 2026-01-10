@@ -2,7 +2,7 @@
 
 """Unit tests for the hallway partial observability feature."""
 
-import os
+import pathlib
 import time
 
 from pyrobosim.core import WorldYamlLoader
@@ -16,7 +16,7 @@ from pyrobosim.utils.world_collision import is_connectable
 def test_partial_obs_hallways_enabled() -> None:
     """Tests partial hallway observability feature with slight modifications to default world graph planner settings."""
     world = WorldYamlLoader().from_file(
-        os.path.join(get_data_folder(), "test_world.yaml")
+        pathlib.Path(get_data_folder()) / "test_world.yaml"
     )
     # Set up a closed hallway for testing
     world.hallways[0].is_open = False
@@ -46,14 +46,14 @@ def test_partial_obs_hallways_enabled() -> None:
         robot=robot,
     )
 
-    assert collision_free_without_partial_obs_hallways == False
-    assert collision_free_with_partial_obs_hallways == True
+    assert collision_free_without_partial_obs_hallways is False
+    assert collision_free_with_partial_obs_hallways is True
 
 
 def test_detect_hallway_states() -> None:
     """Tests updating recorded closed hallways."""
     world = WorldYamlLoader().from_file(
-        os.path.join(get_data_folder(), "test_world.yaml")
+        pathlib.Path(get_data_folder()) / "test_world.yaml"
     )
     # Set up a closed hallway for testing
     world.hallways[0].is_open = False

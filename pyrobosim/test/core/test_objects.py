@@ -4,13 +4,13 @@
 Tests for object creation in PyRoboSim.
 """
 
-import os
+import pathlib
+
 from pytest import LogCaptureFixture
 
 from pyrobosim.core import Object, World
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
-
 
 data_folder = get_data_folder()
 
@@ -20,8 +20,8 @@ class TestObjects:
         """Test adding an object from an Object instance."""
         world = World()
         world.set_metadata(
-            locations=os.path.join(data_folder, "example_location_data.yaml"),
-            objects=os.path.join(data_folder, "example_object_data.yaml"),
+            locations=pathlib.Path(data_folder) / "example_location_data.yaml",
+            objects=pathlib.Path(data_folder) / "example_object_data.yaml",
         )
 
         coords = [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)]
@@ -60,8 +60,8 @@ class TestObjects:
         """Test adding an object from a list of named keyword arguments."""
         world = World()
         world.set_metadata(
-            locations=os.path.join(data_folder, "example_location_data.yaml"),
-            objects=os.path.join(data_folder, "example_object_data.yaml"),
+            locations=pathlib.Path(data_folder) / "example_location_data.yaml",
+            objects=pathlib.Path(data_folder) / "example_object_data.yaml",
         )
 
         coords = [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)]

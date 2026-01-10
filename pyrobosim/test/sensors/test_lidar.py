@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
 
 """Unit tests for lidar sensor."""
-
-import os
 import numpy as np
+import pathlib
 
-from pyrobosim.core import WorldYamlLoader
-from pyrobosim.sensors.lidar import Lidar2D
+from pyrobosim.core.yaml_utils import WorldYamlLoader
 from pyrobosim.utils.general import get_data_folder
-from pyrobosim.utils.pose import Pose
+from pyrobosim.sensors.lidar import Lidar2D
 
 
 def test_lidar_2d() -> None:
     # Setup a robot with a lidar sensor.
     world = WorldYamlLoader().from_file(
-        os.path.join(get_data_folder(), "test_world.yaml")
+        pathlib.Path(get_data_folder()) / "test_world.yaml"
     )
     lidar = Lidar2D(
         update_rate_s=0.1,
