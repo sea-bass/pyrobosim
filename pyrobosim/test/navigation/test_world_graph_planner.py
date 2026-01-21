@@ -10,10 +10,10 @@ from pyrobosim.core.world import World
 from pyrobosim.utils.pose import Pose
 
 
-def test_world_graph_default(world: World) -> None:
+def test_world_graph_default(test_world: World) -> None:
     """Tests planning with default world graph planner settings."""
     planner = WorldGraphPlanner()
-    world.robots[0].set_path_planner(planner)
+    test_world.robots[0].set_path_planner(planner)
 
     start = Pose(x=-1.6, y=2.8)
     goal = Pose(x=2.5, y=3.0)
@@ -25,7 +25,7 @@ def test_world_graph_default(world: World) -> None:
 
 
 def test_world_graph_short_connection_distance(
-    caplog: LogCaptureFixture, world: World
+    test_world: World, caplog: LogCaptureFixture
 ) -> None:
     """Tests planning with short connection distance, which should fail."""
     planner_config = {
@@ -33,7 +33,7 @@ def test_world_graph_short_connection_distance(
         "max_connection_dist": 1.0,
     }
     planner = WorldGraphPlanner(**planner_config)
-    world.robots[0].set_path_planner(planner)
+    test_world.robots[0].set_path_planner(planner)
 
     start = Pose(x=-1.6, y=2.8)
     goal = Pose(x=2.5, y=3.0)

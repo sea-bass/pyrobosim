@@ -4,7 +4,6 @@
 
 import pathlib
 import tempfile
-from math import pi
 
 import numpy as np
 import pytest
@@ -359,7 +358,7 @@ class TestWorldYamlLoading:
                     "path_executor": {
                         "type": "constant_velocity",
                         "linear_velocity": 1.0,
-                        "max_angular_velocity": pi,
+                        "max_angular_velocity": np.pi,
                         "dt": 0.1,
                     },
                     "grasping": {
@@ -437,7 +436,7 @@ class TestWorldYamlLoading:
         path_executor = robot1.path_executor
         assert isinstance(path_executor, ConstantVelocityExecutor)
         assert path_executor.linear_velocity == 1.0
-        assert path_executor.max_angular_velocity == pi
+        assert path_executor.max_angular_velocity == np.pi
         assert path_executor.dt == 0.1
 
         grasp_generator = robot1.grasp_generator
@@ -677,12 +676,12 @@ def test_yaml_load_and_write_dict() -> None:
     world.shutdown()
 
 
-def test_yaml_load_and_write_file(world: World) -> None:
+def test_yaml_load_and_write_file(test_world: World) -> None:
     """Tests round-trip loading from, and writing to, a YAML file."""
-    world = world("test_world_multirobot.yaml")
+    test_world = test_world("test_world_multirobot.yaml")
 
     temp_file = pathlib.Path(tempfile.mkdtemp()) / "test_world.yaml"
-    WorldYamlWriter().to_file(world, temp_file)
+    WorldYamlWriter().to_file(test_world, temp_file)
 
     reloaded_world = WorldYamlLoader().from_file(temp_file)
     assert isinstance(reloaded_world, World)
@@ -732,5 +731,5 @@ def test_yaml_load_and_write_file(world: World) -> None:
     assert reloaded_world.objects[7].name == "soda"
 
     # Avoids sensor thread deadlock at shutdown.
-    world.shutdown()
+    test_world.shutdown()
     reloaded_world.shutdown()

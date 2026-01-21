@@ -8,13 +8,13 @@ from pyrobosim.core.world import World
 from pyrobosim.utils.pose import Pose
 
 
-def test_astar(world: World) -> None:
+def test_astar(test_world: World) -> None:
     """Test A* planner with and without path compression"""
 
     start = Pose(x=-1.6, y=2.8)
     goal = Pose(x=2.5, y=3.0)
 
-    robot = world.robots[0]
+    robot = test_world.robots[0]
     planner_config = {
         "grid_resolution": 0.05,
         "grid_inflation_radius": 1.5 * robot.radius,

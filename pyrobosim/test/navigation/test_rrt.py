@@ -10,7 +10,7 @@ from pyrobosim.core.world import World
 from pyrobosim.utils.pose import Pose
 
 
-def test_rrt_long_distance(world: World) -> None:
+def test_rrt_long_distance(test_world: World) -> None:
     """Tests planning with default world graph planner settings."""
 
     planner_config = {
@@ -19,7 +19,7 @@ def test_rrt_long_distance(world: World) -> None:
         "rrt_star": False,
     }
     rrt = RRTPlanner(**planner_config)
-    world.robots[0].set_path_planner(rrt)
+    test_world.robots[0].set_path_planner(rrt)
 
     start = Pose(x=-1.6, y=2.8)
     goal = Pose(x=2.5, y=3.0)
@@ -30,7 +30,7 @@ def test_rrt_long_distance(world: World) -> None:
     assert path.poses[-1] == goal
 
 
-def test_rrt_short_distance_connect(world: World) -> None:
+def test_rrt_short_distance_connect(test_world: World) -> None:
     """Tests if direct connection works if goal is within max_connection_distance."""
     planner_config = {
         "bidirectional": False,
@@ -38,7 +38,7 @@ def test_rrt_short_distance_connect(world: World) -> None:
         "rrt_star": False,
     }
     rrt = RRTPlanner(**planner_config)
-    world.robots[0].set_path_planner(rrt)
+    test_world.robots[0].set_path_planner(rrt)
 
     start = Pose(x=-1.6, y=2.8)
     goal = Pose(x=-1.6, y=3.0)
@@ -49,7 +49,7 @@ def test_rrt_short_distance_connect(world: World) -> None:
     assert path.poses[1] == goal
 
 
-def test_rrt_no_path(caplog: LogCaptureFixture, world: World) -> None:
+def test_rrt_no_path(caplog: LogCaptureFixture, test_world: World) -> None:
     """Test that RRT gracefully returns when there is no feasible path."""
 
     planner_config = {
@@ -57,7 +57,7 @@ def test_rrt_no_path(caplog: LogCaptureFixture, world: World) -> None:
     }
 
     rrt = RRTPlanner(**planner_config)
-    world.robots[0].set_path_planner(rrt)
+    test_world.robots[0].set_path_planner(rrt)
 
     start = Pose(x=-1.6, y=2.8)
     goal = Pose(x=12.5, y=3.0)
@@ -67,7 +67,7 @@ def test_rrt_no_path(caplog: LogCaptureFixture, world: World) -> None:
     assert "Could not find a path from start to goal." in caplog.text
 
 
-def test_rrt_bidirectional(world: World) -> None:
+def test_rrt_bidirectional(test_world: World) -> None:
     """Tests bidirectional RRT planning."""
 
     planner_config = {
@@ -76,7 +76,7 @@ def test_rrt_bidirectional(world: World) -> None:
         "rrt_star": False,
     }
     rrt = RRTPlanner(**planner_config)
-    world.robots[0].set_path_planner(rrt)
+    test_world.robots[0].set_path_planner(rrt)
 
     start = Pose(x=-1.6, y=2.8)
     goal = Pose(x=2.5, y=3.0)
@@ -87,7 +87,7 @@ def test_rrt_bidirectional(world: World) -> None:
     assert path.poses[-1] == goal
 
 
-def test_rrt_connect(world: World) -> None:
+def test_rrt_connect(test_world: World) -> None:
     """Tests RRTConnect planning."""
 
     planner_config = {
@@ -96,7 +96,7 @@ def test_rrt_connect(world: World) -> None:
         "rrt_star": False,
     }
     rrt = RRTPlanner(**planner_config)
-    world.robots[0].set_path_planner(rrt)
+    test_world.robots[0].set_path_planner(rrt)
 
     start = Pose(x=-1.6, y=2.8)
     goal = Pose(x=2.5, y=3.0)
@@ -107,7 +107,7 @@ def test_rrt_connect(world: World) -> None:
     assert path.poses[-1] == goal
 
 
-def test_rrt_star(world: World) -> None:
+def test_rrt_star(test_world: World) -> None:
     """Tests RRT* planning."""
     planner_config = {
         "bidirectional": False,
@@ -115,7 +115,7 @@ def test_rrt_star(world: World) -> None:
         "rrt_star": True,
     }
     rrt = RRTPlanner(**planner_config)
-    world.robots[0].set_path_planner(rrt)
+    test_world.robots[0].set_path_planner(rrt)
 
     start = Pose(x=-1.6, y=2.8)
     goal = Pose(x=2.5, y=3.0)
@@ -126,7 +126,7 @@ def test_rrt_star(world: World) -> None:
     assert path.poses[-1] == goal
 
 
-def test_rrt_compress_path(world: World) -> None:
+def test_rrt_compress_path(test_world: World) -> None:
     """Tests planning with path compression option."""
     planner_config = {
         "bidirectional": False,
@@ -135,7 +135,7 @@ def test_rrt_compress_path(world: World) -> None:
         "compress_path": False,
     }
     rrt = RRTPlanner(**planner_config)
-    world.robots[0].set_path_planner(rrt)
+    test_world.robots[0].set_path_planner(rrt)
 
     start = Pose(x=-0.3, y=0.6)
     goal = Pose(x=2.5, y=3.0)
