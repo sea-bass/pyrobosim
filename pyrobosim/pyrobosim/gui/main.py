@@ -370,7 +370,12 @@ class PyRoboSimMainWindow(QtWidgets.QMainWindow):  # type: ignore [misc]
 
     def rand_obj_cb(self) -> None:
         """Callback to randomize manipulation object goal."""
-        obj_name = np.random.choice(self.world.get_object_names())
+        object_names = self.world.get_object_names()
+        if not object_names:
+            # No objects to choose from; warn and do nothing.
+            self.world.logger.warning("No objects available to pick a random goal.")
+            return
+        obj_name = np.random.choice(object_names)
         self.goal_textbox.setText(obj_name)
 
     def on_robot_changed(self) -> None:
