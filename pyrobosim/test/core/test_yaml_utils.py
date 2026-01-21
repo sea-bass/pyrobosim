@@ -676,7 +676,9 @@ def test_yaml_load_and_write_dict() -> None:
     world.shutdown()
 
 
-@pytest.mark.parametrize("world_config_file", ["test_world_multirobot.yaml"], indirect=True)
+@pytest.mark.parametrize(
+    "world_config_file", ["test_world_multirobot.yaml"], indirect=True
+)
 def test_yaml_load_and_write_file(test_world: World) -> None:
     """Tests round-trip loading from, and writing to, a YAML file."""
     temp_file = pathlib.Path(tempfile.mkdtemp()) / "test_world.yaml"
