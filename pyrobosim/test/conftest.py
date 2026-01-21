@@ -8,18 +8,18 @@ from pyrobosim.utils.general import get_data_folder
 
 @pytest.fixture(autouse=False, scope="module")
 def test_world(world_config_file: str = "test_world.yaml") -> World:
-    """Create a reusable test world factory for sensors tests.
+    """Create a reusable test world for tests.
 
     Usage:
-        w = world()  # loads default test_world.yaml
-        w = world("other_world.yaml")  # loads another YAML in data folder
+        def test_example(test_world: World) -> None:
+            # test_world is loaded from test_world.yaml (default)
+            assert test_world.name == "test_world"
 
-    To use with a non-default filename, parametrize the fixture or pass the argument directly if supported.
-    Example:
-        @pytest.mark.parametrize("world_config_file", ["test_world_multirobot.yaml"])
-        def test_example(world: World) -> None:
-            # world is loaded from test_world_multirobot.yaml
-            pass
+    To use with a non-default filename, parametrize the fixture with indirect=True:
+        @pytest.mark.parametrize("test_world", ["test_world_multirobot.yaml"], indirect=True)
+        def test_example(test_world: World) -> None:
+            # test_world is loaded from test_world_multirobot.yaml
+            assert test_world.name == "test_world_multirobot"
     """
 
     # Create a default world to proxy attributes to when the fixture
