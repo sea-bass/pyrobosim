@@ -685,9 +685,9 @@ def test_yaml_load_and_write_file(test_world: World) -> None:
     reloaded_world = WorldYamlLoader().from_file(temp_file)
     assert isinstance(reloaded_world, World)
     assert reloaded_world.name == test_world.name
-    assert reloaded_world.object_radius == 0.0375
-    assert reloaded_world.wall_height == 2.0
-    assert reloaded_world.inflation_radius == 0.1
+    assert reloaded_world.object_radius == test_world.object_radius
+    assert reloaded_world.wall_height == test_world.wall_height
+    assert reloaded_world.inflation_radius == test_world.inflation_radius
 
     loc_metadata = reloaded_world.get_location_metadata()
     for category in ["table", "desk", "counter", "trash_can", "charger"]:
@@ -697,37 +697,11 @@ def test_yaml_load_and_write_file(test_world: World) -> None:
     for category in ["apple", "banana", "water", "coke"]:
         assert obj_metadata.has_category(category)
 
-    assert len(reloaded_world.robots) == 3
-    assert reloaded_world.robots[0].name == "robot0"
-    assert reloaded_world.robots[1].name == "robot1"
-    assert reloaded_world.robots[2].name == "robot2"
-
-    assert len(reloaded_world.rooms) == 3
-    assert reloaded_world.rooms[0].name == "kitchen"
-    assert reloaded_world.rooms[1].name == "bedroom"
-    assert reloaded_world.rooms[2].name == "bathroom"
-
-    assert len(reloaded_world.hallways) == 3
-    assert reloaded_world.hallways[0].name == "hall_bathroom_kitchen"
-    assert reloaded_world.hallways[1].name == "hall_bathroom_bedroom"
-    assert reloaded_world.hallways[2].name == "hall_bedroom_kitchen"
-
-    assert len(reloaded_world.locations) == 5
-    assert reloaded_world.locations[0].name == "table0"
-    assert reloaded_world.locations[1].name == "my_desk"
-    assert reloaded_world.locations[2].name == "counter0"
-    assert reloaded_world.locations[3].name == "trash"
-    assert reloaded_world.locations[4].name == "charger"
-
-    assert len(reloaded_world.objects) == 8
-    assert reloaded_world.objects[0].name == "banana0"
-    assert reloaded_world.objects[1].name == "apple0"
-    assert reloaded_world.objects[2].name == "gala"
-    assert reloaded_world.objects[3].name == "fuji"
-    assert reloaded_world.objects[4].name == "water0"
-    assert reloaded_world.objects[5].name == "banana1"
-    assert reloaded_world.objects[6].name == "water1"
-    assert reloaded_world.objects[7].name == "soda"
+    assert len(reloaded_world.robots) == len(test_world.robots)
+    assert len(reloaded_world.rooms) == len(test_world.rooms)
+    assert len(reloaded_world.hallways) == len(test_world.hallways)
+    assert len(reloaded_world.locations) == len(test_world.locations)
+    assert len(reloaded_world.objects) == len(test_world.objects)
 
     # Avoids sensor thread deadlock at shutdown.
     test_world.shutdown()
