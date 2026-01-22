@@ -684,7 +684,7 @@ def test_yaml_load_and_write_file(test_world: World) -> None:
 
     reloaded_world = WorldYamlLoader().from_file(temp_file)
     assert isinstance(reloaded_world, World)
-    assert reloaded_world.name == "test_world_multirobot"
+    assert reloaded_world.name == test_world.name
     assert reloaded_world.object_radius == 0.0375
     assert reloaded_world.wall_height == 2.0
     assert reloaded_world.inflation_radius == 0.1
