@@ -76,7 +76,7 @@ def test_print_task_action(capsys: CaptureFixture) -> None:
             path=Path(poses=[Pose(), Pose(x=3.0, y=4.0)]),
             robot="robby",
             cost=42.0,
-        )
+        ),
     )
     out, _ = capsys.readouterr()
     expected_str = (
@@ -97,7 +97,7 @@ def test_print_task_action(capsys: CaptureFixture) -> None:
             object="apple",
             target_location="table",
             pose=Pose(x=1.0, y=2.0, z=3.0),
-        )
+        ),
     )
     out, _ = capsys.readouterr()
     expected_str = (
@@ -116,7 +116,7 @@ def test_print_task_action(capsys: CaptureFixture) -> None:
             object="apple",
             target_location="table",
             pose=Pose(x=1.0, y=2.0, z=3.0),
-        )
+        ),
     )
     out, _ = capsys.readouterr()
     expected_str = (
@@ -171,7 +171,7 @@ def test_task_plan_nondefault_args() -> None:
             Pose(x=0.0, y=0.0, z=0.0, q=[1.0, 0.0, 0.0, 0.0]),
             Pose(x=1.0, y=0.0, z=0.0, q=[0.707, 0.0, 0.0, 0.707]),
             Pose(x=1.0, y=1.0, z=0.0, q=[0.0, 0.0, 0.0, 1.0]),
-        ]
+        ],
     )
     place_pose = Pose(x=0.8, y=1.0, z=0.5, q=[1.0, 0.0, 0.0, 0.0])
 
@@ -186,7 +186,11 @@ def test_task_plan_nondefault_args() -> None:
             cost=0.75,
         ),
         TaskAction(
-            "place", object="apple", target_location="desk0", pose=place_pose, cost=0.5
+            "place",
+            object="apple",
+            target_location="desk0",
+            pose=place_pose,
+            cost=0.5,
         ),
     ]
     plan = TaskPlan(robot="robot0", actions=actions)
@@ -209,7 +213,10 @@ def test_print_task_plan(capsys: CaptureFixture) -> None:
 
     actions = [
         TaskAction(
-            "navigate", source_location="charger", target_location="table", cost=1.0
+            "navigate",
+            source_location="charger",
+            target_location="table",
+            cost=1.0,
         ),
         TaskAction("detect", object="apple"),
         TaskAction("pick", object="apple", target_location="table", cost=0.75),

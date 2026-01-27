@@ -11,7 +11,6 @@ from pytest import LogCaptureFixture
 from pyrobosim.core import Pose
 from pyrobosim.utils.search_graph import Node, SearchGraph, SearchGraphPlanner
 
-
 ####################
 # Helper functions #
 ####################

@@ -2,11 +2,12 @@
 
 """Unit tests for world YAML loading and writing utilities."""
 
+import pathlib
+import tempfile
+
 import numpy as np
-import os
 import pytest
 from pytest import LogCaptureFixture
-import tempfile
 
 from pyrobosim.core.locations import Location
 from pyrobosim.core.objects import Object
@@ -75,9 +76,48 @@ class TestWorldYamlLoading:
         assert len(Location.metadata.sources) == 1
         assert len(Object.metadata.sources) == 1
 
+        # Test metadata with only locations specified (objects = None branch)
+        metadata_dict_loc_only = {
+            "locations": "$DATA/example_location_data.yaml",
+        }
+        loader.data = {
+            "params": params_dict,
+            "metadata": metadata_dict_loc_only,
+        }
+        loader.create_world()
+        assert hasattr(Location, "metadata")
+        assert len(Location.metadata.data) > 0
+
+        # Test metadata with only objects specified (locations = None branch)
+        metadata_dict_obj_only = {
+            "objects": "$DATA/example_object_data.yaml",
+        }
+        loader.data = {
+            "params": params_dict,
+            "metadata": metadata_dict_obj_only,
+        }
+        loader.create_world()
+        assert hasattr(Object, "metadata")
+        assert len(Object.metadata.data) > 0
+
+        # Re-establish full metadata for subsequent tests
+        metadata_dict_full = {
+            "locations": "$DATA/example_location_data.yaml",
+            "objects": "$DATA/example_object_data.yaml",
+        }
+        loader.data = {
+            "params": params_dict,
+            "metadata": metadata_dict_full,
+        }
+        loader.create_world()
+        assert hasattr(Location, "metadata")
+        assert len(Location.metadata.data) > 0
+        assert hasattr(Object, "metadata")
+        assert len(Object.metadata.data) > 0
+
     @staticmethod
     @pytest.mark.dependency(  # type: ignore[misc]
-        depends=["TestWorldYamlLoading::test_create_world_from_yaml"]
+        depends=["TestWorldYamlLoading::test_create_world_from_yaml"],
     )
     def test_create_rooms_from_yaml() -> None:
         """Tests adding rooms to a world from YAML data."""
@@ -127,17 +167,18 @@ class TestWorldYamlLoading:
         assert loader.world.rooms[1].name == "bedroom"
         poly, _ = polygon_and_height_from_footprint(rooms_dict["rooms"][1]["footprint"])
         assert loader.world.rooms[1].polygon == transform_polygon(
-            poly, Pose(x=2.625, y=3.5)
+            poly,
+            Pose(x=2.625, y=3.5),
         )
         assert loader.world.rooms[1].wall_width == 0.2
         assert loader.world.rooms[1].viz_color == (0, 1, 0)
         assert loader.world.rooms[1].nav_poses == [
-            Pose.from_list(loader.world.rooms[1].centroid)
+            Pose.from_list(loader.world.rooms[1].centroid),
         ]
 
     @staticmethod
     @pytest.mark.dependency(  # type: ignore[misc]
-        depends=["TestWorldYamlLoading::test_create_rooms_from_yaml"]
+        depends=["TestWorldYamlLoading::test_create_rooms_from_yaml"],
     )
     def test_create_hallways_from_yaml() -> None:
         """Tests adding hallways to a world from YAML data."""
@@ -159,7 +200,7 @@ class TestWorldYamlLoading:
                     "conn_method": "auto",
                     "color": [0.5, 0.5, 0.5],
                 },
-            ]
+            ],
         }
         loader.data = hallways_dict
         loader.add_hallways()
@@ -173,16 +214,17 @@ class TestWorldYamlLoading:
 
     @staticmethod
     @pytest.mark.dependency(  # type: ignore[misc]
-        depends=["TestWorldYamlLoading::test_create_hallways_from_yaml"]
+        depends=["TestWorldYamlLoading::test_create_hallways_from_yaml"],
     )
     def test_create_locations_from_yaml(caplog: LogCaptureFixture) -> None:
         """Tests adding locations to a world from YAML data."""
         loader = TestWorldYamlLoading.yaml_loader
 
         # No location data means no locations should be added.
+        initial_location_count = len(loader.world.locations)
         loader.data = {}
         loader.add_locations()
-        assert len(loader.world.locations) == 0
+        assert len(loader.world.locations) == initial_location_count
 
         # No parent means the location is not added.
         loader.data = {
@@ -190,11 +232,11 @@ class TestWorldYamlLoading:
                 {
                     "category": "table",
                     "pose": [0.85, -0.5, 0.0, -1.57],
-                }
-            ]
+                },
+            ],
         }
         loader.add_locations()
-        assert len(loader.world.locations) == 0
+        assert len(loader.world.locations) == initial_location_count
         assert "Location instance or parent must be specified." in caplog.text
         caplog.clear()
 
@@ -205,11 +247,11 @@ class TestWorldYamlLoading:
                     "category": "does_not_exist",
                     "parent": "kitchen",
                     "pose": [0.85, -0.5, 0.0, -1.57],
-                }
-            ]
+                },
+            ],
         }
         loader.add_locations()
-        assert len(loader.world.locations) == 0
+        assert len(loader.world.locations) == initial_location_count
         assert "Invalid location category: does_not_exist" in caplog.text
         caplog.clear()
 
@@ -231,45 +273,53 @@ class TestWorldYamlLoading:
         }
         loader.data = locations_dict
         loader.add_locations()
-        assert len(loader.world.locations) == 2
+        assert len(loader.world.locations) == initial_location_count + 2
 
-        assert loader.world.locations[0].name == "table0"  # Auto-named
-        assert loader.world.locations[0].category == "table"
-        assert loader.world.locations[0].parent.name == "kitchen"
-        assert loader.world.locations[0].pose == Pose.from_list(
-            [0.85, -0.5, 0.0, -1.57]
+        # Get the newly added locations (last 2)
+        new_locations = loader.world.locations[-2:]
+        assert new_locations[0].name == "table0"  # Auto-named
+        assert new_locations[0].category == "table"
+        assert new_locations[0].parent.name == "kitchen"
+        assert new_locations[0].pose == Pose.from_list(
+            [0.85, -0.5, 0.0, -1.57],
         )
 
-        assert loader.world.locations[1].name == "test_desk"
-        assert loader.world.locations[1].category == "desk"
-        assert loader.world.locations[1].parent.name == "bedroom"
-        assert loader.world.locations[1].pose == Pose.from_list([3.15, 3.65, 0.0, 0.0])
+        assert new_locations[1].name == "test_desk"
+        assert new_locations[1].category == "desk"
+        assert new_locations[1].parent.name == "bedroom"
+        assert new_locations[1].pose == Pose.from_list([3.15, 3.65, 0.0, 0.0])
 
     @staticmethod
     @pytest.mark.dependency(  # type: ignore[misc]
-        depends=["TestWorldYamlLoading::test_create_locations_from_yaml"]
+        depends=["TestWorldYamlLoading::test_create_locations_from_yaml"],
     )
     def test_create_objects_from_yaml(caplog: LogCaptureFixture) -> None:
         """Tests adding objects to a world from YAML data."""
         loader = TestWorldYamlLoading.yaml_loader
 
         # No object data means no objects should be added.
+        initial_object_count = len(loader.world.objects)
         loader.data = {}
         loader.add_objects()
-        assert len(loader.world.objects) == 0
+        assert len(loader.world.objects) == initial_object_count
 
         # Invalid object category means the object is not added.
+        # We need to ensure a valid location exists first for the test to work properly
+        # The locations test should have created table0, but let's verify locations exist
+        assert len(loader.world.locations) > 0, "No locations exist for object parent"
+
         loader.data = {
             "objects": [
                 {
                     "category": "does_not_exist",
-                    "parent": "table0",
-                    "pose": [3.2, 3.5, 0.0, 0.707],
-                }
-            ]
+                    "parent": "table0",  # Use the location created in the previous test
+                },
+            ],
         }
+        caplog.clear()
         loader.add_objects()
-        assert len(loader.world.objects) == 0
+        assert len(loader.world.objects) == initial_object_count
+        # The warning message comes from the exception being caught
         assert "Invalid object category: does_not_exist" in caplog.text
         caplog.clear()
 
@@ -290,22 +340,24 @@ class TestWorldYamlLoading:
         }
         loader.data = objects_dict
         loader.add_objects()
-        assert len(loader.world.objects) == 2
+        assert len(loader.world.objects) == initial_object_count + 2
 
-        assert loader.world.objects[0].name == "banana0"  # Auto-named
-        assert loader.world.objects[0].category == "banana"
-        assert loader.world.objects[0].parent.name == "table0_tabletop"
+        # Get the newly added objects (last 2)
+        new_objects = loader.world.objects[-2:]
+        assert new_objects[0].name == "banana0"  # Auto-named
+        assert new_objects[0].category == "banana"
+        assert new_objects[0].parent.name == "table0_tabletop"
 
-        assert loader.world.objects[1].name == "test_apple"
-        assert loader.world.objects[1].category == "apple"
-        assert loader.world.objects[1].parent.name == "test_desk_desktop"
+        assert new_objects[1].name == "test_apple"
+        assert new_objects[1].category == "apple"
+        assert new_objects[1].parent.name == "test_desk_desktop"
         # NOTE: The height of the object gets modified to the height of the object spawn
         height = loader.world.get_entity_by_name("test_desk_desktop").height
-        assert loader.world.objects[1].pose == Pose.from_list([3.2, 3.5, height, 0.707])
+        assert new_objects[1].pose == Pose.from_list([3.2, 3.5, height, 0.707])
 
     @staticmethod
     @pytest.mark.dependency(  # type: ignore[misc]
-        depends=["TestWorldYamlLoading::test_create_objects_from_yaml"]
+        depends=["TestWorldYamlLoading::test_create_objects_from_yaml"],
     )
     def test_create_robots_from_yaml() -> None:
         """Tests adding robots to a world from YAML data."""
@@ -356,7 +408,7 @@ class TestWorldYamlLoading:
                     "path_executor": {
                         "type": "constant_velocity",
                         "linear_velocity": 1.0,
-                        "max_angular_velocity": 3.14,
+                        "max_angular_velocity": np.pi,
                         "dt": 0.1,
                     },
                     "grasping": {
@@ -434,7 +486,7 @@ class TestWorldYamlLoading:
         path_executor = robot1.path_executor
         assert isinstance(path_executor, ConstantVelocityExecutor)
         assert path_executor.linear_velocity == 1.0
-        assert path_executor.max_angular_velocity == 3.14
+        assert path_executor.max_angular_velocity == np.pi
         assert path_executor.dt == 0.1
 
         grasp_generator = robot1.grasp_generator
@@ -467,10 +519,186 @@ class TestWorldYamlLoading:
         assert place_options.success_probability == 0.5
         assert place_options.rng_seed == 1234
 
+    @staticmethod
+    @pytest.mark.dependency(  # type: ignore[misc]
+        depends=["TestWorldYamlLoading::test_create_objects_from_yaml"],
+    )
+    def test_invalid_path_planner() -> None:
+        """Tests that an invalid path planner type raises an error."""
+        loader = TestWorldYamlLoading.yaml_loader
+
+        robots_dict = {
+            "robots": [
+                {
+                    "name": "test_robot",
+                    "radius": 0.1,
+                    "location": "kitchen",
+                    "path_planner": {
+                        "type": "invalid_planner_type",
+                    },
+                },
+            ],
+        }
+        loader.data = robots_dict
+
+        with pytest.raises(
+            RuntimeError, match="Path planner 'invalid_planner_type' is not available"
+        ):
+            loader.add_robots()
+
+    @staticmethod
+    @pytest.mark.dependency(  # type: ignore[misc]
+        depends=["TestWorldYamlLoading::test_create_objects_from_yaml"],
+    )
+    def test_invalid_path_executor(caplog: LogCaptureFixture) -> None:
+        """Tests that an invalid path executor type logs a warning."""
+        loader = TestWorldYamlLoading.yaml_loader
+
+        robots_dict = {
+            "robots": [
+                {
+                    "name": "test_robot",
+                    "radius": 0.1,
+                    "location": "kitchen",
+                    "path_executor": {
+                        "type": "invalid_executor_type",
+                    },
+                },
+            ],
+        }
+        caplog.clear()
+        loader.data = robots_dict
+        loader.add_robots()
+
+        # Check that the warning was logged
+        assert (
+            "Invalid path executor type specified: invalid_executor_type" in caplog.text
+        )
+        # The robot should have been created despite the invalid executor
+        assert len(loader.world.robots) > 0
+
+    @staticmethod
+    @pytest.mark.dependency(  # type: ignore[misc]
+        depends=["TestWorldYamlLoading::test_create_objects_from_yaml"],
+    )
+    def test_invalid_sensor() -> None:
+        """Tests that an invalid sensor type raises an error."""
+        loader = TestWorldYamlLoading.yaml_loader
+
+        robots_dict = {
+            "robots": [
+                {
+                    "name": "test_robot",
+                    "radius": 0.1,
+                    "location": "kitchen",
+                    "sensors": {
+                        "my_sensor": {
+                            "type": "invalid_sensor_type",
+                        },
+                    },
+                },
+            ],
+        }
+        loader.data = robots_dict
+
+        with pytest.raises(
+            RuntimeError, match="Sensor 'invalid_sensor_type' is not available"
+        ):
+            loader.add_robots()
+
+    @staticmethod
+    @pytest.mark.dependency(  # type: ignore[misc]
+        depends=["TestWorldYamlLoading::test_create_objects_from_yaml"],
+    )
+    def test_invalid_grasp_generator(caplog: LogCaptureFixture) -> None:
+        """Tests that an invalid grasp generator type logs a warning."""
+        loader = TestWorldYamlLoading.yaml_loader
+
+        robots_dict = {
+            "robots": [
+                {
+                    "name": "test_robot",
+                    "radius": 0.1,
+                    "location": "kitchen",
+                    "grasping": {
+                        "generator": "invalid_grasp_type",
+                    },
+                },
+            ],
+        }
+        loader.data = robots_dict
+        loader.add_robots()
+
+        assert (
+            "Invalid grasp generator type specified: invalid_grasp_type" in caplog.text
+        )
+        assert loader.world.robots[0].grasp_generator is None
+
+    @staticmethod
+    @pytest.mark.dependency(  # type: ignore[misc]
+        depends=["TestWorldYamlLoading::test_create_robots_from_yaml"],
+    )
+    def test_ros_interface_cleanup() -> None:
+        """Tests that ROS interfaces are cleaned up when reloading a world."""
+
+        # Create a mock ROS node with latest_robot_cmds
+        class MockRosNode:
+            def __init__(self) -> None:
+                self.latest_robot_cmds = {"old_robot": None, "robot0": None}
+                self.removed_robots: list[str] = []
+                self.added_robots: list[str] = []
+
+            def remove_robot_interfaces(self, robot_name: str) -> None:
+                self.removed_robots.append(robot_name)
+
+            def add_robot_ros_interfaces(self, robot) -> None:  # type: ignore[no-untyped-def]
+                self.added_robots.append(robot.name)
+
+        loader = TestWorldYamlLoading.yaml_loader
+
+        # First, load robots to establish initial state
+        robots_dict = {
+            "robots": [
+                {
+                    "name": "robot0",
+                    "radius": 0.1,
+                    "location": "kitchen",
+                },
+            ],
+        }
+        loader.data = robots_dict
+        loader.add_robots()
+
+        # Simulate having a ROS node with old robot interfaces
+        mock_ros_node = MockRosNode()
+        loader.world.ros_node = mock_ros_node
+
+        # Reload with a different robot (this should clean up old_robot)
+        robots_dict_new = {
+            "robots": [
+                {
+                    "name": "robot0",  # Keep this one
+                    "radius": 0.1,
+                    "location": "kitchen",
+                },
+                {
+                    "name": "new_robot",  # Add a new one
+                    "radius": 0.1,
+                    "location": "bedroom",
+                },
+            ],
+        }
+        loader.data = robots_dict_new
+        loader.add_robots()
+
+        # Check that old_robot was removed but robot0 was not
+        assert "old_robot" in mock_ros_node.removed_robots
+        assert "robot0" not in mock_ros_node.removed_robots
+
 
 def test_yaml_load_and_write_dict() -> None:
     """Tests round-trip loading from, and writing to, a YAML dictionary."""
-    world_file = os.path.join(get_data_folder(), "test_world_multirobot.yaml")
+    world_file = pathlib.Path(get_data_folder()) / "test_world_multirobot.yaml"
     world = WorldYamlLoader().from_file(world_file)
     world_dict = WorldYamlWriter().to_dict(world)
 
@@ -482,10 +710,10 @@ def test_yaml_load_and_write_dict() -> None:
 
     assert "metadata" in world_dict
     assert world_dict["metadata"].get("locations") == list(
-        [str(loc) for loc in Location.metadata.sources]
+        [str(loc) for loc in Location.metadata.sources],
     )
     assert world_dict["metadata"].get("objects") == list(
-        [str(obj) for obj in Object.metadata.sources]
+        [str(obj) for obj in Object.metadata.sources],
     )
 
     assert "robots" in world_dict
@@ -512,12 +740,12 @@ def test_yaml_load_and_write_dict() -> None:
     assert robot0_dict.get("path_planner").get("type") == "rrt"
     assert robot0_dict.get("path_planner").get("collision_check_step_dist") == 0.025
     assert robot0_dict.get("path_planner").get("max_connection_dist") == 0.5
-    assert robot0_dict.get("path_planner").get("bidirectional") == True
-    assert robot0_dict.get("path_planner").get("rrt_star") == True
+    assert robot0_dict.get("path_planner").get("bidirectional") is True
+    assert robot0_dict.get("path_planner").get("rrt_star") is True
     assert robot0_dict.get("path_planner").get("rewire_radius") == 1.5
     assert robot0_dict.get("path_planner").get("max_nodes_sampled") == 1000
     assert robot0_dict.get("path_planner").get("max_time") == 2.0
-    assert robot0_dict.get("path_planner").get("compress_path") == False
+    assert robot0_dict.get("path_planner").get("compress_path") is False
     assert robot0_dict.get("path_executor").get("type") == "constant_velocity"
     assert robot0_dict.get("path_executor").get("linear_velocity") == 1.0
     assert robot0_dict.get("path_executor").get("max_angular_velocity") == 4.0
@@ -530,9 +758,9 @@ def test_yaml_load_and_write_dict() -> None:
     assert robot0_dict.get("sensors").get("lidar").get("max_angle") == 120.0
     assert robot0_dict.get("sensors").get("lidar").get("angular_resolution") == 5.0
     assert robot0_dict.get("sensors").get("lidar").get("max_range_m") == 2.0
-    assert robot0_dict.get("start_sensor_threads") == True
-    assert robot0_dict.get("partial_obs_objects") == False
-    assert robot0_dict.get("partial_obs_hallways") == False
+    assert robot0_dict.get("start_sensor_threads") is True
+    assert robot0_dict.get("partial_obs_objects") is False
+    assert robot0_dict.get("partial_obs_hallways") is False
     assert robot0_dict.get("initial_battery_level") == 100.0
     assert "action_execution_options" not in robot0_dict
 
@@ -568,12 +796,12 @@ def test_yaml_load_and_write_dict() -> None:
     assert robot1_dict.get("path_planner").get("collision_check_step_dist") == 0.025
     assert robot1_dict.get("path_planner").get("max_connection_dist") == 1.5
     assert robot1_dict.get("path_planner").get("max_nodes") == 100
-    assert robot1_dict.get("path_planner").get("compress_path") == False
+    assert robot1_dict.get("path_planner").get("compress_path") is False
     assert robot1_dict.get("path_executor").get("type") == "constant_velocity"
     assert "sensors" not in robot1_dict
-    assert robot1_dict.get("start_sensor_threads") == True
-    assert robot1_dict.get("partial_obs_objects") == False
-    assert robot1_dict.get("partial_obs_hallways") == False
+    assert robot1_dict.get("start_sensor_threads") is True
+    assert robot1_dict.get("partial_obs_objects") is False
+    assert robot1_dict.get("partial_obs_hallways") is False
     assert robot1_dict.get("initial_battery_level") == 100.0
     assert "action_execution_options" not in robot1_dict
 
@@ -600,13 +828,13 @@ def test_yaml_load_and_write_dict() -> None:
     assert robot2_dict.get("path_planner").get("grid_resolution") == 0.05
     assert robot2_dict.get("path_planner").get("grid_inflation_radius") == 0.15
     assert robot2_dict.get("path_planner").get("heuristic") == "euclidean"
-    assert robot2_dict.get("path_planner").get("diagonal_motion") == True
-    assert robot2_dict.get("path_planner").get("compress_path") == False
+    assert robot2_dict.get("path_planner").get("diagonal_motion") is True
+    assert robot2_dict.get("path_planner").get("compress_path") is False
     assert robot2_dict.get("path_executor").get("type") == "constant_velocity"
     assert "sensors" not in robot2_dict
-    assert robot2_dict.get("start_sensor_threads") == True
-    assert robot2_dict.get("partial_obs_objects") == False
-    assert robot2_dict.get("partial_obs_hallways") == False
+    assert robot2_dict.get("start_sensor_threads") is True
+    assert robot2_dict.get("partial_obs_objects") is False
+    assert robot2_dict.get("partial_obs_hallways") is False
     assert robot2_dict.get("initial_battery_level") == 95.0
     exec_opts_dict = robot2_dict.get("action_execution_options")
     assert len(exec_opts_dict) == 6
@@ -674,20 +902,18 @@ def test_yaml_load_and_write_dict() -> None:
     world.shutdown()
 
 
-def test_yaml_load_and_write_file() -> None:
+@pytest.mark.parametrize("test_world", ["test_world_multirobot.yaml"], indirect=True)
+def test_yaml_load_and_write_file(test_world: World) -> None:
     """Tests round-trip loading from, and writing to, a YAML file."""
-    world_file = os.path.join(get_data_folder(), "test_world_multirobot.yaml")
-    world = WorldYamlLoader().from_file(world_file)
-
-    temp_file = os.path.join(tempfile.mkdtemp(), "test_world.yaml")
-    WorldYamlWriter().to_file(world, temp_file)
+    temp_file = pathlib.Path(tempfile.mkdtemp()) / "test_world_multirobot.yaml"
+    WorldYamlWriter().to_file(test_world, temp_file)
 
     reloaded_world = WorldYamlLoader().from_file(temp_file)
     assert isinstance(reloaded_world, World)
-    assert reloaded_world.name == "test_world_multirobot"
-    assert reloaded_world.object_radius == 0.0375
-    assert reloaded_world.wall_height == 2.0
-    assert reloaded_world.inflation_radius == 0.1
+    assert reloaded_world.name == test_world.name
+    assert reloaded_world.object_radius == test_world.object_radius
+    assert reloaded_world.wall_height == test_world.wall_height
+    assert reloaded_world.inflation_radius == test_world.inflation_radius
 
     loc_metadata = reloaded_world.get_location_metadata()
     for category in ["table", "desk", "counter", "trash_can", "charger"]:
@@ -697,38 +923,27 @@ def test_yaml_load_and_write_file() -> None:
     for category in ["apple", "banana", "water", "coke"]:
         assert obj_metadata.has_category(category)
 
-    assert len(reloaded_world.robots) == 3
-    assert reloaded_world.robots[0].name == "robot0"
-    assert reloaded_world.robots[1].name == "robot1"
-    assert reloaded_world.robots[2].name == "robot2"
+    # Verify round-trip preserves all entities
+    assert len(reloaded_world.robots) == len(test_world.robots)
+    for robot_idx, robot in enumerate(reloaded_world.robots):
+        assert robot.name == test_world.robots[robot_idx].name
 
-    assert len(reloaded_world.rooms) == 3
-    assert reloaded_world.rooms[0].name == "kitchen"
-    assert reloaded_world.rooms[1].name == "bedroom"
-    assert reloaded_world.rooms[2].name == "bathroom"
+    assert len(reloaded_world.rooms) == len(test_world.rooms)
+    for room_idx, room in enumerate(reloaded_world.rooms):
+        assert room.name == test_world.rooms[room_idx].name
 
-    assert len(reloaded_world.hallways) == 3
-    assert reloaded_world.hallways[0].name == "hall_bathroom_kitchen"
-    assert reloaded_world.hallways[1].name == "hall_bathroom_bedroom"
-    assert reloaded_world.hallways[2].name == "hall_bedroom_kitchen"
+    assert len(reloaded_world.hallways) == len(test_world.hallways)
+    for hallway_idx, hallway in enumerate(reloaded_world.hallways):
+        assert hallway.name == test_world.hallways[hallway_idx].name
 
-    assert len(reloaded_world.locations) == 5
-    assert reloaded_world.locations[0].name == "table0"
-    assert reloaded_world.locations[1].name == "my_desk"
-    assert reloaded_world.locations[2].name == "counter0"
-    assert reloaded_world.locations[3].name == "trash"
-    assert reloaded_world.locations[4].name == "charger"
+    assert len(reloaded_world.locations) == len(test_world.locations)
+    for location_idx, location in enumerate(reloaded_world.locations):
+        assert location.name == test_world.locations[location_idx].name
 
-    assert len(reloaded_world.objects) == 8
-    assert reloaded_world.objects[0].name == "banana0"
-    assert reloaded_world.objects[1].name == "apple0"
-    assert reloaded_world.objects[2].name == "gala"
-    assert reloaded_world.objects[3].name == "fuji"
-    assert reloaded_world.objects[4].name == "water0"
-    assert reloaded_world.objects[5].name == "banana1"
-    assert reloaded_world.objects[6].name == "water1"
-    assert reloaded_world.objects[7].name == "soda"
+    assert len(reloaded_world.objects) == len(test_world.objects)
+    for obj_idx, obj in enumerate(reloaded_world.objects):
+        assert obj.name == test_world.objects[obj_idx].name
 
     # Avoids sensor thread deadlock at shutdown.
-    world.shutdown()
+    test_world.shutdown()
     reloaded_world.shutdown()
