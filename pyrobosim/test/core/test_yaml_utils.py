@@ -636,8 +636,8 @@ class TestWorldYamlLoading:
         class MockRosNode:
             def __init__(self) -> None:
                 self.latest_robot_cmds = {"old_robot": None, "robot0": None}
-                self.removed_robots = []
-                self.added_robots = []
+                self.removed_robots: list[str] = []
+                self.added_robots: list[str] = []
 
             def remove_robot_interfaces(self, robot_name: str) -> None:
                 self.removed_robots.append(robot_name)
