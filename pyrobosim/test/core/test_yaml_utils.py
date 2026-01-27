@@ -697,11 +697,26 @@ def test_yaml_load_and_write_file(test_world: World) -> None:
     for category in ["apple", "banana", "water", "coke"]:
         assert obj_metadata.has_category(category)
 
+    # Verify round-trip preserves all entities
     assert len(reloaded_world.robots) == len(test_world.robots)
+    for robot_idx, robot in enumerate(reloaded_world.robots):
+        assert robot.name == test_world.robots[robot_idx].name
+
     assert len(reloaded_world.rooms) == len(test_world.rooms)
+    for room_idx, room in enumerate(reloaded_world.rooms):
+        assert room.name == test_world.rooms[room_idx].name
+
     assert len(reloaded_world.hallways) == len(test_world.hallways)
+    for hallway_idx, hallway in enumerate(reloaded_world.hallways):
+        assert hallway.name == test_world.hallways[hallway_idx].name
+
     assert len(reloaded_world.locations) == len(test_world.locations)
+    for location_idx, location in enumerate(reloaded_world.locations):
+        assert location.name == test_world.locations[location_idx].name
+
     assert len(reloaded_world.objects) == len(test_world.objects)
+    for obj_idx, obj in enumerate(reloaded_world.objects):
+        assert obj.name == test_world.objects[obj_idx].name
 
     # Avoids sensor thread deadlock at shutdown.
     test_world.shutdown()
