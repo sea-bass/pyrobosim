@@ -307,7 +307,7 @@ class TestWorldYamlLoading:
         # We need to ensure a valid location exists first for the test to work properly
         # The locations test should have created table0, but let's verify locations exist
         assert len(loader.world.locations) > 0, "No locations exist for object parent"
-        
+
         loader.data = {
             "objects": [
                 {
@@ -526,7 +526,7 @@ class TestWorldYamlLoading:
     def test_invalid_path_planner() -> None:
         """Tests that an invalid path planner type raises an error."""
         loader = TestWorldYamlLoading.yaml_loader
-        
+
         robots_dict = {
             "robots": [
                 {
@@ -540,8 +540,10 @@ class TestWorldYamlLoading:
             ],
         }
         loader.data = robots_dict
-        
-        with pytest.raises(RuntimeError, match="Path planner 'invalid_planner_type' is not available"):
+
+        with pytest.raises(
+            RuntimeError, match="Path planner 'invalid_planner_type' is not available"
+        ):
             loader.add_robots()
 
     @staticmethod
@@ -551,7 +553,7 @@ class TestWorldYamlLoading:
     def test_invalid_path_executor(caplog: LogCaptureFixture) -> None:
         """Tests that an invalid path executor type logs a warning."""
         loader = TestWorldYamlLoading.yaml_loader
-        
+
         robots_dict = {
             "robots": [
                 {
@@ -567,9 +569,11 @@ class TestWorldYamlLoading:
         caplog.clear()
         loader.data = robots_dict
         loader.add_robots()
-        
+
         # Check that the warning was logged
-        assert "Invalid path executor type specified: invalid_executor_type" in caplog.text
+        assert (
+            "Invalid path executor type specified: invalid_executor_type" in caplog.text
+        )
         # The robot should have been created despite the invalid executor
         assert len(loader.world.robots) > 0
 
@@ -580,7 +584,7 @@ class TestWorldYamlLoading:
     def test_invalid_sensor() -> None:
         """Tests that an invalid sensor type raises an error."""
         loader = TestWorldYamlLoading.yaml_loader
-        
+
         robots_dict = {
             "robots": [
                 {
@@ -596,8 +600,10 @@ class TestWorldYamlLoading:
             ],
         }
         loader.data = robots_dict
-        
-        with pytest.raises(RuntimeError, match="Sensor 'invalid_sensor_type' is not available"):
+
+        with pytest.raises(
+            RuntimeError, match="Sensor 'invalid_sensor_type' is not available"
+        ):
             loader.add_robots()
 
     @staticmethod
@@ -607,7 +613,7 @@ class TestWorldYamlLoading:
     def test_invalid_grasp_generator(caplog: LogCaptureFixture) -> None:
         """Tests that an invalid grasp generator type logs a warning."""
         loader = TestWorldYamlLoading.yaml_loader
-        
+
         robots_dict = {
             "robots": [
                 {
@@ -622,8 +628,10 @@ class TestWorldYamlLoading:
         }
         loader.data = robots_dict
         loader.add_robots()
-        
-        assert "Invalid grasp generator type specified: invalid_grasp_type" in caplog.text
+
+        assert (
+            "Invalid grasp generator type specified: invalid_grasp_type" in caplog.text
+        )
         assert loader.world.robots[0].grasp_generator is None
 
     @staticmethod
@@ -632,6 +640,7 @@ class TestWorldYamlLoading:
     )
     def test_ros_interface_cleanup() -> None:
         """Tests that ROS interfaces are cleaned up when reloading a world."""
+
         # Create a mock ROS node with latest_robot_cmds
         class MockRosNode:
             def __init__(self) -> None:
@@ -646,7 +655,7 @@ class TestWorldYamlLoading:
                 self.added_robots.append(robot.name)
 
         loader = TestWorldYamlLoading.yaml_loader
-        
+
         # First, load robots to establish initial state
         robots_dict = {
             "robots": [
@@ -659,11 +668,11 @@ class TestWorldYamlLoading:
         }
         loader.data = robots_dict
         loader.add_robots()
-        
+
         # Simulate having a ROS node with old robot interfaces
         mock_ros_node = MockRosNode()
         loader.world.ros_node = mock_ros_node
-        
+
         # Reload with a different robot (this should clean up old_robot)
         robots_dict_new = {
             "robots": [
@@ -681,7 +690,7 @@ class TestWorldYamlLoading:
         }
         loader.data = robots_dict_new
         loader.add_robots()
-        
+
         # Check that old_robot was removed but robot0 was not
         assert "old_robot" in mock_ros_node.removed_robots
         assert "robot0" not in mock_ros_node.removed_robots
