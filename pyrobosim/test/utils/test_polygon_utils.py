@@ -281,7 +281,7 @@ def test_convhull_to_rectangle(display: bool = False) -> None:
     # Then, gets its convex hull and a best-fit rectangle
     hull = ConvexHull(xy_pts)
     hull_pts = np.vstack([xy_pts[hull.vertices, :], xy_pts[hull.vertices[0], :]])
-    (rect_pose, rect_dims, rect_pts) = convhull_to_rectangle(hull_pts)
+    rect_pose, rect_dims, rect_pts = convhull_to_rectangle(hull_pts)
 
     # Check the rectangle origin and dimension
     assert rect_pose.x == pytest.approx(0.0)

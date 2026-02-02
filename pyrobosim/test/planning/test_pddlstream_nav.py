@@ -3,6 +3,7 @@
 """
 Tests for PDDLStream planning with navigation streams.
 """
+
 import pathlib
 import threading
 from importlib.util import find_spec

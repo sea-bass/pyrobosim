@@ -2,7 +2,6 @@
 
 """Unit tests for A* planner"""
 
-
 from pyrobosim.navigation.a_star import AStarPlanner
 from pyrobosim.core.world import World
 from pyrobosim.utils.pose import Pose

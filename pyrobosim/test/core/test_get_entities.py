@@ -3,6 +3,7 @@
 """
 Unit tests for entity getting with world models.
 """
+
 import pathlib
 
 import numpy as np

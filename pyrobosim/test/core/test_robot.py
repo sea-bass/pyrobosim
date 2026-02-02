@@ -3,6 +3,7 @@
 """
 Unit tests for robot class.
 """
+
 import pathlib
 import threading
 import time
