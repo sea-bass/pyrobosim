@@ -1290,7 +1290,7 @@ class World:
         :param remove: Specifies if the update is due to removal of an entity.
         """
         if isinstance(entity, (Room, Hallway)):
-            (xmin, ymin, xmax, ymax) = entity.polygon.bounds
+            xmin, ymin, xmax, ymax = entity.polygon.bounds
 
             # Simply assign the bounds when adding the first entity.
             if (self.x_bounds is None) or (self.y_bounds is None):
@@ -1305,7 +1305,7 @@ class World:
                 # Only update if the Room/Hallway being removed affects the bounds
                 if sets_x_bounds or sets_y_bounds:
                     for other_entity in itertools.chain(self.rooms, self.hallways):
-                        (xmin, ymin, xmax, ymax) = other_entity.polygon.bounds
+                        xmin, ymin, xmax, ymax = other_entity.polygon.bounds
                         self.x_bounds[0] = min(self.x_bounds[0], xmin)
                         self.x_bounds[1] = max(self.x_bounds[1], xmax)
                         self.y_bounds[0] = min(self.y_bounds[0], ymin)

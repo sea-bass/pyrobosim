@@ -6,6 +6,7 @@ Test script showing PyRoboSim partial hallway observability feature.
 This refers to the robot not knowing the true state (open/closed) of hallways
 until it senses them with sensors.
 """
+
 import argparse
 
 from pyrobosim.core.robot import Robot
@@ -18,7 +19,6 @@ from pyrobosim.navigation.rrt import RRTPlanner
 from pyrobosim.sensors.lidar import Lidar2D
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
-
 
 data_folder = get_data_folder()
 

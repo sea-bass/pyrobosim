@@ -1,6 +1,5 @@
 from setuptools import setup, find_packages
 
-
 project_name = "pyrobosim_ros"
 
 install_requires = [

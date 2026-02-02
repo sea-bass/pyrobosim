@@ -4,6 +4,7 @@
 Example showing how to build a world and use it with PyRoboSim,
 additionally starting up a ROS interface.
 """
+
 import os
 import rclpy
 import threading
@@ -15,7 +16,6 @@ from pyrobosim.navigation.rrt import RRTPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 from pyrobosim_ros.ros_interface import WorldROSWrapper
-
 
 data_folder = get_data_folder()
 

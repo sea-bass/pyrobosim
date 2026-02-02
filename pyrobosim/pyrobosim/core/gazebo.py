@@ -14,7 +14,6 @@ from .types import Entity
 from .world import World
 from ..utils.general import get_data_folder, replace_special_yaml_tokens
 
-
 FOUR_SPACES = " " * 4
 EIGHT_SPACES = " " * 8
 TWELVE_SPACES = " " * 12

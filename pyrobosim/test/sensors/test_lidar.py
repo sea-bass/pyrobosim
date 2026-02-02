@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 """Unit tests for lidar sensor."""
+
 import numpy as np
 import pathlib
 

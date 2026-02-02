@@ -2,7 +2,6 @@
 
 """Unit tests for the PRM planner"""
 
-
 import numpy as np
 from pytest import LogCaptureFixture
 

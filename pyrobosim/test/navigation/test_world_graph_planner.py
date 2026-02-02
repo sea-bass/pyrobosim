@@ -2,7 +2,6 @@
 
 """Unit tests for the World Graph planner"""
 
-
 from pytest import LogCaptureFixture
 
 from pyrobosim.navigation.world_graph import WorldGraphPlanner

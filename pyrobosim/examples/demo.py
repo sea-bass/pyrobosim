@@ -3,6 +3,7 @@
 """
 Test script showing how to build a world and use it with PyRoboSim.
 """
+
 import argparse
 
 from pyrobosim.core.robot import Robot
@@ -17,7 +18,6 @@ from pyrobosim.navigation.rrt import RRTPlanner
 from pyrobosim.sensors.lidar import Lidar2D
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
-
 
 data_folder = get_data_folder()
 
