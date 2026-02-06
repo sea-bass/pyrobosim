@@ -1,6 +1,9 @@
 services:
-  pyrobosim-mcp:
-    image: pyrobosim_ros:humble
+  pyrobosim:
+    build:
+      context: /Users/jonathansalfity/Documents/dev/pyrobosim
+      dockerfile: docker/Dockerfile
+    image: pyrobosim_mcp:latest
     container_name: pyrobosim
     environment:
       - DISPLAY=host.docker.internal:0
@@ -12,8 +15,6 @@ services:
       - "9001:9001"
     working_dir: /workspace/pyrobosim/pyrobosim
     command: >-
-      bash -lc "python3 -m pip install -e . &&
-      python3 -m pip install -U py_trees fastmcp &&
-      python3 -m pyrobosim.mcp.sim_server --transport streamable-http --host 0.0.0.0 --port 9000"
+      bash -lc "sleep infinity"
     tty: true
     stdin_open: true

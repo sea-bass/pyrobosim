@@ -1,100 +1,52 @@
-# Dockerfile for PyRoboSim builds with and without ROS
-ARG ROS_DISTRO=humble
+FROM ubuntu:22.04
 
-##################################
-#
-# base PyRoboSim build for Ubuntu
-#
-##################################
-FROM ubuntu:latest AS pyrobosim
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Install dependencies
-ARG DEBIAN_FRONTEND=noninteractive
-RUN apt-get update &&\
-    apt-get install -y \
-        apt-utils \
-        libegl1 \
-        libgl1-mesa-dev \
-        python3 \
-        python3-pip \
-        python3-tk \
-        git \
-        cmake \
-        ffmpeg \
-        libsm6 \
-        libxext6
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    python3-dev \
+    build-essential \
+    git \
+    libgl1 \
+    libglib2.0-0 \
+    libxkbcommon-x11-0 \
+    libxcb-xinerama0 \
+    libxcb-cursor0 \
+    libxcb-icccm4 \
+    libxcb-image0 \
+    libxcb-keysyms1 \
+    libxcb-randr0 \
+    libxcb-render-util0 \
+    libxcb-shape0 \
+    libxcb-xfixes0 \
+    libxcb-xkb1 \
+    libx11-xcb1 \
+    libxrender1 \
+    libxext6 \
+    libsm6 \
+    libx11-6 \
+    libxfixes3 \
+    libxi6 \
+    libxrandr2 \
+    libxcb1 \
+    libegl1 \
+    libdbus-1-3 \
+    libfontconfig1 \
+    libfreetype6 \
+    libpng16-16 \
+    libjpeg-turbo8 \
+    libgeos-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /opt/pyrobosim/test
-RUN mkdir -p /opt/pyrobosim/setup
-WORKDIR /opt/pyrobosim/
+WORKDIR /workspace/pyrobosim
 
-# Install PDDLStream
-COPY setup/configure_pddlstream.bash setup/
-RUN setup/configure_pddlstream.bash
+COPY pyrobosim /workspace/pyrobosim/pyrobosim
+COPY pyrobosim/setup.py /workspace/pyrobosim/pyrobosim/setup.py
+COPY pyrobosim/README.md /workspace/pyrobosim/pyrobosim/README.md
 
-# Install pip dependencies for docs and testing
-ENV PIP_BREAK_SYSTEM_PACKAGES=1
-COPY docs/python_docs_requirements.txt docs/
-COPY test/python_test_requirements.txt test/
-RUN pip3 install -r docs/python_docs_requirements.txt && \
-    pip3 install -r test/python_test_requirements.txt
+RUN python3 -m pip install --no-cache-dir -U pip \
+    && python3 -m pip install --no-cache-dir -e /workspace/pyrobosim/pyrobosim \
+    && python3 -m pip install --no-cache-dir -U py_trees fastmcp
 
-# Copy the rest of the source directory and install PyRoboSim
-COPY . /opt/pyrobosim/
-RUN pip3 install -e pyrobosim
-
-# Set the default startup command
-CMD /bin/bash
-
-##################################
-#
-# PyRoboSim build for Ubuntu / ROS
-#
-##################################
-FROM ros:${ROS_DISTRO}-ros-base AS pyrobosim_ros
-ENV ROS_DISTRO=${ROS_DISTRO}
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
-# Install dependencies
-ARG DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get upgrade -y
-RUN apt-get install -y \
-    apt-utils python3-pip python3-tk \
-    libegl1 libgl1-mesa-dev libglu1-mesa-dev '^libxcb.*-dev' libx11-xcb-dev \
-    libxi-dev libxkbcommon-dev libxkbcommon-x11-dev libxrender-dev
-
-# Create a ROS 2 workspace
-RUN mkdir -p /pyrobosim_ws/src/pyrobosim
-WORKDIR /pyrobosim_ws/src
-
-# Install dependencies
-COPY setup/configure_pddlstream.bash /pyrobosim_ws/src/setup/
-RUN setup/configure_pddlstream.bash
-
-# Install PyRoboSim, docs, and testing dependencies
-ENV PIP_BREAK_SYSTEM_PACKAGES=1
-COPY pyrobosim/setup.py pyrobosim/
-COPY docs/python_docs_requirements.txt docs/
-COPY test/python_test_requirements.txt test/
-RUN pip3 install -e ./pyrobosim && \
-    pip3 install -r docs/python_docs_requirements.txt && \
-    pip3 install -r test/python_test_requirements.txt
-
-# Build the ROS workspace, which includes PyRoboSim
-COPY . /pyrobosim_ws/src/
-WORKDIR /pyrobosim_ws
-RUN . /opt/ros/${ROS_DISTRO}/setup.bash && \
-    colcon build
-
-# Remove display warnings
-RUN mkdir /tmp/runtime-root
-ENV XDG_RUNTIME_DIR="/tmp/runtime-root"
-RUN chmod -R 0700 /tmp/runtime-root
-ENV NO_AT_BRIDGE=1
-
-# Setup an entrypoint and working folder
-COPY setup /pyrobosim_ws/src/setup
-CMD /bin/bash
-COPY docker/entrypoint.sh /entrypoint.sh
-ENTRYPOINT ["/entrypoint.sh"]
-RUN echo "source /entrypoint.sh" >> ~/.bashrc
+CMD ["bash"]

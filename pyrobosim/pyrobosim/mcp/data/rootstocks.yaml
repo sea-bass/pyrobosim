@@ -1,0 +1,93 @@
+rootstocks:
+  - name: fetch_place
+    description: Navigate to source, detect, pick, navigate to target, place.
+    grafts: ["<SOURCE>", "<OBJECT>", "<TARGET>", "<POSE?>"]
+    template:
+      type: sequence
+      memory: true
+      children:
+        - type: action
+          name: NavigateToSource
+          action: navigate
+          params: "<SOURCE>"
+        - type: action
+          name: Detect
+          action: detect
+          params: "<OBJECT>"
+        - type: action
+          name: Pick
+          action: pick
+          params: "<OBJECT>"
+        - type: action
+          name: NavigateToTarget
+          action: navigate
+          params: "<TARGET>"
+        - type: action
+          name: Place
+          action: place
+          params: "<POSE?>"
+
+  - name: search_fallback
+    description: Search candidate locations with fallback; detect then pick if found.
+    grafts: ["<SEARCH_SEQUENCE>", "<FALLBACK>"]
+    template:
+      type: sequence
+      memory: true
+      children:
+        - type: selector
+          children:
+            - type: sequence
+              children: "<SEARCH_SEQUENCE>"
+            - type: action
+              name: SearchFailed
+              action: navigate
+              params: "<FALLBACK>"
+
+  - name: detect_gate
+    description: Detect objects before manipulation with a guard condition.
+    grafts: ["<OBJECT>"]
+    template:
+      type: sequence
+      memory: true
+      children:
+        - type: action
+          name: Detect
+          action: detect
+          outputs:
+            detected_objects: detected_objects
+        - type: condition
+          name: HasTarget
+          key: detected_objects
+          operator: contains
+          value: "<OBJECT>"
+        - type: action
+          name: Pick
+          action: pick
+          params: "<OBJECT>"
+
+  - name: door_open
+    description: Open a door if needed before entering.
+    grafts: ["<DOOR>", "<TARGET>"]
+    template:
+      type: sequence
+      memory: true
+      children:
+        - type: action
+          name: Open
+          action: open
+          params: "<DOOR>"
+        - type: action
+          name: Navigate
+          action: navigate
+          params: "<TARGET>"
+
+  - name: battery_aware
+    description: Check battery and recharge before continuing.
+    grafts: ["<MAIN_TASK>", "<RECHARGE_FLOW>"]
+    template:
+      type: selector
+      children:
+        - type: sequence
+          children: "<MAIN_TASK>"
+        - type: sequence
+          children: "<RECHARGE_FLOW>"
