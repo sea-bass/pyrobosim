@@ -1,0 +1,61 @@
+"""JSON schema helpers for behavior tree payloads."""
+
+from __future__ import annotations
+
+from typing import Any
+
+
+def get_bt_schema() -> dict[str, Any]:
+    return {
+        "schema_version": "1.0",
+        "description": "PyRoboSim behavior tree JSON format.",
+        "node_types": ["sequence", "selector", "parallel", "decorator", "condition", "action"],
+        "action_node": {
+            "type": "action",
+            "fields": {
+                "name": "string",
+                "action": "string",
+                "params": {
+                    "param_format": {
+                        "literal": "any",
+                        "blackboard": {"source": "blackboard", "key": "string", "default": "any"},
+                        "pose": {"pose": {"x": "float", "y": "float", "yaw": "float"}},
+                        "path": {"path": [{"x": "float", "y": "float", "yaw": "float"}]},
+                    }
+                },
+                "outputs": {
+                    "status": "blackboard_key",
+                    "message": "blackboard_key",
+                    "result": "blackboard_key",
+                    "detected_objects": "blackboard_key",
+                    "battery_level": "blackboard_key",
+                    "last_nav_result": "blackboard_key",
+                },
+            },
+        },
+        "condition_node": {
+            "type": "condition",
+            "fields": {
+                "name": "string",
+                "key": "blackboard_key",
+                "operator": ["==", "!=", ">", ">=", "<", "<=", "in", "contains", "truthy"],
+                "value": "any",
+            },
+        },
+        "composite_nodes": {
+            "sequence": {"children": "list", "memory": "bool"},
+            "selector": {"children": "list", "memory": "bool"},
+            "parallel": {"children": "list", "policy": ["success_on_all", "success_on_one"]},
+        },
+        "decorator_node": {
+            "type": "decorator",
+            "fields": {
+                "decorator": ["inverter", "retry"],
+                "num_failures": "int",
+                "child": "node",
+            },
+        },
+        "blackboard": {
+            "initial": "dict",
+        },
+    }
