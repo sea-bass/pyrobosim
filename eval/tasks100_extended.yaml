@@ -1,0 +1,1173 @@
+world_file: test_world.yaml
+robot_name: robot
+bt_output_dir: pyrobosim/pyrobosim/behaviors/generated
+control_server: http://127.0.0.1:9001
+
+runtime:
+  timeout_s: 30
+  stall_seconds: 10
+  reset_between: true
+  hard_reset_between: true
+execution_mode: headless_per_run
+
+# Extended success criteria include must_hold_name, object_at, robot_at, not_holding.
+
+tasks:
+  # --- Hold (20) ---
+  - id: task01_hold_banana0
+    task_prompt: "Go to table0_tabletop, detect banana0, and pick it up."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [table0_tabletop]
+      condition_contains: banana0
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: banana0
+
+  - id: task02_hold_gala
+    task_prompt: "Navigate to table0_tabletop and pick gala after detecting it."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [table0_tabletop]
+      condition_contains: gala
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: gala
+
+  - id: task03_hold_apple0
+    task_prompt: "At my_desk_desktop, detect apple0 and pick it up."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [my_desk_desktop]
+      condition_contains: apple0
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: apple0
+
+  - id: task04_hold_water1
+    task_prompt: "Go to my_desk_desktop. Detect water1 and pick it up."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [my_desk_desktop]
+      condition_contains: water1
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: water1
+
+  - id: task05_hold_soda
+    task_prompt: "Navigate to my_desk_desktop and pick soda if detected."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [my_desk_desktop]
+      condition_contains: soda
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: soda
+
+  - id: task06_hold_banana1
+    task_prompt: "Go to counter0_left, detect banana1, then pick it up."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [counter0_left]
+      condition_contains: banana1
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: banana1
+
+  - id: task07_hold_water0
+    task_prompt: "At counter0_right, detect water0 and pick it up."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [counter0_right]
+      condition_contains: water0
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: water0
+
+  - id: task08_hold_fuji
+    task_prompt: "Go to trash_top and pick fuji after detecting it."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [trash_top]
+      condition_contains: fuji
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: fuji
+
+  - id: task09_hold_search_banana1
+    task_prompt: "Search table0_tabletop, then counter0_left for banana1. If found, pick it up."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [table0_tabletop, counter0_left]
+      condition_contains: banana1
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: banana1
+
+  - id: task10_hold_search_water0
+    task_prompt: "Search my_desk_desktop, then counter0_right for water0. If found, pick it up."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [my_desk_desktop, counter0_right]
+      condition_contains: water0
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: water0
+
+  - id: task11_hold_search_soda
+    task_prompt: "Search table0_tabletop, then my_desk_desktop for soda. If found, pick it up."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [table0_tabletop, my_desk_desktop]
+      condition_contains: soda
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: soda
+
+  - id: task12_hold_search_apple0
+    task_prompt: "Search counter0_left, then my_desk_desktop for apple0. If found, pick it up."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [counter0_left, my_desk_desktop]
+      condition_contains: apple0
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: apple0
+
+  - id: task13_hold_branch_gala
+    task_prompt: "Go to table0_tabletop. If you detect gala, pick it up; otherwise go to my_desk_desktop."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [table0_tabletop, my_desk_desktop]
+      condition_contains: gala
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: gala
+
+  - id: task14_hold_branch_water1
+    task_prompt: "Go to my_desk_desktop. If you detect water1, pick it up; otherwise go to counter0_left."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [my_desk_desktop, counter0_left]
+      condition_contains: water1
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: water1
+
+  - id: task15_hold_branch_fuji
+    task_prompt: "Go to trash_top. If you detect fuji, pick it up; otherwise go to counter0_right."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [trash_top, counter0_right]
+      condition_contains: fuji
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: fuji
+
+  - id: task16_hold_seq_banana0
+    task_prompt: "Check table0_tabletop for banana0, then pick it up."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [table0_tabletop]
+      condition_contains: banana0
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: banana0
+
+  - id: task17_hold_seq_soda
+    task_prompt: "Check my_desk_desktop for soda, then pick it up."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [my_desk_desktop]
+      condition_contains: soda
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: soda
+
+  - id: task18_hold_seq_banana1
+    task_prompt: "Check counter0_left for banana1, then pick it up."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [counter0_left]
+      condition_contains: banana1
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: banana1
+
+  - id: task19_hold_seq_water0
+    task_prompt: "Check counter0_right for water0, then pick it up."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [counter0_right]
+      condition_contains: water0
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: water0
+
+  - id: task20_hold_seq_fuji
+    task_prompt: "Check trash_top for fuji, then pick it up."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [trash_top]
+      condition_contains: fuji
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: fuji
+
+  # --- Place (15) ---
+  - id: task21_place_gala_counter_left
+    task_prompt: "Search table0_tabletop, then my_desk_desktop for gala. If found, pick it up and place it at counter0_left."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [table0_tabletop, my_desk_desktop, counter0_left]
+      condition_contains: gala
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: gala
+        location: counter0_left
+
+  - id: task22_place_banana0_counter_right
+    task_prompt: "Search table0_tabletop, then trash_top for banana0. If found, pick it up and place it at counter0_right."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [table0_tabletop, trash_top, counter0_right]
+      condition_contains: banana0
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: banana0
+        location: counter0_right
+
+  - id: task23_place_apple0_table
+    task_prompt: "Search my_desk_desktop, then counter0_left for apple0. If found, pick it up and place it at table0_tabletop."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [my_desk_desktop, counter0_left, table0_tabletop]
+      condition_contains: apple0
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: apple0
+        location: table0_tabletop
+
+  - id: task24_place_water1_trash
+    task_prompt: "Search my_desk_desktop, then table0_tabletop for water1. If found, pick it up and place it at trash_top."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [my_desk_desktop, table0_tabletop, trash_top]
+      condition_contains: water1
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: water1
+        location: trash_top
+
+  - id: task25_place_soda_table
+    task_prompt: "Search my_desk_desktop, then table0_tabletop for soda. If found, pick it up and place it at table0_tabletop."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [my_desk_desktop, table0_tabletop]
+      condition_contains: soda
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: soda
+        location: table0_tabletop
+
+  - id: task26_place_banana1_table
+    task_prompt: "Search counter0_left, then table0_tabletop for banana1. If found, pick it up and place it at table0_tabletop."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [counter0_left, table0_tabletop]
+      condition_contains: banana1
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: banana1
+        location: table0_tabletop
+
+  - id: task27_place_water0_desk
+    task_prompt: "Search counter0_right, then counter0_left for water0. If found, pick it up and place it at my_desk_desktop."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [counter0_right, counter0_left, my_desk_desktop]
+      condition_contains: water0
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: water0
+        location: my_desk_desktop
+
+  - id: task28_place_fuji_counter_left
+    task_prompt: "Search trash_top, then table0_tabletop for fuji. If found, pick it up and place it at counter0_left."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [trash_top, table0_tabletop, counter0_left]
+      condition_contains: fuji
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: fuji
+        location: counter0_left
+
+  - id: task29_place_gala_trash
+    task_prompt: "Search table0_tabletop, then my_desk_desktop for gala. If found, move it to trash_top."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [table0_tabletop, my_desk_desktop, trash_top]
+      condition_contains: gala
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: gala
+        location: trash_top
+
+  - id: task30_place_banana0_desk
+    task_prompt: "Search table0_tabletop, then trash_top for banana0. If found, move it to my_desk_desktop."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [table0_tabletop, trash_top, my_desk_desktop]
+      condition_contains: banana0
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: banana0
+        location: my_desk_desktop
+
+  - id: task31_place_apple0_counter_left
+    task_prompt: "Move apple0 from my_desk_desktop to counter0_left."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [my_desk_desktop, counter0_left]
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: apple0
+        location: counter0_left
+
+  - id: task32_place_water1_table
+    task_prompt: "Move water1 from my_desk_desktop to table0_tabletop."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [my_desk_desktop, table0_tabletop]
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: water1
+        location: table0_tabletop
+
+  - id: task33_place_soda_counter_right
+    task_prompt: "Move soda from my_desk_desktop to counter0_right."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [my_desk_desktop, counter0_right]
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: soda
+        location: counter0_right
+
+  - id: task34_place_banana1_trash
+    task_prompt: "Move banana1 from counter0_left to trash_top."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [counter0_left, trash_top]
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: banana1
+        location: trash_top
+
+  - id: task35_place_fuji_table
+    task_prompt: "Move fuji from trash_top to table0_tabletop."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [trash_top, table0_tabletop]
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: fuji
+        location: table0_tabletop
+
+  # --- Return (10) ---
+  - id: task36_return_kitchen_after_banana0
+    task_prompt: "Go to table0_tabletop. If you detect banana0, pick it up; otherwise go to trash_top. Then return to kitchen."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [table0_tabletop, trash_top, kitchen]
+      condition_contains: banana0
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      robot_at: kitchen
+
+  - id: task37_return_bedroom_after_soda
+    task_prompt: "Go to my_desk_desktop. If you detect soda, pick it up; otherwise go to counter0_right. Then go to bedroom."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [my_desk_desktop, counter0_right, bedroom]
+      condition_contains: soda
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      robot_at: bedroom
+
+  - id: task38_return_bathroom_after_water0
+    task_prompt: "Go to counter0_right. If you detect water0, pick it up; otherwise go to my_desk_desktop. Then go to bathroom."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [counter0_right, my_desk_desktop, bathroom]
+      condition_contains: water0
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      robot_at: bathroom
+
+  - id: task39_return_table_after_gala
+    task_prompt: "Pick gala at table0_tabletop, then return to table0_tabletop."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [table0_tabletop]
+      must_use_memory_sequence: true
+    success:
+      robot_at: table0_tabletop
+
+  - id: task40_return_desk_after_apple0
+    task_prompt: "Pick apple0 at my_desk_desktop, then return to my_desk_desktop."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [my_desk_desktop]
+      must_use_memory_sequence: true
+    success:
+      robot_at: my_desk_desktop
+
+  - id: task41_return_counter_left_after_banana1
+    task_prompt: "Pick banana1 at counter0_left, then return to counter0_left."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [counter0_left]
+      must_use_memory_sequence: true
+    success:
+      robot_at: counter0_left
+
+  - id: task42_return_counter_right_after_water0
+    task_prompt: "Pick water0 at counter0_right, then return to counter0_right."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [counter0_right]
+      must_use_memory_sequence: true
+    success:
+      robot_at: counter0_right
+
+  - id: task43_return_trash_after_fuji
+    task_prompt: "Pick fuji at trash_top, then return to trash_top."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [trash_top]
+      must_use_memory_sequence: true
+    success:
+      robot_at: trash_top
+
+  - id: task44_return_bedroom_after_water1
+    task_prompt: "Pick water1 at my_desk_desktop, then go to bedroom."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [my_desk_desktop, bedroom]
+      must_use_memory_sequence: true
+    success:
+      robot_at: bedroom
+
+  - id: task45_return_bathroom_after_banana1
+    task_prompt: "Pick banana1 at counter0_left, then go to bathroom."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [counter0_left, bathroom]
+      must_use_memory_sequence: true
+    success:
+      robot_at: bathroom
+
+  # --- Place + release (5) ---
+  - id: task46_place_release_gala
+    task_prompt: "Pick gala at table0_tabletop, place it at counter0_left, and end empty-handed."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [table0_tabletop, counter0_left]
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: gala
+        location: counter0_left
+      not_holding: true
+
+  - id: task47_place_release_banana0
+    task_prompt: "Pick banana0 at table0_tabletop, place it at counter0_right, and end empty-handed."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [table0_tabletop, counter0_right]
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: banana0
+        location: counter0_right
+      not_holding: true
+
+  - id: task48_place_release_water1
+    task_prompt: "Pick water1 at my_desk_desktop, place it at table0_tabletop, and end empty-handed."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [my_desk_desktop, table0_tabletop]
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: water1
+        location: table0_tabletop
+      not_holding: true
+
+  - id: task49_place_release_soda
+    task_prompt: "Pick soda at my_desk_desktop, place it at counter0_left, and end empty-handed."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [my_desk_desktop, counter0_left]
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: soda
+        location: counter0_left
+      not_holding: true
+
+  - id: task50_place_release_fuji
+    task_prompt: "Pick fuji at trash_top, place it at table0_tabletop, and end empty-handed."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [trash_top, table0_tabletop]
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: fuji
+        location: table0_tabletop
+      not_holding: true
+
+  # --- Additional medium/hard (30) ---
+  - id: task51_fallback_banana0_three
+    task_prompt: "Search table0_tabletop, then counter0_left, then trash_top for banana0. If found, pick it up."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [table0_tabletop, counter0_left, trash_top]
+      condition_contains: banana0
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: banana0
+
+  - id: task52_fallback_gala_three
+    task_prompt: "Search table0_tabletop, then counter0_right, then my_desk_desktop for gala. If found, pick it up."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [table0_tabletop, counter0_right, my_desk_desktop]
+      condition_contains: gala
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: gala
+
+  - id: task53_fallback_water1_three
+    task_prompt: "Search my_desk_desktop, then table0_tabletop, then counter0_left for water1. If found, pick it up."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [my_desk_desktop, table0_tabletop, counter0_left]
+      condition_contains: water1
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: water1
+
+  - id: task54_fallback_soda_three
+    task_prompt: "Search my_desk_desktop, then counter0_right, then table0_tabletop for soda. If found, pick it up."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [my_desk_desktop, counter0_right, table0_tabletop]
+      condition_contains: soda
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: soda
+
+  - id: task55_fallback_banana1_three
+    task_prompt: "Search counter0_left, then table0_tabletop, then my_desk_desktop for banana1. If found, pick it up."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [counter0_left, table0_tabletop, my_desk_desktop]
+      condition_contains: banana1
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: banana1
+
+  - id: task56_recovery_pick_gala
+    task_prompt: "Go to table0_tabletop and detect gala. If detected, pick it up; if not, search my_desk_desktop and try again."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [table0_tabletop, my_desk_desktop]
+      condition_contains: gala
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: gala
+
+  - id: task57_recovery_pick_banana0
+    task_prompt: "Go to table0_tabletop and detect banana0. If not found, search trash_top and try again."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [table0_tabletop, trash_top]
+      condition_contains: banana0
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: banana0
+
+  - id: task58_recovery_pick_water1
+    task_prompt: "Go to my_desk_desktop and detect water1. If not found, search table0_tabletop and try again."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [my_desk_desktop, table0_tabletop]
+      condition_contains: water1
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: water1
+
+  - id: task59_recovery_pick_soda
+    task_prompt: "Go to my_desk_desktop and detect soda. If not found, search counter0_right and try again."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [my_desk_desktop, counter0_right]
+      condition_contains: soda
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: soda
+
+  - id: task60_recovery_pick_banana1
+    task_prompt: "Go to counter0_left and detect banana1. If not found, search table0_tabletop and try again."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [counter0_left, table0_tabletop]
+      condition_contains: banana1
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: banana1
+
+  # --- Hard (20) ---
+  - id: task61_hard_nested_banana0
+    task_prompt: "Patrol table0_tabletop, then my_desk_desktop. If banana0 is detected at any step, pick it up; otherwise search trash_top."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [table0_tabletop, my_desk_desktop, trash_top]
+      condition_contains: banana0
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: banana0
+
+  - id: task62_hard_nested_gala
+    task_prompt: "Check table0_tabletop for gala; if not detected, check counter0_right; if found, pick it up, else go to my_desk_desktop."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [table0_tabletop, counter0_right, my_desk_desktop]
+      condition_contains: gala
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: gala
+
+  - id: task63_hard_nested_water1
+    task_prompt: "Search my_desk_desktop for water1; if not found, search table0_tabletop; if found, pick it up, else go to counter0_left."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [my_desk_desktop, table0_tabletop, counter0_left]
+      condition_contains: water1
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: water1
+
+  - id: task64_hard_nested_soda
+    task_prompt: "Search my_desk_desktop for soda; if not found, search counter0_right; if found, pick it up, else go to table0_tabletop."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [my_desk_desktop, counter0_right, table0_tabletop]
+      condition_contains: soda
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: soda
+
+  - id: task65_hard_nested_banana1
+    task_prompt: "Search counter0_left for banana1; if not found, search table0_tabletop; if found, pick it up, else go to my_desk_desktop."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [counter0_left, table0_tabletop, my_desk_desktop]
+      condition_contains: banana1
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: banana1
+
+  - id: task66_hard_fallback_place_gala
+    task_prompt: "Search table0_tabletop, then my_desk_desktop for gala. If found, pick it up and place it at trash_top; otherwise go to counter0_right."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [table0_tabletop, my_desk_desktop, trash_top, counter0_right]
+      condition_contains: gala
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: gala
+        location: trash_top
+
+  - id: task67_hard_fallback_place_banana0
+    task_prompt: "Search table0_tabletop, then trash_top for banana0. If found, place it at counter0_left; otherwise go to my_desk_desktop."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [table0_tabletop, trash_top, counter0_left, my_desk_desktop]
+      condition_contains: banana0
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: banana0
+        location: counter0_left
+
+  - id: task68_hard_fallback_place_water1
+    task_prompt: "Search my_desk_desktop, then table0_tabletop for water1. If found, place it at counter0_right; otherwise go to counter0_left."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [my_desk_desktop, table0_tabletop, counter0_right, counter0_left]
+      condition_contains: water1
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: water1
+        location: counter0_right
+
+  - id: task69_hard_fallback_place_soda
+    task_prompt: "Search my_desk_desktop, then counter0_right for soda. If found, place it at table0_tabletop; otherwise go to trash_top."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [my_desk_desktop, counter0_right, table0_tabletop, trash_top]
+      condition_contains: soda
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: soda
+        location: table0_tabletop
+
+  - id: task70_hard_fallback_place_fuji
+    task_prompt: "Search trash_top, then table0_tabletop for fuji. If found, place it at my_desk_desktop; otherwise go to counter0_right."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [trash_top, table0_tabletop, my_desk_desktop, counter0_right]
+      condition_contains: fuji
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: fuji
+        location: my_desk_desktop
+
+  - id: task71_hard_three_branch_banana0
+    task_prompt: "Check table0_tabletop for banana0; if not found, check counter0_left; if still not found, check trash_top; pick it if found."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [table0_tabletop, counter0_left, trash_top]
+      condition_contains: banana0
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: banana0
+
+  - id: task72_hard_three_branch_gala
+    task_prompt: "Check table0_tabletop for gala; if not found, check counter0_right; if still not found, check my_desk_desktop; pick it if found."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [table0_tabletop, counter0_right, my_desk_desktop]
+      condition_contains: gala
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: gala
+
+  - id: task73_hard_three_branch_water1
+    task_prompt: "Check my_desk_desktop for water1; if not found, check table0_tabletop; if still not found, check counter0_left; pick it if found."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [my_desk_desktop, table0_tabletop, counter0_left]
+      condition_contains: water1
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: water1
+
+  - id: task74_hard_three_branch_soda
+    task_prompt: "Check my_desk_desktop for soda; if not found, check counter0_right; if still not found, check table0_tabletop; pick it if found."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [my_desk_desktop, counter0_right, table0_tabletop]
+      condition_contains: soda
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: soda
+
+  - id: task75_hard_three_branch_banana1
+    task_prompt: "Check counter0_left for banana1; if not found, check table0_tabletop; if still not found, check my_desk_desktop; pick it if found."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [counter0_left, table0_tabletop, my_desk_desktop]
+      condition_contains: banana1
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: banana1
+
+  - id: task76_hard_nested_place_banana0
+    task_prompt: "Search table0_tabletop for banana0; if found, pick and place it at counter0_right; otherwise search trash_top, then my_desk_desktop."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [table0_tabletop, counter0_right, trash_top, my_desk_desktop]
+      condition_contains: banana0
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: banana0
+        location: counter0_right
+
+  - id: task77_hard_nested_place_gala
+    task_prompt: "Search table0_tabletop for gala; if found, pick and place it at counter0_left; otherwise search my_desk_desktop, then counter0_right."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [table0_tabletop, counter0_left, my_desk_desktop, counter0_right]
+      condition_contains: gala
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: gala
+        location: counter0_left
+
+  - id: task78_hard_nested_place_water1
+    task_prompt: "Search my_desk_desktop for water1; if found, place it at table0_tabletop; otherwise search counter0_left, then table0_tabletop."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [my_desk_desktop, table0_tabletop, counter0_left]
+      condition_contains: water1
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: water1
+        location: table0_tabletop
+
+  - id: task79_hard_nested_place_soda
+    task_prompt: "Search my_desk_desktop for soda; if found, place it at counter0_left; otherwise search counter0_right, then table0_tabletop."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [my_desk_desktop, counter0_left, counter0_right, table0_tabletop]
+      condition_contains: soda
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: soda
+        location: counter0_left
+
+  - id: task80_hard_nested_place_fuji
+    task_prompt: "Search trash_top for fuji; if found, place it at table0_tabletop; otherwise search counter0_right, then my_desk_desktop."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [trash_top, table0_tabletop, counter0_right, my_desk_desktop]
+      condition_contains: fuji
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: fuji
+        location: table0_tabletop
+
+  - id: task81_hard_three_branch_place_banana1
+    task_prompt: "Check counter0_left for banana1; if not found, check table0_tabletop; if still not found, check my_desk_desktop; place it at trash_top if found."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [counter0_left, table0_tabletop, my_desk_desktop, trash_top]
+      condition_contains: banana1
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: banana1
+        location: trash_top
+
+  - id: task82_hard_three_branch_place_water0
+    task_prompt: "Check counter0_right for water0; if not found, check my_desk_desktop; if still not found, check table0_tabletop; place it at counter0_left if found."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [counter0_right, my_desk_desktop, table0_tabletop, counter0_left]
+      condition_contains: water0
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: water0
+        location: counter0_left
+
+  - id: task83_hard_three_branch_place_gala
+    task_prompt: "Check table0_tabletop for gala; if not found, check counter0_right; if still not found, check my_desk_desktop; place it at counter0_left if found."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [table0_tabletop, counter0_right, my_desk_desktop, counter0_left]
+      condition_contains: gala
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: gala
+        location: counter0_left
+
+  - id: task84_hard_three_branch_place_soda
+    task_prompt: "Check my_desk_desktop for soda; if not found, check counter0_right; if still not found, check table0_tabletop; place it at counter0_left if found."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [my_desk_desktop, counter0_right, table0_tabletop, counter0_left]
+      condition_contains: soda
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: soda
+        location: counter0_left
+
+  - id: task85_hard_three_branch_place_fuji
+    task_prompt: "Check trash_top for fuji; if not found, check table0_tabletop; if still not found, check counter0_right; place it at my_desk_desktop if found."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [trash_top, table0_tabletop, counter0_right, my_desk_desktop]
+      condition_contains: fuji
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: fuji
+        location: my_desk_desktop
+
+  - id: task86_hard_recover_place_banana0
+    task_prompt: "Go to table0_tabletop and detect banana0. If detected, pick and place it at counter0_right. If not detected, search trash_top, then try again."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [table0_tabletop, trash_top, counter0_right]
+      condition_contains: banana0
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: banana0
+        location: counter0_right
+
+  - id: task87_hard_recover_place_gala
+    task_prompt: "Go to table0_tabletop and detect gala. If detected, pick and place it at counter0_left. If not detected, search my_desk_desktop, then try again."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [table0_tabletop, my_desk_desktop, counter0_left]
+      condition_contains: gala
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: gala
+        location: counter0_left
+
+  - id: task88_hard_recover_place_water1
+    task_prompt: "Go to my_desk_desktop and detect water1. If detected, pick and place it at table0_tabletop. If not detected, search counter0_left, then try again."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [my_desk_desktop, counter0_left, table0_tabletop]
+      condition_contains: water1
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: water1
+        location: table0_tabletop
+
+  - id: task89_hard_recover_place_soda
+    task_prompt: "Go to my_desk_desktop and detect soda. If detected, pick and place it at counter0_left. If not detected, search counter0_right, then try again."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [my_desk_desktop, counter0_right, counter0_left]
+      condition_contains: soda
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: soda
+        location: counter0_left
+
+  - id: task90_hard_recover_place_fuji
+    task_prompt: "Go to trash_top and detect fuji. If detected, pick and place it at table0_tabletop. If not detected, search counter0_right, then try again."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [trash_top, counter0_right, table0_tabletop]
+      condition_contains: fuji
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: fuji
+        location: table0_tabletop
+
+  - id: task91_hard_nested_hold_banana0
+    task_prompt: "Search table0_tabletop for banana0; if found, pick it up; else search counter0_left, then trash_top and pick if found."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [table0_tabletop, counter0_left, trash_top]
+      condition_contains: banana0
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: banana0
+
+  - id: task92_hard_nested_hold_gala
+    task_prompt: "Search table0_tabletop for gala; if found, pick it up; else search counter0_right, then my_desk_desktop and pick if found."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [table0_tabletop, counter0_right, my_desk_desktop]
+      condition_contains: gala
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: gala
+
+  - id: task93_hard_nested_hold_water1
+    task_prompt: "Search my_desk_desktop for water1; if found, pick it up; else search table0_tabletop, then counter0_left and pick if found."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [my_desk_desktop, table0_tabletop, counter0_left]
+      condition_contains: water1
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: water1
+
+  - id: task94_hard_nested_hold_soda
+    task_prompt: "Search my_desk_desktop for soda; if found, pick it up; else search counter0_right, then table0_tabletop and pick if found."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [my_desk_desktop, counter0_right, table0_tabletop]
+      condition_contains: soda
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: soda
+
+  - id: task95_hard_nested_hold_banana1
+    task_prompt: "Search counter0_left for banana1; if found, pick it up; else search table0_tabletop, then my_desk_desktop and pick if found."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [counter0_left, table0_tabletop, my_desk_desktop]
+      condition_contains: banana1
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: banana1
+
+  - id: task96_hard_chain_place_release_gala
+    task_prompt: "Search table0_tabletop, then my_desk_desktop for gala. If found, place it at counter0_left and end empty-handed."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [table0_tabletop, my_desk_desktop, counter0_left]
+      condition_contains: gala
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: gala
+        location: counter0_left
+      not_holding: true
+
+  - id: task97_hard_chain_place_release_banana0
+    task_prompt: "Search table0_tabletop, then trash_top for banana0. If found, place it at counter0_right and end empty-handed."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [table0_tabletop, trash_top, counter0_right]
+      condition_contains: banana0
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: banana0
+        location: counter0_right
+      not_holding: true
+
+  - id: task98_hard_chain_place_release_water1
+    task_prompt: "Search my_desk_desktop, then table0_tabletop for water1. If found, place it at table0_tabletop and end empty-handed."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [my_desk_desktop, table0_tabletop]
+      condition_contains: water1
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: water1
+        location: table0_tabletop
+      not_holding: true
+
+  - id: task99_hard_chain_place_release_soda
+    task_prompt: "Search my_desk_desktop, then counter0_right for soda. If found, place it at counter0_left and end empty-handed."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [my_desk_desktop, counter0_right, counter0_left]
+      condition_contains: soda
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: soda
+        location: counter0_left
+      not_holding: true
+
+  - id: task100_hard_chain_place_release_fuji
+    task_prompt: "Search trash_top, then table0_tabletop for fuji. If found, place it at table0_tabletop and end empty-handed."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [trash_top, table0_tabletop]
+      condition_contains: fuji
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      object_at:
+        name: fuji
+        location: table0_tabletop
+      not_holding: true

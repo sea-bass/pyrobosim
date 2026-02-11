@@ -1,0 +1,65 @@
+world_file: test_world.yaml
+robot_name: robot
+bt_output_dir: pyrobosim/pyrobosim/behaviors/generated
+control_server: http://127.0.0.1:9001
+
+runtime:
+  timeout_s: 30
+  stall_seconds: 10
+  reset_between: true
+  hard_reset_between: true
+execution_mode: headless_per_run # control_server
+
+# Success criteria are best-effort checks from final world state.
+# If omitted, runtime success is based on BT status.
+
+tasks:
+  - id: task01_detect_gate_banana
+    task_prompt: "Go to table0_tabletop. If you detect banana0, pick it up."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [table0_tabletop]
+      condition_contains: banana0
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: banana0
+
+  - id: task02_fetch_apple_to_counter
+    task_prompt: "Fetch gala from table0_tabletop and place it at counter0_left."
+    required:
+      actions: [navigate, detect, pick, place]
+      locations: [table0_tabletop, counter0_left]
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: gala
+
+  - id: task03_soda_branch
+    task_prompt: "Go to my_desk_desktop. If you find soda, pick it up; otherwise go to trash_top."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [my_desk_desktop, trash_top]
+      condition_contains: soda
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: soda
+
+  - id: task04_search_banana
+    task_prompt: "Search table0_tabletop, then counter0_right for banana1. If found, pick it up."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [table0_tabletop, counter0_right]
+      must_use_selector: true
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: banana1
+
+  - id: task05_detect_gate_water
+    task_prompt: "Navigate to my_desk_desktop and pick up water1 if detected."
+    required:
+      actions: [navigate, detect, pick]
+      locations: [my_desk_desktop]
+      condition_contains: water1
+      must_use_memory_sequence: true
+    success:
+      must_hold_name: water1
