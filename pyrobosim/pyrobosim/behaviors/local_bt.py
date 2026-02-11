@@ -79,18 +79,18 @@ class RobotActionBehavior(py_trees.behaviour.Behaviour):
     def _write_outputs(self, result: ExecutionResult) -> None:
         for value_name, bb_key in self.outputs.items():
             if value_name == "status":
-                setattr(self.blackboard, bb_key, result.status.name)
+                self._bb_client.set(bb_key, result.status.name)
             elif value_name == "message":
-                setattr(self.blackboard, bb_key, result.message)
+                self._bb_client.set(bb_key, result.message)
             elif value_name == "result":
-                setattr(self.blackboard, bb_key, result)
+                self._bb_client.set(bb_key, result)
             elif value_name == "detected_objects":
                 detected = [obj.name for obj in self.robot.last_detected_objects]
-                setattr(self.blackboard, bb_key, detected)
+                self._bb_client.set(bb_key, detected)
             elif value_name == "battery_level":
-                setattr(self.blackboard, bb_key, self.robot.battery_level)
+                self._bb_client.set(bb_key, self.robot.battery_level)
             elif value_name == "last_nav_result":
-                setattr(self.blackboard, bb_key, self.robot.last_nav_result)
+                self._bb_client.set(bb_key, self.robot.last_nav_result)
 
 
 class BlackboardCondition(py_trees.behaviour.Behaviour):
@@ -112,9 +112,9 @@ class BlackboardCondition(py_trees.behaviour.Behaviour):
         self._bb_client.register_key(key=key, access=py_trees.common.Access.READ)
 
     def update(self) -> py_trees.common.Status:
-        if not hasattr(self.blackboard, self.key):
+        current = self._bb_client.get(self.key)
+        if current is None:
             return py_trees.common.Status.FAILURE
-        current = getattr(self.blackboard, self.key)
         if _compare(self.operator, current, self.value):
             return py_trees.common.Status.SUCCESS
         return py_trees.common.Status.FAILURE

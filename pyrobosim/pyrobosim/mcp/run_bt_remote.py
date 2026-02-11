@@ -45,6 +45,11 @@ def main() -> None:
     parser.add_argument("--robot", default=None, help="Robot name.")
     parser.add_argument("--tick-ms", type=int, default=100, help="Tick period in ms.")
     parser.add_argument("--print-every", type=int, default=1, help="Print tree every N ticks.")
+    parser.add_argument(
+        "--print-blackboard",
+        action="store_true",
+        help="Print blackboard outputs (e.g., detect_status) each tick.",
+    )
     args = parser.parse_args()
 
     bt_path = None
@@ -71,14 +76,19 @@ def main() -> None:
 
     run_id = result["run_id"]
     last_tick = -1
+    last_bb = None
     while True:
         status = call_control(args.server, "/bt_status", {"run_id": run_id})
         tick_count = int(status.get("tick_count", 0))
         tree = status.get("tree", "")
+        blackboard = status.get("blackboard", {})
         if args.print_every > 0 and tick_count != last_tick and tick_count % args.print_every == 0:
             if tree:
                 print(tree)
             last_tick = tick_count
+        if args.print_blackboard and blackboard != last_bb:
+            print(json.dumps(blackboard, indent=2))
+            last_bb = blackboard
         if status.get("status") in ("SUCCESS", "FAILURE", "CANCELED"):
             if tree:
                 print(tree)

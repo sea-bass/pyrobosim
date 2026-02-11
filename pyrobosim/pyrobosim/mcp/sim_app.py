@@ -20,10 +20,32 @@ from pyrobosim.utils.general import get_data_folder
 
 DATA_FOLDER = get_data_folder()
 
+def _collect_blackboard_keys(node: dict[str, Any], keys: set[str]) -> None:
+    node_type = node.get("type")
+    if node_type == "action":
+        outputs = node.get("outputs", {})
+        if isinstance(outputs, dict):
+            for key in outputs.values():
+                if isinstance(key, str):
+                    keys.add(key)
+    if node_type == "condition":
+        key = node.get("key")
+        if isinstance(key, str):
+            keys.add(key)
+    if node_type == "decorator":
+        child = node.get("child")
+        if isinstance(child, dict):
+            _collect_blackboard_keys(child, keys)
+        return
+    for child in node.get("children", []):
+        if isinstance(child, dict):
+            _collect_blackboard_keys(child, keys)
+
 
 class SimContext:
-    def __init__(self, world: World) -> None:
+    def __init__(self, world: World, world_file: Path | None) -> None:
         self.world = world
+        self.world_file = world_file
         self.bt_runs: dict[str, dict[str, Any]] = {}
         self.lock = threading.Lock()
 
@@ -49,6 +71,10 @@ class SimContext:
         tree = build_tree_from_json(bt_json, robot)
         cancel_event = threading.Event()
         run_id = str(uuid.uuid4())
+        bb_keys: set[str] = set()
+        root_spec = bt_json.get("root")
+        if isinstance(root_spec, dict):
+            _collect_blackboard_keys(root_spec, bb_keys)
 
         def _on_tick(local_tree: py_trees.trees.BehaviourTree, count: int) -> None:
             tree_text = ""
@@ -77,6 +103,7 @@ class SimContext:
                 "cancel_event": cancel_event,
                 "tick_count": 0,
                 "tree": "",
+                "bb_keys": sorted(bb_keys),
             }
         thread = threading.Thread(target=_runner, daemon=True)
         thread.start()
@@ -89,11 +116,53 @@ class SimContext:
             entry = self.bt_runs.get(run_id)
             if not entry:
                 return {"status": "UNKNOWN"}
+            blackboard = py_trees.blackboard.Blackboard()
+            bb_values = dict(blackboard.storage)
             return {
                 "status": entry.get("status", "UNKNOWN"),
                 "tick_count": entry.get("tick_count", 0),
                 "tree": entry.get("tree", ""),
+                "blackboard": bb_values,
             }
+
+    def world_state(self, robot_name: str | None = None) -> dict[str, Any]:
+        robot = self.get_robot(robot_name)
+        held = None
+        if robot.manipulated_object is not None:
+            held = {
+                "name": robot.manipulated_object.name,
+                "category": robot.manipulated_object.category,
+            }
+        objects = []
+        for obj in self.world.objects:
+            parent = obj.parent.name if obj.parent is not None else None
+            objects.append(
+                {
+                    "name": obj.name,
+                    "category": obj.category,
+                    "location": parent,
+                }
+            )
+        location = robot.location.name if robot.location is not None else None
+        return {
+            "robot": robot.name,
+            "location": location,
+            "held_object": held,
+            "objects": objects,
+        }
+
+    def reset_world(self, deterministic: bool = False, seed: int = -1) -> bool:
+        return self.world.reset(deterministic=deterministic, seed=seed)
+
+    def reload_world(self) -> bool:
+        if self.world_file is None:
+            raise ValueError("No world_file configured for reload.")
+        gui = self.world.gui
+        new_world = WorldYamlLoader().from_file(self.world_file)
+        self.world = new_world
+        if gui is not None:
+            gui.set_world(new_world)
+        return True
 
 
 class ControlHandler(BaseHTTPRequestHandler):
@@ -108,7 +177,7 @@ class ControlHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_POST(self) -> None:  # noqa: N802
-        if self.path not in ("/run_bt", "/bt_status"):
+        if self.path not in ("/run_bt", "/bt_status", "/world_state", "/reset_world", "/reload_world"):
             self._send_json({"error": "not_found"}, status=404)
             return
 
@@ -130,6 +199,36 @@ class ControlHandler(BaseHTTPRequestHandler):
                 self._send_json({"error": "run_id_required"}, status=400)
                 return
             self._send_json(self.context.bt_status(run_id))
+            return
+
+        if self.path == "/world_state":
+            robot = data.get("robot")
+            try:
+                state = self.context.world_state(robot)
+            except Exception as exc:
+                self._send_json({"error": str(exc)}, status=400)
+                return
+            self._send_json(state)
+            return
+
+        if self.path == "/reset_world":
+            deterministic = bool(data.get("deterministic", False))
+            seed = int(data.get("seed", -1))
+            try:
+                ok = self.context.reset_world(deterministic=deterministic, seed=seed)
+            except Exception as exc:
+                self._send_json({"error": str(exc)}, status=400)
+                return
+            self._send_json({"reset": ok})
+            return
+
+        if self.path == "/reload_world":
+            try:
+                ok = self.context.reload_world()
+            except Exception as exc:
+                self._send_json({"error": str(exc)}, status=400)
+                return
+            self._send_json({"reload": ok})
             return
 
         bt_json = data.get("bt_json")
@@ -156,13 +255,13 @@ def start_control_server(context: SimContext, host: str, port: int) -> Threading
     return server
 
 
-def load_world(world_file: str | None, multirobot: bool) -> World:
+def load_world(world_file: str | None, multirobot: bool) -> tuple[World, Path | None]:
     loader = WorldYamlLoader()
     if world_file:
-        return loader.from_file(DATA_FOLDER / world_file)
+        return loader.from_file(DATA_FOLDER / world_file), DATA_FOLDER / world_file
     if multirobot:
-        return loader.from_file(DATA_FOLDER / "test_world_multirobot.yaml")
-    return loader.from_file(DATA_FOLDER / "test_world.yaml")
+        return loader.from_file(DATA_FOLDER / "test_world_multirobot.yaml"), DATA_FOLDER / "test_world_multirobot.yaml"
+    return loader.from_file(DATA_FOLDER / "test_world.yaml"), DATA_FOLDER / "test_world.yaml"
 
 
 def main() -> None:
@@ -173,8 +272,8 @@ def main() -> None:
     parser.add_argument("--control-port", type=int, default=9001, help="Control server port.")
     args = parser.parse_args()
 
-    world = load_world(args.world_file, args.multirobot)
-    context = SimContext(world)
+    world, world_file = load_world(args.world_file, args.multirobot)
+    context = SimContext(world, world_file)
     start_control_server(context, args.host, args.control_port)
     start_gui(world)
 
