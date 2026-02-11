@@ -15,6 +15,7 @@ from pyrobosim.behaviors.local_bt import build_tree_from_json, tick_tree
 from pyrobosim.core.world import World
 from pyrobosim.core.yaml_utils import WorldYamlLoader
 from pyrobosim.gui import start_gui
+from pyrobosim.mcp.world_entities import build_world_entities
 from pyrobosim.utils.general import get_data_folder
 
 
@@ -151,6 +152,17 @@ class SimContext:
             "objects": objects,
         }
 
+    def world_entities(
+        self,
+        mode: str = "vocab",
+        robot_name: str | None = None,
+        allow_full: bool = False,
+    ) -> dict[str, Any]:
+        robot = None
+        if mode == "observed" or robot_name:
+            robot = self.get_robot(robot_name)
+        return build_world_entities(self.world, mode=mode, robot=robot, allow_full=allow_full)
+
     def reset_world(self, deterministic: bool = False, seed: int = -1) -> bool:
         return self.world.reset(deterministic=deterministic, seed=seed)
 
@@ -177,7 +189,14 @@ class ControlHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_POST(self) -> None:  # noqa: N802
-        if self.path not in ("/run_bt", "/bt_status", "/world_state", "/reset_world", "/reload_world"):
+        if self.path not in (
+            "/run_bt",
+            "/bt_status",
+            "/world_state",
+            "/world_entities",
+            "/reset_world",
+            "/reload_world",
+        ):
             self._send_json({"error": "not_found"}, status=404)
             return
 
@@ -209,6 +228,20 @@ class ControlHandler(BaseHTTPRequestHandler):
                 self._send_json({"error": str(exc)}, status=400)
                 return
             self._send_json(state)
+            return
+
+        if self.path == "/world_entities":
+            mode = data.get("mode", "vocab")
+            robot = data.get("robot")
+            allow_full = bool(data.get("allow_full", False))
+            try:
+                payload = self.context.world_entities(
+                    mode=mode, robot_name=robot, allow_full=allow_full
+                )
+            except Exception as exc:
+                self._send_json({"error": str(exc)}, status=400)
+                return
+            self._send_json(payload)
             return
 
         if self.path == "/reset_world":

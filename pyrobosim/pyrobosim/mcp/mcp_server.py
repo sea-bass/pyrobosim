@@ -4,15 +4,20 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import uuid
+import urllib.request
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from .bt_schema import get_bt_schema
 from .skills import get_skill_schemas
+from .world_entities import build_world_entities
 from pyrobosim.behaviors.rootstocks import list_rootstocks
 from pyrobosim.behaviors.validator import validate_bt
+from pyrobosim.core.yaml_utils import WorldYamlLoader
+from pyrobosim.utils.general import get_data_folder
 from .eval_logger import append_record
 
 try:
@@ -26,6 +31,7 @@ except ImportError as exc:  # pragma: no cover - runtime guard
 REPO_ROOT = Path(__file__).resolve().parents[3]
 GENERATED_DIR = Path(__file__).resolve().parent.parent / "behaviors" / "generated"
 DEFAULT_EVAL_LOG = REPO_ROOT / "eval" / "submissions.jsonl"
+DEFAULT_CONTROL_URL = os.getenv("PYROBOSIM_CONTROL_URL", "http://127.0.0.1:9001")
 
 
 def build_mcp() -> FastMCP:
@@ -74,6 +80,46 @@ def build_mcp() -> FastMCP:
         return list_rootstocks()
 
     @mcp.tool()
+    def list_world_entities(
+        mode: str = "vocab",
+        world_file: str | None = None,
+        control_url: str | None = None,
+        robot: str | None = None,
+        allow_full: bool = False,
+    ) -> dict[str, Any]:
+        """
+        Returns world entity vocabulary without leaking task-critical state by default.
+
+        Modes:
+          - vocab: names/categories only (no locations or open/locked state)
+          - observed: robot-known objects only (requires control_url)
+          - full: includes ground-truth locations/state (requires allow_full=True)
+        """
+        if mode == "full" and not allow_full:
+            raise ValueError("full mode requires allow_full=True")
+
+        if not control_url and not world_file:
+            control_url = DEFAULT_CONTROL_URL
+
+        if control_url:
+            payload = {
+                "mode": mode,
+                "robot": robot,
+                "allow_full": allow_full,
+            }
+            return _call_control(control_url, "/world_entities", payload)
+
+        if mode == "observed":
+            raise ValueError("observed mode requires control_url")
+
+        if world_file is None:
+            raise ValueError("world_file or control_url must be provided")
+
+        world_path = _resolve_world_file(world_file)
+        world = WorldYamlLoader().from_file(world_path)
+        return build_world_entities(world, mode=mode, allow_full=allow_full)
+
+    @mcp.tool()
     def validate(bt_json: dict[str, Any] | str) -> dict[str, Any]:
         bt_data = _coerce_bt_json(bt_json)
         issues = validate_bt(bt_data, get_skill_schemas())
@@ -119,6 +165,22 @@ def _relative_to_repo(path: Path) -> str:
         return str(path.relative_to(REPO_ROOT))
     except ValueError:
         return str(path)
+
+def _resolve_world_file(world_file: str) -> Path:
+    world_path = Path(world_file)
+    if world_path.is_absolute():
+        return world_path
+    return get_data_folder() / world_file
+
+def _call_control(url: str, endpoint: str, args: dict[str, Any]) -> dict[str, Any]:
+    request = urllib.request.Request(
+        url.rstrip("/") + endpoint,
+        data=json.dumps(args).encode("utf-8"),
+        headers={"Content-Type": "application/json", "Accept": "application/json"},
+        method="POST",
+    )
+    with urllib.request.urlopen(request) as response:
+        return json.loads(response.read().decode("utf-8"))
 
 
 def main() -> None:
