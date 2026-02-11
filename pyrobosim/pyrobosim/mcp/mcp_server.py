@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import uuid
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +13,7 @@ from .bt_schema import get_bt_schema
 from .skills import get_skill_schemas
 from pyrobosim.behaviors.rootstocks import list_rootstocks
 from pyrobosim.behaviors.validator import validate_bt
+from .eval_logger import append_record
 
 try:
     from fastmcp import FastMCP
@@ -21,7 +23,9 @@ except ImportError as exc:  # pragma: no cover - runtime guard
     ) from exc
 
 
+REPO_ROOT = Path(__file__).resolve().parents[3]
 GENERATED_DIR = Path(__file__).resolve().parent.parent / "behaviors" / "generated"
+DEFAULT_EVAL_LOG = REPO_ROOT / "eval" / "submissions.jsonl"
 
 
 def build_mcp() -> FastMCP:
@@ -39,6 +43,7 @@ def build_mcp() -> FastMCP:
     def send_to_robot(
         bt_json: dict[str, Any] | str,
         output_name: str | None = None,
+        task_prompt: str | None = None,
     ) -> dict[str, Any]:
         bt_data = _coerce_bt_json(bt_json)
         _validate_bt_json(bt_data)
@@ -48,8 +53,20 @@ def build_mcp() -> FastMCP:
         generated_path = GENERATED_DIR / f"{name}.json"
         generated_path.write_text(json.dumps(bt_data, indent=2), encoding="utf-8")
 
+        submission_id = uuid.uuid4().hex
+        generated_rel = _relative_to_repo(generated_path)
+        record = {
+            "submission_id": submission_id,
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "generated": generated_rel,
+            "task_prompt": task_prompt,
+        }
+        append_record(DEFAULT_EVAL_LOG, record)
+
         return {
-            "generated": str(generated_path),
+            "submission_id": submission_id,
+            "generated": generated_rel,
+            "logged": str(DEFAULT_EVAL_LOG),
         }
 
     @mcp.tool()
@@ -95,6 +112,13 @@ def _validate_bt_json(bt_json: dict[str, Any]) -> None:
 
 def _sanitize_name(name: str) -> str:
     return "".join(ch for ch in name if ch.isalnum() or ch in ("_", "-")) or "bt"
+
+
+def _relative_to_repo(path: Path) -> str:
+    try:
+        return str(path.relative_to(REPO_ROOT))
+    except ValueError:
+        return str(path)
 
 
 def main() -> None:

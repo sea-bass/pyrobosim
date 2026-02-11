@@ -1,5 +1,8 @@
 schema_version: "1.0"
 description: "PyRoboSim behavior tree JSON format."
+notes:
+  - "Memory rule: set memory=true on any sequence/selector that contains action nodes, so completed actions are not re-run on subsequent ticks."
+  - "Use memory=false only for purely reactive condition/sensor chains that should re-evaluate from the start every tick."
 node_types: [sequence, selector, parallel, decorator, condition, action]
 
 action_node:
