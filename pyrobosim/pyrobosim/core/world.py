@@ -890,8 +890,6 @@ class World:
 
             You can also pass in the parent entity name as the ``parent`` argument, and it will be resolved to an actual entity, if it exists in the world.
 
-            If you pass in a list of parent entities, a random one will be selected.
-
         :return: Object instance if successfully created, else None.
         """
         # If the category name is empty, use "object" as the base name.
@@ -905,10 +903,6 @@ class World:
             obj: Object = object_config["object"]
         else:
             parent = object_config.get("parent")
-
-            if isinstance(parent, list):
-                parent = np.random.choice(parent)
-
             if isinstance(parent, str):
                 from ..utils.knowledge import query_to_entity
 
@@ -1095,7 +1089,7 @@ class World:
     def add_robot(
         self,
         robot: Robot,
-        loc: Entity | str | list[Entity | str] | None = None,
+        loc: Entity | str | None = None,
         pose: Pose | None = None,
         show: bool = True,
     ) -> None:
@@ -1104,7 +1098,6 @@ class World:
 
         :param robot: Robot instance to add to the world.
         :param loc: World entity instance or name to place the robot.
-            You can also pass in a list, in which case a random entity will be selected.
         :param pose: Pose at which to add the robot. If not specified, will be sampled.
         :param show: If True (default), causes the GUI to be updated.
             This is mostly for internal usage to speed up reloading.
@@ -1124,11 +1117,7 @@ class World:
             self.set_inflation_radius(new_inflation_radius)
 
         robot_pose: Pose | None = None
-        if isinstance(loc, list):
-            resolved_loc: Entity | str | None = np.random.choice(loc)
-        else:
-            resolved_loc = loc
-
+        resolved_loc = loc
         if resolved_loc is None:
             if pose is None:
                 # If nothing is specified, sample any valid location in the world

@@ -31,6 +31,7 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
        radius: <value>  # Robot radius
        height: <value>  # Robot height
        location: <loc_name>  # Initial location (can also be a list)
+       probability: <loc_probabilities>  # Probabilities of spawning at locations in the list (optional)
        pose:  # Initial pose, if not specified will sample
          position:
            x: <x>
@@ -140,6 +141,7 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
      - name: <obj_name>  # If not specified, will be automatic
        category: <obj_category>  # From object YAML file
        parent: <loc_name>  # Initial location (can also be a list)
+       probability: <loc_probabilities>  # Probabilities of spawning at parents in the list (optional)
        pose:  # If not specified, will sample
          position:
            x: <x>

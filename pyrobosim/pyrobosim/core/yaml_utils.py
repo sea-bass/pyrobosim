@@ -1,10 +1,12 @@
 """Utilities to create worlds from YAML files."""
 
 import copy
+import pathlib
 from typing import Any
 import yaml
 
-import pathlib
+import numpy as np
+
 from .robot import Robot
 from .world import World
 from ..planning.actions import ExecutionOptions
@@ -154,6 +156,15 @@ class WorldYamlLoader:
                 obj_args["pose"] = construct_pose_from_args(
                     obj_args["pose"], self.world
                 )
+            # If you pass in a list of parent entities, a random one will be selected uniformly.
+            # Alternatively, you can specify probabilities for each of the parent entities.
+            if isinstance(obj_args.get("parent"), list):
+                probability = obj_args.get("probability")
+                obj_args["parent"] = str(
+                    np.random.choice(obj_args["parent"], p=probability)
+                )
+                if probability is not None:
+                    del obj_args["probability"]
             self.world.add_object(**obj_args, show=False)
 
     def add_robots(self) -> None:
@@ -174,11 +185,16 @@ class WorldYamlLoader:
             robot_args["sensors"] = self.get_sensors(robot_args)
             robot = Robot(**robot_args)
 
-            loc = robot_data.get("location")
-            if "pose" in robot_args:
+            pose = robot_args.get("pose")
+            if pose is not None:
                 pose = construct_pose_from_args(robot_args["pose"], self.world)
-            else:
-                pose = None
+
+            # If you pass in a list of parent locations, a random one will be selected uniformly.
+            # Alternatively, you can specify probabilities for each of the parent entities.
+            loc = robot_data.get("location")
+            if isinstance(loc, list):
+                loc = str(np.random.choice(loc, p=robot_args.get("probability")))
+
             self.world.add_robot(robot, loc=loc, pose=pose, show=False)
 
         # Clean up any unused ROS interface due to resetting the world.

@@ -166,7 +166,7 @@ def create_world(multirobot: bool = False) -> World:
             grasp_generator=GraspGenerator(grasp_props),
             partial_obs_objects=args.partial_obs_objects,
         )
-        world.add_robot(robot1, loc=["bathroom", "counter"])
+        world.add_robot(robot1, loc="bathroom")
         planner_config_prm = {
             "collision_check_step_dist": 0.025,
             "max_connection_dist": 1.5,
@@ -184,7 +184,7 @@ def create_world(multirobot: bool = False) -> World:
             grasp_generator=GraspGenerator(grasp_props),
             partial_obs_objects=args.partial_obs_objects,
         )
-        world.add_robot(robot2, loc=["bedroom", "desk"])
+        world.add_robot(robot2, loc="bedroom")
         planner_config_astar = {
             "grid_resolution": 0.05,
             "grid_inflation_radius": 0.15,

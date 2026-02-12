@@ -281,4 +281,5 @@ objects:
 
   - name: soda
     category: coke
-    parent: my_desk
+    parent: [my_desk, table0]
+    probability: [0.7, 0.3]
