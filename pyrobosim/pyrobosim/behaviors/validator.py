@@ -5,6 +5,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from pyrobosim.mcp.bt_schema import get_bt_schema
+
+
+DEFAULT_NODE_TYPES = {"sequence", "selector", "parallel", "decorator", "condition", "action"}
+
 
 @dataclass
 class ValidationIssue:
@@ -13,16 +18,19 @@ class ValidationIssue:
     path: str | None = None
 
 
-def validate_bt(bt: dict[str, Any], skills: list[dict[str, Any]]) -> list[ValidationIssue]:
+def validate_bt(
+    bt: dict[str, Any],
+    skills: list[dict[str, Any]],
+) -> list[ValidationIssue]:
     issues: list[ValidationIssue] = []
     skill_map = {s.get("name"): s for s in skills if isinstance(s, dict)}
+    allowed_node_types = _get_allowed_node_types()
 
     root = bt.get("root")
     if root is None:
         return [ValidationIssue("missing_root", "BT missing root node")]
 
-    _validate_node(root, skill_map, issues, path="root")
-    _validate_detect_before_pick(root, issues)
+    _validate_node(root, skill_map, issues, path="root", allowed_node_types=allowed_node_types)
     return issues
 
 
@@ -31,9 +39,10 @@ def _validate_node(
     skill_map: dict[str, dict[str, Any]],
     issues: list[ValidationIssue],
     path: str,
+    allowed_node_types: set[str],
 ) -> None:
     node_type = node.get("type")
-    if node_type not in {"sequence", "selector", "parallel", "decorator", "condition", "action"}:
+    if node_type not in allowed_node_types:
         issues.append(ValidationIssue("invalid_node", f"Invalid node type '{node_type}'", path))
         return
 
@@ -44,7 +53,13 @@ def _validate_node(
             return
         for idx, child in enumerate(children):
             if isinstance(child, dict):
-                _validate_node(child, skill_map, issues, path=f"{path}.children[{idx}]")
+                _validate_node(
+                    child,
+                    skill_map,
+                    issues,
+                    path=f"{path}.children[{idx}]",
+                    allowed_node_types=allowed_node_types,
+                )
             else:
                 issues.append(ValidationIssue("invalid_child", "Child must be an object", path))
         return
@@ -54,7 +69,13 @@ def _validate_node(
         if not isinstance(child, dict):
             issues.append(ValidationIssue("invalid_decorator", "Decorator child must be an object", path))
             return
-        _validate_node(child, skill_map, issues, path=f"{path}.child")
+        _validate_node(
+            child,
+            skill_map,
+            issues,
+            path=f"{path}.child",
+            allowed_node_types=allowed_node_types,
+        )
         return
 
     if node_type == "condition":
@@ -94,32 +115,11 @@ def _validate_params(
             issues.append(ValidationIssue("unknown_param", f"Unknown param '{key}'", path))
 
 
-def _validate_detect_before_pick(root: dict[str, Any], issues: list[ValidationIssue]) -> None:
-    """Simple structural rule: if Pick appears in a Sequence, Detect must precede it in that Sequence."""
-
-    def walk(node: dict[str, Any]) -> None:
-        if node.get("type") == "sequence":
-            seen_detect = False
-            for child in node.get("children", []):
-                if isinstance(child, dict):
-                    if child.get("type") == "action" and child.get("action") == "detect":
-                        seen_detect = True
-                    if child.get("type") == "action" and child.get("action") == "pick" and not seen_detect:
-                        issues.append(
-                            ValidationIssue(
-                                "detect_before_pick",
-                                "Pick appears before Detect in a sequence",
-                            )
-                        )
-                    walk(child)
-        else:
-            for key in ("children", "child"):
-                child = node.get(key)
-                if isinstance(child, list):
-                    for c in child:
-                        if isinstance(c, dict):
-                            walk(c)
-                elif isinstance(child, dict):
-                    walk(child)
-
-    walk(root)
+def _get_allowed_node_types() -> set[str]:
+    schema = get_bt_schema()
+    node_types = schema.get("node_types")
+    if isinstance(node_types, list):
+        configured = {str(t) for t in node_types if isinstance(t, str) and t}
+        if configured:
+            return configured
+    return set(DEFAULT_NODE_TYPES)
