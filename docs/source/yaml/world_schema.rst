@@ -236,7 +236,7 @@ These options allow you to control where robots and objects randomly spawn on wo
        location: [kitchen, bedroom]
      - name: robot2
        location:
-         locations: [kitchen, bedroom, bathroom]
+         choices: [kitchen, bedroom, bathroom]
          probabilities: [0.5, 0.3, 0.2]  # optional
 
    # For objects, the `parent` field is used.
@@ -247,5 +247,5 @@ These options allow you to control where robots and objects randomly spawn on wo
        parent: [desk, table]
      - category:
        parent:
-         locations: [desk, table, counter]
+         choices: [desk, table, counter]
          probabilities: [0.15, 0.3, 0.55]  # optional

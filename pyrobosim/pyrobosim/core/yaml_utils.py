@@ -39,7 +39,7 @@ def get_location_from_args(loc_args: str | list[str] | dict[str, Any]) -> str:
 
         - A single string, which just passes through the same value.
         - A list of strings, in which case one is randomly selected.
-        - A dictionary containing ``locations`` and (optional) ``probabilities`` fields,
+        - A dictionary containing ``choices`` and (optional) ``probabilities`` fields,
           which selects a location given the specified probabilities.
 
     :param loc_args: The location arguments.
@@ -48,12 +48,12 @@ def get_location_from_args(loc_args: str | list[str] | dict[str, Any]) -> str:
     if isinstance(loc_args, list):
         loc = str(np.random.choice(loc_args))
     elif isinstance(loc_args, dict):
-        if "locations" not in loc_args:
+        if "choices" not in loc_args:
             raise ValueError(
-                f"Location arguments must contain a 'locations' field. Found {list(loc_args.keys())} instead."
+                f"Location arguments must contain a 'choices' field. Found {list(loc_args.keys())} instead."
             )
         loc = str(
-            np.random.choice(loc_args["locations"], p=loc_args.get("probabilities"))
+            np.random.choice(loc_args["choices"], p=loc_args.get("probabilities"))
         )
     else:
         loc = loc_args
