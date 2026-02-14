@@ -30,8 +30,7 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
      - name: <name>
        radius: <value>  # Robot radius
        height: <value>  # Robot height
-       location: <loc_name>  # Initial location (can also be a list)
-       probability: <loc_probabilities>  # Probabilities of spawning at locations in the list (optional)
+       location: <loc_name>  # Initial location (can also be a list or dictionary)
        pose:  # Initial pose, if not specified will sample
          position:
            x: <x>
@@ -140,8 +139,7 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
    objects:
      - name: <obj_name>  # If not specified, will be automatic
        category: <obj_category>  # From object YAML file
-       parent: <loc_name>  # Initial location (can also be a list)
-       probability: <loc_probabilities>  # Probabilities of spawning at parents in the list (optional)
+       parent: <loc_name>  # Initial location (can also be a list or dictionary)
        pose:  # If not specified, will sample
          position:
            x: <x>
@@ -219,3 +217,35 @@ This makes it easier to specify poses relative to other entities in the world (r
        yaw: 45.0
        angle_units: "degrees"
      relative_to: "table0"
+
+
+Specifying Robot and Object Spawn Locations
+-------------------------------------------
+
+There are a few ways to specify spawn locations for robots and objects in PyRoboSim YAML files: strings, lists, and dictionaries.
+
+These options allow you to control where robots and objects randomly spawn on world startup and resetting.
+
+.. code-block:: yaml
+
+   # For robots, the `location` field is used.
+   robots:
+     - name: robot0
+       location: kitchen
+     - name: robot1
+       location: [kitchen, bedroom]
+     - name: robot2
+       location:
+         locations: [kitchen, bedroom, bathroom]
+         probabilities: [0.5, 0.3, 0.2]
+
+   # For objects, the `parent` field is used.
+   objects:
+     - category: apple
+       parent: desk
+     - category: apple
+       parent: [desk, table]
+     - category:
+       parent:
+         locations: [desk, table, counter]
+         probabilities: [0.15, 0.3, 0.55]

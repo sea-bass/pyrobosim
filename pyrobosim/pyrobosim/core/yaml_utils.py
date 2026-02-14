@@ -31,6 +31,35 @@ def construct_pose_from_args(pose_args: dict[str, Any], world: World) -> Pose:
     return pose
 
 
+def get_location_from_args(loc_args: str | list[str] | dict[str, Any]) -> str:
+    """
+    Gets a single location name from a set of possible argument types.
+
+    This can be:
+
+        - A single string, which just passes through the same value.
+        - A list of strings, in which case one is randomly selected.
+        - A dictionary containing ``locations`` and (optional) ``probabilities`` fields,
+          which selects a location given the specified probabilities.
+
+    :param loc_args: The location arguments.
+    :return: The selected location name.
+    """
+    if isinstance(loc_args, list):
+        loc = str(np.random.choice(loc_args))
+    elif isinstance(loc_args, dict):
+        if "locations" not in loc_args:
+            raise ValueError(
+                f"Location arguments must contain a 'locations' field. Found {list(loc_args.keys())} instead."
+            )
+        loc = str(
+            np.random.choice(loc_args["locations"], p=loc_args.get("probabilities"))
+        )
+    else:
+        loc = loc_args
+    return loc
+
+
 class WorldYamlLoader:
     """Creates world models from YAML files."""
 
@@ -156,15 +185,9 @@ class WorldYamlLoader:
                 obj_args["pose"] = construct_pose_from_args(
                     obj_args["pose"], self.world
                 )
-            # If you pass in a list of parent entities, a random one will be selected uniformly.
-            # Alternatively, you can specify probabilities for each of the parent entities.
-            if isinstance(obj_args.get("parent"), list):
-                probability = obj_args.get("probability")
-                obj_args["parent"] = str(
-                    np.random.choice(obj_args["parent"], p=probability)
-                )
-                if probability is not None:
-                    del obj_args["probability"]
+            if "parent" in obj_args:
+                obj_args["parent"] = get_location_from_args(obj_args["parent"])
+
             self.world.add_object(**obj_args, show=False)
 
     def add_robots(self) -> None:
@@ -188,12 +211,9 @@ class WorldYamlLoader:
             pose = robot_args.get("pose")
             if pose is not None:
                 pose = construct_pose_from_args(robot_args["pose"], self.world)
-
-            # If you pass in a list of parent locations, a random one will be selected uniformly.
-            # Alternatively, you can specify probabilities for each of the parent entities.
             loc = robot_data.get("location")
-            if isinstance(loc, list):
-                loc = str(np.random.choice(loc, p=robot_args.get("probability")))
+            if loc is not None:
+                loc = get_location_from_args(loc)
 
             self.world.add_robot(robot, loc=loc, pose=pose, show=False)
 
