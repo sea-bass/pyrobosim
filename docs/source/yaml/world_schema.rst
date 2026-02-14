@@ -230,10 +230,13 @@ These options allow you to control where robots and objects randomly spawn on wo
 
    # For robots, the `location` field is used.
    robots:
+     # Specify a location
      - name: robot0
        location: kitchen
+     # Choose uniformly among locations
      - name: robot1
        location: [kitchen, bedroom]
+     # Choose among locations with specified probabilities
      - name: robot2
        location:
          choices: [kitchen, bedroom, bathroom]
@@ -241,10 +244,13 @@ These options allow you to control where robots and objects randomly spawn on wo
 
    # For objects, the `parent` field is used.
    objects:
+     # Specify a location
      - category: apple
        parent: desk
+     # Choose uniformly among locations
      - category: apple
        parent: [desk, table]
+     # Choose among locations with specified probabilities
      - category:
        parent:
          choices: [desk, table, counter]
