@@ -49,7 +49,7 @@ We recommend making a bash function in your ``~/.bashrc`` file (or equivalent) s
     }
 
 .. note::
-    The ``setup_pyrobosim_bash`` script will create a configuration file named ``pyrobosim.env`` in the repo root folder.
+    The ``setup_pyrobosim.bash`` script will create a configuration file named ``pyrobosim.env`` in the repo root folder.
     This file is then read by the ``source_pyrobosim.bash`` script to start up the environment.
 
     You can edit this file manually if you're comfortable with how these settings work.
