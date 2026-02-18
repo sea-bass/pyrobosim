@@ -1,10 +1,12 @@
 """Utilities to create worlds from YAML files."""
 
 import copy
+import pathlib
 from typing import Any
 import yaml
 
-import pathlib
+import numpy as np
+
 from .robot import Robot
 from .world import World
 from ..planning.actions import ExecutionOptions
@@ -27,6 +29,35 @@ def construct_pose_from_args(pose_args: dict[str, Any], world: World) -> Pose:
     if "relative_to" in pose_args:
         pose = world.get_pose_relative_to(pose, pose_args["relative_to"])
     return pose
+
+
+def get_location_from_args(loc_args: str | list[str] | dict[str, Any]) -> str:
+    """
+    Gets a single location name from a set of possible argument types.
+
+    This can be:
+
+        - A single string, which just passes through the same value.
+        - A list of strings, in which case one is randomly selected.
+        - A dictionary containing ``choices`` and (optional) ``probabilities`` fields,
+          which selects a location given the specified probabilities.
+
+    :param loc_args: The location arguments.
+    :return: The selected location name.
+    """
+    if isinstance(loc_args, list):
+        loc = str(np.random.choice(loc_args))
+    elif isinstance(loc_args, dict):
+        if "choices" not in loc_args:
+            raise ValueError(
+                f"Location arguments must contain a 'choices' field. Found {list(loc_args.keys())} instead."
+            )
+        loc = str(
+            np.random.choice(loc_args["choices"], p=loc_args.get("probabilities"))
+        )
+    else:
+        loc = loc_args
+    return loc
 
 
 class WorldYamlLoader:
@@ -154,6 +185,9 @@ class WorldYamlLoader:
                 obj_args["pose"] = construct_pose_from_args(
                     obj_args["pose"], self.world
                 )
+            if "parent" in obj_args:
+                obj_args["parent"] = get_location_from_args(obj_args["parent"])
+
             self.world.add_object(**obj_args, show=False)
 
     def add_robots(self) -> None:
@@ -174,11 +208,13 @@ class WorldYamlLoader:
             robot_args["sensors"] = self.get_sensors(robot_args)
             robot = Robot(**robot_args)
 
-            loc = robot_data.get("location")
-            if "pose" in robot_args:
+            pose = robot_args.get("pose")
+            if pose is not None:
                 pose = construct_pose_from_args(robot_args["pose"], self.world)
-            else:
-                pose = None
+            loc = robot_data.get("location")
+            if loc is not None:
+                loc = get_location_from_args(loc)
+
             self.world.add_robot(robot, loc=loc, pose=pose, show=False)
 
         # Clean up any unused ROS interface due to resetting the world.

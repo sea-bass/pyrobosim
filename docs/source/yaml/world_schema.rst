@@ -30,7 +30,7 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
      - name: <name>
        radius: <value>  # Robot radius
        height: <value>  # Robot height
-       location: <loc_name>  # Initial location (can also be a list)
+       location: <loc_name>  # Initial location (can also be a list or dictionary)
        pose:  # Initial pose, if not specified will sample
          position:
            x: <x>
@@ -139,7 +139,7 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
    objects:
      - name: <obj_name>  # If not specified, will be automatic
        category: <obj_category>  # From object YAML file
-       parent: <loc_name>  # Initial location (can also be a list)
+       parent: <loc_name>  # Initial location (can also be a list or dictionary)
        pose:  # If not specified, will sample
          position:
            x: <x>
@@ -217,3 +217,41 @@ This makes it easier to specify poses relative to other entities in the world (r
        yaw: 45.0
        angle_units: "degrees"
      relative_to: "table0"
+
+
+Specifying Robot and Object Spawn Locations
+-------------------------------------------
+
+There are a few ways to specify spawn locations for robots and objects in PyRoboSim YAML files: strings, lists, and dictionaries.
+
+These options allow you to control where robots and objects randomly spawn on world startup and resetting.
+
+.. code-block:: yaml
+
+   # For robots, the `location` field is used.
+   robots:
+     # Specify a location
+     - name: robot0
+       location: kitchen
+     # Choose uniformly among locations
+     - name: robot1
+       location: [kitchen, bedroom]
+     # Choose among locations with specified probabilities
+     - name: robot2
+       location:
+         choices: [kitchen, bedroom, bathroom]
+         probabilities: [0.5, 0.3, 0.2]  # optional
+
+   # For objects, the `parent` field is used.
+   objects:
+     # Specify a location
+     - category: apple
+       parent: desk
+     # Choose uniformly among locations
+     - category: apple
+       parent: [desk, table]
+     # Choose among locations with specified probabilities
+     - category:
+       parent:
+         choices: [desk, table, counter]
+         probabilities: [0.15, 0.3, 0.55]  # optional
