@@ -12,4 +12,4 @@ def test_import() -> None:
 
 def test_version() -> None:
     ver = version("pyrobosim")
-    assert ver == "4.3.3", "Incorrect pyrobosim version"
+    assert ver == "4.3.4", "Incorrect pyrobosim version"
