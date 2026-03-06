@@ -108,27 +108,15 @@ def build_mcp(config: ServerValidationConfig | None = None) -> FastMCP:
             return list_rootstocks()
 
     @mcp.tool()
-    def list_world_entities(
-        mode: str = "vocab",
-        world_file: str | None = None,
-        control_url: str | None = None,
-        robot: str | None = None,
-        allow_full: bool = False,
-    ) -> dict[str, Any]:
+    def list_world_entities() -> dict[str, Any]:
         """
-        Returns world entity vocabulary without leaking task-critical state by default.
-
-        Modes:
-          - vocab: names/categories only (no locations or open/locked state)
-          - observed: robot-known objects only (requires control_url)
-          - full: includes ground-truth locations/state (requires allow_full=True)
+        Returns world vocabulary for client-side planning.
+        This tool intentionally exposes no parameters and always returns vocab mode.
         """
-        return _resolve_world_entities(
-            mode=mode,
-            world_file=world_file,
-            control_url=control_url,
-            robot=robot,
-            allow_full=allow_full,
+        return _resolve_vocab_entities(
+            world_file=None,
+            control_url=None,
+            robot=None,
         )
 
     def _validate_impl(
@@ -137,7 +125,6 @@ def build_mcp(config: ServerValidationConfig | None = None) -> FastMCP:
         world_file: str | None = None,
         control_url: str | None = None,
         robot: str | None = None,
-        allow_full: bool = False,
     ) -> dict[str, Any]:
         bt_data = _coerce_bt_json(bt_json)
         # Server-side static validation is schema/vocabulary only.
@@ -148,12 +135,10 @@ def build_mcp(config: ServerValidationConfig | None = None) -> FastMCP:
         )
         vocab_issues: list[dict[str, Any]] = []
         if check_vocabulary:
-            entities = _resolve_world_entities(
-                mode="vocab",
+            entities = _resolve_vocab_entities(
                 world_file=world_file,
                 control_url=control_url,
                 robot=robot,
-                allow_full=allow_full,
             )
             vocab_issues = _validate_vocab_references(bt_data, entities)
         return {
@@ -223,6 +208,20 @@ def _call_control(url: str, endpoint: str, args: dict[str, Any]) -> dict[str, An
     )
     with urllib.request.urlopen(request) as response:
         return json.loads(response.read().decode("utf-8"))
+
+
+def _resolve_vocab_entities(
+    world_file: str | None,
+    control_url: str | None,
+    robot: str | None,
+) -> dict[str, Any]:
+    return _resolve_world_entities(
+        mode="vocab",
+        world_file=world_file,
+        control_url=control_url,
+        robot=robot,
+        allow_full=False,
+    )
 
 
 def _resolve_world_entities(
