@@ -1,0 +1,11 @@
+{
+  "unlabeled": {
+    "count": 1,
+    "valid_rate": 1.0,
+    "grounded_rate": 1.0,
+    "params_rate": 1.0,
+    "struct_comp_rate": 1.0,
+    "success_rate": 0.0,
+    "trace_comp_rate": null
+  }
+}

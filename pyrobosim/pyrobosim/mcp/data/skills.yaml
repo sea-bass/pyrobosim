@@ -17,7 +17,7 @@ skills:
     outputs: [status, message, last_nav_result, battery_level]
 
   - name: pick
-    description: Pick up an object at the current location.
+    description: Pick up an object at the current location. Constraint is single-arm robot; cannot pick something up while already holding something.
     params:
       object:
         type: string
@@ -48,7 +48,7 @@ skills:
     outputs: [status, message, detected_objects, battery_level]
 
   - name: open
-    description: Open the current location or target location if provided.
+    description: Open the current location or target location if provided. Constraint is single-arm robot; cannot open while holding an object.
     params:
       target_location:
         type: string
@@ -57,7 +57,7 @@ skills:
     outputs: [status, message, battery_level]
 
   - name: close
-    description: Close the current location or target location if provided.
+    description: Close the current location or target location if provided. Constraint is single-arm robot; cannot close while holding an object.
     params:
       target_location:
         type: string
