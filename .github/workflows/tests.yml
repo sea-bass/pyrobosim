@@ -20,7 +20,7 @@ concurrency:
 jobs:
   # Build and test the base, non-ROS image
   python-test:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     permissions:
       pull-requests: write
     steps:
