@@ -6,7 +6,7 @@ ARG ROS_DISTRO=humble
 # base PyRoboSim build for Ubuntu
 #
 ##################################
-FROM ubuntu:latest AS pyrobosim
+FROM ubuntu:24.04 AS pyrobosim
 
 # Install dependencies
 ARG DEBIAN_FRONTEND=noninteractive
