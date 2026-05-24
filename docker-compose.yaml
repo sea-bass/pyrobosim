@@ -13,13 +13,13 @@
 
 services:
   base:
-    image: pyrobosim_ros:${ROS_DISTRO:-humble}
+    image: pyrobosim_ros:${ROS_DISTRO:-jazzy}
     build:
       context: .
       dockerfile: docker/Dockerfile
       target: pyrobosim_ros
       args:
-        ROS_DISTRO: ${ROS_DISTRO:-humble}
+        ROS_DISTRO: ${ROS_DISTRO:-jazzy}
     # Ensures signals are actually passed and reaped in the container for shutdowns.
     # https://docs.docker.com/compose/compose-file/compose-file-v3/#init
     init: true
@@ -53,7 +53,7 @@ services:
     command: src/docs/generate_docs.bash
   test:
     extends: base
-    command: src/test/run_tests.bash ${ROS_DISTRO:-humble}
+    command: src/test/run_tests.bash ${ROS_DISTRO:-jazzy}
 
   ###############
   # Basic demos #

@@ -4,7 +4,8 @@ Setup
 This package is being tested with:
 
 * Python 3.10 / Ubuntu 22.04 (optionally with ROS 2 Humble)
-* Python 3.12 / Ubuntu 24.04 (optionally with ROS 2 Jazzy, Kilted, or Rolling)
+* Python 3.12 / Ubuntu 24.04 (optionally with ROS 2 Jazzy or Kilted)
+* Python 3.14 / Ubuntu 26.04 (optionally with ROS 2 Lyrical or Rolling)
 
 pip install (Limited)
 ---------------------

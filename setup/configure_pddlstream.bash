@@ -12,7 +12,7 @@ fi
 
 # Clone and build PDDLStream
 pushd ${SCRIPT_DIR}/../dependencies > /dev/null || exit
-git clone https://github.com/caelan/pddlstream.git
+git clone -b bump-downward https://github.com/sea-bass/pddlstream.git
 pushd pddlstream > /dev/null || exit
 touch COLCON_IGNORE
 git submodule update --init --recursive

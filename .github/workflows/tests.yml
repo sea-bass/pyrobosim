@@ -112,7 +112,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ros_distro: [humble, jazzy, kilted, rolling]
+        ros_distro: [humble, jazzy, kilted, lyrical, rolling]
 
     name: ros-${{ matrix.ros_distro }}-test
     runs-on: ubuntu-latest
