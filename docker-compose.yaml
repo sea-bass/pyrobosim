@@ -26,6 +26,7 @@ services:
     # Interactive shell
     stdin_open: true
     tty: true
+    working_dir: /pyrobosim_ws
     # Networking and IPC for ROS 2
     network_mode: host
     ipc: host
@@ -70,6 +71,14 @@ services:
   demo_multirobot_ros:
     extends: base
     command: ros2 launch pyrobosim_ros demo_commands_multirobot.launch.py
+  demo_llm:
+    extends: base
+    volumes:
+      - ./models:/models:ro
+    command: >
+      python3 src/pyrobosim/examples/demo.py
+      --llm-model ${LLM_MODEL_PATH:-/models/model.gguf}
+      --llm-auto-step
 
   ##################################
   # Task and Motion Planning demos #

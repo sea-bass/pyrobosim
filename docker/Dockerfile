@@ -13,6 +13,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update &&\
     apt-get install -y \
         apt-utils \
+        build-essential \
         libegl1 \
         libgl1-mesa-dev \
         python3 \
@@ -36,6 +37,9 @@ RUN setup/configure_pddlstream.bash
 ENV PIP_BREAK_SYSTEM_PACKAGES=1
 COPY docs/python_docs_requirements.txt docs/
 COPY test/python_test_requirements.txt test/
+RUN pip3 install -U pip setuptools wheel && \
+    pip3 install -U "packaging>=24.1" "scikit-build-core>=0.10"
+RUN pip3 install --no-build-isolation -v "llama-cpp-python==0.3.16"
 RUN pip3 install -r docs/python_docs_requirements.txt && \
     pip3 install -r test/python_test_requirements.txt
 
@@ -59,7 +63,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get upgrade -y
 RUN apt-get install -y \
-    apt-utils python3-pip python3-tk \
+    apt-utils build-essential python3-pip python3-tk \
     libegl1 libgl1-mesa-dev libglu1-mesa-dev '^libxcb.*-dev' libx11-xcb-dev \
     libxi-dev libxkbcommon-dev libxkbcommon-x11-dev libxrender-dev
 
@@ -76,6 +80,9 @@ ENV PIP_BREAK_SYSTEM_PACKAGES=1
 COPY pyrobosim/setup.py pyrobosim/
 COPY docs/python_docs_requirements.txt docs/
 COPY test/python_test_requirements.txt test/
+RUN pip3 install -U pip setuptools wheel && \
+    pip3 install -U "packaging>=24.1" "scikit-build-core>=0.10"
+RUN pip3 install --no-build-isolation -v "llama-cpp-python==0.3.16"
 RUN pip3 install -e ./pyrobosim && \
     pip3 install -r docs/python_docs_requirements.txt && \
     pip3 install -r test/python_test_requirements.txt

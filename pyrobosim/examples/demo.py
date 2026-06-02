@@ -6,6 +6,7 @@ Test script showing how to build a world and use it with PyRoboSim.
 
 import argparse
 
+from pyrobosim.ai import LLMPolicy, LocalLLM, LocalLLMError
 from pyrobosim.core.robot import Robot
 from pyrobosim.core.world import World
 from pyrobosim.core.yaml_utils import WorldYamlLoader
@@ -45,7 +46,7 @@ def create_world(multirobot: bool = False) -> World:
         pose=Pose(x=0.0, y=0.0, z=0.0, yaw=0.0),
         footprint=r1coords,
         color="red",
-        nav_poses=[Pose(x=0.75, y=0.75, z=0.0, yaw=0.0)],
+        nav_poses=[Pose(x=0.75, y=1.5, z=0.0, yaw=0.0)],
     )
     r2coords = [(-0.875, -0.75), (0.875, -0.75), (0.875, 0.75), (-0.875, 0.75)]
     world.add_room(
@@ -226,6 +227,35 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="If True, adds a lidar sensor to the first robot.",
     )
+    parser.add_argument(
+        "--llm-model",
+        default="",
+        help="Path to a local llama.cpp-compatible model file (e.g., GGUF). "
+        "If provided, robots will use an LLM-backed policy.",
+    )
+    parser.add_argument(
+        "--llm-temperature",
+        type=float,
+        default=0.1,
+        help="Sampling temperature for the LLM policy.",
+    )
+    parser.add_argument(
+        "--llm-max-tokens",
+        type=int,
+        default=256,
+        help="Maximum tokens to request from the LLM for each decision.",
+    )
+    parser.add_argument(
+        "--llm-threads",
+        type=int,
+        default=None,
+        help="Number of CPU threads for the llama.cpp backend (default uses all cores).",
+    )
+    parser.add_argument(
+        "--llm-auto-step",
+        action="store_true",
+        help="Execute one LLM-driven plan for each robot before starting the GUI.",
+    )
     return parser.parse_args()
 
 
@@ -237,6 +267,33 @@ if __name__ == "__main__":
         world = create_world(args.multirobot)
     else:
         world = create_world_from_yaml(args.world_file)
+
+    llm_policy = None
+    if args.llm_model:
+        try:
+            llm_backend = LocalLLM(
+                model_path=args.llm_model,
+                n_threads=args.llm_threads,
+            )
+            llm_policy = LLMPolicy(
+                generator=llm_backend,
+                temperature=args.llm_temperature,
+                max_tokens=args.llm_max_tokens,
+            )
+        except LocalLLMError as exc:
+            print(f"[LLM] Failed to initialize local model: {exc}")
+
+    if llm_policy is not None:
+        for robot in world.robots:
+            robot.set_policy(llm_policy)
+        if args.llm_auto_step:
+            for robot in world.robots:
+                result, num_actions = robot.execute_policy_step()
+                robot.logger.info(
+                    "LLM policy executed %d actions with status %s",
+                    num_actions,
+                    result.status.name if result else "UNKNOWN",
+                )
 
     # Start the program either as ROS node or standalone.
     start_gui(world)
