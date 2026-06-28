@@ -81,7 +81,6 @@ ENV VIRTUAL_ENV=/opt/.venvs/pyrobosim
 RUN python3 -m venv --system-site-packages ${VIRTUAL_ENV}
 
 # Install PyRoboSim, docs, and testing dependencies
-ENV PIP_BREAK_SYSTEM_PACKAGES=1
 COPY pyrobosim/pyproject.toml pyrobosim/README.md pyrobosim/
 COPY docs/python_docs_requirements.txt docs/
 COPY test/python_test_requirements.txt test/
