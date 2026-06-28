@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Activate the Python virtual environment that holds the pip-installed dependencies.
-source /opt/venv/bin/activate
+source /opt/.venvs/pyrobosim/bin/activate
 
 # Source ROS and the PyRoboSim workspace
 source /opt/ros/${ROS_DISTRO}/setup.bash

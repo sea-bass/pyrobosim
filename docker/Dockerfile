@@ -76,7 +76,7 @@ RUN setup/configure_pddlstream.bash
 # cause version conflicts. Use --system-site-packages so that the ROS 2 Python
 # packages (rclpy, etc.) installed system-wide remain importable. Commands that
 # need these dependencies source the venv explicitly (see also the entrypoint).
-ENV VIRTUAL_ENV=/opt/venv
+ENV VIRTUAL_ENV=/opt/.venvs/pyrobosim
 RUN python3 -m venv --system-site-packages ${VIRTUAL_ENV}
 
 # Install PyRoboSim, docs, and testing dependencies
