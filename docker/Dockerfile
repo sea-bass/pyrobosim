@@ -81,7 +81,7 @@ ENV VIRTUAL_ENV=/opt/.venvs/pyrobosim
 RUN python3 -m venv --system-site-packages ${VIRTUAL_ENV}
 
 # Install PyRoboSim, docs, and testing dependencies
-COPY pyrobosim/pyproject.toml pyrobosim/README.md pyrobosim/
+COPY pyrobosim/pyproject.toml pyrobosim/
 COPY docs/python_docs_requirements.txt docs/
 COPY test/python_test_requirements.txt test/
 # Upgrade setuptools so that the pyproject.toml package can be installed in editable mode.
