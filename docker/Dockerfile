@@ -41,7 +41,7 @@ RUN pip3 install -r docs/python_docs_requirements.txt && \
 
 # Copy the rest of the source directory and install PyRoboSim
 COPY . /opt/pyrobosim/
-RUN pip3 install -e pyrobosim
+RUN pip3 install -e pyrobosim[web]
 
 # Set the default startup command
 CMD /bin/bash
@@ -89,7 +89,7 @@ COPY test/python_test_requirements.txt test/
 # and lacks the 'build_editable' hook.
 RUN source ${VIRTUAL_ENV}/bin/activate && \
     pip3 install --upgrade pip setuptools && \
-    pip3 install -e ./pyrobosim && \
+    pip3 install -e ./pyrobosim[web] && \
     pip3 install -r docs/python_docs_requirements.txt && \
     pip3 install -r test/python_test_requirements.txt
 

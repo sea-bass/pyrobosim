@@ -17,6 +17,12 @@ However, note that this will not include any of the ROS 2 or Task and Motion Pla
 
   pip install pyrobosim
 
+To also install the optional dependencies for the web-based visualization, use the ``web`` extra:
+
+::
+
+  pip install pyrobosim[web]
+
 
 Local Setup
 -----------

@@ -92,7 +92,7 @@ jobs:
           junitxml-path: ./test/results/test_results.xml
           pytest-xml-coverage-path: ./test/results/test_results_coverage.xml
           coverage-path-prefix: pyrobosim/pyrobosim/
-          remove-links-to-files: true  # gets around issues of comment being too long
+          remove-links-to-lines: true  # gets around issues of comment being too long
         if: ${{ !github.event.pull_request.head.repo.fork }}
       - name: Create coverage badge
         uses: schneegans/dynamic-badges-action@v1.7.0

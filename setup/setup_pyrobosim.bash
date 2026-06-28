@@ -73,7 +73,7 @@ if [ "${USE_ROS,,}" == "y" ]; then
   # PyRoboSim itself is built into the workspace by colcon, so we only need its
   # Python dependencies here. Install the package to pull in its dependencies,
   # then remove just the package, leaving the dependencies behind.
-  pip3 install ./pyrobosim
+  pip3 install ./pyrobosim[web]
   pip3 uninstall -y pyrobosim
 
   # Install packages needed to run colcon build and use rclpy from within our virtual environment.
@@ -87,7 +87,7 @@ if [ "${USE_ROS,,}" == "y" ]; then
   popd
 else
   # In the non-ROS case, install PyRoboSim in editable mode.
-  pip3 install -e ./pyrobosim
+  pip3 install -e ./pyrobosim[web]
 fi
 
 # Optionally configure PDDLStream for task and motion planning
