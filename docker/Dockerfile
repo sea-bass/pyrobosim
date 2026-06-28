@@ -81,10 +81,14 @@ ENV VIRTUAL_ENV=/opt/.venvs/pyrobosim
 RUN python3 -m venv --system-site-packages ${VIRTUAL_ENV}
 
 # Install PyRoboSim, docs, and testing dependencies
-COPY pyrobosim/setup.py pyrobosim/
+COPY pyrobosim/pyproject.toml pyrobosim/
 COPY docs/python_docs_requirements.txt docs/
 COPY test/python_test_requirements.txt test/
+# Upgrade setuptools so that the pyproject.toml package can be installed in editable mode.
+# Older distros (e.g., Ubuntu 22.04 / Humble) ship a setuptools that predates PEP 660
+# and lacks the 'build_editable' hook.
 RUN source ${VIRTUAL_ENV}/bin/activate && \
+    pip3 install --upgrade pip setuptools && \
     pip3 install -e ./pyrobosim && \
     pip3 install -r docs/python_docs_requirements.txt && \
     pip3 install -r test/python_test_requirements.txt
