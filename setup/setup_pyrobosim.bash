@@ -16,8 +16,6 @@ echo -e "Created Python virtual environment in ${VIRTUALENV_FOLDER}\n"
 source "${VIRTUALENV_FOLDER}/bin/activate"
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 pushd "${SCRIPT_DIR}/.." > /dev/null
-# Install PyRoboSim (editable) along with its Python dependencies.
-pip3 install -e ./pyrobosim
 pip3 install -r test/python_test_requirements.txt
 
 # Write key variables to file
@@ -72,13 +70,24 @@ if [ "${USE_ROS,,}" == "y" ]; then
   echo "PYROBOSIM_ROS_WORKSPACE=${ROS_WORKSPACE}" >> ${ENV_FILE}
   echo "PYROBOSIM_ROS_DISTRO=${ROS_DISTRO,,}" >> ${ENV_FILE}
 
+  # PyRoboSim itself is built into the workspace by colcon, so we only need its
+  # Python dependencies here. Install the package to pull in its dependencies,
+  # then remove just the package, leaving the dependencies behind.
+  pip3 install ./pyrobosim
+  pip3 uninstall -y pyrobosim
+
   # Install packages needed to run colcon build and use rclpy from within our virtual environment.
-  pip3 install colcon-common-extensions typing_extensions
+  # Pin empy to 3.3.x, since colcon-core pulls in empy 4.x by default, which is
+  # incompatible with the rosidl message generators (TransientParseError).
+  pip3 install colcon-common-extensions typing_extensions "empy==3.3.4"
 
   # Install any ROS package dependencies that may be missing.
   pushd ${ROS_WORKSPACE} > /dev/null
   rosdep install --from-paths src -y --ignore-src --rosdistro ${ROS_DISTRO}
   popd
+else
+  # In the non-ROS case, install PyRoboSim in editable mode.
+  pip3 install -e ./pyrobosim
 fi
 
 # Optionally configure PDDLStream for task and motion planning

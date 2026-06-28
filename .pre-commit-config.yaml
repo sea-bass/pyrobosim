@@ -45,6 +45,7 @@ repos:
     rev: v2.4.2
     hooks:
       - id: codespell
+        args: ["--ignore-words-list=empy"]
 
   # Finds issues in YAML files.
   - repo: https://github.com/adrienverge/yamllint
