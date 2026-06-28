@@ -9,10 +9,13 @@
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
+import sys
+
+# The pyrobosim_ros package is not pip-installable, so add its source directory
+# to the path to make it importable for autosummary/autodoc.
+# Its ROS 2 dependencies are handled via autodoc_mock_imports below.
+sys.path.insert(0, os.path.abspath("../../pyrobosim_ros"))
 
 
 # -- Project information -----------------------------------------------------
