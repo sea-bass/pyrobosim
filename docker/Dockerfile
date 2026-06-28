@@ -59,7 +59,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get upgrade -y
 RUN apt-get install -y \
-    apt-utils python3-pip python3-tk \
+    apt-utils python3-pip python3-tk python3-venv \
     libegl1 libgl1-mesa-dev libglu1-mesa-dev '^libxcb.*-dev' libx11-xcb-dev \
     libxi-dev libxkbcommon-dev libxkbcommon-x11-dev libxrender-dev
 
@@ -71,19 +71,28 @@ WORKDIR /pyrobosim_ws/src
 COPY setup/configure_pddlstream.bash /pyrobosim_ws/src/setup/
 RUN setup/configure_pddlstream.bash
 
+# Create a Python virtual environment to isolate pip-installed packages
+# (e.g., numpy, pytest) from the system/apt-managed packages, which otherwise
+# cause version conflicts. Use --system-site-packages so that the ROS 2 Python
+# packages (rclpy, etc.) installed system-wide remain importable. Commands that
+# need these dependencies source the venv explicitly (see also the entrypoint).
+ENV VIRTUAL_ENV=/opt/venv
+RUN python3 -m venv --system-site-packages ${VIRTUAL_ENV}
+
 # Install PyRoboSim, docs, and testing dependencies
-ENV PIP_BREAK_SYSTEM_PACKAGES=1
 COPY pyrobosim/setup.py pyrobosim/
 COPY docs/python_docs_requirements.txt docs/
 COPY test/python_test_requirements.txt test/
-RUN pip3 install -e ./pyrobosim && \
+RUN source ${VIRTUAL_ENV}/bin/activate && \
+    pip3 install -e ./pyrobosim && \
     pip3 install -r docs/python_docs_requirements.txt && \
     pip3 install -r test/python_test_requirements.txt
 
 # Build the ROS workspace, which includes PyRoboSim
 COPY . /pyrobosim_ws/src/
 WORKDIR /pyrobosim_ws
-RUN . /opt/ros/${ROS_DISTRO}/setup.bash && \
+RUN source ${VIRTUAL_ENV}/bin/activate && \
+    source /opt/ros/${ROS_DISTRO}/setup.bash && \
     colcon build
 
 # Remove display warnings
