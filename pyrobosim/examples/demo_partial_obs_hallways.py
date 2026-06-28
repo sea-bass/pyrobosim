@@ -214,6 +214,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="This option will add multiple robots to the world.",
     )
+    parser.add_argument(
+        "--web",
+        action="store_true",
+        help="Launch the browser-based web GUI instead of the Qt GUI.",
+    )
     return parser.parse_args()
 
 
@@ -224,4 +229,9 @@ if __name__ == "__main__":
     world = create_world(args.multirobot)
 
     # Start the GUI.
-    start_gui(world)
+    if args.web:
+        from pyrobosim.web.app import run
+
+        run(world)
+    else:
+        start_gui(world)

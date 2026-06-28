@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import argparse
+
 from pyrobosim.core import WorldYamlLoader
 from pyrobosim.gui import start_gui
 from pyrobosim.navigation.prm import PRMPlanner
@@ -32,5 +34,18 @@ def test_prm() -> None:
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="PRM planner demo.")
+    parser.add_argument(
+        "--web",
+        action="store_true",
+        help="Launch the browser-based web GUI instead of the Qt GUI.",
+    )
+    args = parser.parse_args()
+
     test_prm()
-    start_gui(world)
+    if args.web:
+        from pyrobosim.web.app import run
+
+        run(world)
+    else:
+        start_gui(world)

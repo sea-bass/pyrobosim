@@ -4,6 +4,7 @@
 Test script showing how to command robot velocities and simulate dynamics.
 """
 
+import argparse
 import numpy as np
 import time
 from threading import Thread
@@ -118,11 +119,24 @@ def command_robots(world: World) -> None:
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Robot dynamics demo.")
+    parser.add_argument(
+        "--web",
+        action="store_true",
+        help="Launch the browser-based web GUI instead of the Qt GUI.",
+    )
+    args = parser.parse_args()
+
     world = create_world()
 
     # Command robots on a separate thread.
     robot_commands_thread = Thread(target=lambda: command_robots(world))
     robot_commands_thread.start()
 
-    # Start the program either as ROS node or standalone.
-    start_gui(world)
+    # Start the program in the web GUI or the Qt GUI.
+    if args.web:
+        from pyrobosim.web.app import run
+
+        run(world)
+    else:
+        start_gui(world)
