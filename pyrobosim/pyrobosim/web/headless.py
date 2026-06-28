@@ -51,6 +51,42 @@ class _CounterSignal:
         self._counter.value += 1
 
 
+class _ShowPathSignal:
+    """
+    Functional stand-in for the canvas ``show_planner_and_path_signal``.
+
+    Core emits this whenever a path should be displayed: when a planner plans on
+    the spot (carrying the freshly planned path), and when an action supplies its
+    own path -- e.g. a PDDLStream ``navigate`` action whose path is produced by a
+    stream rather than planned at navigation time. In the latter case the path
+    planner never records the path, so the web figure cannot recover it from
+    ``get_latest_path``. We therefore stash the path here (per robot) for the
+    figure to render, and bump the change counter so the engine does a full
+    refresh.
+
+    The ``show_graphs`` flag is stashed too: graphs are only meaningful when the
+    planner actually planned during the action (``True``), not when a path was
+    supplied ready-made (``False``), so the figure suppresses them in the latter
+    case -- mirroring the Qt canvas.
+    """
+
+    def __init__(
+        self,
+        counter: _Counter,
+        paths: dict[str, Any],
+        graphs_visible: dict[str, bool],
+    ) -> None:
+        self._counter = counter
+        self._paths = paths
+        self._graphs_visible = graphs_visible
+
+    def emit(self, robot: Any, show_graphs: bool = True, path: Any = None) -> None:
+        if robot is not None:
+            self._paths[robot.name] = path
+            self._graphs_visible[robot.name] = show_graphs
+        self._counter.value += 1
+
+
 class _NavigateSignal:
     """
     Functional stand-in for the Qt canvas ``navigate_signal``.
@@ -109,6 +145,12 @@ class _HeadlessCanvas:
     def __init__(self, counter: _Counter) -> None:
         self.axes = _Axes()
         self.obj_patches = _NoPatchList()
+        # Latest path handed to the canvas per robot (e.g. PDDLStream-supplied
+        # paths that the path planner never recorded), read by the web figure.
+        self.displayed_paths: dict[str, Any] = {}
+        # Whether to show planner graphs per robot: True when the planner planned
+        # during the action, False when a path was supplied ready-made.
+        self.graphs_visible: dict[str, bool] = {}
         # Frequent generic redraw hook: ignored (motion is handled by polling).
         self.draw_signal = _Signal()
         # Functional: actually performs navigation.
@@ -118,10 +160,16 @@ class _HeadlessCanvas:
         self.show_locations_signal = _CounterSignal(counter)
         self.show_objects_signal = _CounterSignal(counter)
         self.show_robots_signal = _CounterSignal(counter)
-        self.show_planner_and_path_signal = _CounterSignal(counter)
+        # Functional: stashes the supplied path / graph visibility, bumps counter.
+        self.show_planner_and_path_signal = _ShowPathSignal(
+            counter, self.displayed_paths, self.graphs_visible
+        )
 
     def show(self) -> None:
-        pass
+        # Called on world reset; drop stale state so a reset world starts clean
+        # (robots are rebuilt, so their old supplied paths no longer apply).
+        self.displayed_paths.clear()
+        self.graphs_visible.clear()
 
     def show_objects(self) -> None:
         pass

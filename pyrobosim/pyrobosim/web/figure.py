@@ -183,6 +183,26 @@ def _lidar_xy(robot: Robot) -> tuple[list[float | None], list[float | None]]:
     return xs, ys
 
 
+def _path_to_render(robot: Robot) -> Any:
+    """
+    Returns the path to display for a robot.
+
+    A path handed to the GUI (via ``show_planner_and_path``) takes precedence:
+    PDDLStream ``navigate`` actions carry their own path produced by a stream
+    rather than planned at navigation time, so the path planner never records it
+    and ``get_latest_path`` would miss it. Otherwise fall back to the planner's
+    latest plan (the usual plan-on-the-spot case).
+    """
+    world = robot.world
+    gui = getattr(world, "gui", None) if world is not None else None
+    paths = getattr(getattr(gui, "canvas", None), "displayed_paths", None)
+    if paths is not None and robot.name in paths:
+        return paths[robot.name]
+    if robot.path_planner is not None:
+        return robot.path_planner.get_latest_path()
+    return None
+
+
 def _robot_dynamic_xy(robot: Robot) -> dict[int, tuple[list[Any], list[Any]]]:
     """
     Returns the x/y data for each of a robot's dynamic traces, keyed by the
@@ -190,19 +210,19 @@ def _robot_dynamic_xy(robot: Robot) -> dict[int, tuple[list[Any], list[Any]]]:
     """
     pose = robot.get_pose()
 
-    # Planner path: shown while navigating, or when a freshly planned path has
-    # not been traversed yet (the robot is still at its start) -- e.g. the
-    # planner demos that plan but never navigate. It clears once the robot has
-    # reached the goal (no longer moving and no longer at the path start).
+    # Path (planned on the spot or supplied by an action, see _path_to_render):
+    # shown while navigating, or when a fresh path has not been traversed yet
+    # (the robot is still at its start) -- e.g. the planner demos that plan but
+    # never navigate. It clears once the robot has reached the goal (no longer
+    # moving and no longer at the path start).
     path_x: list[Any] = []
     path_y: list[Any] = []
-    if robot.path_planner is not None:
-        path = robot.path_planner.get_latest_path()
-        if path is not None and path.num_poses > 1:
-            at_start = pose.get_linear_distance(path.poses[0]) < 0.05
-            if robot.is_moving() or at_start:
-                path_x = [p.x for p in path.poses]
-                path_y = [p.y for p in path.poses]
+    path = _path_to_render(robot)
+    if path is not None and path.num_poses > 1:
+        at_start = pose.get_linear_distance(path.poses[0]) < 0.05
+        if robot.is_moving() or at_start:
+            path_x = [p.x for p in path.poses]
+            path_y = [p.y for p in path.poses]
 
     body_x, body_y = _circle_xy(pose.x, pose.y, robot.radius)
 
@@ -284,9 +304,29 @@ def _robot_traces(robot: Robot) -> list[go.Scatter]:
 # ---------------------------------------------------------------------------
 # Planner graphs (shown only for the selected robot)
 # ---------------------------------------------------------------------------
+def _graphs_visible(robot: Robot) -> bool:
+    """
+    Whether planner graphs should be shown for a robot.
+
+    Graphs are only meaningful when the planner actually planned during the
+    action; when a path is supplied ready-made (e.g. a PDDLStream ``navigate``
+    action), ``show_planner_and_path`` was emitted with ``show_graphs=False`` and
+    we suppress the graphs, showing just the path. Defaults to True when nothing
+    has been recorded yet (the planner demos that plan on the spot).
+    """
+    world = robot.world
+    gui = getattr(world, "gui", None) if world is not None else None
+    visible = getattr(getattr(gui, "canvas", None), "graphs_visible", None)
+    if visible is not None and robot.name in visible:
+        return bool(visible[robot.name])
+    return True
+
+
 def _graphs_for(selected_robot: Robot | None) -> list[Any]:
     """Returns the selected robot's planner search graphs (empty if none)."""
     if selected_robot is None or selected_robot.path_planner is None:
+        return []
+    if not _graphs_visible(selected_robot):
         return []
     return list(selected_robot.path_planner.get_graphs())
 

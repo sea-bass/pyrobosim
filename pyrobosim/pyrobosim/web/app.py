@@ -35,7 +35,18 @@ IDLE_TICK_MS = 750
 # state changes made on background threads (e.g. pick/place) are captured.
 FORCE_FRAMES = 6
 
-_BUTTON_STYLE = {"flex": "1", "margin": "2px", "padding": "6px"}
+# Shared UI font, so the status text and other elements match the buttons
+# instead of falling back to the browser's serif default.
+_FONT_FAMILY = (
+    "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+)
+
+_BUTTON_STYLE = {
+    "flex": "1",
+    "margin": "2px",
+    "padding": "6px",
+    "fontFamily": _FONT_FAMILY,
+}
 
 # Action buttons whose disabled state is driven by robot state, in output order.
 _TOGGLEABLE = [
@@ -57,9 +68,12 @@ def _button(button_id: str, label: str) -> html.Button:
     return html.Button(label, id=button_id, n_clicks=0, style=_BUTTON_STYLE)
 
 
-def _row(children: list[Any]) -> html.Div:
+def _row(children: list[Any], extra_style: dict[str, Any] | None = None) -> html.Div:
     """Lays out children in a horizontal flex row."""
-    return html.Div(children, style={"display": "flex", "width": "100%"})
+    style: dict[str, Any] = {"display": "flex", "width": "100%"}
+    if extra_style:
+        style.update(extra_style)
+    return html.Div(children, style=style)
 
 
 def _visibility_flags(visibility: list[str]) -> dict[str, bool]:
@@ -80,7 +94,14 @@ def _layout(world: World) -> html.Div:
     default_visibility = ["rooms", "locations", "objects", "robots"]
 
     return html.Div(
-        style={"display": "flex", "flexDirection": "column", "height": "100vh"},
+        style={
+            "display": "flex",
+            "flexDirection": "column",
+            "height": "100vh",
+            "boxSizing": "border-box",
+            "paddingBottom": "10px",
+            "fontFamily": _FONT_FAMILY,
+        },
         children=[
             _row(
                 [
@@ -110,7 +131,11 @@ def _layout(world: World) -> html.Div:
                         value="",
                         style={"flex": "4", "margin": "2px"},
                     ),
-                ]
+                ],
+                # Lift this row (and the dropdown's open menu) above the world
+                # graph below, which otherwise paints over the lower options and
+                # hides robot names when the menu drops down.
+                {"position": "relative", "zIndex": 10},
             ),
             _row(
                 [
@@ -163,7 +188,8 @@ def _layout(world: World) -> html.Div:
                     _button("reset-world", "Reset world"),
                     _button("reset-planner", "Reset path planner"),
                     _button("cancel", "Cancel action"),
-                ]
+                ],
+                {"alignItems": "center", "flexWrap": "wrap"},
             ),
             dcc.Interval(id="tick", interval=TICK_MS, n_intervals=0),
         ],
