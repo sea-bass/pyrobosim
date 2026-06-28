@@ -37,8 +37,8 @@ popd || exit
 ROS_DISTRO=$1
 if [[ -n "${ROS_DISTRO}" && -n "${COLCON_PREFIX_PATH}" ]]
 then
-    WORKSPACE_DIR="${COLCON_PREFIX_PATH}/../"
-    echo "Running ROS package unit tests from ${WORKSPACE_DIR}..."
+    WORKSPACE_DIR=$(realpath "${COLCON_PREFIX_PATH}/../")
+    echo "Running ROS package unit tests from ${WORKSPACE_DIR} ..."
     pushd "${WORKSPACE_DIR}" > /dev/null || exit
     colcon test \
         --packages-select pyrobosim_ros \
