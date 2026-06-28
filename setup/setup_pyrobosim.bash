@@ -16,10 +16,8 @@ echo -e "Created Python virtual environment in ${VIRTUALENV_FOLDER}\n"
 source "${VIRTUALENV_FOLDER}/bin/activate"
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 pushd "${SCRIPT_DIR}/.." > /dev/null
-pip3 install setuptools
-python3 pyrobosim/setup.py egg_info
-pip3 install -r pyrobosim.egg-info/requires.txt
-rm -rf pyrobosim.egg-info/
+# Install PyRoboSim (editable) along with its Python dependencies.
+pip3 install -e ./pyrobosim
 pip3 install -r test/python_test_requirements.txt
 
 # Write key variables to file
@@ -81,9 +79,6 @@ if [ "${USE_ROS,,}" == "y" ]; then
   pushd ${ROS_WORKSPACE} > /dev/null
   rosdep install --from-paths src -y --ignore-src --rosdistro ${ROS_DISTRO}
   popd
-else
-  # Install PyRoboSim using pip in the non-ROS case.
-  pip3 install -e ./pyrobosim
 fi
 
 # Optionally configure PDDLStream for task and motion planning
