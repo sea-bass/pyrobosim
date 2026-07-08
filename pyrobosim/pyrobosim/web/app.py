@@ -216,10 +216,12 @@ def create_app(world: World, title: str = "PyRoboSim") -> Dash:
     app.layout = _layout(world)
 
     # Shared refresh state, mutated by the dispatch and engine callbacks.
+    # ``force`` is the number of upcoming frames that must fully rebuild the
+    # figure (commands set it; async commands set several frames' worth so
+    # changes landing later on background threads are captured).
     refresh: dict[str, Any] = {
         "force": 0,
         "prev_active": False,
-        "need_full": False,
         "count": -1,
         "interval": TICK_MS,
         "resetting": False,
@@ -251,7 +253,6 @@ def create_app(world: World, title: str = "PyRoboSim") -> Dash:
 
         structural = (
             ctx.triggered_id in ("robot-select", "visibility")
-            or refresh["need_full"]
             or refresh["force"] > 0
             or change_count != refresh["count"]
         )
@@ -259,9 +260,7 @@ def create_app(world: World, title: str = "PyRoboSim") -> Dash:
             fig_out: Any = figure.make_figure(
                 world, selected_robot=selected, **_visibility_flags(visibility)
             )
-            refresh["need_full"] = False
-            if refresh["force"] > 0:
-                refresh["force"] -= 1
+            refresh["force"] = max(0, refresh["force"] - 1)
         elif active or refresh["prev_active"]:
             # Smooth motion: update only the moving traces.
             fig_out = figure.dynamic_patch(world, selected)
@@ -314,7 +313,7 @@ def create_app(world: World, title: str = "PyRoboSim") -> Dash:
                         world.reset()
                     finally:
                         refresh["resetting"] = False
-                        refresh["need_full"] = True
+                        refresh["force"] = 1
 
                 threading.Thread(target=_do_reset, daemon=True).start()
             refresh["interval"] = TICK_MS
@@ -322,9 +321,7 @@ def create_app(world: World, title: str = "PyRoboSim") -> Dash:
 
         if action in WORLD_ACTIONS:
             WORLD_ACTIONS[action](world, robot_name, goal)
-            refresh["need_full"] = True
-            if action in commands.ASYNC_ACTIONS:
-                refresh["force"] = FORCE_FRAMES
+            refresh["force"] = FORCE_FRAMES if action in commands.ASYNC_ACTIONS else 1
             # Wake the engine immediately even if it was idling slowly.
             refresh["interval"] = TICK_MS
             return (no_update, TICK_MS)

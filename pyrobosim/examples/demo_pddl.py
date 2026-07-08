@@ -105,10 +105,5 @@ if __name__ == "__main__":
     planner_thread = threading.Thread(target=start_planner, args=(world, args))
     planner_thread.start()
 
-    # Start the web GUI or the Qt GUI in the main thread.
-    if args.web:
-        from pyrobosim.web.app import run
-
-        run(world)
-    else:
-        start_gui(world)
+    # Start the web UI or the Qt GUI in the main thread.
+    start_gui(world, web=args.web)

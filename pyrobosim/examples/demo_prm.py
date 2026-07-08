@@ -38,14 +38,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--web",
         action="store_true",
-        help="Launch the browser-based web GUI instead of the Qt GUI.",
+        help="Launch the browser-based web UI instead of the Qt GUI.",
     )
     args = parser.parse_args()
 
     test_prm()
-    if args.web:
-        from pyrobosim.web.app import run
-
-        run(world)
-    else:
-        start_gui(world)
+    start_gui(world, web=args.web)

@@ -6,110 +6,52 @@ removed in the next major release of PyRoboSim when we fully switch over to
 the web frontend for visualization.
 
 The web app renders by polling the world directly, so it does not need the Qt
-canvas. However, the core world model and some examples treat ``world.gui`` as a
-signal that "a GUI is attached / ready": core methods call
-``world.gui.canvas.*`` to refresh the Qt canvas (all guarded by
-``if world.gui is not None``), and examples wait in ``while world.gui is None``
-before proceeding.
+canvas. However, the core world model calls ``world.gui.canvas.*`` to refresh
+the Qt canvas (guarded by ``if world.gui is not None``), and some examples wait
+in ``while world.gui is None`` before proceeding. ``HeadlessGui`` mirrors
+exactly the (small) interface that ``pyrobosim.core`` accesses on the GUI
+object:
 
-``HeadlessGui`` satisfies both. It mirrors exactly the (small) interface that
-``pyrobosim.core`` accesses on the GUI object, and:
-
-* turns canvas-refresh hooks into a shared **change counter** so the web engine
-  can cheaply tell when a discrete change happened (pick/place/open/close/
-  detect/plan) without re-scanning world state every frame;
-* keeps ``navigate_signal`` *functional* (core delegates navigation to it);
-* stores no object patches, so core never tries to remove a Matplotlib artist
-  that was never added to a real axes.
+* Structural-change hooks (pick/place/open/close/detect/plan) bump a shared
+  ``change_count`` so the web engine can cheaply tell when a discrete change
+  happened without re-scanning world state every frame.
+* ``navigate_signal`` stays *functional*: core delegates navigation to the GUI
+  (the Qt ``NavRunner`` thread), so task plans would not move the robot without
+  it.
+* ``show_planner_and_path_signal`` stashes the path (and graph visibility) per
+  robot. This matters for paths supplied ready-made by an action (e.g. a
+  PDDLStream ``navigate`` action whose path came from a stream): the path
+  planner never records those, so the figure cannot recover them from
+  ``get_latest_path``.
+* ``obj_patches`` stores nothing, so core never tries to remove a Matplotlib
+  artist that was never added to a real axes.
 """
 
 import threading
-from typing import Any
-
-
-class _Counter:
-    """A simple shared integer counter."""
-
-    def __init__(self) -> None:
-        self.value = 0
+from typing import Any, Callable
 
 
 class _Signal:
-    """No-op stand-in for a Qt signal (used for the frequent ``draw_signal``)."""
+    """Stand-in for a Qt signal: calls ``fn`` (if given) when emitted."""
+
+    def __init__(self, fn: Callable[..., None] | None = None) -> None:
+        self._fn = fn
 
     def emit(self, *args: Any, **kwargs: Any) -> None:
-        pass
+        if self._fn is not None:
+            self._fn(*args, **kwargs)
 
 
-class _CounterSignal:
-    """A signal stand-in that bumps a shared counter whenever it is emitted."""
-
-    def __init__(self, counter: _Counter) -> None:
-        self._counter = counter
-
-    def emit(self, *args: Any, **kwargs: Any) -> None:
-        self._counter.value += 1
-
-
-class _ShowPathSignal:
-    """
-    Functional stand-in for the canvas ``show_planner_and_path_signal``.
-
-    Core emits this whenever a path should be displayed: when a planner plans on
-    the spot (carrying the freshly planned path), and when an action supplies its
-    own path -- e.g. a PDDLStream ``navigate`` action whose path is produced by a
-    stream rather than planned at navigation time. In the latter case the path
-    planner never records the path, so the web figure cannot recover it from
-    ``get_latest_path``. We therefore stash the path here (per robot) for the
-    figure to render, and bump the change counter so the engine does a full
-    refresh.
-
-    The ``show_graphs`` flag is stashed too: graphs are only meaningful when the
-    planner actually planned during the action (``True``), not when a path was
-    supplied ready-made (``False``), so the figure suppresses them in the latter
-    case -- mirroring the Qt canvas.
-    """
-
-    def __init__(
-        self,
-        counter: _Counter,
-        paths: dict[str, Any],
-        graphs_visible: dict[str, bool],
-    ) -> None:
-        self._counter = counter
-        self._paths = paths
-        self._graphs_visible = graphs_visible
-
-    def emit(self, robot: Any, show_graphs: bool = True, path: Any = None) -> None:
-        if robot is not None:
-            self._paths[robot.name] = path
-            self._graphs_visible[robot.name] = show_graphs
-        self._counter.value += 1
-
-
-class _NavigateSignal:
-    """
-    Functional stand-in for the Qt canvas ``navigate_signal``.
-
-    Core's ``Robot.execute_action`` does not navigate inline when a GUI is
-    attached; it emits this signal and waits for ``executing_nav`` to clear,
-    expecting the GUI to run the navigation on a thread (the Qt ``NavRunner``).
-    This replicates that so task plans actually move the robot in web mode.
-    """
-
-    def emit(
-        self,
-        robot: Any,
-        goal: Any,
-        path: Any = None,
-        realtime_factor: float = 1.0,
-    ) -> None:
-        threading.Thread(
-            target=lambda: robot.navigate(
-                goal=goal, path=path, realtime_factor=realtime_factor
-            ),
-            daemon=True,
-        ).start()
+def _navigate_on_thread(
+    robot: Any, goal: Any, path: Any = None, realtime_factor: float = 1.0
+) -> None:
+    """Runs a robot navigation on a background thread, like the Qt ``NavRunner``."""
+    threading.Thread(
+        target=lambda: robot.navigate(
+            goal=goal, path=path, realtime_factor=realtime_factor
+        ),
+        daemon=True,
+    ).start()
 
 
 class _NoPatchList:
@@ -142,7 +84,7 @@ class _Axes:
 class _HeadlessCanvas:
     """No-op stand-in for the Qt ``WorldCanvas``."""
 
-    def __init__(self, counter: _Counter) -> None:
+    def __init__(self, bump: Callable[..., None]) -> None:
         self.axes = _Axes()
         self.obj_patches = _NoPatchList()
         # Latest path handed to the canvas per robot (e.g. PDDLStream-supplied
@@ -151,19 +93,26 @@ class _HeadlessCanvas:
         # Whether to show planner graphs per robot: True when the planner planned
         # during the action, False when a path was supplied ready-made.
         self.graphs_visible: dict[str, bool] = {}
+        self._bump = bump
         # Frequent generic redraw hook: ignored (motion is handled by polling).
         self.draw_signal = _Signal()
         # Functional: actually performs navigation.
-        self.navigate_signal = _NavigateSignal()
-        # Structural-change hooks: bump the shared counter.
-        self.show_hallways_signal = _CounterSignal(counter)
-        self.show_locations_signal = _CounterSignal(counter)
-        self.show_objects_signal = _CounterSignal(counter)
-        self.show_robots_signal = _CounterSignal(counter)
+        self.navigate_signal = _Signal(_navigate_on_thread)
+        # Structural-change hooks: bump the shared change counter.
+        self.show_hallways_signal = _Signal(bump)
+        self.show_locations_signal = _Signal(bump)
+        self.show_objects_signal = _Signal(bump)
+        self.show_robots_signal = _Signal(bump)
         # Functional: stashes the supplied path / graph visibility, bumps counter.
-        self.show_planner_and_path_signal = _ShowPathSignal(
-            counter, self.displayed_paths, self.graphs_visible
-        )
+        self.show_planner_and_path_signal = _Signal(self._show_planner_and_path)
+
+    def _show_planner_and_path(
+        self, robot: Any, show_graphs: bool = True, path: Any = None
+    ) -> None:
+        if robot is not None:
+            self.displayed_paths[robot.name] = path
+            self.graphs_visible[robot.name] = show_graphs
+        self._bump()
 
     def show(self) -> None:
         # Called on world reset; drop stale state so a reset world starts clean
@@ -185,14 +134,13 @@ class HeadlessGui:
     """Minimal ``world.gui`` stand-in so core's GUI hooks are no-ops in web mode."""
 
     def __init__(self) -> None:
-        self._counter = _Counter()
-        self.canvas = _HeadlessCanvas(self._counter)
-        self.update_buttons_signal = _CounterSignal(self._counter)
+        #: Number of structural-change hooks fired so far.
+        self.change_count = 0
+        self.canvas = _HeadlessCanvas(self._bump)
+        self.update_buttons_signal = _Signal(self._bump)
 
-    @property
-    def change_count(self) -> int:
-        """Number of structural-change hooks fired so far."""
-        return self._counter.value
+    def _bump(self, *args: Any, **kwargs: Any) -> None:
+        self.change_count += 1
 
     def set_buttons_during_action(self, state: bool) -> None:
         pass

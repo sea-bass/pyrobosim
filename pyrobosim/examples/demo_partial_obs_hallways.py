@@ -228,10 +228,5 @@ if __name__ == "__main__":
     # Create a world.
     world = create_world(args.multirobot)
 
-    # Start the GUI.
-    if args.web:
-        from pyrobosim.web.app import run
-
-        run(world)
-    else:
-        start_gui(world)
+    # Start the program in the web UI or the Qt GUI.
+    start_gui(world, web=args.web)

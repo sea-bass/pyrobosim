@@ -17,13 +17,25 @@ from ..core.robot import Robot
 from ..core.world import World
 
 
-def start_gui(world: World, options: WorldCanvasOptions = WorldCanvasOptions()) -> None:
+def start_gui(
+    world: World,
+    options: WorldCanvasOptions = WorldCanvasOptions(),
+    web: bool = False,
+) -> None:
     """
     Helper function to start a PyRoboSim GUI for a world model.
 
     :param world: World object to attach to the GUI.
     :param options: A world canvas options dataclass instance.
+    :param web: If True, serves the browser-based web UI (which requires the
+        ``web`` extra to be installed) instead of starting the Qt GUI.
     """
+    if web:
+        from ..web.app import run
+
+        run(world)
+        return
+
     app = PyRoboSimGUI(world, sys.argv, options=options)
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     sys.exit(app.exec_())

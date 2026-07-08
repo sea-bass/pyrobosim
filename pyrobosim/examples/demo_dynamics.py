@@ -123,7 +123,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--web",
         action="store_true",
-        help="Launch the browser-based web GUI instead of the Qt GUI.",
+        help="Launch the browser-based web UI instead of the Qt GUI.",
     )
     args = parser.parse_args()
 
@@ -133,10 +133,4 @@ if __name__ == "__main__":
     robot_commands_thread = Thread(target=lambda: command_robots(world))
     robot_commands_thread.start()
 
-    # Start the program in the web GUI or the Qt GUI.
-    if args.web:
-        from pyrobosim.web.app import run
-
-        run(world)
-    else:
-        start_gui(world)
+    start_gui(world, web=args.web)

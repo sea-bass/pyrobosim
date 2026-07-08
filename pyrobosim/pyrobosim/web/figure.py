@@ -36,7 +36,6 @@ COLLISION_COLOR = "rgb(255, 0, 255)"
 
 # Number of dynamic traces emitted per robot (path, lidar, body, dir, held).
 TRACES_PER_ROBOT = 5
-_PATH, _LIDAR, _BODY, _DIR, _HELD = range(TRACES_PER_ROBOT)
 
 
 def color_to_css(color: Sequence[float]) -> str:
@@ -183,6 +182,13 @@ def _lidar_xy(robot: Robot) -> tuple[list[float | None], list[float | None]]:
     return xs, ys
 
 
+def _gui_canvas(robot: Robot) -> Any:
+    """Returns the canvas of the GUI attached to the robot's world, if any."""
+    world = robot.world
+    gui = getattr(world, "gui", None) if world is not None else None
+    return getattr(gui, "canvas", None)
+
+
 def _path_to_render(robot: Robot) -> Any:
     """
     Returns the path to display for a robot.
@@ -193,9 +199,7 @@ def _path_to_render(robot: Robot) -> Any:
     and ``get_latest_path`` would miss it. Otherwise fall back to the planner's
     latest plan (the usual plan-on-the-spot case).
     """
-    world = robot.world
-    gui = getattr(world, "gui", None) if world is not None else None
-    paths = getattr(getattr(gui, "canvas", None), "displayed_paths", None)
+    paths = getattr(_gui_canvas(robot), "displayed_paths", None)
     if paths is not None and robot.name in paths:
         return paths[robot.name]
     if robot.path_planner is not None:
@@ -203,10 +207,10 @@ def _path_to_render(robot: Robot) -> Any:
     return None
 
 
-def _robot_dynamic_xy(robot: Robot) -> dict[int, tuple[list[Any], list[Any]]]:
+def _robot_dynamic_xy(robot: Robot) -> list[tuple[list[Any], list[Any]]]:
     """
-    Returns the x/y data for each of a robot's dynamic traces, keyed by the
-    trace offset within the robot's block.
+    Returns the (x, y) data for a robot's dynamic traces, in block order:
+    path, lidar, body, orientation line, held object.
     """
     pose = robot.get_pose()
 
@@ -237,21 +241,19 @@ def _robot_dynamic_xy(robot: Robot) -> dict[int, tuple[list[Any], list[Any]]]:
         obj = robot.manipulated_object
         held_x, held_y = _polygon_xy(transform_polygon(obj.raw_polygon, obj.pose))
 
-    lidar_x, lidar_y = _lidar_xy(robot)
-
-    return {
-        _PATH: (path_x, path_y),
-        _LIDAR: (lidar_x, lidar_y),
-        _BODY: (body_x, body_y),
-        _DIR: (dir_x, dir_y),
-        _HELD: (held_x, held_y),
-    }
+    return [
+        (path_x, path_y),
+        _lidar_xy(robot),
+        (body_x, body_y),
+        (dir_x, dir_y),
+        (held_x, held_y),
+    ]
 
 
 def _robot_traces(robot: Robot) -> list[go.Scatter]:
     """Builds the (styled) dynamic traces for a single robot, in block order."""
     color = color_to_css(robot.color)
-    data = _robot_dynamic_xy(robot)
+    path, lidar, body, direction, held = _robot_dynamic_xy(robot)
     held_color = (
         color_to_css(robot.manipulated_object.viz_color)
         if robot.manipulated_object is not None
@@ -260,24 +262,24 @@ def _robot_traces(robot: Robot) -> list[go.Scatter]:
     common = {"hoverinfo": "skip", "showlegend": False}
     return [
         go.Scatter(
-            x=data[_PATH][0],
-            y=data[_PATH][1],
+            x=path[0],
+            y=path[1],
             mode="lines",
             line={"color": color, "width": 3},
             opacity=0.5,
             **common,
         ),
         go.Scatter(
-            x=data[_LIDAR][0],
-            y=data[_LIDAR][1],
+            x=lidar[0],
+            y=lidar[1],
             mode="lines",
             line={"color": color, "width": 0.5},
             opacity=0.5,
             **common,
         ),
         go.Scatter(
-            x=data[_BODY][0],
-            y=data[_BODY][1],
+            x=body[0],
+            y=body[1],
             mode="lines",
             line={"color": color, "width": 2},
             fill="toself",
@@ -285,15 +287,15 @@ def _robot_traces(robot: Robot) -> list[go.Scatter]:
             **common,
         ),
         go.Scatter(
-            x=data[_DIR][0],
-            y=data[_DIR][1],
+            x=direction[0],
+            y=direction[1],
             mode="lines",
             line={"color": color, "width": 2},
             **common,
         ),
         go.Scatter(
-            x=data[_HELD][0],
-            y=data[_HELD][1],
+            x=held[0],
+            y=held[1],
             mode="lines",
             line={"color": held_color, "width": 2},
             **common,
@@ -314,9 +316,7 @@ def _graphs_visible(robot: Robot) -> bool:
     we suppress the graphs, showing just the path. Defaults to True when nothing
     has been recorded yet (the planner demos that plan on the spot).
     """
-    world = robot.world
-    gui = getattr(world, "gui", None) if world is not None else None
-    visible = getattr(getattr(gui, "canvas", None), "graphs_visible", None)
+    visible = getattr(_gui_canvas(robot), "graphs_visible", None)
     if visible is not None and robot.name in visible:
         return bool(visible[robot.name])
     return True
@@ -573,8 +573,7 @@ def dynamic_patch(world: World, selected_robot: Robot | None) -> Patch:
     patch = Patch()
     base = 1 + num_graph_traces(selected_robot)
     for i, robot in enumerate(world.robots):
-        data = _robot_dynamic_xy(robot)
-        for offset, (xs, ys) in data.items():
+        for offset, (xs, ys) in enumerate(_robot_dynamic_xy(robot)):
             index = base + TRACES_PER_ROBOT * i + offset
             patch["data"][index]["x"] = xs
             patch["data"][index]["y"] = ys
