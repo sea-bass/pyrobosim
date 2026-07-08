@@ -193,15 +193,15 @@ def _path_to_render(robot: Robot) -> Any:
     """
     Returns the path to display for a robot.
 
-    A path handed to the GUI (via ``show_planner_and_path``) takes precedence:
-    PDDLStream ``navigate`` actions carry their own path produced by a stream
-    rather than planned at navigation time, so the path planner never records it
-    and ``get_latest_path`` would miss it. Otherwise fall back to the planner's
-    latest plan (the usual plan-on-the-spot case).
+    With a GUI attached, only paths explicitly handed to it (via
+    ``show_planner_and_path``) are rendered -- the planner's live state is
+    mutated continuously by e.g. PDDLStream sampling streams and would show
+    garbage candidate paths. Without a GUI (standalone figure), fall back to
+    the planner's latest plan.
     """
     paths = getattr(_gui_canvas(robot), "displayed_paths", None)
-    if paths is not None and robot.name in paths:
-        return paths[robot.name]
+    if paths is not None:
+        return paths.get(robot.name)
     if robot.path_planner is not None:
         return robot.path_planner.get_latest_path()
     return None
@@ -306,28 +306,21 @@ def _robot_traces(robot: Robot) -> list[go.Scatter]:
 # ---------------------------------------------------------------------------
 # Planner graphs (shown only for the selected robot)
 # ---------------------------------------------------------------------------
-def _graphs_visible(robot: Robot) -> bool:
-    """
-    Whether planner graphs should be shown for a robot.
-
-    Graphs are only meaningful when the planner actually planned during the
-    action; when a path is supplied ready-made (e.g. a PDDLStream ``navigate``
-    action), ``show_planner_and_path`` was emitted with ``show_graphs=False`` and
-    we suppress the graphs, showing just the path. Defaults to True when nothing
-    has been recorded yet (the planner demos that plan on the spot).
-    """
-    visible = getattr(_gui_canvas(robot), "graphs_visible", None)
-    if visible is not None and robot.name in visible:
-        return bool(visible[robot.name])
-    return True
-
-
 def _graphs_for(selected_robot: Robot | None) -> list[Any]:
-    """Returns the selected robot's planner search graphs (empty if none)."""
+    """
+    Returns the selected robot's planner search graphs (empty if none).
+
+    With a GUI attached, only the graphs snapshotted by
+    ``show_planner_and_path`` are rendered, for the same reason as
+    :func:`_path_to_render`. Without a GUI, read the planner directly.
+    """
     if selected_robot is None or selected_robot.path_planner is None:
         return []
-    if not _graphs_visible(selected_robot):
-        return []
+    graphs: dict[str, list[Any]] | None = getattr(
+        _gui_canvas(selected_robot), "displayed_graphs", None
+    )
+    if graphs is not None:
+        return graphs.get(selected_robot.name, [])
     return list(selected_robot.path_planner.get_graphs())
 
 
@@ -506,9 +499,10 @@ def make_figure(
     """
     Builds a complete Plotly figure rendering a world, mirroring the GUI.
 
-    Trace layout (used by :func:`dynamic_patch`): index 0 is an invisible bounds
-    trace, followed by planner-graph traces, followed by ``TRACES_PER_ROBOT``
-    traces for each robot in order.
+    Trace layout (used by :func:`dynamic_patch`): planner-graph traces first,
+    followed by ``TRACES_PER_ROBOT`` traces for each robot in order. The view
+    extent comes from explicit axis ranges (not autorange), so redrawing trace
+    data never re-fits the view.
     """
     shapes, annotations = _static_shapes_and_labels(
         world,
@@ -532,21 +526,11 @@ def make_figure(
                 )
             )
 
-    xmin, ymin, xmax, ymax = _bounds(world)
-    bounds_trace = go.Scatter(
-        x=[xmin, xmax, xmin, xmax],
-        y=[ymin, ymin, ymax, ymax],
-        mode="markers",
-        marker={"opacity": 0.0},
-        hoverinfo="skip",
-        showlegend=False,
-    )
-
-    traces: list[go.Scatter] = [bounds_trace]
-    traces += _graph_traces(selected_robot)
+    traces: list[go.Scatter] = _graph_traces(selected_robot)
     for robot in world.robots:
         traces += _robot_traces(robot)
 
+    xmin, ymin, xmax, ymax = _bounds(world)
     fig = go.Figure(data=traces)
     fig.update_layout(
         shapes=shapes,
@@ -557,8 +541,16 @@ def make_figure(
         plot_bgcolor="white",
         uirevision="world",
     )
-    fig.update_xaxes(showgrid=False, zeroline=False, constrain="domain")
-    fig.update_yaxes(showgrid=False, zeroline=False, scaleanchor="x", scaleratio=1)
+    fig.update_xaxes(
+        range=[xmin, xmax], showgrid=False, zeroline=False, constrain="domain"
+    )
+    fig.update_yaxes(
+        range=[ymin, ymax],
+        showgrid=False,
+        zeroline=False,
+        scaleanchor="x",
+        scaleratio=1,
+    )
     return fig
 
 
@@ -571,7 +563,7 @@ def dynamic_patch(world: World, selected_robot: Robot | None) -> Patch:
     is unchanged (same robots and same number of graphs).
     """
     patch = Patch()
-    base = 1 + num_graph_traces(selected_robot)
+    base = num_graph_traces(selected_robot)
     for i, robot in enumerate(world.robots):
         for offset, (xs, ys) in enumerate(_robot_dynamic_xy(robot)):
             index = base + TRACES_PER_ROBOT * i + offset

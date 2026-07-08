@@ -65,11 +65,14 @@ def test_make_figure(web_world: World) -> None:
     assert len(fig.layout.shapes) >= len(web_world.rooms) > 0
     assert fig.layout.yaxis.scaleanchor == "x"
 
-    # Traces: bounds + planner-graph traces (none without a selected robot) +
-    # a fixed block per robot.
-    expected_traces = (
-        1 + num_graph_traces(None) + TRACES_PER_ROBOT * len(web_world.robots)
-    )
+    # The view extent is set explicitly (autorange would re-fit the view every
+    # time trace data is redrawn, e.g. mid pan/zoom).
+    assert fig.layout.xaxis.range is not None
+    assert fig.layout.yaxis.range is not None
+
+    # Traces: planner-graph traces (none without a selected robot) + a fixed
+    # block per robot.
+    expected_traces = num_graph_traces(None) + TRACES_PER_ROBOT * len(web_world.robots)
     assert len(fig.data) == expected_traces
 
     # The status is rendered outside the figure (no plot title), so updating it

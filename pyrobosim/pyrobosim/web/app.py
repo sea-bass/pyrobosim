@@ -14,6 +14,20 @@ and light on network traffic it:
   changes, selection/visibility changes),
 * leaves the figure untouched when the world is idle, and
 * slows the refresh timer when idle so an untouched scene isn't polled at 10 Hz.
+
+Figure updates are not written to the graph directly: they go to the "figbuf"
+store and a clientside callback forwards them to the graph. While the user is
+interacting, the full update is stashed and applied when the gesture ends;
+during mouse drags the trace data is still applied via ``Plotly.restyle`` so
+the world keeps animating under the pan. A full re-render mid-drag breaks
+Plotly's drag machinery: Plotly only commits new axis ranges when the gesture
+ends, so a re-render snaps the view back to the stale committed ranges and
+(with a 10 Hz stream) leaves the drag half-dead afterwards. During wheel-zoom
+bursts even a restyle flickers (scroll zoom previews via layer transforms and
+defers its redraw), so those hold updates entirely. The gate must live
+client-side -- with a server-side "is dragging" flag there is always one
+already-in-flight update that lands right after the gesture starts, and one is
+enough to break it.
 """
 
 import logging
@@ -92,6 +106,11 @@ def _layout(world: World) -> html.Div:
     robot_names = world.get_robot_names() + ["world"]
     default_robot = robot_names[0] if robot_names else "world"
     default_visibility = ["rooms", "locations", "objects", "robots"]
+    initial_figure = figure.make_figure(
+        world,
+        selected_robot=commands.resolve_robot(world, default_robot),
+        **_visibility_flags(default_visibility),
+    )
 
     return html.Div(
         style={
@@ -162,11 +181,7 @@ def _layout(world: World) -> html.Div:
             ),
             dcc.Graph(
                 id="world-graph",
-                figure=figure.make_figure(
-                    world,
-                    selected_robot=commands.resolve_robot(world, default_robot),
-                    **_visibility_flags(default_visibility),
-                ),
+                figure=initial_figure,
                 style={"flex": "1"},
                 config={"scrollZoom": True, "displaylogo": False},
             ),
@@ -192,6 +207,9 @@ def _layout(world: World) -> html.Div:
                 {"alignItems": "center", "flexWrap": "wrap"},
             ),
             dcc.Interval(id="tick", interval=TICK_MS, n_intervals=0),
+            # Buffer for figure updates; a clientside callback forwards its
+            # contents to the graph when no pan/zoom gesture is in progress.
+            dcc.Store(id="figbuf", data=initial_figure),
         ],
     )
 
@@ -211,9 +229,76 @@ def create_app(world: World, title: str = "PyRoboSim") -> Dash:
     # Attach a no-op GUI so core's GUI-refresh hooks are satisfied and examples
     # that wait for ``world.gui`` to be set proceed in web mode. Its change
     # counter lets the engine cheaply detect discrete world changes.
-    world.gui = HeadlessGui()  # type: ignore[assignment]
+    gui = HeadlessGui()
+    world.gui = gui  # type: ignore[assignment]
+
+    # Snapshot each robot's current planner path/graphs into the display stash,
+    # so plans made before the app started (e.g. the planner demos) still show.
+    for robot in world.robots:
+        planner = robot.path_planner
+        gui.canvas.show_planner_and_path_signal.emit(
+            robot, True, planner.get_latest_path() if planner else None
+        )
 
     app.layout = _layout(world)
+
+    # Forward buffered figure updates to the graph, unless the user is
+    # interacting: during mouse drags (``gd._dragging``), apply only the trace
+    # data and stash the full update for drag end; during wheel-zoom bursts
+    # (recent wheel / ``plotly_relayouting`` event), stash and apply nothing.
+    # ``plotly_relayout`` fires once a gesture commits.
+    app.clientside_callback(
+        """
+        function(fig) {
+            const gd = document.querySelector('#world-graph .js-plotly-plot');
+            if (!gd) {
+                return fig;
+            }
+            if (!gd._pyrobosimHooked && gd.on) {
+                gd._pyrobosimHooked = true;
+                const bump = () => { window._pyrobosimGestureTs = Date.now(); };
+                gd.on('plotly_relayouting', bump);
+                gd.addEventListener('wheel', bump, {passive: true});
+                gd.on('plotly_relayout', () => {
+                    window._pyrobosimGestureTs = 0;
+                    const pending = window._pyrobosimPendingFig;
+                    if (pending) {
+                        window._pyrobosimPendingFig = null;
+                        setTimeout(() => window.dash_clientside.set_props(
+                            'world-graph', {figure: pending}), 0);
+                    }
+                });
+            }
+            if (gd._dragging) {
+                window._pyrobosimPendingFig = fig;
+                // Keep the world animating under the drag: trace data does
+                // not touch the layout or gesture state. Skip if the trace
+                // count changed (structural change); it applies on drag end.
+                if (gd.data && gd.data.length === fig.data.length) {
+                    window.Plotly.restyle(gd, {
+                        x: fig.data.map(t => t.x),
+                        y: fig.data.map(t => t.y),
+                    });
+                }
+                return window.dash_clientside.no_update;
+            }
+            const sinceGesture = Date.now() - (window._pyrobosimGestureTs || 0);
+            if (sinceGesture < 400) {
+                // Wheel-zoom burst: hold everything. Scroll zoom previews via
+                // layer transforms and only redraws ~270 ms after the last
+                // wheel event, so both react and restyle flicker against the
+                // preview. The commit fires plotly_relayout, which releases
+                // the stashed update right away.
+                window._pyrobosimPendingFig = fig;
+                return window.dash_clientside.no_update;
+            }
+            window._pyrobosimPendingFig = null;
+            return fig;
+        }
+        """,
+        Output("world-graph", "figure"),
+        Input("figbuf", "data"),
+    )
 
     # Shared refresh state, mutated by the dispatch and engine callbacks.
     # ``force`` is the number of upcoming frames that must fully rebuild the
@@ -228,7 +313,7 @@ def create_app(world: World, title: str = "PyRoboSim") -> Dash:
     }
 
     @app.callback(
-        Output("world-graph", "figure"),
+        Output("figbuf", "data"),
         Output("status", "children"),
         *[Output(action, "disabled") for action in _TOGGLEABLE],
         Output("tick", "interval"),

@@ -18,11 +18,12 @@ object:
 * ``navigate_signal`` stays *functional*: core delegates navigation to the GUI
   (the Qt ``NavRunner`` thread), so task plans would not move the robot without
   it.
-* ``show_planner_and_path_signal`` stashes the path (and graph visibility) per
-  robot. This matters for paths supplied ready-made by an action (e.g. a
-  PDDLStream ``navigate`` action whose path came from a stream): the path
-  planner never records those, so the figure cannot recover them from
-  ``get_latest_path``.
+* ``show_planner_and_path_signal`` stashes the path and a snapshot of the
+  planner graphs per robot, which is what the figure renders. Reading the
+  planner's *live* state instead would show garbage while e.g. PDDLStream
+  sampling streams re-plan continuously, and would miss ready-made paths
+  (e.g. a PDDLStream ``navigate`` action's path) that the planner never
+  records.
 * ``obj_patches`` stores nothing, so core never tries to remove a Matplotlib
   artist that was never added to a real axes.
 """
@@ -87,12 +88,12 @@ class _HeadlessCanvas:
     def __init__(self, bump: Callable[..., None]) -> None:
         self.axes = _Axes()
         self.obj_patches = _NoPatchList()
-        # Latest path handed to the canvas per robot (e.g. PDDLStream-supplied
-        # paths that the path planner never recorded), read by the web figure.
+        # Per-robot display state, written when core hands a path to the canvas
+        # and read by the web figure. Graphs are *snapshotted* at signal time:
+        # the live planner state mutates constantly while e.g. PDDLStream
+        # sampling streams re-plan, and must not leak into the display.
         self.displayed_paths: dict[str, Any] = {}
-        # Whether to show planner graphs per robot: True when the planner planned
-        # during the action, False when a path was supplied ready-made.
-        self.graphs_visible: dict[str, bool] = {}
+        self.displayed_graphs: dict[str, list[Any]] = {}
         self._bump = bump
         # Frequent generic redraw hook: ignored (motion is handled by polling).
         self.draw_signal = _Signal()
@@ -110,15 +111,20 @@ class _HeadlessCanvas:
         self, robot: Any, show_graphs: bool = True, path: Any = None
     ) -> None:
         if robot is not None:
+            planner = robot.path_planner
             self.displayed_paths[robot.name] = path
-            self.graphs_visible[robot.name] = show_graphs
+            self.displayed_graphs[robot.name] = (
+                list(planner.get_graphs())
+                if (show_graphs and planner is not None)
+                else []
+            )
         self._bump()
 
     def show(self) -> None:
         # Called on world reset; drop stale state so a reset world starts clean
         # (robots are rebuilt, so their old supplied paths no longer apply).
         self.displayed_paths.clear()
-        self.graphs_visible.clear()
+        self.displayed_graphs.clear()
 
     def show_objects(self) -> None:
         pass
