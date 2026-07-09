@@ -5,8 +5,6 @@ The whole module is skipped if the optional web dependencies (plotly/dash) are
 not installed.
 """
 
-import pathlib
-
 import pytest
 
 pytest.importorskip("plotly")
@@ -14,8 +12,7 @@ pytest.importorskip("dash")
 
 from shapely.geometry import Polygon
 
-from pyrobosim.core import World, WorldYamlLoader
-from pyrobosim.utils.general import get_data_folder
+from pyrobosim.core import World
 from pyrobosim.web import commands
 from pyrobosim.web.figure import (
     TRACES_PER_ROBOT,
@@ -26,14 +23,6 @@ from pyrobosim.web.figure import (
     num_graph_traces,
     status_text,
 )
-
-
-@pytest.fixture(scope="module")
-def web_world() -> World:
-    """Loads a world from YAML for the web tests."""
-    return WorldYamlLoader().from_file(
-        pathlib.Path(get_data_folder()) / "test_world.yaml"
-    )
 
 
 def test_color_to_css() -> None:
@@ -57,12 +46,12 @@ def test_svg_path_handles_holes() -> None:
     assert _svg_path(Polygon()) == ""
 
 
-def test_make_figure(web_world: World) -> None:
+def test_make_figure(test_world: World) -> None:
     """Static geometry renders as shapes; dynamic content as traces at known indices."""
-    fig = make_figure(web_world)
+    fig = make_figure(test_world)
 
     # Static geometry: at least the room wall rings are shapes.
-    assert len(fig.layout.shapes) >= len(web_world.rooms) > 0
+    assert len(fig.layout.shapes) >= len(test_world.rooms) > 0
     assert fig.layout.yaxis.scaleanchor == "x"
 
     # The view extent is set explicitly (autorange would re-fit the view every
@@ -72,7 +61,7 @@ def test_make_figure(web_world: World) -> None:
 
     # Traces: planner-graph traces (none without a selected robot) + a fixed
     # block per robot.
-    expected_traces = num_graph_traces(None) + TRACES_PER_ROBOT * len(web_world.robots)
+    expected_traces = num_graph_traces(None) + TRACES_PER_ROBOT * len(test_world.robots)
     assert len(fig.data) == expected_traces
 
     # The status is rendered outside the figure (no plot title), so updating it
@@ -80,42 +69,42 @@ def test_make_figure(web_world: World) -> None:
     assert fig.layout.title.text in (None, "")
 
 
-def test_status_text(web_world: World) -> None:
+def test_status_text(test_world: World) -> None:
     """The status string reports the selected robot's name and battery."""
     assert status_text(None) == ""
-    text = status_text(web_world.robots[0])
-    assert web_world.robots[0].name in text
+    text = status_text(test_world.robots[0])
+    assert test_world.robots[0].name in text
     assert "Battery" in text
 
 
-def test_collision_polygons_add_shapes(web_world: World) -> None:
+def test_collision_polygons_add_shapes(test_world: World) -> None:
     """Enabling collision polygons adds extra shapes."""
-    base = len(make_figure(web_world).layout.shapes)
+    base = len(make_figure(test_world).layout.shapes)
     with_collision = len(
-        make_figure(web_world, show_collision_polygons=True).layout.shapes
+        make_figure(test_world, show_collision_polygons=True).layout.shapes
     )
     assert with_collision > base
 
 
-def test_dynamic_patch(web_world: World) -> None:
+def test_dynamic_patch(test_world: World) -> None:
     """The dynamic patch builds for the world's robots."""
-    patch = dynamic_patch(web_world, web_world.robots[0])
+    patch = dynamic_patch(test_world, test_world.robots[0])
     assert patch is not None
 
 
-def test_resolve_robot(web_world: World) -> None:
+def test_resolve_robot(test_world: World) -> None:
     """Robot names resolve to robots; 'world'/None resolve to no robot."""
-    robot = web_world.robots[0]
-    assert commands.resolve_robot(web_world, robot.name) is robot
-    assert commands.resolve_robot(web_world, "world") is None
-    assert commands.resolve_robot(web_world, None) is None
+    robot = test_world.robots[0]
+    assert commands.resolve_robot(test_world, robot.name) is robot
+    assert commands.resolve_robot(test_world, "world") is None
+    assert commands.resolve_robot(test_world, None) is None
 
 
-def test_create_app(web_world: World) -> None:
+def test_create_app(test_world: World) -> None:
     """The interactive Dash app builds with a layout and registered callbacks."""
     from pyrobosim.web.app import create_app
 
-    app = create_app(web_world)
+    app = create_app(test_world)
     assert app.layout is not None
     # The engine (figure + buttons + interval) and dispatch callbacks register.
     assert len(app.callback_map) >= 2

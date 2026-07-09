@@ -45,10 +45,6 @@ from ..core.world import World
 TICK_MS = 100
 IDLE_TICK_MS = 750
 
-# Number of frames to keep fully refreshing after an async command, so discrete
-# state changes made on background threads (e.g. pick/place) are captured.
-FORCE_FRAMES = 6
-
 # Shared UI font, so the status text and other elements match the buttons
 # instead of falling back to the browser's serif default.
 _FONT_FAMILY = (
@@ -78,12 +74,24 @@ _TOGGLEABLE = [
 
 
 def _button(button_id: str, label: str) -> html.Button:
-    """Creates a styled action button."""
+    """
+    Creates a styled action button.
+
+    :param button_id: The Dash component ID for the button.
+    :param label: The text shown on the button.
+    :return: The button component.
+    """
     return html.Button(label, id=button_id, n_clicks=0, style=_BUTTON_STYLE)
 
 
 def _row(children: list[Any], extra_style: dict[str, Any] | None = None) -> html.Div:
-    """Lays out children in a horizontal flex row."""
+    """
+    Lays out children in a horizontal flex row.
+
+    :param children: The components to lay out.
+    :param extra_style: Additional CSS style entries for the row, if any.
+    :return: The row component.
+    """
     style: dict[str, Any] = {"display": "flex", "width": "100%"}
     if extra_style:
         style.update(extra_style)
@@ -91,7 +99,12 @@ def _row(children: list[Any], extra_style: dict[str, Any] | None = None) -> html
 
 
 def _visibility_flags(visibility: list[str]) -> dict[str, bool]:
-    """Maps the visibility checklist values to make_figure keyword flags."""
+    """
+    Maps the visibility checklist values to ``make_figure`` keyword flags.
+
+    :param visibility: The checked visibility values, e.g. ``["rooms", "objects"]``.
+    :return: The corresponding keyword arguments for :func:`.figure.make_figure`.
+    """
     return {
         "show_room_names": "rooms" in visibility,
         "show_location_names": "locations" in visibility,
@@ -102,9 +115,14 @@ def _visibility_flags(visibility: list[str]) -> dict[str, bool]:
 
 
 def _layout(world: World) -> html.Div:
-    """Builds the application layout for a world."""
+    """
+    Builds the application layout for a world.
+
+    :param world: The world to build the layout for.
+    :return: The root component of the application layout.
+    """
     robot_names = world.get_robot_names() + ["world"]
-    default_robot = robot_names[0] if robot_names else "world"
+    default_robot = robot_names[0]
     default_visibility = ["rooms", "locations", "objects", "robots"]
     initial_figure = figure.make_figure(
         world,
@@ -209,6 +227,9 @@ def _layout(world: World) -> html.Div:
             dcc.Interval(id="tick", interval=TICK_MS, n_intervals=0),
             # Buffer for figure updates; a clientside callback forwards its
             # contents to the graph when no pan/zoom gesture is in progress.
+            # It must always hold a complete figure: smooth-motion frames are
+            # ``dash.Patch`` outputs, which the renderer applies against this
+            # store's current value (patching an empty store throws).
             dcc.Store(id="figbuf", data=initial_figure),
         ],
     )
@@ -301,11 +322,11 @@ def create_app(world: World, title: str = "PyRoboSim") -> Dash:
     )
 
     # Shared refresh state, mutated by the dispatch and engine callbacks.
-    # ``force`` is the number of upcoming frames that must fully rebuild the
-    # figure (commands set it; async commands set several frames' worth so
-    # changes landing later on background threads are captured).
+    # ``force`` marks that a command just ran, so the next frame must fully
+    # rebuild the figure; effects landing later on background threads are
+    # caught by the change counter.
     refresh: dict[str, Any] = {
-        "force": 0,
+        "force": False,
         "prev_active": False,
         "count": -1,
         "interval": TICK_MS,
@@ -322,6 +343,15 @@ def create_app(world: World, title: str = "PyRoboSim") -> Dash:
         Input("visibility", "value"),
     )
     def _engine(_n: int, robot_name: str, visibility: list[str]) -> list[Any]:
+        """
+        Refreshes the view each tick (see the module docstring for the policy).
+
+        :param _n: The tick counter (unused; the tick itself is the trigger).
+        :param robot_name: The currently selected robot name.
+        :param visibility: The checked visibility values.
+        :return: The figure update, status text, button disabled states, and
+            tick interval, matching the callback outputs.
+        """
         # While a reset is reloading the world on a background thread, leave
         # everything untouched rather than reading a half-rebuilt world.
         if refresh["resetting"]:
@@ -333,19 +363,18 @@ def create_app(world: World, title: str = "PyRoboSim") -> Dash:
         # The stub GUI bumps this counter on every structural change (pick/place/
         # open/close/detect/plan), including ones triggered outside the web
         # callbacks (e.g. task-plan execution), so they show without polling.
-        gui = world.gui
-        change_count = gui.change_count if isinstance(gui, HeadlessGui) else 0
+        change_count = gui.change_count
 
         structural = (
             ctx.triggered_id in ("robot-select", "visibility")
-            or refresh["force"] > 0
+            or refresh["force"]
             or change_count != refresh["count"]
         )
         if structural:
             fig_out: Any = figure.make_figure(
                 world, selected_robot=selected, **_visibility_flags(visibility)
             )
-            refresh["force"] = max(0, refresh["force"] - 1)
+            refresh["force"] = False
         elif active or refresh["prev_active"]:
             # Smooth motion: update only the moving traces.
             fig_out = figure.dynamic_patch(world, selected)
@@ -358,7 +387,7 @@ def create_app(world: World, title: str = "PyRoboSim") -> Dash:
 
         # Poll fast while busy, slowly when idle. Only emit a new interval value
         # when it changes, to avoid restarting the timer every tick.
-        target = TICK_MS if (active or refresh["force"] > 0) else IDLE_TICK_MS
+        target = TICK_MS if (active or refresh["force"]) else IDLE_TICK_MS
         interval_out: Any = no_update
         if target != refresh["interval"]:
             refresh["interval"] = target
@@ -372,13 +401,21 @@ def create_app(world: World, title: str = "PyRoboSim") -> Dash:
         Output("tick", "interval", allow_duplicate=True),
         [
             Input(action, "n_clicks")
-            for action in list(WORLD_ACTIONS) + list(GOAL_ACTIONS)
+            for action in ["reset-world", *WORLD_ACTIONS, *GOAL_ACTIONS]
         ],
         State("robot-select", "value"),
         State("goal-input", "value"),
         prevent_initial_call=True,
     )
     def _dispatch(*_clicks: int) -> tuple[Any, Any]:
+        """
+        Runs the command for whichever action button was clicked.
+
+        :param _clicks: The button click counters (unused; the triggering
+            button is read from the callback context instead).
+        :return: The new goal text and tick interval, matching the callback
+            outputs.
+        """
         robot_name = ctx.states["robot-select.value"]
         goal = ctx.states["goal-input.value"] or ""
         action = ctx.triggered_id
@@ -394,11 +431,12 @@ def create_app(world: World, title: str = "PyRoboSim") -> Dash:
                 refresh["resetting"] = True
 
                 def _do_reset() -> None:
+                    """Reloads the world, then unblocks and refreshes the view."""
                     try:
                         world.reset()
                     finally:
                         refresh["resetting"] = False
-                        refresh["force"] = 1
+                        refresh["force"] = True
 
                 threading.Thread(target=_do_reset, daemon=True).start()
             refresh["interval"] = TICK_MS
@@ -406,7 +444,7 @@ def create_app(world: World, title: str = "PyRoboSim") -> Dash:
 
         if action in WORLD_ACTIONS:
             WORLD_ACTIONS[action](world, robot_name, goal)
-            refresh["force"] = FORCE_FRAMES if action in commands.ASYNC_ACTIONS else 1
+            refresh["force"] = True
             # Wake the engine immediately even if it was idling slowly.
             refresh["interval"] = TICK_MS
             return (no_update, TICK_MS)
@@ -419,7 +457,11 @@ def create_app(world: World, title: str = "PyRoboSim") -> Dash:
 def _button_disabled_states(world: World, robot_name: str) -> list[bool]:
     """
     Computes the disabled state of each toggleable button, mirroring the GUI's
-    ``update_button_state``. Returns values in the order of ``_TOGGLEABLE``.
+    ``update_button_state``.
+
+    :param world: The world containing the robot.
+    :param robot_name: The selected robot name, or ``"world"`` for no robot.
+    :return: The disabled states, in the order of ``_TOGGLEABLE``.
     """
     robot = commands.resolve_robot(world, robot_name)
     if robot is None:
@@ -474,4 +516,9 @@ def run(
     # is noisy given the refresh timer fires continuously.
     logging.getLogger("werkzeug").setLevel(logging.ERROR)
     app = create_app(world, title=title)
-    app.run(host=host, port=port, debug=debug)
+    try:
+        app.run(host=host, port=port, debug=debug)
+    finally:
+        # The server returns on Ctrl+C, but non-daemon threads (e.g., sensors)
+        # would keep the interpreter hanging in threading shutdown without this.
+        world.shutdown()

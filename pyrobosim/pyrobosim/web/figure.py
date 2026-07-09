@@ -7,10 +7,10 @@ Rendering is split into two layers:
   objects, optional collision polygons) is drawn as ``layout.shapes``. These
   polygons often have interior holes (e.g. a room's wall ring), so they use SVG
   ``path`` shapes with an even-odd fill rule.
-* **Dynamic content** (per robot: planner path, lidar rays, body, orientation
-  line, and any held object) is drawn as Plotly traces at stable indices, so it
-  can be updated each frame with :func:`dynamic_patch` instead of rebuilding the
-  whole figure. The selected robot's planner graphs are drawn as traces too
+* **Dynamic content** (per robot: planner path, sensor data such as lidar rays,
+  body, orientation line, and any held object) is drawn as Plotly traces at
+  stable indices, so it can be updated each frame with :func:`dynamic_patch`
+  instead of rebuilding the whole figure. The selected robot's planner graphs are drawn as traces too
   (efficient for many nodes/edges).
 """
 
@@ -24,17 +24,17 @@ from shapely.geometry import MultiPolygon, Polygon
 from ..core.robot import Robot
 from ..core.world import World
 from ..utils.polygon import transform_polygon
+from ..utils.search_graph import SearchGraph
+from .headless import HeadlessCanvas, HeadlessGui
 
 # Multiplier of robot radius for the orientation line, matching the GUI.
 ROBOT_DIR_LINE_FACTOR = 3.0
-# Number of segments used to approximate a robot's circular body.
-ROBOT_CIRCLE_SEGMENTS = 40
 # Fraction of the world extent added as a margin around the view.
 VIEW_MARGIN = 0.05
 # Color used for collision-polygon overlays, matching the GUI's magenta.
 COLLISION_COLOR = "rgb(255, 0, 255)"
 
-# Number of dynamic traces emitted per robot (path, lidar, body, dir, held).
+# Number of dynamic traces emitted per robot (path, sensors, body, dir, held).
 TRACES_PER_ROBOT = 5
 
 
@@ -54,13 +54,24 @@ def color_to_css(color: Sequence[float]) -> str:
 # Geometry helpers
 # ---------------------------------------------------------------------------
 def _rgba(rgb_str: str, alpha: float) -> str:
-    """Converts a CSS ``rgb(...)`` string into ``rgba(...)`` with the given alpha."""
+    """
+    Converts a CSS ``rgb(...)`` string into ``rgba(...)`` with the given alpha.
+
+    :param rgb_str: A CSS color string, e.g. ``"rgb(204, 0, 204)"``.
+    :param alpha: The alpha channel value, in the range (0.0, 1.0).
+    :return: A CSS color string, e.g. ``"rgba(204, 0, 204, 0.5)"``.
+    """
     inner = rgb_str[rgb_str.index("(") + 1 : rgb_str.index(")")]
     return f"rgba({inner}, {alpha})"
 
 
 def _ring_path(coords: Sequence[Sequence[float]]) -> str:
-    """Builds an SVG sub-path string (``M ... L ... Z``) for one polygon ring."""
+    """
+    Builds an SVG sub-path string (``M ... L ... Z``) for one polygon ring.
+
+    :param coords: The (x, y) coordinates along the ring.
+    :return: The SVG sub-path string, or an empty string for no coordinates.
+    """
     if not coords:
         return ""
     commands = [
@@ -70,7 +81,12 @@ def _ring_path(coords: Sequence[Sequence[float]]) -> str:
 
 
 def _svg_path(geom: Polygon | MultiPolygon | None) -> str:
-    """Converts a Shapely polygon (with holes / parts) to an SVG path string."""
+    """
+    Converts a Shapely polygon (with holes / parts) to an SVG path string.
+
+    :param geom: The polygon to convert.
+    :return: The SVG path string, or an empty string for a missing/empty polygon.
+    """
     if geom is None or geom.is_empty:
         return ""
     polys = geom.geoms if isinstance(geom, MultiPolygon) else [geom]
@@ -91,7 +107,17 @@ def _polygon_shape(
     dash: str | None = None,
     layer: str = "below",
 ) -> dict[str, Any] | None:
-    """Builds a Plotly ``path`` shape for a polygon, or None if it is empty."""
+    """
+    Builds a Plotly ``path`` shape for a polygon.
+
+    :param geom: The polygon to render.
+    :param line_color: The CSS color for the polygon outline.
+    :param fillcolor: The CSS fill color. If None, the shape is not filled.
+    :param width: The outline width, in pixels.
+    :param dash: The outline dash style (e.g. ``"dash"``). If None, a solid line.
+    :param layer: The Plotly shape layer (``"below"`` or ``"above"`` traces).
+    :return: The shape dictionary, or None if the polygon is missing/empty.
+    """
     path = _svg_path(geom)
     if not path:
         return None
@@ -113,7 +139,12 @@ def _polygon_shape(
 def _polygon_xy(
     geom: Polygon | MultiPolygon | None,
 ) -> tuple[list[float | None], list[float | None]]:
-    """Returns None-separated x/y coordinate lists for a polygon's exterior ring(s)."""
+    """
+    Extracts None-separated x/y coordinate lists for a polygon's exterior ring(s).
+
+    :param geom: The polygon whose exterior ring(s) to extract.
+    :return: The x and y coordinate lists, with None separating each ring.
+    """
     xs: list[float | None] = []
     ys: list[float | None] = []
     if geom is None or geom.is_empty:
@@ -128,18 +159,17 @@ def _polygon_xy(
     return xs, ys
 
 
-def _bounds(world: World) -> tuple[float, float, float, float]:
-    """Returns the world's (xmin, ymin, xmax, ymax) extent, with a small margin."""
-    if world.x_bounds is None or world.y_bounds is None:
-        return (-1.0, -1.0, 1.0, 1.0)
-    xmin, xmax = world.x_bounds
-    ymin, ymax = world.y_bounds
-    pad = VIEW_MARGIN * max(xmax - xmin, ymax - ymin)
-    return (xmin - pad, ymin - pad, xmax + pad, ymax + pad)
-
-
 def _label(x: float, y: float, text: str, color: str, size: int) -> dict[str, Any]:
-    """Builds a Plotly annotation for an entity name."""
+    """
+    Builds a Plotly annotation for an entity name.
+
+    :param x: The x position of the label.
+    :param y: The y position of the label.
+    :param text: The label text.
+    :param color: The CSS text color.
+    :param size: The font size, in points.
+    :return: The annotation dictionary.
+    """
     return {
         "x": x,
         "y": y,
@@ -154,81 +184,64 @@ def _label(x: float, y: float, text: str, color: str, size: int) -> dict[str, An
 # ---------------------------------------------------------------------------
 # Dynamic per-robot trace data
 # ---------------------------------------------------------------------------
-def _circle_xy(cx: float, cy: float, radius: float) -> tuple[list[float], list[float]]:
-    """Returns the x/y points of a closed circle for a robot body."""
-    angles = [
-        2.0 * math.pi * i / ROBOT_CIRCLE_SEGMENTS
-        for i in range(ROBOT_CIRCLE_SEGMENTS + 1)
-    ]
-    return (
-        [cx + radius * math.cos(a) for a in angles],
-        [cy + radius * math.sin(a) for a in angles],
-    )
+def _headless_canvas(robot: Robot) -> HeadlessCanvas | None:
+    """
+    Looks up the headless web GUI canvas attached to the robot's world.
 
-
-def _lidar_xy(robot: Robot) -> tuple[list[float | None], list[float | None]]:
-    """Collects None-separated ray segments from a robot's active lidar sensors."""
-    xs: list[float | None] = []
-    ys: list[float | None] = []
-    for sensor in robot.sensors.values():
-        if not getattr(sensor, "is_active", False):
-            continue
-        for segment in getattr(sensor, "lidar_coords", []):
-            for point in segment:
-                xs.append(point[0])
-                ys.append(point[1])
-            xs.append(None)
-            ys.append(None)
-    return xs, ys
-
-
-def _gui_canvas(robot: Robot) -> Any:
-    """Returns the canvas of the GUI attached to the robot's world, if any."""
+    :param robot: The robot whose world to check.
+    :return: The headless canvas, or None if no headless web GUI is attached.
+    """
     world = robot.world
-    gui = getattr(world, "gui", None) if world is not None else None
-    return getattr(gui, "canvas", None)
-
-
-def _path_to_render(robot: Robot) -> Any:
-    """
-    Returns the path to display for a robot.
-
-    With a GUI attached, only paths explicitly handed to it (via
-    ``show_planner_and_path``) are rendered -- the planner's live state is
-    mutated continuously by e.g. PDDLStream sampling streams and would show
-    garbage candidate paths. Without a GUI (standalone figure), fall back to
-    the planner's latest plan.
-    """
-    paths = getattr(_gui_canvas(robot), "displayed_paths", None)
-    if paths is not None:
-        return paths.get(robot.name)
-    if robot.path_planner is not None:
-        return robot.path_planner.get_latest_path()
+    if world is not None and isinstance(world.gui, HeadlessGui):
+        return world.gui.canvas
     return None
 
 
 def _robot_dynamic_xy(robot: Robot) -> list[tuple[list[Any], list[Any]]]:
     """
-    Returns the (x, y) data for a robot's dynamic traces, in block order:
-    path, lidar, body, orientation line, held object.
+    Computes the (x, y) data for a robot's dynamic traces.
+
+    :param robot: The robot to compute trace data for.
+    :return: One (x, y) data tuple per trace, in block order:
+        path, sensors, body, orientation line, held object.
     """
     pose = robot.get_pose()
 
-    # Path (planned on the spot or supplied by an action, see _path_to_render):
-    # shown while navigating, or when a fresh path has not been traversed yet
-    # (the robot is still at its start) -- e.g. the planner demos that plan but
-    # never navigate. It clears once the robot has reached the goal (no longer
-    # moving and no longer at the path start).
+    # Path: with the headless web GUI attached, render only paths explicitly
+    # handed to it (via ``show_planner_and_path``) -- the planner's live state
+    # is mutated continuously by e.g. PDDLStream sampling streams and would
+    # show garbage candidate paths. Without it (standalone figure), fall back
+    # to the planner's latest plan.
+    canvas = _headless_canvas(robot)
+    if canvas is not None:
+        path = canvas.displayed_paths.get(robot.name)
+    elif robot.path_planner is not None:
+        path = robot.path_planner.get_latest_path()
+    else:
+        path = None
+
+    # The path is shown while navigating, or when a fresh path has not been
+    # traversed yet (the robot is still at its start) -- e.g. the planner demos
+    # that plan but never navigate. It clears once the robot has reached the
+    # goal (no longer moving and no longer at the path start).
     path_x: list[Any] = []
     path_y: list[Any] = []
-    path = _path_to_render(robot)
     if path is not None and path.num_poses > 1:
         at_start = pose.get_linear_distance(path.poses[0]) < 0.05
         if robot.is_moving() or at_start:
             path_x = [p.x for p in path.poses]
             path_y = [p.y for p in path.poses]
 
-    body_x, body_y = _circle_xy(pose.x, pose.y, robot.radius)
+    # Sensor data (e.g. lidar rays), as None-separated line segments.
+    sensor_x: list[Any] = []
+    sensor_y: list[Any] = []
+    for sensor in robot.sensors.values():
+        for segment in sensor.get_display_coords():
+            for point in segment:
+                sensor_x.append(point[0])
+                sensor_y.append(point[1])
+            sensor_x.append(None)
+            sensor_y.append(None)
 
     length = ROBOT_DIR_LINE_FACTOR * robot.radius
     yaw = pose.get_yaw()
@@ -243,17 +256,22 @@ def _robot_dynamic_xy(robot: Robot) -> list[tuple[list[Any], list[Any]]]:
 
     return [
         (path_x, path_y),
-        _lidar_xy(robot),
-        (body_x, body_y),
+        (sensor_x, sensor_y),
+        _polygon_xy(robot.polygon),
         (dir_x, dir_y),
         (held_x, held_y),
     ]
 
 
 def _robot_traces(robot: Robot) -> list[go.Scatter]:
-    """Builds the (styled) dynamic traces for a single robot, in block order."""
+    """
+    Builds the styled dynamic traces for a single robot.
+
+    :param robot: The robot to build traces for.
+    :return: The list of traces, in the block order of :func:`_robot_dynamic_xy`.
+    """
     color = color_to_css(robot.color)
-    path, lidar, body, direction, held = _robot_dynamic_xy(robot)
+    path, sensors, body, direction, held = _robot_dynamic_xy(robot)
     held_color = (
         color_to_css(robot.manipulated_object.viz_color)
         if robot.manipulated_object is not None
@@ -270,8 +288,8 @@ def _robot_traces(robot: Robot) -> list[go.Scatter]:
             **common,
         ),
         go.Scatter(
-            x=lidar[0],
-            y=lidar[1],
+            x=sensors[0],
+            y=sensors[1],
             mode="lines",
             line={"color": color, "width": 0.5},
             opacity=0.5,
@@ -306,31 +324,42 @@ def _robot_traces(robot: Robot) -> list[go.Scatter]:
 # ---------------------------------------------------------------------------
 # Planner graphs (shown only for the selected robot)
 # ---------------------------------------------------------------------------
-def _graphs_for(selected_robot: Robot | None) -> list[Any]:
+def _graphs_for(selected_robot: Robot | None) -> list[SearchGraph]:
     """
     Returns the selected robot's planner search graphs (empty if none).
 
-    With a GUI attached, only the graphs snapshotted by
-    ``show_planner_and_path`` are rendered, for the same reason as
-    :func:`_path_to_render`. Without a GUI, read the planner directly.
+    With the headless web GUI attached, only the graphs snapshotted by
+    ``show_planner_and_path`` are rendered, for the same reason as the path in
+    :func:`_robot_dynamic_xy`. Without it, read the planner directly.
+
+    :param selected_robot: The robot whose planner graphs to look up, if any.
+    :return: The list of search graphs to display.
     """
     if selected_robot is None or selected_robot.path_planner is None:
         return []
-    graphs: dict[str, list[Any]] | None = getattr(
-        _gui_canvas(selected_robot), "displayed_graphs", None
-    )
-    if graphs is not None:
-        return graphs.get(selected_robot.name, [])
+    canvas = _headless_canvas(selected_robot)
+    if canvas is not None:
+        return canvas.displayed_graphs.get(selected_robot.name, [])
     return list(selected_robot.path_planner.get_graphs())
 
 
 def num_graph_traces(selected_robot: Robot | None) -> int:
-    """Number of traces emitted for planner graphs (two per graph: edges, nodes)."""
+    """
+    Counts the traces emitted for planner graphs (two per graph: edges, nodes).
+
+    :param selected_robot: The robot whose planner graphs are displayed, if any.
+    :return: The number of planner-graph traces at the start of the figure.
+    """
     return 2 * len(_graphs_for(selected_robot))
 
 
 def _graph_traces(selected_robot: Robot | None) -> list[go.Scatter]:
-    """Builds edge and node traces for the selected robot's planner graphs."""
+    """
+    Builds edge and node traces for the selected robot's planner graphs.
+
+    :param selected_robot: The robot whose planner graphs to render, if any.
+    :return: The list of traces, two (edges, nodes) per graph.
+    """
     traces: list[go.Scatter] = []
     for graph in _graphs_for(selected_robot):
         color = color_to_css(graph.color)
@@ -367,17 +396,57 @@ def _graph_traces(selected_robot: Robot | None) -> list[go.Scatter]:
 
 
 # ---------------------------------------------------------------------------
-# Static geometry
+# Public API
 # ---------------------------------------------------------------------------
-def _static_shapes_and_labels(
+def status_text(robot: Robot | None) -> str:
+    """
+    Builds the selected robot's status string (battery / location / holding),
+    as shown in the GUI title. It is rendered in an HTML element beside the
+    graph rather than the figure title, so updating it every frame does not
+    relayout the plot (which would disrupt an in-progress pan/zoom).
+
+    :param robot: The robot to describe, or None for an empty string.
+    :return: The status text, formatted over two lines.
+    """
+    if robot is None:
+        return ""
+    bits = []
+    if robot.location is not None:
+        loc = robot.location if isinstance(robot.location, str) else robot.location.name
+        bits.append(f"Location: {loc}")
+    if robot.manipulated_object is not None:
+        bits.append(f"Holding: {robot.manipulated_object.name}")
+    return f"[{robot.name}] Battery: {robot.battery_level:.2f}%\n{', '.join(bits)}"
+
+
+def make_figure(
     world: World,
-    selected_robot: Robot | None,
-    show_room_names: bool,
-    show_location_names: bool,
-    show_object_names: bool,
-    show_collision_polygons: bool,
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    """Builds the static geometry shapes and name annotations for the world."""
+    *,
+    selected_robot: Robot | None = None,
+    show_room_names: bool = True,
+    show_location_names: bool = True,
+    show_object_names: bool = True,
+    show_robot_names: bool = True,
+    show_collision_polygons: bool = False,
+) -> go.Figure:
+    """
+    Builds a complete Plotly figure rendering a world, mirroring the GUI.
+
+    Trace layout (used by :func:`dynamic_patch`): planner-graph traces first,
+    followed by ``TRACES_PER_ROBOT`` traces for each robot in order. The view
+    extent comes from explicit axis ranges (not autorange), so redrawing trace
+    data never re-fits the view.
+
+    :param world: The world to render.
+    :param selected_robot: The robot whose knowledge (closed hallways, known
+        objects) and planner graphs are displayed, or None for full world state.
+    :param show_room_names: If True, shows room name labels.
+    :param show_location_names: If True, shows location name labels.
+    :param show_object_names: If True, shows object name labels.
+    :param show_robot_names: If True, shows robot name labels.
+    :param show_collision_polygons: If True, overlays the collision polygons.
+    :return: The complete Plotly figure for the world.
+    """
     shapes: list[dict[str, Any]] = []
     annotations: list[dict[str, Any]] = []
 
@@ -434,17 +503,16 @@ def _static_shapes_and_labels(
         if obj in held:
             continue
         color = color_to_css(obj.viz_color)
-        polygon = transform_polygon(obj.raw_polygon, obj.pose)
         # Objects render above robots (GUI zorder 4 > 3).
-        shape = _polygon_shape(polygon, color, layer="above")
+        shape = _polygon_shape(obj.polygon, color, layer="above")
         if shape:
             shapes.append(shape)
         if show_object_names:
-            xmin, ymin, xmax, ymax = polygon.bounds
+            oxmin, oymin, oxmax, oymax = obj.polygon.bounds
             annotations.append(
                 _label(
-                    obj.pose.x + (xmax - xmin),
-                    obj.pose.y + (ymax - ymin),
+                    obj.pose.x + (oxmax - oxmin),
+                    obj.pose.y + (oymax - oymin),
                     obj.name,
                     color,
                     8,
@@ -461,57 +529,6 @@ def _static_shapes_and_labels(
             )
             if shape:
                 shapes.append(shape)
-
-    return shapes, annotations
-
-
-# ---------------------------------------------------------------------------
-# Public API
-# ---------------------------------------------------------------------------
-def status_text(robot: Robot | None) -> str:
-    """
-    Builds the selected robot's status string (battery / location / holding),
-    as shown in the GUI title. It is rendered in an HTML element beside the
-    graph rather than the figure title, so updating it every frame does not
-    relayout the plot (which would disrupt an in-progress pan/zoom).
-    """
-    if robot is None:
-        return ""
-    bits = []
-    if robot.location is not None:
-        loc = robot.location if isinstance(robot.location, str) else robot.location.name
-        bits.append(f"Location: {loc}")
-    if robot.manipulated_object is not None:
-        bits.append(f"Holding: {robot.manipulated_object.name}")
-    return f"[{robot.name}] Battery: {robot.battery_level:.2f}%\n{', '.join(bits)}"
-
-
-def make_figure(
-    world: World,
-    *,
-    selected_robot: Robot | None = None,
-    show_room_names: bool = True,
-    show_location_names: bool = True,
-    show_object_names: bool = True,
-    show_robot_names: bool = True,
-    show_collision_polygons: bool = False,
-) -> go.Figure:
-    """
-    Builds a complete Plotly figure rendering a world, mirroring the GUI.
-
-    Trace layout (used by :func:`dynamic_patch`): planner-graph traces first,
-    followed by ``TRACES_PER_ROBOT`` traces for each robot in order. The view
-    extent comes from explicit axis ranges (not autorange), so redrawing trace
-    data never re-fits the view.
-    """
-    shapes, annotations = _static_shapes_and_labels(
-        world,
-        selected_robot,
-        show_room_names,
-        show_location_names,
-        show_object_names,
-        show_collision_polygons,
-    )
 
     if show_robot_names:
         for robot in world.robots:
@@ -530,7 +547,14 @@ def make_figure(
     for robot in world.robots:
         traces += _robot_traces(robot)
 
-    xmin, ymin, xmax, ymax = _bounds(world)
+    # View extent: the world bounds plus a small margin.
+    if world.x_bounds is not None and world.y_bounds is not None:
+        (xmin, xmax), (ymin, ymax) = world.x_bounds, world.y_bounds
+        pad = VIEW_MARGIN * max(xmax - xmin, ymax - ymin)
+        xmin, ymin, xmax, ymax = xmin - pad, ymin - pad, xmax + pad, ymax + pad
+    else:
+        xmin, ymin, xmax, ymax = -1.0, -1.0, 1.0, 1.0
+
     fig = go.Figure(data=traces)
     fig.update_layout(
         shapes=shapes,
@@ -561,6 +585,11 @@ def dynamic_patch(world: World, selected_robot: Robot | None) -> Patch:
     only trace data keeps each frame a pure restyle (no relayout), so motion
     does not disrupt an in-progress pan/zoom. Valid only while the trace layout
     is unchanged (same robots and same number of graphs).
+
+    :param world: The world whose robots to update.
+    :param selected_robot: The robot whose planner graphs are displayed, if any.
+        Used to offset the per-robot trace indices past the graph traces.
+    :return: A Dash patch updating the dynamic trace data in place.
     """
     patch = Patch()
     base = num_graph_traces(selected_robot)
