@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyrobosim_ros"
+version = "4.3.4"
+description = "ROS 2 interface to PyRoboSim."
+license = { text = "MIT" }
+authors = [
+    { name = "Sebastian Castro", email = "sebas.a.castro@gmail.com" },
+]
+requires-python = ">=3.10"
+dependencies = [
+    "pyrobosim",
+]
+
+[project.urls]
+Homepage = "https://github.com/sea-bass/pyrobosim"
+
+[tool.setuptools.packages.find]
+include = ["pyrobosim_ros", "pyrobosim_ros.*"]
