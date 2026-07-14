@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>pyrobosim</name>
-  <version>4.3.4</version>
+  <version>4.4.0</version>
   <description>ROS 2 enabled 2D mobile robot simulator for behavior prototyping.</description>
   <maintainer email="sebas.a.castro@gmail.com">Sebastian Castro</maintainer>
   <license>MIT</license>

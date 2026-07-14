@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyrobosim"
-version = "4.3.4"
+version = "4.4.0"
 description = "2D mobile robot simulator for behavior prototyping."
 readme = "README.md"
 license = { text = "MIT" }
