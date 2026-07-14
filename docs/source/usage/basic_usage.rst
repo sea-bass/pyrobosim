@@ -91,6 +91,30 @@ For example:
 
 Refer to the :ref:`yaml_schemas` documentation for more information.
 
+Web UI (Experimental)
+---------------------
+
+PyRoboSim also has an experimental browser-based UI built with `Plotly Dash <https://dash.plotly.com/>`_.
+This is a lightweight alternative to the Qt GUI, and the goal is to replace it in a future major release.
+It requires the optional web dependencies, which you can install with ``pip install pyrobosim[web]``.
+
+Most examples accept a ``--web`` flag to launch the web UI instead of the Qt GUI:
+
+::
+
+    python3 examples/demo.py --web
+
+Then, open ``http://localhost:8050`` in your browser to interact with the world.
+
+To use the web UI in your own scripts, pass ``web=True`` to ``start_gui``:
+
+.. code-block:: python
+
+    from pyrobosim.gui import start_gui
+
+    start_gui(world, web=True, web_host="127.0.0.1", web_port=8050)
+
+Note that the web server is unauthenticated, so only bind to a non-localhost address (``web_host``) on networks you trust.
 
 Exporting Worlds to Gazebo
 --------------------------

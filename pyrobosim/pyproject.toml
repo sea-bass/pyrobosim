@@ -29,8 +29,8 @@ dependencies = [
 
 [project.optional-dependencies]
 web = [
-    "dash",
-    "plotly",
+    "dash>=4,<5",
+    "plotly>=6,<7",
 ]
 
 [project.urls]
