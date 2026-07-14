@@ -21,6 +21,8 @@ def start_gui(
     world: World,
     options: WorldCanvasOptions = WorldCanvasOptions(),
     web: bool = False,
+    web_host: str = "127.0.0.1",
+    web_port: int = 8050,
 ) -> None:
     """
     Helper function to start a PyRoboSim GUI for a world model.
@@ -29,11 +31,13 @@ def start_gui(
     :param options: A world canvas options dataclass instance.
     :param web: If True, serves the browser-based web UI (which requires the
         ``web`` extra to be installed) instead of starting the Qt GUI.
+    :param web_host: The host interface to bind to (used only for web).
+    :param web_port: The port to serve on (used only for web).
     """
     if web:
         from ..web.app import run
 
-        run(world)
+        run(world, host=web_host, port=web_port)
         return
 
     app = PyRoboSimGUI(world, sys.argv, options=options)

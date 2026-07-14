@@ -1,36 +1,25 @@
 """
 A minimal stand-in for the Qt GUI, used by the web frontend.
 
-This is implemented purely for compatibility with the Qt GUI, and should be
-removed in the next major release of PyRoboSim when we fully switch over to
-the web frontend for visualization.
-
-The web app renders by polling the world directly, so it does not need the Qt
-canvas. However, the core world model calls ``world.gui.canvas.*`` to refresh
-the Qt canvas (guarded by ``if world.gui is not None``), and some examples wait
-in ``while world.gui is None`` before proceeding. ``HeadlessGui`` mirrors
-exactly the (small) interface that ``pyrobosim.core`` accesses on the GUI
-object:
+The web app renders by polling the world directly, but the core world model
+still calls a small set of GUI hooks (``world.gui.canvas.*``), and some
+examples wait for ``world.gui`` to be set. :class:`HeadlessGui` implements
+exactly the interface that ``pyrobosim.core`` accesses on the GUI object:
 
 * Structural-change hooks (pick/place/open/close/detect/plan) bump a shared
-  ``change_count`` so the web engine can cheaply tell when a discrete change
-  happened without re-scanning world state every frame.
-* ``navigate_signal`` stays *functional*: core delegates navigation to the GUI
-  (the Qt ``NavRunner`` thread), so task plans would not move the robot without
-  it.
-* ``show_planner_and_path_signal`` stashes the path and a snapshot of the
-  planner graphs per robot, which is what the figure renders. Reading the
-  planner's *live* state instead would show garbage while e.g. PDDLStream
-  sampling streams re-plan continuously, and would miss ready-made paths
-  (e.g. a PDDLStream ``navigate`` action's path) that the planner never
-  records.
-* ``obj_patches`` stores nothing, so core never tries to remove a Matplotlib
-  artist that was never added to a real axes.
+  ``change_count``, so the web engine can cheaply detect discrete changes.
+* ``navigate_signal`` performs navigation on a background thread, mirroring
+  the Qt GUI's navigation runner, since core delegates navigation to the GUI.
+* ``show_planner_and_path_signal`` stashes the supplied path and a snapshot
+  of the planner graphs per robot, which is what the web figure renders.
+
+This module exists purely for compatibility with the Qt GUI, and should be
+removed when PyRoboSim fully switches over to the web frontend.
 """
 
-import threading
 from typing import Any, Callable
 
+from .commands import run_async
 from ..core.robot import Robot
 from ..utils.path import Path
 from ..utils.search_graph import SearchGraph
@@ -59,32 +48,28 @@ class _Signal:
 
 
 def _navigate_on_thread(
-    robot: Any, goal: Any, path: Any = None, realtime_factor: float = 1.0
+    robot: Robot, goal: Any, path: Path | None = None, realtime_factor: float = 1.0
 ) -> None:
     """
-    Runs a robot navigation on a background thread, like the Qt ``NavRunner``.
+    Runs a robot navigation on a background thread, like the Qt GUI does.
 
     :param robot: The robot to navigate.
     :param goal: The navigation goal (an entity or entity query).
     :param path: An optional ready-made path to follow instead of planning.
     :param realtime_factor: The real-time factor for the motion animation.
     """
-    threading.Thread(
-        target=lambda: robot.navigate(
-            goal=goal, path=path, realtime_factor=realtime_factor
-        ),
-        daemon=True,
-    ).start()
+    run_async(
+        lambda: robot.navigate(goal=goal, path=path, realtime_factor=realtime_factor)
+    )
 
 
 class _NoPatchList:
     """
     Stand-in for the canvas object-patch list that stores nothing.
 
-    In web mode object visualization patches are never added to a real
-    Matplotlib axes, so core must not try to remove them (it would raise
-    "cannot remove artist"). Reporting ``False`` for membership keeps core out
-    of that code path.
+    In web mode, object visualization patches are never added to real
+    Matplotlib axes, so core must not try to remove them. Reporting ``False``
+    for membership keeps core out of that code path.
     """
 
     def append(self, item: Any) -> None:
@@ -134,14 +119,12 @@ class HeadlessCanvas:
         """
         self.axes = _Axes()
         self.obj_patches = _NoPatchList()
-        # Per-robot display state, written when core hands a path to the canvas
-        # and read by the web figure. Graphs are *snapshotted* at signal time:
-        # the live planner state mutates constantly while e.g. PDDLStream
-        # sampling streams re-plan, and must not leak into the display.
+        #: Per-robot display state, written by ``show_planner_and_path_signal``
+        #: and read by the web figure.
         self.displayed_paths: dict[str, Path | None] = {}
         self.displayed_graphs: dict[str, list[SearchGraph]] = {}
         self._bump = bump
-        # Frequent generic redraw hook: ignored (motion is handled by polling).
+        # Generic redraw hook: ignored, since motion is handled by polling.
         self.draw_signal = _Signal()
         # Functional: actually performs navigation.
         self.navigate_signal = _Signal(_navigate_on_thread)
@@ -150,7 +133,7 @@ class HeadlessCanvas:
         self.show_locations_signal = _Signal(bump)
         self.show_objects_signal = _Signal(bump)
         self.show_robots_signal = _Signal(bump)
-        # Functional: stashes the supplied path / graph visibility, bumps counter.
+        # Functional: stashes the supplied path / graph snapshot, bumps counter.
         self.show_planner_and_path_signal = _Signal(self._show_planner_and_path)
 
     def _show_planner_and_path(
@@ -158,6 +141,9 @@ class HeadlessCanvas:
     ) -> None:
         """
         Stashes the supplied path and a snapshot of the planner's graphs.
+
+        The graphs are snapshotted (rather than read live at render time)
+        because some planners mutate their state continuously while replanning.
 
         :param robot: The robot the path/graphs belong to. If None, only bumps
             the change counter.
@@ -179,8 +165,8 @@ class HeadlessCanvas:
         """
         Clears the stashed per-robot display state.
 
-        Core calls this on world reset; robots are rebuilt then, so their old
-        supplied paths no longer apply and a reset world must start clean.
+        Core calls this on world reset, which rebuilds the robots, so their
+        old paths and graphs no longer apply.
         """
         self.displayed_paths.clear()
         self.displayed_graphs.clear()
@@ -196,7 +182,7 @@ class HeadlessCanvas:
 
 
 class HeadlessGui:
-    """Minimal ``world.gui`` stand-in so core's GUI hooks are no-ops in web mode."""
+    """Minimal ``world.gui`` stand-in so core's GUI hooks work in web mode."""
 
     def __init__(self) -> None:
         """Creates a headless GUI with a fresh canvas and change counter."""

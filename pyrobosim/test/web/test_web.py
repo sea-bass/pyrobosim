@@ -1,8 +1,8 @@
 """
-Tests for the web frontend serialization, figure building, and commands.
+Tests for the web frontend figure building, commands, and app creation.
 
-The whole module is skipped if the optional web dependencies (plotly/dash) are
-not installed.
+The whole module is skipped if the optional web dependencies (plotly/dash)
+are not installed.
 """
 
 import pytest
@@ -14,6 +14,7 @@ from shapely.geometry import Polygon
 
 from pyrobosim.core import World
 from pyrobosim.web import commands
+from pyrobosim.web.app import create_app, status_text
 from pyrobosim.web.figure import (
     TRACES_PER_ROBOT,
     _svg_path,
@@ -21,7 +22,6 @@ from pyrobosim.web.figure import (
     dynamic_patch,
     make_figure,
     num_graph_traces,
-    status_text,
 )
 
 
@@ -55,7 +55,7 @@ def test_make_figure(test_world: World) -> None:
     assert fig.layout.yaxis.scaleanchor == "x"
 
     # The view extent is set explicitly (autorange would re-fit the view every
-    # time trace data is redrawn, e.g. mid pan/zoom).
+    # time trace data is redrawn, e.g., mid pan/zoom).
     assert fig.layout.xaxis.range is not None
     assert fig.layout.yaxis.range is not None
 
@@ -102,9 +102,7 @@ def test_resolve_robot(test_world: World) -> None:
 
 def test_create_app(test_world: World) -> None:
     """The interactive Dash app builds with a layout and registered callbacks."""
-    from pyrobosim.web.app import create_app
-
     app = create_app(test_world)
     assert app.layout is not None
-    # The engine (figure + buttons + interval) and dispatch callbacks register.
-    assert len(app.callback_map) >= 2
+    # The engine, goal-randomizer, and dispatch callbacks register.
+    assert len(app.callback_map) >= 3

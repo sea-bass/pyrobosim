@@ -32,7 +32,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--web",
         action="store_true",
-        help="Launch the browser-based web GUI instead of the Qt GUI.",
+        help="Launch the browser-based web UI instead of the Qt GUI.",
     )
     return parser.parse_args()
 
