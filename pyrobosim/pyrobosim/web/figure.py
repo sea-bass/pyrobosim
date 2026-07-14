@@ -1,0 +1,565 @@
+"""
+Builds a Plotly figure from a PyRoboSim world, mirroring the matplotlib GUI.
+
+Rendering is split into two layers:
+
+* **Static geometry** (rooms, hallways, locations, object spawns, resting
+  objects, optional collision polygons) is drawn as ``layout.shapes``. These
+  polygons often have interior holes (e.g., a room's wall ring), so they use
+  SVG ``path`` shapes with an even-odd fill rule.
+* **Dynamic content** (planner graphs, and per robot: planner path, sensor
+  data, body, orientation line, and any held object) is drawn as traces at
+  stable indices, so it can be updated each frame with :func:`dynamic_patch`
+  instead of rebuilding the whole figure.
+"""
+
+import math
+from typing import Any, NamedTuple, Sequence
+
+import plotly.graph_objects as go
+from dash import Patch
+from shapely.geometry import MultiPolygon, Polygon
+
+from ..core.robot import Robot
+from ..core.world import World
+from ..utils.polygon import transform_polygon
+from ..utils.search_graph import SearchGraph
+from .headless import HeadlessCanvas, HeadlessGui
+
+# Multiplier of robot radius for the orientation line, matching the GUI.
+ROBOT_DIR_LINE_FACTOR = 3.0
+# Fraction of the world extent added as a margin around the view.
+VIEW_MARGIN = 0.05
+# Color used for collision-polygon overlays, matching the GUI's magenta.
+COLLISION_COLOR = "rgb(255, 0, 255)"
+
+# None-separated x and y coordinate lists for one scatter trace.
+TraceXY = tuple[list[Any], list[Any]]
+
+
+class RobotTraceData(NamedTuple):
+    """The (x, y) data for one robot's dynamic traces, in trace order."""
+
+    path: TraceXY
+    sensors: TraceXY
+    body: TraceXY
+    direction: TraceXY
+    held_object: TraceXY
+
+
+# Number of dynamic traces emitted per robot.
+TRACES_PER_ROBOT = len(RobotTraceData._fields)
+
+
+def color_to_css(color: Sequence[float]) -> str:
+    """
+    Converts a PyRoboSim RGB color to a CSS ``rgb(...)`` string.
+
+    :param color: An (R, G, B) sequence with each channel in the range (0.0, 1.0),
+        as produced by :func:`pyrobosim.utils.general.parse_color`.
+    :return: A CSS color string, e.g., ``"rgb(204, 0, 204)"``.
+    """
+    r, g, b = (int(round(255 * channel)) for channel in color)
+    return f"rgb({r}, {g}, {b})"
+
+
+# ---------------------------------------------------------------------------
+# Static shapes
+# ---------------------------------------------------------------------------
+def _rgba(rgb_str: str, alpha: float) -> str:
+    """
+    Converts a CSS ``rgb(...)`` string into ``rgba(...)`` with the given alpha.
+
+    :param rgb_str: A CSS color string, e.g., ``"rgb(204, 0, 204)"``.
+    :param alpha: The alpha channel value, in the range (0.0, 1.0).
+    :return: A CSS color string, e.g., ``"rgba(204, 0, 204, 0.5)"``.
+    """
+    inner = rgb_str[rgb_str.index("(") + 1 : rgb_str.index(")")]
+    return f"rgba({inner}, {alpha})"
+
+
+def _ring_path(coords: Sequence[Sequence[float]]) -> str:
+    """
+    Builds an SVG sub-path string (``M ... L ... Z``) for one polygon ring.
+
+    :param coords: The (x, y) coordinates along the ring.
+    :return: The SVG sub-path string, or an empty string for no coordinates.
+    """
+    if not coords:
+        return ""
+    commands = [
+        f"{'M' if i == 0 else 'L'}{x:.5f},{y:.5f}" for i, (x, y) in enumerate(coords)
+    ]
+    return " ".join(commands) + " Z"
+
+
+def _svg_path(geom: Polygon | MultiPolygon | None) -> str:
+    """
+    Converts a Shapely polygon (with holes / parts) to an SVG path string.
+
+    :param geom: The polygon to convert.
+    :return: The SVG path string, or an empty string for a missing/empty polygon.
+    """
+    if geom is None or geom.is_empty:
+        return ""
+    polys = geom.geoms if isinstance(geom, MultiPolygon) else [geom]
+    parts = []
+    for poly in polys:
+        parts.append(_ring_path(poly.exterior.coords))
+        for interior in poly.interiors:
+            parts.append(_ring_path(interior.coords))
+    return " ".join(part for part in parts if part)
+
+
+def _polygon_shape(
+    geom: Polygon | MultiPolygon | None,
+    line_color: str,
+    *,
+    fillcolor: str | None = None,
+    width: float = 2.0,
+    dash: str | None = None,
+    layer: str = "below",
+) -> dict[str, Any] | None:
+    """
+    Builds a Plotly ``path`` shape for a polygon.
+
+    :param geom: The polygon to render.
+    :param line_color: The CSS color for the polygon outline.
+    :param fillcolor: The CSS fill color. If None, the shape is not filled.
+    :param width: The outline width, in pixels.
+    :param dash: The outline dash style (e.g., ``"dash"``). If None, a solid line.
+    :param layer: The Plotly shape layer (``"below"`` or ``"above"`` traces).
+    :return: The shape dictionary, or None if the polygon is missing/empty.
+    """
+    path = _svg_path(geom)
+    if not path:
+        return None
+    line: dict[str, Any] = {"color": line_color, "width": width}
+    if dash is not None:
+        line["dash"] = dash
+    return {
+        "type": "path",
+        "path": path,
+        "xref": "x",
+        "yref": "y",
+        "fillcolor": fillcolor or "rgba(0,0,0,0)",
+        "fillrule": "evenodd",
+        "line": line,
+        "layer": layer,
+    }
+
+
+def _polygon_xy(geom: Polygon | MultiPolygon | None) -> TraceXY:
+    """
+    Extracts None-separated x/y coordinate lists for a polygon's exterior ring(s).
+
+    :param geom: The polygon whose exterior ring(s) to extract.
+    :return: The x and y coordinate lists, with None separating each ring.
+    """
+    xs: list[Any] = []
+    ys: list[Any] = []
+    if geom is None or geom.is_empty:
+        return xs, ys
+    polys = geom.geoms if isinstance(geom, MultiPolygon) else [geom]
+    for poly in polys:
+        for x, y in poly.exterior.coords:
+            xs.append(x)
+            ys.append(y)
+        xs.append(None)
+        ys.append(None)
+    return xs, ys
+
+
+def _label(x: float, y: float, text: str, color: str, size: int) -> dict[str, Any]:
+    """
+    Builds a Plotly annotation for an entity name.
+
+    :param x: The x position of the label.
+    :param y: The y position of the label.
+    :param text: The label text.
+    :param color: The CSS text color.
+    :param size: The font size, in points.
+    :return: The annotation dictionary.
+    """
+    return {
+        "x": x,
+        "y": y,
+        "text": text,
+        "showarrow": False,
+        "font": {"color": color, "size": size},
+        "xanchor": "center",
+        "yanchor": "top",
+    }
+
+
+# ---------------------------------------------------------------------------
+# Dynamic per-robot traces
+# ---------------------------------------------------------------------------
+def _headless_canvas(robot: Robot) -> HeadlessCanvas | None:
+    """
+    Looks up the headless web GUI canvas attached to the robot's world.
+
+    :param robot: The robot whose world to check.
+    :return: The headless canvas, or None if no headless web GUI is attached.
+    """
+    world = robot.world
+    if world is not None and isinstance(world.gui, HeadlessGui):
+        return world.gui.canvas
+    return None
+
+
+def _robot_trace_data(robot: Robot) -> RobotTraceData:
+    """
+    Computes the (x, y) data for a robot's dynamic traces.
+
+    :param robot: The robot to compute trace data for.
+    :return: The per-trace (x, y) data.
+    """
+    pose = robot.get_pose()
+
+    # With the headless web GUI attached, render only paths explicitly handed
+    # to it; the planner's live state may be mid-replan. Without it
+    # (standalone figure), fall back to the planner's latest path.
+    canvas = _headless_canvas(robot)
+    if canvas is not None:
+        path = canvas.displayed_paths.get(robot.name)
+    elif robot.path_planner is not None:
+        path = robot.path_planner.get_latest_path()
+    else:
+        path = None
+
+    # The path shows while navigating or still untraversed (e.g., the planner
+    # demos plan without navigating), and clears once the robot arrives.
+    path_x: list[Any] = []
+    path_y: list[Any] = []
+    if path is not None and path.num_poses > 1:
+        at_start = pose.get_linear_distance(path.poses[0]) < 0.05
+        if robot.is_moving() or at_start:
+            path_x = [p.x for p in path.poses]
+            path_y = [p.y for p in path.poses]
+
+    # Sensor data (e.g., lidar rays), as None-separated line segments.
+    sensor_x: list[Any] = []
+    sensor_y: list[Any] = []
+    for sensor in robot.sensors.values():
+        for segment in sensor.get_display_coords():
+            for point in segment:
+                sensor_x.append(point[0])
+                sensor_y.append(point[1])
+            sensor_x.append(None)
+            sensor_y.append(None)
+
+    length = ROBOT_DIR_LINE_FACTOR * robot.radius
+    yaw = pose.get_yaw()
+    dir_x = [pose.x, pose.x + length * math.cos(yaw)]
+    dir_y = [pose.y, pose.y + length * math.sin(yaw)]
+
+    held_x: list[Any] = []
+    held_y: list[Any] = []
+    if robot.manipulated_object is not None:
+        obj = robot.manipulated_object
+        held_x, held_y = _polygon_xy(transform_polygon(obj.raw_polygon, obj.pose))
+
+    return RobotTraceData(
+        path=(path_x, path_y),
+        sensors=(sensor_x, sensor_y),
+        body=_polygon_xy(robot.polygon),
+        direction=(dir_x, dir_y),
+        held_object=(held_x, held_y),
+    )
+
+
+def _robot_traces(robot: Robot) -> list[go.Scatter]:
+    """
+    Builds the styled dynamic traces for a single robot.
+
+    :param robot: The robot to build traces for.
+    :return: The list of traces, in the field order of :class:`RobotTraceData`.
+    """
+    color = color_to_css(robot.color)
+    held_color = (
+        color_to_css(robot.manipulated_object.viz_color)
+        if robot.manipulated_object is not None
+        else color
+    )
+    styles: dict[str, dict[str, Any]] = {
+        "path": {"line": {"color": color, "width": 3}, "opacity": 0.5},
+        "sensors": {"line": {"color": color, "width": 0.5}, "opacity": 0.5},
+        "body": {
+            "line": {"color": color, "width": 2},
+            "fill": "toself",
+            "fillcolor": "white",
+        },
+        "direction": {"line": {"color": color, "width": 2}},
+        "held_object": {"line": {"color": held_color, "width": 2}},
+    }
+    return [
+        go.Scatter(
+            x=xs,
+            y=ys,
+            mode="lines",
+            hoverinfo="skip",
+            showlegend=False,
+            **styles[field],
+        )
+        for field, (xs, ys) in zip(RobotTraceData._fields, _robot_trace_data(robot))
+    ]
+
+
+# ---------------------------------------------------------------------------
+# Planner graphs (shown only for the selected robot)
+# ---------------------------------------------------------------------------
+def _graphs_for(selected_robot: Robot | None) -> list[SearchGraph]:
+    """
+    Returns the selected robot's planner search graphs (empty if none).
+
+    With the headless web GUI attached, only the graphs snapshotted by
+    ``show_planner_and_path`` are rendered, for the same reason as the path in
+    :func:`_robot_trace_data`. Without it, the planner is read directly.
+
+    :param selected_robot: The robot whose planner graphs to look up, if any.
+    :return: The list of search graphs to display.
+    """
+    if selected_robot is None or selected_robot.path_planner is None:
+        return []
+    canvas = _headless_canvas(selected_robot)
+    if canvas is not None:
+        return canvas.displayed_graphs.get(selected_robot.name, [])
+    return list(selected_robot.path_planner.get_graphs())
+
+
+def num_graph_traces(selected_robot: Robot | None) -> int:
+    """
+    Counts the traces emitted for planner graphs (two per graph: edges, nodes).
+
+    :param selected_robot: The robot whose planner graphs are displayed, if any.
+    :return: The number of planner-graph traces at the start of the figure.
+    """
+    return 2 * len(_graphs_for(selected_robot))
+
+
+def _graph_traces(selected_robot: Robot | None) -> list[go.Scatter]:
+    """
+    Builds edge and node traces for the selected robot's planner graphs.
+
+    :param selected_robot: The robot whose planner graphs to render, if any.
+    :return: The list of traces, two (edges, nodes) per graph.
+    """
+    traces: list[go.Scatter] = []
+    for graph in _graphs_for(selected_robot):
+        color = color_to_css(graph.color)
+        alpha = graph.color_alpha
+
+        edge_x: list[float | None] = []
+        edge_y: list[float | None] = []
+        for edge in graph.edges:
+            edge_x += [edge.nodeA.pose.x, edge.nodeB.pose.x, None]
+            edge_y += [edge.nodeA.pose.y, edge.nodeB.pose.y, None]
+        traces.append(
+            go.Scatter(
+                x=edge_x,
+                y=edge_y,
+                mode="lines",
+                line={"color": color, "width": 0.7, "dash": "dash"},
+                opacity=alpha,
+                hoverinfo="skip",
+                showlegend=False,
+            )
+        )
+        traces.append(
+            go.Scatter(
+                x=[n.pose.x for n in graph.nodes],
+                y=[n.pose.y for n in graph.nodes],
+                mode="markers",
+                marker={"color": color, "size": 4},
+                opacity=alpha,
+                hoverinfo="skip",
+                showlegend=False,
+            )
+        )
+    return traces
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+def make_figure(
+    world: World,
+    *,
+    selected_robot: Robot | None = None,
+    show_room_names: bool = True,
+    show_location_names: bool = True,
+    show_object_names: bool = True,
+    show_robot_names: bool = True,
+    show_collision_polygons: bool = False,
+) -> go.Figure:
+    """
+    Builds a complete Plotly figure rendering a world, mirroring the GUI.
+
+    Trace layout (used by :func:`dynamic_patch`): planner-graph traces first,
+    followed by ``TRACES_PER_ROBOT`` traces for each robot in order. The view
+    extent comes from explicit axis ranges (not autorange), so redrawing trace
+    data never re-fits the view.
+
+    :param world: The world to render.
+    :param selected_robot: The robot whose knowledge (closed hallways, known
+        objects) and planner graphs are displayed, or None for full world state.
+    :param show_room_names: If True, shows room name labels.
+    :param show_location_names: If True, shows location name labels.
+    :param show_object_names: If True, shows object name labels.
+    :param show_robot_names: If True, shows robot name labels.
+    :param show_collision_polygons: If True, overlays the collision polygons.
+    :return: The complete Plotly figure for the world.
+    """
+    shapes: list[dict[str, Any]] = []
+    annotations: list[dict[str, Any]] = []
+
+    # Rooms: colored wall rings.
+    for room in world.rooms:
+        color = color_to_css(room.viz_color)
+        shape = _polygon_shape(room.viz_polygon, color, fillcolor=_rgba(color, 0.85))
+        if shape:
+            shapes.append(shape)
+        if show_room_names:
+            annotations.append(
+                _label(room.centroid[0], room.centroid[1], room.name, color, 12)
+            )
+
+    # Hallways: wall rings, plus a filled block when known to be closed.
+    if selected_robot is not None:
+        known_closed = set(selected_robot.get_known_closed_hallways())
+    else:
+        known_closed = {h for h in world.hallways if not h.is_open}
+    for hall in world.hallways:
+        color = color_to_css(hall.viz_color)
+        shape = _polygon_shape(hall.viz_polygon, color, fillcolor=_rgba(color, 0.75))
+        if shape:
+            shapes.append(shape)
+        if hall in known_closed:
+            closed = _polygon_shape(
+                hall.closed_polygon, color, fillcolor=_rgba(color, 0.5)
+            )
+            if closed:
+                shapes.append(closed)
+
+    # Locations: outline, filled if closed; object spawns as dashed outlines.
+    for loc in world.locations:
+        color = color_to_css(loc.viz_color)
+        fill = None if loc.is_open else _rgba(color, 0.5)
+        shape = _polygon_shape(loc.polygon, color, fillcolor=fill)
+        if shape:
+            shapes.append(shape)
+        if show_location_names:
+            annotations.append(_label(loc.pose.x, loc.pose.y, loc.name, color, 10))
+        for spawn in loc.children:
+            spawn_shape = _polygon_shape(spawn.polygon, color, width=1, dash="dash")
+            if spawn_shape:
+                shapes.append(spawn_shape)
+
+    # Resting objects (held objects are drawn as dynamic robot traces instead).
+    held = {r.manipulated_object for r in world.robots if r.manipulated_object}
+    known_objects = (
+        selected_robot.get_known_objects()
+        if selected_robot is not None
+        else world.objects
+    )
+    for obj in known_objects:
+        if obj in held:
+            continue
+        color = color_to_css(obj.viz_color)
+        # Objects render above robots, matching the GUI z-order.
+        shape = _polygon_shape(obj.polygon, color, layer="above")
+        if shape:
+            shapes.append(shape)
+        if show_object_names:
+            oxmin, oymin, oxmax, oymax = obj.polygon.bounds
+            annotations.append(
+                _label(
+                    obj.pose.x + (oxmax - oxmin),
+                    obj.pose.y + (oymax - oymin),
+                    obj.name,
+                    color,
+                    8,
+                )
+            )
+
+    # Collision polygons (debug overlay).
+    if show_collision_polygons:
+        for entity in [*world.rooms, *world.hallways]:
+            shape = _polygon_shape(
+                entity.internal_collision_polygon,
+                COLLISION_COLOR,
+                fillcolor=_rgba(COLLISION_COLOR, 0.5),
+            )
+            if shape:
+                shapes.append(shape)
+
+    if show_robot_names:
+        for robot in world.robots:
+            pose = robot.get_pose()
+            annotations.append(
+                _label(
+                    pose.x,
+                    pose.y - 2.0 * robot.radius,
+                    robot.name,
+                    color_to_css(robot.color),
+                    10,
+                )
+            )
+
+    traces: list[go.Scatter] = _graph_traces(selected_robot)
+    for robot in world.robots:
+        traces += _robot_traces(robot)
+
+    # View extent: the world bounds plus a small margin.
+    if world.x_bounds is not None and world.y_bounds is not None:
+        (xmin, xmax), (ymin, ymax) = world.x_bounds, world.y_bounds
+        pad = VIEW_MARGIN * max(xmax - xmin, ymax - ymin)
+        xmin, ymin, xmax, ymax = xmin - pad, ymin - pad, xmax + pad, ymax + pad
+    else:
+        xmin, ymin, xmax, ymax = -1.0, -1.0, 1.0, 1.0
+
+    fig = go.Figure(data=traces)
+    fig.update_layout(
+        shapes=shapes,
+        annotations=annotations,
+        showlegend=False,
+        dragmode="pan",
+        margin={"l": 20, "r": 20, "t": 20, "b": 20},
+        plot_bgcolor="white",
+        uirevision="world",
+    )
+    fig.update_xaxes(
+        range=[xmin, xmax], showgrid=False, zeroline=False, constrain="domain"
+    )
+    fig.update_yaxes(
+        range=[ymin, ymax],
+        showgrid=False,
+        zeroline=False,
+        scaleanchor="x",
+        scaleratio=1,
+    )
+    return fig
+
+
+def dynamic_patch(world: World, selected_robot: Robot | None) -> Patch:
+    """
+    Builds a Dash ``Patch`` updating only the dynamic per-robot trace data,
+    leaving static shapes, planner graphs, and the layout untouched. Touching
+    only trace data keeps each frame a pure restyle (no relayout), so motion
+    does not disrupt an in-progress pan/zoom. Valid only while the trace
+    layout is unchanged (same robots and same number of graphs).
+
+    :param world: The world whose robots to update.
+    :param selected_robot: The robot whose planner graphs are displayed, if any.
+        Used to offset the per-robot trace indices past the graph traces.
+    :return: A Dash patch updating the dynamic trace data in place.
+    """
+    patch = Patch()
+    base = num_graph_traces(selected_robot)
+    for i, robot in enumerate(world.robots):
+        for offset, (xs, ys) in enumerate(_robot_trace_data(robot)):
+            index = base + TRACES_PER_ROBOT * i + offset
+            patch["data"][index]["x"] = xs
+            patch["data"][index]["y"] = ys
+    return patch

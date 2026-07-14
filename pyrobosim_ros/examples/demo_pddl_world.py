@@ -6,8 +6,9 @@ Task and Motion Planner such as PDDLStream.
 """
 
 import os
-import rclpy
 import threading
+
+import rclpy
 
 from pyrobosim.core import World, WorldYamlLoader
 from pyrobosim.gui import start_gui
@@ -26,6 +27,7 @@ def create_ros_node() -> WorldROSWrapper:
     rclpy.init()
     world = load_world()
     node = WorldROSWrapper(world=world, name="pddl_demo", state_pub_rate=0.1)
+    node.declare_parameter("web", value=False)
     return node
 
 
@@ -36,5 +38,5 @@ if __name__ == "__main__":
     ros_thread = threading.Thread(target=lambda: node.start(wait_for_gui=True))
     ros_thread.start()
 
-    # Start GUI in main thread
-    start_gui(node.world)
+    # Start the web UI or the Qt GUI in main thread
+    start_gui(node.world, web=node.get_parameter("web").value)

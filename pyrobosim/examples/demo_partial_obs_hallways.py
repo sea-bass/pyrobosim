@@ -214,6 +214,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="This option will add multiple robots to the world.",
     )
+    parser.add_argument(
+        "--web",
+        action="store_true",
+        help="Launch the browser-based web UI instead of the Qt GUI.",
+    )
     return parser.parse_args()
 
 
@@ -223,5 +228,5 @@ if __name__ == "__main__":
     # Create a world.
     world = create_world(args.multirobot)
 
-    # Start the GUI.
-    start_gui(world)
+    # Start the program in the web UI or the Qt GUI.
+    start_gui(world, web=args.web)

@@ -27,6 +27,12 @@ dependencies = [
     "typing_extensions",  # For compatibility with Python <= 3.10
 ]
 
+[project.optional-dependencies]
+web = [
+    "dash>=4,<5",
+    "plotly>=6,<7",
+]
+
 [project.urls]
 Homepage = "https://github.com/sea-bass/pyrobosim"
 

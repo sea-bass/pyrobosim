@@ -53,12 +53,20 @@ def generate_launch_description() -> LaunchDescription:
         default_value=TextSubstitution(text="0.5"),
         description="Search to sample ratio for planner",
     )
+    web_arg = DeclareLaunchArgument(
+        "web",
+        default_value=TextSubstitution(text="false"),
+        description="If true, launches the browser-based web UI instead of the Qt GUI.",
+    )
 
     # Nodes
     world_node = Node(
         package="pyrobosim_ros",
         executable="demo_pddl_world.py",
         name="pddl_demo",
+        parameters=[{"web": LaunchConfiguration("web")}],
+        output="screen",
+        emulate_tty=True,
     )
     planner_node = OpaqueFunction(function=launch_planner_node)
     goalspec_node = Node(
@@ -80,6 +88,7 @@ def generate_launch_description() -> LaunchDescription:
             verbose_arg,
             subscribe_arg,
             search_sample_ratio_arg,
+            web_arg,
             world_node,
             planner_node,
             goalspec_node,

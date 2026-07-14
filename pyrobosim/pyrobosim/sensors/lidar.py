@@ -1,7 +1,7 @@
 """Lidar sensor simulation."""
 
 import time
-from typing import Any
+from typing import Any, Iterable
 
 from matplotlib.artist import Artist
 from matplotlib.collections import LineCollection
@@ -150,6 +150,14 @@ class Lidar2D(Sensor):
         These should have been originally returned by `setup_artists()`.
         """
         self.artist.set_paths(self.lidar_coords)
+
+    def get_display_coords(self) -> Iterable[Iterable[tuple[float, float]]]:
+        """
+        Returns the coordinates of the lidar rays to currently display.
+
+        :return: The list of lidar ray segments, each a sequence of (x, y) points.
+        """
+        return self.lidar_coords if self.is_active else []
 
     def to_dict(self) -> dict[str, Any]:
         """

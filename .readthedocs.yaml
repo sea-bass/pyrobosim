@@ -13,6 +13,8 @@ python:
     - requirements: docs/python_docs_requirements.txt
     - method: pip
       path: pyrobosim
+      extra_requirements:
+        - web
     - method: pip
       path: pyrobosim_ros
 

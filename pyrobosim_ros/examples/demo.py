@@ -6,8 +6,9 @@ additionally starting up a ROS interface.
 """
 
 import os
-import rclpy
 import threading
+
+import rclpy
 
 from pyrobosim.core import Robot, World, WorldYamlLoader
 from pyrobosim.gui import start_gui
@@ -143,6 +144,7 @@ def create_ros_node() -> WorldROSWrapper:
     rclpy.init()
     node = WorldROSWrapper(state_pub_rate=0.1, dynamics_rate=0.01)
     node.declare_parameter("world_file", value="")
+    node.declare_parameter("web", value=False)
 
     # Set the world
     world_file = node.get_parameter("world_file").get_parameter_value().string_value
@@ -165,5 +167,5 @@ if __name__ == "__main__":
     ros_thread = threading.Thread(target=lambda: node.start(wait_for_gui=True))
     ros_thread.start()
 
-    # Start GUI in main thread
-    start_gui(node.world)
+    # Start the web UI or the Qt GUI in main thread
+    start_gui(node.world, web=node.get_parameter("web").value)

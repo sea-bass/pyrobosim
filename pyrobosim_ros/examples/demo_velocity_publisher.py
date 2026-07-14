@@ -4,9 +4,10 @@
 Example showing how to publish velocity commands to a PyRoboSim robot.
 """
 
+import time
+
 import rclpy
 from rclpy.node import Node
-import time
 
 from geometry_msgs.msg import Twist
 
