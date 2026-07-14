@@ -482,14 +482,7 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
         )
 
         # Package up the result
-        try:
-            if goal_handle.is_cancel_requested:
-                goal_handle.canceled()
-            else:
-                goal_handle.succeed()
-        except Exception:
-            if rclpy.ok():
-                raise
+        finalize_goal_handle(goal_handle)
         return ExecuteTaskAction.Result(
             execution_result=execution_result_to_ros(execution_result)
         )
@@ -562,14 +555,7 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
         )
 
         # Package up the result
-        try:
-            if goal_handle.is_cancel_requested:
-                goal_handle.canceled()
-            else:
-                goal_handle.succeed()
-        except Exception:
-            if rclpy.ok():
-                raise
+        finalize_goal_handle(goal_handle)
         return ExecuteTaskPlan.Result(
             execution_result=execution_result_to_ros(execution_result),
             num_completed=num_completed,
@@ -657,11 +643,7 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
                 execution_result=ExecutionResult(status=ExecutionResult.CANCELED),
                 message="Path following canceled.",
             )
-        try:
-            goal_handle.succeed()
-        except Exception:
-            if rclpy.ok():
-                raise
+        finalize_goal_handle(goal_handle)
         return FollowPath.Result(
             execution_result=execution_result_to_ros(robot.last_nav_result)
         )
@@ -914,6 +896,24 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
             deterministic=request.deterministic, seed=request.seed
         )
         return response
+
+
+def finalize_goal_handle(goal_handle: ServerGoalHandle) -> None:  # type: ignore[type-arg] # Cannot add type args in Humble and Jazzy
+    """
+    Marks a goal handle canceled or succeeded once its execution completes.
+
+    :param goal_handle: The goal handle to finalize.
+    """
+    try:
+        if goal_handle.is_cancel_requested:
+            goal_handle.canceled()
+        else:
+            goal_handle.succeed()
+    except Exception:
+        #  Failures are ignored if the ROS context was already shut down
+        # (e.g., on Ctrl+C), since the goal can no longer be finalized.
+        if rclpy.ok():
+            raise
 
 
 def update_world_from_state_msg(world: World, msg: WorldState) -> None:
