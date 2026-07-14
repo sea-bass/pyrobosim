@@ -104,6 +104,12 @@ Most examples accept a ``--web`` flag to launch the web UI instead of the Qt GUI
 
     python3 examples/demo.py --web
 
+The ROS examples instead expose this as a ``web`` node parameter, which is also available as a launch argument:
+
+::
+
+    ros2 launch pyrobosim_ros demo.launch.py web:=true
+
 Then, open ``http://localhost:8050`` in your browser to interact with the world.
 
 To use the web UI in your own scripts, pass ``web=True`` to ``start_gui``:

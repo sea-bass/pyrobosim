@@ -2,6 +2,7 @@
 
 import itertools
 import numpy as np
+from threading import Thread
 from typing import Any
 
 import pathlib
@@ -124,6 +125,16 @@ class World:
 
     def shutdown(self) -> None:
         """Cleanly shuts down the world."""
+        cancel_threads = [
+            Thread(target=robot.cancel_actions)
+            for robot in self.robots
+            if robot.is_busy()
+        ]
+        for thread in cancel_threads:
+            thread.start()
+        for thread in cancel_threads:
+            thread.join()
+
         for robot in self.robots:
             robot.stop_sensor_threads()
 
