@@ -40,6 +40,7 @@ Below is a list of known projects that use PyRoboSim.
 * `Replacing Large Language Models for Personalized Robot Behavior <https://digital.wpi.edu/concern/etds/5999n813z>`_, by Tuomas Pyorre (2025)
 * `Reinforcement Learning for Deliberation in ROS 2 <https://github.com/ros-wg-delib/rl_deliberation>`_, by Christian Henkel and Sebastian Castro (2025)
 * `BT4.x, Groot2 y BTROS2: Orquestación avanzada en ROS 2 <https://github.com/Eurecat/BTWorkshop_ROSCON_ES25>`_, by Davide Faconti and Devis Dal Moro (2025)
+* `TrafficSim: A Simulation Framework for the Scottish Rail Network in ROS2 <https://abdn.elsevierpure.com/en/publications/trafficsim-a-simulation-framework-for-the-scottish-rail-network-i/>`_, by Rebekah Leslie, Calvin Earnshaw, Favour Jam, Kacper Komnata, Andreas Maita, and Rafael C. Cardoso (2025)
 * `Contract-Grounded Behavior Tree Synthesis via Coding Agents <https://jsalfity.github.io/agentic-bt-gen-webviewer/>`_, by Jonathan Salfity, Robert Blake Anderson, and Mitch Pryor (2026)
 
 If you have something to add, please submit a pull request!
