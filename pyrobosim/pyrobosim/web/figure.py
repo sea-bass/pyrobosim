@@ -203,18 +203,15 @@ def _robot_trace_data(robot: Robot) -> RobotTraceData:
     pose = robot.get_pose()
 
     # Render only the path snapshotted by the robot; the planner's live state
-    # may be mid-replan.
+    # may be mid-replan. The path persists after navigation until the next
+    # plan replaces it or the planner is reset.
     path = robot.displayed_path
 
-    # The path shows while navigating or still untraversed (e.g., the planner
-    # demos plan without navigating), and clears once the robot arrives.
     path_x: list[Any] = []
     path_y: list[Any] = []
     if path is not None and path.num_poses > 1:
-        at_start = pose.get_linear_distance(path.poses[0]) < 0.05
-        if robot.is_moving() or at_start:
-            path_x = [p.x for p in path.poses]
-            path_y = [p.y for p in path.poses]
+        path_x = [p.x for p in path.poses]
+        path_y = [p.y for p in path.poses]
 
     # Sensor data (e.g., lidar rays), as None-separated line segments.
     sensor_x: list[Any] = []

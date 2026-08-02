@@ -5,10 +5,13 @@ Tests for the web UI figure building, commands, and app creation.
 from shapely.geometry import Polygon
 
 from pyrobosim.core import World
+from pyrobosim.utils.path import Path
+from pyrobosim.utils.pose import Pose
 from pyrobosim.web import commands
 from pyrobosim.web.app import create_app, status_text
 from pyrobosim.web.figure import (
     TRACES_PER_ROBOT,
+    _robot_trace_data,
     _svg_path,
     color_to_css,
     dynamic_patch,
@@ -102,6 +105,26 @@ def test_held_object_label(test_world: World) -> None:
         )
     finally:
         robot.manipulated_object = None
+
+
+def test_path_persists_after_navigation(test_world: World) -> None:
+    """The path trail stays rendered after arrival, until replaced or cleared."""
+    robot = test_world.robots[0]
+    path = Path(poses=[Pose(x=0.0, y=0.0), Pose(x=1.0, y=0.5), Pose(x=2.0, y=1.0)])
+    robot.displayed_path = path
+    try:
+        # Idle at the goal pose, i.e., navigation has finished.
+        robot.set_pose(path.poses[-1])
+        assert not robot.is_moving()
+        path_x, path_y = _robot_trace_data(robot).path
+        assert path_x == [0.0, 1.0, 2.0]
+        assert path_y == [0.0, 0.5, 1.0]
+
+        # Clearing the path (e.g., on planner reset) clears the trail.
+        robot.displayed_path = None
+        assert _robot_trace_data(robot).path == ([], [])
+    finally:
+        robot.displayed_path = None
 
 
 def test_resolve_robot(test_world: World) -> None:
