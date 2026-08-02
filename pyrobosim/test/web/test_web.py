@@ -1,14 +1,6 @@
 """
-Tests for the web frontend figure building, commands, and app creation.
-
-The whole module is skipped if the optional web dependencies (plotly/dash)
-are not installed.
+Tests for the web UI figure building, commands, and app creation.
 """
-
-import pytest
-
-pytest.importorskip("plotly")
-pytest.importorskip("dash")
 
 from shapely.geometry import Polygon
 
@@ -90,6 +82,26 @@ def test_dynamic_patch(test_world: World) -> None:
     """The dynamic patch builds for the world's robots."""
     patch = dynamic_patch(test_world, test_world.robots[0])
     assert patch is not None
+
+
+def test_held_object_label(test_world: World) -> None:
+    """A held object's name renders as trace text, so it follows the robot."""
+    robot = test_world.robots[0]
+    obj = test_world.objects[0]
+    robot.manipulated_object = obj
+    try:
+        fig = make_figure(test_world, selected_robot=robot)
+        assert any(
+            trace.text is not None and obj.name in trace.text for trace in fig.data
+        )
+
+        # The label hides when object names are toggled off.
+        fig = make_figure(test_world, selected_robot=robot, show_object_names=False)
+        assert not any(
+            trace.text is not None and obj.name in trace.text for trace in fig.data
+        )
+    finally:
+        robot.manipulated_object = None
 
 
 def test_resolve_robot(test_world: World) -> None:

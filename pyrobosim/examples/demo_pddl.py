@@ -9,9 +9,9 @@ import threading
 import time
 
 from pyrobosim.core import World, WorldYamlLoader
-from pyrobosim.gui import start_gui
 from pyrobosim.planning.pddlstream import PDDLStreamPlanner, get_default_domains_folder
 from pyrobosim.utils.general import get_data_folder
+from pyrobosim.web import start_ui
 
 
 def parse_args() -> argparse.Namespace:
@@ -29,11 +29,6 @@ def parse_args() -> argparse.Namespace:
         default=0.5,
         help="Search to sample ratio for planner",
     )
-    parser.add_argument(
-        "--web",
-        action="store_true",
-        help="Launch the browser-based web UI instead of the Qt GUI.",
-    )
     return parser.parse_args()
 
 
@@ -48,10 +43,9 @@ def start_planner(world: World, args: argparse.Namespace) -> None:
     domain_folder = get_default_domains_folder() / args.example
     planner = PDDLStreamPlanner(world, domain_folder)
 
-    # Wait for the GUI to load
-    while world.gui is None:
-        time.sleep(1.0)
-    time.sleep(0.5)  # Extra time for log messages to not interfere with prompt
+    # Give the web UI time to start up and finish logging,
+    # so its messages do not interfere with the prompt below.
+    time.sleep(2.0)
 
     if args.example == "01_simple":
         # Task specification for simple example.
@@ -105,5 +99,5 @@ if __name__ == "__main__":
     planner_thread = threading.Thread(target=start_planner, args=(world, args))
     planner_thread.start()
 
-    # Start the web UI or the Qt GUI in the main thread.
-    start_gui(world, web=args.web)
+    # Start the web UI in the main thread.
+    start_ui(world)

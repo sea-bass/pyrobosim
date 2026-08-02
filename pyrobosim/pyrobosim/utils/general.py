@@ -1,10 +1,9 @@
 """General package utilities."""
 
-import re
 import pathlib
 from typing import Sequence
 
-from matplotlib.colors import CSS4_COLORS, to_rgb
+from PIL import ImageColor
 
 
 def get_data_folder() -> pathlib.Path:
@@ -76,18 +75,11 @@ def parse_color(color: Sequence[float] | str) -> Sequence[float]:
         )
 
     if isinstance(color, str):
-        if color in CSS4_COLORS:
-            color = to_rgb(CSS4_COLORS[color])
-            assert isinstance(color, tuple) and len(color) == 3
-            return color
-
-        hex_pattern = r"^#(?:[0-9a-fA-F]{3}){1,2}$"
-        if re.match(hex_pattern, color):
-            color = to_rgb(color)
-            assert isinstance(color, tuple) and len(color) == 3
-            return color
-
-        raise ValueError(f"Invalid color name or hexadecimal value: {color}.")
+        try:
+            rgb = ImageColor.getrgb(color)
+        except ValueError:
+            raise ValueError(f"Invalid color name or hexadecimal value: {color}.")
+        return tuple(channel / 255.0 for channel in rgb[:3])
 
     raise ValueError(
         "Unsupported input type. Expected a list, tuple, or string representing a color."

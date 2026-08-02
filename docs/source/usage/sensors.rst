@@ -68,29 +68,24 @@ This will only take effect if your robot is created with the ``start_sensor_thre
                 time.sleep(max(0.0, self.update_rate_s - (t_end - t_start)))
 
 
-For visualization, you can provide ``setup_artists()`` and ``update_artists()`` methods.
+For visualization, you can provide a ``get_display_coords()`` method, which returns
+the line segments (each an iterable of XY points) to display for the sensor.
 
 .. code-block:: python
 
-    from matplotlib.artist import Artist
-    from matplotlib.patches import Circle
-    from matplotlib.transforms import Affine2D
+    import math
+    from typing import Iterable
 
-        def setup_artists(self) -> list[Artist]:
-            """Executes when the sensor is first visualized."""
+        def get_display_coords(self) -> Iterable[Iterable[tuple[float, float]]]:
+            """Returns a circle around the robot as a line segment loop."""
             pose = self.robot.get_pose()
-            self.circle = Circle(
-                (pose.x, pose.y),
-                radius=1.0,
-                color="r",
-            )
-            return [self.circle]
-
-        def update_artists(self) -> None:
-            """Updates the artist as needed."""
-            pose = self.robot.get_pose()
-            new_tform = Affine2D().translate(pose.x, pose.y)
-            self.circle.set_transform(new_tform)
+            angles = [math.radians(deg) for deg in range(0, 361, 10)]
+            return [
+                [
+                    (pose.x + math.cos(angle), pose.y + math.sin(angle))
+                    for angle in angles
+                ]
+            ]
 
 
 To serialize to file, which is needed to reset the world, you should also implement the ``to_dict()`` method.

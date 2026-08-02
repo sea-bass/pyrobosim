@@ -302,8 +302,7 @@ class ConstantVelocityExecutor(PathExecutor):
                             )
 
                         self.robot.update_polygons()
-                        if self.robot.world.gui is not None:
-                            self.robot.world.gui.canvas.show_hallways_signal.emit()
+                        self.robot.world.mark_changed()
 
             time.sleep(
                 max(0, self.lidar_sensor_measurement_dt - (time.time() - start_time))

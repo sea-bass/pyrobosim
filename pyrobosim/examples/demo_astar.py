@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 
-import argparse
-
 from pyrobosim.core import WorldYamlLoader
-from pyrobosim.gui import start_gui
 from pyrobosim.navigation.a_star import AStarPlanner
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
+from pyrobosim.web import start_ui
 
 # Load a test world.
 world_file = get_data_folder() / "test_world.yaml"
@@ -35,13 +33,5 @@ def demo_astar() -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="A* planner demo.")
-    parser.add_argument(
-        "--web",
-        action="store_true",
-        help="Launch the browser-based web UI instead of the Qt GUI.",
-    )
-    args = parser.parse_args()
-
     demo_astar()
-    start_gui(world, web=args.web)
+    start_ui(world)

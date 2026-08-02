@@ -3,11 +3,8 @@
 from typing import Any, Sequence
 
 import numpy as np
-from matplotlib.patches import PathPatch
-from matplotlib.text import Text
 import pathlib
 from shapely.geometry import Polygon
-from shapely.plotting import patch_from_polygon
 from scipy.spatial import ConvexHull
 
 from .types import Entity, EntityMetadata, InvalidEntityCategoryException
@@ -80,8 +77,6 @@ class Object(Entity):
 
         self.inflation_radius = inflation_radius
         self.collision_polygon = Polygon()
-        self.viz_patch: PathPatch | None = None
-        self.viz_text: Text | None = None
 
         category_metadata = Object.metadata.get(category)
         if category_metadata is None:
@@ -125,7 +120,6 @@ class Object(Entity):
             self.height = height
         self.centroid = list(self.polygon.centroid.coords)[0]
         self.update_collision_polygon(inflation_radius)
-        self.update_visualization_polygon()
 
     def update_collision_polygon(self, inflation_radius: float | None = None) -> None:
         """
@@ -138,18 +132,6 @@ class Object(Entity):
         radius = inflation_radius or self.inflation_radius
         self.raw_collision_polygon = inflate_polygon(self.raw_polygon, radius)
         self.collision_polygon = inflate_polygon(self.polygon, radius)
-
-    def update_visualization_polygon(self) -> None:
-        """Updates the visualization polygon for the object."""
-        self.viz_patch = patch_from_polygon(
-            self.polygon,
-            facecolor=None,
-            edgecolor=self.viz_color,
-            linewidth=2,
-            fill=None,
-            alpha=0.75,
-            zorder=4,
-        )
 
     def get_footprint(self) -> np.ndarray:
         """

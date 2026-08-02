@@ -3,7 +3,6 @@
 from typing import Any, Sequence
 
 import pathlib
-from shapely.plotting import patch_from_polygon
 
 from .types import Entity, EntityMetadata, InvalidEntityCategoryException
 from ..utils.general import parse_color
@@ -144,7 +143,6 @@ class Location(Entity):
             self.height = height
         self.polygon = transform_polygon(self.raw_polygon, self.pose)
         self.update_collision_polygon(inflation_radius=inflation_radius)
-        self.update_visualization_polygon()
 
     def update_collision_polygon(self, inflation_radius: float = 0.0) -> None:
         """
@@ -153,18 +151,6 @@ class Location(Entity):
         :param inflation_radius: Inflation radius, in meters.
         """
         self.collision_polygon = inflate_polygon(self.polygon, inflation_radius)
-
-    def update_visualization_polygon(self) -> None:
-        """Updates the visualization polygon for the location."""
-        self.viz_patch = patch_from_polygon(
-            self.polygon,
-            facecolor=None if self.is_open else self.viz_color,
-            edgecolor=self.viz_color,
-            linewidth=2,
-            fill=not self.is_open,
-            alpha=0.5,
-            zorder=2,
-        )
 
     def create_spawn_locations(self) -> None:
         """Creates the object spawn locations at this location."""
@@ -253,7 +239,6 @@ class ObjectSpawn(Entity):
         )
         self.height = height or self.parent.height
 
-        self.update_visualization_polygon()
         self.centroid = get_polygon_centroid(self.polygon)
         self.pose = Pose(
             x=self.centroid[0], y=self.centroid[1], z=0.0, q=self.parent.pose.q
@@ -283,19 +268,6 @@ class ObjectSpawn(Entity):
                     self.nav_poses.append(nav_pose)
         else:
             self.nav_poses = self.parent.nav_poses
-
-    def update_visualization_polygon(self) -> None:
-        """Updates the visualization polygon for the object spawn."""
-        assert self.parent is not None
-        self.viz_patch = patch_from_polygon(
-            self.polygon,
-            facecolor=None,
-            edgecolor=self.parent.viz_color,
-            linewidth=1,
-            fill=None,
-            ls="--",
-            zorder=2,
-        )
 
     def add_graph_nodes(self) -> None:
         """Creates graph nodes for searching."""

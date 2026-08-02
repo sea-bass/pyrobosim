@@ -1,8 +1,9 @@
 """
-Web frontend for PyRoboSim.
+Web UI for PyRoboSim.
 
-This subpackage renders a PyRoboSim world in the browser using Plotly/Dash,
-as a lightweight alternative to the PySide6/matplotlib GUI. It has no
-dependency on PySide6 or ROS, and does not modify the core world model: it
-only reads the geometry already stored on world entities.
+This subpackage renders a PyRoboSim world in the browser using Plotly Dash.
+It does not modify the core world model: it only reads the geometry already
+stored on world entities, and drives the world through its regular APIs.
 """
+
+from .app import create_app, start_ui

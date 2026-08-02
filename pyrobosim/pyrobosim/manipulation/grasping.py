@@ -4,11 +4,53 @@ from enum import Enum
 from typing import Sequence
 
 import numpy as np
-from matplotlib.axes import Axes
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+from plotly.colors import qualitative
 from transforms3d.quaternions import rotate_vector, qinverse
 
 from ..utils.pose import Pose
+
+# A quadrilateral face for 3D visualization, as a list of four XYZ vertices.
+Quad = list[list[float]]
+
+
+def _mesh_from_quads(quads: list[Quad], color: str, opacity: float) -> go.Mesh3d:
+    """
+    Builds a Plotly 3D mesh trace from a list of quadrilateral faces.
+
+    :param quads: The quadrilateral faces, each a list of four XYZ vertices.
+    :param color: The CSS color of the mesh.
+    :param opacity: The opacity of the mesh, in the range (0.0, 1.0).
+    :return: The mesh trace.
+    """
+    xs: list[float] = []
+    ys: list[float] = []
+    zs: list[float] = []
+    i: list[int] = []
+    j: list[int] = []
+    k: list[int] = []
+    for quad in quads:
+        base = len(xs)
+        for vx, vy, vz in quad:
+            xs.append(vx)
+            ys.append(vy)
+            zs.append(vz)
+        # Split the quad into two triangles.
+        i += [base, base]
+        j += [base + 1, base + 2]
+        k += [base + 2, base + 3]
+    return go.Mesh3d(
+        x=xs,
+        y=ys,
+        z=zs,
+        i=i,
+        j=j,
+        k=k,
+        color=color,
+        opacity=opacity,
+        flatshading=True,
+        hoverinfo="skip",
+    )
 
 
 class GraspFace(Enum):
@@ -146,18 +188,12 @@ class Grasp:
             self.origin_wrt_object.z + vec[2],
         ]
 
-    def plot(
-        self, ax: Axes, color: tuple[float, ...] | str, alpha: float = 0.8
-    ) -> None:
+    def get_gripper_quads(self) -> list[Quad]:
         """
-        Displays the grasp on an existing set of axes.
+        Computes the gripper faces for visualizing the grasp.
 
-        :param ax: The axes to use for displaying the result.
-        :param color: The color of the grasp, as an RGB tuple or string.
-        :param alpha: The alpha channel (transparency) of the grasp.
+        :return: The gripper faces (right finger, left finger, and base).
         """
-        from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-
         d = self.properties.depth
         h = self.properties.height / 2
         w = self.properties.max_width / 2
@@ -172,7 +208,7 @@ class Grasp:
         right_bottom_tip = self.translate_origin(rotate_vector([-w, -h, 0], qinv))
         right_top_tip = self.translate_origin(rotate_vector([-w, h, 0], qinv))
 
-        gripper_verts = [
+        return [
             # Right gripper
             [right_bottom_base, right_bottom_tip, right_top_tip, right_top_base],
             # Left gripper
@@ -180,7 +216,6 @@ class Grasp:
             # Gripper base
             [right_bottom_base, left_bottom_base, left_top_base, right_top_base],
         ]
-        ax.add_collection3d(Poly3DCollection(gripper_verts, color=color, alpha=alpha))
 
     def __repr__(self) -> str:
         """Printable string representation"""
@@ -546,7 +581,7 @@ class GraspGenerator:
         object_footprint: np.ndarray | None = None,
     ) -> None:
         """
-        Display the grasps on top of an object.
+        Display the grasps on top of an object in the browser.
 
         :param object_dims: List containing the object [x, y, z] dimensions
         :param grasps: A list of grasps
@@ -554,33 +589,31 @@ class GraspGenerator:
         :param robot_pose: The pose of the robot. If none specified, it is not used in calculations.
         :param object_footprint: Optional N-by-2 array of the object footprint points to overlay
         """
-        from mpl_toolkits.mplot3d import Axes3D
-        from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-
-        fig = plt.figure()
-        ax = Axes3D(fig)
-        fig.add_axes(ax)
+        fig = go.Figure()
 
         # Show the object cuboid
-        max_dim = max(object_dims)
-        min_x = min_y = min_z = -max_dim
-        max_x = max_y = max_z = max_dim
         x, y, z = [d / 2 for d in object_dims]
-        verts = [
-            [(-x, -y, -z), (x, -y, -z), (x, y, -z), (-x, y, -z)],
-            [(-x, -y, z), (x, -y, z), (x, y, z), (-x, y, z)],
-            [(-x, -y, -z), (-x, y, -z), (-x, y, z), (-x, -y, z)],
-            [(x, -y, -z), (x, y, -z), (x, y, z), (x, -y, z)],
-            [(-x, -y, -z), (x, -y, -z), (x, -y, z), (-x, -y, z)],
-            [(-x, y, -z), (x, y, -z), (x, y, z), (-x, y, z)],
+        cuboid_quads: list[Quad] = [
+            [[-x, -y, -z], [x, -y, -z], [x, y, -z], [-x, y, -z]],
+            [[-x, -y, z], [x, -y, z], [x, y, z], [-x, y, z]],
+            [[-x, -y, -z], [-x, y, -z], [-x, y, z], [-x, -y, z]],
+            [[x, -y, -z], [x, y, -z], [x, y, z], [x, -y, z]],
+            [[-x, -y, -z], [x, -y, -z], [x, -y, z], [-x, -y, z]],
+            [[-x, y, -z], [x, y, -z], [x, y, z], [-x, y, z]],
         ]
-        ax.add_collection3d(Poly3DCollection(verts, color=[0.3, 0.3, 0.3, 0.3]))
+        fig.add_trace(_mesh_from_quads(cuboid_quads, "gray", opacity=0.3))
 
         # Show the object footprint points, if specified
         if object_footprint is not None:
-            footprint_verts = [[(pt[0], pt[1], -z) for pt in object_footprint]]
-            ax.add_collection3d(
-                Poly3DCollection(footprint_verts, color=[0.3, 0.3, 0.3, 0.6])
+            fig.add_trace(
+                go.Scatter3d(
+                    x=object_footprint[:, 0],
+                    y=object_footprint[:, 1],
+                    z=[-z] * len(object_footprint),
+                    mode="lines",
+                    line={"color": "gray", "width": 4},
+                    showlegend=False,
+                )
             )
 
         # Show the robot pose, if present
@@ -594,42 +627,59 @@ class GraspGenerator:
             xr = p_robot_rt_object.x
             yr = p_robot_rt_object.y
             zr = p_robot_rt_object.z
-            ax.plot3D(xr, yr, zr, "ko", markersize=10)
-            ax.plot3D([0, xr], [0, yr], [0, zr], "k--", linewidth=1)
+            fig.add_trace(
+                go.Scatter3d(
+                    x=[0, xr],
+                    y=[0, yr],
+                    z=[0, zr],
+                    mode="lines+markers",
+                    line={"color": "black", "dash": "dash", "width": 2},
+                    marker={"color": "black", "size": [0, 8]},
+                    name="robot",
+                )
+            )
 
         # Show the grasps
-        color_idx = 0
-        colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
-        for grasp in grasps:
+        colors = qualitative.Plotly
+        for color_idx, grasp in enumerate(grasps):
             xo = grasp.origin_wrt_object.x
             yo = grasp.origin_wrt_object.y
             zo = grasp.origin_wrt_object.z
             xd, yd, zd = normal_from_face[grasp.face]
             depth = grasp.properties.depth
 
-            # Plot the grasp point
-            color = colors[color_idx]
-            ax.plot3D(xo, yo, zo, "o", color=color)
-            ax.plot3D(
-                [xo, xo + depth * xd],
-                [yo, yo + depth * yd],
-                [zo, zo + depth * zd],
-                ":",
-                color=color,
+            # Plot the grasp point and approach direction
+            color = colors[color_idx % len(colors)]
+            fig.add_trace(
+                go.Scatter3d(
+                    x=[xo, xo + depth * xd],
+                    y=[yo, yo + depth * yd],
+                    z=[zo, zo + depth * zd],
+                    mode="lines+markers",
+                    line={"color": color, "dash": "dot", "width": 4},
+                    marker={"color": color, "size": [5, 0]},
+                    name=f"grasp {color_idx}",
+                )
             )
 
             # Plot the grasp itself
-            grasp.plot(ax, color)
+            fig.add_trace(
+                _mesh_from_quads(grasp.get_gripper_quads(), color, opacity=0.8)
+            )
 
-            color_idx += 1
-
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        ax.set_zlabel("Z")
-        ax.axes.set_xlim3d(min_x, max_x)
-        ax.axes.set_ylim3d(min_y, max_y)
-        ax.axes.set_zlim3d(min_z, max_z)
-        plt.show()
+        # Set an equal-aspect view spanning the object dimensions.
+        max_dim = max(object_dims)
+        axis_settings = {"range": [-max_dim, max_dim]}
+        fig.update_layout(
+            scene={
+                "xaxis": {"title": "X", **axis_settings},
+                "yaxis": {"title": "Y", **axis_settings},
+                "zaxis": {"title": "Z", **axis_settings},
+                "aspectmode": "cube",
+            },
+            title="Grasps",
+        )
+        fig.show()
 
     def to_dict(self) -> dict[str, str | float]:
         """

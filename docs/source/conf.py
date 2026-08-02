@@ -56,30 +56,6 @@ autodoc_mock_imports = [
     "std_srvs",
 ]
 
-# Importing PySide6 installs a global import hook (shibokensupport) that calls
-# inspect.getsource() on every subsequently imported module. Sphinx's mocked
-# modules (see autodoc_mock_imports above) have a self-referential __wrapped__
-# attribute, so inspect.unwrap() raises "ValueError: wrapper loop" and the
-# import fails, leaving those API pages empty. Make inspect.unwrap() return the
-# object unchanged in that case; getsource() then fails with a regular error
-# that the hook already handles.
-import inspect
-
-_original_unwrap = inspect.unwrap
-
-
-def _safe_unwrap(func, *, stop=None):  # type: ignore[no-untyped-def]
-    try:
-        if stop is None:
-            return _original_unwrap(func)
-        return _original_unwrap(func, stop=stop)
-    except ValueError:
-        return func
-
-
-inspect.unwrap = _safe_unwrap
-
-
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for

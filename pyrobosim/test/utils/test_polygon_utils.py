@@ -4,10 +4,8 @@
 Unit tests for polygon utilities.
 """
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pytest
-from matplotlib.patches import Polygon as PolygonPatch
 from pytest import LogCaptureFixture
 from scipy.spatial import ConvexHull
 from shapely.geometry import Point, Polygon
@@ -258,7 +256,7 @@ def test_polygon_from_footprint() -> None:
     assert str(exc_info.value) == "Invalid footprint type: invalid"
 
 
-def test_convhull_to_rectangle(display: bool = False) -> None:
+def test_convhull_to_rectangle() -> None:
     # Create a cross-shaped object
     xy_pts = np.array(
         [
@@ -281,20 +279,9 @@ def test_convhull_to_rectangle(display: bool = False) -> None:
     # Then, gets its convex hull and a best-fit rectangle
     hull = ConvexHull(xy_pts)
     hull_pts = np.vstack([xy_pts[hull.vertices, :], xy_pts[hull.vertices[0], :]])
-    rect_pose, rect_dims, rect_pts = convhull_to_rectangle(hull_pts)
+    rect_pose, rect_dims, _ = convhull_to_rectangle(hull_pts)
 
     # Check the rectangle origin and dimension
     assert rect_pose.x == pytest.approx(0.0)
     assert rect_pose.y == pytest.approx(0.0)
     assert rect_dims == pytest.approx([0.2 * np.sqrt(2), 0.2 * np.sqrt(2)])
-
-    # Display the outputs
-    if display:
-        fig, ax = plt.subplots()
-        poly = PolygonPatch(xy_pts)
-        ax.add_patch(poly)
-        plt.plot(hull_pts[:, 0], hull_pts[:, 1], "r--", lw=2)
-        plt.plot(rect_pts[:, 0], rect_pts[:, 1], "b:", lw=2)
-        plt.legend(["Polygon", "Convex Hull", "Rectangle Fit"])
-        plt.axis("equal")
-        plt.show()

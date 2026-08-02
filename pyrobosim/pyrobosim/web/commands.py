@@ -1,9 +1,9 @@
 """
-World and robot commands for the web frontend.
+World and robot commands for the web UI.
 
-These mirror the Qt GUI's button callbacks: long-running actions (navigate,
-pick, place, detect, open, close) run on background daemon threads so the web
-callback returns immediately, while quick ones run inline.
+Long-running actions (navigate, pick, place, detect, open, close) run on
+background daemon threads so the web callback returns immediately, while
+quick ones run inline.
 """
 
 import threading

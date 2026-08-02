@@ -3,15 +3,10 @@
 """
 System-level tests for the web UI functionality to execute tasks.
 
-These mirror ``test/system/test_system.py``, but drive the Dash application
-instead of the Qt GUI. Actions are exercised end-to-end through the app's
-HTTP callback endpoint (via the Flask test client), the same route the
-browser posts to, so no browser is needed. While actions execute, the engine
-callback is invoked the way the browser's refresh timer would, and its
-responses are checked.
-
-The whole module is skipped if the optional web dependencies (plotly/dash)
-are not installed.
+Actions are exercised end-to-end through the app's HTTP callback endpoint
+(via the Flask test client), the same route the browser posts to, so no
+browser is needed. While actions execute, the engine callback is invoked
+the way the browser's refresh timer would, and its responses are checked.
 """
 
 import pathlib
@@ -19,9 +14,6 @@ import time
 from typing import Any, Callable, ClassVar
 
 import pytest
-
-pytest.importorskip("plotly")
-pytest.importorskip("dash")
 
 from dash import Dash
 from flask.testing import FlaskClient
@@ -48,10 +40,8 @@ class TestSystemWeb:
         if TestSystemWeb.app is not None:
             return
 
-        # Load the same world as the Qt GUI system tests.
-        world_file_path = (
-            pathlib.Path(__file__).parents[1] / "system" / "test_system_world.yaml"
-        )
+        # Load the system test world.
+        world_file_path = pathlib.Path(__file__).parent / "test_system_world.yaml"
         TestSystemWeb.world = WorldYamlLoader().from_file(world_file_path)
         TestSystemWeb.robot = TestSystemWeb.world.robots[0]
 

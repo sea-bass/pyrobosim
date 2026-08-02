@@ -6,7 +6,6 @@ from typing import Any, Sequence
 from typing_extensions import Self  # For compatibility with Python <= 3.10
 
 import pathlib
-from matplotlib.patches import PathPatch
 from shapely import intersects_xy, Polygon
 import yaml
 
@@ -48,10 +47,8 @@ class Entity:
     is_charger = False
     """Whether the entity is a charger or not."""
 
-    viz_patch: PathPatch | None = None
-    """The visualization polygon patch for the entity."""
     viz_color: Sequence[float]
-    """The color of the visualization polygon patch and text."""
+    """The color of the visualization polygon and text."""
 
     def __init__(self, *, name: str) -> None:
         """

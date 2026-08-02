@@ -3,10 +3,8 @@
 import math
 from typing import Any, Sequence
 
-from matplotlib.patches import PathPatch
 from shapely import intersects_xy
 from shapely.geometry import LineString, MultiLineString
-from shapely.plotting import patch_from_polygon
 
 from .room import Room
 from .types import Entity
@@ -159,44 +157,6 @@ class Hallway(Entity):
         self.viz_polygon = self.buffered_polygon.difference(self.polygon)
         self.viz_polygon = self.viz_polygon.difference(self.room_start.buffered_polygon)
         self.viz_polygon = self.viz_polygon.difference(self.room_end.buffered_polygon)
-        self.viz_patch = patch_from_polygon(
-            self.viz_polygon,
-            facecolor=self.viz_color,
-            edgecolor=self.viz_color,
-            linewidth=2,
-            alpha=0.75,
-            zorder=2,
-        )
-
-    def get_closed_patch(self) -> PathPatch:
-        """
-        Returns a patch of the hallway polygon to display when it is closed.
-
-        :return: Polygon patch of the closed polygon.
-        """
-        return patch_from_polygon(
-            self.closed_polygon,
-            facecolor=self.viz_color,
-            edgecolor=self.viz_color,
-            linewidth=2,
-            alpha=0.5,
-            zorder=2,
-        )
-
-    def get_collision_patch(self) -> PathPatch:
-        """
-        Returns a patch of the collision polygon for debug visualization.
-
-        :return: Polygon patch of the collision polygon.
-        """
-        return patch_from_polygon(
-            self.internal_collision_polygon,
-            facecolor=(1, 0, 1),
-            edgecolor=(1, 0, 1),
-            linewidth=2,
-            alpha=0.5,
-            zorder=2,
-        )
 
     def is_collision_free(self, pose: Pose | Sequence[float]) -> bool:
         """

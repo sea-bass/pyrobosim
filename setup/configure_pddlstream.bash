@@ -2,6 +2,8 @@
 
 # Set up PDDLStream
 
+set -euo pipefail
+
 # Set up the dependencies folder
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 DEPENDS_DIR=${SCRIPT_DIR}/../dependencies

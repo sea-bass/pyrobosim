@@ -210,11 +210,10 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
         self.world.logger = get_logger(self.world.name)
         self.world.logger.info("Configured ROS node.")
 
-    def start(self, wait_for_gui: bool = False, auto_spin: bool = True) -> None:
+    def start(self, auto_spin: bool = True) -> None:
         """
         Starts the node.
 
-        :param wait_for_gui: If True, waits for the GUI to come up before starting.
         :param auto_spin: If True, creates an executor and spins it indefinitely.
             If you want to handle your own node execution, set this to False.
         """
@@ -236,9 +235,6 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
             self.dynamics_rate, self.dynamics_callback
         )
 
-        while wait_for_gui and self.world.gui is None:
-            self.get_logger().info("Waiting for GUI...")
-            time.sleep(1.0)
         self.get_logger().info("PyRoboSim ROS node ready!")
 
         if auto_spin:
@@ -625,18 +621,12 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
         path = path_from_ros(goal_handle.request.path)
         Thread(target=robot.follow_path, args=(path,)).start()
 
-        if self.world.gui is not None:
-            self.world.gui.set_buttons_during_action(False)
-
         while robot.executing_nav and goal_handle.status != GoalStatus.STATUS_CANCELED:
             if goal_handle.is_cancel_requested:
                 robot.cancel_actions()
                 goal_handle.canceled()
                 break
             time.sleep(0.1)
-
-        if self.world.gui is not None:
-            self.world.gui.set_buttons_during_action(True)
 
         if goal_handle.status == GoalStatus.STATUS_CANCELED:
             return FollowPath.Result(

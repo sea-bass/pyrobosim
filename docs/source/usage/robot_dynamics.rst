@@ -72,19 +72,21 @@ For example:
 
         robot.set_pose(new_pose)
 
-Finally, if you want to run with the GUI, you must ensure that the GUI is running on the main thread and the dynamics are on a separate thread.
+Finally, if you want to run with the UI, you must ensure that the UI is running on the main thread and the dynamics are on a separate thread.
 You can do this as follows, using our ``command_robots()`` function above.
 
 .. code-block:: python
 
     from threading import Thread
 
+    from pyrobosim.web import start_ui
+
     # Command robots on a separate thread.
     robot_commands_thread = Thread(target=lambda: command_robots(world))
     robot_commands_thread.start()
 
-    # Start the program either as ROS node or standalone.
-    start_gui(world)
+    # Start the UI on the main thread.
+    start_ui(world)
 
 The full example is available here for you to run and modify.
 

@@ -18,7 +18,9 @@ Then, run the example.
 
     python3 examples/demo.py
 
-You can now interact with the GUI through the buttons and text boxes.
+This serves the UI at ``http://localhost:8050`` and opens it in your default browser.
+
+You can now interact with the UI through the buttons and text boxes.
 For example, enter "bedroom desk" in the **Goal query** text box and then click the **Navigate** button.
 Once at the destination, click **Pick**.
 
@@ -41,7 +43,7 @@ First, build and setup your ROS 2 workspace (or use one of our provided Docker c
     . install/local_setup.bash
 
 
-You can run a ROS 2 enabled demo and interact with the GUI:
+You can run a ROS 2 enabled demo and interact with the UI:
 
 ::
 
@@ -91,36 +93,23 @@ For example:
 
 Refer to the :ref:`yaml_schemas` documentation for more information.
 
-Web UI (Experimental)
----------------------
+Web UI
+------
 
-PyRoboSim also has an experimental browser-based UI built with `Plotly Dash <https://dash.plotly.com/>`_.
-This is a lightweight alternative to the Qt GUI, and the goal is to replace it in a future major release.
-It requires the optional web dependencies, which you can install with ``pip install pyrobosim[web]``.
+The PyRoboSim UI is browser-based and built with `Plotly Dash <https://dash.plotly.com/>`_.
+The examples serve it at ``http://localhost:8050`` and open it in your default browser.
 
-Most examples accept a ``--web`` flag to launch the web UI instead of the Qt GUI:
-
-::
-
-    python3 examples/demo.py --web
-
-The ROS examples instead expose this as a ``web`` node parameter, which is also available as a launch argument:
-
-::
-
-    ros2 launch pyrobosim_ros demo.launch.py web:=true
-
-Then, open ``http://localhost:8050`` in your browser to interact with the world.
-
-To use the web UI in your own scripts, pass ``web=True`` to ``start_gui``:
+To use the web UI in your own scripts, call ``start_ui`` with a world:
 
 .. code-block:: python
 
-    from pyrobosim.gui import start_gui
+    from pyrobosim.web import start_ui
 
-    start_gui(world, web=True, web_host="127.0.0.1", web_port=8050)
+    start_ui(world, host="127.0.0.1", port=8050, auto_open=True)
 
-Note that the web server is unauthenticated, so only bind to a non-localhost address (``web_host``) on networks you trust.
+To keep the browser from opening automatically (e.g., on a headless machine), pass ``auto_open=False``.
+
+Note that the web server is unauthenticated, so only bind to a non-localhost address (``host``) on networks you trust.
 
 Exporting Worlds to Gazebo
 --------------------------
