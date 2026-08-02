@@ -143,19 +143,4 @@ Then, follow the steps displayed on the console to see the generated world.
     :width: 600px
     :alt: Example world exported to Gazebo.
 
-If you add the ``--classic`` flag to this demo, you can similarly export to Gazebo Classic.
-
-::
-
-    # Standalone
-    python3 examples/demo_world_save.py --classic
-
-    # ROS 2
-    ros2 run pyrobosim_ros demo_world_save.py --classic
-
-.. image:: ../media/gazebo_classic_demo_world.png
-    :align: center
-    :width: 600px
-    :alt: Example world exported to Gazebo Classic.
-
 |

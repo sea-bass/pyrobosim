@@ -24,9 +24,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--out-folder", default=None, help="Output folder for exporting the world"
     )
-    parser.add_argument(
-        "--classic", action="store_true", help="Enable to export to Gazebo Classic"
-    )
     parser.add_argument("--save-grid", action="store_true", help="Save occupancy grid")
     parser.add_argument(
         "--grid-resolution",
@@ -56,7 +53,7 @@ def main() -> None:
 
     # Export a Gazebo world.
     exp = WorldGazeboExporter(world)
-    world_folder = exp.export(classic=args.classic, out_folder=args.out_folder)
+    world_folder = exp.export(out_folder=args.out_folder)
 
     # Save an occupancy grid to the world folder and show it, if enabled.
     if args.save_grid:
