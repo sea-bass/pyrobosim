@@ -257,8 +257,7 @@ class WorldROSWrapper(Node):  # type: ignore[misc]
             self.destroy_node()
             self.executor.shutdown()
             self.executor = None
-        if rclpy.ok():
-            rclpy.shutdown()
+        rclpy.try_shutdown()
 
     def add_robot_ros_interfaces(self, robot: Robot) -> None:
         """
