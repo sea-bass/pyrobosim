@@ -1,5 +1,4 @@
 import pytest
-from matplotlib.colors import CSS4_COLORS, to_rgb
 
 from pyrobosim.utils.general import parse_color
 
@@ -15,12 +14,10 @@ def test_parse_color() -> None:
     assert parse_color((0.0, 1.0, 0.0)) == color_rgb_tuple
 
     # Test with named color
-    color_by_name = "red"
-    assert parse_color("red") == to_rgb(CSS4_COLORS[color_by_name])
+    assert parse_color("red") == (1.0, 0.0, 0.0)
 
     # Test with hexadecimal color format
-    color_hex = "#00FFFF"
-    assert parse_color("#00FFFF") == to_rgb(color_hex)
+    assert parse_color("#00FFFF") == (0.0, 1.0, 1.0)
 
     # Test with invalid RGB list
     with pytest.raises(ValueError) as exc_info:

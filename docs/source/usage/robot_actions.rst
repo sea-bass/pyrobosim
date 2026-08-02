@@ -20,7 +20,7 @@ Executing Actions and Plans
 
 Actions can be executed in a few ways:
 
-* Through the buttons on the GUI.
+* Through the buttons on the UI.
 * Using a robot's :py:meth:`pyrobosim.core.robot.Robot.execute_action` method.
 * (If using ROS), sending a goal to the ``/execute_action`` ROS action server.
 
@@ -154,13 +154,13 @@ To test this, you can run the following example.
     cd /path/to/pyrobosim/pyrobosim
     python3 examples/demo.py --multirobot --partial-obs-objects
 
-In the GUI, selecting a robot in the drop-down menu will only display the objects locally known to that robot.
+In the UI, selecting a robot in the drop-down menu will only display the objects locally known to that robot.
 Alternatively, you can select the ``world`` option to show all existing objects.
 
 .. image:: ../media/pyrobosim_partial_observability.png
     :align: center
     :width: 720px
-    :alt: Partial observability in the PyRoboSim GUI.
+    :alt: Partial observability in the PyRoboSim UI.
 
 |
 

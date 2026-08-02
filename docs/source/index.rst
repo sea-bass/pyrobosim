@@ -3,9 +3,9 @@
 PyRoboSim
 =========
 
-PyRoboSim is a ROS 2 enabled 2D mobile robot simulator for behavior prototyping.
+PyRoboSim is a 2D mobile robot simulator for behavior prototyping with an optional ROS 2 interface.
 
-.. youtube:: K5359uSeyVA
+.. youtube:: hojqw_78-jI
 
 |
 

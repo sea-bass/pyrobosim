@@ -561,7 +561,7 @@ class TestWorldModeling:
 
 
 if __name__ == "__main__":
-    from pyrobosim.gui import start_gui
+    from pyrobosim.web import start_ui
 
     TestWorldModeling.test_create_world_default()
     TestWorldModeling.test_create_room()
@@ -569,4 +569,4 @@ if __name__ == "__main__":
     TestWorldModeling.test_create_location()
     TestWorldModeling.test_create_object()
     TestWorldModeling.test_add_robot()
-    start_gui(TestWorldModeling.world)
+    start_ui(TestWorldModeling.world)

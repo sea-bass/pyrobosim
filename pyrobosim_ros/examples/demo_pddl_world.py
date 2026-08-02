@@ -11,8 +11,8 @@ import threading
 import rclpy
 
 from pyrobosim.core import World, WorldYamlLoader
-from pyrobosim.gui import start_gui
 from pyrobosim.utils.general import get_data_folder
+from pyrobosim.web import start_ui
 from pyrobosim_ros.ros_interface import WorldROSWrapper
 
 
@@ -26,17 +26,15 @@ def create_ros_node() -> WorldROSWrapper:
     """Initializes ROS node"""
     rclpy.init()
     world = load_world()
-    node = WorldROSWrapper(world=world, name="pddl_demo", state_pub_rate=0.1)
-    node.declare_parameter("web", value=False)
-    return node
+    return WorldROSWrapper(world=world, name="pddl_demo", state_pub_rate=0.1)
 
 
 if __name__ == "__main__":
     node = create_ros_node()
 
     # Start ROS Node in separate thread
-    ros_thread = threading.Thread(target=lambda: node.start(wait_for_gui=True))
+    ros_thread = threading.Thread(target=node.start)
     ros_thread.start()
 
-    # Start the web UI or the Qt GUI in main thread
-    start_gui(node.world, web=node.get_parameter("web").value)
+    # Start the web UI in main thread
+    start_ui(node.world)

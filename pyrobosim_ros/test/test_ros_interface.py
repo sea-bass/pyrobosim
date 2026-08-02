@@ -448,13 +448,13 @@ class TestRosInterface:
         )
         assert len(result.result.detected_objects) == 0
 
-    @pytest.mark.dependency(  # type: ignore[misc]
-        name="test_shutdown_ros_interface", depends=["test_specialized_actions"]
-    )
-    def test_shutdown_ros_interface(self) -> None:
-        """Shuts down the interface node and rclpy at the end of all other tests."""
-        assert TestRosInterface.ros_interface is not None
-        TestRosInterface.ros_interface.shutdown()
-
-        # Avoids sensor thread deadlock at shutdown.
-        TestRosInterface.ros_interface.world.shutdown()
+    @classmethod
+    def teardown_class(cls) -> None:
+        """
+        Shuts down the interface node, world, and rclpy after all tests in this class.
+        """
+        try:
+            if cls.ros_interface is not None:
+                cls.ros_interface.shutdown()
+        finally:
+            rclpy.try_shutdown()

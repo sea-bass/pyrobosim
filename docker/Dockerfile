@@ -13,16 +13,11 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y \
         apt-utils \
-        libegl1 \
-        libgl1-mesa-dev \
         python3 \
         python3-pip \
-        python3-tk \
+        g++ \
         git \
-        cmake \
-        ffmpeg \
-        libsm6 \
-        libxext6
+        cmake
 
 RUN mkdir -p /opt/pyrobosim/test
 RUN mkdir -p /opt/pyrobosim/setup
@@ -41,7 +36,7 @@ RUN pip3 install -r docs/python_docs_requirements.txt && \
 
 # Copy the rest of the source directory and install PyRoboSim
 COPY . /opt/pyrobosim/
-RUN pip3 install -e pyrobosim[web]
+RUN pip3 install -e pyrobosim
 
 # Set the default startup command
 CMD /bin/bash
@@ -60,9 +55,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y \
-        apt-utils python3-pip python3-tk python3-venv \
-        libegl1 libgl1-mesa-dev libglu1-mesa-dev '^libxcb.*-dev' libx11-xcb-dev \
-        libxi-dev libxkbcommon-dev libxkbcommon-x11-dev libxrender-dev
+        apt-utils python3-pip python3-venv
 
 # Create a ROS 2 workspace
 RUN mkdir -p /pyrobosim_ws/src/pyrobosim
@@ -89,7 +82,7 @@ COPY test/python_test_requirements.txt test/
 # and lacks the 'build_editable' hook.
 RUN source ${VIRTUAL_ENV}/bin/activate && \
     pip3 install --upgrade pip setuptools && \
-    pip3 install -e ./pyrobosim[web] && \
+    pip3 install -e ./pyrobosim && \
     pip3 install -r docs/python_docs_requirements.txt && \
     pip3 install -r test/python_test_requirements.txt
 
@@ -99,12 +92,6 @@ WORKDIR /pyrobosim_ws
 RUN source ${VIRTUAL_ENV}/bin/activate && \
     source /opt/ros/${ROS_DISTRO}/setup.bash && \
     colcon build
-
-# Remove display warnings
-RUN mkdir /tmp/runtime-root
-ENV XDG_RUNTIME_DIR="/tmp/runtime-root"
-RUN chmod -R 0700 /tmp/runtime-root
-ENV NO_AT_BRIDGE=1
 
 # Setup an entrypoint and working folder
 COPY setup /pyrobosim_ws/src/setup

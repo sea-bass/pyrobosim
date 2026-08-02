@@ -5,7 +5,7 @@ PyRoboSim offers a standalone Python API for modeling worlds and simulating robo
 Optionally, you can also launch this tool with:
 
  * A ROS 2 interface that offers topics, services, and actions to interact with the world.
- * A `PySide6 <https://doc.qt.io/qtforpython-6/>`_ based GUI, and an experimental `Plotly Dash <https://dash.plotly.com/>`_ web UI, for visualizing the world.
+ * A browser-based UI, built with `Plotly Dash <https://dash.plotly.com/>`_, for visualizing and interacting with the world.
 
 Refer to the following pages for different types of usage guides.
 

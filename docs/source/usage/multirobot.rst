@@ -40,7 +40,7 @@ First, build and setup your ROS 2 workspace (or use one of our provided Docker c
     . install/local_setup.bash
 
 
-You can run a ROS 2 enabled multirobot demo and interact with the GUI:
+You can run a ROS 2 enabled multirobot demo and interact with the UI:
 
 ::
 

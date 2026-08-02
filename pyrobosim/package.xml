@@ -15,7 +15,7 @@
 
   <!-- Execution dependencies -->
   <!--
-    The third-party Python dependencies (matplotlib, shapely, PySide6, etc.)
+    The third-party Python dependencies (shapely, dash, plotly, etc.)
     are managed through pip via pyproject.toml, since several of them do not
     have rosdep keys. Only the ROS-specific runtime dependency is listed here.
   -->

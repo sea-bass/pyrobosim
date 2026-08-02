@@ -5,8 +5,6 @@ Basic types for sensor simulation.
 from threading import Thread
 from typing import Any, Iterable
 
-from matplotlib.artist import Artist
-
 
 class Sensor:
     """
@@ -81,28 +79,12 @@ class Sensor:
             self.is_active = False
             self.thread.join()
 
-    def setup_artists(self) -> list[Artist]:
-        """
-        Sets up and returns the artists for visualizing the sensor.
-
-        :return: The list of MatPlotLib artists for the sensor.
-        """
-        return []
-
-    def update_artists(self) -> None:
-        """
-        Updates the artists.
-
-        These should have been originally returned by `setup_artists()`.
-        """
-
     def get_display_coords(self) -> Iterable[Iterable[tuple[float, float]]]:
         """
         Returns the coordinates of line segments to currently display for the sensor.
 
-        This is the toolkit-agnostic analog of `setup_artists()`, used by the
-        web visualization. Sensors with nothing to display can rely on this
-        default empty implementation.
+        Sensors with nothing to display can rely on this default empty
+        implementation.
 
         :return: An iterable of line segments, each an iterable of (x, y) points.
         """

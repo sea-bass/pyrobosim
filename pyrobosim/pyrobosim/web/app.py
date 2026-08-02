@@ -1,10 +1,10 @@
 """
 Dash web application for viewing and driving a PyRoboSim world in a browser.
 
-The controls mirror the Qt GUI: a robot selector and goal query, action
-buttons, and visibility toggles, with a live world view. The app assumes a
-single local user and a single server process, since the world model and
-refresh state live in server memory.
+The controls consist of a robot selector and goal query, action buttons, and
+visibility toggles, with a live world view. The app assumes a single local
+user and a single server process, since the world model and refresh state
+live in server memory.
 
 A single tick-driven "engine" callback refreshes the view. It rebuilds the
 full figure after discrete world changes, sends a lightweight ``dash.Patch``
@@ -19,14 +19,16 @@ in flight when a gesture starts are held as well.
 """
 
 import logging
+import os
+import webbrowser
 from dataclasses import dataclass
+from threading import Timer
 from typing import Any
 
 from dash import Dash, Input, Output, State, ctx, dcc, html, no_update
 from dash.exceptions import PreventUpdate
 
 from . import commands, figure
-from .headless import HeadlessGui
 from ..core.robot import Robot
 from ..core.world import World
 
@@ -147,8 +149,7 @@ def _row(children: list[Any], extra_style: dict[str, Any] | None = None) -> html
 
 def _disabled_states(robot: Robot | None) -> dict[str, bool]:
     """
-    Computes the disabled state of each action button, keyed by button ID,
-    mirroring the Qt GUI's ``update_button_state``.
+    Computes the disabled state of each action button, keyed by button ID.
 
     :param robot: The selected robot, or None if "world" is selected.
     :return: The disabled state of each button in ``_ACTION_BUTTONS``.
@@ -308,19 +309,6 @@ def create_app(world: World, title: str = "PyRoboSim") -> Dash:
     # browser tab every time the refresh timer fires.
     app = Dash(__name__, title=title, update_title=None)  # type: ignore[arg-type]
 
-    # Attach a no-op GUI so core's GUI hooks work in web mode and examples
-    # that wait for ``world.gui`` to be set proceed.
-    gui = HeadlessGui()
-    world.gui = gui  # type: ignore[assignment]
-
-    # Snapshot each robot's current planner path/graphs, so plans made before
-    # the app started (e.g., by the planner demos) still show.
-    for robot in world.robots:
-        planner = robot.path_planner
-        gui.canvas.show_planner_and_path_signal.emit(
-            robot, True, planner.get_latest_path() if planner else None
-        )
-
     # Layout as a function: Dash re-evaluates it on each page load, so a
     # reloaded page renders the world's current state instead of a stale
     # snapshot from app startup.
@@ -328,7 +316,7 @@ def create_app(world: World, title: str = "PyRoboSim") -> Dash:
 
     # Starting from the current change count means the first engine tick does
     # not rebuild the figure the layout just rendered.
-    state = _RefreshState(change_count=gui.change_count)
+    state = _RefreshState(change_count=world.change_count)
 
     # Forward buffered figure updates to the graph, unless a pan/zoom gesture
     # is in progress; a full update mid-gesture breaks Plotly's drag and
@@ -418,9 +406,9 @@ def create_app(world: World, title: str = "PyRoboSim") -> Dash:
 
         selected = commands.resolve_robot(world, robot_name)
         active = any(robot.is_moving() for robot in world.robots)
-        # The headless GUI bumps this counter on every structural change,
-        # including ones made outside the web callbacks (e.g., task plans).
-        change_count = gui.change_count
+        # The world bumps this counter on every change, including ones made
+        # outside the web callbacks (e.g., task plans).
+        change_count = world.change_count
 
         if state.force or change_count != state.change_count:
             fig_out: Any = figure.make_figure(
@@ -565,26 +553,41 @@ def create_app(world: World, title: str = "PyRoboSim") -> Dash:
     return app
 
 
-def run(
+def start_ui(
     world: World,
     host: str = "127.0.0.1",
     port: int = 8050,
     debug: bool = False,
     title: str = "PyRoboSim",
+    auto_open: bool = True,
 ) -> None:
     """
-    Builds and runs the interactive Dash web application for a world.
+    Builds and runs the interactive web UI for a world.
+
+    Note that the web server is unauthenticated, so only bind to a
+    non-localhost ``host`` on networks you trust.
 
     :param world: The world to render and drive.
     :param host: Host interface to bind to.
     :param port: Port to serve on.
     :param debug: If True, runs Dash in debug mode with auto-reloading.
     :param title: Browser tab title for the application.
+    :param auto_open: If True, opens the UI in the default web browser.
     """
     # Silence the per-request access log, which is noisy given the refresh
     # timer fires continuously.
     logging.getLogger("werkzeug").setLevel(logging.ERROR)
     app = create_app(world, title=title)
+
+    # Open the browser shortly after the server starts. In debug mode, the
+    # auto-reloader runs this function again in a child process (marked by
+    # WERKZEUG_RUN_MAIN), which must not open a second browser tab.
+    if auto_open and os.environ.get("WERKZEUG_RUN_MAIN") != "true":
+        browse_host = "127.0.0.1" if host == "0.0.0.0" else host
+        timer = Timer(1.0, lambda: webbrowser.open(f"http://{browse_host}:{port}"))
+        timer.daemon = True
+        timer.start()
+
     try:
         app.run(host=host, port=port, debug=debug)
     finally:

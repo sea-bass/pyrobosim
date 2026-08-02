@@ -37,23 +37,13 @@ def generate_launch_description() -> LaunchDescription:
         default_value="False",
         description="If True, cancels running actions after some time.",
     )
-    web_arg = DeclareLaunchArgument(
-        "web",
-        default_value="False",
-        description="If True, launches the browser-based web UI instead of the Qt GUI.",
-    )
 
     # Nodes
     world_node = Node(
         package="pyrobosim_ros",
         executable="demo.py",
         name="demo_world",
-        parameters=[
-            {
-                "world_file": LaunchConfiguration("world_file"),
-                "web": LaunchConfiguration("web"),
-            }
-        ],
+        parameters=[{"world_file": LaunchConfiguration("world_file")}],
         output="screen",
         emulate_tty=True,
     )
@@ -82,7 +72,6 @@ def generate_launch_description() -> LaunchDescription:
             action_success_probability_arg,
             action_rng_seed_arg,
             send_cancel_arg,
-            web_arg,
             world_node,
             command_node,
         ]

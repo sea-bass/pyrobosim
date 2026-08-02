@@ -41,8 +41,6 @@ class World:
         :param object_radius: Buffer radius around objects for collision checking, in meters.
         :param wall_height: Height of walls, in meters, for 3D model generation.
         """
-        from ..gui.main import PyRoboSimMainWindow
-
         self.name = name
         self.wall_height = wall_height
         self.source_yaml: dict[str, Any] | None = None
@@ -50,8 +48,10 @@ class World:
         self.logger = create_logger(self.name)
 
         # Connected apps
-        self.gui: PyRoboSimMainWindow | None = None
         self.ros_node = None
+
+        # Number of world changes so far. UIs poll this to detect when to re-render.
+        self.change_count = 0
 
         # World entities (robots, locations, objects, etc.)
         self.name_to_entity: dict[str, Entity] = {}
@@ -90,6 +90,12 @@ class World:
 
         self.logger.info("Created world.")
 
+    def mark_changed(self) -> None:
+        """
+        Records a change to the world state by incrementing ``change_count``.
+        """
+        self.change_count += 1
+
     def reset(self, deterministic: bool = False, seed: int = -1) -> bool:
         """
         Resets the world to its initial state.
@@ -116,10 +122,7 @@ class World:
                 self.source_yaml = WorldYamlWriter().to_dict(self)
             WorldYamlLoader().from_yaml(self.source_yaml, world=self)
 
-        if self.gui is not None:
-            self.gui.canvas.show()
-            self.gui.update_buttons_signal.emit()
-
+        self.mark_changed()
         self.logger.info("Reset world successfully.")
         return True  # No error handling yet
 
@@ -456,7 +459,7 @@ class World:
         If the location does not have a specified name, it will be given an
         automatic name using its category, e.g., ``"table0"``.
 
-        :param show: If True (default), causes the GUI to be updated.
+        :param show: If True (default), causes the UI to be refreshed.
             This is mostly for internal usage to speed up reloading.
         :param \*\*location_config: Keyword arguments describing the location.
 
@@ -537,10 +540,8 @@ class World:
             self.name_to_entity[spawn.name] = spawn
         self.update_polygons()
 
-        if show and self.gui is not None:
-            self.gui.canvas.show_locations_signal.emit()
-            self.gui.canvas.show_objects_signal.emit()
-            self.gui.canvas.draw_signal.emit()
+        if show:
+            self.mark_changed()
         return loc
 
     def update_location(
@@ -610,10 +611,7 @@ class World:
         for spawn in resolved_location.children:
             assert isinstance(spawn, ObjectSpawn)
             spawn.set_pose_from_parent()
-        if self.gui is not None:
-            self.gui.canvas.show_locations_signal.emit()
-            self.gui.canvas.show_objects_signal.emit()
-            self.gui.canvas.draw_signal.emit()
+        self.mark_changed()
         return True
 
     def remove_location(self, location: Location | str) -> bool:
@@ -711,14 +709,8 @@ class World:
             )
 
         location.set_open(True, recursive=True)
-        location.update_visualization_polygon()
         self.update_polygons()
-        if self.gui is not None:
-            if isinstance(location, Hallway):
-                self.gui.canvas.show_hallways_signal.emit()
-            else:
-                self.gui.canvas.show_locations_signal.emit()
-            self.gui.update_buttons_signal.emit()
+        self.mark_changed()
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
     def close_location(
@@ -773,14 +765,8 @@ class World:
                     )
 
         location.set_open(False, recursive=True)
-        location.update_visualization_polygon()
         self.update_polygons()
-        if self.gui is not None:
-            if is_hallway:
-                self.gui.canvas.show_hallways_signal.emit()
-            else:
-                self.gui.canvas.show_locations_signal.emit()
-            self.gui.update_buttons_signal.emit()
+        self.mark_changed()
         return ExecutionResult(status=ExecutionStatus.SUCCESS)
 
     def lock_location(self, location: Entity | str | None) -> ExecutionResult:
@@ -892,7 +878,7 @@ class World:
 
         If the location contains multiple object spawns, one will be selected at random.
 
-        :param show: If True (default), causes the GUI to be updated.
+        :param show: If True (default), causes the UI to be refreshed.
             This is mostly for internal usage to speed up reloading.
         :param \*\*object_config: Keyword arguments describing the object.
 
@@ -994,8 +980,8 @@ class World:
         self.name_to_entity[obj.name] = obj
         self.num_objects += 1
         self.object_instance_counts[category] += 1
-        if show and self.gui is not None:
-            self.gui.canvas.show_objects_signal.emit()
+        if show:
+            self.mark_changed()
         return obj
 
     def update_object(
@@ -1063,7 +1049,7 @@ class World:
         Cleanly removes an object from the world.
 
         :param loc: Object instance or name to remove.
-        :param show: If True (default), causes the GUI to be updated.
+        :param show: If True (default), causes the UI to be refreshed.
             This is mostly for internal usage to speed up reloading.
         :return: True if the object was successfully removed, else False.
         """
@@ -1081,8 +1067,8 @@ class World:
         self.num_objects -= 1
         if resolved_object.parent is not None:
             resolved_object.parent.children.remove(resolved_object)
-        if show and self.gui is not None:
-            self.gui.canvas.show_objects_signal.emit()
+        if show:
+            self.mark_changed()
         return True
 
     def remove_all_objects(self, restart_numbering: bool = True) -> None:
@@ -1110,7 +1096,7 @@ class World:
         :param robot: Robot instance to add to the world.
         :param loc: World entity instance or name to place the robot.
         :param pose: Pose at which to add the robot. If not specified, will be sampled.
-        :param show: If True (default), causes the GUI to be updated.
+        :param show: If True (default), causes the UI to be refreshed.
             This is mostly for internal usage to speed up reloading.
         """
         # Check that the robot name doesn't already exist.
@@ -1207,8 +1193,8 @@ class World:
         if robot.path_planner is not None:
             robot.path_planner.reset()
 
-        if show and self.gui is not None:
-            self.gui.canvas.show_robots_signal.emit()
+        if show:
+            self.mark_changed()
         if self.ros_node is not None:
             self.ros_node.add_robot_ros_interfaces(robot)
 
@@ -1219,7 +1205,7 @@ class World:
         Removes a robot from the world.
 
         :param robot: Robot instance or name to remove.
-        :param show: If True (default), causes the GUI to be updated.
+        :param show: If True (default), causes the UI to be refreshed.
             This is mostly for internal usage to speed up reloading.
         :param remove_ros_interfaces: If True (default), and the world has a ROS interface,
             it removes them. This is configurable since resetting the world is prone to a rclpy bug.
@@ -1237,8 +1223,8 @@ class World:
         self.robots.remove(resolved_robot)
         self.name_to_entity.pop(resolved_robot.name)
         resolved_robot.stop_sensor_threads()
-        if show and self.gui is not None:
-            self.gui.canvas.show_robots_signal.emit()
+        if show:
+            self.mark_changed()
         if (self.ros_node is not None) and remove_ros_interfaces:
             self.ros_node.remove_robot_ros_interfaces(resolved_robot)
 

@@ -3,7 +3,7 @@
 import math
 import pathlib
 import numpy as np
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 from PIL import Image
 from typing import Sequence
 from typing_extensions import Self  # For compatibility with Python <= 3.10
@@ -46,20 +46,22 @@ class OccupancyGrid:
         self.free_thresh = free_thresh
 
     def show(self) -> None:
-        """Displays the occupancy grid as an image."""
-        rot_img = np.logical_not(np.rot90(self.data))
-        plt.imshow(rot_img, cmap="gray", interpolation="nearest")
-        plt.axis("equal")
-        plt.title("Occupancy Grid")
-
-        n_buckets = 8
-        x_pos = np.linspace(0, self.width, n_buckets)
-        plt.xticks(x_pos, [f"{p*self.resolution + self.origin[0]:.2}" for p in x_pos])
-        y_pos = np.linspace(0, self.height, n_buckets)
-        plt.yticks(
-            y_pos, np.flip([f"{p*self.resolution + self.origin[1]:.2}" for p in y_pos])
+        """Displays the occupancy grid as an image in the browser."""
+        fig = go.Figure(
+            go.Heatmap(
+                z=self.data.T,
+                x0=self.origin[0],
+                dx=self.resolution,
+                y0=self.origin[1],
+                dy=self.resolution,
+                colorscale="Greys",
+                showscale=False,
+                hoverinfo="x+y+z",
+            )
         )
-        plt.show()
+        fig.update_layout(title="Occupancy Grid")
+        fig.update_yaxes(scaleanchor="x", scaleratio=1)
+        fig.show()
 
     def is_in_bounds(self, pos: tuple[int, int]) -> bool:
         """

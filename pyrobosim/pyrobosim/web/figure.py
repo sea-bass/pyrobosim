@@ -1,5 +1,5 @@
 """
-Builds a Plotly figure from a PyRoboSim world, mirroring the matplotlib GUI.
+Builds a Plotly figure from a PyRoboSim world.
 
 Rendering is split into two layers:
 
@@ -23,14 +23,12 @@ from shapely.geometry import MultiPolygon, Polygon
 from ..core.robot import Robot
 from ..core.world import World
 from ..utils.polygon import transform_polygon
-from ..utils.search_graph import SearchGraph
-from .headless import HeadlessCanvas, HeadlessGui
 
-# Multiplier of robot radius for the orientation line, matching the GUI.
+# Multiplier of robot radius for the orientation line.
 ROBOT_DIR_LINE_FACTOR = 3.0
 # Fraction of the world extent added as a margin around the view.
 VIEW_MARGIN = 0.05
-# Color used for collision-polygon overlays, matching the GUI's magenta.
+# Color used for collision-polygon overlays.
 COLLISION_COLOR = "rgb(255, 0, 255)"
 
 # None-separated x and y coordinate lists for one scatter trace.
@@ -195,19 +193,6 @@ def _label(x: float, y: float, text: str, color: str, size: int) -> dict[str, An
 # ---------------------------------------------------------------------------
 # Dynamic per-robot traces
 # ---------------------------------------------------------------------------
-def _headless_canvas(robot: Robot) -> HeadlessCanvas | None:
-    """
-    Looks up the headless web GUI canvas attached to the robot's world.
-
-    :param robot: The robot whose world to check.
-    :return: The headless canvas, or None if no headless web GUI is attached.
-    """
-    world = robot.world
-    if world is not None and isinstance(world.gui, HeadlessGui):
-        return world.gui.canvas
-    return None
-
-
 def _robot_trace_data(robot: Robot) -> RobotTraceData:
     """
     Computes the (x, y) data for a robot's dynamic traces.
@@ -217,26 +202,16 @@ def _robot_trace_data(robot: Robot) -> RobotTraceData:
     """
     pose = robot.get_pose()
 
-    # With the headless web GUI attached, render only paths explicitly handed
-    # to it; the planner's live state may be mid-replan. Without it
-    # (standalone figure), fall back to the planner's latest path.
-    canvas = _headless_canvas(robot)
-    if canvas is not None:
-        path = canvas.displayed_paths.get(robot.name)
-    elif robot.path_planner is not None:
-        path = robot.path_planner.get_latest_path()
-    else:
-        path = None
+    # Render only the path snapshotted by the robot; the planner's live state
+    # may be mid-replan. The path persists after navigation until the next
+    # plan replaces it or the planner is reset.
+    path = robot.displayed_path
 
-    # The path shows while navigating or still untraversed (e.g., the planner
-    # demos plan without navigating), and clears once the robot arrives.
     path_x: list[Any] = []
     path_y: list[Any] = []
     if path is not None and path.num_poses > 1:
-        at_start = pose.get_linear_distance(path.poses[0]) < 0.05
-        if robot.is_moving() or at_start:
-            path_x = [p.x for p in path.poses]
-            path_y = [p.y for p in path.poses]
+        path_x = [p.x for p in path.poses]
+        path_y = [p.y for p in path.poses]
 
     # Sensor data (e.g., lidar rays), as None-separated line segments.
     sensor_x: list[Any] = []
@@ -258,7 +233,14 @@ def _robot_trace_data(robot: Robot) -> RobotTraceData:
     held_y: list[Any] = []
     if robot.manipulated_object is not None:
         obj = robot.manipulated_object
-        held_x, held_y = _polygon_xy(transform_polygon(obj.raw_polygon, obj.pose))
+        held_polygon = transform_polygon(obj.raw_polygon, obj.pose)
+        held_x, held_y = _polygon_xy(held_polygon)
+        # Extra point anchoring the held object's name label, offset like the
+        # resting-object labels. It follows the None ring separator, so no
+        # line connects to it.
+        xmin, ymin, xmax, ymax = held_polygon.bounds
+        held_x.append(obj.pose.x + (xmax - xmin))
+        held_y.append(obj.pose.y + (ymax - ymin))
 
     return RobotTraceData(
         path=(path_x, path_y),
@@ -269,19 +251,18 @@ def _robot_trace_data(robot: Robot) -> RobotTraceData:
     )
 
 
-def _robot_traces(robot: Robot) -> list[go.Scatter]:
+def _robot_traces(robot: Robot, show_object_names: bool = True) -> list[go.Scatter]:
     """
     Builds the styled dynamic traces for a single robot.
 
     :param robot: The robot to build traces for.
+    :param show_object_names: If True, labels any held object with its name.
     :return: The list of traces, in the field order of :class:`RobotTraceData`.
     """
+    data = _robot_trace_data(robot)
     color = color_to_css(robot.color)
-    held_color = (
-        color_to_css(robot.manipulated_object.viz_color)
-        if robot.manipulated_object is not None
-        else color
-    )
+    held_obj = robot.manipulated_object
+    held_color = color_to_css(held_obj.viz_color) if held_obj is not None else color
     styles: dict[str, dict[str, Any]] = {
         "path": {"line": {"color": color, "width": 3}, "opacity": 0.5},
         "sensors": {"line": {"color": color, "width": 0.5}, "opacity": 0.5},
@@ -293,41 +274,33 @@ def _robot_traces(robot: Robot) -> list[go.Scatter]:
         "direction": {"line": {"color": color, "width": 2}},
         "held_object": {"line": {"color": held_color, "width": 2}},
     }
+    if held_obj is not None and show_object_names:
+        # The held object's name renders as trace text on its label anchor
+        # point (the last one), so it keeps following the object during smooth
+        # motion, which restyles trace data without touching the layout.
+        styles["held_object"].update(
+            {
+                "mode": "lines+text",
+                "text": [""] * (len(data.held_object[0]) - 1) + [held_obj.name],
+                "textposition": "bottom center",
+                "textfont": {"color": held_color, "size": 8},
+            }
+        )
     return [
         go.Scatter(
             x=xs,
             y=ys,
-            mode="lines",
             hoverinfo="skip",
             showlegend=False,
-            **styles[field],
+            **{"mode": "lines", **styles[field]},
         )
-        for field, (xs, ys) in zip(RobotTraceData._fields, _robot_trace_data(robot))
+        for field, (xs, ys) in zip(RobotTraceData._fields, data)
     ]
 
 
 # ---------------------------------------------------------------------------
 # Planner graphs (shown only for the selected robot)
 # ---------------------------------------------------------------------------
-def _graphs_for(selected_robot: Robot | None) -> list[SearchGraph]:
-    """
-    Returns the selected robot's planner search graphs (empty if none).
-
-    With the headless web GUI attached, only the graphs snapshotted by
-    ``show_planner_and_path`` are rendered, for the same reason as the path in
-    :func:`_robot_trace_data`. Without it, the planner is read directly.
-
-    :param selected_robot: The robot whose planner graphs to look up, if any.
-    :return: The list of search graphs to display.
-    """
-    if selected_robot is None or selected_robot.path_planner is None:
-        return []
-    canvas = _headless_canvas(selected_robot)
-    if canvas is not None:
-        return canvas.displayed_graphs.get(selected_robot.name, [])
-    return list(selected_robot.path_planner.get_graphs())
-
-
 def num_graph_traces(selected_robot: Robot | None) -> int:
     """
     Counts the traces emitted for planner graphs (two per graph: edges, nodes).
@@ -335,18 +308,25 @@ def num_graph_traces(selected_robot: Robot | None) -> int:
     :param selected_robot: The robot whose planner graphs are displayed, if any.
     :return: The number of planner-graph traces at the start of the figure.
     """
-    return 2 * len(_graphs_for(selected_robot))
+    if selected_robot is None:
+        return 0
+    return 2 * len(selected_robot.displayed_graphs)
 
 
 def _graph_traces(selected_robot: Robot | None) -> list[go.Scatter]:
     """
     Builds edge and node traces for the selected robot's planner graphs.
 
+    Only the graphs snapshotted by the robot are rendered, for the same reason
+    as the path in :func:`_robot_trace_data`.
+
     :param selected_robot: The robot whose planner graphs to render, if any.
     :return: The list of traces, two (edges, nodes) per graph.
     """
     traces: list[go.Scatter] = []
-    for graph in _graphs_for(selected_robot):
+    if selected_robot is None:
+        return traces
+    for graph in selected_robot.displayed_graphs:
         color = color_to_css(graph.color)
         alpha = graph.color_alpha
 
@@ -394,7 +374,7 @@ def make_figure(
     show_collision_polygons: bool = False,
 ) -> go.Figure:
     """
-    Builds a complete Plotly figure rendering a world, mirroring the GUI.
+    Builds a complete Plotly figure rendering a world.
 
     Trace layout (used by :func:`dynamic_patch`): planner-graph traces first,
     followed by ``TRACES_PER_ROBOT`` traces for each robot in order. The view
@@ -467,7 +447,7 @@ def make_figure(
         if obj in held:
             continue
         color = color_to_css(obj.viz_color)
-        # Objects render above robots, matching the GUI z-order.
+        # Objects render above robots.
         shape = _polygon_shape(obj.polygon, color, layer="above")
         if shape:
             shapes.append(shape)
@@ -509,7 +489,7 @@ def make_figure(
 
     traces: list[go.Scatter] = _graph_traces(selected_robot)
     for robot in world.robots:
-        traces += _robot_traces(robot)
+        traces += _robot_traces(robot, show_object_names=show_object_names)
 
     # View extent: the world bounds plus a small margin.
     if world.x_bounds is not None and world.y_bounds is not None:

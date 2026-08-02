@@ -15,7 +15,7 @@ if find_spec("pddlstream") is None:
     pytest.skip(allow_module_level=True, reason="PDDLStream not available")
 
 from pyrobosim.core import Robot, World
-from pyrobosim.gui import start_gui
+from pyrobosim.web import start_ui
 from pyrobosim.manipulation import GraspGenerator, ParallelGraspProperties
 from pyrobosim.navigation.execution import ConstantVelocityExecutor
 from pyrobosim.navigation.rrt import RRTPlanner
@@ -179,4 +179,4 @@ if __name__ == "__main__":
     )
     planner_thread.start()
 
-    start_gui(world)
+    start_ui(world)

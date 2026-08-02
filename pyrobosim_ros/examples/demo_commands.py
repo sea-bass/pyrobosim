@@ -161,7 +161,7 @@ def main() -> None:
 
     rclpy.spin(cmd)
     cmd.destroy_node()
-    rclpy.shutdown()
+    rclpy.try_shutdown()
 
 
 if __name__ == "__main__":

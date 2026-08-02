@@ -13,24 +13,18 @@ authors = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-    "adjustText",
     "astar",
-    "matplotlib",
+    "dash>=4,<5",
     "numpy",
+    "pillow",
+    "plotly>=6,<7",
     "pycollada",
-    "PySide6>=6.4.0",
     "PyYAML",
     "shapely>=2.0.1",
     "scipy",
     "transforms3d",
     "trimesh",
     "typing_extensions",  # For compatibility with Python <= 3.10
-]
-
-[project.optional-dependencies]
-web = [
-    "dash>=4,<5",
-    "plotly>=6,<7",
 ]
 
 [project.urls]

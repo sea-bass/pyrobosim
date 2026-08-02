@@ -1,17 +1,8 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 
 def generate_launch_description() -> LaunchDescription:
-    # Arguments
-    web_arg = DeclareLaunchArgument(
-        "web",
-        default_value="False",
-        description="If True, launches the browser-based web UI instead of the Qt GUI.",
-    )
-
     # Nodes
     world_node = Node(
         package="pyrobosim_ros",
@@ -21,7 +12,6 @@ def generate_launch_description() -> LaunchDescription:
             {
                 # Use multirobot file option.
                 "world_file": "test_world_multirobot.yaml",
-                "web": LaunchConfiguration("web"),
             }
         ],
         output="screen",
@@ -39,4 +29,4 @@ def generate_launch_description() -> LaunchDescription:
         ],
     )
 
-    return LaunchDescription([web_arg, world_node, command_node])
+    return LaunchDescription([world_node, command_node])
