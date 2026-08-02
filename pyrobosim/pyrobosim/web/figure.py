@@ -39,6 +39,7 @@ class RobotTraceData(NamedTuple):
     """The (x, y) data for one robot's dynamic traces, in trace order."""
 
     path: TraceXY
+    sensor_fill: TraceXY
     sensors: TraceXY
     body: TraceXY
     direction: TraceXY
@@ -213,9 +214,12 @@ def _robot_trace_data(robot: Robot) -> RobotTraceData:
         path_x = [p.x for p in path.poses]
         path_y = [p.y for p in path.poses]
 
-    # Sensor data (e.g., lidar rays), as None-separated line segments.
+    # Sensor data, as None-separated line segments (e.g., lidar rays) and
+    # filled polygon rings (e.g., FOV cones).
     sensor_x: list[Any] = []
     sensor_y: list[Any] = []
+    fill_x: list[Any] = []
+    fill_y: list[Any] = []
     for sensor in robot.sensors.values():
         for segment in sensor.get_display_coords():
             for point in segment:
@@ -223,6 +227,12 @@ def _robot_trace_data(robot: Robot) -> RobotTraceData:
                 sensor_y.append(point[1])
             sensor_x.append(None)
             sensor_y.append(None)
+        for ring in sensor.get_display_polygons():
+            for point in ring:
+                fill_x.append(point[0])
+                fill_y.append(point[1])
+            fill_x.append(None)
+            fill_y.append(None)
 
     length = ROBOT_DIR_LINE_FACTOR * robot.radius
     yaw = pose.get_yaw()
@@ -244,6 +254,7 @@ def _robot_trace_data(robot: Robot) -> RobotTraceData:
 
     return RobotTraceData(
         path=(path_x, path_y),
+        sensor_fill=(fill_x, fill_y),
         sensors=(sensor_x, sensor_y),
         body=_polygon_xy(robot.polygon),
         direction=(dir_x, dir_y),
@@ -265,6 +276,12 @@ def _robot_traces(robot: Robot, show_object_names: bool = True) -> list[go.Scatt
     held_color = color_to_css(held_obj.viz_color) if held_obj is not None else color
     styles: dict[str, dict[str, Any]] = {
         "path": {"line": {"color": color, "width": 3}, "opacity": 0.5},
+        "sensor_fill": {
+            "line": {"color": color, "width": 1},
+            "opacity": 0.5,
+            "fill": "toself",
+            "fillcolor": _rgba(color, 0.3),
+        },
         "sensors": {"line": {"color": color, "width": 0.5}, "opacity": 0.5},
         "body": {
             "line": {"color": color, "width": 2},

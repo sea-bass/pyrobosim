@@ -76,9 +76,10 @@ class World:
         self.x_bounds = None
         self.y_bounds = None
 
-        # Polygons for collision checking
+        # Polygons for collision checking and sensing
         self.total_internal_polygon = Polygon()
         self.total_external_polygon = Polygon()
+        self.total_sensing_polygon = Polygon()
 
         # Other parameters
         # Max number of tries to sample object locations
@@ -1734,13 +1735,19 @@ class World:
         )
         shapely.prepare(self.total_internal_polygon)
 
-        self.total_external_polygon = unary_union(
+        # Region visible to sensors: walls and closed hallways block visibility,
+        # but locations do not, so objects on top of them can be seen.
+        self.total_sensing_polygon = unary_union(
             [entity.polygon for entity in itertools.chain(self.rooms, self.hallways)]
         ).difference(
             unary_union(
-                [loc.polygon for loc in self.locations]
-                + [hall.closed_polygon for hall in self.hallways if not hall.is_open]
+                [hall.closed_polygon for hall in self.hallways if not hall.is_open]
             )
+        )
+        shapely.prepare(self.total_sensing_polygon)
+
+        self.total_external_polygon = self.total_sensing_polygon.difference(
+            unary_union([loc.polygon for loc in self.locations])
         )
         shapely.prepare(self.total_external_polygon)
 

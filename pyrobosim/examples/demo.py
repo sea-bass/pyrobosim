@@ -14,7 +14,9 @@ from pyrobosim.navigation.execution import ConstantVelocityExecutor
 from pyrobosim.navigation.a_star import AStarPlanner
 from pyrobosim.navigation.prm import PRMPlanner
 from pyrobosim.navigation.rrt import RRTPlanner
+from pyrobosim.sensors.fov import FOVSensor
 from pyrobosim.sensors.lidar import Lidar2D
+from pyrobosim.sensors.types import Sensor
 from pyrobosim.utils.general import get_data_folder
 from pyrobosim.utils.pose import Pose
 from pyrobosim.web import start_ui
@@ -121,14 +123,24 @@ def create_world(multirobot: bool = False) -> World:
         width_clearance=0.01,
         depth_clearance=0.01,
     )
-    lidar = Lidar2D(
-        update_rate_s=0.1,
-        angle_units="degrees",
-        min_angle=-120.0,
-        max_angle=120.0,
-        angular_resolution=5.0,
-        max_range_m=2.0,
-    )
+    sensors: dict[str, Sensor] = {}
+    if args.lidar:
+        sensors["lidar"] = Lidar2D(
+            update_rate_s=0.1,
+            angle_units="degrees",
+            min_angle=-120.0,
+            max_angle=120.0,
+            angular_resolution=5.0,
+            max_range_m=2.0,
+        )
+    if args.fov:
+        sensors["object_detector"] = FOVSensor(
+            update_rate_s=0.1,
+            angle_units="degrees",
+            min_angle=-45.0,
+            max_angle=45.0,
+            max_range_m=1.5,
+        )
 
     robot0 = Robot(
         name="robot0",
@@ -139,7 +151,7 @@ def create_world(multirobot: bool = False) -> World:
             max_angular_velocity=4.0,
             validate_during_execution=True,
         ),
-        sensors={"lidar": lidar} if args.lidar else None,
+        sensors=sensors,
         grasp_generator=GraspGenerator(grasp_props),
         partial_obs_objects=args.partial_obs_objects,
         color="#CC00CC",
@@ -225,6 +237,11 @@ def parse_args() -> argparse.Namespace:
         "--lidar",
         action="store_true",
         help="If True, adds a lidar sensor to the first robot.",
+    )
+    parser.add_argument(
+        "--fov",
+        action="store_true",
+        help="If True, adds a field-of-view (FOV) object sensor to the first robot.",
     )
     return parser.parse_args()
 

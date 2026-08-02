@@ -147,12 +147,15 @@ In these cases, the robot must explicitly go to a location and use an object det
 You can model this in PyRoboSim by instantiating robot objects with the ``partial_obs_objects`` option set to ``True``.
 Then, you can use the **Detect** action to find objects at the robot's current location.
 
+If the robot has any field-of-view (FOV) sensors (see :ref:`sensors`), the **Detect** action
+instead finds the objects inside those sensors' fields of view, regardless of the robot's location.
+
 To test this, you can run the following example.
 
 ::
 
     cd /path/to/pyrobosim/pyrobosim
-    python3 examples/demo.py --multirobot --partial-obs-objects
+    python3 examples/demo.py --multirobot --partial-obs-objects --fov
 
 In the UI, selecting a robot in the drop-down menu will only display the objects locally known to that robot.
 Alternatively, you can select the ``world`` option to show all existing objects.
