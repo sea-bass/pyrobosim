@@ -41,9 +41,7 @@ class WorldGazeboExporter:
         )
         self.link_template_text = self.read_template_file("link_template_polyline.sdf")
 
-    def export(
-        self, classic: bool = False, out_folder: pathlib.Path | None = None
-    ) -> pathlib.Path:
+    def export(self, out_folder: pathlib.Path | None = None) -> pathlib.Path:
         """
         Exports the world to an SDF file to use with Gazebo, including
         all other necessary models for locations and/or objects.
@@ -51,7 +49,6 @@ class WorldGazeboExporter:
         Instructions to add to the Gazebo model path and spawn the world
         are printed to the Terminal.
 
-        :param classic: If True, exports to Gazebo Classic, else to Gazebo Sim.
         :param out_folder: The output folder. If not specified, defaults to the PyRoboSim `data/worlds` folder.
         :return: Path to output folder with generated world.
         """
@@ -60,8 +57,7 @@ class WorldGazeboExporter:
             world_name = "gen_world"
 
         # Set up text to export
-        suffix = "gazebo_classic" if classic else "gazebo"
-        world_text = self.read_template_file(f"world_template_{suffix}.sdf")
+        world_text = self.read_template_file(f"world_template_gazebo.sdf")
         self.model_include_text = ""
 
         # Define output folder
@@ -85,23 +81,14 @@ class WorldGazeboExporter:
 
         # Print commands for the user to start the world.
         # TODO: We could generate a script to do this instead?
-        if not classic:
-            model_path_env = "GZ_SIM_RESOURCE_PATH"
-            command = "gz sim"
-        else:
-            model_path_env = "GAZEBO_MODEL_PATH"
-            command = "gazebo"
-
         include_path_str = ":".join(
             [path.as_posix() for path in self.include_model_paths]
         )
         help_string = f"\nWorld file saved to {world_file_name}\n"
         help_string += "Ensure to update your Gazebo model path:\n"
-        help_string += (
-            f"    export {model_path_env}=${model_path_env}:{include_path_str}\n"
-        )
+        help_string += f"    export GZ_SIM_RESOURCE_PATH=$GZ_SIM_RESOURCE_PATH:{include_path_str}\n"
         help_string += "To start the world, enter:\n"
-        help_string += f"    {command} {world_file_name}\n"
+        help_string += f"    gz sim {world_file_name}\n"
         self.world.logger.info(help_string)
 
         return self.out_folder
