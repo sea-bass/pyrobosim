@@ -68,6 +68,15 @@ robots:
       max_connection_dist: 1.5
       max_nodes: 100
       compress_path: false
+    sensors:
+      object_detector:
+        type: fov
+        update_rate_s: 0.1
+        angle_units: degrees
+        min_angle: -45.0
+        max_angle: 45.0
+        max_range_m: 1.5
+    start_sensor_threads: true
 
   - name: "robot2"
     radius: 0.06

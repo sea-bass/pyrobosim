@@ -90,6 +90,18 @@ class Sensor:
         """
         return []
 
+    def get_display_polygons(self) -> Iterable[Iterable[tuple[float, float]]]:
+        """
+        Returns the polygon rings to currently display filled for the sensor,
+        e.g., a field of view.
+
+        Sensors with nothing to display can rely on this default empty
+        implementation.
+
+        :return: An iterable of polygon rings, each an iterable of (x, y) points.
+        """
+        return []
+
     def to_dict(self) -> dict[str, Any]:
         """
         Serializes the sensor to a dictionary.

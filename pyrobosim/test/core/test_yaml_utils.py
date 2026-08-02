@@ -798,7 +798,16 @@ def test_yaml_load_and_write_dict() -> None:
     assert robot1_dict.get("path_planner").get("max_nodes") == 100
     assert robot1_dict.get("path_planner").get("compress_path") is False
     assert robot1_dict.get("path_executor").get("type") == "constant_velocity"
-    assert "sensors" not in robot1_dict
+    assert len(robot1_dict.get("sensors")) == 1
+    assert robot1_dict.get("sensors").get("object_detector").get("type") == "fov"
+    assert robot1_dict.get("sensors").get("object_detector").get("update_rate_s") == 0.1
+    assert (
+        robot1_dict.get("sensors").get("object_detector").get("angle_units")
+        == "degrees"
+    )
+    assert robot1_dict.get("sensors").get("object_detector").get("min_angle") == -45.0
+    assert robot1_dict.get("sensors").get("object_detector").get("max_angle") == 45.0
+    assert robot1_dict.get("sensors").get("object_detector").get("max_range_m") == 1.5
     assert robot1_dict.get("start_sensor_threads") is True
     assert robot1_dict.get("partial_obs_objects") is False
     assert robot1_dict.get("partial_obs_hallways") is False

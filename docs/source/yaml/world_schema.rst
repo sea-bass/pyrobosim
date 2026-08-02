@@ -65,6 +65,13 @@ The world schema looks as follows, where ``<angle brackets>`` are placeholders:
            max_angle: 120.0
            angular_resolution: 5.0
            max_range_m: 2.0
+         object_detector:
+           type: fov
+           update_rate_s: 0.1
+           angle_units: degrees
+           min_angle: -45.0
+           max_angle: 45.0
+           max_range_m: 1.5
          # ... other named sensors can go here
        start_sensor_threads: true  # If True, automatically starts sensor threads
        # Options to control the execution of actions

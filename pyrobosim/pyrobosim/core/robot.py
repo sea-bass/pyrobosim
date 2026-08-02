@@ -24,6 +24,7 @@ from ..planning.actions import (
     TaskAction,
     TaskPlan,
 )
+from ..sensors.fov import FOVSensor
 from ..sensors.types import Sensor
 from ..utils.logging import create_logger
 from ..utils.polygon import sample_from_polygon, transform_polygon
@@ -785,6 +786,10 @@ class Robot(Entity):
         """
         Detects all objects at the robot's current location.
 
+        If the robot has any field-of-view (FOV) sensors, objects are instead
+        detected inside those sensors' fields of view, regardless of the
+        robot's location.
+
         :param target_object: The name of a target object or category.
             If None, the action succeeds regardless of which object is found.
             Otherwise, the action succeeds only if the target object is found.
@@ -792,22 +797,24 @@ class Robot(Entity):
         """
         self.last_detected_objects = []
 
-        if (self.location is None) or (not self.at_object_spawn()):
-            message = "Robot is not at an object spawn. Cannot detect objects."
-            self.logger.warning(message)
-            return ExecutionResult(
-                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
-            )
-        if (
-            (self.location is not None)
-            and (self.location.parent is not None)
-            and (not self.location.is_open)
-        ):
-            message = f"{self.location.parent.name} is not open. Cannot detect objects."
-            self.logger.warning(message)
-            return ExecutionResult(
-                status=ExecutionStatus.PRECONDITION_FAILURE, message=message
-            )
+        fov_sensors = [
+            sensor for sensor in self.sensors.values() if isinstance(sensor, FOVSensor)
+        ]
+        if len(fov_sensors) == 0:
+            if (self.location is None) or (not self.at_object_spawn()):
+                message = "Robot is not at an object spawn. Cannot detect objects."
+                self.logger.warning(message)
+                return ExecutionResult(
+                    status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+                )
+            if (self.location.parent is not None) and (not self.location.is_open):
+                message = (
+                    f"{self.location.parent.name} is not open. Cannot detect objects."
+                )
+                self.logger.warning(message)
+                return ExecutionResult(
+                    status=ExecutionStatus.PRECONDITION_FAILURE, message=message
+                )
 
         if self.battery_level <= 0.0:
             message = "Out of battery. Cannot detect objects."
@@ -829,26 +836,33 @@ class Robot(Entity):
                     status=ExecutionStatus.EXECUTION_FAILURE, message=message
                 )
 
-        # Add all the objects at the current robot's location.
-        for obj in self.location.children:
-            assert isinstance(obj, Object)
-            self.known_objects.add(obj)
+        # Gather the detected objects, either from the FOV sensors or from the
+        # robot's current location.
+        if len(fov_sensors) > 0:
+            visible_objects = set()
+            for sensor in fov_sensors:
+                sensor.update()
+                visible_objects.update(sensor.get_measurement())
+            detected_objects = sorted(visible_objects, key=lambda obj: obj.name)
+        else:
+            assert self.location is not None
+            detected_objects = [
+                obj for obj in self.location.children if isinstance(obj, Object)
+            ]
+        self.known_objects.update(detected_objects)
+        if self.world is not None:
+            self.world.mark_changed()
 
         # If a target object was specified, look for a matching instance.
         # We should only return SUCCESS if one such instance was found.
-        if self.world is not None:
-            self.world.mark_changed()
         if not target_object:  # Checking for empty string and None
-            self.last_detected_objects = [
-                obj for obj in self.location.children if isinstance(obj, Object)
-            ]
+            self.last_detected_objects = detected_objects
             return ExecutionResult(status=ExecutionStatus.SUCCESS)
         else:
             self.last_detected_objects = [
                 obj
-                for obj in self.location.children
-                if isinstance(obj, Object)
-                and ((obj.name == target_object) or (obj.category == target_object))
+                for obj in detected_objects
+                if (obj.name == target_object) or (obj.category == target_object)
             ]
             if len(self.last_detected_objects) > 0:
                 return ExecutionResult(status=ExecutionStatus.SUCCESS)

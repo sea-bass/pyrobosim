@@ -10,6 +10,14 @@ Sensor Definitions
 
 The ``pyrobosim/sensors`` module contains all sensor model implementations.
 
+The built-in sensor models are:
+
+* ``Lidar2D``: Simulates 2D lidar scans as rays clipped against the world's obstacles.
+* ``FOVSensor``: Simulates a field-of-view (FOV) object detection sensor as a cone
+  attached to the robot, clipped so it does not extend through walls or closed hallways.
+  If a robot has any FOV sensors, its **Detect** action finds the objects inside the
+  sensors' fields of view instead of the objects at the robot's current location.
+
 
 What to Implement in a Sensor
 ------------------------------
@@ -86,6 +94,10 @@ the line segments (each an iterable of XY points) to display for the sensor.
                     for angle in angles
                 ]
             ]
+
+Similarly, a ``get_display_polygons()`` method returns polygon rings that the UI displays filled in the robot's color.
+This suits sensors that observe a region rather than individual rays (for example, the FOV sensor's cone).
+The UI draws all sensors' line segments and filled polygons for each robot; a sensor can provide either or both.
 
 
 To serialize to file, which is needed to reset the world, you should also implement the ``to_dict()`` method.
