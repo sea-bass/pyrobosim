@@ -19,6 +19,7 @@ from dash import Dash
 from flask.testing import FlaskClient
 
 from pyrobosim.core import Robot, World, WorldYamlLoader
+from pyrobosim.planning.actions import ExecutionStatus
 from pyrobosim.utils.knowledge import query_to_entity
 from pyrobosim.web.app import _ACTION_BUTTONS, _DEFAULT_VISIBILITY, create_app
 
@@ -158,6 +159,42 @@ class TestSystemWeb:
             self.tick_engine()
             time.sleep(0.1)
 
+    def start_nav(self, nav_query: str) -> None:
+        """
+        Clicks navigate and waits for path execution to start.
+
+        If the action fails before execution starts (e.g., the planner found
+        no path), fails immediately with the result instead of burning the
+        full wait timeout on a flag that will never be set.
+
+        :param nav_query: Query for navigation goal.
+        """
+        robot = self.robot
+        # Failure is detected by a *new* result object with a failure status;
+        # comparing to the previous object ignores stale results (such as the
+        # CANCELED left behind by a canceled navigation).
+        prev_result = robot.last_nav_result
+
+        def started_or_failed() -> bool:
+            result = robot.last_nav_result
+            return robot.executing_nav or (
+                result is not prev_result
+                and result.status
+                not in (ExecutionStatus.UNKNOWN, ExecutionStatus.SUCCESS)
+            )
+
+        self.click_action("navigate", goal=nav_query)
+        self.wait_until(started_or_failed)
+        result = robot.last_nav_result
+        if (
+            not robot.executing_nav
+            and result is not prev_result
+            and result.status not in (ExecutionStatus.UNKNOWN, ExecutionStatus.SUCCESS)
+        ):
+            pytest.fail(
+                f"Navigation failed to start: {result.status.name} ({result.message})"
+            )
+
     def nav_helper(self, nav_query: str) -> None:
         """
         Helper function to test navigation UI action.
@@ -174,9 +211,7 @@ class TestSystemWeb:
             resolution_strategy="nearest",
         )
 
-        self.click_action("navigate", goal=nav_query)
-
-        self.wait_until(lambda: robot.executing_nav)
+        self.start_nav(nav_query)
         # While navigating, the engine must keep the buttons in sync.
         updates = self.tick_engine()
         if robot.executing_nav and updates is not None:
@@ -282,9 +317,7 @@ class TestSystemWeb:
         nav_query = "hall_kitchen_bathroom"
         robot = self.robot
 
-        self.click_action("navigate", goal=nav_query)
-
-        self.wait_until(lambda: robot.executing_nav)
+        self.start_nav(nav_query)
         if robot.executing_nav:
             time.sleep(0.2)
             self.click_action("cancel")
