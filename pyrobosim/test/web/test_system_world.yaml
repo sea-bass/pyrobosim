@@ -33,6 +33,7 @@ robots:
       rrt_star: true
       rewire_radius: 1.0
       compress_path: false
+      max_time: 5.0  # The default budget intermittently fails on loaded CI runners.
     # Linear motion path executor
     path_executor:
       type: constant_velocity
