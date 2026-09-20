@@ -1,0 +1,55 @@
+name: publish-pypi
+
+on:
+  # Publish whenever a tag of the form x.y.z (e.g., 5.0.1) is pushed
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  # Build the source distribution and wheel, and check them before publishing
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check that the tag matches the package version
+        run: |
+          PKG_VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyrobosim/pyproject.toml', 'rb'))['project']['version'])")
+          if [ "$PKG_VERSION" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag '$GITHUB_REF_NAME' does not match version '$PKG_VERSION' in pyrobosim/pyproject.toml"
+            exit 1
+          fi
+      - name: Build package
+        run: |
+          python -m pip install build twine
+          python -m build --outdir dist pyrobosim
+          python -m twine check --strict dist/*
+      - name: Upload distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+  # Publish to PyPI using trusted publishing (OIDC), so no API token is stored.
+  # This is a separate job so that only it is granted the id-token permission.
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/pyrobosim/${{ github.ref_name }}/
+    permissions:
+      id-token: write
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
