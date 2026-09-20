@@ -128,6 +128,29 @@ def test_get_constant_speed_trajectory_unlimited_ang_vel() -> None:
     assert np.all(traj.poses == path.poses)
 
 
+@pytest.mark.parametrize(
+    "start_yaw, end_yaw",
+    [
+        (0.0, np.pi / 2),
+        (0.0, -np.pi / 2),
+        (3 * np.pi / 4, -3 * np.pi / 4),
+        (-3 * np.pi / 4, 3 * np.pi / 4),
+    ],
+)
+@pytest.mark.parametrize("distance, duration", [(0.0, 4.0), (0.1, 4.0), (3.0, 6.0)])
+def test_get_constant_speed_trajectory_angular_limit_both_directions(
+    start_yaw: float, end_yaw: float, distance: float, duration: float
+) -> None:
+    path = Path(poses=[Pose(yaw=start_yaw), Pose(x=distance, yaw=end_yaw)])
+    traj = get_constant_speed_trajectory(
+        path, linear_velocity=0.5, max_angular_velocity=np.pi / 8
+    )
+
+    assert traj is not None
+    assert traj.t_pts == pytest.approx([0.0, duration])
+    assert np.all(traj.poses == path.poses)
+
+
 def test_get_constant_speed_trajectory_limited_ang_vel() -> None:
     path = Path(
         poses=[
