@@ -209,3 +209,51 @@ def test_interpolate_trajectory_insufficient_points(caplog: LogCaptureFixture) -
     interpolated_traj = interpolate_trajectory(traj, dt=0.1)
     assert interpolated_traj is None
     assert "Insufficient trajectory points for interpolation." in caplog.text
+
+
+@pytest.mark.parametrize("start_time", [0.0, 1.0, -2.0])
+@pytest.mark.parametrize("dt", [0.25, 0.3])
+def test_interpolate_trajectory_time_range(start_time: float, dt: float) -> None:
+    traj = Trajectory(
+        [start_time, start_time + 1.0],
+        [Pose(), Pose(x=1.0, yaw=np.pi / 2)],
+    )
+    interpolated_traj = interpolate_trajectory(traj, dt)
+
+    assert interpolated_traj is not None
+    expected_times = np.append(
+        np.arange(start_time, start_time + 1.0, dt), start_time + 1.0
+    )
+    assert interpolated_traj.t_pts == pytest.approx(expected_times)
+    assert interpolated_traj.num_points() == len(expected_times)
+    for t, pose in zip(interpolated_traj.t_pts, interpolated_traj.poses):
+        fraction = t - start_time
+        assert pose.x == pytest.approx(fraction)
+        assert pose.get_yaw() == pytest.approx(fraction * np.pi / 2)
+    assert traj.t_pts == pytest.approx([start_time, start_time + 1.0])
+
+
+def test_interpolate_trajectory_after_deleting_first_point() -> None:
+    traj = Trajectory([0.0, 1.0, 2.0], [Pose(), Pose(x=1.0), Pose(x=2.0)])
+    assert traj.delete(0)
+
+    interpolated_traj = interpolate_trajectory(traj, dt=0.5)
+
+    assert interpolated_traj is not None
+    assert interpolated_traj.t_pts == pytest.approx([1.0, 1.5, 2.0])
+    assert [pose.x for pose in interpolated_traj.poses] == pytest.approx(
+        [1.0, 1.5, 2.0]
+    )
+
+
+def test_interpolate_trajectory_single_time_after_deduplication() -> None:
+    pose = Pose(x=1.0, yaw=np.pi / 2)
+    traj = Trajectory([1.0, 1.0, 1.0], [pose, pose, pose])
+
+    interpolated_traj = interpolate_trajectory(traj, dt=0.1)
+
+    assert interpolated_traj is not None
+    assert interpolated_traj.t_pts == pytest.approx([1.0])
+    assert interpolated_traj.num_points() == 1
+    assert interpolated_traj.poses[0].is_approx(pose)
+    assert traj.num_points() == 3
