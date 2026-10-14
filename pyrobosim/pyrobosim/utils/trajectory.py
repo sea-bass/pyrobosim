@@ -107,6 +107,7 @@ def interpolate_trajectory(traj: Trajectory, dt: float) -> Trajectory | None:
     Interpolates a trajectory given a time step `dt`.
     Positions are interpolated linearly and the angle is interpolated
     using the Spherical Linear Interpolation (Slerp) method.
+    The input trajectory's start and end times are preserved.
 
     :param traj: Input trajectory.
     :param dt: Trajectory sample time, in seconds.
@@ -132,8 +133,9 @@ def interpolate_trajectory(traj: Trajectory, dt: float) -> Trajectory | None:
         else:
             i += 1
 
+    t_start = modified_traj.t_pts[0]
     t_final = modified_traj.t_pts[-1]
-    t_interp = np.arange(0, t_final, dt)
+    t_interp = np.arange(t_start, t_final, dt)
 
     # Interpolate the translation elements linearly
     if t_final not in t_interp:
@@ -149,7 +151,7 @@ def interpolate_trajectory(traj: Trajectory, dt: float) -> Trajectory | None:
     )
 
     # Set up Slerp interpolation for the angle.
-    if t_final > 0:
+    if modified_traj.num_points() > 1:
         euler_angs = [pose.eul for pose in modified_traj.poses]
         slerp = Slerp(modified_traj.t_pts, Rotation.from_euler("xyz", euler_angs))
         eul_interp = [slerp(t).as_euler("xyz", degrees=False) for t in t_interp]
